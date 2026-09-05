@@ -126,3 +126,11 @@ re-graded by this retrofit — re-grading is the Rei gate's job (t_ec7f0c19).**
 6. **B4 playerbot_metadata store prod deploy (2026-08-20)** — store engineering COMPLETE (gate 2121/0/1, B4 line item fully closed) but NOT deployed; presence-demo home resolution gains a persisted fallback on deploy — separate Josh decision.
 
 *Progress = forward motion with receipts. Every row above is evidence-gated. Bots prove function; Josh proves feel — H verdicts stay UNKNOWN until Josh runs it (ledger: EVIDENCE-LEDGER.md, 7-state, t_547ef82d).*
+
+## Addendum — 2026-09-05 (docs-only; rows above preserved verbatim)
+
+- Current roadmap: [Post-M7 readiness — roadmap zoom-out](../ROADMAP.md) (2026-09-05 section;
+  Correction register, A5 FINAL triad reconciliation, bounded-now slices, Horizon, M8 policy).
+  This board's M5.3 row (IMPL COMPLETE + MERGED 08-17, Rei ACCEPT) stands as the
+  accepted historical record — later "Move unverified" mirrors elsewhere were stale pointers to the
+  pre-08-17 v1 caveat, now corrected at the mirror sites, not here.

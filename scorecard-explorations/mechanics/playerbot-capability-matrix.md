@@ -22,6 +22,27 @@ Operator command (requires Docker, read-only `/root/hl-cp-test` assets, and
 `ensure-log-caps.sh` in the isolated E2E root):
 `A5_TIER3_SIX_HOUR=1 A5_TIER3_SIX_HOUR_MINUTES=360 A5_TIER3_SIX_HOUR_SAMPLE_SECONDS=60 A5_DORMANT_COUNT=1000 E2E_ROOT=/root/aaemu-e2e-a5-tier3-sixhour E2E_LOGIN_PORT=4237 E2E_GAME_PORT=4239 E2E_STREAM_PORT=4250 E2E_BRIDGE_PORT=4260 E2E_INTERNAL_PORT=4234 E2E_WEBAPI_PORT=4280 E2E_DB_PORT=43306 DB_HOST_PORT=43306 COMPOSE_PROJECT_NAME=aaemu_a5_t3_sixhour E2E_REBUILD=1 dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --filter-method AAEmu.IntegrationTests.E2e.G2.A5Tier3AcceptanceProbeTests.Probe_A5Tier3DormantTimers_SixHour`
 
+## CURRENT ADDENDUM (2026-09-05 — historical sections below preserved verbatim)
+
+- [six-hour] CURRENT ADDENDUM (2026-09-05): the no-six-hour-execution wording below
+  is historical. Since 2026-08-28: 6h Tier-3 canary FULL 360.00003-min window (failed RSS on
+  pre-quiescence baseline only — diagnostic failure, not a pass); corrected 12h soak SHA 1ce4664f
+  FULL 720.000044 min, RSS in budget, passed=false on timing (UNKNOWN); soak #1 @9ad5735b2
+  interrupted ~72min cause UNKNOWN; soak #2 @322390b32 from 09:28:34Z 5 Sep, report pending. No A5
+  pass; A5 OPEN.
+- [254-255] CURRENT ADDENDUM (2026-09-05): the 254→255-only-consumer wording is
+  historical. Since 2026-08-28 LevelingLoop grew: inter-zone + Nui death recovery, Dewstone chain +
+  AdaptiveBand + GatherLeg fallback, AbilityLevel/MateLevel legs, PB-MOUNT/BAG/COMBAT managers.
+  Broad autonomy open; A/R rig/proxy unless cited.
+- [M5.3] CURRENT ADDENDUM (2026-09-05): the "M5.3 movement caveat" pointer below is
+  pre-acceptance history (v1 silent-Transform-write era). ACCEPTED HISTORICAL EVIDENCE (progression
+  board 2026-08-17): dossier → Move rework @ 8e9c0713a (real 1.2 movement path + per-leg broadcasts)
+  → Observe/Stop/Target/Cast + exit @ 7b9e81d7f → rework @ 6b4ffe1d2 (SetTarget broadcast +
+  ExecutionBoundary); Rei gate t_5fa9bd73 ACCEPT, full 2102/0/1, targeted 13/13 + 1/1 + 30/30 + 5/5.
+  NOT re-opened as missing implementation. SEPARATE and still open: September Move changes
+  (trapezoidal profile, unmerged corner-blending geometry acceptance), H UNKNOWN, and the formal
+  whole-milestone closure caveat (Rei gate lane).
+
 ## M2 loop reconciliation (2026-08-28)
 
 M2's player loop is **clean reset → ordinary golden-path baseline

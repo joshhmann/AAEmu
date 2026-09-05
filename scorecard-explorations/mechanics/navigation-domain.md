@@ -651,3 +651,60 @@ paths in less time, success rate unchanged).
 Artifacts: `/tmp/navprobe-baseline.txt`, `/tmp/navprobe-after.txt` (raw matrix dumps);
 committed rig + probe under `.worktrees/nav-slice`. Branch tip at addendum time:
 `7e5d96e74`.
+
+## Addendum — 2026-09-05 corner-blending acceptance gate (docs-only review; branch NOT merged)
+
+**Purpose:** gate the `spline/corner-blending` branch (@ `5fdb7a385`,
+`feat(bots): corner-blending for routed Move legs`, worktree `/root/aaemu-splinework`,
+exactly 1 commit ahead of develop `135c4f14e`, clean) before ANY merge claim.
+Grades reuse the dossier table (§1 header). No code was written in this review; all
+implementation cites are from a read-only diff of the branch
+(`GameplayActor.cs` +70, `GameplayActorTests.cs` +103). Reported receipts are
+unit-only (37+4+11+5+27 per SESSION-REPORT baseline, which includes assignment-supplied figures); the three blend-specific tests
+verified present by name are `Move_CornerBlending_BlendedCornerStaysWithinTolerance`,
+`Move_CornerBlending_VelocityNeverZeroMidPath`, and
+`Move_CornerBlendingDisabled_LegacyStopAtWaypoint`. Scope guard: this addendum decides acceptance only (roadmap status lives in ROADMAP.md; no duplication here).
+
+### A1. What the branch does (VERIFIED from the diff; comment-only claims marked)
+
+- New `MoveCornerBlendRadius`, default 1 f (branch-current implementation value — not an approved gameplay default; non-positive disables → legacy stop-at-waypoint)
+  - On a routed leg (`_moveWaypoints` nonempty), flat distance to the current intermediate waypoint in `(0.0001 f, radius]` dequeues the NEXT waypoint, re-anchors, and steps toward it in the same tick, carrying `_moveCurrentSpeed` through (`GameplayActor.cs:3681-3688`)
+  - Final destination arrives within ArrivalRadius (0.5 f const — VERIFIED `GameplayActor.cs:75`; never exact float equality)
+  - Pure-vertical and unstick-recovery legs keeping legacy arrival is a branch-COMMENT claim only — no test demonstrates it (see A3.3)
+- New internal test seam `NavigateRoutedForTest(route, …)` starts a routed leg over an explicit waypoint list without GeoData
+  - Defect (VERIFIED): it indexes `route[^1]` in the `NewRequest(...)` call BEFORE the `route.Count == 0` fail-closed reject — an empty route throws instead of rejecting with `ActorFailureReason.RejectedAction`
+  - Acceptance requires the guard reorder (a requirement on the future slice, not a code fix in this docs-only review)
+- The branch comment claims "the shortcut's closest approach to the skipped waypoint is at most the blend radius"
+  - That bound holds trivially for the CURRENT position (the shortcut segment starts at P with |W−P| ≤ radius) — but it is NOT a path-smoothness result: no spline curve, no curvature bound, heading changes instantaneously at re-anchor
+  - "Corner-cutting" is the honest name; "spline" is not proven by this branch
+
+### A2. Why the current tests do not close geometry (VERIFIED names, PLAUSIBLE shape)
+
+- `BlendedCornerStaysWithinTolerance` checks minimum distance to the corner — necessary but insufficient: silent on heading discontinuity, wire slew, obstacles, vertical behavior, short-leg chains
+- `VelocityNeverZeroMidPath` shows speed > 0 mid-path, which does NOT imply vector continuity — an instantaneous heading flip at full speed passes a speed-only check while violating yaw-rate limits
+- None of the three branch tests exercises the branch through the REAL routed public callsite (see A3.5); no claim is made here about the rest of the repo suite
+
+### A3. Acceptance clauses (all REQUIRED before merge; proposed bounds are tuning proposals, existing values noted)
+
+- Value status key: PROPOSED = this addendum's tuning proposal (needs approval with evidence); EXISTING = already-approved value reused as-is
+
+- 1. **Real geometry:** prove max lateral deviation vs the waypoint polyline ≤ configured radius (PROPOSED bound) AND single-tick heading change ≤ 360°/s × dt at blend speed (EXISTING slew reference) AND velocity-vector continuity (direction change bounded per tick, not just speed > 0)
+  - Sweep: radii 0/disabled, 1 f (proposed default), ≥2 f; speeds walk/cruise/mounted ~10.5 m/s; corner angles acute/right/obtuse
+  - Minimum-distance-to-corner alone FAILS this clause
+- 2. **Obstacle / detour interaction:** the blend block keys only on `_moveWaypoints` nonempty, so it ALSO fires on obstacle-detour legs (the `:370` detour producer feeds the same queue)
+  - Prove a blend shortcut never cuts through an `ObstacleManager`-indexed keep-out (clearance table: shortcut segment vs keep-out polygons), or gate blending to non-detour legs
+  - A shortcut through a fence/wall/building FAILS this clause
+- 3. **Vertical / steep legs:** the trigger is flat-distance-only (`zDistance` recomputed, never gated)
+  - Prove steep legs (small flat component, large |ΔZ|) neither blend across floors/cliffs nor stall; demonstrate (not cite) the near-zero-flat guard behavior — the pure-vertical legacy claim is comment-only until a test shows it
+- 4. **Short-leg pathology:** waypoint spacing below the radius degrades to bounded multi-skip or clean arrival — never oscillation, never a skipped final destination; arrival within ArrivalRadius holds for route lengths 1, 2, N
+- 5. **Routed public callsite:** at least one clause-1–4 run enters through the REAL production path that builds `_moveWaypoints` (`NavigateTo` navmesh path `:350` / detour `:370` / direct `:399-402`), not only `NavigateRoutedForTest`; seam-only evidence FAILS this clause
+- 6. **Velocity + yaw on the wire:** capture `SCOneUnitMovementPacket` streams across a blended corner; assert vector continuity + yaw-rate within the 360°/s budget; packets/leg bounded vs the legacy stop-turn (no broadcast storm)
+- 7. **Seam contract:** single-point route is a VALID one-leg routed leg (must arrive within ArrivalRadius); empty route rejects BEFORE any index; non-finite waypoint rejects — all with taxonomy reasons (mirrors the `TargetNotFound`/`AlreadyAtUnit`/`WithoutGeoData` precedent)
+
+### A4. Evidence required (exact scope; honest not-run where absent)
+
+- Per-clause rig numbers (fail-pre where a gap is found, pass-post) + wire capture artifact + deviation/yaw/clearance tables, each labeled with the exact branch tip measured
+- At least one full pass through the real routed callsite (A3.5) — seam-only runs do not count toward geometry clauses
+- No automatic rebase is ever required by this gate; numbers state the exact tip measured, and the affected clauses rerun only if the runtime changes
+- Claim scope: routed-leg corner behavior ONLY — not pathfinding quality, not obstacle-index changes, not live/client feel (H UNKNOWN — no verdict attempted)
+- Branch NOT merging until A3.1–A3.7 are green plus review; a failing clause ends fix-or-drop, never a relaxed bound
