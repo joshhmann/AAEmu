@@ -467,6 +467,22 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
   reliability only, no code fixes. Rows updated by that entry: M6 current-row soak mirror + M5.3-row accepted-08-17 evidence correction; all other rows untouched.
 - 2026-09-05 — Ledger-precision note (docs-only; no state advancement, no earned-history deletion):
   M3a bot-replay-passed cell corrected `HOUSING-01/FARM-01 C/W/H/A=2 (proxy)` → `C/W/A=2 (proxy)` — the H grade never belonged in the proxy cell (existing 08-12 H-reconciliation t_547ef82d: proxy/bot evidence ≠ H=2; progression-board row 75 records C/W/A=2 with H=U; H column stays UNKNOWN). M4 deployed cell (`pending Josh GO`) and M6 B4 cell (`DEFERRED — not yet executed`) are dated historic snapshots (08-11/08-12 and 08-20-era wording, preserved above); current addendum states the historical M4 deployment `95bb1c78e` and B4 engineering DONE 2026-08-20 per the board — cited as history, NOT a new grade and NOT a fresh-deploy claim.
+- 2026-09-05 — A5 soak #2 PASS (docs-only record; quiescence-budget leg closed, A5 stays OPEN):
+  fresh report `/root/aaemu-e2e-a5-tier3-sixhour/logs/g2-a5-tier3-sixhour-report.json` — probe G2-A5
+  Tier-3 natural dormant-timer soak, runAtUtc 2026-09-05T15:33:11Z, config 1000 dormant/360 min/60 s,
+  window 360.00008 FULL (`windowCompleted` true, `windowStatus` FULL), warmup `A5_WARMUP_READY`
+  09:33:11Z (134.8 s, baseline 5635.5 MB), RSS growth 6.7 MB (budget 512), DB writes 0
+  (114670→114670), SaveP95 2.25 ms/SaveMax 61 ms/0 skips, sampleCount 361, `failures: []`,
+  `passed: true`, leg RUN; test binary 6h04m34s, 1/1. Code identity: report stamps `ca7762d7d`
+  (roadmap docs merge) because SourceRevision is read at report time; `git diff --stat 322390b32
+  ca7762d7d` = 7 markdown-only files (EVIDENCE-LEDGER, ROADMAP, SCORECARD, STATUS,
+  navigation-domain, playerbot-capability-matrix, progression-board), zero code — tested binary is
+  exactly `322390b32` source; launch header HEAD was `322390b32`. Roadmap meaning: closes (b1) 6h
+  quiescence-budget leg with a zero-breach post-change run; still open (a) SHAPE re-shown at the
+  fixed tip (last measured 2026-08-26 pre-change), (b2) timer-progression assertion (A5-W2 unbuilt).
+  "Preferably 12-hour" remains recommendation-only. H separate, unchanged. Soak #1 (+72min
+  external-kill, cause UNKNOWN) stays recorded as partial evidence, not a pass. No other
+  ledger-state change.
 
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*

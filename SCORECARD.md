@@ -129,6 +129,17 @@ feel.)
   progression, PLANNED) — H separate, never an A5 criterion; "preferably 12-hour" is
   recommendation-only; spline `5fdb7a385` branch-only/unit-only, geometry unproven. No grade
   changes; H grades unchanged (DEFERRED stays deferred, U stays U).
+- **2026-09-05 A5 soak #2 PASS (docs-only record; quiescence-budget leg closed, A5 stays OPEN):**
+  fresh `/root/aaemu-e2e-a5-tier3-sixhour/logs/g2-a5-tier3-sixhour-report.json` — G2-A5 Tier-3
+  natural dormant-timer soak, runAtUtc 2026-09-05T15:33:11Z, 1000 dormant / 360 min / 60 s, FULL
+  360.00008-min window (`windowCompleted` true), warmup `A5_WARMUP_READY` 09:33:11Z (134.8 s,
+  baseline 5635.5 MB), RSS growth 6.7 MB (budget 512), DB writes 0, SaveP95 2.25 ms / SaveMax
+  61 ms / 0 skips, 361 samples, `failures: []`, `passed: true`, leg RUN; binary 6h04m34s, 1/1.
+  Code identity: stamp `ca7762d7d` is a docs-merge HEAD read at report time
+  (`322390b32→ca7762d7d` = 7 markdown-only files, zero code) — tested binary is exactly
+  `322390b32`. Closes (b1) 6h quiescence-budget leg; still open (a) SHAPE at the fixed tip
+  (last measured 2026-08-26 pre-change), (b2) timer-progression assertion (A5-W2 unbuilt).
+  "Preferably 12-hour" recommendation-only. H separate, unchanged. Soak #1 stays partial evidence.
 - The prior full gate at source/test `0ce518ac03a18de00fff1516aa9e794e8566bee6`
   remains historical at 2504 total / 2503 passed / 0 failed / 1 skipped,
   compiler 0/0, MCP 39. H remains U (UNKNOWN) and no M6 full-exit claim is

@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-05 · zoom-out specs + corrections (docs-only); develop `135c4f14e` / source `322390b32`
-Branch of record: develop 135c4f14e (docs zoom-out HEAD; runtime source/test 322390b32)
+Updated: 2026-09-05 · A5 soak #2 PASS record (docs-only); develop `ca7762d7d` / source `322390b32`
+Branch of record: develop ca7762d7d (roadmap docs merge HEAD; runtime source/test 322390b32)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
 `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
@@ -12,7 +12,9 @@ consumer only, and broad M5 policy/universal autonomy remain open. M6 includes
 six-hour leg `155c82c66` integrated here.
 Current honest state (2026-09-05): deployed `135c4f14e` (source `322390b32`) healthy
 per director session report (not freshly queried); full gate 2836/1/1 NOT green (1 PvP-honor flake);
-soak #2 in flight, report pending; A5 OPEN with FINAL = (shape) + (quiescence-budget) +
+soak #2 PASS (`g2-a5-tier3-sixhour-report.json` 2026-09-05T15:33:11Z, FULL 360.00008-min window,
+`passed: true`, zero breaches — tested binary exactly `322390b32` source, report stamp `ca7762d7d`
+is docs-only); A5 OPEN with FINAL = (shape) + (quiescence-budget) +
 (actual timer progression, planned) — H is separate and NOT an A5 criterion; H states unchanged
 (DEFERRED stays deferred, UNKNOWN stays unknown).
 
@@ -23,6 +25,26 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+
+## 2026-09-05 — A5 soak #2 PASS: 6h quiescence-budget leg closed (docs-only record)
+
+- **Fresh report `g2-a5-tier3-sixhour-report.json` PASS:** probe G2-A5 Tier-3 natural
+  dormant-timer soak, runAtUtc 2026-09-05T15:33:11Z, config 1000 dormant / 360 min / 60 s,
+  window 360.00008 FULL (`windowCompleted` true, `windowStatus` FULL), warmup `A5_WARMUP_READY`
+  09:33:11Z (134.8 s, baseline 5635.5 MB), RSS growth 6.7 MB (budget 512), DB writes 0
+  (114670→114670), SaveP95 2.25 ms / SaveMax 61 ms / 0 skips, sampleCount 361, `failures: []`,
+  `passed: true`, leg RUN. Test binary duration 6h04m34s, 1/1. Report:
+  `/root/aaemu-e2e-a5-tier3-sixhour/logs/g2-a5-tier3-sixhour-report.json`.
+- **Code identity (honesty note):** report stamps `ca7762d7d` (roadmap docs merge) because
+  SourceRevision is read at report time; `git diff --stat 322390b32 ca7762d7d` = 7 markdown-only
+  files (EVIDENCE-LEDGER, ROADMAP, SCORECARD, STATUS, navigation-domain,
+  playerbot-capability-matrix, progression-board), zero code — tested binary is exactly
+  `322390b32` source. Launch header HEAD was `322390b32`.
+- **Roadmap meaning:** closes (b1) 6h quiescence-budget leg with a zero-breach post-change run.
+  Still open: (a) SHAPE re-shown at the fixed tip (last measured 2026-08-26 pre-change), (b2)
+  timer-progression assertion (A5-W2 unbuilt). **A5 stays OPEN.** "Preferably 12-hour" remains
+  recommendation-only. H separate, unchanged.
+- **Soak #1** (+72 min external-kill, cause UNKNOWN) stays recorded as partial evidence, not a pass.
 
 ## 2026-09-05 — Corrections (docs-only; dated history below preserved, current mirrors corrected)
 
