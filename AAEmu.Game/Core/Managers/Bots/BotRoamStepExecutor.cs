@@ -319,7 +319,10 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                 {
                     if (targetUnit != null && targetUnit.Hp <= 0)
                     {
-                        _ = actor.Loot(targetUnit.ObjId);
+                        var loot = actor.Loot(targetUnit.ObjId);
+                        if (loot is { IsTerminal: true, State: not ActorLifecycleState.Completed })
+                            Logger.Debug("Roam loot rejected for bot {CharacterId}: corpse {NpcName} ({NpcId}, template {TemplateId}) — {State} ({Detail})",
+                                bot.CharacterId, targetUnit.Name, targetUnit.ObjId, targetUnit.TemplateId, loot.State, loot.Detail);
                     }
 
                     if (bot.Character.CurrentTarget?.ObjId == state.TargetNpcObjId)
