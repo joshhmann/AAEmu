@@ -505,3 +505,11 @@ Cell values: ✅ PASS · 🔶 PARTIAL · ⏳ DEFERRED (recorded, Josh-owned) ·
 
 *Progress = forward motion with receipts. Every cell above is evidence-gated.
 Fork-local doc — never in an upstream PR.*
+- 2026-09-05 — A5 b2 bounded restart leg PASS (runtime; no grade promotion beyond
+  the leg itself): `Probe_A5Tier3RestartConservesDormantTimers` 1/1 PASS (3m34s)
+  at HEAD `f2ef4b16f` (docs-only over b2 code `54f7e741a`) — real plant path at
+  RestartGrowthRate 120, restart, boot catch-up to strictly forward phase with
+  recomputed growth_time. Isolated root `/root/aaemu-e2e-a5-restart` (62xx ports,
+  DB 63306, `aaemu_a5_restart`, `E2E_REBUILD=1`); game-data hardlink-seeded from
+  the sixhour root (canonical md5 verified). Still open: 2-from-stack planting at
+  rate 3, 6h asserted soak, SHAPE re-show. A5 stays OPEN; H unchanged.

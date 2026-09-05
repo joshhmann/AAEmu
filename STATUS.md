@@ -26,6 +26,19 @@ acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
 
+## 2026-09-05 — A5 b2 bounded restart leg PASS (runtime proof, A5 stays OPEN)
+
+- **`Probe_A5Tier3RestartConservesDormantTimers` 1/1 PASS** (3m34s) at HEAD `f2ef4b16f`
+  (docs-only over b2 code `54f7e741a`): real plant path at RestartGrowthRate 120 →
+  restart → boot catch-up fired to a strictly forward phase with recomputed growth_time
+  (`CheckRestartConservation` null, no fail-fast tripped). Isolated root
+  `/root/aaemu-e2e-a5-restart` (62xx ports, DB 63306, `aaemu_a5_restart`,
+  `E2E_REBUILD=1`); game-data hardlink-seeded from the sixhour root
+  (canonical md5 `78b3bdbf038db3b927056106efdf91af` verified); `ensure-log-caps.sh`
+  copied in (fresh roots lack it — pre-existing gap, not a code bug).
+- Still open: 2-from-stack planting + due-in-window at rate 3 (only the 6h asserted
+  soak exercises it), the 6h asserted soak itself, SHAPE re-show. **A5 OPEN.**
+
 ## 2026-09-05 — A5 b2 prelaunch correction record (no runtime proof, A5 stays OPEN)
 
 - **Correction:** pushed `948bf9662` (b2 helper build + full UnitTests gate)
