@@ -44,7 +44,7 @@
 | Q1 | G0 full-gate / honor-flake diagnostic | DONE investigation 2026-09-05 (root-caused; fix is separate build card) |
 | Q2 | B5 runner fidelity (runner-only) | DONE 2026-09-05 (fixed + fake-runner + real subset green) |
 | Q3 | PB-001 routed-geometry gate (branch-local) | REVIEWED 2026-09-05 NOT gate-ready (0/7); fix punch-list recorded, branch UNMERGED |
-| Q4 | M5-B1 loot + bag conservation | P0 investigate, build if gap |
+| Q4 | M5-B1 loot + bag conservation | RIG PROOF DONE 2026-09-05 (11/11 + suite 2855/0/1); live hunt-leg artifact pending |
 | Q5 | NPC wildlife skills data audit (read-only) | DONE investigation 2026-09-05 (verdicts recorded; OQ-1 blocks loot contents) |
 | Q6 | PB-002 bounded interzone loop (existing data) | P0 live-proof (loop exists) |
 | Q7 | PB-005 named grounding decisions | BLOCKED on rulings |
