@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-05 · A5 b2 prelaunch correction (docs-only); develop `ca7762d7d` / source `322390b32`
+Updated: 2026-09-05 · Tier 1 gate RED @ f04804f (flake family, no regression); soak b2 in flight on .165
 Branch of record: develop ca7762d7d (roadmap docs merge HEAD; runtime source/test 322390b32)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
@@ -25,6 +25,13 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+
+## 2026-09-05 — Tier 1 gate RED @ f04804f (known flake family, no regression)
+
+- 2841 passed / 2 failed / 1 skipped (1m55s); build + ScriptCompiler clean; MCP smokes skipped by gate design (RC=2).
+- Fails: `Duel_RequestAccept_StateTransitionsAndFactionSwap` (IsInDuel false) + `DoDie_MultiParticipantAssists_ComprehensiveDamageHealAndCc` (HonorPoint 0 vs 4) — both match the Q1 cross-class singleton-race profile (global TeamManager/SkillManager swaps across parallel rig classes). Docs-only delta since green `fc58e58b6` ⇒ no code regression.
+- 7 tracked `scorecard-explorations/generated/*` files rewritten by the run (actor-ID/GUID/timestamp churn; m7 file additionally outcome-nondeterministic: SUSTAIN-RETREAT/heal-Rejected vs old HUNT-KILL/LOOT) — reverted as run artifacts, not evidence. Citations to the old m7 artifact must be re-checked before reuse.
+- Gate stays non-green; singleton-serialization fix queued as the Q1 follow-up build card.
 
 ## 2026-09-05 — A5 b2 bounded restart leg PASS (runtime proof, A5 stays OPEN)
 
