@@ -44,7 +44,7 @@
 | Q1 | G0 full-gate / honor-flake diagnostic | DONE 2026-09-05 (root-caused + serialized; background-rate watch ongoing) |
 | Q2 | B5 runner fidelity (runner-only) | DONE 2026-09-05 (fixed + fake-runner + real subset green) |
 | Q3 | PB-001 routed-geometry gate (branch-local) | REVIEWED 2026-09-05 NOT gate-ready (0/7); fix punch-list recorded, branch UNMERGED |
-| Q4 | M5-B1 loot + bag conservation | RIG PROOF DONE 2026-09-05 (11/11 + suite 2855/0/1); live hunt-leg artifact pending |
+| Q4 | M5-B1 loot + bag conservation | DONE 2026-09-06 (rig 11/11 + live hunt-leg PASS, quest-251 held, caller deltas) |
 | Q5 | NPC wildlife skills data audit (read-only) | DONE investigation 2026-09-05 (verdicts recorded; OQ-1 blocks loot contents) |
 | Q6 | PB-002 bounded interzone loop (existing data) | P0 live-proof (loop exists) |
 | Q7 | PB-005 named grounding decisions | BLOCKED on rulings |
@@ -113,6 +113,7 @@
   - Negative/recovery: retry (or a second looter) after success observes empty-preflight `Rejected` or `Completed(0)` with zero caller delta — nothing granted twice (existing `TryReserveLootItem` semantics, demonstrated not cited); full-bag pins the actual engine outcome (partial grant permitted — conservation asserted, reject-everything NOT required)
   - Evidence EXISTS: concurrent-generation regression `7c0772f12` (40×16-thread hammer); `Loot` preflight/Completed states
   - Rig proof 2026-09-05 (`GameplayActorLootGrantTests` 11/11; full suite 2855/0/1 @ `08cf94308`): caller bag/money deltas assert grant vs no-op vs foreign-take; full-bag `Completed(0)`+restore; partial conservation; quest-gate pin; 16-task single-winner hammer. Contract clarification: `Result` counts container ENTRIES, not units. Live hunt-leg caller-delta artifact still open.
+  - Live artifact 2026-09-06 (`/root/aaemu-e2e-q4live/logs/q4-live-hunt-loot-report.json`, PASS 101s): quest 251 accepted live at NPC 2425, boar 3475 down after 7 real casts, Completed granted=2 container 2->0 with caller meatDelta +1 / moneyDelta 0 / x-checked, retry Rejected zero-delta. Bridge gained additive E2E-only cast+loot ops (default-off untouched). Full-bag live stays rig-proven.
   - Evidence PLANNED: grant-attribution accounting rig (caller-delta vs no-op vs foreign-take; fail-pre/pass-post if a gap is found) + live hunt-leg caller-delta artifact
   - Dependencies: wildlife loot-pack census (from Q5 census — NOT the MateLevel carrier decision; no cross-link)
   - Non-goal: `GenerateLoot`/picker/butcher changes; template drop guarantees (RNG packs — assert eligibility/range/conservation, not contents); logging mandates (request detail carries the reason; logging alone is not proof)

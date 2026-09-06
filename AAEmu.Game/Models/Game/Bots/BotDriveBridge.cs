@@ -782,6 +782,94 @@ public sealed class BotDriveBridge
                     state = connection.State.ToString(),
                     activeQuests = character.Quests.ActiveQuests.Count
                 });
+            case "cast":
+            {
+                // Q4 live hunt-leg seam (E2E-ONLY, additive): real offensive
+                // cast through the M5 contract on the live networked
+                // character — the same call the CSStartSkillPacket
+                // learned-skill branch makes (GameplayActor.Cast). Target HP
+                // is sampled around the cast so the runner can observe the
+                // kill without a second verb.
+                var skillId = GetUInt(root, "skill");
+                if (skillId == 0)
+                    return Err("cast requires 'skill'");
+                var castObjId = GetUInt(root, "npcObjId");
+                Npc? target = null;
+                if (castObjId != 0)
+                {
+                    target = character.ParentWorld.GetNpc(castObjId);
+                }
+                else
+                {
+                    var castTemplate = GetUInt(root, "npc");
+                    if (castTemplate == 0)
+                        return Err("cast requires 'npcObjId' or 'npc' (template id)");
+                    var here = character.Transform.World.Position;
+                    target = character.ParentWorld.GetAllNpcs()
+                        .Where(n => n.TemplateId == castTemplate && n.Hp > 0)
+                        .OrderBy(n => (n.Transform.World.Position - here).LengthSquared())
+                        .FirstOrDefault();
+                    if (target == null)
+                        return Err($"cast: no live NPC of template {castTemplate} in world");
+                }
+                if (target == null)
+                    return Err($"cast: target objId {castObjId} not in world (despawned?)");
+                var hpBefore = target.Hp;
+                var cast = new GameplayActor(character).Cast(skillId, target.ObjId);
+                return Ok(new
+                {
+                    state = cast.State.ToString(),
+                    result = cast.Result?.ToString(),
+                    failure = cast.Failure.ToString(),
+                    detail = cast.Detail ?? "",
+                    targetObjId = target.ObjId,
+                    targetTemplate = target.TemplateId,
+                    hpBefore,
+                    hpAfter = target.Hp,
+                    targetAlive = target.Hp > 0
+                });
+            }
+            case "loot":
+            {
+                // Q4 live hunt-leg seam (E2E-ONLY, additive): caller-delta
+                // loot grant through the M5 contract — the exact call
+                // CSLootOpenBagPacket makes with lootAll=true
+                // (GameplayActor.Loot). The caller's bag + money deltas are
+                // diffed atomically server-side: the runner asserts caller
+                // deltas, never container counts (Result counts container
+                // ENTRIES, not units).
+                var lootObjId = GetUInt(root, "npcObjId");
+                if (lootObjId == 0)
+                    return Err("loot requires 'npcObjId'");
+                var lootOwnerBefore = character.ParentWorld?.GetBaseUnit(lootObjId);
+                var containerBefore = lootOwnerBefore?.LootingContainer.Items.Count ?? -1;
+                var moneyBefore = character.Money;
+                var bagBefore = CountBagByTemplate(character);
+                var loot = new GameplayActor(character).Loot(lootObjId);
+                var bagAfter = CountBagByTemplate(character);
+                var delta = new List<object>();
+                foreach (var template in bagBefore.Keys.Concat(bagAfter.Keys).Distinct().OrderBy(t => t))
+                {
+                    bagBefore.TryGetValue(template, out var b);
+                    bagAfter.TryGetValue(template, out var a);
+                    if (a != b)
+                        delta.Add(new { template, before = b, after = a, delta = a - b });
+                }
+                var remaining = character.ParentWorld?.GetBaseUnit(lootObjId)?.LootingContainer.Items.Count ?? -1;
+                return Ok(new
+                {
+                    state = loot.State.ToString(),
+                    granted = loot.Result is int g ? g : 0,
+                    failure = loot.Failure.ToString(),
+                    detail = loot.Detail ?? "",
+                    containerBefore,
+                    remaining,
+                    moneyBefore,
+                    moneyAfter = character.Money,
+                    moneyDelta = character.Money - moneyBefore,
+                    bagDelta = delta.ToArray()
+                });
+            }
             case "charPos":
                 // Read-only diagnostic (PB-003 exit E2E): engine-truth transform
                 // for the bot, independent of GM command access levels.
@@ -2344,4 +2432,23 @@ public sealed class BotDriveBridge
 
     private static int GetInt(JsonElement root, string name, int defaultValue = 0)
         => root.TryGetProperty(name, out var el) && el.TryGetInt32(out var v) ? v : defaultValue;
+
+    /// <summary>
+    /// Q4 live hunt-leg helper (E2E-ONLY): the caller's bag grouped by
+    /// template id with summed counts — the before/after snapshots the
+    /// <c>loot</c> op diffs into caller-delta proof.
+    /// </summary>
+    private static Dictionary<uint, int> CountBagByTemplate(Character character)
+    {
+        var counts = new Dictionary<uint, int>();
+        var bag = character.Inventory?.Bag;
+        if (bag == null)
+            return counts;
+        foreach (var item in bag.GetItemsSnapshot())
+        {
+            counts.TryGetValue(item.TemplateId, out var existing);
+            counts[item.TemplateId] = existing + item.Count;
+        }
+        return counts;
+    }
 }
