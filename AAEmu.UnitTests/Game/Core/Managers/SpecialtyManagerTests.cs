@@ -442,6 +442,8 @@ public class SpecialtyManagerTests
                 world.Template.CellY * WorldManager.SECTORS_PER_CELL];
         }
         var worlds = (ConcurrentDictionary<uint, WorldInstance>)GetField(WorldManager.Instance, "_worlds");
+        // P1 note: id-1 slot is shared first-wins by design; the identity-guarded
+        // UnregisterWorld below is the protection here, not a loud assert.
         worlds.TryAdd(world.Id, world);
     }
 

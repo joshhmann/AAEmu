@@ -60,9 +60,13 @@ public class GameplayActorLoadPackOntoVehicleTests
     /// → WorldManager.GetWorld) resolve to the FOREIGN world, so the pack
     /// doodad spawns there and session.World.GetDoodad finds nothing. A
     /// per-test unique id keeps this class's worlds out of every shared
-    /// slot (0x6000_0000 base is unused by the other world-id rigs:
-    /// 0x4000_0000 plant, 0x5000_0000 house/cast/M3aM4, 0x7000_0000 soak).
-    /// Registration is still removed in TearDown with an identity guard.</summary>
+    /// slot. P1 (cargo-flake root cause): the 0x6000_0000 base is SHARED with
+    /// HousingBuildRaceProtectionTests (0x6000_0000, never unregisters) and
+    /// GameplayActorHarvestTests (0x6000_0000, rename-only, never registers) —
+    /// first-wins means a lost TryAdd silently re-homes the doodad. The
+    /// TryAdd below FAILS LOUD instead; the other two lanes moved to
+    /// 0x6001_0000 / 0x6002_0000. Registration is still removed in TearDown
+    /// with an identity guard.</summary>
     private static uint s_nextWorldId = 0x6000_0000;
     /// <summary>
     /// Gives the session world a UNIQUE high-base instance id and registers
@@ -82,7 +86,8 @@ public class GameplayActorLoadPackOntoVehicleTests
         var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, WorldInstance>)typeof(WorldManager)
             .GetField("_worlds", Flags)!
             .GetValue(WorldManager.Instance)!;
-        worlds.TryAdd(session.World.Id, session.World);
+        if (!worlds.TryAdd(session.World.Id, session.World) && !ReferenceEquals(worlds.GetValueOrDefault(session.World.Id), session.World))
+            throw new InvalidOperationException($"World id collision: 0x{session.World.Id:X8} already held by a foreign world — the pack doodad would spawn there and session.World.GetDoodad would miss.");
         _registeredWorld = session.World;
         session.World.SpawnManager ??= new SpawnManager(session.World);
         // Re-pin the character transform to the renamed world id so later

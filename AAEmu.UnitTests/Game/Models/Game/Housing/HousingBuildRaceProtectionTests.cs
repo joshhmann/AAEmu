@@ -90,7 +90,21 @@ public class HousingBuildRaceProtectionTests
         var housingField = typeof(Singleton<HousingGameData>).GetField("s_instance", BindingFlags.NonPublic | BindingFlags.Static);
         housingField?.SetValue(null, _previousHousingGameData);
         RemoveEngineHouses();
+        // P1: unregister our worlds (identity-guarded, cargo pattern) — this
+        // class used to leak every 0x6000_0000 registration permanently.
+        var worlds = (ConcurrentDictionary<uint, WorldInstance>)
+            typeof(WorldManager).GetField("_worlds", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?.GetValue(WorldManager.Instance);
+        foreach (var world in _registeredWorlds)
+        {
+            if (worlds?.TryGetValue(world.Id, out var registered) == true && ReferenceEquals(registered, world))
+                worlds.TryRemove(world.Id, out _);
+        }
+        _registeredWorlds.Clear();
     }
+
+    /// <summary>Worlds this test registered (drained identity-guarded in TearDown).</summary>
+    private readonly List<WorldInstance> _registeredWorlds = [];
 
     // ================================================================ THE RACE
 
@@ -197,15 +211,20 @@ public class HousingBuildRaceProtectionTests
 
     // ================================================================ rig helpers (M5.2 shape)
 
-    private static (GameplayActor Actor, HeadlessSession Session) CreateActor(string name)
+    private (GameplayActor Actor, HeadlessSession Session) CreateActor(string name)
     {
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        // P1: base was 0x6000_0000, shared with LoadPackOntoVehicleTests (and
+        // HarvestTests) under first-wins TryAdd — whoever lost the race
+        // silently spawned into the foreign world. 0x6001_0000 is ours alone.
         typeof(WorldInstance).GetField("<Id>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(session.World, s_nextWorldId++);
         var worlds = (ConcurrentDictionary<uint, WorldInstance>)
             typeof(WorldManager).GetField("_worlds", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.GetValue(WorldManager.Instance);
-        worlds?.TryAdd(session.World.Id, session.World);
+        if (worlds != null && !worlds.TryAdd(session.World.Id, session.World) && !ReferenceEquals(worlds.GetValueOrDefault(session.World.Id), session.World))
+            throw new InvalidOperationException($"World id collision: 0x{session.World.Id:X8} already held by a foreign world.");
+        _registeredWorlds.Add(session.World);
         session.World.SpawnManager ??= new SpawnManager(session.World);
         typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
             .GetField("_instanceId", BindingFlags.NonPublic | BindingFlags.Instance)!
@@ -221,7 +240,7 @@ public class HousingBuildRaceProtectionTests
         return (actor, session);
     }
 
-    private static uint s_nextWorldId = 0x6000_0000;
+    private static uint s_nextWorldId = 0x6001_0000;
 
     private void RemoveEngineHouses()
     {

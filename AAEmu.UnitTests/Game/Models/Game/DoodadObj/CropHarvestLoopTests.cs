@@ -407,6 +407,12 @@ public static class CropHarvestLoopRig
     /// WorldManager.Instance.GetWorld(instanceId); an unregistered world makes
     /// that return null and the setter chain NREs. Register it once.
     /// </summary>
+    /// P1 note: this shared static rig deliberately does NOT assert the
+    /// TryAdd below and does NOT unregister — every caller passes default
+    /// id-1 headless worlds by design, so repeats legitimately re-hit the
+    /// same slot and callers resolve through their own references/backing
+    /// fields (never GetWorld(1)). Per-test unique-id lanes that DO depend
+    /// on the registry assert + unregister (cargo pattern).
     private static void RegisterWorld(WorldInstance world)
     {
         // Production WorldManager.CreateWorld allocates world.Regions; the

@@ -90,8 +90,13 @@ public class GameplayActorHarvestTests
     /// base would let this class's worlds win the registry slots and strand
     /// every later Plant/HouseBuild test's world (crops/houses land in the
     /// wrong world).
+    /// P1 (cargo-flake root cause): 0x6000_0000 ALSO collided with
+    /// LoadPackOntoVehicleTests and HousingBuildRaceProtectionTests (both
+    /// TryAdd into shared _worlds; this class renames only, never registers).
+    /// Moved to 0x6002_0000 (cargo keeps 0x6000, housing-race 0x6001) so no
+    /// two lanes share a base even if this class registers in the future.
     /// </summary>
-    private static uint _nextWorldInstanceId = 0x6000_0000;
+    private static uint _nextWorldInstanceId = 0x6002_0000;
 
     [Before(Test)]
     public void SetUp()

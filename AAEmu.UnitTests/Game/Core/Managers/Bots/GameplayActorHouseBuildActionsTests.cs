@@ -121,11 +121,29 @@ public class GameplayActorHouseBuildActionsTests
     [After(Test)]
     public void TearDown()
     {
+        UnregisterWorlds();
         MySQL.SetConfiguration(null); // restore default (localhost:3306)
         AppConfiguration.Instance.World = _previousWorldConfig;
         var housingField = typeof(Singleton<HousingGameData>).GetField("s_instance", BindingFlags.NonPublic | BindingFlags.Static);
         housingField?.SetValue(null, _previousHousingGameData);
         RemoveHouses();
+    }
+
+    /// <summary>Worlds this test registered (drained identity-guarded in TearDown, cargo pattern).</summary>
+    private readonly List<WorldInstance> _registeredWorlds = [];
+
+    /// <summary>P1: identity-guarded unregister — never drop a sibling lane's same-id world.</summary>
+    private void UnregisterWorlds()
+    {
+        var worlds = (ConcurrentDictionary<uint, WorldInstance>)
+            typeof(WorldManager).GetField("_worlds", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?.GetValue(WorldManager.Instance);
+        foreach (var world in _registeredWorlds)
+        {
+            if (worlds?.TryGetValue(world.Id, out var registered) == true && ReferenceEquals(registered, world))
+                worlds.TryRemove(world.Id, out _);
+        }
+        _registeredWorlds.Clear();
     }
 
     // ================================================================ happy path — real engine path
@@ -444,7 +462,7 @@ public class GameplayActorHouseBuildActionsTests
 
     // ================================================================ rig helpers
 
-    private static (GameplayActor Actor, HeadlessSession Session) CreateActor(string name)
+    private (GameplayActor Actor, HeadlessSession Session) CreateActor(string name)
     {
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
         // Hermetic tax identity (suite-health): the engine's first-house-free
@@ -511,15 +529,16 @@ public class GameplayActorHouseBuildActionsTests
     private static uint s_nextWorldId = 0x5000_0000;
     /// <summary>Unique account ids per actor (hermetic tax identity — see CreateActor).</summary>
     private static uint s_nextAccountId = 0x00A0_0000;
-
-    private static void RigWorld(HeadlessSession session)
+    private void RigWorld(HeadlessSession session)
     {
         typeof(WorldInstance).GetField("<Id>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(session.World, s_nextWorldId++);
         var worlds = (ConcurrentDictionary<uint, WorldInstance>)
             typeof(WorldManager).GetField("_worlds", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.GetValue(WorldManager.Instance);
-        worlds?.TryAdd(session.World.Id, session.World);
+        if (worlds != null && !worlds.TryAdd(session.World.Id, session.World) && !ReferenceEquals(worlds.GetValueOrDefault(session.World.Id), session.World))
+            throw new InvalidOperationException($"World id collision: 0x{session.World.Id:X8} already held by a foreign world.");
+        _registeredWorlds.Add(session.World);
         session.World.SpawnManager ??= new SpawnManager(session.World);
 
         typeof(Transform).GetField("_instanceId", BindingFlags.NonPublic | BindingFlags.Instance)!

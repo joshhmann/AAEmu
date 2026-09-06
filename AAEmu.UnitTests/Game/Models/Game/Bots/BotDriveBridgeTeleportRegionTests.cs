@@ -38,6 +38,8 @@ public class BotDriveBridgeTeleportRegionTests
         var worldsField = typeof(WorldManager).GetField("_worlds",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
         var worlds = (ConcurrentDictionary<uint, WorldInstance>)worldsField.GetValue(WorldManager.Instance)!;
+        // P1 note: default id-1 slot is shared first-wins by design — no loud
+        // assert here; the identity-guarded finally below is the protection.
         worlds.TryAdd(session.World.Id, session.World);
         try
         {
@@ -45,7 +47,9 @@ public class BotDriveBridgeTeleportRegionTests
         }
         finally
         {
-            worlds.TryRemove(session.World.Id, out _);
+            // Identity-guarded: never drop a sibling lane's same-id world.
+            if (worlds.TryGetValue(session.World.Id, out var registered) && ReferenceEquals(registered, session.World))
+                worlds.TryRemove(session.World.Id, out _);
         }
     }
 

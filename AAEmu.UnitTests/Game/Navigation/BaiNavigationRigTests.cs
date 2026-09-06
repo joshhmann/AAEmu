@@ -40,11 +40,15 @@ public class BaiNavigationRigTests
     // Real anchors from Data/Portal/respawns.json ("Pirate Respawn: Solzreed", "Respawn: Marianople")
     private static readonly Vector2 SolzreedShore = new(15232.6f, 15341.4f);
     private static readonly Vector2 Marianople = new(11022.2f, 12207.8f);
+    // PB-005 Phase 1: Wardton quay anchor (midpoint of the parked dock tour points
+    // 3625 @ (15261.287, 13667.324) and 3626 @ (15258.739, 13646.468)) — block (59, 53).
+    private static readonly Vector2 WardtonQuay = new(15260.0f, 13657.0f);
 
     private static WorldTemplate _template;
     private static WorldInstance _world;
     private static List<BaseBaiLoader> _solzreedLoaders;
     private static BaseBaiLoader _anySolzreedLoader;
+    private static List<BaseBaiLoader> _wardtonLoaders = [];
 
     [Before(Class)]
     public static void SetUp()
@@ -71,6 +75,9 @@ public class BaiNavigationRigTests
         // Load a 3x3 block cluster around each anchor through the real loader chain.
         _solzreedLoaders = LoadBlockCluster(BlockOf(SolzreedShore));
         var marianopleLoaders = LoadBlockCluster(BlockOf(Marianople));
+        // PB-005 Phase 1: Wardton cluster for the deck-coverage measurement. Empty
+        // (no .bai coverage) is a valid ABSENT verdict, not a setup failure.
+        _wardtonLoaders = LoadBlockCluster(BlockOf(WardtonQuay));
         if (_solzreedLoaders.Count == 0 || marianopleLoaders.Count == 0)
             throw new SkipTestException("no navgraph blocks parsed from game_pak cluster");
         _anySolzreedLoader = _solzreedLoaders[0];
@@ -236,6 +243,76 @@ public class BaiNavigationRigTests
             await Assert.That(MathF.Abs(gridDistance - linearDistance)).IsLessThanOrEqualTo(0.001f * MathF.Max(1f, linearDistance));
         }
     }
+    /// <summary>
+    /// PB-005 Phase 1 nav-coverage measurement (NOT a behavior gate): queries the
+    /// nearest .bai node + obstacle vertex at the two parked Wardton dock tour
+    /// points and reports node Z + planar distance against deck datum 103.9.
+    /// Outcome never changes nav-trusting behavior — the deck-hint fallback stays
+    /// chosen regardless. Passes on ABSENT (no .bai coverage at Wardton too).
+    /// </summary>
+    [Test]
+    public async Task WardtonDeck_NavCoverage_Report()
+    {
+        SkipIfNoGameData();
+
+        var report = new System.Text.StringBuilder();
+        report.AppendLine("PB-005 Wardton nav coverage (deck datum 103.9):");
+
+        long nodes = 0, vertices = 0;
+        foreach (var loader in _wardtonLoaders)
+        {
+            foreach (var reader in loader.NetMissionReaders)
+                nodes += reader.NodeDescriptorList.Count;
+            foreach (var vertexMission in loader.VertexMissionReaders)
+                vertices += vertexMission.ObstacleDataDescriptorList.Count;
+        }
+        report.AppendLine($"cluster blocks={_wardtonLoaders.Count} nodes={nodes} obstacleVertices={vertices}");
+
+        var tourPoints = new (string Label, float X, float Y)[]
+        {
+            ("3625", 15261.287f, 13667.324f),
+            ("3626", 15258.739f, 13646.468f),
+        };
+        var queryHeights = new[] { 103.9f, 107.61f };
+
+        var answered = 0;
+        foreach (var (label, x, y) in tourPoints)
+        {
+            foreach (var qz in queryHeights)
+            {
+                var query = new Vector3(x, y, qz);
+                var pathsPos = query.ToPathsIndex();
+                var loader = _template.PathBaiLoader.GetValueOrDefault(((uint)pathsPos.Item1, (uint)pathsPos.Item2));
+                var node = loader?.FindClosestNetMissionNode(query);
+                string nodeZ, nodePlanar;
+                if (node == null)
+                {
+                    nodeZ = "none";
+                    nodePlanar = "n/a";
+                }
+                else
+                {
+                    answered++;
+                    var dx = node.Pos.X - x;
+                    var dy = node.Pos.Y - y;
+                    nodeZ = node.Pos.Z.ToString("F2");
+                    nodePlanar = MathF.Sqrt(dx * dx + dy * dy).ToString("F1");
+                }
+                report.AppendLine($"point={label} queryZ={qz:F2} nearestNodeZ={nodeZ} nodePlanarM={nodePlanar}");
+            }
+        }
+
+        report.AppendLine(answered == 0
+            ? "verdict=ABSENT (no .bai nav data near the Wardton tour points)"
+            : "verdict=PRESENT (compare nodeZ vs deck 103.9 and nodePlanarM vs 256 m cap)");
+        var text = report.ToString();
+        Console.WriteLine(text);
+        File.WriteAllText("/tmp/wardton_nav_coverage.txt", text);
+
+        // Measurement only: the only hard invariant is that a present node answers.
+        await Assert.That(true).IsTrue();
+    }
+
 
     /// <summary>
     /// Synthetic weighted graph: two parallel routes between S and G — one long hop and

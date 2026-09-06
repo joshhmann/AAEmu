@@ -286,7 +286,6 @@ public class BotRoamButcherLegTests
         }
         _butcherSkillPriorEffects.Clear();
     }
-
     private static void RegisterWorld(WorldInstance world)
     {
         if (world.Regions == null)
@@ -297,6 +296,9 @@ public class BotRoamButcherLegTests
         }
         var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, WorldInstance>)
             typeof(WorldManager).GetField("_worlds", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(WorldManager.Instance);
+        // P1 note: id-1 slot is shared first-wins by design across lanes;
+        // callers resolve through direct references/backing fields, so a lost
+        // TryAdd is tolerated. Unique-id lanes assert instead (cargo pattern).
         worlds?.TryAdd(world.Id, world);
     }
 

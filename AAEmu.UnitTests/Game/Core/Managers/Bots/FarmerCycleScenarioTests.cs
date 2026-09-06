@@ -44,7 +44,7 @@ public class FarmerCycleScenarioTests
     private const uint PotatoId = CropHarvestLoopTests.PotatoItemId;
     private const uint GoldenId = CropHarvestLoopTests.GoldenPotatoItemId;
 
-    private static uint _nextWorldInstanceId = 0x8000_0000; // fresh base: 0x4 plant / 0x5 M3aM4 / 0x6 harvest+loadpack / 0x7 soak
+    private static uint _nextWorldInstanceId = 0x8000_0000; // fresh base: 0x4 plant / 0x5 M3aM4 / 0x6000 loadpack / 0x6001 housing-race / 0x6002 harvest / 0x7 soak
 
     private WorldConfig _previousWorldConfig;
 

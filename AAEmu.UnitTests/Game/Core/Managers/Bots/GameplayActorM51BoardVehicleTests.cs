@@ -484,8 +484,9 @@ public class GameplayActorM51BoardVehicleTests
     ///
     /// NOTE (t_15343fdd): the base is 0x7000_0000, NOT 0x4000_0000 — the
     /// sibling M5.1 rigs own 0x4000_0000 (rig base / Plant), 0x5000_0000
-    /// (HouseBuild) and 0x6000_0000 (Harvest) with process-wide first-wins
-    /// registration; sharing a base would let this class's worlds win the
+    /// (HouseBuild), 0x6000_0000 (LoadPack), 0x6001_0000 (housing-race) and
+    /// 0x6002_0000 (Harvest) with process-wide first-wins registration;
+    /// sharing a base would let this class's worlds win the
     /// registry slots and strand every later Plant/HouseBuild/Harvest test.
     /// </summary>
     private static uint _nextWorldInstanceId = 0x7000_0000;

@@ -83,8 +83,26 @@ public class M3aM4ReplayScenarioRigTests
     [After(Test)]
     public void TearDown()
     {
+        UnregisterWorlds();
         RestoreMovementSingletons(); // sibling suites must never observe the swap
         MySQL.SetConfiguration(null); // restore default (localhost:3306)
+    }
+
+    /// <summary>Worlds this test registered (drained identity-guarded in TearDown, cargo pattern).</summary>
+    private readonly List<WorldInstance> _registeredWorlds = [];
+
+    /// <summary>P1: identity-guarded unregister — never drop a sibling lane's same-id world.</summary>
+    private void UnregisterWorlds()
+    {
+        var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, WorldInstance>)
+            typeof(WorldManager).GetField("_worlds", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            ?.GetValue(WorldManager.Instance);
+        foreach (var world in _registeredWorlds)
+        {
+            if (worlds?.TryGetValue(world.Id, out var registered) == true && ReferenceEquals(registered, world))
+                worlds.TryRemove(world.Id, out _);
+        }
+        _registeredWorlds.Clear();
     }
 
     [Test]
@@ -308,14 +326,16 @@ public class M3aM4ReplayScenarioRigTests
     /// </summary>
     private static uint s_nextWorldId = 0x5000_0000;
 
-    private static void RigWorld(HeadlessSession session)
+    private void RigWorld(HeadlessSession session)
     {
         typeof(WorldInstance).GetField("<Id>k__BackingField", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
             .SetValue(session.World, s_nextWorldId++);
         var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, WorldInstance>)
             typeof(WorldManager).GetField("_worlds", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             ?.GetValue(WorldManager.Instance);
-        worlds?.TryAdd(session.World.Id, session.World);
+        if (worlds != null && !worlds.TryAdd(session.World.Id, session.World) && !ReferenceEquals(worlds.GetValueOrDefault(session.World.Id), session.World))
+            throw new InvalidOperationException($"World id collision: 0x{session.World.Id:X8} already held by a foreign world.");
+        _registeredWorlds.Add(session.World);
         session.World.SpawnManager ??= new SpawnManager(session.World);
 
         // CreateActor pinned the character's _instanceId to the session

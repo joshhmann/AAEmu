@@ -4,6 +4,7 @@ using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Static;
+using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.Skills.Templates;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
@@ -37,25 +38,53 @@ public class GameplayActorCastAtTests
     /// Same registration shape as CropHarvestLoopRig.RegisterWorld /
     /// PlantActionsTests.RigWorld.
     /// </summary>
-    private static void RegisterWorldForPosCast(HeadlessSession session)
+    private void RegisterWorldForPosCast(HeadlessSession session)
     {
         const System.Reflection.BindingFlags Flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
         typeof(AAEmu.Game.Models.Game.World.WorldInstance)
             .GetField("<Id>k__BackingField", Flags)!
-            .SetValue(session.World, s_nextWorldId++);
+            // P1: atomic — this class has no ParallelLimiter, so tests may
+            // draw ids concurrently; duplicates would trip the loud assert below.
+            .SetValue(session.World, (uint)System.Threading.Interlocked.Increment(ref s_nextWorldId));
         var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, AAEmu.Game.Models.Game.World.WorldInstance>)
             typeof(AAEmu.Game.Core.Managers.World.WorldManager)
                 .GetField("_worlds", Flags)!
                 .GetValue(AAEmu.Game.Core.Managers.World.WorldManager.Instance)!;
-        worlds.TryAdd(session.World.Id, session.World);
+        if (!worlds.TryAdd(session.World.Id, session.World) && !ReferenceEquals(worlds.GetValueOrDefault(session.World.Id), session.World))
+            throw new InvalidOperationException($"World id collision: 0x{session.World.Id:X8} already held by a foreign world.");
+        _registeredWorlds.Add(session.World);
         // Re-pin the character transform to the RENAMED world id.
         typeof(AAEmu.Game.Models.Game.World.Transform.Transform)
             .GetField("_instanceId", Flags)!
             .SetValue(session.Character.Transform, session.World.Id);
     }
+    /// <summary>Worlds this test registered (drained identity-guarded in TearDown, cargo pattern).</summary>
+    private readonly List<WorldInstance> _registeredWorlds = [];
+
+    /// <summary>P1: identity-guarded unregister — never drop a sibling lane's same-id world.</summary>
+    private void UnregisterWorlds()
+    {
+        const System.Reflection.BindingFlags Flags2 = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, AAEmu.Game.Models.Game.World.WorldInstance>)
+            typeof(AAEmu.Game.Core.Managers.World.WorldManager)
+                .GetField("_worlds", Flags2)!
+                .GetValue(AAEmu.Game.Core.Managers.World.WorldManager.Instance)!;
+        foreach (var world in _registeredWorlds)
+        {
+            if (worlds.TryGetValue(world.Id, out var registered) && ReferenceEquals(registered, world))
+                worlds.TryRemove(world.Id, out _);
+        }
+        _registeredWorlds.Clear();
+    }
+
+    [After(Test)]
+    public void TearDown()
+    {
+        UnregisterWorlds();
+    }
 
     /// <summary>Creates an actor that knows the seeded Pos-target skill.</summary>
-    private static (GameplayActor Actor, HeadlessSession Session) CreatePosCaster(string name)
+    private (GameplayActor Actor, HeadlessSession Session) CreatePosCaster(string name)
     {
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
         RegisterWorldForPosCast(session);

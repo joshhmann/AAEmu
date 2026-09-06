@@ -192,6 +192,9 @@ public class HousingStorageFurnitureTests
     {
         var field = WorldManager.Instance.GetType().GetField("_worlds", BindingFlags.NonPublic | BindingFlags.Instance);
         var worlds = (ConcurrentDictionary<uint, WorldInstance>)field?.GetValue(WorldManager.Instance);
+        // P1 note: id-1 slot is shared first-wins by design across lanes;
+        // callers resolve through direct references/backing fields, so a lost
+        // TryAdd is tolerated. Unique-id lanes assert instead (cargo pattern).
         worlds?.TryAdd(world.Id, world);
     }
 

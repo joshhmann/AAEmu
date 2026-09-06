@@ -183,11 +183,14 @@ public class SlaveLifecycleTests
             .GetField("s_instance", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
             ?.SetValue(null, worldManager);
     }
-
     private void RegisterWorld(WorldInstance world)
     {
         var field = WorldManager.Instance.GetType().GetField("_worlds", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         var worlds = (System.Collections.Concurrent.ConcurrentDictionary<uint, WorldInstance>)field?.GetValue(WorldManager.Instance);
+        // P1 note: id-1 slot is shared first-wins by design across lanes;
+        // callers resolve through direct references/backing fields, so a lost
+        // TryAdd is tolerated (asserting here broke these lanes: the slot is
+        // legitimately held). Unique-id lanes assert instead (cargo pattern).
         worlds?.TryAdd(world.Id, world);
     }
 

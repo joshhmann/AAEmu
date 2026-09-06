@@ -84,11 +84,29 @@ public class GameplayActorPlantActionsTests
     [After(Test)]
     public void TearDown()
     {
+        UnregisterWorlds();
         MySQL.SetConfiguration(null); // restore default (localhost:3306)
         AppConfiguration.Instance.World = _previousWorldConfig;
         SetFarmGate(false);
         SetFarmAllowlist(false);
         RemoveHouses();
+    }
+
+    /// <summary>Worlds this test registered (drained identity-guarded in TearDown, cargo pattern).</summary>
+    private readonly List<WorldInstance> _registeredWorlds = [];
+
+    /// <summary>P1: identity-guarded unregister — never drop a sibling lane's same-id world.</summary>
+    private void UnregisterWorlds()
+    {
+        var worlds = (ConcurrentDictionary<uint, WorldInstance>)
+            typeof(WorldManager).GetField("_worlds", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?.GetValue(WorldManager.Instance);
+        foreach (var world in _registeredWorlds)
+        {
+            if (worlds?.TryGetValue(world.Id, out var registered) == true && ReferenceEquals(registered, world))
+                worlds.TryRemove(world.Id, out _);
+        }
+        _registeredWorlds.Clear();
     }
 
     // ================================================================ happy path — real engine path
@@ -366,34 +384,34 @@ public class GameplayActorPlantActionsTests
     }
 
     // ================================================================ rig helpers
-
-    private static (GameplayActor Actor, HeadlessSession Session) CreateActor(string name)
-    {
-        var (actor, session) = GameplayActorTestRig.CreateActor(name);
-        RigWorld(session);
-        return (actor, session);
-    }
-
     /// <summary>
     /// Gives the test world a UNIQUE high-base instance id (all headless
     /// session worlds are born as instance id 1 — the WorldManager registry
     /// is first-wins, so only the first test's world would resolve, and a
     /// later test's planted doodad would land in the first test's world via
     /// the Transform.InstanceId setter chain) and registers it, then attaches
-    /// a SpawnManager (CanPlace's GetCommonFarmDoodads + the engine's
-    /// AddPlayerDoodad tail dereference it — production worlds get one at
-    /// creation). Same registration shape as CropHarvestLoopRig.RegisterWorld.
+    /// a SpawnManager. Same registration shape as CropHarvestLoopRig.RegisterWorld.
     /// </summary>
     private static uint s_nextWorldId = 0x4000_0000;
 
-    private static void RigWorld(HeadlessSession session)
+    private (GameplayActor Actor, HeadlessSession Session) CreateActor(string name)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        RigWorld(session);
+        return (actor, session);
+    }
+
+
+    private void RigWorld(HeadlessSession session)
     {
         typeof(WorldInstance).GetField("<Id>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
             .SetValue(session.World, s_nextWorldId++);
         var worlds = (ConcurrentDictionary<uint, WorldInstance>)
             typeof(WorldManager).GetField("_worlds", BindingFlags.NonPublic | BindingFlags.Instance)
             ?.GetValue(WorldManager.Instance);
-        worlds?.TryAdd(session.World.Id, session.World);
+        if (worlds != null && !worlds.TryAdd(session.World.Id, session.World) && !ReferenceEquals(worlds.GetValueOrDefault(session.World.Id), session.World))
+            throw new InvalidOperationException($"World id collision: 0x{session.World.Id:X8} already held by a foreign world.");
+        _registeredWorlds.Add(session.World);
         session.World.SpawnManager ??= new SpawnManager(session.World);
 
         // Sync the character transform to the RENAMED world id. CreateActor
