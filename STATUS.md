@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-05 · Tier 1 gate GREEN @ 6c64b449d (lane fix + smokes); soak b2 in flight on .165
+Updated: 2026-09-06 · Q6 live partial 8/9 (death v2 queued); soak b2 in flight on .165
 Branch of record: develop ca7762d7d (roadmap docs merge HEAD; runtime source/test 322390b32)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
@@ -25,6 +25,10 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+
+## 2026-09-06 — Q6 live partial: 8/9 legs, death UNOBSERVED (lane freed)
+
+- Probe `InterzoneLoopE2eTests` (new) + `E2eQuestDriver` selection fix; 72xx lane used and freed, logs kept at `/root/aaemu-e2e-q6/logs/`. Death v2 queued (retaliation-verified mob + longer watch). No H claim.
 
 ## 2026-09-05 — Tier 1 gate GREEN @ 6c64b449d (singleton lane + smokes)
 

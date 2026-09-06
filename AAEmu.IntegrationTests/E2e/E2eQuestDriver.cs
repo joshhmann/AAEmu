@@ -77,13 +77,39 @@ public static class E2eQuestDriver
             {
                 if (IsReportEvent(rawEvent))
                     continue; // never turn in during prepare
-                FireEvent(bridge, botName, manifest.QuestId, rawEvent);
+                FireEvent(bridge, botName, manifest.QuestId, rawEvent, manifest.SelectedRewardIndex);
             }
 
             Call(bridge, botName, $"{{\"cmd\":\"drive\",\"bot\":\"{botName}\",\"op\":\"advance\",\"quest\":{manifest.QuestId}}}");
         }
 
         return IsQuestActive(bridge, botName, manifest.QuestId);
+    }
+
+    /// <summary>Continues an already-accepted quest from the named stage.
+    /// Covers the live timing transient where the server settles a stage
+    /// ahead of the calibrated expectation (e.g. supply auto-completing
+    /// between accept and the START read) — the quest is healthy, the stage
+    /// machine just needs to resume downstream instead of failing.</summary>
+    public static QuestResult ResumeFromStage(BotDriveClient bridge, string botName, E2eQuestManifest manifest, string stageName, List<StageVerdict>? prefix = null)
+    {
+        var stages = prefix ?? [];
+        if (!IsQuestActive(bridge, botName, manifest.QuestId))
+        {
+            var reason = "quest not active on resume — restore failed";
+            stages.Add(new StageVerdict("ACCEPT", false, reason));
+            return new QuestResult(manifest.QuestId, false, manifest.Name, "ACCEPT", reason, stages);
+        }
+
+        var index = manifest.Stages.FindIndex(s => string.Equals(s.Name, stageName, StringComparison.OrdinalIgnoreCase));
+        if (index < 0)
+        {
+            var reason = $"stage {stageName} not found in manifest";
+            stages.Add(new StageVerdict(stageName, false, reason));
+            return new QuestResult(manifest.QuestId, false, manifest.Name, stageName, reason, stages);
+        }
+
+        return RunStagesFrom(bridge, botName, manifest, index, stages);
     }
 
     /// <summary>Resumes a prepared quest from the first terminal stage (the
@@ -133,7 +159,7 @@ public static class E2eQuestDriver
                 if (IsQuestActive(bridge, botName, questId))
                 {
                     foreach (var rawEvent in stage.Events)
-                        FireEvent(bridge, botName, questId, rawEvent);
+                        FireEvent(bridge, botName, questId, rawEvent, manifest.SelectedRewardIndex);
 
                     Call(bridge, botName, $"{{\"cmd\":\"drive\",\"bot\":\"{botName}\",\"op\":\"advance\",\"quest\":{questId}}}");
                 }
@@ -265,10 +291,13 @@ public static class E2eQuestDriver
     /// event surface the world interaction pipeline fires (types are the quest
     /// act family names, same as QuestScenarioDriver.FireEvent).
     /// </summary>
-    private static void FireEvent(BotDriveClient bridge, string botName, uint questId, JsonElement rawEvent)
+    private static void FireEvent(BotDriveClient bridge, string botName, uint questId, JsonElement rawEvent, int calibratedSelected = -1)
     {
         var type = rawEvent.GetProperty("type").GetString();
         var q = $"\"quest\":{questId},";
+        // Calibrated top-level selection wins: the manifest generator writes
+        // event-level selected=0 uniformly while the true 1-based index lives
+        // at top level (138 manifests). Engine grants iff the indices match.
         switch (type)
         {
             case "MonsterHunt":
@@ -334,7 +363,8 @@ public static class E2eQuestDriver
                 if (objId == 0)
                     throw new InvalidOperationException($"ReportNpc: NPC {npcId} never spawned in the live world after teleport");
 
-                var selected = rawEvent.TryGetProperty("selected", out var s) && s.TryGetInt32(out var sel) ? sel : -1;
+                var selected = calibratedSelected >= 0 ? calibratedSelected
+                    : rawEvent.TryGetProperty("selected", out var s) && s.TryGetInt32(out var sel) ? sel : -1;
                 Call(bridge, botName, $"{{\"cmd\":\"drive\",\"bot\":\"{botName}\",\"op\":\"report\",{q}\"npc\":{npcId},\"selected\":{selected}}}");
                 break;
             }
@@ -356,7 +386,8 @@ public static class E2eQuestDriver
                 if (objId == 0)
                     throw new InvalidOperationException($"ReportDoodad: doodad {doodadId} not spawned in the live world");
 
-                var selected = rawEvent.TryGetProperty("selected", out var s) && s.TryGetInt32(out var sel) ? sel : -1;
+                var selected = calibratedSelected >= 0 ? calibratedSelected
+                    : rawEvent.TryGetProperty("selected", out var s) && s.TryGetInt32(out var sel) ? sel : -1;
                 Call(bridge, botName, $"{{\"cmd\":\"drive\",\"bot\":\"{botName}\",\"op\":\"reportDoodad\",{q}\"doodad\":{doodadId},\"selected\":{selected}}}");
                 break;
             }
