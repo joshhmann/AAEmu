@@ -18,7 +18,7 @@
 
 ## Post-M7 readiness — roadmap zoom-out: prioritized post-M7 work and M8 horizon (2026-09-05, docs-only)
 
-- Provenance: develop `135c4f14e` (docs zoom-out HEAD; runtime source/test `322390b32`)
+- Provenance: develop `6d6b98b70` (code tip includes Q4 grant rig + loot tests, singleton lane, Q6 probe, seam salvage, E2E cast/loot ops; zoom-out authored docs-only over source/test `322390b32`)
   - docs-only HEAD over source/test `322390b32`; no code/test/config/data edits, no builds/gates/deploys
 - IDs: stable existing only (M0–M8, PB-001/002/005/007, A1–A6, B1–B5, C1–C5, G0–G4, REQ-*, deferred gates #1–#4 + M7 feel, ledger states 1–7); no new kanban IDs
 - History below preserved with dates; the current register in this section stands alone (act on this section without reconciling old paragraphs)
@@ -32,7 +32,7 @@
 - G2-A4 save: autosave p95 < 2 s @ 250 characters, zero `_isSaving` skips — MET (p95 393.1 ms, 80.3% headroom)
 - G2-A5 FINAL Tier-3: (a) SHAPE + (b1) 6 h quiescence-budget leg + (b2) business-state progression — OPEN (reconciliation below)
 - M8 exit: 2 farmers / 1 crafter / 2 haulers / 3 adventurers, full day, ≥3 restarts, auditable economy, 25 embodied in G1 budgets — OPEN
-- M5.3: IMPL COMPLETE + MERGED 2026-08-17 + Rei gate ACCEPT — dossier t_5189977b → Move rework 8e9c0713a → Observe/Stop/Target/Cast + exit 7b9e81d7f → rework 6b4ffe1d2; full 2102/0/1 + targeted 13/13 + 1/1 + 30/30 + 5/5; H UNKNOWN (progression-board.md DoD-table M5.3 row + `M5.3 core surface COMPLETE + MERGED` entry — preserved historic evidence, not restated as fresh missing work). Today's open scope is geometry/fidelity REGRADE against changed movement (trapezoidal profile a38484f9e, corner-blending proposal → Q3)
+- M5.3: IMPL COMPLETE + MERGED 2026-08-17 + Rei gate ACCEPT — dossier t_5189977b → Move rework 8e9c0713a → Observe/Stop/Target/Cast + exit 7b9e81d7f → rework 6b4ffe1d2; full 2102/0/1 + targeted 13/13 + 1/1 + 30/30 + 5/5; H UNKNOWN (progression-board.md DoD-table M5.3 row + `M5.3 core surface COMPLETE + MERGED` entry — preserved historic evidence, not restated as fresh missing work). Today's open scope is geometry/fidelity REGRADE against changed movement (trapezoidal profile a38484f9e, corner-blending proposal → Q3). Update 2026-09-06: corner-blending dropped (→ Q3 outcome), regrade scope is the trapezoidal profile only.
 - Ledger rule: bot/proxy evidence never flips state 7; H UNKNOWN (no verdict attempted) vs DEFERRED (recorded Josh-owned decision) kept distinct per item below
 
 ### Recommended queue (proposed order; each card independently doable)
@@ -43,10 +43,10 @@
 |---|---|---|
 | Q1 | G0 full-gate / honor-flake diagnostic | DONE 2026-09-05 (root-caused + serialized; background-rate watch ongoing) |
 | Q2 | B5 runner fidelity (runner-only) | DONE 2026-09-05 (fixed + fake-runner + real subset green) |
-| Q3 | PB-001 routed-geometry gate (branch-local) | REVIEWED 2026-09-05 NOT gate-ready (0/7); fix punch-list recorded, branch UNMERGED |
+| Q3 | PB-001 routed-geometry gate (branch-local) | DROP-RULED 2026-09-06 (blend dropped: yaw unmeetable without real curve; seam reorder + 4 contract tests salvaged to develop) |
 | Q4 | M5-B1 loot + bag conservation | DONE 2026-09-06 (rig 11/11 + live hunt-leg PASS, quest-251 held, caller deltas) |
 | Q5 | NPC wildlife skills data audit (read-only) | DONE investigation 2026-09-05 (verdicts recorded; OQ-1 blocks loot contents) |
-| Q6 | PB-002 bounded interzone loop (existing data) | P0 live-proof (loop exists) |
+| Q6 | PB-002 bounded interzone loop (existing data) | DONE 2026-09-06 (live PASS 9/9 x2, death via mob 13517, restart-resume, reward deltas; gaps listed) |
 | Q7 | PB-005 named grounding decisions | BLOCKED on rulings |
 | Q8 | PB-007 WAR-HONOR (deferred) | BLOCKED, listed not opened |
 - **Q1 — G0 full-gate / honor-flake diagnostic.**
@@ -106,7 +106,8 @@
   - Evidence PLANNED: per-clause rig numbers + `SCOneUnitMovementPacket` wire capture + deviation/yaw/clearance tables on a stated tip, including real-routed-callsite runs
   - **Review 2026-09-05 (branch-local, no merge): NOT gate-ready — 0/7 PASS (A3.1 FAIL, A3.5 FAIL, A3.7 FAIL, A3.2/A3.3/A3.4/A3.6 UNPROVEN).** A3.1 asserts only min-distance-to-corner (named fail shape) at single radius/speed/angle, no yaw measurement. A3.5 enters only via `NavigateRoutedForTest`, never `NavigateToInternal`. Seam defect CONFIRMED: `GameplayActor.cs:418` indexes `route[^1]` before the `:423` empty-guard (throws instead of `RejectedAction` reject). 1m-skip concern SUSTAINED (instantaneous heading flip, no curve). Unit counts 37+4+11+5+27 receipts only.
   - Punch-list (fix-or-drop, never a relaxed bound): (1) reorder :418/:423 + fail-pre/post test; (2) max-deviation rig sweeping radii/speeds/angles + per-tick heading + continuity; (3) clearance table or producer-flag gating; (4) steep-leg tests; (5) short-leg tests incl. ArrivalRadius; (6) real-path reruns; (7) wire yaw capture; (8) seam-contract tests. Drop if rig items unfunded.
-  - Dependencies: none (branch-local). Non-goal: merge, new pathfinding, obstacle-index changes. Done: all clauses green + review; a failing clause ends fix-or-drop, never a relaxed bound
+  - Dependencies: none (branch-local). Non-goal: merge, new pathfinding, obstacle-index changes. Done: all clauses green + review; a failing clause ends fix-or-drop, never a relaxed bound. Superseded by the drop ruling above for the blend; seam half met its 4 tests.
+  - Outcome 2026-09-06: fix-or-drop concluded as DROP for the blend; seam salvage landed (fix(bots) `9c84b6897`). Branch stays unmerged.
 - **Q4 — M5-B1 loot grant proof (existing paths only). Priority: HIGH — genuine acceptance gap.**
   - Actual contract (`GameplayActor.cs:1277-1305` — VERIFIED): `Rejected` covers preflight ONLY (owner not found / out of `MaxLootingRange` / empty at entry); after `OpenBag` the request returns `Completed(granted)` with `granted` = container before-after count — INCLUDING `Completed(0)`. The count is not bag/money proof
   - Contract: the CALLER's bag + money deltas are the grant proof. Three outcomes told apart, never conflated: caller grant (deltas match the generated pack, eligibility-gated) vs no-op `Completed(0)` (zero caller delta — needs corroboration, is neither receipt nor failure) vs concurrent foreign take (container delta with zero caller delta — another looter's grant, not ours)
@@ -131,6 +132,7 @@
   - Evidence PLANNED: live/E2E loop artifact (restart + death legs, reward deltas)
   - Partial 2026-09-06 (~00:10Z, `/root/aaemu-e2e-q6/logs/q6-interzone-loop-report.json`, verdict FAIL): 8/9 legs green — enter-world, solzreed-exhaust (~38 IDs), l10-gate (11), highway-traverse (120 m / 60 wire frames), wire-locomotion (60/60 broadcasts), reconnect (charId stable), restart-resume (resumed + invStable), log-tail (0/0); chain 44/918/71/48/55 completed with reward deltas. Death-recovery UNOBSERVED (mob 14313 non-retaliating; kill lands ~15–17 min past the watch). Incidental fix: `E2eQuestDriver` now honors calibrated `SelectedRewardIndex` (was silently granting nothing on 138 manifests). v2: engagement-gated mob selection (2-min combat-evidence probe per candidate) + longer death watch. 72xx lane freed after the run; teardown incident (default `e2e-db-1` briefly removed by an unscoped compose down, volumes preserved, restored healthy — verified).
   - Green 2026-09-06 (runs 25+26, ~7 min each, verdict PASS at `/root/aaemu-e2e-q6/logs/q6-interzone-loop-report.json`): 9/9 legs — death-recovery via engagement-gated mob 13517 (pool 14312/13737 showed zero combat frames and were rejected in 2 min each; 13517 engaged with HP-zero telemetry), shrine (21773.7,8071.2), genuine client rez packet, 20 m post-move, journal kept. Shared-harness notes: `ResumeFromStage` fast-forward for settled-ahead transients; `E2eQuestDriver` calibrated-selection fix stands. Remaining gaps: saddle-mount, money/HP floors in charState, kill-9 follow-up, stuck-leg live surface.
+  - Closed 2026-09-06 by runs 25+26 (~7 min each, report `/root/aaemu-e2e-q6/logs/q6-interzone-loop-report.json`); remaining gaps (saddle-mount, money/HP bridge fields, kill-9, stuck live surface) are follow-ups, not reopeners.
   - Dependencies: none new (loop, highway waypoints, and existing straight-leg/routed nav already exist; the corner-blending branch is NOT required). Non-goal: new quests/carriers; Marianople ≥20 leg listed, not opened. Done: live artifact green. H: UNKNOWN (no feel verdict attempted)
 - **Q7 — PB-005 named grounding decisions (rulings first, then build).**
   - Contract: each open item gets a recorded ruling, then only the implementation the ruling unlocks: cave/deck/submerged classification; duplicate-row policy beyond the landed 733 exact-dedup (key UnitId+XYZ @ 0.01 m); disposition of the 593 non-whitelisted terrain-replay residuals
@@ -142,17 +144,18 @@
   - Exemption (recorded, not an omission): while WAR-HONOR stays deferred, no contract/evidence/done fields apply — this entry exists only to fence WAR-HONOR scope out of the narrow handshake closure
 
 ### Correction register (current evidenced state; history below unchanged)
-- Deploy pointer: `.165` = `135c4f14e` containing source `322390b32` (HEAD docs-only over source)
+- Deploy pointer: `.165` = presence-demo prod (still); source pointer `135c4f14e` / source `322390b32` STALE — see STATUS.md current honest state
   - Observed 10-min window 0 threw / 0 boundary / 0 fast @ 250 provisioned bots = liveness snapshot only: specified races are defended by the hammer/regression tests (`7c0772f12`, `BuffToleranceTests`, `NpcAggroRaceTests`); the window shows non-recurrence only — never absolute validation
-- Gate @ `322390b32`: 2838 total = 2836 pass / 1 fail / 1 skip; MCP smokes 39 + 24
-  - NOT full-green; isolated 11/11 is determinism evidence only, not proof the honor flake is unrelated (→ Q1)
+- Gate @ `6c64b449d`: 2855 total = 2854 pass / 0 fail / 1 skip; MCP smokes 39 + 24
+  - Green 2854/0/1; RED@`f04804f` triaged as flake (cross-class singleton race); full history in STATUS.md
 - Soak #1 (@ `9ad5735b2`): interrupted ~72 min, no fresh report, cause UNKNOWN (external-termination hypothesis; current memory/dmesg silence is not historical exclusion); partial evidence only
-- Soak #2 (@ `322390b32`, candidate): started 09:28:34Z 5 Sep, last observed 5h11m @ ~14:40Z (latest observation timestamp; no notification/closure promised); report `g2-a5-tier3-sixhour-report.json` ABSENT at last check
+- Soak #2 (@ `322390b32`): CLOSED-PASS 2026-09-05 (started 09:28:34Z 5 Sep; report `g2-a5-tier3-sixhour-report.json` PASS — FULL window, `passed: true`, zero breaches)
   - Window completes ~15:33Z + finalization (warmup-anchored: `A5_WARMUP_READY` 09:33:11Z + 360 min — NOT 09:28 + 6 exact)
   - Heartbeats `[+0/x0/?0]` are test-runner counters, NOT zero-breach proof — verdict lives only in `report.failures` / `report.passed`
+  - Superseded by the b2 asserted soak in flight on .165 (since 20:33Z 2026-09-05, ETA ~02:40Z 2026-09-06)
 - Wildlife/loot facts: NPC picker uniform-random among off-cooldown/in-range `np_skills` (`Behavior.cs:55-61` filter, `:95` pick — VERIFIED); `CombatDecisionTree` = bot offense only; `actor.Loot` real path exists; the roam callsite discards the loot-request outcome (`_ = actor.Loot(...)`, `BotRoamStepExecutor.cs:322` — VERIFIED); `LevelingLoop` loots + auto-equips; doodad livestock butcher exists; NPC-corpse→doodad conversion not present in the inspected death path (`Npc.DoDie` → `Unit.DoDie` → `GenerateLoot`) and a canonical requirement is unestablished (name-hit absence is not exhaustive proof); canonical audit before skinning (→ Q5)
-- Spline branch: 1 commit ahead of develop, clean, UNMERGED; receipts unit-only (reported 37+4+11+5+27)
-  - 1 m skip is corner-cutting, not a proven spline; max-deviation bound NOT proven; `route[^1]`-before-`Count` seam defect (→ Q3)
+- Spline branch: UNMERGED (ref still open, no merge commit); base corner-blending code already in develop via `b6a81ccc5`; blend dropped, seam salvaged (→ Q3 card)
+  - 1 m skip is corner-cutting, not a proven spline; max-deviation bound NOT proven; `route[^1]`-before-`Count` seam defect fixed in develop via `9c84b6897` (→ Q3)
 
 ### A5 Tier-3 contract reconciliation (reconciles the §G2 scale-ladder FINAL Tier-3 acceptance with the longer-soak recommendation)
 
@@ -161,7 +164,7 @@
   - (b1) 6 h quiescence-budget leg: what `AAEmu.IntegrationTests/E2e/Gate/A5Tier3AcceptanceProbeTests.cs` Run+Write+`Assert.Empty(failures)` (`:343-347`, timer started AFTER quiescence `:378`, sample loop `:388-421` with NO endpoint sample) plus per-sample snapshots (`:457-519`, incl. `ValidateDormantTimerSample` `:487-519`) assert — embodied==0, dormantSpecs floor, 0 materializations/dematerializations, tick/region/save budgets, queues==0, failures==0, RSS growth ≤ 512 MB
   - (b2) business-state progression: harvest/travel timers actually advancing (before/due/after/restart-conservation) — asserted NOWHERE in `:296-449`; planned, not evidenced
 - Window gate (no exact-count pin): window ≥ 360 min + `windowCompleted` + `windowStatus` FULL + nonempty appropriate-cadence samples + exact source commit + `passed=true` AND `failures` empty (`Assert.Empty(failures)`, `:347` — both required, names alone never suffice) (sampleCount 360/361 is implementation-dependent — never demand exactly 361)
-- A `passed=true` report closes (b1) only; FULL Tier-3 additionally needs (a) re-shown at the same tip and (b2) asserted. Explicit A5 work: A5-W1 collect the (b1) report at the pinned tip (readiness: BLOCKED on soak #2 completion, operator lane — do not touch the running lane); A5-W2 design + run the (b2) timer-state assertion (readiness: P0 investigation/design)
+- A `passed=true` report closes (b1) only; FULL Tier-3 additionally needs (a) re-shown at the same tip and (b2) asserted. Explicit A5 work: A5-W1 collect the (b1) report at the pinned tip (readiness: DONE — soak #2 PASS 2026-09-05); A5-W2 design + run the (b2) timer-state assertion (readiness: RUNNING — b2 asserted soak on .165 since 20:33Z 2026-09-05, ETA ~02:40Z; bounded restart leg already PASS)
 - "Preferably 12-hour" (recommendation in the G2 scale-ladder section) stays a RECOMMENDATION (follow-up hardening after the conjunction), never a gate; H stays separate (never an A5 criterion); budgets NOT relaxed
 - Soak #2 is the (b1) candidate; A5 stays OPEN/UNCLOSED until a comparable post-change run shows zero breaches
 
