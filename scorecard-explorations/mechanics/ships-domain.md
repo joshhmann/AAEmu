@@ -299,3 +299,7 @@ of §12's verdict:
    763 Ship frames in 15 s of throttle, displacement 67.2 m, yaw-rate sign flips on steering reversal
    (+100→−8.7°/s, −100→+8.1°/s), unbind/despawn wire clean. Sharpest UNKNOWN #3 is hereby answered
    properly: boats DO sail on this fork once the receiver set is intact.
+
+## 14. Discovery 2026-09-06 (Josh live report) — rowboat re-pack to inventory fails
+
+Ground truth (Josh in-client): board/use rowboat works; returning it to inventory does not. Boats are Slave-lane. Route to Slave pickup path investigation. Explicitly UNASSIGNED (no owner, no card) pending triage. Non-goal: shipyard/steering changes.

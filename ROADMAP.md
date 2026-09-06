@@ -47,7 +47,7 @@
 | Q4 | M5-B1 loot + bag conservation | DONE 2026-09-06 (rig 11/11 + live hunt-leg PASS, quest-251 held, caller deltas) |
 | Q5 | NPC wildlife skills data audit (read-only) | DONE investigation 2026-09-05 (verdicts recorded; OQ-1 blocks loot contents) |
 | Q6 | PB-002 bounded interzone loop (existing data) | DONE 2026-09-06 (live PASS 9/9 x2, death via mob 13517, restart-resume, reward deltas; gaps listed) |
-| Q7 | PB-005 named grounding decisions | BLOCKED on rulings |
+| Q7 | PB-005 named grounding decisions | BLOCKED on rulings; board-wide sweep scoped 2026-09-06 (dry-run first) |
 | Q8 | PB-007 WAR-HONOR (deferred) | BLOCKED, listed not opened |
 - **Q1 — G0 full-gate / honor-flake diagnostic.**
   - Contract: full gate green at a pinned SHA, or the single FAIL reproduced with an isolation note (test-order / concurrency / load axes — cause not predetermined)
@@ -139,6 +139,7 @@
   - Negative/recovery: a ruling overturned by new canonical evidence reopens that item only (other rulings stand); excision without a recorded ruling is rejected (revert to the last ruled state)
   - Evidence EXISTS: [pb005-residual-evidence-2026-08-29.md](scorecard-explorations/generated/pb005-residual-evidence-2026-08-29.md); gate 2778
   - Evidence PLANNED: rulings + follow-through diffs. Dependencies: canonical census per decision. Non-goal: mass excision without a ruling. Done: rulings recorded + implemented
+  - Scope expansion 2026-09-06 (user-directed, no new ID per repo rule): systematic board-wide grounding sweep, not per-row fixes. Motivation (Josh live tour): per-row `.position` readings are impractical on hilly terrain; walking tours show widespread clipping-underground (name tags only), knee-walking, and free-falling mobs/NPCs across zones. Standing rule from Josh: NEVER delete NPCs, fix placements only. Contract: deterministic, reviewable placement correction over `AAEmu.Game/Data/Worlds/main_world/npc_spawns.json` (+ other world spawn files): grounded check per row against terrain height + structure exceptions (deck datum pattern from Wardton: Misty/Sentries/Ood/Ral KEEP + deck z≈103.9; cave floors keep interior residents); report counts per disposition (snapped/kept/sample-needed); per-row old→new evidence for a bounded sample; full-suite green before/after (placement changes must not break spawn-dependent tests); no mass edit without a dry-run + exact residual IDs (prior Q7 rule). Pilot pair for the snap rule: the two parked Wardton snaps (3625 @15261.287,13667.324 Z 112.36109; 3626 @15258.739,13646.468 Z 106.961). Dependencies: Q7 tour log (`scorecard-explorations/pb005-tour-log-2026-09-06.md`). Done: sweep applied with evidence + suite green + tour-log rulings recorded. Readiness: P0 investigation (dry-run + thresholds first).
 - **Q8 — PB-007 WAR-HONOR: explicitly deferred, listed not opened.**
   - Narrow flagged-aggression handshake CLOSED (live E2E 1/1 + PEACE-BLOCK + crime branch — EXISTS); WAR-HONOR (>251 kills + conflict timer) deferred — no claim, no work until the deferral lifts
   - Exemption (recorded, not an omission): while WAR-HONOR stays deferred, no contract/evidence/done fields apply — this entry exists only to fence WAR-HONOR scope out of the narrow handshake closure
@@ -152,7 +153,7 @@
 - Soak #2 (@ `322390b32`): CLOSED-PASS 2026-09-05 (started 09:28:34Z 5 Sep; report `g2-a5-tier3-sixhour-report.json` PASS — FULL window, `passed: true`, zero breaches)
   - Window completes ~15:33Z + finalization (warmup-anchored: `A5_WARMUP_READY` 09:33:11Z + 360 min — NOT 09:28 + 6 exact)
   - Heartbeats `[+0/x0/?0]` are test-runner counters, NOT zero-breach proof — verdict lives only in `report.failures` / `report.passed`
-  - Superseded by the b2 asserted soak in flight on .165 (since 20:33Z 2026-09-05, ETA ~02:40Z 2026-09-06)
+  - Superseded by the b2 asserted soak CLOSED-PASS 2026-09-06 (report 02:49:08Z, passed:true, failures:[], tested revision 02903804b; see STATUS.md).
 - Wildlife/loot facts: NPC picker uniform-random among off-cooldown/in-range `np_skills` (`Behavior.cs:55-61` filter, `:95` pick — VERIFIED); `CombatDecisionTree` = bot offense only; `actor.Loot` real path exists; the roam callsite discards the loot-request outcome (`_ = actor.Loot(...)`, `BotRoamStepExecutor.cs:322` — VERIFIED); `LevelingLoop` loots + auto-equips; doodad livestock butcher exists; NPC-corpse→doodad conversion not present in the inspected death path (`Npc.DoDie` → `Unit.DoDie` → `GenerateLoot`) and a canonical requirement is unestablished (name-hit absence is not exhaustive proof); canonical audit before skinning (→ Q5)
 - Spline branch: UNMERGED (ref still open, no merge commit); base corner-blending code already in develop via `b6a81ccc5`; blend dropped, seam salvaged (→ Q3 card)
   - 1 m skip is corner-cutting, not a proven spline; max-deviation bound NOT proven; `route[^1]`-before-`Count` seam defect fixed in develop via `9c84b6897` (→ Q3)
