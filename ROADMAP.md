@@ -164,9 +164,9 @@
   - (b1) 6 h quiescence-budget leg: what `AAEmu.IntegrationTests/E2e/Gate/A5Tier3AcceptanceProbeTests.cs` Run+Write+`Assert.Empty(failures)` (`:343-347`, timer started AFTER quiescence `:378`, sample loop `:388-421` with NO endpoint sample) plus per-sample snapshots (`:457-519`, incl. `ValidateDormantTimerSample` `:487-519`) assert — embodied==0, dormantSpecs floor, 0 materializations/dematerializations, tick/region/save budgets, queues==0, failures==0, RSS growth ≤ 512 MB
   - (b2) business-state progression: harvest/travel timers actually advancing (before/due/after/restart-conservation) — asserted NOWHERE in `:296-449`; planned, not evidenced
 - Window gate (no exact-count pin): window ≥ 360 min + `windowCompleted` + `windowStatus` FULL + nonempty appropriate-cadence samples + exact source commit + `passed=true` AND `failures` empty (`Assert.Empty(failures)`, `:347` — both required, names alone never suffice) (sampleCount 360/361 is implementation-dependent — never demand exactly 361)
-- A `passed=true` report closes (b1) only; FULL Tier-3 additionally needs (a) re-shown at the same tip and (b2) asserted. Explicit A5 work: A5-W1 collect the (b1) report at the pinned tip (readiness: DONE — soak #2 PASS 2026-09-05); A5-W2 design + run the (b2) timer-state assertion (readiness: RUNNING — b2 asserted soak on .165 since 20:33Z 2026-09-05, ETA ~02:40Z; bounded restart leg already PASS)
+- Explicit A5 work: A5-W1 collect the (b1) report at the pinned tip (readiness: DONE — soak #2 PASS 2026-09-05); A5-W2 design + run the (b2) timer-state assertion (readiness: DONE (b2 asserted soak PASS 2026-09-06 + bounded restart PASS 2026-09-05))
 - "Preferably 12-hour" (recommendation in the G2 scale-ladder section) stays a RECOMMENDATION (follow-up hardening after the conjunction), never a gate; H stays separate (never an A5 criterion); budgets NOT relaxed
-- Soak #2 is the (b1) candidate; A5 stays OPEN/UNCLOSED until a comparable post-change run shows zero breaches
+- Soak #2 is the (b1) candidate; A5 stays OPEN/UNCLOSED until a comparable post-change run shows zero breaches. Remaining: (a) SHAPE re-show.
 
 ### M8 living-village contracts (proposed; C1/C2 foundations DONE, integration not started)
 

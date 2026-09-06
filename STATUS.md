@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-06 · Q6 live GREEN 9/9 (runs 25+26); soak b2 in flight on .165
+Updated: 2026-09-06 · A5 b2 CLOSED (soak PASS); SHAPE re-show pending
 Branch of record: develop ca7762d7d (roadmap docs merge HEAD; runtime source/test 322390b32)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
@@ -25,6 +25,11 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+
+## 2026-09-06 — A5 b2 CLOSED: 6h asserted soak PASS on .165
+
+- Report `g2-a5-tier3-sixhour-report.json` runAtUtc 2026-09-06T02:49:08Z: `passed: true`, `failures: []`, window FULL 360.00001 min (`windowCompleted` true), 360 samples, RSS growth 25.4 MB (budget 512), SaveP95/Max within budget per report. Tested binary source `02903804b` (= b2 code; local docs-only delta carries zero code change). Scope: b2 passed AT revision 02903804b, not at current HEAD — commits since are additive/default-off/test-only (E2E bridge ops, farmer slice, seam guard, unit lane) and touch no dormant-timer/tick path, but the letter of the evidence is the tested revision. A5 as a whole stays OPEN pending (a) SHAPE re-show. Run 6h16m05s, 1/1.
+- With the bounded restart leg PASS (2026-09-05) this closes (b2) actual timer progression. A5 remaining: (a) SHAPE re-show at the fixed tip (last measured 2026-08-26 pre-change). H separate, unchanged.
 
 ## 2026-09-06 — Q6 live GREEN 9/9 (lane freed)
 

@@ -513,3 +513,4 @@ Fork-local doc — never in an upstream PR.*
   DB 63306, `aaemu_a5_restart`, `E2E_REBUILD=1`); game-data hardlink-seeded from
   the sixhour root (canonical md5 verified). Still open: 2-from-stack planting at
   rate 3, 6h asserted soak, SHAPE re-show. A5 stays OPEN; H unchanged.
+- 2026-09-06 — A5 b2 CLOSED (runtime): 6h asserted soak PASS, tested revision 02903804b — report `g2-a5-tier3-sixhour-report.json` runAtUtc 2026-09-06T02:49:08Z, `passed: true`, `failures: []`, window FULL 360.00001 min, 360 samples, RSS growth 25.4 MB (budget 512). With the bounded restart leg PASS (2026-09-05) this closes (b2) timer progression. No grade promotion beyond the b2 leg; A5 stays OPEN pending (a) SHAPE re-show; H unchanged.
