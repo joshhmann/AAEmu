@@ -58,6 +58,7 @@ public class InterzoneLoopE2eTests
         var evidence = new StringBuilder();
         evidence.AppendLine($"# Q6 interzone loop live proof — {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}Z");
         var legs = new List<(string Leg, bool Passed, string Detail)>();
+        var reported = false;
         void Leg(string leg, bool passed, string detail)
         {
             legs.Add((leg, passed, detail));
@@ -171,7 +172,7 @@ public class InterzoneLoopE2eTests
             Assert.True(chainOk, "Dewstone chain + restart-resume must hold:\n" + evidence);
 
             // ---- leg 8: death/recovery watch ----
-            var (deathSeen, deathDetail) = await DeathRecoveryLeg(bridge, ChainBotName, chainSession, evidence);
+            var (deathSeen, deathDetail) = await DeathRecoveryLeg(bridge, ChainBotName, chainSession, observer, evidence);
             Leg("death-recovery", deathSeen, deathDetail);
 
             // ---- log-tail scan (spike convention) ----
@@ -182,6 +183,7 @@ public class InterzoneLoopE2eTests
 
             var allOk = legs.All(l => l.Passed);
             await WriteReportAsync(allOk, legs, evidence.ToString());
+            reported = true;
             Assert.True(allOk, "Q6 interzone loop FAIL:\n" + evidence + $"\nReport: {ReportPath}");
         }
         finally
@@ -191,7 +193,10 @@ public class InterzoneLoopE2eTests
             chainSession?.Dispose();
             observer?.Dispose();
             bridge.Dispose();
-            await WriteReportAsync(false, legs, evidence.ToString());
+            // The pass-path above already wrote the verdict; only record a
+            // failure here when the run never reached it (exception mid-leg).
+            if (!reported)
+                await WriteReportAsync(false, legs, evidence.ToString());
         }
     }
     private static async Task<BotNetworkSession> ConnectBotAsync(string bot, string account)
@@ -323,21 +328,47 @@ public class InterzoneLoopE2eTests
 
     // Wire tap: counts SCOneUnitMovementPacket broadcasts for one objId by
     // draining the observer's owned game link (TransferRide frame pattern).
+    // Combat extension: SCCombatEngaged (0x85, Bc id), SCUnitDamaged (0xa7,
+    // counted ambient — layout too deep for cheap parse), SCUnitPoints
+    // (0xba: Bc id + precise HP/MP) give live HP telemetry for the tap's
+    // objId — engagement evidence and death corroboration on the wire.
     private sealed class WireTap(BotTcpLink link, uint objId)
     {
         private int _frames;
+        private int _combatFrames;
+        private int _minHp = int.MaxValue;
         private string _detail = "no frames yet";
         public (int Frames, string Detail) Stop() => (_frames, _detail);
+        public int CombatFrames => _combatFrames;
+        public int MinHp => _minHp;
 
         public void Pump()
         {
             foreach (var (type, body) in link.DrainAll())
             {
-                if (type != SCOffsets.SCOneUnitMovementPacket) continue;
                 try
                 {
                     var stream = new PacketStream(body);
-                    if (stream.ReadBc() == objId) _frames++;
+                    if (type == SCOffsets.SCOneUnitMovementPacket)
+                    {
+                        if (stream.ReadBc() == objId) _frames++;
+                    }
+                    else if (type == SCOffsets.SCCombatEngagedPacket)
+                    {
+                        if (stream.ReadBc() == objId) _combatFrames++;
+                    }
+                    else if (type == SCOffsets.SCUnitDamagedPacket)
+                    {
+                        _combatFrames++;
+                    }
+                    else if (type == SCOffsets.SCUnitPointsPacket)
+                    {
+                        if (stream.ReadBc() == objId)
+                        {
+                            var hp = stream.ReadInt32();
+                            if (hp < _minHp) _minHp = hp;
+                        }
+                    }
                 }
                 catch { /* torn frame under load — skip */ }
             }
@@ -387,76 +418,114 @@ public class InterzoneLoopE2eTests
     }
 
 
-    // Death/recovery by mob retaliation (canonical-data setup, live combat):
-    // teleport the chain bot to an over-level hostile NPC (14313, stern witch,
-    // L50, Dewstone north), fire aggro, and watch for the death signature —
-    // a long-range position discontinuity to a shrine. Recovery = the bot
-    // moves again afterwards with its journal intact. Recovery floors (70%
-    // MaxHp/Mp) are UNASSERTABLE: charState carries no HP/MP — recorded gap.
-    private const uint DeathProbeNpcId = 14313;
+    // Death/recovery by VERIFIED-retaliating mob (canonical-data setup, live
+    // combat): engagement-gated candidate pool — teleport + aggro per mob,
+    // require wire combat evidence (engaged/damaged broadcasts, HP telemetry)
+    // within 2 min, abort + re-pick fast on passive mobs. The chosen mob then
+    // gets the full death watch (shrine jump or HP-zero on the wire) and the
+    // genuine client rez + recovery moves. Recovery floors (70% MaxHp/Mp)
+    // are UNASSERTABLE: charState carries no HP/MP — recorded gap.
+    private static readonly uint[] DeathProbeCandidates = [14312, 13737, 13517, 13451, 12756];
     private static async Task<(bool, string)> DeathRecoveryLeg(
-        BotDriveClient bridge, string bot, BotNetworkSession session, StringBuilder evidence)
+        BotDriveClient bridge, string bot, BotNetworkSession session, BotNetworkSession observerSession, StringBuilder evidence)
     {
-        bridge.Call($"{{\"cmd\":\"drive\",\"bot\":\"{bot}\",\"op\":\"teleportToNpc\",\"npc\":{DeathProbeNpcId}}}", timeoutMs: 60_000);
-        // Pre-weaken through the genuine rez path (CharacterResurrection has
-        // no IsDead guard: packet-rez on a live bot resets HP to 10% — the
-        // documented live-client restore level). Runs 20-22 show the L50
-        // witch needs ~15-17 min against full HP; at 10% the same real
-        // combat concludes inside the watch. Fully disclosed acceleration.
-        var link0 = GetGameLink(session);
-        link0.SendGameFrame(CSOffsets.CSResurrectCharacterPacket, 1, body => body.Write(false));
-        await Task.Delay(TimeSpan.FromSeconds(5));
-        bridge.Call($"{{\"cmd\":\"drive\",\"bot\":\"{bot}\",\"op\":\"aggro\",\"npc\":{DeathProbeNpcId}}}", timeoutMs: 60_000);
-        var before = CharPos(bridge, bot);
-        Pos? shrine = null;
-        var deadline = Environment.TickCount64 + 1_500_000;
-        while (Environment.TickCount64 < deadline)
+        var botObjId = (uint)CharState(bridge, bot).GetProperty("objId").GetUInt32();
+        var observerLink = GetGameLink(observerSession);
+        StopBackgroundLoops(observerSession);
+        using var pingCts = new CancellationTokenSource();
+        _ = Task.Run(() => PingLoopAsync(observerLink, pingCts.Token));
+        var tap = new WireTap(observerLink, botObjId);
+        using var pumpCts = new CancellationTokenSource();
+        var pumpTask = Task.Run(async () =>
         {
-            await Task.Delay(TimeSpan.FromSeconds(5));
-            var pos = CharPos(bridge, bot);
-            var jump = MathF.Sqrt((pos.X - before.X) * (pos.X - before.X) + (pos.Y - before.Y) * (pos.Y - before.Y));
-            if (jump > 300f) { shrine = pos; break; }
-        }
-        if (shrine is null)
-        {
-            // Late-death acceptance: combat can outlast the watch (run-20
-            // ended hp=0 at a shrine with no in-window jump). A final reading
-            // far from the probe point is the same signature, later.
-            var last = CharPos(bridge, bot);
-            var lateJump = MathF.Sqrt((last.X - before.X) * (last.X - before.X) + (last.Y - before.Y) * (last.Y - before.Y));
-            evidence.AppendLine($"  death watch timed out; final displacement={lateJump:0.#}m");
-            if (lateJump < 300f)
-                return (false, "UNOBSERVED — no shrine jump in 25 min after aggro on 14313 (mob may be non-retaliating; trail in evidence)");
-            shrine = last;
-        }
-        evidence.AppendLine($"  death observed: shrine=({shrine.X:0.#},{shrine.Y:0.#},{shrine.Z:0.#})");
-        // Recovery is MANUAL on the live path (QuestManagerEvents model):
-        // the ghost auto-returns but stays dead (hp 0) until rez. Send the
-        // genuine client rez packet (TransferRide precedent) — engine truth
-        // restores HP (10% on the packet path; the card's 70% floors belong
-        // to the bot-scenario HandleDeathRecovery path, recorded distinction).
-        var link = GetGameLink(session);
-        var objId = (uint)CharState(bridge, bot).GetProperty("objId").GetUInt32();
-        link.SendGameFrame(CSOffsets.CSResurrectCharacterPacket, 1, body => body.Write(false));
-        await Task.Delay(TimeSpan.FromSeconds(5));
-        for (var i = 0; i < 10; i++)
-        {
-            var move = VehicleMovementModel.BuildCharacterMove(
-                new System.Numerics.Vector3(shrine.X + (i + 1) * 2f, shrine.Y, shrine.Z), 0f, 5f);
-            link.SendGameFrame(CSOffsets.CSMoveUnitPacket, 1, body =>
+            while (!pumpCts.IsCancellationRequested)
             {
-                body.WriteBc(objId);
-                body.Write((byte)MoveTypeEnum.Unit);
-                move.Write(body);
-            });
-            await Task.Delay(100);
+                try { tap.Pump(); } catch { }
+                await Task.Delay(500, pumpCts.Token).ContinueWith(_ => { });
+            }
+        });
+        try
+        {
+            // ---- engagement gate: first candidate with wire combat evidence wins ----
+            uint? engaged = null;
+            foreach (var npcId in DeathProbeCandidates)
+            {
+                var combatBefore = tap.CombatFrames;
+                bridge.Call($"{{\"cmd\":\"drive\",\"bot\":\"{bot}\",\"op\":\"teleportToNpc\",\"npc\":{npcId}}}", timeoutMs: 60_000);
+                bridge.Call($"{{\"cmd\":\"drive\",\"bot\":\"{ObserverBot}\",\"op\":\"teleportToNpc\",\"npc\":{npcId}}}", timeoutMs: 60_000);
+                // Pre-weaken through the genuine rez path (no IsDead guard:
+                // packet-rez on a live bot resets HP to 10%, the documented
+                // live-client restore level). Fully disclosed acceleration.
+                GetGameLink(session).SendGameFrame(CSOffsets.CSResurrectCharacterPacket, 1, body => body.Write(false));
+                await Task.Delay(TimeSpan.FromSeconds(5));
+                bridge.Call($"{{\"cmd\":\"drive\",\"bot\":\"{bot}\",\"op\":\"aggro\",\"npc\":{npcId}}}", timeoutMs: 60_000);
+                var gateDeadline = Environment.TickCount64 + 120_000;
+                while (Environment.TickCount64 < gateDeadline)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    if (tap.CombatFrames > combatBefore) break;
+                }
+                var gained = tap.CombatFrames - combatBefore;
+                evidence.AppendLine($"  death probe candidate {npcId}: combatFrames+={gained} minHp={tap.MinHp}");
+                if (gained > 0) { engaged = npcId; break; }
+            }
+            if (engaged is null)
+                return (false, "UNOBSERVED — no candidate retaliated in 2 min each (pool exhausted; trail in evidence)");
+            // ---- death watch on the engaged mob ----
+            evidence.AppendLine($"  death probe engaged mob {engaged}, watching 25 min for a shrine jump or HP-zero");
+            var before = CharPos(bridge, bot);
+            Pos? shrine = null;
+            var deadline = Environment.TickCount64 + 1_500_000;
+            while (Environment.TickCount64 < deadline)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5));
+                var pos = CharPos(bridge, bot);
+                var jump = MathF.Sqrt((pos.X - before.X) * (pos.X - before.X) + (pos.Y - before.Y) * (pos.Y - before.Y));
+                if (jump > 300f) { shrine = pos; break; }
+                if (tap.MinHp == 0) { shrine = CharPos(bridge, bot); break; }
+            }
+            if (shrine is null)
+            {
+                var last = CharPos(bridge, bot);
+                var lateJump = MathF.Sqrt((last.X - before.X) * (last.X - before.X) + (last.Y - before.Y) * (last.Y - before.Y));
+                evidence.AppendLine($"  death watch timed out; final displacement={lateJump:0.#}m minHp={tap.MinHp}");
+                if (lateJump < 300f && tap.MinHp != 0)
+                    return (false, "UNOBSERVED — engaged mob did not finish the kill in 25 min (trail in evidence)");
+                shrine = last;
+            }
+            evidence.AppendLine($"  death observed: shrine=({shrine.X:0.#},{shrine.Y:0.#},{shrine.Z:0.#})");
+            // Recovery is MANUAL on the live path: rez through the genuine
+            // client packet, then move on own wire frames (connection
+            // persists across death). 10% packet-path restore vs the card's
+            // 70% bot-path floors — recorded distinction.
+            var link = GetGameLink(session);
+            var objId = (uint)CharState(bridge, bot).GetProperty("objId").GetUInt32();
+            link.SendGameFrame(CSOffsets.CSResurrectCharacterPacket, 1, body => body.Write(false));
+            await Task.Delay(TimeSpan.FromSeconds(5));
+            for (var i = 0; i < 10; i++)
+            {
+                var move = VehicleMovementModel.BuildCharacterMove(
+                    new System.Numerics.Vector3(shrine.X + (i + 1) * 2f, shrine.Y, shrine.Z), 0f, 5f);
+                link.SendGameFrame(CSOffsets.CSMoveUnitPacket, 1, body =>
+                {
+                    body.WriteBc(objId);
+                    body.Write((byte)MoveTypeEnum.Unit);
+                    move.Write(body);
+                });
+                await Task.Delay(100);
+            }
+            var end = CharPos(bridge, bot);
+            var dist = MathF.Sqrt((end.X - shrine.X) * (end.X - shrine.X) + (end.Y - shrine.Y) * (end.Y - shrine.Y));
+            var journalKept = E2eQuestDriver.HasCompleted(bridge, bot, 55);
+            evidence.AppendLine($"  recovery: post-shrine displacement={dist:0.#}m journal55kept={journalKept}");
+            return (dist > 2f && journalKept,
+                $"mob={engaged} shrine=({shrine.X:0.#},{shrine.Y:0.#}) postMove={dist:0.#}m journalKept={journalKept} (70% floors unassertable — bridge gap)");
         }
-        var end = CharPos(bridge, bot);
-        var dist = MathF.Sqrt((end.X - shrine.X) * (end.X - shrine.X) + (end.Y - shrine.Y) * (end.Y - shrine.Y));
-        var journalKept = E2eQuestDriver.HasCompleted(bridge, bot, 55);
-        evidence.AppendLine($"  recovery: post-shrine displacement={dist:0.#}m journal55kept={journalKept}");
-        return (dist > 2f && journalKept,
-            $"shrine=({shrine.X:0.#},{shrine.Y:0.#}) postMove={dist:0.#}m journalKept={journalKept} (70% floors unassertable — bridge gap)");
+        finally
+        {
+            pumpCts.Cancel();
+            try { await pumpTask; } catch { }
+        }
     }
 
     private static int BridgeLevel(BotDriveClient bridge)
