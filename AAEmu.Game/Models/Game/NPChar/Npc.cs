@@ -1164,8 +1164,9 @@ public partial class Npc : Unit
     /// the leash-timeout return teleport passes 1e6. Teleport-scale steps are exempt
     /// from the slope/step gate so mobs that de-aggro below cliff-top spawns still
     /// snap home instead of being stranded at the cliff base (t_26de2672).
+    /// Single-sourced from <see cref="NpcGroundingPolicy.TeleportStepThresholdM"/>.
     /// </summary>
-    private const float NpcTeleportStepThreshold = 100f;
+    private const float NpcTeleportStepThreshold = NpcGroundingPolicy.TeleportStepThresholdM;
 
     /// <summary>
     /// Slope/step gate decision for <see cref="MoveTowards"/>: a tick's XY step is
@@ -1318,6 +1319,34 @@ public partial class Npc : Unit
         // TODO: Implement proper use for Transform.World.AddDistanceToFront
         var (newX, newY, newZ) = World.Transform.PositionAndRotation.AddDistanceToFront(travelDist, targetDist, Transform.Local.Position, other);
         var targetPositionZ = WorldManager.Instance.GetReferenceHeight(Ai, newX, newY, newZ, Transform.ZoneId);
+        // PB-005 Phase 1 (audit-only): evaluate the centralized grounding policy for
+        // this roaming step, but ALWAYS apply the legacy reference height while
+        // NpcGroundingPolicy.DryRunMoverWrites is true. Would-clamp dispositions are
+        // counted + throttled-logged only. Guarded so audit failures can never alter
+        // movement.
+        try
+        {
+            var moverLegacyZ = targetPositionZ;
+            var terrainZ = WorldManager.Instance.GetTerrainHeight(Transform.ZoneId, newX, newY);
+            float navZ = 0f, navPlanarM = float.MaxValue;
+            var worldTemplate = WorldManager.Instance.GetWorldTemplateByZoneKey(Transform.ZoneId);
+            if (worldTemplate?.GeoData?.TryGetNavSample(new Vector3(newX, newY, newZ), out var sampledNavZ, out var sampledPlanarM) == true)
+            {
+                navZ = sampledNavZ;
+                navPlanarM = sampledPlanarM;
+            }
+            float? hintFloor = NpcGroundingPolicy.TryGetDeckFloor(newX, newY, newZ, out var deckFloor) ? deckFloor : null;
+            var disposition = NpcGroundingPolicy.EvaluateMoverZ(TemplateId, CanFly, IsInBattle,
+                distance >= NpcTeleportStepThreshold, Transform.Local.Position.Z,
+                terrainZ, navZ, navPlanarM, hintFloor, moverLegacyZ, out var auditZ);
+            if (disposition == NpcGroundingPolicy.MoverGroundingDisposition.WouldClampToGround)
+                NpcGroundingPolicy.ReportMoverDisposition(TemplateId, newX, newY, moverLegacyZ, auditZ);
+            targetPositionZ = NpcGroundingPolicy.DryRunMoverWrites ? moverLegacyZ : auditZ;
+        }
+        catch (Exception ex)
+        {
+            Logger.Trace(ex, "PB-005 mover grounding audit failed; keeping legacy reference height.");
+        }
 
         // Slope/step gate: before committing this tick's XY step, verify the terrain
         // at the destination does not rise more than a walkable step above the current

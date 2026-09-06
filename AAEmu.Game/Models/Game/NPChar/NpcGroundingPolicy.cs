@@ -36,6 +36,36 @@ namespace AAEmu.Game.Models.Game.NPChar;
 public static class NpcGroundingPolicy
 {
     public const float ClampSeverityM = 2f;
+    /// <summary>
+    /// Phase 1 (audit-only): nav samples whose winner lies farther than one 256 m
+    /// path-block away in the horizontal plane are treated as unusable
+    /// (<see cref="SpawnGroundingAction.NoGroundSample"/>) — answers the Q1
+    /// hazard where <c>GetBaiByPos</c> can return a wrong-zone loader and
+    /// <c>GetHeight</c> returns its Z with no distance sanity.
+    /// </summary>
+    public const float NavMaxPlanarDistanceM = 256f;
+
+    /// <summary>
+    /// Phase 1: a mover-time policy resolution only counts as a would-change when
+    /// it differs from the legacy reference height by at least this epsilon.
+    /// Below it the disposition is <c>KeptSourceZ</c> (jitter guard).
+    /// </summary>
+    public const float MoverChangedEpsilonM = 0.05f;
+
+    /// <summary>
+    /// Single source for the teleport-scale step threshold: a single move request
+    /// covering this much distance is a leash-return teleport, not a per-tick walk
+    /// step, and bypasses the grounding policy (legacy behavior preserved).
+    /// </summary>
+    public const float TeleportStepThresholdM = 100f;
+
+    /// <summary>
+    /// Phase 1 dry-run switch. While true (the only approved setting), mover hooks
+    /// evaluate dispositions and telemetry but ALWAYS apply the legacy reference
+    /// height. Flipping to false applies policy-resolved Z and requires a second
+    /// approval (Phase 2).
+    /// </summary>
+    public static bool DryRunMoverWrites { get; set; } = true;
 
     private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
@@ -249,6 +279,175 @@ public static class NpcGroundingPolicy
         }
 
         return SpawnGroundingAction.KeptSourceZ;
+    }
+    // ---------------------------------------------------------------
+    // Phase 1: multi-source height stack + mover-time dispositions
+    // ---------------------------------------------------------------
+
+    /// <summary>
+    /// Phase 1 mover-time disposition. Audit-only: <see cref="WouldClampToGround"/>
+    /// means the policy WOULD change Z (by at least <see cref="MoverChangedEpsilonM"/>)
+    /// — the legacy height is still applied while <see cref="DryRunMoverWrites"/>.
+    /// </summary>
+    public enum MoverGroundingDisposition
+    {
+        /// <summary>Unit is in combat — policy bypassed, legacy path preserved.</summary>
+        BypassedCombat,
+        /// <summary>Teleport-scale step — policy bypassed, legacy path preserved.</summary>
+        BypassedTeleport,
+        /// <summary>Fly/swim or whitelisted unit — legacy height kept.</summary>
+        Exempted,
+        /// <summary>No usable sample from any source — source Z authoritative.</summary>
+        NoGroundSample,
+        /// <summary>Sub-threshold offset or jitter — legacy height kept.</summary>
+        KeptSourceZ,
+        /// <summary>Severe offset that WOULD snap to effective ground (dry-run: counted + logged only).</summary>
+        WouldClampToGround,
+    }
+
+    private static bool IsValidSample(float value) => float.IsFinite(value) && value > 0f;
+
+    /// <summary>
+    /// Deck-hint hook: highest-floor hint volume containing the point wins.
+    /// Empty store (shipped state) → false, zero behavior change.
+    /// </summary>
+    public static bool TryGetDeckFloor(float x, float y, float z, out float floorZ)
+        => DeckVolumeStore.TryGetFloor(x, y, z, out floorZ);
+
+    /// <summary>
+    /// Multi-source overload. Precedence: valid deck hint &gt; max(valid terrain,
+    /// valid nav) where nav is valid only inside <see cref="NavMaxPlanarDistanceM"/>
+    /// planar distance (Q1 cap); no valid sample from any source keeps source Z.
+    /// The offset machine below is the unchanged <see cref="ResolveSpawnZ(uint,bool,float,float,out float)"/> core.
+    /// </summary>
+    public static SpawnGroundingAction ResolveSpawnZ(uint npcTemplateId, bool canFly, float currentZ,
+        float terrainZ, float navZ, float navPlanarDistanceM, float? hintFloorZ, out float resolvedZ)
+    {
+        resolvedZ = currentZ;
+
+        if (!float.IsFinite(currentZ))
+            return SpawnGroundingAction.NoGroundSample;
+
+        float effectiveGround;
+        if (hintFloorZ.HasValue && IsValidSample(hintFloorZ.Value))
+        {
+            effectiveGround = hintFloorZ.Value;
+        }
+        else
+        {
+            var terrainValid = IsValidSample(terrainZ);
+            var navValid = IsValidSample(navZ)
+                && float.IsFinite(navPlanarDistanceM)
+                && navPlanarDistanceM <= NavMaxPlanarDistanceM;
+            if (!terrainValid && !navValid)
+                return SpawnGroundingAction.NoGroundSample;
+            effectiveGround = Math.Max(
+                terrainValid ? terrainZ : float.NegativeInfinity,
+                navValid ? navZ : float.NegativeInfinity);
+        }
+
+        return ResolveSpawnZ(npcTemplateId, canFly, currentZ, effectiveGround, out resolvedZ);
+    }
+
+    /// <summary>
+    /// Pure mover-time gate. Combat and teleport-scale steps bypass to the legacy
+    /// path (no chase/leash behavior change); otherwise the multi-source core
+    /// decides. <paramref name="auditZ"/> carries the policy resolution for
+    /// counters/logging; callers apply it only when <see cref="DryRunMoverWrites"/>
+    /// is false (Phase 2). Resolutions within <see cref="MoverChangedEpsilonM"/>
+    /// of <paramref name="legacyZ"/> report <see cref="MoverGroundingDisposition.KeptSourceZ"/>.
+    /// </summary>
+    public static MoverGroundingDisposition EvaluateMoverZ(uint npcTemplateId, bool canFly, bool inCombat,
+        bool teleportScale, float currentZ, float terrainZ, float navZ, float navPlanarDistanceM,
+        float? hintFloorZ, float legacyZ, out float auditZ)
+    {
+        auditZ = legacyZ;
+
+        if (inCombat)
+            return CountMover(MoverGroundingDisposition.BypassedCombat);
+        if (teleportScale)
+            return CountMover(MoverGroundingDisposition.BypassedTeleport);
+        if (canFly || IsIntentionalFloater(npcTemplateId))
+            return CountMover(MoverGroundingDisposition.Exempted);
+
+        var action = ResolveSpawnZ(npcTemplateId, canFly: false, currentZ,
+            terrainZ, navZ, navPlanarDistanceM, hintFloorZ, out var resolvedZ);
+        switch (action)
+        {
+            case SpawnGroundingAction.NoGroundSample:
+                return CountMover(MoverGroundingDisposition.NoGroundSample);
+            case SpawnGroundingAction.Exempted:
+                return CountMover(MoverGroundingDisposition.Exempted);
+            case SpawnGroundingAction.KeptSourceZ:
+                return CountMover(MoverGroundingDisposition.KeptSourceZ);
+            default:
+                auditZ = resolvedZ;
+                return CountMover(MathF.Abs(resolvedZ - legacyZ) < MoverChangedEpsilonM
+                    ? MoverGroundingDisposition.KeptSourceZ
+                    : MoverGroundingDisposition.WouldClampToGround);
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Phase 1 mover disposition counters + throttled would-clamp telemetry
+    // ---------------------------------------------------------------
+
+    private static readonly Lock MoverGate = new();
+    private static readonly long[] MoverCounts = new long[Enum.GetValues<MoverGroundingDisposition>().Length];
+    private static TimeSpan _moverWarnInterval = TimeSpan.FromSeconds(10);
+    private static DateTime _nextMoverWarnUtc = DateTime.MinValue;
+    private static long _moverSuppressedSinceLastWarn;
+
+    private static MoverGroundingDisposition CountMover(MoverGroundingDisposition disposition)
+    {
+        Interlocked.Increment(ref MoverCounts[(int)disposition]);
+        return disposition;
+    }
+
+    /// <summary>Phase 1 counter read for reports and tests.</summary>
+    public static long GetMoverCount(MoverGroundingDisposition disposition)
+        => Interlocked.Read(ref MoverCounts[(int)disposition]);
+
+    /// <summary>Test hook: zeroes disposition counters and mover warn throttle.</summary>
+    internal static void ResetMoverStateForTests(TimeSpan? interval = null)
+    {
+        Array.Clear(MoverCounts);
+        lock (MoverGate)
+        {
+            _moverWarnInterval = interval ?? TimeSpan.FromSeconds(10);
+            _nextMoverWarnUtc = DateTime.MinValue;
+            _moverSuppressedSinceLastWarn = 0;
+        }
+    }
+
+    /// <summary>
+    /// Throttled dry-run warning for would-clamp mover evaluations, aggregating
+    /// suppressed occurrences like <see cref="ReportClamp"/>. Names template id +
+    /// coordinates per the grounding-telemetry contract.
+    /// </summary>
+    public static void ReportMoverDisposition(uint npcTemplateId, float x, float y, float legacyZ, float auditZ)
+    {
+        lock (MoverGate)
+        {
+            var now = DateTime.UtcNow;
+            if (now < _nextMoverWarnUtc)
+            {
+                _moverSuppressedSinceLastWarn++;
+                return;
+            }
+
+            _nextMoverWarnUtc = now + _moverWarnInterval;
+        }
+
+        var suppressed = Interlocked.Exchange(ref _moverSuppressedSinceLastWarn, 0);
+        if (suppressed > 0)
+            Logger.Warn(
+                "PB-005 mover grounding (dry-run): npc template {TemplateId} at ({X:F1},{Y:F1}) would clamp z {LegacyZ:F1} -> {AuditZ:F1} ({Suppressed} further would-clamps suppressed since last warning)",
+                npcTemplateId, x, y, legacyZ, auditZ, suppressed);
+        else
+            Logger.Warn(
+                "PB-005 mover grounding (dry-run): npc template {TemplateId} at ({X:F1},{Y:F1}) would clamp z {LegacyZ:F1} -> {AuditZ:F1}",
+                npcTemplateId, x, y, legacyZ, auditZ);
     }
 
     // ---------------------------------------------------------------

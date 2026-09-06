@@ -396,6 +396,32 @@ public class Simulation : Patrol
             var (newX, newY, newZ) = PositionAndRotation.AddDistanceToFront(travelDist, targetDist, npc.Transform.Local.Position, target);
 
             newZ = WorldManager.Instance.GetReferenceHeight(npc.Ai, newX, newY, newZ, npc.Transform.ZoneId);
+            // PB-005 Phase 1 (audit-only): same centralized policy evaluation as
+            // Npc.MoveTowards — dispositions counted + would-clamps logged, legacy
+            // height always applied while NpcGroundingPolicy.DryRunMoverWrites.
+            try
+            {
+                var moverLegacyZ = newZ;
+                var terrainZ = WorldManager.Instance.GetTerrainHeight(npc.Transform.ZoneId, newX, newY);
+                float navZ = 0f, navPlanarM = float.MaxValue;
+                var worldTemplate = WorldManager.Instance.GetWorldTemplateByZoneKey(npc.Transform.ZoneId);
+                if (worldTemplate?.GeoData?.TryGetNavSample(new Vector3(newX, newY, newZ), out var sampledNavZ, out var sampledPlanarM) == true)
+                {
+                    navZ = sampledNavZ;
+                    navPlanarM = sampledPlanarM;
+                }
+                float? hintFloor = NpcGroundingPolicy.TryGetDeckFloor(newX, newY, newZ, out var deckFloor) ? deckFloor : null;
+                var disposition = NpcGroundingPolicy.EvaluateMoverZ(npc.TemplateId, npc.CanFly, npc.IsInBattle,
+                    targetDist >= NpcGroundingPolicy.TeleportStepThresholdM, npc.Transform.Local.Position.Z,
+                    terrainZ, navZ, navPlanarM, hintFloor, moverLegacyZ, out var auditZ);
+                if (disposition == NpcGroundingPolicy.MoverGroundingDisposition.WouldClampToGround)
+                    NpcGroundingPolicy.ReportMoverDisposition(npc.TemplateId, newX, newY, moverLegacyZ, auditZ);
+                newZ = NpcGroundingPolicy.DryRunMoverWrites ? moverLegacyZ : auditZ;
+            }
+            catch (Exception ex)
+            {
+                Logger.Trace(ex, "PB-005 mover grounding audit failed; keeping legacy reference height.");
+            }
             npc.Transform.Local.SetPosition(newX, newY, newZ);
 
             var angle = MathUtil.CalculateAngleFrom(npc.Transform.Local.Position, target);

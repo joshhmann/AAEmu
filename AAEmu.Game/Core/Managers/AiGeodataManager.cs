@@ -251,6 +251,67 @@ public class AiGeoDataManager(WorldTemplate worldTemplate)
     }
 
     /// <summary>
+    /// Phase 1: navmesh-only height sample plus the winner's planar (XY) distance
+    /// from <paramref name="pos"/>. Returns false when no .bai data covers the
+    /// position (no loader, or empty node/vertex grids). Throws exactly where the
+    /// legacy <see cref="GetHeight"/> threw (unloaded-cell lookup failures) —
+    /// callers that must not throw (mover audit hooks) guard with try/catch.
+    /// </summary>
+    public bool TryGetNavSample(Vector3 pos, out float navZ, out float planarDistanceM)
+    {
+        navZ = 0f;
+        planarDistanceM = float.MaxValue;
+
+        var closestPoint = Vector3.Zero;
+        var closestDistance = float.MaxValue;
+
+        // Try to get height from .bai files data
+        var bai = worldTemplate.GetBaiByPos(pos);
+        if (bai == null)
+            return false;
+
+        // Exact nearest netmission node and obstacle vertex of this block via the
+        // lazily built spatial grid; ties resolve to the netmission node, matching
+        // the previous reader-ordered scan.
+        var closestNode = bai.FindClosestNetMissionNode(pos);
+        if (closestNode != null)
+        {
+            closestDistance = Vector3.Distance(closestNode.Pos, pos);
+            closestPoint = closestNode.Pos;
+            // Slightly optimize if very close to target point
+            if (closestDistance < 0.01f)
+            {
+                navZ = closestPoint.Z;
+                planarDistanceM = 0f;
+                return true;
+            }
+        }
+
+        var closestVertex = bai.FindClosestVertexPoint(pos, out var vertexDistance);
+        if (vertexDistance < closestDistance)
+        {
+            closestDistance = vertexDistance;
+            closestPoint = closestVertex;
+            // Slightly optimize if very close to target point
+            if (closestDistance < 0.01f)
+            {
+                navZ = closestPoint.Z;
+                planarDistanceM = 0f;
+                return true;
+            }
+        }
+
+        if (closestDistance >= float.MaxValue)
+            return false;
+
+        navZ = closestPoint.Z;
+        var dx = closestPoint.X - pos.X;
+        var dy = closestPoint.Y - pos.Y;
+        planarDistanceM = MathF.Sqrt(dx * dx + dy * dy);
+        return true;
+    }
+
+    /// <summary>
     /// Gets height using navmesh data
     /// </summary>
     /// <param name="pos"></param>
@@ -262,45 +323,11 @@ public class AiGeoDataManager(WorldTemplate worldTemplate)
         //stopWatch.Start();
         try
         {
-            var closestPoint = Vector3.Zero;
-            var closestDistance = float.MaxValue;
+            // Navmesh sample first; raw heightmap fallback when no .bai data covers pos.
+            if (TryGetNavSample(pos, out var navZ, out _))
+                return navZ;
 
-            // Try to get height from .bai files data
-            var bai = worldTemplate.GetBaiByPos(pos);
-            if (bai != null)
-            {
-                // Exact nearest netmission node and obstacle vertex of this block via the
-                // lazily built spatial grid; ties resolve to the netmission node, matching
-                // the previous reader-ordered scan.
-                var closestNode = bai.FindClosestNetMissionNode(pos);
-                if (closestNode != null)
-                {
-                    closestDistance = Vector3.Distance(closestNode.Pos, pos);
-                    closestPoint = closestNode.Pos;
-                    // Slightly optimize if very close to target point
-                    if (closestDistance < 0.01f)
-                        return closestPoint.Z;
-                }
-
-                var closestVertex = bai.FindClosestVertexPoint(pos, out var vertexDistance);
-                if (vertexDistance < closestDistance)
-                {
-                    closestDistance = vertexDistance;
-                    closestPoint = closestVertex;
-                    // Slightly optimize if very close to target point
-                    if (closestDistance < 0.01f)
-                        return closestPoint.Z;
-                }
-            }
-            
-            // Now compare to heightmap data
-            if (closestDistance >= float.MaxValue) 
-            {
-                // Fall back to raw heightmap data
-                closestPoint = new Vector3(pos.X, pos.Y, worldTemplate.GetRawHeightMapHeight((int)MathF.Round(pos.X), (int)MathF.Round(pos.Y)));
-            }
-
-            return closestPoint.Z;
+            return worldTemplate.GetRawHeightMapHeight((int)MathF.Round(pos.X), (int)MathF.Round(pos.Y));
         }
         catch
         {
