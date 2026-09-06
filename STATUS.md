@@ -29,6 +29,7 @@ renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map
 ## 2026-09-06 — Q6 live GREEN 9/9 (lane freed)
 
 - Probe `InterzoneLoopE2eTests` green twice (~7 min each, verdict PASS): death via engagement-gated mob 13517, shrine + client-rez + 20 m recovery, journal kept. `E2eQuestDriver` selection fix + `ResumeFromStage` held in diff. Remaining gaps: saddle-mount, money/HP floors, kill-9, stuck-leg live surface. Logs at `/root/aaemu-e2e-q6/logs/`. No H claim.
+- Q3 branch deleted 2026-09-06 (worktree + local + remote refs; punch-list diff discarded per drop ruling, salvage stands at 9c84b6897).
 
 ## 2026-09-06 — INCIDENT: unscoped pkill killed the calibration lane (this session's fault)
 
