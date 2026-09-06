@@ -306,6 +306,71 @@ public class GameplayActorTests
         var t = Math.Clamp(Vector3.Dot(p - a, ab) / denom, 0f, 1f);
         return Vector3.Distance(p, a + ab * t);
     }
+    // Routed-seam contract (gate A3.7): a null or empty route rejects with
+    // RejectedAction BEFORE any indexing (fail-closed — route[^1] must
+    // never throw); a single-point route is a VALID one-leg routed leg; a
+    // non-finite waypoint rejects. All rejections carry taxonomy reasons.
+
+    [Test]
+    public async Task NavigateRouted_EmptyRoute_RejectsPreIndex_WithRejectedAction()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-blend-seam-empty");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var request = actor.NavigateRoutedForTest(new List<Vector3>(), speed: 5f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(request.Detail).IsEqualTo("RejectedAction: route must be non-empty");
+        await Assert.That(actor.ActiveRequest).IsNull();
+    }
+
+    [Test]
+    public async Task NavigateRouted_NullRoute_RejectsPreIndex_WithRejectedAction()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-blend-seam-null");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var request = actor.NavigateRoutedForTest(null, speed: 5f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(request.Detail).IsEqualTo("RejectedAction: route must be non-empty");
+        await Assert.That(actor.ActiveRequest).IsNull();
+    }
+
+    [Test]
+    public async Task NavigateRouted_SinglePointRoute_CompletesWithinArrivalRadius()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-blend-seam-single");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        // A single-point route is a VALID one-leg routed leg (not a reject).
+        var destination = new Vector3(10, 0, 0);
+        var request = actor.NavigateRoutedForTest(new List<Vector3> { destination }, speed: 5f);
+
+        var guard = 0;
+        while (request.State is ActorLifecycleState.Accepted or ActorLifecycleState.Running && guard++ < 200)
+            actor.Tick(TimeSpan.FromSeconds(0.1));
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(Vector3.Distance(actor.Character.Transform.World.Position, destination)).IsLessThanOrEqualTo(GameplayActor.ArrivalRadius + 0.1f);
+    }
+
+    [Test]
+    public async Task NavigateRouted_NonFiniteWaypoint_RejectsWithRejectedAction()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("move-blend-seam-nonfinite");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var request = actor.NavigateRoutedForTest(
+            new List<Vector3> { new Vector3(10, 0, 0), new Vector3(float.NaN, 0, 0) }, speed: 5f);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(request.Detail).IsEqualTo("RejectedAction: route must be finite");
+        await Assert.That(actor.ActiveRequest).IsNull();
+    }
 
 
     [Test]

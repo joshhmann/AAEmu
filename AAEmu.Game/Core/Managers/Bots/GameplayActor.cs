@@ -410,18 +410,30 @@ public class GameplayActor : IGameplayActor
     /// and obstacle detours, without requiring GeoData or obstacles
     /// headless). Corner blending, the trapezoid profile, and arrival apply
     /// exactly as on production routed legs.
+    /// A null or empty route rejects with RejectedAction BEFORE any
+    /// indexing (fail-closed); a single-point route is a valid one-leg
+    /// routed leg via StartMove; a non-finite waypoint rejects.
     /// </summary>
-    internal ActorRequest NavigateRoutedForTest(IReadOnlyList<Vector3> route, float speed = 5f, TimeSpan? timeout = null)
+    internal ActorRequest NavigateRoutedForTest(IReadOnlyList<Vector3>? route, float speed = 5f, TimeSpan? timeout = null)
     {
         ExecutionBoundary.AssertOnExecutionThread("NavigateRoutedForTest");
+
+        if (route is null || route.Count == 0)
+        {
+            // Fail-closed BEFORE any indexing: route[^1] below would throw
+            // on an empty route instead of rejecting with a taxonomy
+            // reason (gate A3.7 seam contract).
+            var emptyRequest = NewRequest(ActorActionType.Move, 0, null, timeout: timeout ?? DefaultMoveTimeout);
+            if (!TryBegin(emptyRequest, "navigate"))
+                return emptyRequest;
+            return Reject(emptyRequest, ActorFailureReason.RejectedAction, "route must be non-empty");
+        }
 
         var request = NewRequest(ActorActionType.Move, 0, route[^1], timeout: timeout ?? DefaultMoveTimeout);
         if (!TryBegin(request, "navigate"))
             return request;
         if (speed <= 0f)
             return Reject(request, ActorFailureReason.RejectedAction, "speed must be positive");
-        if (route.Count == 0)
-            return Reject(request, ActorFailureReason.RejectedAction, "route must be non-empty");
         if (route.Any(p => !p.IsFinite()))
             return Reject(request, ActorFailureReason.RejectedAction, "route must be finite");
         if (route.Count == 1)
