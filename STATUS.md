@@ -1,6 +1,6 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-06 · A5 b2 CLOSED (soak PASS); SHAPE re-show pending
+Updated: 2026-09-06 · Phase 1 evidence complete @ 61123ea88 (gate + archaeology green)
 Branch of record: develop ca7762d7d (roadmap docs merge HEAD; runtime source/test 322390b32)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
@@ -26,6 +26,8 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+
+## 2026-09-06 — Phase 1 evidence complete @ 61123ea88 (post-push): Tier 1 gate 2879/0/1 + MCP 39+24; archaeology-cycle 156/156 + 24-tool smoke, compact md5 unchanged. P1 registry hardening + audit-only telemetry covered. Phase 2 (writes) still needs second approval.
 
 ## 2026-09-06 — A5 b2 CLOSED: 6h asserted soak PASS on .165
 
