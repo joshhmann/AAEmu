@@ -171,7 +171,7 @@
 ### M8 living-village contracts (proposed; C1/C2 foundations DONE, integration not started)
 
 - Foundations recorded: C1 schedules v1 DONE `62f13fdc7` (`BotScheduleService` phase machine, default OFF); C2 social v1 DONE `8c198f13d` (`BotChatterService` 8 archetypes × 4 lines, default OFF, = M8.5a). Sequence follows the existing G4/C order (C1 → C2 → C3 → C4 → C5); changes need a recorded rationale (normal planning, not a new gate)
-- **C3 farmer v1:** owned mature crop → harvest through the real `Doodad.Use` path → deposit yield → replant approved crop → shortage report
+- **C3 farmer v1:** owned mature crop → harvest through the real `Doodad.Use` path → deposit yield → replant approved crop → shortage report. Landed 2026-09-06 as FarmerCycleScenario (static callable, default-OFF) + FarmerCycleScenarioTests 8/8; full suite 2867/2866/0/1. Rulings: bank Warehouse, potato-15659 constant, audit-trail report.
   - Proposed acceptances: owned-plot precheck; immature / foreign-or-occupied / despawn-scheduled doodads reject with taxonomy reasons (exact labels pinned by the implementing slice against the Harvest precedents — not fixed here); restart mid-cycle → no dup and no lost inputs (yield + replant conservation)
   - Anchors: M3aM4 replay harvest legs, `GameplayActorHarvestTests`, `LivestockInteractionTests`, economy-cycle harvest stage
 - **C4 hauler/trader v1:** craft pack → load onto vehicle → drive route → specialty sale → deposit proceeds → return home (materials/products/currency/labor conservation across the chain per the ledger reconciliation laws)
