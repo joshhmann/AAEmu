@@ -10,6 +10,7 @@ primitive remains integrated in `LevelingLoop`'s accept choice at
 consumer only, and broad M5 policy/universal autonomy remain open. M6 includes
 `950cfd279` cancellation, `c97909f4f` population isolation, and opt-in
 six-hour leg `155c82c66` integrated here.
+Superseded 2026-09-06 — see the 2026-09-06 b2-CLOSED and gate entries above; preserved below as history:
 Current honest state (2026-09-05): deployed `135c4f14e` (source `322390b32`) healthy
 per director session report (not freshly queried); full gate 2836/1/1 NOT green (1 PvP-honor flake);
 soak #2 PASS (`g2-a5-tier3-sixhour-report.json` 2026-09-05T15:33:11Z, FULL 360.00008-min window,
