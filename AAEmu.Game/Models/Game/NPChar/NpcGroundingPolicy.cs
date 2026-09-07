@@ -35,7 +35,7 @@ namespace AAEmu.Game.Models.Game.NPChar;
 /// </summary>
 public static class NpcGroundingPolicy
 {
-    public const float ClampSeverityM = 2f;
+    public const float ClampSeverityM = 0.5f;
     /// <summary>
     /// Phase 1 (audit-only): nav samples whose winner lies farther than one 256 m
     /// path-block away in the horizontal plane are treated as unusable
@@ -220,7 +220,7 @@ public static class NpcGroundingPolicy
         1419u, // Ruby Miner (mine)
     }.ToFrozenSet();
 
-    public const float NegativeClampSeverityM = -2f;
+    public const float NegativeClampSeverityM = -0.1f;
 
     /// <summary>True when this npc template is exempt from spawn-time Z clamping (remedy C).</summary>
     public static bool IsIntentionalFloater(uint npcTemplateId) => IntentionalFloaters.Contains(npcTemplateId);

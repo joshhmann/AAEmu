@@ -49,17 +49,17 @@ public class NpcGroundingPolicyTests
     [Test]
     public async Task ResolveSpawnZ_NegativeSubThreshold_KeepsSourceZ()
     {
-        // -1.5m offset: within +/- 2m tolerance for roads/slopes.
-        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 250.5f, groundZ: 252.0f, out var resolvedZ);
+        // -0.05m offset: within sub-threshold tolerance.
+        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 251.95f, groundZ: 252.0f, out var resolvedZ);
         await Assert.That(action).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.KeptSourceZ);
-        await Assert.That(resolvedZ).IsEqualTo(250.5f);
+        await Assert.That(resolvedZ).IsEqualTo(251.95f);
     }
 
     [Test]
     public async Task ResolveSpawnZ_ExactlyAtNegativeThreshold_Clamps()
     {
-        // Exactly -2.0m offset: clamps to ground.
-        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 250.0f, groundZ: 252.0f, out var resolvedZ);
+        // Exactly -0.10m offset: clamps to ground.
+        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 251.90f, groundZ: 252.0f, out var resolvedZ);
         await Assert.That(action).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.ClampedToGround);
         await Assert.That(resolvedZ).IsEqualTo(252.0f);
     }
@@ -67,17 +67,17 @@ public class NpcGroundingPolicyTests
     [Test]
     public async Task ResolveSpawnZ_SubThresholdDelta_KeepsSourceZ()
     {
-        // 1.9 m offset: below default 2 m severity — roads/decks make this legitimate.
-        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 254.60f, groundZ: 252.70f, out var resolvedZ);
+        // 0.40 m offset: below 0.50 m severity — micro variations make this legitimate.
+        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 253.10f, groundZ: 252.70f, out var resolvedZ);
         await Assert.That(action).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.KeptSourceZ);
-        await Assert.That(resolvedZ).IsEqualTo(254.60f);
+        await Assert.That(resolvedZ).IsEqualTo(253.10f);
     }
 
     [Test]
     public async Task ResolveSpawnZ_ExactlyAtThreshold_Clamps()
     {
         // Policy: deltas BELOW severity keep source z; delta == severity clamps.
-        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 254.70f, groundZ: 252.70f, out var resolvedZ);
+        var action = NpcGroundingPolicy.ResolveSpawnZ(10082, canFly: false, spawnerZ: 253.20f, groundZ: 252.70f, out var resolvedZ);
         await Assert.That(action).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.ClampedToGround);
         await Assert.That(resolvedZ).IsEqualTo(252.70f);
     }
@@ -157,10 +157,10 @@ public class NpcGroundingPolicyTests
     // ------------------------------------------------------------- threshold
 
     [Test]
-    public async Task ClampSeverity_IsExactlyTwoMeters()
+    public async Task ClampSeverity_MatchesConfiguredThresholds()
     {
-        await Assert.That(NpcGroundingPolicy.ClampSeverityM).IsEqualTo(2f);
-        await Assert.That(NpcGroundingPolicy.NegativeClampSeverityM).IsEqualTo(-2f);
+        await Assert.That(NpcGroundingPolicy.ClampSeverityM).IsEqualTo(0.5f);
+        await Assert.That(NpcGroundingPolicy.NegativeClampSeverityM).IsEqualTo(-0.1f);
     }
 
 
