@@ -94,11 +94,12 @@ public class NpcSpawnerNpc : Spawner<Npc>
 
         Logger.Trace($"Spawn npc templateId {MemberId} objId {npc.ObjId} from spawnerId {NpcSpawnerTemplateId} at Position: {npcSpawner.Position}");
 
-        // PB-005 remedy A: ground units more than 2 m above sampled terrain are snapped to
-        // that terrain height (the old rule only "corrected" deltas < 1 m, which let frozen-z
-        // source data reach clients verbatim). Fly/swim and whitelisted units keep their
-        // spawner z; sub-threshold and negative offsets remain unchanged because raw terrain
-        // cannot distinguish roads/decks, caves, and interiors.
+        // PB-005 remedy A: ground units at least ClampSeverityM (0.5 m) above sampled ground,
+        // or past NegativeClampSeverityM (-0.1 m) below it, are snapped to that ground height
+        // (the old rule only "corrected" deltas < 1 m, which let frozen-z source data reach
+        // clients verbatim). Fly/swim and whitelisted units keep their spawner z; sub-threshold
+        // offsets keep source z, and negative offsets keep source z for cave/interior dwellers,
+        // because raw terrain cannot distinguish roads/decks, caves, and interiors.
         var pos = npcSpawner.Position.AsPositionVector();
         float? hintFloor = NpcGroundingPolicy.TryGetDeckFloor(pos.X, pos.Y, pos.Z, out var deckFloor) ? deckFloor : null;
         var groundZ = hintFloor ?? npcSpawner.ParentWorld.Template.GeoData.GetHeight(pos);

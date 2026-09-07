@@ -238,7 +238,7 @@ public static class NpcGroundingPolicy
         Exempted,
         /// <summary>No usable ground sample (GeoData exception / out-of-bounds sentinel 0).</summary>
         NoGroundSample,
-        /// <summary>Sub-threshold offsets (-2m..2m) and whitelisted cave/interior dwellers preserve source z.</summary>
+        /// <summary>Sub-threshold offsets (within NegativeClampSeverityM..ClampSeverityM, i.e. -0.1m..0.5m) preserve source z, as do negative offsets for whitelisted cave/interior dwellers.</summary>
         KeptSourceZ,
         /// <summary>Offset at or beyond positive/negative severity threshold — z snapped to terrain.</summary>
         ClampedToGround,

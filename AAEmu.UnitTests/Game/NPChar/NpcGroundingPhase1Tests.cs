@@ -1,6 +1,5 @@
 using AAEmu.Game.Models.Game.NPChar;
-
-namespace AAEmu.UnitTests.Game.NPChar;
+using AAEmu.UnitTests.Game.Housing;
 
 /// <summary>
 /// PB-005 Phase 1 (audit-only): contract of the multi-source height stack
@@ -9,6 +8,8 @@ namespace AAEmu.UnitTests.Game.NPChar;
 /// (legacy Z kept, dispositions counted).
 /// New APIs: every test fails pre-change (symbols do not exist on develop).
 /// </summary>
+[ParallelLimiter<SequentialParallelLimit>]
+[NotInParallel]
 public class NpcGroundingPhase1Tests
 {
     private static readonly DeckVolume SyntheticDeck = new("synthetic-test-deck",

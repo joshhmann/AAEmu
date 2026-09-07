@@ -1,11 +1,14 @@
 using System.Numerics;
 
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Skills.Templates;
+using AAEmu.Game.Models.Game.Team;
 using AAEmu.Game.Models.StaticValues;
 
 using Microsoft.Extensions.Time.Testing;
@@ -382,6 +385,83 @@ public class BotRoamStepExecutorTests
         };
 
         // Step once: member should initiate Move toward leader
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(member.ActiveRequest).IsNotNull();
+        await Assert.That(member.ActiveRequest!.Action).IsEqualTo(ActorActionType.Move);
+    }
+
+    [Test]
+    public async Task Step_InPartyWithLiveLeaderTarget_AssistsCastThenResumesRoamAfterLeave()
+    {
+        GameplayActorTestRig.ForceSeedTeamManager();
+        var (leader, hostSession) = GameplayActorTestRig.CreateActor("party-assist-leader");
+        var (member, memberSession) = GameplayActorTestRig.CreateActor("party-assist-member");
+        GameplayActorTestRig.JoinActorWorld(hostSession, member);
+
+        GameplayActorTestRig.SetPosition(leader, new Vector3(20, 0, 0));
+        GameplayActorTestRig.SetPosition(member, new Vector3(0, 0, 0));
+
+        leader.PartyInvite(member.Character.ObjId);
+        member.PartyAccept();
+
+        // Triple Slash is a melee weapon skill: canonical data carries an
+        // EquipSlot(Mainhand) unit requirement, and pilot rigs load that real
+        // data suite-wide — so the member equips a sword through the real
+        // Equip path, exactly like a live Battlerage character would.
+        const uint assistSwordTemplateId = 90_025;
+        GameplayActorTestRig.SeedEquipItemTemplate(assistSwordTemplateId);
+        GameplayActorTestRig.StockItem(memberSession, assistSwordTemplateId, 1);
+        await Assert.That(member.Equip(assistSwordTemplateId).State).IsEqualTo(ActorLifecycleState.Completed);
+
+        // Leader holds a live Npc target within the member's melee reach (3 m):
+        // the assist branch must copy the target and issue the 18131 cast
+        // (3단 베기 Triple Slash — CombatDecisionTree.BattlerageTripleSlashSkillId,
+        // the executor's hardcoded assist skill).
+        const uint assistSkillId = 18131u;
+        var npcObjId = GameplayActorTestRig.SpawnNpc(hostSession);
+        var npc = hostSession.World.GetNpc(npcObjId);
+        npc.Hp = 100;
+        npc.MaxHp = 100;
+        GameplayActorTestRig.SetNpcPosition(hostSession, npcObjId, new Vector3(2, 0, 0));
+        leader.Character.CurrentTarget = npc;
+
+        var runtime = new PlayerBotRuntime(member.Character, "rig");
+        var clock = new FakeTimeProvider();
+        BotRoamStepExecutor executor = new()
+        {
+            ActorFactory = _ => member,
+            TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            RoamSpeed = 2f
+        };
+
+        // Seed the minimal 18131 template and teach it IMMEDIATELY before the
+        // step: pilot/scenario rigs wholesale-replace the SkillManager singleton
+        // mid-suite, so an early seed can be wiped before the cast reads it.
+        GameplayActorTestRig.SeedSkillTemplate(assistSkillId);
+        member.Character.Skills.AddSkill(new SkillTemplate { Id = assistSkillId }, 1, false);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        // Assist: member copies the leader's target and casts 18131 on it.
+        await Assert.That(member.Character.CurrentTarget).IsNotNull();
+        await Assert.That(member.Character.CurrentTarget!.ObjId).IsEqualTo(npcObjId);
+        var assistCasts = member.AuditTrace
+            .Where(r => r.Action == ActorActionType.Cast && r.TargetId == npcObjId)
+            .ToList();
+        await Assert.That(assistCasts).IsNotEmpty();
+        await Assert.That(assistCasts.Any(r => r.Result == ActorLifecycleState.Completed)).IsTrue();
+        var assistCastDetails = string.Join(" | ", assistCasts.Select(r => $"{r.Result}:{r.Detail}"));
+        await Assert.That(assistCastDetails).Contains("18131");
+
+        // Party leave through the real engine path, then roam must resume —
+        // the step must issue a roam Move leg, not stay stuck on handledByParty.
+        TeamManager.Instance.MemberRemoveFromTeam(member.Character, member.Character, RiskyAction.Leave);
+        await Assert.That(TeamManager.Instance.GetActiveTeamByUnit(member.Character.Id)).IsNull();
+        executor.SetRoamRoute(member.Character, new BotPath([new Vector3(50, 0, 0)], BotPath.LoopMode.Loop));
         clock.Advance(TimeSpan.FromMilliseconds(100));
         await executor.StepAsync(runtime, CancellationToken.None);
 

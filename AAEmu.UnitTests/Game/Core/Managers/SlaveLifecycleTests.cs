@@ -653,11 +653,15 @@ public class SlaveLifecycleTests
     }
 
     [Test]
-    public async Task VehicleSeat_UnLoadPassenger_RemovesFromSlaveAttachedCharacters()
+    public async Task SlaveSeat_BindThenUnLoadPassenger_RoundTrip()
     {
         var slave = MakeSlave(0x1005, _owner, new Vector3(0, 0, 0));
         var seat = new VehicleSeat(slave);
-        slave.AttachedCharacters[AttachPointKind.Passenger0] = _owner;
+
+        // Real mount path: SlaveManager.BindSlave lands the Slave AttachedCharacters entry
+        // (VehicleSeat.LoadPassenger only tracks Transfer doodad seats, never Slave entries).
+        _slaveManager.BindSlave(_owner, slave.ObjId, AttachPointKind.Passenger0, AttachUnitReason.NewMaster);
+        await Assert.That(slave.AttachedCharacters.ContainsKey(AttachPointKind.Passenger0)).IsTrue();
 
         seat.LoadPassenger(_owner, 100, 2);
         await Assert.That(slave.AttachedCharacters.ContainsKey(AttachPointKind.Passenger0)).IsTrue();
