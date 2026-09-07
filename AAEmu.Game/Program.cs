@@ -284,6 +284,7 @@ public static class Program
                         sp.GetRequiredService<IBotScheduleBehavior>(),
                         authoritativeScheduleService: sp.GetRequiredService<BotScheduleService>()));
                 services.AddSingleton<IBotActivityModule, PresenceRoamActivityModule>();
+                services.AddSingleton<IBotActivityModule, ConflictJoinActivityModule>();
                 services.AddSingleton<IBotActivityModule, IdleActivityModule>();
                 services.AddSingleton<BotGoalArbiter>();
                 services.AddSingleton<IBotGoalArbiter>(sp => sp.GetRequiredService<BotGoalArbiter>());
