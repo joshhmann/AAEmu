@@ -99,7 +99,9 @@ public class NpcSpawnerNpc : Spawner<Npc>
         // source data reach clients verbatim). Fly/swim and whitelisted units keep their
         // spawner z; sub-threshold and negative offsets remain unchanged because raw terrain
         // cannot distinguish roads/decks, caves, and interiors.
-        var groundZ = npcSpawner.ParentWorld.Template.GeoData.GetHeight(npcSpawner.Position.AsPositionVector());
+        var pos = npcSpawner.Position.AsPositionVector();
+        float? hintFloor = NpcGroundingPolicy.TryGetDeckFloor(pos.X, pos.Y, pos.Z, out var deckFloor) ? deckFloor : null;
+        var groundZ = hintFloor ?? npcSpawner.ParentWorld.Template.GeoData.GetHeight(pos);
         switch (NpcGroundingPolicy.ResolveSpawnZ(MemberId, npc.CanFly, npcSpawner.Position.Z, groundZ, out var resolvedZ))
         {
             case NpcGroundingPolicy.SpawnGroundingAction.ClampedToGround:

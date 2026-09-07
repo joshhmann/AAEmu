@@ -338,8 +338,100 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         if (actor is GameplayActor concreteActor && concreteActor.BroadcastMovement)
             concreteActor.BroadcastMovement = false;
 
+        // 0. Party coordination (PB-002 follow & assist):
+        // Auto-accept pending party invites, and if in a party as member, follow/assist the leader.
+        bool handledByParty = false;
+        try
+        {
+            var tm = TeamManager.Instance;
+            if (tm != null)
+            {
+                if (tm.GetActiveInvitation(bot.CharacterId) is { } invite)
+                {
+                    var accept = actor.PartyAccept();
+                    if (accept.State == ActorLifecycleState.Completed)
+                    {
+                        Logger.Info("Bot {0} ({1}) accepted party invitation from {2}",
+                            bot.CharacterId, bot.Character.Name, invite.Owner?.Id ?? 0);
+                    }
+                }
+
+                var activeTeam = tm.GetActiveTeamByUnit(bot.CharacterId);
+                if (activeTeam != null && activeTeam.IsParty && activeTeam.OwnerId != bot.CharacterId && activeTeam.Members != null)
+                {
+                    var leader = activeTeam.Members.FirstOrDefault(m => m.Character?.Id == activeTeam.OwnerId)?.Character;
+                    if (leader != null && leader.ParentWorld == bot.Character.ParentWorld)
+                    {
+                        handledByParty = true;
+                        var leaderPos = leader.Transform.World.Position;
+                        var distToLeader = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, leaderPos, false);
+
+                        if (leader.CurrentTarget is Npc leaderTarget && leaderTarget.Hp > 0)
+                        {
+                            if (bot.Character.CurrentTarget?.ObjId != leaderTarget.ObjId)
+                            {
+                                actor.SetTarget(leaderTarget.ObjId);
+                            }
+
+                            var targetDist = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, leaderTarget.Transform.World.Position, false);
+                            if (targetDist > HuntMeleeRange)
+                            {
+                                if (actor.ActiveRequest is not { IsTerminal: false, Action: ActorActionType.Move })
+                                {
+                                    state.PendingLeg = actor.MoveToUnit(leaderTarget.ObjId, HuntChaseSpeed, TimeSpan.FromSeconds(5));
+                                }
+                            }
+                            else
+                            {
+                                if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+                                {
+                                    _ = actor.Stop();
+                                    state.PendingLeg = null;
+                                }
+
+                                if (now - state.LastCastUtc >= HuntCastInterval)
+                                {
+                                    state.LastCastUtc = now;
+                                    var skillId = 18131u;
+                                    actor.Cast(skillId, leaderTarget.ObjId);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (distToLeader > 3.5f)
+                            {
+                                var needsFollowMove = actor.ActiveRequest is not { IsTerminal: false, Action: ActorActionType.Move }
+                                    || (state.PendingLeg?.Destination.HasValue == true
+                                        && Vector3.Distance(state.PendingLeg.Destination.Value, leaderPos) > 3.0f);
+
+                                if (needsFollowMove)
+                                {
+                                    if (actor.ActiveRequest is { IsTerminal: false })
+                                        _ = actor.Stop();
+                                    state.PendingLeg = actor.MoveTo(leaderPos, HuntChaseSpeed, TimeSpan.FromSeconds(5));
+                                }
+                            }
+                            else if (distToLeader <= 3.0f)
+                            {
+                                if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+                                {
+                                    _ = actor.Stop();
+                                    state.PendingLeg = null;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Trace(ex, "Bot party step evaluation skipped.");
+        }
+
         // 1. Opportunistic wildlife hunt loop
-        if (EnableWildlifeHunt)
+        if (!handledByParty && EnableWildlifeHunt)
         {
             if (state.TargetNpcObjId != 0)
             {
@@ -507,7 +599,7 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         // into interaction range, and fires the existing Interact
         // ActorRequest. Logging only on the terminal outcome (slice 1/3
         // idiom) — zero success-path change.
-        if (EnableWildlifeButcher)
+        if (!handledByParty && EnableWildlifeButcher)
         {
             if (state.TargetButcherDoodadObjId != 0)
             {
@@ -609,8 +701,8 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             }
         }
 
-        // 2. Issue the next leg when idle, not hunting, not butchering, and a route is active.
-        if (state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
+        // 2. Issue the next leg when idle, not in party, not hunting, not butchering, and a route is active.
+        if (!handledByParty && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
         {
             var target = state.Path.CurrentTarget;
             var leg = actor.MoveTo(target, RoamSpeed, RoamLegTimeout);

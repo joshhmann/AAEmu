@@ -1,4 +1,4 @@
-﻿using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Units;
 
 namespace AAEmu.Game.Models.Game.DoodadObj;
@@ -43,6 +43,12 @@ public class VehicleSeat(BaseUnit parentVehicle)
                 character.Transform.StickyParent = null;
                 if (parentVehicle is Transfer transfer)
                     transfer.AttachedCharacters.Remove(character);
+                if (parentVehicle is Slave slave)
+                {
+                    var pair = slave.AttachedCharacters.FirstOrDefault(kvp => kvp.Value?.Id == character.Id);
+                    if (pair.Value != null)
+                        slave.AttachedCharacters.Remove(pair.Key);
+                }
             }
         }
     }

@@ -20,8 +20,35 @@ public class Use : IWorldInteraction
         Logger.Debug($"World interaction SkillID: {skillId}");
         if (target is Doodad doodad)
         {
+            // Cargo loading support: if target doodad is a pack storage box on a vehicle/slave,
+            // and character is carrying a trade pack in their backpack equipment slot, load it onto the vehicle!
+            if (caster is Character player && doodad.ParentObj is Slave slave && PackVehicleService.IsPackStorageBoxDoodad(doodad.TemplateId))
+            {
+                var loadResult = PackVehicleService.TryLoadCarriedPack(player, slave, out _);
+                if (loadResult == PackVehicleService.PackLoadResult.Success)
+                {
+                    Logger.Debug($"Loaded carried pack onto slave {slave.ObjId} (doodad {doodad.ObjId})");
+                    return;
+                }
+            }
+
             doodad.Use(caster, skillId);
             return;
+        }
+
+        // Direct vehicle interaction: if player interacted with the vehicle itself while carrying a trade pack,
+        // and vehicle has available cargo points, load it onto the vehicle!
+        if (target is Slave directSlave && caster is Character slaveCarrier)
+        {
+            if (PackVehicleService.GetCargoPoints(directSlave).Count > 0)
+            {
+                var loadResult = PackVehicleService.TryLoadCarriedPack(slaveCarrier, directSlave, out _);
+                if (loadResult == PackVehicleService.PackLoadResult.Success)
+                {
+                    Logger.Debug($"Loaded carried pack onto slave {directSlave.ObjId} directly");
+                    return;
+                }
+            }
         }
 
         // Fallback: some gather interactions (e.g. wells / "Draw Water" skill 13154) are cast

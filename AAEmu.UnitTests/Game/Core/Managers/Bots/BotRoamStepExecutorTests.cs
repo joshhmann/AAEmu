@@ -355,4 +355,38 @@ public class BotRoamStepExecutorTests
         await Assert.That(path.Waypoints[0]).IsEqualTo(end);
         await Assert.That(path.Waypoints[1]).IsEqualTo(start);
     }
+
+    [Test]
+    public async Task Step_InPartyAsMember_FollowsLeaderAndAssistsTarget()
+    {
+        GameplayActorTestRig.ForceSeedTeamManager();
+        var (leader, hostSession) = GameplayActorTestRig.CreateActor("party-leader");
+        var (member, _) = GameplayActorTestRig.CreateActor("party-member");
+        GameplayActorTestRig.JoinActorWorld(hostSession, member);
+
+        GameplayActorTestRig.SetPosition(leader, new Vector3(20, 0, 0));
+        GameplayActorTestRig.SetPosition(member, new Vector3(0, 0, 0));
+
+        // Invite and accept
+        leader.PartyInvite(member.Character.ObjId);
+        member.PartyAccept();
+
+        var runtime = new PlayerBotRuntime(member.Character, "rig");
+        var clock = new FakeTimeProvider();
+        BotRoamStepExecutor executor = new()
+        {
+            ActorFactory = _ => member,
+            TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            RoamSpeed = 2f
+        };
+
+        // Step once: member should initiate Move toward leader
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(member.ActiveRequest).IsNotNull();
+        await Assert.That(member.ActiveRequest!.Action).IsEqualTo(ActorActionType.Move);
+    }
 }
+

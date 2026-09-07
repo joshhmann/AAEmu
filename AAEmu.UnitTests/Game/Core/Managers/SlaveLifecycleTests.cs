@@ -651,6 +651,20 @@ public class SlaveLifecycleTests
         // repositioned toward the target (within 20m of the player)
         await Assert.That(slave.Transform.World.Position.X).IsLessThan(10f);
     }
+
+    [Test]
+    public async Task VehicleSeat_UnLoadPassenger_RemovesFromSlaveAttachedCharacters()
+    {
+        var slave = MakeSlave(0x1005, _owner, new Vector3(0, 0, 0));
+        var seat = new VehicleSeat(slave);
+        slave.AttachedCharacters[AttachPointKind.Passenger0] = _owner;
+
+        seat.LoadPassenger(_owner, 100, 2);
+        await Assert.That(slave.AttachedCharacters.ContainsKey(AttachPointKind.Passenger0)).IsTrue();
+
+        seat.UnLoadPassenger(_owner, 100);
+        await Assert.That(slave.AttachedCharacters.ContainsKey(AttachPointKind.Passenger0)).IsFalse();
+    }
 }
 
 /// <summary>Slave with Save() stubbed — the MySQL write tail never runs in unit tests.</summary>
