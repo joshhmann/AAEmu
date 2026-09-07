@@ -1,4 +1,7 @@
-﻿using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
@@ -18,6 +21,42 @@ public class Use : IWorldInteraction
         if (target is Doodad doodad)
         {
             doodad.Use(caster, skillId);
+            return;
+        }
+
+        // Fallback: some gather interactions (e.g. wells / "Draw Water" skill 13154) are cast
+        // self-targeted by the client, so the doodad is never the skill's target and doodad.Use()
+        // never runs (= no water). Find the nearest doodad around the caster whose CURRENT phase has
+        // a use-func matching this skill, and use it -> drives the intact DoodadFuncUse -> next phase
+        // -> DoodadFuncLootItem chain. Only doodads that actually respond to this skill match, so it
+        // does not disturb other gathers (those still hit the target-is-Doodad branch above).
+        if (caster is Character)
+        {
+            var nearby = WorldManager.GetAround<Doodad>(caster, 6f);
+            if (nearby != null && nearby.Count > 0)
+            {
+                Doodad best = null;
+                var bestDistSq = float.MaxValue;
+                var cp = caster.Transform.World.Position;
+                foreach (var d in nearby)
+                {
+                    if (DoodadManager.Instance.GetFunc(d.FuncGroupId, skillId) == null)
+                        continue;
+                    var dp = d.Transform.World.Position;
+                    var distSq = (dp.X - cp.X) * (dp.X - cp.X) + (dp.Y - cp.Y) * (dp.Y - cp.Y) + (dp.Z - cp.Z) * (dp.Z - cp.Z);
+                    if (distSq < bestDistSq)
+                    {
+                        bestDistSq = distSq;
+                        best = d;
+                    }
+                }
+
+                if (best != null)
+                {
+                    Logger.Debug($"Use fallback: skill {skillId} -> nearby doodad objId={best.ObjId} template={best.TemplateId} phase={best.FuncGroupId}");
+                    best.Use(caster, skillId);
+                }
+            }
         }
 
         /*

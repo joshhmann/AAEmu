@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Utils;
+using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Units.Route;
@@ -126,6 +126,7 @@ public class NpcSpawnerNpc : Spawner<Npc>
 
         npc.Spawner = npcSpawner;
         npc.Spawner.RespawnTime = (int)Random.Shared.Next(npc.Spawner.Template.SpawnDelayMin, npc.Spawner.Template.SpawnDelayMax);
+        ApplyRespawnFloor(npc);
         npc.Spawn();
 
         var world = WorldManager.Instance.GetWorld(npc.Transform.InstanceId);
@@ -151,5 +152,32 @@ public class NpcSpawnerNpc : Spawner<Npc>
     private List<Npc> SpawnNpcGroup(NpcSpawner npcSpawner, uint ownerId = 0)
     {
         return SpawnNpc(npcSpawner, ownerId);
+    }
+
+    /// <summary>
+    /// Raises RespawnTime to the configured floor when the spawner's authored delay is a data
+    /// placeholder (e.g. the 11,774 compact.sqlite3 rows set to 10s). Spawners with a genuinely
+    /// authored delay (bosses, rares) are left alone.
+    /// </summary>
+    public static void ApplyRespawnFloor(Npc npc)
+    {
+        var cfg = AppConfiguration.Instance.World;
+        if (cfg == null || npc?.Spawner?.Template == null)
+            return;
+
+        var authored = npc.Spawner.Template.SpawnDelayMax;
+        if (authored > cfg.NpcRespawnPlaceholderThreshold)
+            return; // Real authored timer, do not touch
+
+        var floor = cfg.NpcRespawnMinSeconds;
+        if (cfg.NpcRespawnMinSecondsElite > 0 &&
+            npc.Template != null &&
+            (int)npc.Template.NpcGradeId >= cfg.NpcRespawnEliteMinGrade)
+        {
+            floor = cfg.NpcRespawnMinSecondsElite;
+        }
+
+        if (floor > 0 && npc.Spawner.RespawnTime < floor)
+            npc.Spawner.RespawnTime = floor;
     }
 }

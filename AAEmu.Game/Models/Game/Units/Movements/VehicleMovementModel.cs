@@ -46,6 +46,19 @@ public static class VehicleMovementModel
     /// <param name="vmt">The client-authored move payload (position, rotation, velocity).</param>
     public static void ApplySlaveMove(Character driver, Slave car, VehicleMoveType vmt)
     {
+        // Out-of-bounds guard: a glitched vehicle client (e.g. cart/longboard physics)
+        // can stream positions that leave the valid world region. The vehicle is the root object and
+        // the driver is parented to it, so accepting these drags the player into the void, flooding
+        // region/visibility churn and OOM-ing the server. Reject the move and free the rider.
+        if (car.Transform.Parent == null &&
+            !WorldManager.Instance.IsPositionValidForWorld(car.Transform.WorldId, vmt.X, vmt.Y))
+        {
+            Logger.Warn($"Rejecting out-of-bounds vehicle move from {driver.Name} (slave {car.ObjId}) @ x{vmt.X:F1} y{vmt.Y:F1} - dismounting runaway vehicle");
+            driver.ForceDismount();
+            driver.ParentWorld.SlaveManager.RemoveActiveSlave(driver, car.TlId, false);
+            return;
+        }
+
         var (rotDegX, rotDegY, rotDegZ) = MathUtil.GetSlaveRotationInDegrees(vmt.RotationX, vmt.RotationY, vmt.RotationZ);
 
         // Make sure driver is attached to car
@@ -161,6 +174,17 @@ public static class VehicleMovementModel
         // If ActorFlag 0x40 is no longer set, it means we're no longer climbing/holding onto something
         if (targetUnit.Transform.StickyParent != null && !isSticky && !IsBoardedOnTransfer(targetUnit))
             targetUnit.Transform.StickyParent = null;
+
+        // Out-of-bounds guard: reject moves that would put a root (un-parented) unit outside the
+        // valid world region. Prevents runaway physics / dragged riders / exploit positions from
+        // flooding region streaming and OOM-ing the server. Parented units use relative coords, skip.
+        if (targetUnit.Transform.Parent == null &&
+            !WorldManager.Instance.IsPositionValidForWorld(targetUnit.Transform.WorldId, dmt.X, dmt.Y))
+        {
+            if (targetUnit is Character oobChar)
+                Logger.Warn($"Rejecting out-of-bounds move from {oobChar.Name} @ x{dmt.X:F1} y{dmt.Y:F1}");
+            return;
+        }
 
         // Actually update the position
         targetUnit.Transform.Local.SetPosition(dmt.X, dmt.Y, dmt.Z,

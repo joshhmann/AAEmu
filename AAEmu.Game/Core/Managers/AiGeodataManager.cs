@@ -312,6 +312,13 @@ public class AiGeoDataManager(WorldTemplate worldTemplate)
     }
 
     /// <summary>
+    /// Max planar distance to accept a .bai navmesh sample for terrain height queries.
+    /// If the nearest nav node is farther than this, the unit is on open terrain, not on
+    /// that bridge/road/structure node — so the true bilinear terrain heightmap is used instead.
+    /// </summary>
+    public const float NavMaxPlanarDistanceForHeightM = 5.0f;
+
+    /// <summary>
     /// Gets height using navmesh data
     /// </summary>
     /// <param name="pos"></param>
@@ -323,9 +330,13 @@ public class AiGeoDataManager(WorldTemplate worldTemplate)
         //stopWatch.Start();
         try
         {
-            // Navmesh sample first; raw heightmap fallback when no .bai data covers pos.
-            if (TryGetNavSample(pos, out var navZ, out _))
+            // Navmesh sample only when close enough laterally to be standing on that deck/bridge/road node.
+            if (TryGetNavSample(pos, out var navZ, out var planarM) && planarM <= NavMaxPlanarDistanceForHeightM && navZ > 0f)
                 return navZ;
+
+            var terrainZ = worldTemplate.GetHeight(pos.X, pos.Y);
+            if (terrainZ > 0f)
+                return terrainZ;
 
             return worldTemplate.GetRawHeightMapHeight((int)MathF.Round(pos.X), (int)MathF.Round(pos.Y));
         }

@@ -276,6 +276,11 @@ public class SlaveManager(WorldInstance parentWorldInstance)
         world.Physics.RemoveShip(slaveInfo);
         owner?.BroadcastPacket(new SCSlaveDespawnPacket(objId), true);
         owner?.BroadcastPacket(new SCSlaveRemovedPacket(owner.ObjId, slaveInfo.TlId), true);
+        if (owner != null && slaveInfo.SummoningItem != null)
+        {
+            slaveInfo.SummoningItem.IsDirty = true;
+            owner.SendPacket(new SCItemTaskSuccessPacket(ItemTaskType.UpdateSummonSlaveItem, new ItemUpdate(slaveInfo.SummoningItem), []));
+        }
         lock (_slaveListLock)
         {
             World.RemoveObject(slaveInfo);
@@ -495,7 +500,7 @@ public class SlaveManager(WorldInstance parentWorldInstance)
             slaveSummonItem.SummonLocation = spawnPos.World.Position;
             slaveSummonItem.RepairStartTime = DateTime.MinValue; // reset timer here
             slaveSummonItem.IsDirty = true;
-            owner?.SendPacket(new SCItemTaskSuccessPacket(ItemTaskType.UpdateSummonMateItem, new ItemUpdate(item), []));
+            owner?.SendPacket(new SCItemTaskSuccessPacket(ItemTaskType.UpdateSummonSlaveItem, new ItemUpdate(item), []));
         }
 
         // Create the Slave (packet)
@@ -929,7 +934,10 @@ public class SlaveManager(WorldInstance parentWorldInstance)
             return;
         }
 
-        if (Vector3.Distance(character.Transform.World.Position, slave.Transform.World.Position) > DespawnRangeMeters)
+        var isAttached = slave.AttachedCharacters.Values.Any(c => c.ObjId == character.ObjId);
+        var distance = Vector3.Distance(character.Transform.World.Position, slave.Transform.World.Position);
+        var maxRange = Math.Max(DespawnRangeMeters, (slave.Template?.SpawnYOffset ?? 0f) + 10f);
+        if (!isAttached && distance > maxRange)
         {
             character.SendErrorMessage(ErrorMessageType.SlaveDespawnNearTheSlave);
             return;

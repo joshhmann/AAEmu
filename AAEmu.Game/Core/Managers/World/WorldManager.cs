@@ -811,11 +811,33 @@ public class WorldManager(
 
         if (!worldTemplate.ValidRegion(sx, sy))
         {
-            Logger.Fatal($"GetZoneId: Coordinates out of bounds for WorldId {worldTemplate.Id} - x:{x:#,0.#} - y: {y:#,0.#}");
+            if ((DateTime.UtcNow - _lastOutOfBoundsLog).TotalSeconds >= 5.0)
+            {
+                _lastOutOfBoundsLog = DateTime.UtcNow;
+                Logger.Warn($"GetZoneId: Coordinates out of bounds for WorldId {worldTemplate.Id} - x:{x:#,0.#} - y: {y:#,0.#} (further out-of-bounds messages throttled for 5s)");
+            }
             return 0;
         }
 
         return worldTemplate.ZoneKeyByRegions[sx, sy];
+    }
+
+    private static DateTime _lastOutOfBoundsLog = DateTime.MinValue;
+
+    /// <summary>
+    /// Returns true if the given world-space (x,y) falls inside a valid region of the specified world.
+    /// Used by movement models to reject runaway/out-of-bounds positions before they flood region
+    /// streaming and visibility churn (which can OOM the server).
+    /// </summary>
+    public bool IsPositionValidForWorld(uint worldId, float x, float y)
+    {
+        if (!WorldTemplatesById.TryGetValue(worldId, out var worldTemplate))
+            return true;
+        if (worldTemplate.CellX == 0 || worldTemplate.CellY == 0)
+            return true;
+        var sx = (int)(x / REGION_SIZE);
+        var sy = (int)(y / REGION_SIZE);
+        return worldTemplate.ValidRegion(sx, sy);
     }
 
     /// <summary>

@@ -78,6 +78,28 @@ public class WorldConfig
     public double GrowthRate { get; set; } = 1.0;
 
     /// <summary>
+    /// Minimum NPC respawn time in seconds. Only applied to spawners whose authored spawn delay is at
+    /// or below NpcRespawnPlaceholderThreshold (e.g. the 11,774 compact.sqlite3 rows set to placeholder 10s).
+    /// Spawners with real authored values (e.g. bosses) are untouched. 0 disables.
+    /// </summary>
+    public int NpcRespawnMinSeconds { get; set; } = 0;
+
+    /// <summary>
+    /// As NpcRespawnMinSeconds, but for NPCs whose npc_grade_id is at or above NpcRespawnEliteMinGrade. 0 disables.
+    /// </summary>
+    public int NpcRespawnMinSecondsElite { get; set; } = 0;
+
+    /// <summary>
+    /// npc_grade_id threshold for elite/named NPC respawn floor.
+    /// </summary>
+    public int NpcRespawnEliteMinGrade { get; set; } = 7;
+
+    /// <summary>
+    /// Authored spawn delays at or below this many seconds are treated as data placeholders eligible for the respawn floor.
+    /// </summary>
+    public float NpcRespawnPlaceholderThreshold { get; set; } = 10f;
+
+    /// <summary>
     /// Number of days 1 week worth of tax pays for, set this to 3640 would make 1 tax payment last for about 10 years.
     /// </summary>
     public uint DaysForTaxPayment { get; set; } = 7u;

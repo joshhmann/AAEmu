@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using NetCoreServer;
@@ -28,8 +28,21 @@ public class Server(IPAddress address, int port, IBaseProtocolHandler protocolHa
 
     protected override void OnConnected(TcpSession session)
     {
-        Logger.Info(
-            $"Connect from {session.Socket.RemoteEndPoint} established, session id: {session.Id}");
+        string remote;
+        try
+        {
+            remote = session.Socket.RemoteEndPoint?.ToString() ?? "unknown";
+        }
+        catch (ObjectDisposedException)
+        {
+            remote = "disconnected";
+        }
+        catch (SocketException)
+        {
+            remote = "disconnected";
+        }
+
+        Logger.Info($"Connect from {remote} established, session id: {session.Id}");
         _sessions.TryAdd(session.Id, (Session)session);
     }
 

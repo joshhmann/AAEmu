@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
@@ -339,6 +339,19 @@ public class SphereGameData : Singleton<SphereGameData>, IGameDataLoader
     /// <returns>SphereQuest that was hit, null if none found</returns>
     public SphereQuest IsInsideAreaSphere(uint sphereId, uint value2, Vector3 worldPosition, uint requiredComponentId = 0)
     {
+        // Primary path: match quest-sphere geometry (.g files) directly by active quest ComponentId.
+        // The static sphere_quests mapping table's quest_id is often stale in reference data (826 of 1229
+        // rows point at quest IDs absent from client .g files, though their ComponentId matches DB quest_components).
+        if (requiredComponentId != 0)
+        {
+            var spheresByComponent = SphereQuestManager.GetSpheresForComponent(requiredComponentId);
+            foreach (var pakDataSphere in spheresByComponent)
+            {
+                if (pakDataSphere.Contains(worldPosition))
+                    return pakDataSphere;
+            }
+        }
+
         if (!_spheres.TryGetValue(sphereId, out var dbSphere))
             return null;
 

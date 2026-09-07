@@ -1,4 +1,4 @@
-﻿using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
@@ -21,6 +21,11 @@ public class DoodadFuncRequireQuest : DoodadPhaseFuncTemplate
                 return false; // This player is on the correct quest, continue
             return true; // Player doesn't have the quest, stop execution
         }
-        return false; // caster is not a player, allow execution as we can't check
+        // No player context (e.g. world spawner boot or timer tick).
+        // This gate means "only proceed for a player holding this quest", so with
+        // no player present we must STOP (return true), not continue.
+        // Returning false was letting doodads with RequireQuest + Timer (such as
+        // Quest 307 "Trash" sacks) run their timers and self-delete 120s after boot.
+        return true;
     }
 }

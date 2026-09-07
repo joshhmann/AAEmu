@@ -342,6 +342,17 @@ public class SphereQuestManager(WorldInstance parent) : ISphereQuestManager
         return sphereQuests;
     }
 
+    public static List<SphereQuest> GetSpheresForComponent(uint componentId)
+    {
+        if (_sphereQuests == null)
+            return [];
+
+        if (_sphereQuests.TryGetValue(componentId, out var list))
+            return [..list];
+
+        return [];
+    }
+
     public static List<SphereQuest> GetSpheresForQuest(uint questSphereQuestId)
     {
         var res = new List<SphereQuest>();

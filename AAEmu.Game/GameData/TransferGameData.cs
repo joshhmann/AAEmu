@@ -1,4 +1,4 @@
-﻿using System.Xml;
+using System.Xml;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.XML;
@@ -196,6 +196,10 @@ public class TransferGameData : Singleton<TransferGameData>, IGameDataLoader
                                     // конвертируем координаты из локальных в мировые, сразу при считывании из файла пути
                                     // convert coordinates from local to world, immediately when reading the path from the file
                                     var vec = ZoneManager.Instance.ConvertToWorldCoordinates(zoneId, xyz);
+                                    // Apply per-path cell offset: Pos values in transfer_path.xml are relative
+                                    // to the path's cell (cellX/cellY on the <Transfer> node), not the zone origin.
+                                    vec.X += transferRoad.CellX * 1024f;
+                                    vec.Y += transferRoad.CellY * 1024f;
                                     var pos = new WorldSpawnPosition
                                     {
                                         X = vec.X,

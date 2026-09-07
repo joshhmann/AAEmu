@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Sockets;
 using NetCoreServer;
 
@@ -32,9 +32,31 @@ public class Session : TcpSession, ISession
 
     protected override void OnConnecting()
     {
-        RemoteEndPoint = (IPEndPoint)Socket.RemoteEndPoint;
-        SessionId = (uint)RemoteEndPoint.GetHashCode();
-        Ip = RemoteEndPoint.Address;
+        IPEndPoint remote = null;
+        try
+        {
+            remote = Socket.RemoteEndPoint as IPEndPoint;
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        catch (SocketException)
+        {
+        }
+
+        if (remote != null)
+        {
+            RemoteEndPoint = remote;
+            SessionId = (uint)remote.GetHashCode();
+            Ip = remote.Address;
+        }
+        else
+        {
+            RemoteEndPoint = new IPEndPoint(IPAddress.None, 0);
+            SessionId = (uint)Id.GetHashCode();
+            Ip = IPAddress.None;
+        }
+
         ProtocolHandler?.OnConnect(this);
     }
 

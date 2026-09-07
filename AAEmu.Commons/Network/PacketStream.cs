@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+using System.Buffers;
 using System.Collections;
 using System.Numerics;
 using System.Text;
@@ -181,9 +181,20 @@ public class PacketStream : ICloneable, IComparable
 
     private static byte[] Roundup(int length)
     {
+        if (length < 0)
+            throw new ArgumentOutOfRangeException(nameof(length), length, "Negative buffer length");
+
         var i = 16;
-        while (length > i)
-            i <<= 1;
+        while (i < length)
+        {
+            var next = i << 1;
+            if (next < i) // would overflow Int32 -> use exact length
+            {
+                i = length;
+                break;
+            }
+            i = next;
+        }
         return new byte[i];
     }
 
@@ -193,6 +204,9 @@ public class PacketStream : ICloneable, IComparable
     /// <param name="count">Minimum buffer size.</param>
     public void Reserve(int count)
     {
+        if (count < 0)
+            throw new ArgumentOutOfRangeException(nameof(count), count, "Negative buffer length");
+
         if (Buffer == null)
         {
             Buffer = Roundup(count);

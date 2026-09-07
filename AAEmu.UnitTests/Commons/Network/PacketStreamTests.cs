@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 
 using AAEmu.Commons.Network;
 
@@ -148,6 +148,32 @@ namespace AAEmu.UnitTests.Commons.Network
             await Assert.That(result.X).IsGreaterThanOrEqualTo(q.X - 0.1f).And.IsLessThanOrEqualTo(q.X + 0.1f);
             await Assert.That(result.Y).IsGreaterThanOrEqualTo(q.Y - 0.1f).And.IsLessThanOrEqualTo(q.Y + 0.1f);
             await Assert.That(result.Z).IsGreaterThanOrEqualTo(q.Z - 0.1f).And.IsLessThanOrEqualTo(q.Z + 0.1f);
+        }
+
+        [Test]
+        public async Task Reserve_NegativeLength_ThrowsArgumentOutOfRangeException()
+        {
+            var stream = new PacketStream();
+            Assert.Throws<ArgumentOutOfRangeException>(() => stream.Reserve(-1));
+        }
+
+        [Test]
+        public async Task Reserve_LargeLength_AllocatesWithoutInfiniteLoop()
+        {
+            var stream = new PacketStream();
+            // Value greater than 2^30 would previously spin forever in Roundup
+            // We test with (1 << 30) + 1. Because allocating 2GB might throw OutOfMemoryException,
+            // we assert that it either allocates or throws OutOfMemoryException, but does NOT hang.
+            try
+            {
+                stream.Reserve((1 << 30) + 1);
+                await Assert.That(stream.Capacity).IsGreaterThanOrEqualTo((1 << 30) + 1);
+            }
+            catch (OutOfMemoryException)
+            {
+                // Acceptable on memory-constrained systems - point is it didn't hang
+                await Assert.That(true).IsTrue();
+            }
         }
     }
 }

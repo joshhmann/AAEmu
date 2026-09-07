@@ -119,7 +119,7 @@ public class WorldTemplate
     {
         var cellX = x / WorldManager.CELL_SIZE;
         var cellY = y / WorldManager.CELL_SIZE;
-        if (cellX < 0 || cellX > CellX || cellY < 0 || cellY > CellY)
+        if (cellX < 0 || cellX >= Cells.GetLength(0) || cellY < 0 || cellY >= Cells.GetLength(1))
             return 0f; // out of bounds
         var cell = Cells[cellX, cellY].VerifyCellLoaded();
         var sx = x % WorldManager.CELL_SIZE / 2;
@@ -209,7 +209,7 @@ public class WorldTemplate
     /// <returns>Returns the cell, or null if the given index is out of bounds for this world</returns>
     public WorldCell GetCell(int cellX, int cellY)
     {
-        if (cellX < 0 || cellX > CellX || cellY < 0 || cellY > CellY)
+        if (cellX < 0 || cellX >= Cells.GetLength(0) || cellY < 0 || cellY >= Cells.GetLength(1))
             return null;
         return Cells[cellX, cellY];
     }
