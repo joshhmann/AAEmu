@@ -58,6 +58,22 @@ feel.)
   `harvest`, `craft`, `buy`, `sell`, `pack_pickup`, `put_down`,
   `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
   `drive_vehicle`. The current MCP catalog is **39 tools**.
+
+## Position 2026-09-07 (current; history below preserved)
+
+- HEAD: local `develop` at `0f2ff824f`. Since the `322390b32` baseline above:
+  combat kill-races closed, M5 decision primitive + M6 cancellation/isolation
+  integrated, Q1 singleton-lane serialization, Q2 runner fix, Q3 seam salvage
+  (blend dropped), Q4 grant rig + live hunt-leg, Q5 wildlife audit, Q6 live
+  9/9, M8 C3 farmer, Phase 1 audit telemetry + registry hardening, gap tests
+  (deck-wins, seat round-trip, assist cast).
+- Gate @ `8a4721775`: 2883 total / 2882 passed / 0 failed / 1 skipped
+  (environmental live-rig skip); MCP smokes 39 + 24; archaeology-cycle
+  156/156 + 24-tool smoke, compact md5 unchanged.
+- A5: b1 + b2 closed (tested revision `02903804b`); SHAPE re-show pending.
+- H stays U (UNKNOWN) everywhere until Josh runs the curated scenario —
+  including his 2026-09-06 Wardton tour (keeps + deck exception recorded,
+  two dock snaps parked UNCONFIRMED, cave keep ruling).
 - Current source/test HEAD is local `develop` at `322390b32` (combat bonus-snapshot + aggro-table
   kill races; prior `7c0772f12` loot-race regression, `9ad5735b2` bot-wildlife crash cluster);
   CompleteQuest composition, non-objective act classification, and Level objective pursuit are

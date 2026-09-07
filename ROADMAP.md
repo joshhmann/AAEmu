@@ -18,7 +18,7 @@
 
 ## Post-M7 readiness — roadmap zoom-out: prioritized post-M7 work and M8 horizon (2026-09-05, docs-only)
 
-- Provenance: develop `6d6b98b70` (code tip includes Q4 grant rig + loot tests, singleton lane, Q6 probe, seam salvage, E2E cast/loot ops; zoom-out authored docs-only over source/test `322390b32`)
+- Provenance: develop `0f2ff824f` (code tip includes Q4 grant rig + live hunt-leg, singleton lane, Q6 probe, seam salvage, M8 C3 farmer, Phase 1 audit telemetry + registry hardening, gap tests, handoff doc, GM guide; zoom-out authored docs-only over source/test `322390b32` — that baseline is now historical)
   - docs-only HEAD over source/test `322390b32`; no code/test/config/data edits, no builds/gates/deploys
 - IDs: stable existing only (M0–M8, PB-001/002/005/007, A1–A6, B1–B5, C1–C5, G0–G4, REQ-*, deferred gates #1–#4 + M7 feel, ledger states 1–7); no new kanban IDs
 - History below preserved with dates; the current register in this section stands alone (act on this section without reconciling old paragraphs)
@@ -147,17 +147,17 @@
   - Exemption (recorded, not an omission): while WAR-HONOR stays deferred, no contract/evidence/done fields apply — this entry exists only to fence WAR-HONOR scope out of the narrow handshake closure
 
 ### Correction register (current evidenced state; history below unchanged)
-- Deploy pointer: `.165` = presence-demo prod (still); source pointer `135c4f14e` / source `322390b32` STALE — see STATUS.md current honest state
+- Deploy pointer: `.165` = presence-demo prod (still); live image built 01:35Z Sep 7 (uptimes healthy per 2026-09-07 check) — image source revision unstamped, unconfirmed; old pointer `135c4f14e` / source `322390b32` STALE — see STATUS.md current honest state
   - Observed 10-min window 0 threw / 0 boundary / 0 fast @ 250 provisioned bots = liveness snapshot only: specified races are defended by the hammer/regression tests (`7c0772f12`, `BuffToleranceTests`, `NpcAggroRaceTests`); the window shows non-recurrence only — never absolute validation
-- Gate @ `6c64b449d`: 2855 total = 2854 pass / 0 fail / 1 skip; MCP smokes 39 + 24
-  - Green 2854/0/1; RED@`f04804f` triaged as flake (cross-class singleton race); full history in STATUS.md
+- Gate @ `8a4721775` (2026-09-07): 2883 total = 2882 pass / 0 fail / 1 skip (environmental live-rig skip); MCP smokes 39 + 24; archaeology-cycle 156/156 + 24-tool smoke, compact md5 unchanged. Prior greens: `6c64b449d` 2855/2854/0/1, `d860979` 2844/2843/0/1.
+  - Green 2882/0/1 at tip; RED@`f04804f` triaged as flake (cross-class singleton race); full history in STATUS.md
 - Soak #1 (@ `9ad5735b2`): interrupted ~72 min, no fresh report, cause UNKNOWN (external-termination hypothesis; current memory/dmesg silence is not historical exclusion); partial evidence only
 - Soak #2 (@ `322390b32`): CLOSED-PASS 2026-09-05 (started 09:28:34Z 5 Sep; report `g2-a5-tier3-sixhour-report.json` PASS — FULL window, `passed: true`, zero breaches)
   - Window completes ~15:33Z + finalization (warmup-anchored: `A5_WARMUP_READY` 09:33:11Z + 360 min — NOT 09:28 + 6 exact)
   - Heartbeats `[+0/x0/?0]` are test-runner counters, NOT zero-breach proof — verdict lives only in `report.failures` / `report.passed`
   - Superseded by the b2 asserted soak CLOSED-PASS 2026-09-06 (report 02:49:08Z, passed:true, failures:[], tested revision 02903804b; see STATUS.md).
 - Wildlife/loot facts: NPC picker uniform-random among off-cooldown/in-range `np_skills` (`Behavior.cs:55-61` filter, `:95` pick — VERIFIED); `CombatDecisionTree` = bot offense only; `actor.Loot` real path exists; the roam callsite discards the loot-request outcome (`_ = actor.Loot(...)`, `BotRoamStepExecutor.cs:322` — VERIFIED); `LevelingLoop` loots + auto-equips; doodad livestock butcher exists; NPC-corpse→doodad conversion not present in the inspected death path (`Npc.DoDie` → `Unit.DoDie` → `GenerateLoot`) and a canonical requirement is unestablished (name-hit absence is not exhaustive proof); canonical audit before skinning (→ Q5)
-- Spline branch: UNMERGED (ref still open, no merge commit); base corner-blending code already in develop via `b6a81ccc5`; blend dropped, seam salvaged (→ Q3 card)
+- Spline branch: DELETED 2026-09-06 (worktree + local + remote refs removed; punch-list diff discarded per drop ruling). Base corner-blending code remains in develop via `b6a81ccc5`; seam salvaged (→ Q3 card)
   - 1 m skip is corner-cutting, not a proven spline; max-deviation bound NOT proven; `route[^1]`-before-`Count` seam defect fixed in develop via `9c84b6897` (→ Q3)
 
 ### A5 Tier-3 contract reconciliation (reconciles the §G2 scale-ladder FINAL Tier-3 acceptance with the longer-soak recommendation)

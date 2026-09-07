@@ -1,7 +1,7 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-06 · Phase 1 evidence complete @ 61123ea88 (gate + archaeology green)
-Branch of record: develop ca7762d7d (roadmap docs merge HEAD; runtime source/test 322390b32)
+Updated: 2026-09-07 · docs alignment (roadmap + scorecard current @ `0f2ff824f`)
+Branch of record: develop `0f2ff824f` (queue Q1–Q6 done/dropped, A5 b1+b2 closed, M8 C3 landed)
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
 `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
