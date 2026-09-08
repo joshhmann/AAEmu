@@ -1044,6 +1044,8 @@ public sealed class BotDriveBridge
             return HandlePartySpikeScenario(root);
         if (templateName == VillageDayCycle.ScenarioName)
             return HandleVillageDayCycleScenario(root);
+        if (templateName == VillageFullDayCycle.ScenarioName)
+            return HandleVillageFullDayScenario(root);
 
         var template = templateName != null ? BotScenarioTemplates.Get(templateName) : null;
         if (template == null)
@@ -1785,6 +1787,270 @@ public sealed class BotDriveBridge
         }
     }
 
+    /// <summary>
+    /// M8 C5-soak execution seam: runs <see cref="VillageFullDayCycle"/> (the
+    /// slice-4 composer, unchanged) on TWO real provisioned bots through the
+    /// live E2E bridge. Request (all fields optional except "template"):
+    ///
+    ///   {"cmd":"scenario","template":"m8-village-fullday-s4",
+    ///    "farmer":"m8vffarmer","crafter":"m8vfcrafter","cycleId":"m8v5-c0"}
+    ///
+    /// Flow: day prep identical to the half-day seam (mature owned crop +
+    /// banked craft mats + bench) PLUS evening prep (banked saleable output
+    /// per bot through real deposit legs + the general merchant resolve —
+    /// villagers stay where the day left them: Sell has no range gate and
+    /// home is each villager's own position) → record profession + home +
+    /// schedule (anchors, no phase yet) → run the full-day composer →
+    /// stamp lastPhase per villager → enqueue each actor's NEW audit slice
+    /// (the run's records only — prep legs stay out) into
+    /// <see cref="PlayerBotAuditSink"/> (the B4 flush path the SaveManager
+    /// tick persists to playerbot_audit) → return the structured payload
+    /// with per-bot `ledger` + evening evidence the restart test reconciles
+    /// against MySQL. Both characters are deactivated afterwards.
+    /// </summary>
+    private string HandleVillageFullDayScenario(JsonElement root)
+    {
+        var farmerName = (root.TryGetProperty("farmer", out var farmerEl) && farmerEl.GetString() is { Length: > 0 } farmerRaw
+            ? farmerRaw
+            : "m8vffarmer").NormalizeName();
+        var crafterName = (root.TryGetProperty("crafter", out var crafterEl) && crafterEl.GetString() is { Length: > 0 } crafterRaw
+            ? crafterRaw
+            : "m8vfcrafter").NormalizeName();
+        var cycleId = root.TryGetProperty("cycleId", out var cy) && cy.GetString() is { Length: > 0 } cs
+            ? cs
+            : "m8v5-c0";
+
+        var provisionError = ProvisionBotParty(VillageFullDayCycle.ScenarioName, [farmerName, crafterName], 10, out var sessions);
+        if (provisionError != null)
+            return provisionError;
+
+        var farmerSession = sessions[0];
+        var crafterSession = sessions[1];
+        try
+        {
+            var farmerChar = farmerSession.Character;
+            var crafterChar = crafterSession.Character;
+            farmerChar.Level = 10;
+            crafterChar.Level = 10;
+            farmerChar.Money = EconomyDayCycleScenario.DefaultSeedMoney;
+            crafterChar.Money = EconomyDayCycleScenario.DefaultSeedMoney;
+            farmerChar.LaborPower = EconomyDayCycleScenario.DefaultLaborPool;
+            crafterChar.LaborPower = EconomyDayCycleScenario.DefaultLaborPool;
+
+            var pump = new EconomyDayCycleScenario.LiveCyclePump();
+            var farmerActor = new GameplayActor(farmerChar);
+            var crafterActor = new GameplayActor(crafterChar);
+            var anchors = BotDailyAnchors.Template;
+
+            // ---- Merchant resolve FIRST: the spawner path teleports the
+            // adapter's character to the spawner (proximity spawn), so this
+            // must run before the farmer plants at its feet and before the
+            // crafter moves to the bench. The ObjId stays valid (same world).
+            var merchantObjId = new LiveScenarioWorldAdapter(farmerChar)
+                .ResolveNpcObjId(EconomyDayCycleScenario.GeneralMerchantNpcTemplateId);
+            if (merchantObjId == 0)
+                return Err($"scenario: general merchant {EconomyDayCycleScenario.GeneralMerchantNpcTemplateId} unresolvable in world");
+
+            // ---- Farmer prep: one mature owned crop at the farmer's feet. ----
+            new PlayerBotController(farmerChar).StockInventory(EconomyDayCycleScenario.PotatoSeedItemId, 3);
+            var farmPos = farmerChar.Transform.World.Position;
+            var prep = farmerActor.Plant(EconomyDayCycleScenario.PotatoSeedItemId, farmPos,
+                idempotencyKey: $"{cycleId}-prep-plant");
+            prep = pump.Drive(farmerActor, prep, TimeSpan.FromSeconds(60));
+            if (prep.State != ActorLifecycleState.Completed)
+                return Err($"scenario: prep plant failed ({prep.State}: {prep.Detail ?? "no detail"})");
+            var cropObjId = ReadVillageObjId(prep.Result);
+            if (cropObjId == 0)
+                return Err("scenario: prep plant completed without a crop ObjId");
+            if (!pump.WaitForCropMaturity(farmerChar, cropObjId, TimeSpan.FromSeconds(180)))
+                return Err($"scenario: prep crop {cropObjId} not harvestable within the maturity window");
+            var crafterCtl = new PlayerBotController(crafterChar);
+            crafterCtl.StockInventory(EconomyDayCycleScenario.PotatoItemId, 1);
+            crafterCtl.StockInventory(EconomyDayCycleScenario.WaterItemId, 1);
+            foreach (var material in new[] { EconomyDayCycleScenario.PotatoItemId, EconomyDayCycleScenario.WaterItemId })
+            {
+                var deposit = crafterActor.DepositItem(material, idempotencyKey: $"{cycleId}-prep-deposit-{material}");
+                deposit = pump.Drive(crafterActor, deposit, TimeSpan.FromSeconds(60));
+                if (deposit.State != ActorLifecycleState.Completed)
+                    return Err($"scenario: prep deposit of {material} failed ({deposit.State}: {deposit.Detail ?? "no detail"})");
+            }
+
+            var benchObjId = ResolveVillageBench(crafterChar, cropObjId);
+            if (benchObjId == 0)
+                return Err("scenario: no craft bench doodad in range");
+            var bench = crafterChar.ParentWorld?.GetDoodad(benchObjId);
+            var benchPos = bench?.Transform.World.Position ?? crafterChar.Transform.World.Position;
+            TeleportWithRegionSync(crafterChar, benchPos + new System.Numerics.Vector3(2f, 0f, 0f));
+
+            // ---- Evening prep: banked saleable output per bot (real deposit
+            // legs). The merchant was resolved BEFORE the day prep (its
+            // spawner path teleports). The evening sells every banked unit of
+            // the output template — the day's own craft product (same
+            // template) joins the stocked units in one sale.
+            foreach (var (prepChar, prepActor) in new[] { (farmerChar, farmerActor), (crafterChar, crafterActor) })
+            {
+                new PlayerBotController(prepChar).StockInventory(EconomyDayCycleScenario.BoiledPotatoItemId, 3);
+                var eveningStock = prepActor.DepositItem(EconomyDayCycleScenario.BoiledPotatoItemId,
+                    idempotencyKey: $"{cycleId}-prep-evening-{prepChar.Name}");
+                eveningStock = pump.Drive(prepActor, eveningStock, TimeSpan.FromSeconds(60));
+                if (eveningStock.State != ActorLifecycleState.Completed)
+                    return Err($"scenario: evening stock deposit failed for {prepChar.Name} ({eveningStock.State}: {eveningStock.Detail ?? "no detail"})");
+            }
+
+            // ---- Metadata: profession + home + schedule (anchors, no phase yet). ----
+            var store = PlayerBotMetadataStore.Instance;
+            store.RecordProfession(farmerChar.Id, nameof(VillageDayCycle.VillageProfession.Farmer).ToLowerInvariant());
+            store.RecordProfession(crafterChar.Id, nameof(VillageDayCycle.VillageProfession.Crafter).ToLowerInvariant());
+            RecordVillageHome(store, farmerChar);
+            RecordVillageHome(store, crafterChar);
+            store.RecordSchedule(farmerChar.Id, VillageScheduleJson(farmerChar, cycleId, anchors, null));
+            store.RecordSchedule(crafterChar.Id, VillageScheduleJson(crafterChar, cycleId, anchors, null));
+
+            var farmerHome = farmerChar.Transform.World.Position;
+            var crafterHome = crafterChar.Transform.World.Position;
+            var farmerAuditBase = farmerActor.AuditTrace.Count;
+            var crafterAuditBase = crafterActor.AuditTrace.Count;
+
+            // ---- The full day through the slice-4 composer, unchanged. ----
+            var result = VillageFullDayCycle.Run(
+            [
+                new VillageFullDayCycle.FullDayVillager
+                {
+                    Name = farmerName,
+                    DaySpec = new VillageDayCycle.VillagerSpec
+                    {
+                        Name = farmerName,
+                        Profession = VillageDayCycle.VillageProfession.Farmer,
+                        Actor = farmerActor,
+                        Anchors = anchors,
+                        CropObjId = cropObjId,
+                        FarmerSeedItemId = FarmerCycleScenario.ApprovedSeedItemId
+                    },
+                    EveningOutputTemplateId = EconomyDayCycleScenario.BoiledPotatoItemId,
+                    EveningMerchantObjId = merchantObjId,
+                    EveningHome = farmerHome
+                },
+                new VillageFullDayCycle.FullDayVillager
+                {
+                    Name = crafterName,
+                    DaySpec = new VillageDayCycle.VillagerSpec
+                    {
+                        Name = crafterName,
+                        Profession = VillageDayCycle.VillageProfession.Crafter,
+                        Actor = crafterActor,
+                        Anchors = anchors,
+                        CrafterOptions = new CrafterWorkstationCycle.CrafterWorkstationOptions
+                        {
+                            CycleId = $"{cycleId}-{crafterName}-craft",
+                            CraftId = EconomyDayCycleScenario.BoiledPotatoCraftId,
+                            BenchObjId = benchObjId
+                        },
+                        CrafterPump = new VillageLivePump()
+                    },
+                    EveningOutputTemplateId = EconomyDayCycleScenario.BoiledPotatoItemId,
+                    EveningMerchantObjId = merchantObjId,
+                    EveningHome = crafterHome
+                }
+            ], new VillageFullDayCycle.VillageFullDayOptions { CycleId = cycleId }, new VillageLiveMovePump());
+
+            var farmerEntry = result.Report.Villagers.SingleOrDefault(v => v.Profession == VillageDayCycle.VillageProfession.Farmer);
+            var crafterEntry = result.Report.Villagers.SingleOrDefault(v => v.Profession == VillageDayCycle.VillageProfession.Crafter);
+            BotSchedulePhase? farmerLast = farmerEntry?.DayEntry?.PhasesVisited.Count > 0 ? farmerEntry.DayEntry.PhasesVisited[^1] : null;
+            BotSchedulePhase? crafterLast = crafterEntry?.DayEntry?.PhasesVisited.Count > 0 ? crafterEntry.DayEntry.PhasesVisited[^1] : null;
+
+            // Stamp lastPhase per villager (write-through; hard-kill safe).
+            store.RecordSchedule(farmerChar.Id, VillageScheduleJson(farmerChar, cycleId, anchors, farmerLast));
+            store.RecordSchedule(crafterChar.Id, VillageScheduleJson(crafterChar, cycleId, anchors, crafterLast));
+
+            // Audit: each actor's NEW slice (the run's records only — prep
+            // legs stay out) under its own character id (the same flush path
+            // the B1 queue uses).
+            var sink = PlayerBotAuditSink.Instance;
+            var farmerNew = farmerActor.AuditTrace.Skip(farmerAuditBase).ToList();
+            var crafterNew = crafterActor.AuditTrace.Skip(crafterAuditBase).ToList();
+            foreach (var record in farmerNew)
+                sink.Enqueue(farmerChar.Id, record.ToJson());
+            foreach (var record in crafterNew)
+                sink.Enqueue(crafterChar.Id, record.ToJson());
+
+            var eveningByName = result.Report.EveningReport != null
+                ? result.Report.EveningReport.Villagers.ToDictionary(e => e.Name)
+                : new Dictionary<string, VillageEveningCycle.VillagerEveningEntry>();
+            var villagers = new[]
+            {
+                FullDayEvidence(farmerName, "farmer", farmerChar, farmerEntry, farmerLast, farmerNew.Count, eveningByName),
+                FullDayEvidence(crafterName, "crafter", crafterChar, crafterEntry, crafterLast, crafterNew.Count, eveningByName)
+            };
+            var payload = new
+            {
+                template = result.Scenario,
+                passed = result.Passed,
+                failStage = result.FailStage,
+                failure = result.Failure?.ToString(),
+                failReason = result.FailReason,
+                stages = result.Stages,
+                criteria = result.Criteria,
+                traceRecords = result.TraceRecords.Select(r => r.ToJson()).ToList(),
+                trace = result.TraceRecords
+                    .Select(r => JsonSerializer.Deserialize<JsonElement>(r.ToJson()))
+                    .ToArray(),
+                evidence = string.Join("; ", result.Criteria.Select(c => $"{c.Name}={(c.Passed ? "pass" : "FAIL")}")) +
+                    $" | {farmerName}: work={farmerEntry?.DayEntry?.WorkTicks ?? 0} {farmerEntry?.DayEntry?.FarmerResult?.Report?.HarvestOutcome}" +
+                    $" | {crafterName}: work={crafterEntry?.DayEntry?.WorkTicks ?? 0} labor={crafterEntry?.DayEntry?.CrafterResult?.LaborCharged}",
+                villagers,
+                characters = new[]
+                {
+                    new { name = farmerChar.Name, level = farmerChar.Level, objId = farmerChar.ObjId, id = farmerChar.Id },
+                    new { name = crafterChar.Name, level = crafterChar.Level, objId = crafterChar.ObjId, id = crafterChar.Id }
+                },
+                ledgers = new[]
+                {
+                    VillageLedger(farmerChar),
+                    VillageLedger(crafterChar)
+                }
+            };
+            Logger.Info("scenario '{Template}': {Verdict} on '{Farmer}'+'{Crafter}' ({Stage}{Failure})",
+                VillageFullDayCycle.ScenarioName, result.Passed ? "PASS" : "FAIL", farmerName, crafterName,
+                result.FailStage, result.Failure is { } f ? $", {f}" : "");
+            return Ok(payload);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "scenario '{Template}': run crashed on '{Farmer}'+'{Crafter}'",
+                VillageFullDayCycle.ScenarioName, farmerName, crafterName);
+            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            DeactivateParty(VillageFullDayCycle.ScenarioName, sessions);
+        }
+    }
+
+    /// <summary>One full-day villager's evidence block for the restart-equality test.</summary>
+    private static object FullDayEvidence(string name, string profession, Character character,
+        VillageFullDayCycle.VillagerFullDayEntry? entry, BotSchedulePhase? lastPhase, int traceCount,
+        IReadOnlyDictionary<string, VillageEveningCycle.VillagerEveningEntry> evening)
+    {
+        evening.TryGetValue(name, out var eveningEntry);
+        return new
+        {
+            name,
+            profession,
+            characterId = character.Id,
+            phasesVisited = entry?.DayEntry?.PhasesVisited.Select(p => p.ToString()).ToArray() ?? Array.Empty<string>(),
+            lastPhase = lastPhase?.ToString(),
+            workTicks = entry?.DayEntry?.WorkTicks ?? 0,
+            nonWorkTicks = entry?.DayEntry?.NonWorkTicks ?? 0,
+            laborBefore = entry?.DayEntry?.LaborBefore ?? 0,
+            laborAfter = entry?.LaborAfterEvening ?? 0,
+            traceCount,
+            eveningRefund = eveningEntry?.Refund ?? 0,
+            eveningSold = eveningEntry?.SoldCount ?? 0,
+            eveningMarketComplete = eveningEntry?.MarketComplete ?? false,
+            eveningReturnedHome = eveningEntry?.ReturnedHome ?? false
+        };
+    }
+
     /// <summary>One villager's evidence block for the restart-equality test.</summary>
     private static object VillageEvidence(string name, string profession, Character character,
         VillageDayCycle.VillagerDayEntry entry, BotSchedulePhase? lastPhase, int traceCount)
@@ -1880,6 +2146,21 @@ public sealed class BotDriveBridge
         public ActorRequest DriveCraft(GameplayActor actor, ActorRequest request, uint benchObjId, uint skillId, TimeSpan maxWait)
         {
             var deadline = Environment.TickCount64 + (long)maxWait.TotalMilliseconds;
+            while (!request.IsTerminal && Environment.TickCount64 < deadline)
+            {
+                actor.Tick(TimeSpan.FromMilliseconds(100));
+                Thread.Sleep(TimeSpan.FromMilliseconds(100));
+            }
+
+            return request;
+        }
+    }
+    /// <summary>Live return-home pump: polls the in-flight move to terminal on real time.</summary>
+    private sealed class VillageLiveMovePump : IVillageMovePump
+    {
+        public ActorRequest Walk(GameplayActor actor, ActorRequest request, TimeSpan budget)
+        {
+            var deadline = Environment.TickCount64 + (long)budget.TotalMilliseconds;
             while (!request.IsTerminal && Environment.TickCount64 < deadline)
             {
                 actor.Tick(TimeSpan.FromMilliseconds(100));

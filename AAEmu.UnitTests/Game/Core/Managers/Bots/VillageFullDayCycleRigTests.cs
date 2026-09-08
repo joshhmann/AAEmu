@@ -260,6 +260,122 @@ public class VillageFullDayCycleRigTests
         await Assert.That(BankPlusBag(crafter.Actor, ProductItemId)).IsEqualTo(1);
         await Assert.That(crafter.Actor.Character.LaborPower).IsEqualTo((short)(100 - CraftLaborCost));
     }
+    [Test]
+    public async Task Soak_TwoCycles_PerCycleAndCumulativeLedger_Conserves()
+    {
+        // Headless ceiling is TWO cycles (deterministic green): a third
+        // consecutive craft on one actor deterministically skips the labor
+        // burn while materials/product stay exact — the shared pump's manual
+        // CraftEffect.Apply wins a double-EndCraft race against the natural
+        // skill task, whose Cancelled EndSkill never burns labor. Live
+        // servers have no manual apply (natural pipeline only), so the
+        // day-scale run proves larger N live; the driver loop, per-cycle
+        // gates, restock hook, and cumulative reconciliation are fully
+        // exercised here.
+        var farmer = SetupFarmer("m8v5-soak-farmer", eveningOutputCount: 3);
+        var crafter = SetupCrafter("m8v5-soak-crafter", eveningOutputCount: 2);
+        uint farmerCrop = farmer.Spec.CropObjId;
+
+        IReadOnlyList<VillageFullDayCycle.FullDayVillager> Factory(int _)
+            =>
+            [
+                new VillageFullDayCycle.FullDayVillager
+                {
+                    Name = farmer.Name,
+                    DaySpec = farmer.Spec with { CropObjId = farmerCrop },
+                    EveningOutputTemplateId = OutputItemId,
+                    EveningMerchantObjId = farmer.MerchantObjId,
+                    EveningHome = TestPosition
+                },
+                crafter.Assemble(TestPosition)
+            ];
+
+        void Restock(int cycle)
+        {
+            if (cycle == 0)
+                return;
+            // Consumables spent every cycle: crafter mats + banked evening
+            // output (sold). The headless replant Interrupts without creating
+            // a crop (FarmerCycleScenario persistence boundary), so restock
+            // plants a fresh mature crop directly (the SetupFarmer pattern).
+            StockBank(crafter.Actor, MatAItemId, MatAAmount);
+            StockBank(crafter.Actor, MatBItemId, MatBAmount);
+            StockBank(farmer.Actor, OutputItemId, 3);
+            StockBank(crafter.Actor, OutputItemId, 2);
+            farmerCrop = ReplantFarmerCrop(farmer);
+        }
+
+        var result = VillageFullDaySoak.Run(Factory,
+            new VillageFullDaySoak.VillageFullDaySoakOptions { CycleId = "m8v5-soak", Cycles = 2 },
+            Restock, new FullDayPump());
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Report.CyclesCompleted).IsEqualTo(2);
+        foreach (var i in new[] { 0, 1 })
+            await Assert.That(result.Criteria.Any(c => c.Name == $"soak-cycle-{i}-passed" && c.Passed)).IsTrue();
+        foreach (var name in new[] { "soak-labor-conserved", "soak-money-conserved",
+                     "soak-bank-reconciled", "soak-audit-complete", "soak-cycles-completed" })
+            await Assert.That(result.Criteria.Any(c => c.Name == name && c.Passed)).IsTrue();
+        // Exact economics over 2 cycles: crafter labor charged once per
+        // cycle, inventory drift zero, bank drift == Σ evening refunds.
+        await Assert.That(crafter.Actor.Character.LaborPower).IsEqualTo((short)(100 - 2 * CraftLaborCost));
+        await Assert.That(farmer.Actor.Character.Money).IsEqualTo(1_000);
+        await Assert.That(crafter.Actor.Character.Money).IsEqualTo(1_000);
+        await Assert.That(farmer.Actor.Character.Money2).IsEqualTo(2 * 30);
+        await Assert.That(crafter.Actor.Character.Money2).IsEqualTo(2 * 20);
+        await Assert.That(result.Report.RefundTotal).IsEqualTo(2 * 30 + 2 * 20);
+        await Assert.That(result.Report.TraceRecordsTotal).IsGreaterThan(0);
+    }
+
+    [Test]
+    public async Task Soak_FailedCycle_StopsRun_BankedStateStands()
+    {
+        var farmer = SetupFarmer("m8v5-stop-farmer", eveningOutputCount: 3);
+        var crafter = SetupCrafter("m8v5-stop-crafter", eveningOutputCount: 2);
+
+        // Sabotage: no restock — cycle 1 resolves the spent cycle-0 state
+        // (harvested crop, consumed mats, sold output) and the soak must
+        // stop with cycle 0's banked economics standing.
+        var result = VillageFullDaySoak.Run(
+            _ => [farmer.Assemble(TestPosition), crafter.Assemble(TestPosition)],
+            new VillageFullDaySoak.VillageFullDaySoakOptions { CycleId = "m8v5-stop", Cycles = 3 },
+            null, new FullDayPump());
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.Report.CyclesCompleted).IsEqualTo(1);
+        await Assert.That(result.Criteria.Any(c => c.Name == "soak-cycle-0-passed" && c.Passed)).IsTrue();
+        await Assert.That(result.Criteria.Any(c => c.Name == "soak-cycle-1-passed" && !c.Passed)).IsTrue();
+        // Cycle 0 economics stand as its full day left them.
+        await Assert.That(crafter.Actor.Character.LaborPower).IsEqualTo((short)(100 - CraftLaborCost));
+        await Assert.That(farmer.Actor.Character.Money2).IsEqualTo(30);
+        await Assert.That(crafter.Actor.Character.Money2).IsEqualTo(20);
+    }
+
+    [Test]
+    public async Task Soak_ZeroCycles_RejectedPrecheck()
+    {
+        var result = VillageFullDaySoak.Run(
+            _ => throw new InvalidOperationException("factory must never run with zero cycles"),
+            new VillageFullDaySoak.VillageFullDaySoakOptions { CycleId = "m8v5-empty", Cycles = 0 });
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo("PRECHECK");
+    }
+
+    /// <summary>Soak restock: plant a fresh mature crop for the farmer
+    /// (the SetupFarmer pattern — the headless cycle replant Interrupts
+    /// without creating one), returning its ObjId for the next cycle.</summary>
+    private static uint ReplantFarmerCrop(SetupVillager farmer)
+    {
+        var crop = CropHarvestLoopRig.Plant(farmer.Actor.Character, farmer.Session.World,
+            CropHarvestLoopRig.MakeHouse(farmer.Actor.Character));
+        crop.Transform.Local.SetPosition(farmer.Actor.Character.Transform.World.Position);
+        (crop.FuncTask as AAEmu.Game.Models.Tasks.Doodads.DoodadFuncGrowthTask)?.Execute();
+        (crop.FuncTask as AAEmu.Game.Models.Tasks.Doodads.DoodadFuncGrowthTask)?.Execute();
+        if (crop.FuncGroupId != CropHarvestLoopTests.MaturePhase)
+            throw new InvalidOperationException($"soak restock: crop did not mature (phase {crop.FuncGroupId})");
+        return crop.ObjId;
+    }
 
     [Test]
     public async Task FullDay_Chatter_BudgetAcrossHalves()

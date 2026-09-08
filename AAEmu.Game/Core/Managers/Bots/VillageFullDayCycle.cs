@@ -284,13 +284,19 @@ public static class VillageFullDayCycle
 
         // ---- VERIFY: combined ledger across both halves ----
         var laborCharged = entries.Sum(e => e.DayEntry?.CrafterResult?.LaborCharged ?? 0);
-        var laborDelta = entries.Sum(e => e.LaborBeforeDay - e.LaborAfterEvening);
+        // Crafter-scoped like the day law (village-labor-conserved): farmer
+        // plant/harvest legs charge real skill labor on live (zero in the
+        // rig, which is why the unscoped sum passed there), so only crafter
+        // entries reconcile against the metered craft charge. The evening
+        // half charges no labor for ANY villager (laborStill, all entries).
+        var laborDelta = entries.Where(e => e.DayEntry?.CrafterResult is not null)
+            .Sum(e => e.LaborBeforeDay - e.LaborAfterEvening);
         var laborStill = entries.All(e => e.LaborAfterEvening == (e.DayEntry?.LaborAfter ?? e.LaborBeforeDay));
         var laborOk = laborDelta == laborCharged && laborStill;
         criteria.Add(new BotScenarioRunner.CriterionVerdict("fullday-labor-conserved", laborOk,
             laborOk
-                ? $"day→evening labor deltas {laborDelta} == charged {laborCharged}; evening charged nothing"
-                : $"labor MISMATCH: deltas {laborDelta} vs charged {laborCharged}, eveningUntouched={laborStill}"));
+                ? $"crafter day→evening labor deltas {laborDelta} == charged {laborCharged}; evening charged nothing"
+                : $"labor MISMATCH: crafter deltas {laborDelta} vs charged {laborCharged}, eveningUntouched={laborStill}"));
 
         var moneyNotes = entries.Select(e => $"{e.Name}: {e.MoneyBeforeDay}→{e.MoneyAfterEvening}").ToList();
         var moneyOk = entries.All(e => e.MoneyAfterEvening == e.MoneyBeforeDay);
