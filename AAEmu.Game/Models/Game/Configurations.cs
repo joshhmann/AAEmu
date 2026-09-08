@@ -78,24 +78,31 @@ public class WorldConfig
     public double GrowthRate { get; set; } = 1.0;
 
     /// <summary>
-    /// Minimum NPC respawn time in seconds. Only applied to spawners whose authored spawn delay is at
-    /// or below NpcRespawnPlaceholderThreshold (e.g. the 11,774 compact.sqlite3 rows set to placeholder 10s).
-    /// Spawners with real authored values (e.g. bosses) are untouched. 0 disables.
+    /// Minimum NPC respawn time in seconds. Only applied to spawners whose authored spawn delays are at
+    /// or below NpcRespawnPlaceholderThreshold (e.g. the 11,773 compact.sqlite3 rows set to placeholder 10s).
+    /// Spawners with real authored values (e.g. bosses) are untouched: the floor only raises short
+    /// placeholder timers, it never shortens a longer authored one. 0 disables.
+    /// Configure in <c>AAEmu.Game/Configurations/World.json</c> under <c>World.NpcRespawnMinSeconds</c>.
     /// </summary>
-    public int NpcRespawnMinSeconds { get; set; } = 0;
+    public int NpcRespawnMinSeconds { get; set; } = 90;
 
     /// <summary>
-    /// As NpcRespawnMinSeconds, but for NPCs whose npc_grade_id is at or above NpcRespawnEliteMinGrade. 0 disables.
+    /// As NpcRespawnMinSeconds, but for NPCs whose npc_grade_id is at or above NpcRespawnEliteMinGrade. 0 disables
+    /// (elites then use NpcRespawnMinSeconds).
+    /// Configure in <c>AAEmu.Game/Configurations/World.json</c> under <c>World.NpcRespawnMinSecondsElite</c>.
     /// </summary>
-    public int NpcRespawnMinSecondsElite { get; set; } = 0;
+    public int NpcRespawnMinSecondsElite { get; set; } = 300;
 
     /// <summary>
     /// npc_grade_id threshold for elite/named NPC respawn floor.
+    /// Configure in <c>AAEmu.Game/Configurations/World.json</c> under <c>World.NpcRespawnEliteMinGrade</c>.
     /// </summary>
     public int NpcRespawnEliteMinGrade { get; set; } = 7;
 
     /// <summary>
     /// Authored spawn delays at or below this many seconds are treated as data placeholders eligible for the respawn floor.
+    /// Both SpawnDelayMin and SpawnDelayMax must be at or below this; anything higher keeps its authored value untouched.
+    /// Configure in <c>AAEmu.Game/Configurations/World.json</c> under <c>World.NpcRespawnPlaceholderThreshold</c>.
     /// </summary>
     public float NpcRespawnPlaceholderThreshold { get; set; } = 10f;
 

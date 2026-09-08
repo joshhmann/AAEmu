@@ -91,6 +91,11 @@ public class CharacterQuests(Character owner)
             else
             {
                 Logger.Info($"Duplicate quest {questId}, not added!");
+                // The client opens a full-screen quest-offer cutscene and waits for
+                // SCQuestContextStartedPacket. Return without replying and the player
+                // is frozen in the offer (X / Esc / Back all dead). Send an error so
+                // the client dismisses the cutscene.
+                Owner.SendErrorMessage(ErrorMessageType.AlreadyRequested);
                 return false;
             }
         }
@@ -113,7 +118,12 @@ public class CharacterQuests(Character owner)
             {
                 Logger.Trace($"User {Owner.Name} ({Owner.Id}) does not meet requirements to start new Quest {questId}, ComponentId {questComponentTemplate.Id}");
                 if (!forcibly)
+                {
+                    // Dismiss the client's quest-offer cutscene so it doesn't hang
+                    // waiting for a start confirmation.
+                    Owner.SendErrorMessage(ErrorMessageType.AlreadyRequested);
                     return false;
+                }
             }
         }
 

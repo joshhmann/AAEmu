@@ -158,9 +158,10 @@ public class NpcSpawnerNpc : Spawner<Npc>
     }
 
     /// <summary>
-    /// Raises RespawnTime to the configured floor when the spawner's authored delay is a data
-    /// placeholder (e.g. the 11,774 compact.sqlite3 rows set to 10s). Spawners with a genuinely
-    /// authored delay (bosses, rares) are left alone.
+    /// Raises RespawnTime to the configured floor when the spawner's authored delays are data
+    /// placeholders (both SpawnDelayMin and SpawnDelayMax at or below the threshold, e.g. the
+    /// 11,773 compact.sqlite3 rows set to 10s/10s). Spawners with a genuinely authored delay
+    /// (bosses, rares) return early and are left alone.
     /// </summary>
     public static void ApplyRespawnFloor(Npc npc)
     {
@@ -168,8 +169,9 @@ public class NpcSpawnerNpc : Spawner<Npc>
         if (cfg == null || npc?.Spawner?.Template == null)
             return;
 
-        var authored = npc.Spawner.Template.SpawnDelayMax;
-        if (authored > cfg.NpcRespawnPlaceholderThreshold)
+        var template = npc.Spawner.Template;
+        if (template.SpawnDelayMax > cfg.NpcRespawnPlaceholderThreshold ||
+            template.SpawnDelayMin > cfg.NpcRespawnPlaceholderThreshold)
             return; // Real authored timer, do not touch
 
         var floor = cfg.NpcRespawnMinSeconds;
