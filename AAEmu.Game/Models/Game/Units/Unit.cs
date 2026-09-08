@@ -920,6 +920,15 @@ public class Unit : BaseUnit, IUnit
     public override void InterruptSkills()
     {
         ActivePlotState?.RequestCancellation();
+        // A skill controller is self-driving and tracked by ActiveSkillController, not by
+        // SkillTask or ActivePlotState. End it here so death and every other interrupt path
+        // (AI transitions, buff interrupts) cannot leave a corpse casting. Must run before
+        // the SkillTask null-check below, which returns early.
+        if (ActiveSkillController != null)
+        {
+            ActiveSkillController.End();
+            ActiveSkillController = null;
+        }
         if (SkillTask == null)
             return;
         switch (SkillTask)
