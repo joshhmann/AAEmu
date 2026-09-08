@@ -118,8 +118,29 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>Nearby NPC detection seam (null → WorldManager.GetAround&lt;Npc&gt;).</summary>
     public Func<Character, float, IEnumerable<Npc>>? NearbyNpcProvider { get; init; }
 
+    /// <summary>
+    /// Conflict activity source (wired to the arbiter's active activity).
+    /// When it returns an activity starting with "conflict.", the PvP
+    /// engagement branch runs instead of the wildlife hunt for that wake.
+    /// Null (default) preserves today's behavior exactly.
+    /// </summary>
+    public Func<uint, string?>? ActiveActivityProvider { get; init; }
+
+    /// <summary>
+    /// PvP attackability gate (default: the real CanAttack path). Test seam
+    /// for the conflict branch — the engine relation/zone check needs seeded
+    /// singletons headless.
+    /// </summary>
+    public Func<Character, Character, bool>? CanAttackPlayer { get; init; }
+
+    /// <summary>
+    /// Test seam mirroring NearbyNpcProvider, but for player characters.
+    /// </summary>
+    public Func<Character, float, IEnumerable<Character>>? NearbyCharacterProvider { get; init; }
+
     /// <summary>Unit resolver seam (null → Character.ParentWorld?.GetUnit).</summary>
     public Func<Character, uint, Unit?>? UnitResolver { get; init; }
+
     /// <summary>
     /// Whether the opportunistic livestock-butcher loop is enabled. Defaults
     /// to true when the AAEMU_PRESENCE_BUTCHER environment variable is set to
@@ -170,6 +191,11 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         public DateTime LastScanUtc { get; set; } = DateTime.MinValue;
         public DateTime LastCastUtc { get; set; } = DateTime.MinValue;
         public uint LastSkillUsed { get; set; }
+
+        public uint TargetPlayerObjId { get; set; }
+        public DateTime TargetPlayerEngagedUtc { get; set; } = DateTime.MinValue;
+        public DateTime LastPvpCastUtc { get; set; } = DateTime.MinValue;
+        public uint LastPvpSkillUsed { get; set; }
 
         public uint TargetButcherDoodadObjId { get; set; }
         public DateTime LastButcherScanUtc { get; set; } = DateTime.MinValue;
@@ -430,8 +456,21 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             Logger.Trace(ex, "Bot party step evaluation skipped.");
         }
 
-        // 1. Opportunistic wildlife hunt loop
-        if (!handledByParty && EnableWildlifeHunt)
+        // 0. Conflict PvP engagement (war-horn model): while the arbiter holds
+        // a conflict.* activity, hostile players preempt wildlife. Same
+        // scan/approach/cast shape as the hunt loop below, but targets are
+        // Characters gated by CanAttack (or the CanAttackPlayer seam) instead
+        // of attackable wildlife. Runs only when ActiveActivityProvider names
+        // a conflict activity — null provider preserves today's behavior.
+        var pvpEngaged = false;
+        if (!handledByParty && ActiveActivityProvider?.Invoke(bot.CharacterId) is string pvpActivity
+            && pvpActivity.StartsWith("conflict.", StringComparison.Ordinal))
+        {
+            pvpEngaged = StepPvpEngagement(bot, actor, state, now);
+        }
+
+        // 1. Opportunistic wildlife hunt loop (skipped while fighting players)
+        if (!handledByParty && !pvpEngaged && EnableWildlifeHunt)
         {
             if (state.TargetNpcObjId != 0)
             {
@@ -489,7 +528,6 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                         bot.Character.CurrentTarget = targetUnit;
                         bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, targetUnit.ObjId), true);
                     }
-
                     var dist = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, targetUnit.Transform.World.Position, false);
                     var role = CombatDecisionTree.InferRole(bot.Character);
                     var engageRange = role == CombatRole.Melee ? HuntMeleeRange : 15.0f;
@@ -976,6 +1014,147 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         catch
         {
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Conflict PvP engagement for one wake: validate the current player
+    /// target, engage (approach + cast through CombatDecisionTree), or scan
+    /// for the nearest attackable hostile. Mirrors the wildlife hunt shape;
+    /// returns true while actively fighting (wildlife hunt skips that wake).
+    /// </summary>
+    private bool StepPvpEngagement(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state, DateTime now)
+    {
+        Character? target = null;
+        if (state.TargetPlayerObjId != 0)
+        {
+            target = (UnitResolver != null
+                ? UnitResolver(bot.Character, state.TargetPlayerObjId)
+                : bot.Character.ParentWorld?.GetUnit(state.TargetPlayerObjId)) as Character;
+            var valid = target != null
+                && target.Hp > 0
+                && IsAttackablePlayer(bot.Character, target)
+                && now - state.TargetPlayerEngagedUtc <= TimeSpan.FromSeconds(30);
+            if (!valid)
+            {
+                if (bot.Character.CurrentTarget?.ObjId == state.TargetPlayerObjId)
+                {
+                    bot.Character.CurrentTarget = null;
+                    bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, 0), true);
+                }
+                state.TargetPlayerObjId = 0;
+                state.LastPvpSkillUsed = 0;
+                target = null;
+            }
+        }
+
+        if (target != null)
+        {
+            if (bot.Character.CurrentTarget?.ObjId != target.ObjId)
+            {
+                bot.Character.CurrentTarget = target;
+                bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, target.ObjId), true);
+            }
+
+            var dist = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, target.Transform.World.Position, false);
+            var role = CombatDecisionTree.InferRole(bot.Character);
+            var engageRange = role == CombatRole.Melee ? HuntMeleeRange : 15.0f;
+
+            if (dist > engageRange)
+            {
+                var needsMove = actor.ActiveRequest is not { IsTerminal: false, Action: ActorActionType.Move };
+                if (needsMove)
+                {
+                    if (actor.ActiveRequest is { IsTerminal: false })
+                        _ = actor.Stop();
+                    state.PendingLeg = actor.MoveToUnit(target.ObjId, HuntChaseSpeed, TimeSpan.FromSeconds(10));
+                }
+            }
+            else
+            {
+                if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+                {
+                    _ = actor.Stop();
+                    state.PendingLeg = null;
+                }
+
+                var angle = MathUtil.CalculateAngleFrom(bot.Character.Transform.World.Position, target.Transform.World.Position);
+                bot.Character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
+                bot.Character.Transform.FinalizeTransform();
+
+                if (now - state.LastPvpCastUtc >= HuntCastInterval)
+                {
+                    var skillId = CombatDecisionTree.SelectPrioritizedSkill(
+                        bot.Character,
+                        target,
+                        role,
+                        null,
+                        state.LastPvpSkillUsed);
+                    if (skillId > 0)
+                    {
+                        var castResult = actor.Cast(skillId, target.ObjId);
+                        if (castResult.State != ActorLifecycleState.Rejected)
+                        {
+                            state.LastPvpSkillUsed = skillId;
+                            state.LastPvpCastUtc = now;
+                        }
+                        else
+                        {
+                            state.LastPvpSkillUsed = 0;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        var nearby = NearbyCharacterProvider != null
+            ? NearbyCharacterProvider(bot.Character, HuntPerceptionRadius)
+            : WorldManager.GetAround<Character>(bot.Character, HuntPerceptionRadius);
+
+        Character? best = null;
+        var bestDist = float.MaxValue;
+        foreach (var candidate in nearby)
+        {
+            if (candidate.ObjId == bot.Character.ObjId || candidate.IsDead)
+                continue;
+            if (!IsAttackablePlayer(bot.Character, candidate))
+                continue;
+            var d = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, candidate.Transform.World.Position, false);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = candidate;
+            }
+        }
+
+        if (best != null)
+        {
+            state.TargetPlayerObjId = best.ObjId;
+            state.TargetPlayerEngagedUtc = now;
+            bot.Character.CurrentTarget = best;
+            bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, best.ObjId), true);
+            if (actor.ActiveRequest is { IsTerminal: false })
+            {
+                _ = actor.Stop();
+                state.PendingLeg = null;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private bool IsAttackablePlayer(Character me, Character foe)
+    {
+        if (foe.ObjId == me.ObjId || foe.IsDead)
+            return false;
+        try
+        {
+            return CanAttackPlayer?.Invoke(me, foe) ?? me.CanAttack(foe);
+        }
+        catch
+        {
+            return false;
         }
     }
     /// <summary>

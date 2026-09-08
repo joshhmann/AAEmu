@@ -266,7 +266,13 @@ public static class Program
                 // applies Option A visibility (ground clamp + 4-6 Hz movement
                 // broadcast). Bots without a route behave like the plain
                 // actor executor (tick-only).
-                services.AddSingleton<BotRoamStepExecutor>();
+                services.AddSingleton(sp => new BotRoamStepExecutor
+                {
+                    // Conflict war-horn: the executor reads the arbiter's
+                    // active activity per wake; "conflict.*" arms PvP
+                    // engagement, anything else (or nothing) keeps roam.
+                    ActiveActivityProvider = sp.GetRequiredService<BotGoalArbiter>().GetActiveActivity,
+                });
 
                 // G3-B3 goal arbitration (IBotActivityModule seam): modules
                 // negotiate ONE active activity per bot per scheduler wake —
