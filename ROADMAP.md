@@ -144,7 +144,7 @@
   - Open: LevelingLoop_MarianopleStage4 chained-perception starvation under parallel load (quest-data order vector, cargo green) — own ticket.
 - **Q8 — PB-007 WAR-HONOR: explicitly deferred, listed not opened.**
   - Narrow flagged-aggression handshake CLOSED (live E2E 1/1 + PEACE-BLOCK + crime branch — EXISTS); WAR-HONOR (>251 kills + conflict timer) deferred — no claim, no work until the deferral lifts
-  - Conflict goal 2026-09-07 (`ConflictJoinActivityModule`, priority 75, + 9/9 gate matrix): war-horn model — bot in a non-Peace conflict zone, combat-ready, willing personality joins; Peace/low-HP/unarmed/reluctant deny; activity `conflict.{group}` stable. Full suite 2898/2897/0/1. Live earned-kit join still open.
+  - Combat wire 2026-09-07 (PvP branch in `BotRoamStepExecutor` + 5/5 `PvpEngagementBranchTests`): conflict activity preempts wildlife — scan nearest attackable hostile, approach (MoveToUnit), cast via CombatDecisionTree; no activity/refused/dead all stand down. Full suite 2903/2902/0/1. Live earned-kit join still open.
 
 ### Correction register (current evidenced state; history below unchanged)
 - Deploy pointer: `.165` = presence-demo prod (still); live image built 01:35Z Sep 7 (uptimes healthy per 2026-09-07 check) — image source revision unstamped, unconfirmed; old pointer `135c4f14e` / source `322390b32` STALE — see STATUS.md current honest state
