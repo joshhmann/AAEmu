@@ -161,6 +161,47 @@ public class CrafterMultiCountChanceTests
     }
 
     [Test]
+    public async Task MultiCount_OversizedBankStack_ConsumesExactlyAmountTimesCount()
+    {
+        const int count = 3;
+        const int oversize = 10;
+        var neededA = MultiMatAAmount * count;
+        var neededB = MultiMatBAmount * count;
+        var (actor, _, benchObjId) = CreateRig("m8cm-t1-oversize");
+        // Bank holds far more than Amount × Count in a single stack: the
+        // WithdrawItem path moves the ENTIRE first bank stack, so the
+        // composer must account the surplus (consume exactly the need,
+        // leave the remainder untouched) — never over-consume or lose it.
+        StockBank(actor, MultiMatAItemId, neededA * oversize);
+        StockBank(actor, MultiMatBItemId, neededB * oversize);
+
+        var result = CrafterWorkstationCycle.Run(actor, MultiOptions("m8cm-t1-oversize", benchObjId, count), new CrafterPump());
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.StepsCompleted).IsEqualTo(count);
+
+        // Exact consumption: Amount × Count, no more.
+        await Assert.That(result.MaterialsConsumed[MultiMatAItemId]).IsEqualTo(neededA);
+        await Assert.That(result.MaterialsConsumed[MultiMatBItemId]).IsEqualTo(neededB);
+
+        // Remainder untouched across bank+bag: stocked minus exactly
+        // Amount × Count. (WithdrawItem moves the entire first bank stack
+        // into the bag, so the surplus rests in the bag — conservation is
+        // on the combined total, never over-consumed or lost.)
+        await Assert.That(BagOnlyCount(actor, MultiMatAItemId) + BankCount(actor, MultiMatAItemId)).IsEqualTo(neededA * oversize - neededA);
+        await Assert.That(BagOnlyCount(actor, MultiMatBItemId) + BankCount(actor, MultiMatBItemId)).IsEqualTo(neededB * oversize - neededB);
+
+        // Labor: exactly one recipe cost per step.
+        await Assert.That(actor.Character.LaborPower).IsEqualTo((short)(100 - MultiCraftLaborCost * count));
+        await Assert.That(result.LaborCharged).IsEqualTo(MultiCraftLaborCost * count);
+
+        // Product: one grant per step, out of the bag, into the bank.
+        await Assert.That(BagOnlyCount(actor, MultiProductItemId)).IsEqualTo(0);
+        await Assert.That(BankCount(actor, MultiProductItemId)).IsEqualTo(count);
+        await Assert.That(result.Report!.ProductStored[MultiProductItemId]).IsEqualTo(count);
+    }
+
+    [Test]
     public async Task MultiCount_PartialShortage_HoldsBeforeAnyStep_NothingConsumed()
     {
         const int count = 3;
