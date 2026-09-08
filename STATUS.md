@@ -27,6 +27,12 @@ acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
 
+## 2026-09-08 — A5 CLOSED: SHAPE 4/4 re-shown at the fixed tip
+
+- SHAPE re-show PASS at engine `a23cdc33e` (report `g2-a5-tier3-report.json` runAtUtc 2026-09-08T08:43:32Z, isolated lane `/root/aaemu-e2e-a5-shape`, 15m02s, probe 1/1): 1000/1000 dormant seeded (SQL-verified, 4.1 min sequential), exactly 50 embodied / 50 dematerialized on human leave (0 after), RSS Δ -12.9% (6204.9 → 5404.7 MB medians, within ±15%), wake-to-visible p95 256.2 ms (p50 221.4, max 277.8; window 33.0 s at default 3/sweep @ 2 s pacing). Steps/min parity 29956 vs 29965; tick p95 1.6 vs 1.7 ms.
+- Blocker found + fixed en route: scheduler DI deadlock (`b199e5d30` closed a BotRoamStepExecutor → BotGoalArbiter → SchedulePhase → BotScheduleService → BotRoamStepExecutor resolution cycle) wedged first-ever `GetService<IPlayerBotScheduler>` forever — bridge `{"cmd":"metrics"}` hung (2/2 probe WaitBoot timeouts pre-fix). Engine fix `a23cdc33e` (Lazy arbiter in the executor factory, no runtime changes): single metrics query returns tick.available=true on a fresh isolated boot. Harness stale-pid flaw also fixed `9b790f69f` (test-only: FindGamePid clears a dead cache → rescan; arm-T RSS had read -1/-1/-1).
+- Conjunction: (a) re-shown ✓ at `a23cdc33e`; (b1) soak #2 PASS 2026-09-05 (tested binary `322390b32`, FULL 360.00008-min window, `passed: true`) ✓ historical; (b2) asserted soak PASS 2026-09-06 at `02903804b` + bounded restart PASS 2026-09-05 ✓ historical. Per the roadmap letter (legs evidenced at their tested revisions), A5 is CLOSED. H separate, unchanged. "Preferably 12-hour" stays recommendation-only.
+
 ## 2026-09-06 — Phase 1 evidence complete @ 61123ea88 (post-push): Tier 1 gate 2879/0/1 + MCP 39+24; archaeology-cycle 156/156 + 24-tool smoke, compact md5 unchanged. P1 registry hardening + audit-only telemetry covered. Phase 2 (writes) still needs second approval.
 
 ## 2026-09-06 — A5 b2 CLOSED: 6h asserted soak PASS on .165

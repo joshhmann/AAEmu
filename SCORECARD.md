@@ -59,7 +59,13 @@ feel.)
   `load_pack_onto_vehicle`, `board_vehicle`, `unboard_vehicle`, and
   `drive_vehicle`. The current MCP catalog is **39 tools**.
 
-## Position 2026-09-07 (current; history below preserved)
+## Position 2026-09-08 (A5 CLOSED; history below preserved)
+
+- HEAD: local `develop` at `9b790f69f` (engine `a23cdc33e` + test-only harness fix `9b790f69f`).
+- A5: CLOSED — (a) SHAPE 4/4 re-shown at engine `a23cdc33e` (1000/1000 registered, 50 embodied, RSS Δ -12.9%, wake p95 256.2 ms; report 2026-09-08T08:43:32Z, isolated lane); (b1) soak #2 PASS 2026-09-05 (tested binary `322390b32`); (b2) asserted soak + bounded restart PASS (`02903804b`, 2026-09-06/05). Blocker fixed en route: scheduler DI deadlock `a23cdc33e` (bridge metrics proof tick.available=true).
+- H stays U (UNKNOWN) everywhere until Josh runs the curated scenario.
+
+## Position 2026-09-07 (history below preserved)
 
 - HEAD: local `develop` at `0f2ff824f`. Since the `322390b32` baseline above:
   combat kill-races closed, M5 decision primitive + M6 cancellation/isolation
