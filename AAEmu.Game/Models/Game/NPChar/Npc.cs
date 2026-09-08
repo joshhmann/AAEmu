@@ -1088,7 +1088,9 @@ public partial class Npc : Unit
 
         if (npc.Ai != null)
         {
-            var distanceToIdle = MathUtil.CalculateDistance(npc.Ai.IdlePosition, npc.Transform.World.Position, true);
+            // Horizontal (2D) arrival check: cave/indoor idle Z can resolve to the surface above,
+            // so a 3D distance would force a spurious return while standing at home in XY (4m threshold unchanged).
+            var distanceToIdle = MathUtil.CalculateDistance(npc.Ai.IdlePosition, npc.Transform.World.Position, false);
             if (distanceToIdle > 4)
                 npc.Ai.GoToReturn();
         }
@@ -1103,7 +1105,8 @@ public partial class Npc : Unit
         {
             if (Ai != null)
             {
-                var distanceToIdle = MathUtil.CalculateDistance(Ai.IdlePosition, Ai.Owner.Transform.World.Position, true);
+                // Horizontal (2D) arrival check: same cave idle-Z rationale as above (4m threshold unchanged).
+                var distanceToIdle = MathUtil.CalculateDistance(Ai.IdlePosition, Ai.Owner.Transform.World.Position, false);
                 if (distanceToIdle > 4)
                     Ai.GoToReturn();
             }
