@@ -492,6 +492,7 @@ public static class E2eStack
         WaitTcp("127.0.0.1", GamePort, 300);
         WaitTcp("127.0.0.1", StreamPort, 300);
         WaitBridge(60);
+        WaitServerStarted(Path.Combine(E2eRoot, "logs", "game.log"), 300);
     }
 
     private static Process StartServerProcess(string name, string dir, string dll, string logPath)
@@ -579,6 +580,41 @@ public static class E2eStack
         throw new TimeoutException("BotDriveBridge never came up");
     }
 
+    /// <summary>
+    /// Post-orchestration readiness gate (C5 day-scale soak finding F1): the
+    /// BotDriveBridge binds seconds after process start, ~80s before managers
+    /// finish loading, so TCP/ping is NOT readiness — a scenario issued in the
+    /// gap fails provisioning against empty template dicts (KeyNotFoundException).
+    /// Waits for the post-orchestration marker the server logs after network
+    /// bind. The log file is truncated per start (StartServerProcess), so the
+    /// marker cannot leak from a previous boot.
+    /// </summary>
+    private static void WaitServerStarted(string logPath, int timeoutSeconds)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(timeoutSeconds);
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                using var log = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var reader = new StreamReader(log, Encoding.UTF8);
+                string? line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (line.Contains("Server started!", StringComparison.Ordinal))
+                        return;
+                }
+            }
+            catch (IOException)
+            {
+                // Log not created yet — keep polling.
+            }
+            Thread.Sleep(1000);
+        }
+
+        throw new TimeoutException($"game server never logged 'Server started!' within {timeoutSeconds}s (see {logPath})");
+    }
+
     // --------------------------------------------------------------- control
 
     /// <summary>Stops and restarts ONLY the game server (MySQL + login stay).</summary>
@@ -603,6 +639,7 @@ public static class E2eStack
         WaitTcp("127.0.0.1", GamePort, 300);
         WaitTcp("127.0.0.1", StreamPort, 300);
         WaitBridge(60);
+        WaitServerStarted(Path.Combine(E2eRoot, "logs", "game-restart.log"), 300);
         return killedPid;
     }
 

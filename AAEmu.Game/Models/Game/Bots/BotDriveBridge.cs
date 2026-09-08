@@ -2959,12 +2959,16 @@ public sealed class BotDriveBridge
 
     /// <summary>
     /// Wipes the bot's persisted rows so the next provisioning call creates
-    /// a FRESH rig: quests + completed_quests + characters (aaemu_game) and
-    /// the managed account row (aaemu_login), plus the in-memory NameManager
-    /// registry entry. The same row set the E2E harness cleanup deletes —
-    /// scoped strictly to THIS bot's account. A template run must start
-    /// from a clean slate: prior runs' accepted quests / completed flags
-    /// would be enforced by the real accept gates and poison the rig.
+    /// a FRESH rig: bot state (playerbot_audit + playerbot_metadata), owned
+    /// doodads/items/containers, quests + completed_quests + characters
+    /// (aaemu_game) and the managed account row (aaemu_login), plus the
+    /// in-memory NameManager registry entry. The same row set the E2E harness
+    /// cleanup deletes — scoped strictly to THIS bot's account. A template run
+    /// must start from a clean slate: prior runs' accepted quests / completed
+    /// flags would be enforced by the real accept gates and poison the rig —
+    /// and since the wipe deletes the only character rows, the id allocator
+    /// re-issues the same ids after a reboot, so surviving audit/metadata
+    /// rows would collide with the new run (C5 day-scale soak finding F2).
     /// </summary>
 
     private static void EnsureFreshBotRow(string botName, string username)
@@ -2974,6 +2978,22 @@ public sealed class BotDriveBridge
             return; // unregistered — nothing to wipe (fresh name)
 
         using var connection = MySQL.CreateConnection();
+        foreach (var (table, column) in new[]
+                 {
+                     ("playerbot_audit", "character_id"),
+                     ("playerbot_metadata", "character_id"),
+                     ("doodads", "owner_id"),
+                     ("items", "owner"),
+                     ("item_containers", "owner_id"),
+                 })
+        {
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = $"DELETE FROM {table} WHERE {column} = @charId";
+            cmd.Parameters.AddWithValue("@charId", characterId);
+            try { cmd.ExecuteNonQuery(); }
+            catch (Exception ex) { Logger.Debug(ex, "scenario wipe: {Table} delete FK-tolerant skip for character {CharacterId}", table, characterId); }
+        }
+
         using (var cmd = connection.CreateCommand())
         {
             cmd.CommandText = "DELETE FROM quests WHERE owner = @charId";
