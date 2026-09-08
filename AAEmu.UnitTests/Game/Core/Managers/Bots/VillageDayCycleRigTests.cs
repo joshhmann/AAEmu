@@ -185,6 +185,54 @@ public class VillageDayCycleRigTests
     }
 
     [Test]
+    public async Task VillageDay_RestartSnapshotProjection_IsCompleteAndDeterministic()
+    {
+        var farmer = SetupFarmer("m8v1-snap-farmer");
+        var crafter = SetupCrafter("m8v1-snap-crafter");
+
+        var result = VillageDayCycle.Run(
+        [
+            farmer.Spec,
+            crafter.Spec
+        ], new VillageDayCycle.VillageDayOptions { CycleId = "m8v1-snap" });
+
+        await Assert.That(result.Passed).IsTrue();
+
+        // Slice-2 restart equality projects each villager to: anchors +
+        // lastPhase + profession (the playerbot_metadata row) and inventory
+        // counts + labor (the ledger). The projection must be complete and
+        // deterministic headlessly — the E2E asserts the same rows pre==post.
+        var specs = new Dictionary<string, VillageDayCycle.VillagerSpec>
+        {
+            [farmer.Spec.Name] = farmer.Spec,
+            [crafter.Spec.Name] = crafter.Spec
+        };
+        foreach (var entry in result.Report.Villagers)
+        {
+            var spec = specs[entry.Name];
+            // Profession rides the entry (the metadata row's profession column).
+            await Assert.That(entry.Profession).IsEqualTo(spec.Profession);
+            // LastPhase derivable: the 06->14 sweep ends inside the 08-18 Work window.
+            await Assert.That(entry.PhasesVisited[^1]).IsEqualTo(BotSchedulePhase.Work);
+            // Anchors + lastPhase round-trip through the schedule payload (the
+            // metadata row's schedule JSON) and re-read as the same state.
+            var first = BotSchedulePayload.WithRuntimeState("{\"kind\":\"roam-loop\"}", spec.Anchors, BotSchedulePhase.Work);
+            var second = BotSchedulePayload.WithRuntimeState("{\"kind\":\"roam-loop\"}", spec.Anchors, BotSchedulePhase.Work);
+            await Assert.That(first).IsEqualTo(second);
+            await Assert.That(BotSchedulePayload.TryReadAnchors(first, out var anchors)).IsTrue();
+            await Assert.That(anchors).IsEqualTo(spec.Anchors);
+            await Assert.That(BotSchedulePayload.TryReadLastPhase(first, out var phase)).IsTrue();
+            await Assert.That(phase).IsEqualTo(BotSchedulePhase.Work);
+        }
+
+        // Ledger side of the projection: labor deltas and bank counts are
+        // exactly the conserved values (no hidden state a restart could drop).
+        var crafterEntry = result.Report.Villagers.Single(v => v.Profession == VillageDayCycle.VillageProfession.Crafter);
+        await Assert.That(crafterEntry.LaborBefore - crafterEntry.LaborAfter).IsEqualTo(crafterEntry.CrafterResult!.LaborCharged);
+        await Assert.That(BankCount(crafter.Actor, ProductItemId)).IsEqualTo(1);
+    }
+
+    [Test]
     public async Task VillageDay_HomePhase_HoldsWithReason_NoProfessionLegs()
     {
         // Work windows far outside the 06->14 sweep: the whole day is Home.
