@@ -104,7 +104,9 @@ public static class NpcGroundingPolicy
         3155u, // Archerfish — aquatic
         3704u, // Piranha — aquatic
         8022u, // White Shark — aquatic
+        8563u, // Big Seabug — aquatic (62/62 spawns in s_* sea zones, z=99.2 const, dz +28..+99)
         8564u, // Mother Seabug — aquatic
+        8565u, // Seabug — aquatic (619/619 spawns in s_* sea zones, z 0.3–99.2)
         8566u, // Seabug Pupa — aquatic
         8608u, // Deep Ocean Striped Shark — aquatic
         8609u, // Striped Shark Pup — aquatic

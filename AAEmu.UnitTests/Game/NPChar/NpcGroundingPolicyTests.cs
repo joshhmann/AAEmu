@@ -106,8 +106,22 @@ public class NpcGroundingPolicyTests
     public async Task Whitelist_AerialAndWaterSpecies_AreExempt()
     {
         // Purple Falcon (61 severe spawns, movement_id != 2), Ocean Razorbeak (+100 m ocean-surface drift), Skyfin
-        foreach (var tpl in new uint[] { 1243, 8616, 10820, 8608, 8609, 1218, 12640 })
+        // Seabug 8563/8565: 62/619 spawns, all in s_* sea zones (residual evidence §2; movement_id=0 so the flag misses them)
+        foreach (var tpl in new uint[] { 1243, 8616, 10820, 8608, 8609, 1218, 12640, 8563, 8565, 8564, 8566 })
             await Assert.That(NpcGroundingPolicy.IsIntentionalFloater(tpl)).IsTrue();
+    }
+
+    [Test]
+    public async Task ResolveSpawnZ_SeaDwellingSeabug_NeverClamped()
+    {
+        // Big Seabug surface drift (s_lostway_sea row: z=99.2 over sea floor) and submerged
+        // Seabug (s_silent_sea row: z below terrain) both keep spawner z.
+        var surface = NpcGroundingPolicy.ResolveSpawnZ(8563, canFly: false, spawnerZ: 99.2f, groundZ: 30.0f, out var surfaceZ);
+        await Assert.That(surface).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.Exempted);
+        await Assert.That(surfaceZ).IsEqualTo(99.2f);
+        var submerged = NpcGroundingPolicy.ResolveSpawnZ(8565, canFly: false, spawnerZ: 70.0f, groundZ: 71.5f, out var keptZ);
+        await Assert.That(submerged).IsEqualTo(NpcGroundingPolicy.SpawnGroundingAction.Exempted);
+        await Assert.That(keptZ).IsEqualTo(70.0f);
     }
 
     [Test]

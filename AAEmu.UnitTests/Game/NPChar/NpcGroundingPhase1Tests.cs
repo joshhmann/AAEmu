@@ -134,4 +134,17 @@ public class NpcGroundingPhase1Tests
         await Assert.That(jitter).IsEqualTo(NpcGroundingPolicy.MoverGroundingDisposition.KeptSourceZ);
 
     }
+
+    [Test]
+    [NotInParallel]
+    public async Task MoverGate_WhitelistedSeaDweller_IsExempt()
+    {
+        // Seabug 8565 over the sea floor: severe offset, but the template whitelist
+        // exempts it — no would-clamp disposition, legacy height kept, audit untouched.
+        var disposition = NpcGroundingPolicy.EvaluateMoverZ(8565, canFly: false, inCombat: false,
+            teleportScale: false, currentZ: 99.2f, terrainZ: 30f, navZ: 0f,
+            navPlanarDistanceM: float.MaxValue, hintFloorZ: null, legacyZ: 99f, out var auditZ);
+        await Assert.That(disposition).IsEqualTo(NpcGroundingPolicy.MoverGroundingDisposition.Exempted);
+        await Assert.That(auditZ).IsEqualTo(99f);
+    }
 }
