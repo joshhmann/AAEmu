@@ -25,14 +25,22 @@ namespace AAEmu.IntegrationTests.E2e.Gate;
 ///
 /// Budgets mirror the existing gate numbers exactly (no new numerics):
 ///   - GateBudgets defaults (scheduler wake avg ≤250ms / max ≤1000ms,
-///     step failures 0, tick p95 ≤100ms / max ≤250ms, DB ≤500/min/embodied-
-///     char, physics ≤0.1/min + ≤30 same-world/60s, autosave p95 ≤4000ms /
-///     max ≤10000ms)
+///     step failures 0, tick p95 ≤100ms / max ≤250ms, physics ≤0.1/min +
+///     ≤30 same-world/60s, autosave p95 ≤4000ms / max ≤10000ms; DB
+///     ≤500/min/embodied-char is INVALID/unasserted — the SHOW GLOBAL
+///     STATUS source is server-global scope — until the scoped
+///     instrumented counter lands)
 ///   - GateStages.SoakBudgets idle-stage overrides (ActiveRegionTick worst
 ///     pass ≤200ms, tick-overrun warnings ≤0.1/min)
 ///   - Scheduler step timeouts: reported and enforced at 0 — the same
 ///     zero-tolerance clause as MaxSchedulerStepFailures applied to its
 ///     sibling counter (a timeout is a cancelled step, not a cheap skip).
+///   - Warmup-blind evaluation: budget lines inside any boot's
+///     [boot−30s, boot+120s] window are recorded, not counted; log-derived
+///     rates normalize by steady-state minutes; physics verdicts require
+///     physics.available (n/a-invalidated, never PASS on zero rows); step
+///     failure/timeout verdicts cover the window delta, not the cumulative
+///     counter.
 ///
 /// Evidence: structured JSON + markdown summary under
 /// $E2E_ROOT/logs/scheduler-soak-stage1-*.
@@ -92,10 +100,16 @@ public static class SchedulerSoakStage1Runner
     /// <summary>Sampling cadence (~every 30s per stage-1 spec).</summary>
     private static readonly TimeSpan SampleEvery = TimeSpan.FromSeconds(30);
 
-    public static async Task<SchedulerSoakStage1Result> RunAsync(int minutes, CancellationToken ct)
+    /// <param name="longUpSegmentMinutes">One long no-restart up-segment
+    /// (forensics follow-up: repeated-restart soaks leave zero steady-state
+    /// seconds). When &gt; 0 the window stretches to at least this length;
+    /// no restart occurs inside the window either way, and the manifest
+    /// citizens provide the continuous load. 0 = off.</param>
+    public static async Task<SchedulerSoakStage1Result> RunAsync(int minutes, CancellationToken ct, int longUpSegmentMinutes = 0)
     {
-        Console.WriteLine($"[{StageName}] {CitizenCount} manifest citizens, {minutes}min scheduler-driven window");
-
+        var effectiveMinutes = Math.Max(minutes, longUpSegmentMinutes);
+        Console.WriteLine($"[{StageName}] {CitizenCount} manifest citizens, {effectiveMinutes}min scheduler-driven window" +
+            (longUpSegmentMinutes > 0 ? $" (long up-segment {longUpSegmentMinutes}min, no-restart, continuous load)" : ""));
         // -- enablement BEFORE boot ------------------------------------------
         // The game server process inherits this environment (the same contract
         // BotPresenceCoordinator.IsEnabled/ReadBotCount/ReadManifestPath read),
@@ -111,8 +125,9 @@ public static class SchedulerSoakStage1Runner
 
         var failures = new List<string>();
         long dbWritesStart = 0, dbWritesEnd = 0;
-        long logLenStart = 0;
+        long logLenStart = 0, restartLogLenStart = 0;
         var windowStart = DateTime.UtcNow;
+        var windowStartLocal = DateTime.Now;
 
         using var bridge = new BotDriveClient(E2eStack.BridgePort);
 
@@ -129,8 +144,8 @@ public static class SchedulerSoakStage1Runner
                 "totalStepsRun stayed 0 within the post-boot validity window " +
                 "(presence demo did not provision stepping citizens)");
             Console.WriteLine($"[{StageName}] {failures[^1]}");
-            var paths = WriteEvidence(minutes, first.Metrics, [], [], null, null,
-                false, failures, new DerivedStats(0, 0, 0, 0, 0, -1, -1));
+            var paths = WriteEvidence(effectiveMinutes, first.Metrics, [], [], null, null,
+                false, failures, new DerivedStats(0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0));
             return new SchedulerSoakStage1Result(StageName, false, false, TimeSpan.Zero,
                 [], failures, paths.JsonPath, paths.MdPath,
                 $"{StageName} INVALID — scheduler never stepped; soak results meaningless");
@@ -138,11 +153,13 @@ public static class SchedulerSoakStage1Runner
 
         Console.WriteLine($"[{StageName}] validity GREEN: scheduler running, {first.Metrics?.TotalStepsRun} steps run pre-window");
 
-        // -- sampled window ----------------------------------------------------
+        // -- sampled window (NO restart inside — long up-segment rule) ---------
         dbWritesStart = ReadDbWriteCounters();
         logLenStart = File.Exists(GateSoakRunner.GameLogPath) ? new FileInfo(GateSoakRunner.GameLogPath).Length : 0;
+        restartLogLenStart = File.Exists(GateSoakRunner.GameRestartLogPath) ? new FileInfo(GateSoakRunner.GameRestartLogPath).Length : 0;
         windowStart = DateTime.UtcNow;
-        var deadline = windowStart.AddMinutes(minutes);
+        windowStartLocal = DateTime.Now;
+        var deadline = windowStart.AddMinutes(effectiveMinutes);
 
         var samples = new List<SoakSample> { first.Sample };
         var missedSamples = 0;
@@ -200,13 +217,36 @@ public static class SchedulerSoakStage1Runner
                 $"scheduler STALLED: totalStepsRun did not grow across the window " +
                 $"({firstSample.TotalStepsRun} → {(final?.TotalStepsRun ?? last.TotalStepsRun)})");
 
-        // -- derived measurements ----------------------------------------------
+        // -- derived measurements (window deltas only, never cumulative) -------
         var dbWrites = Math.Max(0, dbWritesEnd - dbWritesStart);
         var dbPerCharPerMin = dbWrites / Math.Max(windowSpan.TotalMinutes, 0.01) / CitizenCount;
-        var logTail = ScanGameLog(logLenStart);
-        var physicsPerMin = logTail.PhysicsWarnings / Math.Max(windowSpan.TotalMinutes, 0.01);
-        var overrunsPerMin = logTail.TickOverrunWarnings / Math.Max(windowSpan.TotalMinutes, 0.01);
+        var windowEndLocal = DateTime.Now;
+        var bootLocalTimes = E2eStack.GameBootTimesUtc.Select(b => b.ToLocalTime()).ToList();
+        var logLines = SoakLogScan.ReadWindowLines(
+        [
+            (GateSoakRunner.GameLogPath, logLenStart),
+            (GateSoakRunner.GameRestartLogPath, restartLogLenStart),
+        ]);
+        var logTail = SoakLogScan.Scan(logLines, windowStartLocal, bootLocalTimes);
+        var steadyMinutes = SoakWarmup.SteadyStateMinutes(windowStartLocal, windowEndLocal, bootLocalTimes);
+        // Rates normalize by steady-state (outside-window) minutes — the same
+        // seconds the counts were evaluated over. A fully blind window leaves
+        // zero counts, so fall back to the wall window (never divide by zero).
+        var evalMinutes = Math.Max(steadyMinutes > 0 ? steadyMinutes : windowSpan.TotalMinutes, 0.01);
+        var physicsPerMin = logTail.PhysicsWarnings / evalMinutes;
+        var overrunsPerMin = logTail.TickOverrunWarnings / evalMinutes;
         var stepsDelta = (final?.TotalStepsRun ?? last.TotalStepsRun) - firstSample.TotalStepsRun;
+        // Window deltas, not cumulative counters: pre-window failures are
+        // enablement-phase business, already covered by the validity gate.
+        var failedDelta = Math.Max(0, (final?.TotalStepsFailed ?? last.TotalStepsFailed) - firstSample.TotalStepsFailed);
+        var timedOutDelta = Math.Max(0, (final?.TotalStepsTimedOut ?? last.TotalStepsTimedOut) - firstSample.TotalStepsTimedOut);
+        var physicsAvailable = (final?.PhysicsAvailable ?? false) || samples.Any(s => s.PhysicsAvailable);
+        var physicsWarmupNote = logTail.WarmupExcludedPhysics > 0
+            ? $" (+{logTail.WarmupExcludedPhysics} warmup-blind excluded, not counted)"
+            : "";
+        var tickWarmupNote = logTail.WarmupExcludedOverruns > 0
+            ? $" (+{logTail.WarmupExcludedOverruns} warmup-blind excluded, not counted)"
+            : "";
         var rssSamples = samples.Select(s => s.RssMb).Where(v => v >= 0).ToList();
         var rssMin = rssSamples.Count > 0 ? rssSamples.Min() : -1;
         var rssMax = rssSamples.Count > 0 ? rssSamples.Max() : -1;
@@ -224,10 +264,10 @@ public static class SchedulerSoakStage1Runner
                 "Scheduler avg wake latency", "ms", v => v <= b.SchedulerAvgWakeLatencyMs),
             Budget(final?.MaxWakeLatencyMs ?? last.MaxWakeLatencyMs, b.SchedulerMaxWakeLatencyMs,
                 "Scheduler max wake latency", "ms", v => v <= b.SchedulerMaxWakeLatencyMs),
-            Budget(final?.TotalStepsFailed ?? last.TotalStepsFailed, b.MaxSchedulerStepFailures,
-                "Scheduler step failures", "steps threw", v => v <= b.MaxSchedulerStepFailures),
-            Budget(final?.TotalStepsTimedOut ?? last.TotalStepsTimedOut, b.MaxSchedulerStepFailures,
-                "Scheduler step timeouts", "steps timed out (zero-tolerance mirrors step failures)", v => v <= b.MaxSchedulerStepFailures),
+            Budget(failedDelta, b.MaxSchedulerStepFailures,
+                "Scheduler step failures", $"steps threw in-window (total {(final?.TotalStepsFailed ?? last.TotalStepsFailed)})", v => v <= b.MaxSchedulerStepFailures),
+            Budget(timedOutDelta, b.MaxSchedulerStepFailures,
+                "Scheduler step timeouts", $"steps timed out in-window, zero-tolerance mirrors step failures (total {(final?.TotalStepsTimedOut ?? last.TotalStepsTimedOut)})", v => v <= b.MaxSchedulerStepFailures),
         };
 
         if (last.TickInvokeP95Ms >= 0)
@@ -236,7 +276,12 @@ public static class SchedulerSoakStage1Runner
                 v => v >= 0 && v <= b.TickP95Ms));
             verdicts.Add(Budget(last.TickInvokeMaxMs, b.TickMaxMs, "TickManager invoke max", "ms",
                 v => v >= 0 && v <= b.TickMaxMs));
-            verdicts.Add(Budget(samples.Where(s => s.RegionElapsedMs >= 0).DefaultIfEmpty(last).Max(s => s.RegionElapsedMs),
+            // Worst-ms capture: the log sees every over-budget pass, the 30s
+            // sampler only a subset — take the max of both.
+            var regionWorst = samples.Where(s => s.RegionElapsedMs >= 0).DefaultIfEmpty(last).Max(s => s.RegionElapsedMs);
+            if (logTail.RegionTickWorstMs >= 0)
+                regionWorst = Math.Max(regionWorst, logTail.RegionTickWorstMs);
+            verdicts.Add(Budget(regionWorst,
                 b.RegionTickMaxElapsedMs, "ActiveRegionTick worst pass", "ms (idle-stage ceiling)",
                 v => v <= b.RegionTickMaxElapsedMs));
         }
@@ -245,15 +290,31 @@ public static class SchedulerSoakStage1Runner
             verdicts.Add(BudgetVerdict.Nx("TickManager invoke p95", 0, b.TickP95Ms, "tick metrics absent on server"));
         }
 
-        verdicts.Add(Budget(dbPerCharPerMin, b.MaxDbWritesPerBotPerMin,
-            "DB writes", "writes/min/embodied-char", v => v <= b.MaxDbWritesPerBotPerMin));
-        verdicts.Add(Budget(physicsPerMin, b.MaxPhysicsWarningsPerMin,
-            "Physics warnings", "warnings/min", v => v <= b.MaxPhysicsWarningsPerMin));
-        verdicts.Add(Budget(logTail.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s,
-            "Physics warnings same-world", "warnings in 60s on one world",
-            v => v <= b.MaxPhysicsWarningsSameWorldPer60s));
+        // INVALID/unasserted: the only source is the server-global SHOW
+        // GLOBAL STATUS fallback (setup + unrelated traffic included) — the
+        // DB-write budget reports n/a, never PASS, until the scoped
+        // instrumented counter lands. Totals stay in evidence only.
+        verdicts.Add(BudgetVerdict.Nx("DB writes", 0, b.MaxDbWritesPerBotPerMin,
+            "DB write-volume source is server-global / unscoped — INVALID, not asserted until the scoped instrumented counter lands"));
+        // Gate-the-gates: physics verdicts require sampled telemetry
+        // (physics.available) — n/a-invalidated, never PASS on zero rows.
+        if (physicsAvailable)
+        {
+            verdicts.Add(Budget(physicsPerMin, b.MaxPhysicsWarningsPerMin,
+                "Physics warnings", "warnings/min" + physicsWarmupNote, v => v <= b.MaxPhysicsWarningsPerMin));
+            verdicts.Add(Budget(logTail.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s,
+                "Physics warnings same-world", "warnings in 60s on one world" + physicsWarmupNote,
+                v => v <= b.MaxPhysicsWarningsSameWorldPer60s));
+        }
+        else
+        {
+            verdicts.Add(BudgetVerdict.Nx("Physics warnings", 0, b.MaxPhysicsWarningsPerMin,
+                "physics telemetry absent / no samples in window — budget not exercisable" + physicsWarmupNote));
+            verdicts.Add(BudgetVerdict.Nx("Physics warnings same-world", 0, b.MaxPhysicsWarningsSameWorldPer60s,
+                "physics telemetry absent / no samples in window — budget not exercisable" + physicsWarmupNote));
+        }
         verdicts.Add(Budget(overrunsPerMin, b.MaxTickOverrunWarningsPerMin,
-            "Tick overrun warnings", "warnings/min (idle-stage budget)", v => v <= b.MaxTickOverrunWarningsPerMin));
+            "Tick overrun warnings", "warnings/min (idle-stage budget)" + tickWarmupNote, v => v <= b.MaxTickOverrunWarningsPerMin));
 
         if (final is { SaveMetricsAvailable: true })
         {
@@ -284,10 +345,14 @@ public static class SchedulerSoakStage1Runner
             StepsDelta: stepsDelta,
             PhysicsWarnings: logTail.PhysicsWarnings,
             TickOverrunWarnings: logTail.TickOverrunWarnings,
+            SteadyStateMinutes: steadyMinutes,
             RssMinMb: rssMin,
-            RssMaxMb: rssMax);
+            RssMaxMb: rssMax,
+            WarmupExcludedPhysics: logTail.WarmupExcludedPhysics,
+            WarmupExcludedOverruns: logTail.WarmupExcludedOverruns,
+            BootCount: bootLocalTimes.Count);
 
-        var evidencePaths = WriteEvidence(minutes, first.Metrics, samples, verdicts,
+        var evidencePaths = WriteEvidence(effectiveMinutes, first.Metrics, samples, verdicts,
             final, windowSpan, true, failures, derived);
 
         Console.WriteLine($"[{StageName}] {detail}");
@@ -346,7 +411,7 @@ public static class SchedulerSoakStage1Runner
             m.AvgWakeLatencyMs, m.MaxWakeLatencyMs,
             m.TickInvokeP95Ms, m.TickInvokeMaxMs, m.RegionElapsedMs,
             m.SaveP95Ms, m.SaveMaxMs,
-            rssMb);
+            rssMb, m.PhysicsAvailable);
 
     private static FinalMetrics ProbeFinal(BotDriveClient bridge)
     {
@@ -356,7 +421,8 @@ public static class SchedulerSoakStage1Runner
             m.ElapsedMs, m.TotalResurrections,
             m.TickInvokeP95Ms, m.TickInvokeMaxMs, m.RegionElapsedMs, m.TickInvokeP95Ms >= 0,
             m.SaveMetricsAvailable, m.SaveSampleCount, m.SaveP95Ms, m.SaveMaxMs,
-            m.PopulationEmbodied, m.PopulationFull, m.PopulationReduced, m.PopulationDormant);
+            m.PopulationEmbodied, m.PopulationFull, m.PopulationReduced, m.PopulationDormant,
+            m.PhysicsAvailable);
     }
 
     /// <summary>Parses one bridge `metrics` reply into the flat snapshot shape.</summary>
@@ -401,6 +467,11 @@ public static class SchedulerSoakStage1Runner
             m.SaveP95Ms = sv.GetProperty("p95Ms").GetDouble();
             m.SaveMaxMs = sv.GetProperty("maxMs").GetDouble();
         }
+
+        // Gate-the-gates precondition for the physics verdicts (A5 surface).
+        if (json.TryGetProperty("physics", out var ph) && ph.ValueKind == JsonValueKind.Object &&
+            ph.TryGetProperty("available", out var pha) && pha.GetBoolean())
+            m.PhysicsAvailable = true;
 
         if (json.TryGetProperty("population", out var po) && po.ValueKind == JsonValueKind.Object &&
             po.TryGetProperty("available", out var pa) && pa.GetBoolean())
@@ -532,6 +603,12 @@ public static class SchedulerSoakStage1Runner
         return -1;
     }
 
+    /// <summary>
+    /// INVALID for verdicts: SHOW GLOBAL STATUS is server-global scope —
+    /// setup plus unrelated traffic — so its delta MUST NOT feed the
+    /// DB-write budget (reports n/a until the scoped instrumented counter
+    /// lands). Retained only as an informational evidence series.
+    /// </summary>
     private static long ReadDbWriteCounters()
     {
         long total = 0;
@@ -552,84 +629,6 @@ public static class SchedulerSoakStage1Runner
         return total;
     }
 
-    // ------------------------------------------------------------------ game-log scan
-
-    private sealed record LogTail(long PhysicsWarnings, long TickOverrunWarnings, long MaxSameWorldPhysicsWarningsPer60s);
-
-    private static readonly System.Text.RegularExpressions.Regex PhysicsWarningRegex = new(
-        @"^(\d{2}):(\d{2}):(\d{2}) .*?in (.+?) at ",
-        System.Text.RegularExpressions.RegexOptions.Compiled);
-
-    /// <summary>
-    /// Same game-log contract as GateSoakRunner: "Physics thread is running
-    /// slow" warnings (with the per-world sliding-60s clause) + "Tick took" /
-    /// ActiveRegionTick over-budget lines — scanned across the WINDOW DELTA
-    /// only (log offset taken at window start).
-    /// </summary>
-    private static LogTail ScanGameLog(long startOffset)
-    {
-        long physics = 0, overruns = 0;
-        var worldTimes = new Dictionary<string, List<long>>();
-        try
-        {
-            if (!File.Exists(GateSoakRunner.GameLogPath))
-                return new LogTail(0, 0, 0);
-
-            using var fs = File.OpenRead(GateSoakRunner.GameLogPath);
-            if (fs.Length <= startOffset)
-                return new LogTail(0, 0, 0);
-
-            fs.Seek(startOffset, SeekOrigin.Begin);
-            using var reader = new StreamReader(fs, Encoding.UTF8, false, 4096, leaveOpen: true);
-            var dayOffset = 0L;
-            long lastSec = -1;
-            while (reader.ReadLine() is { } line)
-            {
-                if (line.Contains("Physics thread is running slow", StringComparison.Ordinal))
-                {
-                    physics++;
-                    var m = PhysicsWarningRegex.Match(line);
-                    if (m.Success)
-                    {
-                        var sec = int.Parse(m.Groups[1].Value) * 3600
-                                  + int.Parse(m.Groups[2].Value) * 60
-                                  + int.Parse(m.Groups[3].Value);
-                        if (lastSec >= 0 && sec < lastSec)
-                            dayOffset += 86400;
-                        lastSec = sec;
-                        var world = m.Groups[4].Value;
-                        if (!worldTimes.TryGetValue(world, out var times))
-                            worldTimes[world] = times = [];
-                        times.Add(sec + dayOffset);
-                    }
-                }
-
-                if (line.Contains("Tick took ", StringComparison.Ordinal) ||
-                    line.Contains("over 100ms budget", StringComparison.Ordinal) ||
-                    line.Contains("ActiveRegionTick took", StringComparison.Ordinal))
-                    overruns++;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[{StageName}] game log scan failed: {ex.GetType().Name}: {ex.Message}");
-        }
-
-        long maxSameWorld60s = 0;
-        foreach (var times in worldTimes.Values)
-        {
-            times.Sort();
-            var head = 0;
-            for (var tail = 0; tail < times.Count; tail++)
-            {
-                while (times[tail] - times[head] > 60)
-                    head++;
-                maxSameWorld60s = Math.Max(maxSameWorld60s, tail - head + 1);
-            }
-        }
-
-        return new LogTail(physics, overruns, maxSameWorld60s);
-    }
 
     // ------------------------------------------------------------------ evidence
 
@@ -661,7 +660,10 @@ public static class SchedulerSoakStage1Runner
             ["generatedUtc"] = DateTime.UtcNow.ToString("o"),
             ["configuredWindowMinutes"] = configuredMinutes,
             ["measuredWindowMinutes"] = windowSpan?.TotalMinutes ?? 0,
-            ["citizens"] = CitizenCount,
+            ["steadyStateMinutes"] = derived.SteadyStateMinutes,
+            ["warmupExcludedPhysics"] = derived.WarmupExcludedPhysics,
+            ["warmupExcludedOverruns"] = derived.WarmupExcludedOverruns,
+            ["bootCount"] = derived.BootCount,
             ["enablement"] = new Dictionary<string, object?>
             {
                 ["env"] = "AAEMU_PRESENCE_DEMO=1 + AAEMU_PRESENCE_MANIFEST",
@@ -697,7 +699,8 @@ public static class SchedulerSoakStage1Runner
         sb.AppendLine($"> Generated by SchedulerSoakStage1Runner. Bots work ONLY through the real " +
                       $"IPlayerBotScheduler lease/wake path (presence demo enabled via env + AAEMU_PRESENCE_MANIFEST roster).");
         sb.AppendLine($"> Validity contract: scheduler.available=true AND totalStepsRun>0 — otherwise the run is INVALID.");
-        sb.AppendLine($"> Window: {(windowSpan?.TotalMinutes ?? 0):F1} min · citizens: {CitizenCount} · valid: {valid}");
+        sb.AppendLine($"> Warmup-blind: [boot−30s, boot+120s] recorded, not counted — {derived.BootCount} boot(s), " +
+                      $"{derived.SteadyStateMinutes:F1} steady-state min, excluded {derived.WarmupExcludedPhysics} physics / {derived.WarmupExcludedOverruns} tick-overrun lines.");
         sb.AppendLine();
         sb.AppendLine("| Metric | Measured | Limit | Verdict |");
         sb.AppendLine("|---|---|---|---|");
@@ -715,8 +718,9 @@ public static class SchedulerSoakStage1Runner
         sb.AppendLine($"- wake latency avg/max: {(final?.AvgWakeLatencyMs ?? 0):F1} ms / {(final?.MaxWakeLatencyMs ?? 0):F1} ms · utilization {(final?.WorkerUtilization ?? 0):P1}");
         sb.AppendLine($"- population embodied: {final?.PopulationEmbodied.ToString() ?? "n/a"} (full {final?.PopulationFull}, reduced {final?.PopulationReduced}, dormant {final?.PopulationDormant})");
         sb.AppendLine($"- RSS band (game proc): {derived.RssMinMb:F0}–{derived.RssMaxMb:F0} MB (informational — no numeric precedent)");
-        sb.AppendLine($"- DB writes: {derived.DbWritesTotal} total ({derived.DbPerEmbodiedCharPerMin:F1}/min/embodied-char)");
+        sb.AppendLine($"- DB writes: {derived.DbWritesTotal} total ({derived.DbPerEmbodiedCharPerMin:F1}/min/embodied-char) — server-global scope, INVALID for verdicts (n/a until the scoped counter lands)");
         sb.AppendLine($"- game-log window delta: {derived.PhysicsWarnings} physics-slow warnings, {derived.TickOverrunWarnings} tick-overrun lines");
+        sb.AppendLine($"- physics telemetry: {(final?.PhysicsAvailable == true ? "available (verdicts enforced)" : "absent — physics verdicts n/a, never PASS on zero rows")}");
         sb.AppendLine();
 
         if (samples.Count > 0)
@@ -759,8 +763,12 @@ public static class SchedulerSoakStage1Runner
         long StepsDelta,
         long PhysicsWarnings,
         long TickOverrunWarnings,
+        double SteadyStateMinutes,
         double RssMinMb,
-        double RssMaxMb);
+        double RssMaxMb,
+        long WarmupExcludedPhysics,
+        long WarmupExcludedOverruns,
+        int BootCount);
 
     /// <summary>One point-in-time sample of the bridge scheduler surface + host RSS.</summary>
     public sealed record SoakSample(
@@ -781,7 +789,8 @@ public static class SchedulerSoakStage1Runner
         double RegionElapsedMs,
         double SaveP95Ms,
         double SaveMaxMs,
-        double RssMb);
+        double RssMb,
+        bool PhysicsAvailable);
 
     /// <summary>Mutating parse target for one bridge `metrics` reply.</summary>
     private sealed class MetricsSnapshot
@@ -804,6 +813,7 @@ public static class SchedulerSoakStage1Runner
         public double TickInvokeMaxMs = -1;
         public double RegionElapsedMs = -1;
         public bool SaveMetricsAvailable;
+        public bool PhysicsAvailable;
         public long SaveSampleCount;
         public double SaveP95Ms;
         public double SaveMaxMs;
@@ -837,5 +847,6 @@ public static class SchedulerSoakStage1Runner
         int PopulationEmbodied,
         int PopulationFull,
         int PopulationReduced,
-        int PopulationDormant);
+        int PopulationDormant,
+        bool PhysicsAvailable);
 }

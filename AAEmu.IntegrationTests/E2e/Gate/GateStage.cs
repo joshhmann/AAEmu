@@ -21,6 +21,16 @@ public sealed record GateStageConfig
     /// <summary>Soak window in minutes (stage 50: ≥360 per deliverable 8; overridable for smoke runs).</summary>
     public int SoakMinutes { get; init; } = 0;
 
+    /// <summary>
+    /// One long no-restart up-segment in minutes under continuous load
+    /// (forensics follow-up: boots ~140s apart left zero steady-state
+    /// seconds, so repeated-restart soaks can never validate steady state).
+    /// When &gt; 0 the metrics window stretches to at least this length, NO
+    /// restart may occur inside it, and bots keep driving quests for its
+    /// whole duration. 0 = off (drive once, then sample the idle window).
+    /// 15-20 is the recommended band when enabled.
+    /// </summary>
+    public int LongUpSegmentMinutes { get; init; } = 0;
     /// <summary>Number of golden-route quests each bot drives (0 = enter-world only).</summary>
     public int QuestSubset { get; init; }
 

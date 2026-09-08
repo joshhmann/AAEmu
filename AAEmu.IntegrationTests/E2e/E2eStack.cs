@@ -70,6 +70,27 @@ public static class E2eStack
     private static readonly object Gate = new();
     private static bool _stackUp;
 
+    /// <summary>
+    /// UTC wall-clock of every game-server (re)boot in this stack epoch, for
+    /// warmup-blind soak evaluation ([boot−30s, boot+120s] excluded from
+    /// verdicts — see AAEmu.Commons.Utils.Gate.SoakWarmup). Recorded when the
+    /// boot is confirmed (Server started! / bridge up), so a boot's blind
+    /// window covers provisioning, not process spawn. Cleared on
+    /// <see cref="StopAll"/> (fresh epoch); restarts append.
+    /// </summary>
+    private static readonly List<DateTime> _gameBootTimesUtc = new();
+
+    /// <summary>Every recorded game boot (UTC) in this stack epoch, oldest first.</summary>
+    public static IReadOnlyList<DateTime> GameBootTimesUtc
+    {
+        get { lock (Gate) return _gameBootTimesUtc.ToList(); }
+    }
+
+    private static void RecordGameBootUtc()
+    {
+        lock (Gate) _gameBootTimesUtc.Add(DateTime.UtcNow);
+    }
+
     public static string RuntimeLoginDir => Path.Combine(E2eRoot, "runtime", "login");
     public static string RuntimeGameDir => Path.Combine(E2eRoot, "runtime", "game");
     public static string GameDataDir => Path.Combine(E2eRoot, "runtime", "game-data");
@@ -486,13 +507,13 @@ public static class E2eStack
         _loginProc = StartServerProcess("login", RuntimeLoginDir, "AAEmu.Login.dll",
             Path.Combine(E2eRoot, "logs", "login.log"));
         WaitTcp("127.0.0.1", LoginPort, 90);
-
         _gameProc = StartServerProcess("game", RuntimeGameDir, "AAEmu.Game.dll",
             Path.Combine(E2eRoot, "logs", "game.log"));
         WaitTcp("127.0.0.1", GamePort, 300);
         WaitTcp("127.0.0.1", StreamPort, 300);
         WaitBridge(60);
         WaitServerStarted(Path.Combine(E2eRoot, "logs", "game.log"), 300);
+        RecordGameBootUtc();
     }
 
     private static Process StartServerProcess(string name, string dir, string dll, string logPath)
@@ -640,6 +661,7 @@ public static class E2eStack
         WaitTcp("127.0.0.1", StreamPort, 300);
         WaitBridge(60);
         WaitServerStarted(Path.Combine(E2eRoot, "logs", "game-restart.log"), 300);
+        RecordGameBootUtc();
         return killedPid;
     }
 
@@ -680,6 +702,7 @@ public static class E2eStack
 
         _loginProc = null;
         _stackUp = false;
+        lock (Gate) _gameBootTimesUtc.Clear();
     }
 
     // ------------------------------------------------------------------ data

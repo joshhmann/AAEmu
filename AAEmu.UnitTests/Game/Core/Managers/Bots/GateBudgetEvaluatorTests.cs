@@ -29,6 +29,8 @@ public class GateBudgetEvaluatorTests
         SaveP95Ms = 800,
         SaveMaxMs = 1500,
         DbWrites = 2500,          // 50/min/bot
+        DbWritesAvailable = true, // scoped instrumented counter present
+        PhysicsAvailable = true,
         PhysicsWarnings = 0,
         MaxSameWorldPhysicsWarningsPer60s = 0,
         TickOverrunWarnings = 0
@@ -430,4 +432,94 @@ public class GateBudgetEvaluatorTests
         var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: false);
         await Assert.That(verdicts.All(v => v.Passed)).IsTrue();
     }
+
+    [Test]
+    public async Task Evaluate_PhysicsTelemetryAbsent_BothVerdictsNotApplicable()
+    {
+        // Gate-the-gates: zero physics rows must never read as PASS — without
+        // physics.available both verdicts report n/a (invalidated, not green).
+        var s = BaseSnapshot() with { PhysicsAvailable = false, PhysicsWarnings = 0, MaxSameWorldPhysicsWarningsPer60s = 0 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var rate = verdicts.Single(v => v.Name == "Physics warnings");
+        await Assert.That(rate.Passed).IsTrue();
+        await Assert.That(rate.NotApplicable).IsTrue();
+        await Assert.That(rate.Detail.Contains("not exercisable")).IsTrue();
+        var sameWorld = verdicts.Single(v => v.Name == "Physics warnings same-world");
+        await Assert.That(sameWorld.Passed).IsTrue();
+        await Assert.That(sameWorld.NotApplicable).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_PhysicsTelemetryAbsent_WarningsPresent_StillNotApplicable()
+    {
+        // Even with counted warnings on the snapshot, absent telemetry means
+        // the surface was not exercisable — n/a, never a counted verdict.
+        var s = BaseSnapshot() with { PhysicsAvailable = false, PhysicsWarnings = 6 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var rate = verdicts.Single(v => v.Name == "Physics warnings");
+        await Assert.That(rate.NotApplicable).IsTrue();
+        await Assert.That(rate.Measured).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Evaluate_SteadyStateMinutes_NormalizesWarningRates()
+    {
+        // 10-min window, one boot blinds 2.5 of them → 1 warning over 7.5
+        // steady-state minutes = 0.133/min (over the 0.1 budget), while the
+        // naive full-window rate (0.1/min) would pass.
+        var boot = new DateTime(2026, 9, 8, 12, 0, 0, DateTimeKind.Utc);
+        var s = BaseSnapshot() with
+        {
+            WindowMinutes = 10,
+            SteadyStateMinutes = 7.5,
+            BootTimesUtc = [boot],
+            PhysicsWarnings = 1,
+        };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "Physics warnings");
+        await Assert.That(v.Passed).IsFalse();
+        await Assert.That(v.Measured).IsEqualTo(1.0 / 7.5).Within(0.0001);
+    }
+
+    [Test]
+    public async Task Evaluate_WarmupExclusions_RecordedInVerdictDetail()
+    {
+        // Excluded lines are recorded, not counted: the detail carries the
+        // exclusion tally while the verdict evaluates the counted remainder.
+        var s = BaseSnapshot() with { WarmupExcludedPhysicsWarnings = 3, WarmupExcludedTickOverruns = 2 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var physics = verdicts.Single(x => x.Name == "Physics warnings");
+        await Assert.That(physics.Passed).IsTrue();
+        await Assert.That(physics.Detail.Contains("+3 warmup-blind excluded")).IsTrue();
+        var tick = verdicts.Single(x => x.Name == "Tick overrun warnings");
+        await Assert.That(tick.Passed).IsTrue();
+        await Assert.That(tick.Detail.Contains("+2 warmup-blind excluded")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_DbWritesUnscopedSource_NotApplicableNeverPass()
+    {
+        // Server-global SHOW GLOBAL STATUS scope includes setup/unrelated
+        // traffic: without the scoped instrumented counter the budget is
+        // INVALID/unasserted — n/a even at write-loop volumes, never PASS
+        // on a number that cannot attribute writes to the window.
+        var s = BaseSnapshot() with { DbWritesAvailable = false, DbWrites = 300000 };
+
+        var verdicts = GateBudgetEvaluator.Evaluate(s, BaseBudgets(), requireH2: true);
+
+        var v = verdicts.Single(x => x.Name == "DB writes");
+        await Assert.That(v.Passed).IsTrue();
+        await Assert.That(v.NotApplicable).IsTrue();
+        await Assert.That(v.Measured).IsEqualTo(0);
+        await Assert.That(v.Detail.Contains("INVALID")).IsTrue();
+    }
+
 }

@@ -56,7 +56,15 @@ public sealed record GateMetricsSnapshot
 
     // -- DB pressure (MySQL Com_* delta over the window) --
     public long DbWrites { get; init; }
-
+    /// <summary>
+    /// True only when DbWrites comes from a window-scoped instrumented
+    /// counter. False (default) = the only available source is the
+    /// server-global SHOW GLOBAL STATUS fallback, which includes setup and
+    /// unrelated traffic and MUST NOT feed verdicts: the DB-write budget
+    /// then reports n/a (INVALID/unasserted, never PASS) until the scoped
+    /// instrumented counter lands.
+    /// </summary>
+    public bool DbWritesAvailable { get; init; }
     // -- Physics warning rate (game log scan over the window) --
     public long PhysicsWarnings { get; init; }
 
@@ -66,6 +74,35 @@ public sealed record GateMetricsSnapshot
     // -- Tick overrun warnings (game log scan over the window) --
     public long TickOverrunWarnings { get; init; }
 
+
+    /// <summary>
+    /// Game-server boot times (UTC) covering this window AND the warmup lead
+    /// before it. Soak runners copy <c>E2eStack.GameBootTimesUtc</c>: every
+    /// boot blinds [boot−30s, boot+120s] (see <see cref="SoakWarmup"/>) so
+    /// post-boot pause storms are recorded, never counted.
+    /// </summary>
+    public IReadOnlyList<DateTime> BootTimesUtc { get; init; } = [];
+
+    /// <summary>
+    /// Steady-state window length in minutes (outside all warmup blinds).
+    /// 0 = unknown: rate verdicts fall back to <see cref="WindowMinutes"/>.
+    /// </summary>
+    public double SteadyStateMinutes { get; init; }
+
+    /// <summary>Warmup-blind physics lines: recorded, not counted.</summary>
+    public long WarmupExcludedPhysicsWarnings { get; init; }
+
+    /// <summary>Warmup-blind tick-overrun lines: recorded, not counted.</summary>
+    public long WarmupExcludedTickOverruns { get; init; }
+
+    /// <summary>
+    /// True when the bridge physics telemetry surface reported
+    /// available=true with samples in this window. Physics verdicts require
+    /// it — without samples they report n/a, never PASS on zero rows.
+    /// </summary>
+    public bool PhysicsAvailable { get; init; }
+
+
     // -- Convenience rates --
     /// <summary>Total embodied characters the DB-write rate normalizes by (network bots + presence citizens).</summary>
     [JsonIgnore]
@@ -74,8 +111,16 @@ public sealed record GateMetricsSnapshot
     public double DbWritesPerMin => WindowMinutes > 0 ? DbWrites / WindowMinutes : 0;
     [JsonIgnore]
     public double DbWritesPerBotPerMin => WindowMinutes > 0 && EmbodiedCharacterCount > 0 ? DbWrites / WindowMinutes / EmbodiedCharacterCount : 0;
+    /// <summary>
+    /// Minutes the log-derived warning rates normalize by: steady-state
+    /// (outside warmup blinds) when the runner measured it, else the full
+    /// window. Budget events are only counted outside warmup, so the rate
+    /// denominator must be outside warmup too.
+    /// </summary>
     [JsonIgnore]
-    public double PhysicsWarningsPerMin => WindowMinutes > 0 ? PhysicsWarnings / WindowMinutes : 0;
+    public double EffectiveEvaluatedMinutes => SteadyStateMinutes > 0 ? SteadyStateMinutes : WindowMinutes;
     [JsonIgnore]
-    public double TickOverrunWarningsPerMin => WindowMinutes > 0 ? TickOverrunWarnings / WindowMinutes : 0;
+    public double PhysicsWarningsPerMin => EffectiveEvaluatedMinutes > 0 ? PhysicsWarnings / EffectiveEvaluatedMinutes : 0;
+    [JsonIgnore]
+    public double TickOverrunWarningsPerMin => EffectiveEvaluatedMinutes > 0 ? TickOverrunWarnings / EffectiveEvaluatedMinutes : 0;
 }

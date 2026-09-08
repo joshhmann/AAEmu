@@ -18,7 +18,9 @@ namespace AAEmu.IntegrationTests.E2e.Gate;
 ///     surface — worst-of-three samples taken at window start/mid/end)
 ///   - PlayerBotScheduler wake latency (bridge surface; n/a when the citizen
 ///     path isn't wired)
-///   - DB writes: MySQL SHOW GLOBAL STATUS Com_* deltas across the window
+///   - DB writes: MySQL SHOW GLOBAL STATUS Com_* deltas across the window —
+///     server-global scope, INVALID for verdicts (n/a until the scoped
+///     instrumented counter lands); recorded as evidence only
 ///   - physics warning rate + tick overrun rate: game-log scan across the
 ///     window ("Physics thread is running slow", "Tick took", ActiveRegionTick
 ///     over-budget lines)
@@ -34,6 +36,14 @@ public static class GateSoakRunner
     private static readonly Dictionary<uint, E2eQuestManifest> Manifests = LoadManifests();
 
     public static string GameLogPath => Path.Combine(E2eStack.E2eRoot, "logs", "game.log");
+    /// <summary>
+    /// Post-restart game log: <see cref="E2eStack.RestartGameServer"/> boots
+    /// the new process logging here (fresh file per restart) while game.log
+    /// freezes. Window scans cover BOTH deltas (chronological) so a
+    /// pre-window restart (e.g. homestead seeding) can never read as zero
+    /// rows — a vacuous PASS on an empty tail.
+    /// </summary>
+    public static string GameRestartLogPath => Path.Combine(E2eStack.E2eRoot, "logs", "game-restart.log");
 
     private static Dictionary<uint, E2eQuestManifest> LoadManifests()
     {
@@ -58,7 +68,7 @@ public static class GateSoakRunner
     /// </summary>
     public static async Task<GateStageResult> RunStageAsync(GateStageConfig stage, CancellationToken ct = default)
     {
-        Console.WriteLine($"[gate] stage {stage.Name}: {stage.BotCount} bots, window {(stage.SoakMinutes > 0 ? stage.SoakMinutes : stage.WindowMinutes)}min (soak={stage.SoakMinutes > 0})");
+        Console.WriteLine($"[gate] stage {stage.Name}: {stage.BotCount} bots, window {(stage.SoakMinutes > 0 ? stage.SoakMinutes : stage.WindowMinutes)}min (soak={stage.SoakMinutes > 0}, longUpSegment={stage.LongUpSegmentMinutes}min)");
         E2eStack.EnsureUp();
 
         // M3b gate-scale scenario: seed homesteads BEFORE the metrics window so
@@ -74,6 +84,8 @@ public static class GateSoakRunner
 
         var failures = new List<string>();
         var windowMinutes = stage.SoakMinutes > 0 ? stage.SoakMinutes : stage.WindowMinutes;
+        if (stage.LongUpSegmentMinutes > 0 && stage.LongUpSegmentMinutes > windowMinutes)
+            windowMinutes = stage.LongUpSegmentMinutes;
 
         // -- H2 probe (stage 25 gate) -------------------------------------
         GateMetricsProbe h2Probe;
@@ -188,23 +200,40 @@ public static class GateSoakRunner
             }
 
             // -- metrics window ----------------------------------------------
+            // NO restart may occur inside the window (long up-segment rule):
+            // boots are journaled by E2eStack and blind [boot−30s, boot+120s]
+            // so pre-window boots (homestead seeding) and any surprise reboot
+            // are recorded, never counted.
             long dbWritesStart = 0, dbWritesEnd = 0;
-            long logLenStart = 0;
+            long schedFailedStart = 0;
+            long logLenStart = 0, restartLogLenStart = 0;
             var tickWorst = new TickSample();
             DateTime windowStart;
+            DateTime windowStartLocal = DateTime.Now;
+            var windowBoots = E2eStack.GameBootTimesUtc;
+            var continuousLoad = stage.LongUpSegmentMinutes > 0 && stage.QuestSubset > 0 && bots.Count > 0;
             try
             {
                 using var bridge = new BotDriveClient(E2eStack.BridgePort);
 
-                // Window start: DB write counters + log offset + first probe.
+                // Window start: DB write counters + log offsets + first probe.
+                // BOTH log files: a pre-window restart freezes game.log and
+                // continues in game-restart.log — scanning one file reads as
+                // zero rows (vacuous PASS).
                 dbWritesStart = ReadDbWriteCounters();
                 logLenStart = File.Exists(GameLogPath) ? new FileInfo(GameLogPath).Length : 0;
+                restartLogLenStart = File.Exists(GameRestartLogPath) ? new FileInfo(GameRestartLogPath).Length : 0;
                 windowStart = DateTime.UtcNow;
+                windowStartLocal = DateTime.Now;
+                windowBoots = E2eStack.GameBootTimesUtc;
                 var s0 = await ProbeMetricsAsync(bridge, ct);
                 tickWorst.Merge(s0);
+                schedFailedStart = s0.Scheduler?.TotalStepsFailed ?? 0;
 
                 var deadline = windowStart.AddMinutes(windowMinutes);
                 var samples = 1;
+                var loadCursor = 0;
+                var driveQuestIds = GoldenRoute.Take(Math.Max(0, stage.QuestSubset)).ToArray();
                 while (DateTime.UtcNow < deadline)
                 {
                     ct.ThrowIfCancellationRequested();
@@ -213,6 +242,8 @@ public static class GateSoakRunner
                     tickWorst.Merge(s);
                     samples++;
                     Console.WriteLine($"[gate] sample {samples}: tick p95={s.Tick?.InvokeP95Ms ?? -1:F1}ms regionElapsed={s.RegionTick?.ElapsedMs ?? -1}ms");
+                    if (continuousLoad)
+                        DriveLongSegmentRound(bridge, bots, driveQuestIds, ref loadCursor, failures);
                 }
 
                 dbWritesEnd = ReadDbWriteCounters();
@@ -232,7 +263,18 @@ public static class GateSoakRunner
             }
 
             var windowSpan = DateTime.UtcNow - windowStart;
-            var logTail = ReadGameLogTail(logLenStart);
+            var windowEndLocal = DateTime.Now;
+            // Re-read boots at window end: a surprise reboot mid-window must
+            // blind its own storm even though no restart was scheduled.
+            windowBoots = E2eStack.GameBootTimesUtc;
+            var bootLocalTimes = windowBoots.Select(b => b.ToLocalTime()).ToList();
+            var logLines = SoakLogScan.ReadWindowLines(
+            [
+                (GameLogPath, logLenStart),
+                (GameRestartLogPath, restartLogLenStart),
+            ]);
+            var logTail = SoakLogScan.Scan(logLines, windowStartLocal, bootLocalTimes);
+            var steadyMinutes = SoakWarmup.SteadyStateMinutes(windowStartLocal, windowEndLocal, bootLocalTimes);
 
             var snapshot = new GateMetricsSnapshot
             {
@@ -244,11 +286,18 @@ public static class GateSoakRunner
                 TickInvokeMaxMs = tickWorst.TickMaxMs,
                 TickSubscriberCount = tickWorst.SubscriberCount,
                 RegionTickBudgetAvailable = h2Probe.RegionTick?.Available == true,
-                RegionTickMaxElapsedMs = tickWorst.RegionTickMaxElapsedMs,
-                RegionTickOverruns = tickWorst.RegionTickOverruns,
+                // Worst-ms capture: the log sees EVERY over-budget pass while
+                // the 30s sampler only observes a subset — take the max of both.
+                RegionTickMaxElapsedMs = Math.Max(tickWorst.RegionTickMaxElapsedMs,
+                    logTail.RegionTickWorstMs),
+                // Window-scoped region-overrun count (was: vacuous always-0 —
+                // TickSample never set it — a PASS on zero rows).
+                RegionTickOverruns = logTail.RegionOverruns,
                 SchedulerStarted = tickWorst.SchedulerStarted,
                 SchedulerStepsRun = tickWorst.SchedulerStepsRun,
-                SchedulerStepsFailed = tickWorst.SchedulerStepsFailed,
+                // Window delta, not the cumulative counter: pre-window drive
+                // failures are correctness-stage business, already recorded.
+                SchedulerStepsFailed = Math.Max(0, tickWorst.SchedulerStepsFailed - schedFailedStart),
                 SchedulerAvgWakeLatencyMs = tickWorst.SchedulerAvgWakeLatencyMs,
                 SchedulerMaxWakeLatencyMs = tickWorst.SchedulerMaxWakeLatencyMs,
                 SaveMetricsAvailable = tickWorst.SaveMetricsAvailable,
@@ -256,6 +305,16 @@ public static class GateSoakRunner
                 SaveP95Ms = tickWorst.SaveP95Ms,
                 SaveMaxMs = tickWorst.SaveMaxMs,
                 DbWrites = Math.Max(0, dbWritesEnd - dbWritesStart),
+                // INVALID/unasserted: the only source is the server-global
+                // SHOW GLOBAL STATUS fallback (setup + unrelated traffic
+                // included) — recorded for evidence, NEVER fed to verdicts
+                // until the scoped instrumented counter lands.
+                DbWritesAvailable = false,
+                BootTimesUtc = windowBoots.ToList(),
+                SteadyStateMinutes = steadyMinutes,
+                WarmupExcludedPhysicsWarnings = logTail.WarmupExcludedPhysics,
+                WarmupExcludedTickOverruns = logTail.WarmupExcludedOverruns,
+                PhysicsAvailable = tickWorst.PhysicsAvailable,
                 PhysicsWarnings = logTail.PhysicsWarnings,
                 MaxSameWorldPhysicsWarningsPer60s = logTail.MaxSameWorldPhysicsWarningsPer60s,
                 TickOverrunWarnings = logTail.TickOverrunWarnings
@@ -330,7 +389,7 @@ public static class GateSoakRunner
         public double TickMaxMs = -1;
         public int SubscriberCount;
         public double RegionTickMaxElapsedMs = -1;
-        public long RegionTickOverruns;
+        public bool PhysicsAvailable;
         public bool SchedulerStarted;
         public long SchedulerStepsRun;
         public long SchedulerStepsFailed;
@@ -374,6 +433,10 @@ public static class GateSoakRunner
                 SaveP95Ms = Math.Max(SaveP95Ms, s.Save.P95Ms);
                 SaveMaxMs = Math.Max(SaveMaxMs, s.Save.MaxMs);
             }
+
+            // Gate-the-gates: physics verdicts require sampled telemetry —
+            // available in ANY window sample counts as exercised.
+            PhysicsAvailable |= s.PhysicsAvailable;
         }
     }
 
@@ -381,7 +444,7 @@ public static class GateSoakRunner
     private sealed record RegionTickProbe(bool Available, int CharactersTotal, int CharactersProcessed, int SpawnersTotal, int SpawnersProcessed, double ElapsedMs, int BudgetMs);
     private sealed record SchedulerProbe(bool Available, bool IsRunning, int WorkerCount, long TotalStepsRun, long TotalStepsFailed, long TotalStepsSkipped, double AvgWakeLatencyMs, double MaxWakeLatencyMs);
     private sealed record SaveProbe(bool Available, long SampleCount, double P95Ms, double MaxMs);
-    private sealed record GateMetricsProbe(TickProbe Tick, RegionTickProbe RegionTick, SchedulerProbe Scheduler, SaveProbe Save, long UptimeMs);
+    private sealed record GateMetricsProbe(TickProbe Tick, RegionTickProbe RegionTick, SchedulerProbe Scheduler, SaveProbe Save, bool PhysicsAvailable, long UptimeMs);
 
     private static async Task<GateMetricsProbe> ProbeMetricsAsync(BotDriveClient bridge, CancellationToken ct)
     {
@@ -398,12 +461,17 @@ public static class GateSoakRunner
         var save = json.TryGetProperty("save", out var sv) && sv.ValueKind == JsonValueKind.Object && sv.TryGetProperty("available", out var sva) && sva.GetBoolean()
             ? new SaveProbe(true, sv.GetProperty("sampleCount").GetInt64(), sv.GetProperty("p95Ms").GetDouble(), sv.GetProperty("maxMs").GetDouble())
             : new SaveProbe(false, 0, 0, 0);
+        // A5 physics telemetry surface (gate-the-gates precondition for the
+        // physics verdicts): available=true with samples means the slow-
+        // thread warnings were exercisable in this window.
+        var physicsAvailable = json.TryGetProperty("physics", out var ph) && ph.ValueKind == JsonValueKind.Object
+            && ph.TryGetProperty("available", out var pha) && pha.GetBoolean();
         var uptime = json.TryGetProperty("uptimeMs", out var u) ? u.GetInt64() : 0;
 
         // ActiveRegionTick overruns are counted from the LOG (per-pass warning
         // lines), not from the point-in-time stats — the runner scans the log
         // delta separately; the probe only carries worst-pass elapsed.
-        return new GateMetricsProbe(tick, region, sched, save, uptime);
+        return new GateMetricsProbe(tick, region, sched, save, physicsAvailable, uptime);
     }
 
     // ------------------------------------------------------------------ homestead seeding (M3b gate-scale)
@@ -471,6 +539,13 @@ public static class GateSoakRunner
 
     // ------------------------------------------------------------------ DB / log
 
+    /// <summary>
+    /// INVALID for verdicts: SHOW GLOBAL STATUS is server-global scope —
+    /// setup plus unrelated traffic — so its delta MUST NOT feed the
+    /// DB-write budget (snapshot DbWritesAvailable stays false until the
+    /// scoped instrumented counter lands). Retained only as an
+    /// informational evidence series.
+    /// </summary>
     private static long ReadDbWriteCounters()
     {
         long total = 0;
@@ -490,84 +565,43 @@ public static class GateSoakRunner
 
         return total;
     }
+    // Log scanning lives in AAEmu.Commons.Utils.Gate.SoakLogScan (shared,
+    // warmup-blind, headless-tested): window deltas from BOTH log files, per-
+    // world 60s sliding maxima, worst-ms capture from over-budget lines.
 
-    private sealed record LogTail(long PhysicsWarnings, long TickOverrunWarnings, long MaxSameWorldPhysicsWarningsPer60s);
-
-    private static readonly System.Text.RegularExpressions.Regex PhysicsWarningRegex = new(
-        @"^(\d{2}):(\d{2}):(\d{2}) .*?in (.+?) at ",
-        System.Text.RegularExpressions.RegexOptions.Compiled);
-
-    private static LogTail ReadGameLogTail(long startOffset)
+    /// <summary>
+    /// One continuous-load round for the long up-segment: each bot drives a
+    /// single quest (round-robin over the stage's quest subset) so the
+    /// no-restart segment stays under real gameplay load. Best-effort per
+    /// bot: a bridge failure is recorded and the segment continues — the
+    /// failure list is the stage's contract.
+    /// </summary>
+    private static void DriveLongSegmentRound(
+        BotDriveClient bridge,
+        List<(string Account, string CharName, BotNetworkSession Session)> bots,
+        uint[] questIds,
+        ref int cursor,
+        List<string> failures)
     {
-        long physics = 0, overruns = 0;
-        // Per-world warning times (seconds-of-day, adjusted across midnight
-        // wraps) for the no-sustained-slow clause: the most warnings any ONE
-        // world logged within a 60s window.
-        var worldTimes = new Dictionary<string, List<long>>();
-        try
+        if (questIds.Length == 0 || bots.Count == 0)
+            return;
+        foreach (var (_, charName, _) in bots)
         {
-            if (!File.Exists(GameLogPath))
-                return new LogTail(0, 0, 0);
-
-            using var fs = File.OpenRead(GameLogPath);
-            if (fs.Length <= startOffset)
-                return new LogTail(0, 0, 0);
-
-            fs.Seek(startOffset, SeekOrigin.Begin);
-            using var reader = new StreamReader(fs, Encoding.UTF8, false, 4096, leaveOpen: true);
-            var dayOffset = 0L;
-            long lastSec = -1;
-            while (reader.ReadLine() is { } line)
+            var questId = questIds[cursor % questIds.Length];
+            cursor++;
+            try
             {
-                if (line.Contains("Physics thread is running slow", StringComparison.Ordinal))
-                {
-                    physics++;
-                    var m = PhysicsWarningRegex.Match(line);
-                    if (m.Success)
-                    {
-                        var sec = int.Parse(m.Groups[1].Value) * 3600
-                                  + int.Parse(m.Groups[2].Value) * 60
-                                  + int.Parse(m.Groups[3].Value);
-                        // Log timestamps are HH:mm:ss only — carry a day
-                        // offset forward when the clock wraps (6h soak can
-                        // cross midnight).
-                        if (lastSec >= 0 && sec < lastSec)
-                            dayOffset += 86400;
-                        lastSec = sec;
-                        var world = m.Groups[4].Value;
-                        if (!worldTimes.TryGetValue(world, out var times))
-                            worldTimes[world] = times = [];
-                        times.Add(sec + dayOffset);
-                    }
-                }
-                if (line.Contains("Tick took ", StringComparison.Ordinal) ||
-                    line.Contains("over 100ms budget", StringComparison.Ordinal) ||
-                    line.Contains("ActiveRegionTick took", StringComparison.Ordinal))
-                    overruns++;
+                var result = E2eQuestDriver.DriveQuest(bridge, charName, Manifests[questId], Manifests[questId].Level);
+                if (!result.Passed)
+                    failures.Add($"bot {charName} quest {questId} (long segment): " + result.ReproTrace());
+            }
+            catch (Exception ex)
+            {
+                failures.Add($"bot {charName} quest {questId} (long segment) threw: {ex.GetType().Name}: {ex.Message}");
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[gate] game log scan failed: {ex.GetType().Name}: {ex.Message}");
-        }
-
-        // Sliding 60s window per world: max count of warnings on one world
-        // within any 60s span.
-        long maxSameWorld60s = 0;
-        foreach (var times in worldTimes.Values)
-        {
-            times.Sort();
-            var head = 0;
-            for (var tail = 0; tail < times.Count; tail++)
-            {
-                while (times[tail] - times[head] > 60)
-                    head++;
-                maxSameWorld60s = Math.Max(maxSameWorld60s, tail - head + 1);
-            }
-        }
-
-        return new LogTail(physics, overruns, maxSameWorld60s);
     }
+
 
     // ------------------------------------------------------------------ evidence
 
@@ -582,10 +616,16 @@ public static class GateSoakRunner
         sb.AppendLine();
         sb.AppendLine($"> Generated by GateSoakRunner (deterministic budgets; wall-clock only for the window).");
         sb.AppendLine($"> Stack: REAL Login (:1237) + Game (:1239/:1250) + MySQL, canonical compact.sqlite3, bots over the REAL network path.");
-        sb.AppendLine($"> Window: {s.WindowMinutes:F1} min · bots: {s.BotCount}" +
+        sb.AppendLine($"> Window: {s.WindowMinutes:F1} min ({s.EffectiveEvaluatedMinutes:F1} steady-state outside warmup blinds) · bots: {s.BotCount}" +
                       (s.PresenceBotCount > 0
                           ? $" + {s.PresenceBotCount} presence citizens = {s.EmbodiedCharacterCount} embodied (DB-write budget normalizes per embodied char)"
                           : " (DB-write budget normalizes per bot)"));
+        sb.AppendLine($"> Boots in/around window: {s.BootTimesUtc.Count} " +
+                      (s.BootTimesUtc.Count > 0
+                          ? $"({string.Join(", ", s.BootTimesUtc.Select(b => b.ToString("HH:mm:ss")))} UTC; [boot−30s, boot+120s] recorded, not counted)"
+                          : "(no boots — full window is steady-state)") +
+                      $" · warmup-blind excluded: {s.WarmupExcludedPhysicsWarnings} physics / {s.WarmupExcludedTickOverruns} tick-overrun" +
+                      (stage.LongUpSegmentMinutes > 0 ? $" · long up-segment: {stage.LongUpSegmentMinutes}min no-restart under continuous load" : ""));
         sb.AppendLine();
         sb.AppendLine("| Metric | Measured | Limit | Verdict |");
         sb.AppendLine("|---|---|---|---|");

@@ -122,14 +122,19 @@ public sealed record BudgetVerdict(
 /// Pure budget evaluation for the gate harness (ARCHITECTURE_REVIEW
 /// deliverable 8 + deliverable 10 slice 10). No game or test dependencies —
 /// snapshot in, verdicts out, fully unit-testable.
-///
 /// Rules:
 ///   - H2 gate: stages that require H2 fail hard when tick metrics are absent.
 ///   - Tick/region budgets are hard fails on any overrun.
-///   - Scheduler budgets are enforced when steps ran; reported as n/a when the
-///     scheduler never started (no citizen path wired) — never a silent pass.
-///   - DB writes normalize per bot per minute.
-///   - Physics/tick-overrun warning rates are hard fails when over budget.
+///   - Scheduler budgets are enforced when steps ran (totalStepsRun &gt; 0);
+///     reported as n/a when the scheduler never stepped — never a silent pass.
+///   - Physics budgets are enforced when physics telemetry sampled
+///     (physics.available); reported as n/a without samples — never a PASS
+///     on zero rows.
+///   - DB writes normalize per bot per minute — enforced only with a scoped
+///     instrumented counter (DbWritesAvailable); otherwise n/a, never PASS.
+///   - Physics/tick-overrun warning rates count window deltas only (never
+///     cumulative logs) outside warmup blinds, normalized by steady-state
+///     minutes; warmup-blind exclusions are recorded on the snapshot.
 /// </summary>
 public static class GateBudgetEvaluator
 {
@@ -203,10 +208,22 @@ public static class GateBudgetEvaluator
         // DB pressure: normalized per embodied character per minute (network
         // bots + presence-demo citizens — both persist at the same save
         // cadence; presence citizens are load, not a write loop, t_b4eb35e9).
+        // Gated on a SCOPED instrumented counter: the server-global SHOW
+        // GLOBAL STATUS fallback includes setup/unrelated traffic and must
+        // never feed verdicts — without it the budget reports n/a
+        // (INVALID/unasserted, never PASS).
         var writesUnit = s.PresenceBotCount > 0 ? "writes/min/embodied-char" : "writes/min/bot";
-        verdicts.Add(s.DbWritesPerBotPerMin <= b.MaxDbWritesPerBotPerMin
-            ? BudgetVerdict.Ok("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit)
-            : BudgetVerdict.Over("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit + " — write-loop risk"));
+        if (s.DbWritesAvailable)
+        {
+            verdicts.Add(s.DbWritesPerBotPerMin <= b.MaxDbWritesPerBotPerMin
+                ? BudgetVerdict.Ok("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit)
+                : BudgetVerdict.Over("DB writes", s.DbWritesPerBotPerMin, b.MaxDbWritesPerBotPerMin, writesUnit + " — write-loop risk"));
+        }
+        else
+        {
+            verdicts.Add(BudgetVerdict.Nx("DB writes", 0, b.MaxDbWritesPerBotPerMin,
+                "DB write-volume source is server-global / unscoped — INVALID, not asserted until the scoped instrumented counter lands"));
+        }
 
         // Autosave duration (M3b gate-scale budget): p95 < 2s, hard max ceiling.
         if (s.SaveMetricsAvailable)
@@ -223,16 +240,36 @@ public static class GateBudgetEvaluator
             verdicts.Add(BudgetVerdict.Nx("Autosave duration p95", 0, b.AutosaveP95Ms, "save metrics absent on server"));
         }
 
-        // Warning rates from the game log.
-        verdicts.Add(s.PhysicsWarningsPerMin <= b.MaxPhysicsWarningsPerMin
-            ? BudgetVerdict.Ok("Physics warnings", s.PhysicsWarningsPerMin, b.MaxPhysicsWarningsPerMin, "warnings/min")
-            : BudgetVerdict.Over("Physics warnings", s.PhysicsWarningsPerMin, b.MaxPhysicsWarningsPerMin, "warnings/min — physics thread running slow"));
-        verdicts.Add(s.MaxSameWorldPhysicsWarningsPer60s <= b.MaxPhysicsWarningsSameWorldPer60s
-            ? BudgetVerdict.Ok("Physics warnings same-world", s.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s, "warnings in 60s on one world")
-            : BudgetVerdict.Over("Physics warnings same-world", s.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s, "warnings in 60s on one world — physics thread cannot keep up (no-sustained-slow)"));
+        // Warning rates from the game log (window deltas only — never
+        // cumulative logs; warmup-blind lines are recorded on the snapshot,
+        // never counted here). Physics verdicts require sampled telemetry
+        // (gate-the-gates): without physics.available they report n/a, never
+        // PASS on zero rows.
+        var physicsWarmupNote = s.WarmupExcludedPhysicsWarnings > 0
+            ? $" (+{s.WarmupExcludedPhysicsWarnings} warmup-blind excluded, not counted)"
+            : "";
+        if (s.PhysicsAvailable)
+        {
+            verdicts.Add(s.PhysicsWarningsPerMin <= b.MaxPhysicsWarningsPerMin
+                ? BudgetVerdict.Ok("Physics warnings", s.PhysicsWarningsPerMin, b.MaxPhysicsWarningsPerMin, "warnings/min" + physicsWarmupNote)
+                : BudgetVerdict.Over("Physics warnings", s.PhysicsWarningsPerMin, b.MaxPhysicsWarningsPerMin, "warnings/min — physics thread running slow" + physicsWarmupNote));
+            verdicts.Add(s.MaxSameWorldPhysicsWarningsPer60s <= b.MaxPhysicsWarningsSameWorldPer60s
+                ? BudgetVerdict.Ok("Physics warnings same-world", s.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s, "warnings in 60s on one world" + physicsWarmupNote)
+                : BudgetVerdict.Over("Physics warnings same-world", s.MaxSameWorldPhysicsWarningsPer60s, b.MaxPhysicsWarningsSameWorldPer60s, "warnings in 60s on one world — physics thread cannot keep up (no-sustained-slow)" + physicsWarmupNote));
+        }
+        else
+        {
+            verdicts.Add(BudgetVerdict.Nx("Physics warnings", 0, b.MaxPhysicsWarningsPerMin,
+                "physics telemetry absent / no samples in window — budget not exercisable" + physicsWarmupNote));
+            verdicts.Add(BudgetVerdict.Nx("Physics warnings same-world", 0, b.MaxPhysicsWarningsSameWorldPer60s,
+                "physics telemetry absent / no samples in window — budget not exercisable" + physicsWarmupNote));
+        }
+        var tickWarmupNote = s.WarmupExcludedTickOverruns > 0
+            ? $" (+{s.WarmupExcludedTickOverruns} warmup-blind excluded, not counted)"
+            : "";
         verdicts.Add(s.TickOverrunWarningsPerMin <= b.MaxTickOverrunWarningsPerMin
-            ? BudgetVerdict.Ok("Tick overrun warnings", s.TickOverrunWarningsPerMin, b.MaxTickOverrunWarningsPerMin, "warnings/min")
-            : BudgetVerdict.Over("Tick overrun warnings", s.TickOverrunWarningsPerMin, b.MaxTickOverrunWarningsPerMin, "warnings/min — world tick over budget"));
+            ? BudgetVerdict.Ok("Tick overrun warnings", s.TickOverrunWarningsPerMin, b.MaxTickOverrunWarningsPerMin, "warnings/min" + tickWarmupNote)
+            : BudgetVerdict.Over("Tick overrun warnings", s.TickOverrunWarningsPerMin, b.MaxTickOverrunWarningsPerMin, "warnings/min — world tick over budget" + tickWarmupNote));
 
         return verdicts;
     }
