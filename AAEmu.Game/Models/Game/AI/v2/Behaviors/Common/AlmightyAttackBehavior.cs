@@ -40,7 +40,15 @@ public class AlmightyAttackBehavior : BaseCombatBehavior
             return; // not initialized yet Enter()
 
         if (Ai.Param is not AlmightyNpcAiParams aiParams)
-            return;
+        {
+            // NpcManager.LoadAiParams() leaves Template.AiParams null for NPCs whose
+            // npc_ai_param_id has no npc_ai_params row (id 0 has none; 3 Almighty
+            // templates in the 1.2 DB). Without this the guard below bailed on every
+            // tick: combat stance, never skill selection. Coerce to empty params so
+            // PickSkill() falls back to the template BaseSkillId.
+            aiParams = new AlmightyNpcAiParams("");
+            Ai.Param = aiParams;
+        }
 
         _aiParams = aiParams;
 
