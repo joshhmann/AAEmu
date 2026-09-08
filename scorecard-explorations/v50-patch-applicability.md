@@ -97,3 +97,14 @@ Pending queue:
 
 1. quest-sphere-component-match (player-visible freeze path still open)
 2. Everything else only after target-file verification per patch.
+
+## Parked upstream phases (not queued)
+
+Roadmap-scale input from `UPSTREAM_BRANCHES_AND_50_ARCHAEOLOGY_FINDINGS.md` (Part VI) — preserved, not queued; needs design sign-off before any implementation.
+
+- Phase 0 protocol truth table (VERIFIED/DEFINED/INFERRED/UNRESOLVED/NOT_IN_1.2 opcode classification) — parked: needs evidence-standard sign-off; see root doc Part VI Phase 0.
+- Phase 2 character/auth hardening follow-ups (creation-payload validation beyond landed guards) — parked: needs design sign-off on scope; see root doc Part VI Phase 2.
+- Phase 3 vehicle/slave socket topology (attach points, seat binding, RidersEscape) — parked: roadmap-scale, needs 1.2-wire + Jitter2 design; see root doc Part VI Phase 3 / Ticket A.
+- Phase 4 doodad & public-farm lifecycle (phase consumption, crop-expiry release) — parked: needs simulation/bot-loop design sign-off; see root doc Part VI Phase 4.
+- Phase 5 economy telemetry (server-side SalesData/SoldsData history) — parked: client-UI absent in 1.2, needs design sign-off; see root doc Part VI Phase 5 / Ticket D.
+- Phase 6 UCC pipeline + skill CC interruption (crest upload :1250, cast-cancel hooks) — parked: roadmap-scale, needs design sign-off; see root doc Part VI Phase 6.
