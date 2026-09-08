@@ -165,6 +165,11 @@ public abstract class Behavior
         switch (skill.Template.TargetType)
         {
             case SkillTargetType.Pos:
+                // Face the target BEFORE the cast: PosRot below is sampled from the
+                // owner's heading, and the post-cast LookTowards runs too late for it.
+                // (Effect position resolves from Npc.CurrentTarget inside
+                // Skill.SetInitialTarget, so no coordinate change is needed here.)
+                Ai.Owner.LookTowards(target.Transform.World.Position);
                 var pos = Ai.Owner.Transform.World.Position;
                 skillCastTarget = new SkillCastPositionTarget
                 {
