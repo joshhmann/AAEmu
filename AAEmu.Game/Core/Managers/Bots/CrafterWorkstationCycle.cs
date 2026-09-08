@@ -36,10 +36,11 @@ public interface ICrafterPump
 ///
 /// Default-OFF surface: this is a static callable with no tick subscription,
 /// no bootstrap, no background work — inert unless a caller invokes it.
-/// Merchant purchase, sale, vendoring, pack auto-equip output, chance-rate
-/// products, and restart legs are later slices. Reporting is a canned record
-/// (LLM LAST): fixed fields only. The audit trail is the legs' own
-/// <see cref="ActorAuditRecord"/> entries plus the returned result.
+/// Slice-3 (trade-pack production): pack recipes (ResultsInBackpack) run the
+/// same withdraw → craft legs, assert auto-equip into the Backpack slot (not
+/// the bag), and skip the bank store leg — the pack stays equipped for hauler
+/// pickup. Merchant purchase, sale, vendoring, chance-rate products, and
+/// restart legs are later slices. Reporting is a canned record
 ///
 /// Engine-truth notes (approved corrections): the craft leg charges materials
 /// + labor only — the recipe model carries no currency cost, so no currency
@@ -98,6 +99,7 @@ public static class CrafterWorkstationCycle
         public List<ActorAuditRecord> TraceRecords { get; init; } = [];
         public Dictionary<uint, int> MaterialsConsumed { get; init; } = new();
         public int LaborCharged { get; init; }
+        public ulong PackItemId { get; init; }
         public CrafterShortageReport? Report { get; init; }
     }
 
@@ -122,9 +124,8 @@ public static class CrafterWorkstationCycle
         var holds = new List<string>();
         var productStored = new Dictionary<uint, int>();
         var materialsConsumed = new Dictionary<uint, int>();
-
         CrafterWorkstationResult Finish(bool passed, string failStage, ActorFailureReason? failure, string failReason,
-            int laborCharged = 0)
+            int laborCharged = 0, ulong packItemId = 0)
         {
             return new CrafterWorkstationResult
             {
@@ -138,6 +139,7 @@ public static class CrafterWorkstationCycle
                 TraceRecords = traceRecords,
                 MaterialsConsumed = materialsConsumed,
                 LaborCharged = laborCharged,
+                PackItemId = packItemId,
                 Report = new CrafterShortageReport
                 {
                     CycleId = options.CycleId,
@@ -195,6 +197,19 @@ public static class CrafterWorkstationCycle
             stages.Add(new BotScenarioRunner.ScenarioStageVerdict("PRECHECK", 0, "Rejected", "", reason));
             Logger.Warn("[{Scenario}] {Cycle}: PRECHECK {Reason}", ScenarioName, options.CycleId, reason);
             return Finish(false, "PRECHECK", ActorFailureReason.RejectedAction, reason);
+        }
+
+        // Slice-3 (pack production): a pack auto-equips into the Backpack
+        // slot — crafting over an occupied slot refuses in the engine
+        // (CanReplaceGliderInBackpackSlot), so hold here with reason before
+        // moving anything.
+        if (craft.ResultsInBackpack && inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack) is { } incumbent)
+        {
+            var occupied = $"backpack slot occupied by item {incumbent.Id} (template {incumbent.TemplateId}) — refusing to craft over a carried pack";
+            criteria.Add(new BotScenarioRunner.CriterionVerdict("precheck-clean", false, occupied));
+            stages.Add(new BotScenarioRunner.ScenarioStageVerdict("PRECHECK", 0, "Rejected", "", occupied));
+            Logger.Warn("[{Scenario}] {Cycle}: PRECHECK {Reason}", ScenarioName, options.CycleId, occupied);
+            return Finish(false, "PRECHECK", ActorFailureReason.RejectedAction, occupied);
         }
 
         criteria.Add(new BotScenarioRunner.CriterionVerdict("precheck-clean", true,
@@ -331,6 +346,43 @@ public static class CrafterWorkstationCycle
         if (!laborOk)
             return Finish(false, "CRAFT", ActorFailureReason.StateTransition,
                 $"craft labor delta {laborCharged} != {expectedLabor}");
+
+        // ---- PACK HANDOFF (slice-3): pack recipes auto-equip into the
+        // Backpack slot (TryEquipNewBackPack) — DepositItem only moves bag
+        // stacks, so there is no bank store leg. The pack stays equipped
+        // for hauler pickup: assert the slot grant, the empty bag row, and
+        // the untouched bank row (nothing duplicated).
+        if (craft.ResultsInBackpack)
+        {
+            var packProductId = craft.CraftProducts.Count > 0 ? craft.CraftProducts[0].ItemId : 0;
+            var pack = inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+            var packEquipped = pack != null && (packProductId == 0 || pack.TemplateId == packProductId);
+            var packInBag = packProductId != 0 ? inventory.GetItemsCount(SlotType.Inventory, packProductId) : 0;
+            var packAutoEquip = packEquipped && packInBag == 0;
+            criteria.Add(new BotScenarioRunner.CriterionVerdict("pack-auto-equip", packAutoEquip,
+                packAutoEquip
+                    ? $"pack {pack!.TemplateId} (instance {pack.Id}) auto-equipped in the backpack slot, bag holds 0"
+                    : $"pack not auto-equipped in the backpack slot (slot: {(pack != null ? $"{pack.TemplateId} x{pack.Count}" : "empty")}, bag: {packInBag})"));
+            if (!packAutoEquip)
+                return Finish(false, "CRAFT", ActorFailureReason.StateTransition,
+                    "pack craft completed without auto-equipping the pack into the backpack slot", laborCharged);
+
+            var bankPackDelta = packProductId != 0
+                ? inventory.GetItemsCount(SlotType.Bank, packProductId) - bankBefore.GetValueOrDefault(packProductId, 0)
+                : 0;
+            var handoffOk = bankPackDelta == 0;
+            criteria.Add(new BotScenarioRunner.CriterionVerdict("pack-handoff-conserved", handoffOk,
+                handoffOk
+                    ? $"pack instance {pack!.Id} in the slot, materials consumed per recipe, labor {laborCharged}, bank pack delta 0 (nothing duplicated)"
+                    : $"pack bank delta {bankPackDelta} != 0 — pack duplicated outside the slot"));
+            if (!handoffOk)
+                return Finish(false, "CRAFT", ActorFailureReason.StateTransition,
+                    "pack handoff failed the conservation check (pack duplicated outside the slot)", laborCharged, pack!.Id);
+
+            Logger.Info("[{Scenario}] {Cycle}: PASS craft {Craft} produced pack {Pack} into the backpack slot",
+                ScenarioName, options.CycleId, options.CraftId, pack!.Id);
+            return Finish(true, "", null, "", laborCharged, pack.Id);
+        }
 
         // ---- STORE: the product rows back into the bank ----
         foreach (var id in productTemplateIds)
