@@ -402,6 +402,14 @@ public static class LevelingLoopScenario
         /// <summary>Move-leg pace (m/s) and per-leg budget for close-in legs.</summary>
         public float TravelSpeed { get; init; } = 6f;
         public TimeSpan TravelTimeout { get; init; } = TimeSpan.FromSeconds(90);
+        /// <summary>
+        /// Bounded travel/explore legs toward an out-of-bubble turn-in
+        /// reporter: each leg re-sweeps Perceive, then closes toward the
+        /// reporter's live world position (the sphere-leg
+        /// GetNpcByTemplateId convention). Exhaustion fails closed
+        /// Navigation — the leg never loops unbounded.
+        /// </summary>
+        public int MaxTurnInTravelLegs { get; init; } = 8;
 
         /// <summary>
         /// Optional driver for in-flight requests (move legs). Rigs inject
@@ -2895,6 +2903,70 @@ public static class LevelingLoopScenario
     }
 
     /// <summary>
+    /// Bounded travel/explore legs toward an out-of-bubble turn-in reporter.
+    /// Each leg re-sweeps the existing Perceive path; when the sweep still
+    /// cannot pin the reporter template, the leg closes toward the
+    /// reporter's live world position (the sphere-leg GetNpcByTemplateId
+    /// convention, SphereLeg) via NavigateTo + DriveRequest, then re-joins
+    /// the actor to its region (the RelocateToHub convention) so the next
+    /// sweep observes the new neighborhood. The turn-in interaction itself
+    /// still requires a Perceive-pinned objId — this leg only supplies
+    /// locomotion. A reporter missing from the live world, an incomplete
+    /// move leg, or budget exhaustion all fail closed Navigation; the leg
+    /// count bounds the loop.
+    /// </summary>
+    private static (uint ObjId, string? Failure) TravelToReporter(GameplayActor actor, LoopOptions opts, uint questId, uint reporterTemplateId)
+    {
+        for (var leg = 0; leg < opts.MaxTurnInTravelLegs; leg++)
+        {
+            var sweep = Perceive(actor);
+            if (sweep.NpcObjIdsByTemplate.TryGetValue(reporterTemplateId, out var reporterObjId))
+                return (reporterObjId, null);
+
+            var reporter = actor.Character.ParentWorld?.GetNpcByTemplateId(reporterTemplateId);
+            if (reporter == null)
+            {
+                return (0, $"report NPC {reporterTemplateId} for quest {questId} not among perceived targets " +
+                           "and not spawned in the live world");
+            }
+
+            var moveReq = actor.NavigateTo(reporter.Transform.World.Position, opts.TravelSpeed, opts.TravelTimeout);
+            var driven = DriveRequest(actor, opts, moveReq);
+            if (driven.State != ActorLifecycleState.Completed)
+            {
+                return (0, $"navigate to report NPC {reporterTemplateId} did not complete: {driven.Detail}");
+            }
+
+            RejoinRegion(actor.Character);
+        }
+
+        var final = Perceive(actor);
+        if (final.NpcObjIdsByTemplate.TryGetValue(reporterTemplateId, out var pinnedObjId))
+            return (pinnedObjId, null);
+
+        return (0, $"report NPC {reporterTemplateId} for quest {questId} not among perceived targets " +
+                   $"after {opts.MaxTurnInTravelLegs} travel legs (travel budget exhausted)");
+    }
+
+    /// <summary>
+    /// Synchronizes world region membership after locomotion: Observe's
+    /// region-graph scan only sees the new neighborhood once the actor is
+    /// joined to its current region.
+    /// </summary>
+    private static void RejoinRegion(Character character)
+    {
+        if (character.ParentWorld == null)
+            return;
+        var newRegion = character.ParentWorld.GetRegionByPos(character.Transform.World.Position);
+        if (newRegion != null && newRegion != character.Region)
+        {
+            character.Region?.RemoveObject(character);
+            newRegion.AddObject(character);
+            character.Region = newRegion;
+        }
+    }
+
+    /// <summary>
     /// Resolves the reporter DATA-DRIVEN (Ready components' ConReportNpc /
     /// ConReportDoodad acts) among PERCEIVED targets and turns the quest in
     /// through the real packet path. Auto-report quests use AutoTurnIn.
@@ -2926,8 +2998,17 @@ public static class LevelingLoopScenario
         {
             if (!perception.NpcObjIdsByTemplate.TryGetValue(reportNpc.NpcId, out var reporterObjId))
             {
-                return Fail("TURN-IN", ActorFailureReason.Navigation,
-                    $"report NPC {reportNpc.NpcId} for quest {questId} not among perceived targets", actor, null);
+                // Out-of-bubble reporter: the accept-spot snapshot cannot pin
+                // him, so walk bounded travel/explore legs toward his live
+                // position (re-sweeping Perceive each leg) instead of failing
+                // terminally. The turn-in below still requires a pinned objId.
+                var travel = TravelToReporter(actor, opts, questId, reportNpc.NpcId);
+                if (travel.Failure != null)
+                {
+                    return Fail("TURN-IN", ActorFailureReason.Navigation, travel.Failure, actor, null);
+                }
+
+                reporterObjId = travel.ObjId;
             }
 
             var reporterUnit = actor.Character.ParentWorld?.GetUnit(reporterObjId);
@@ -3085,16 +3166,7 @@ public static class LevelingLoopScenario
     private static void RelocateToHub(Character character, Vector3 hub)
     {
         character.SetPosition(hub.X, hub.Y, hub.Z, 0, 0, 0);
-        if (character.ParentWorld != null)
-        {
-            var newRegion = character.ParentWorld.GetRegionByPos(hub);
-            if (newRegion != null && newRegion != character.Region)
-            {
-                character.Region?.RemoveObject(character);
-                newRegion.AddObject(character);
-                character.Region = newRegion;
-            }
-        }
+        RejoinRegion(character);
     }
 
     /// <summary>
