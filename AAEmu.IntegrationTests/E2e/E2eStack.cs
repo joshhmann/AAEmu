@@ -589,29 +589,44 @@ public static class E2eStack
     /// (e.g. rolling a MySQL timestamp forward/back while the world is down;
     /// anything later races the new process's Stage-2 data loads).
     /// </summary>
-    public static void RestartGameServer(Action? afterStop = null)
+    /// Returns the PID of the killed game process (0 when no live process
+    /// was held) so restart tests can prove a real kill happened — a silent
+    /// no-kill must never masquerade as a clean restart. Existing callers
+    /// ignore the return; default paths unchanged.
+    /// </summary>
+    public static int RestartGameServer(Action? afterStop = null)
     {
-        StopGameServer();
+        var killedPid = StopGameServer();
         afterStop?.Invoke();
         _gameProc = StartServerProcess("game", RuntimeGameDir, "AAEmu.Game.dll",
             Path.Combine(E2eRoot, "logs", "game-restart.log"));
         WaitTcp("127.0.0.1", GamePort, 300);
         WaitTcp("127.0.0.1", StreamPort, 300);
         WaitBridge(60);
+        return killedPid;
     }
 
-    public static void StopGameServer()
+    /// <summary>Kills ONLY the game process tree via its PID handle
+    /// (confirmed exit) and returns the killed PID (0 when none was held).
+    /// Never pkill: callers target this handle only.</summary>
+    public static int StopGameServer()
     {
+        var pid = 0;
         try
         {
-            _gameProc?.Kill(entireProcessTree: true);
-            _gameProc?.WaitForExit(10_000);
+            if (_gameProc != null)
+            {
+                pid = _gameProc.Id;
+                _gameProc.Kill(entireProcessTree: true);
+                _gameProc.WaitForExit(10_000);
+            }
         }
         catch
         {
         }
 
         _gameProc = null;
+        return pid;
     }
 
     public static void StopAll()
