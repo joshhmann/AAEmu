@@ -8,6 +8,13 @@ using AAEmu.Game.Models.Game.Char.Templates;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.StaticValues;
+using System.Net;
+using System.Net.Sockets;
+using System.Reflection;
+using AAEmu.Commons.Network.Core;
+using AAEmu.Game.Core.Network.Connections;
+using AAEmu.Game.Core.Packets.G2C;
+using AAEmu.Game.Models.Game.Skills;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.UnitManagers;
 
@@ -656,6 +663,85 @@ public class CharacterManagerTests
 
     #endregion
 
+    #region Create Validation Guards Tests
+    [Test]
+    public async Task Create_BogusAbility_SendsCreationFailedAndRegistersNothing()
+    {
+        // Arrange — real NameManager so a leaked registration is observable
+        var nameManager = new NameManager();
+        var manager = CreateCharacterManager(nameManagerOverride: nameManager);
+        // _abilityItems stays empty: (AbilityType)250 has no entry
+        var capture = new PacketCaptureSession();
+        var connection = new GameConnection(capture) { AccountId = 1 };
+
+        // Act — pre-fix this threw KeyNotFoundException on the raw _abilityItems indexer
+        manager.Create(connection, "GuardTest", Race.Nuian, Gender.Male, new uint[7],
+            new UnitCustomModelParams(), (AbilityType)250, AbilityType.None, AbilityType.None, 1);
+
+        // Assert — failure reply, and no side effects leaked (no name registration)
+        await Assert.That(capture.CapturedPackets.Count).IsEqualTo(1);
+        var packet = capture.CapturedPackets[0];
+        await Assert.That((ushort)(packet[6] | (packet[7] << 8))).IsEqualTo(SCOffsets.SCCharacterCreationFailedPacket);
+        await Assert.That(packet[8]).IsEqualTo((byte)CharacterCreateError.Failed);
+        await Assert.That(nameManager.NoNamesRegistered()).IsTrue();
+    }
+
+    [Test]
+    public async Task Create_BogusRaceGender_SendsCreationFailedAndRegistersNothing()
+    {
+        // Arrange — real NameManager so a leaked registration is observable
+        var nameManager = new NameManager();
+        var manager = CreateCharacterManager(nameManagerOverride: nameManager);
+        // Valid ability so the ability guard passes and the race/gender guard is the one under test
+        SetPrivateField(manager, "_abilityItems", new Dictionary<byte, AbilityItems>
+        {
+            { (byte)AbilityType.Fight, new AbilityItems { Ability = (byte)AbilityType.Fight, Items = new EquipItemsTemplate() } }
+        });
+        // _templates stays empty: no template exists for this race/gender
+        var capture = new PacketCaptureSession();
+        var connection = new GameConnection(capture) { AccountId = 1 };
+
+        // Act — pre-fix this threw KeyNotFoundException inside GetTemplate
+        manager.Create(connection, "GuardTest", (Race)250, Gender.Male, new uint[7],
+            new UnitCustomModelParams(), AbilityType.Fight, AbilityType.None, AbilityType.None, 1);
+
+        // Assert — failure reply, and no side effects leaked (no name registration)
+        await Assert.That(capture.CapturedPackets.Count).IsEqualTo(1);
+        var packet = capture.CapturedPackets[0];
+        await Assert.That((ushort)(packet[6] | (packet[7] << 8))).IsEqualTo(SCOffsets.SCCharacterCreationFailedPacket);
+        await Assert.That(packet[8]).IsEqualTo((byte)CharacterCreateError.Failed);
+        await Assert.That(nameManager.NoNamesRegistered()).IsTrue();
+    }
+
+    [Test]
+    public void SetEquipItemTemplate_UnknownTemplate_DoesNotThrow()
+    {
+        // Arrange — Mock.Of<IItemManager>() returns null from Create, simulating an unknown template id
+        var manager = CreateCharacterManager();
+        var method = typeof(CharacterManager).GetMethod("SetEquipItemTemplate",
+            BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        // Act — pre-fix this threw NullReferenceException dereferencing the null Create result.
+        // Inventory is null: the unknown-template path warns and returns before touching it.
+        method.Invoke(manager, new object?[] { null, 9999u, EquipmentItemSlot.Head, (byte)0 });
+    }
+
+    #endregion
+
+    private sealed class PacketCaptureSession : ISession
+    {
+        public List<byte[]> CapturedPackets { get; } = [];
+        public IPAddress Ip => IPAddress.Loopback;
+        public uint SessionId => 1;
+        public Socket Socket => null;
+        public void SendPacket(byte[] packet) => CapturedPackets.Add(packet);
+        public void AddAttribute(string name, object attribute) { }
+        public object GetAttribute(string name) => null;
+        public void ClearAttribute(string name) { }
+        public void Close() { }
+    }
+
+
     #region Helper Methods
 
     private static CharacterManager CreateCharacterManager(
@@ -669,12 +755,13 @@ public class CharacterManagerTests
         Mock<IHousingManager> mockHousingManager = null,
         Mock<IFamilyManager> mockFamilyManager = null,
         Mock<IMailManager> mockMailManager = null,
-        Mock<ITaskManager> mockTaskManager = null)
+        Mock<ITaskManager> mockTaskManager = null,
+        INameManager nameManagerOverride = null)
     {
         return new CharacterManager(
             (mockWorldManager ?? Mock.Of<IWorldManager>()).Object,
             (mockAccountManager ?? Mock.Of<IAccountManager>()).Object,
-            (mockNameManager ?? Mock.Of<INameManager>()).Object,
+            nameManagerOverride ?? (mockNameManager ?? Mock.Of<INameManager>()).Object,
             (mockCharacterIdManager ?? Mock.Of<ICharacterIdManager>()).Object,
             (mockFactionManager ?? Mock.Of<IFactionManager>()).Object,
             (mockSkillManager ?? Mock.Of<ISkillManager>()).Object,

@@ -466,6 +466,27 @@ public class CharacterManager(
             Logger.Error($"User tried to make a new character that has 2nd and/or 3rd ability already set. Account {connection.AccountId}, Name {name}, Class {ability1}, {ability2}, {ability3}");
         }
 
+        // Reject unknown abilities (can happen with a corrupted client packet)
+        if (!_abilityItems.ContainsKey((byte)ability1))
+        {
+            Logger.Warn($"Create character rejected: unknown ability {(byte)ability1}. Account {connection.AccountId}, Name {name}, Race {race}, Gender {gender}. Possible corrupted client packet.");
+            connection.SendPacket(new SCCharacterCreationFailedPacket(CharacterCreateError.Failed));
+            return;
+        }
+
+        // Reject unknown race/gender combination instead of throwing KeyNotFoundException
+        if (!_templates.TryGetValue((byte)(16 * (byte)gender + (byte)race), out var template))
+        {
+            Logger.Warn($"Create character rejected: no template for race {(byte)race} gender {(byte)gender}. Account {connection.AccountId}, Name {name}. Possible corrupted client packet.");
+            connection.SendPacket(new SCCharacterCreationFailedPacket(CharacterCreateError.Failed));
+            return;
+        }
+
+        // Client may send ModelId=0 (meaning "race default"); fill it in from the template,
+        // otherwise the lobby/world applies the face modifiers to a wrong base model
+        if (customModel.ModelId == 0)
+            customModel.SetModelId(template.ModelId);
+
         var accountDetails = accountManager.GetAccountDetails(connection.AccountId);
 
         // Get default access level for all users 
@@ -477,7 +498,6 @@ public class CharacterManager(
 
         var characterId = characterIdManager.GetNextId();
         nameManager.AddCharacter(characterId, name, connection.AccountId);
-        var template = GetTemplate(race, gender);
 
         var character = new Character(customModel)
         {
@@ -871,6 +891,11 @@ public class CharacterManager(
         if (templateId > 0)
         {
             item = itemManager.Create(templateId, 1, grade);
+            if (item == null)
+            {
+                Logger.Warn($"SetEquipItemTemplate: failed to create item with templateId {templateId} for slot {slot} (unknown template or bad client data)");
+                return;
+            }
             item.SlotType = SlotType.Equipment;
             item.Slot = (int)slot;
         }

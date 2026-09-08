@@ -130,7 +130,7 @@ public class UnitCustomModelParams : PacketMarshaler
     public UnitCustomModelType Type => _type;
     private uint HairColorId { get; set; }
     private uint SkinColorId { get; set; }
-    private uint ModelId { get; set; }
+    public uint ModelId { get; private set; }
     public FaceModel Face { get; private set; }
 
     public UnitCustomModelParams(UnitCustomModelType type = UnitCustomModelType.None)
