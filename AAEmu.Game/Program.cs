@@ -266,12 +266,25 @@ public static class Program
                 // applies Option A visibility (ground clamp + 4-6 Hz movement
                 // broadcast). Bots without a route behave like the plain
                 // actor executor (tick-only).
-                services.AddSingleton(sp => new BotRoamStepExecutor
+                services.AddSingleton(sp =>
                 {
                     // Conflict war-horn: the executor reads the arbiter's
                     // active activity per wake; "conflict.*" arms PvP
                     // engagement, anything else (or nothing) keeps roam.
-                    ActiveActivityProvider = sp.GetRequiredService<BotGoalArbiter>().GetActiveActivity,
+                    // Resolved LAZILY (first wake, not factory time):
+                    // BotRoamStepExecutor sits inside the BotGoalArbiter ->
+                    // SchedulePhase -> BotScheduleService -> BotRoamStepExecutor
+                    // resolution cycle, so an eager GetRequiredService here
+                    // wedges first-ever resolution forever (SHAPE blocker
+                    // 2026-09-08: bridge {"cmd":"metrics"} hung in
+                    // GetService<IPlayerBotScheduler>). By first wake the
+                    // graph is fully constructed and this returns the same
+                    // singleton the eager edge captured.
+                    var arbiter = new Lazy<BotGoalArbiter>(sp.GetRequiredService<BotGoalArbiter>);
+                    return new BotRoamStepExecutor
+                    {
+                        ActiveActivityProvider = characterId => arbiter.Value.GetActiveActivity(characterId),
+                    };
                 });
 
                 // G3-B3 goal arbitration (IBotActivityModule seam): modules
