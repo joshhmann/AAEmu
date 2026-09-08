@@ -83,6 +83,7 @@ internal sealed class PhysicsTelemetry
 
     private long _samples;
     private long _windowStartTimestamp;
+    private volatile bool _forceEnabled;
 
     public PhysicsTelemetry(PhysicsTelemetryConfig config, string worldName, float targetPhysicsTps = 25f, TimeProvider timeProvider = null)
     {
@@ -103,7 +104,16 @@ internal sealed class PhysicsTelemetry
         _windowStartTimestamp = _timeProvider.GetTimestamp();
     }
 
-    public bool Enabled => _config.Enabled;
+    public bool Enabled => _config.Enabled || _forceEnabled;
+
+    /// <summary>
+    /// Soak-lane arming: the E2E bridge calls this on its first metrics poll
+    /// so loopGap/step/broadcast percentiles + body/ship/force counts become
+    /// per-cycle assertable without changing the prod default (off). Sticky
+    /// for the process lifetime; cheap (one volatile write, read once per
+    /// iteration). Test-lane only — production config stays disabled.
+    /// </summary>
+    internal void EnsureEnabled() => _forceEnabled = true;
 
     /// <summary>
     /// Records one physics iteration. Cheap when disabled (single bool check).
@@ -118,7 +128,7 @@ internal sealed class PhysicsTelemetry
         int ships,
         int forces)
     {
-        if (!_config.Enabled)
+        if (!Enabled)
             return;
 
         lock (_lock)
@@ -181,7 +191,7 @@ internal sealed class PhysicsTelemetry
 
     private PhysicsTelemetrySnapshot SnapshotLocked()
     {
-        if (!_config.Enabled || _samples == 0)
+        if (!Enabled || _samples == 0)
             return new PhysicsTelemetrySnapshot { Available = false };
 
         var (_, gapP50, gapP95, _, gapMax) = _loopGap.Summarize();

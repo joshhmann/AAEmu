@@ -750,4 +750,54 @@ public class PlayerBotSchedulerTests
     }
 
     #endregion
+
+    #region Gate precondition signaling (soak clearance)
+
+    [Test]
+    public async Task SchedulerLifecycle_StartedButIdle_StepCountIsZero()
+    {
+        // The soak-armed state: TryStart arms the scheduler but bridge-driven
+        // bots are never Woken, so no step ever runs. The gate keys
+        // signalsValid on (isRunning && totalStepsRun > 0) — this state must
+        // report running with a zero count so the gate invalidates, never passes.
+        using var rig = new Rig();
+
+        await Assert.That(rig.Scheduler.IsRunning).IsTrue();
+        await Assert.That(rig.Scheduler.GetMetrics().TotalStepsRun).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task SchedulerLifecycle_NeverStarted_IsNotRunningAndZero()
+    {
+        // Pre-arming state (nothing ever called Start): not running, zero
+        // steps. The gate must distinguish this (scheduler down) from the
+        // armed-idle state above (scheduler live, no steps yet).
+        var time = new FakeTimeProvider(DateTime.UtcNow);
+        var manager = new PlayerBotManager(new RecordingLifecycle());
+        var scheduler = new PlayerBotScheduler(manager, new RecordingExecutor(),
+            new PlayerBotSchedulerOptions { SubscribeToTickManager = false }, time);
+
+        await Assert.That(scheduler.IsRunning).IsFalse();
+        await Assert.That(scheduler.GetMetrics().TotalStepsRun).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task SchedulerLifecycle_AfterDrivenStep_StepCountPositive()
+    {
+        // Only an actually-executed scheduler step flips the count the gate
+        // precondition keys on: wake → scan → marshal → boundary drain.
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
+        await rig.WaitUntilAsync(() => !rig.Scheduler.IsLeased(bot));
+
+        await Assert.That(rig.Scheduler.IsRunning).IsTrue();
+        await Assert.That(rig.Scheduler.GetMetrics().TotalStepsRun).IsEqualTo(1);
+    }
+
+    #endregion
 }

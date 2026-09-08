@@ -405,4 +405,44 @@ public class PhysicsTelemetryTests
         await Assert.That(physics.GetProperty("available").GetBoolean()).IsFalse()
             .Because("with telemetry disabled (default) the physics section must report available=false — never a fabricated snapshot");
     }
+
+    [Test]
+    public async Task EnsureEnabled_DisabledConfig_ArmsSampling_SnapshotAvailable()
+    {
+        // Soak-lane wiring: the bridge arms a default-disabled sampler on its
+        // first metrics poll. After arming, loop iterations must accumulate
+        // into a per-cycle assertable snapshot (percentiles + workload maxima).
+        var telemetry = new PhysicsTelemetry(new PhysicsTelemetryConfig { Enabled = false }, "test_world");
+        telemetry.EnsureEnabled();
+
+        telemetry.Record(loopGapMs: 40, sleepOvershootMs: 2, stepMs: 5, broadcastMs: 3,
+            pendingActions: 1, bodies: 7, ships: 2, forces: 9);
+
+        var snap = telemetry.Snapshot();
+        await Assert.That(snap.Available).IsTrue()
+            .Because("an armed sampler must report the accumulated window");
+        await Assert.That(snap.SampleCount).IsEqualTo(1);
+        await Assert.That(snap.LoopGapMaxMs).IsEqualTo(40);
+        await Assert.That(snap.StepMaxMs).IsEqualTo(5);
+        await Assert.That(snap.BroadcastMaxMs).IsEqualTo(3);
+        await Assert.That(snap.BodiesMax).IsEqualTo(7);
+        await Assert.That(snap.ShipsMax).IsEqualTo(2);
+        await Assert.That(snap.ForcesMax).IsEqualTo(9);
+    }
+
+    [Test]
+    public async Task EnsureEnabled_WithoutSamples_SnapshotStillUnavailable()
+    {
+        // Arming alone must fabricate nothing: the first bridge poll arms the
+        // sampler but reports available=false until the physics loop actually
+        // records an iteration.
+        var telemetry = new PhysicsTelemetry(new PhysicsTelemetryConfig { Enabled = false }, "test_world");
+        telemetry.EnsureEnabled();
+
+        var snap = telemetry.Snapshot();
+
+        await Assert.That(snap.Available).IsFalse()
+            .Because("arming without samples must not report a fabricated snapshot");
+        await Assert.That(snap.SampleCount).IsEqualTo(0);
+    }
 }

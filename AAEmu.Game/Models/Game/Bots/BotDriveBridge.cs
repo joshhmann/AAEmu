@@ -101,11 +101,35 @@ public sealed class BotDriveBridge
             _listener.Start();
             IsRunning = true;
             Logger.Info($"E2E bot drive bridge listening on 127.0.0.1:{_port} (test control surface — disabled in prod config)");
+            ArmSoakScheduler();
             _ = AcceptLoopAsync(_cts.Token);
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "E2E bot drive bridge failed to start");
+        }
+    }
+
+    /// <summary>
+    /// Soak-lane scheduler arming (slice #6 clearance): the soak lane drives
+    /// bots synchronously past the scheduler (see <see cref="CollectGateMetrics"/>),
+    /// so nothing ever called <see cref="IPlayerBotScheduler.Start"/> here and
+    /// the lane reported isRunning=false/totalStepsRun=0. Starting the
+    /// scheduler does NOT change synchronous driving — with no Wake calls the
+    /// scan loop, workers and tick drain idle empty — but it makes the
+    /// scheduler live for presence/admin-enrolled bots and turns
+    /// metrics.scheduler into a real liveness signal. Idempotent; a failure
+    /// is WARN-only and never breaks the bridge.
+    /// </summary>
+    private static void ArmSoakScheduler()
+    {
+        try
+        {
+            SingletonContainer.ServiceProvider?.GetService<IPlayerBotScheduler>()?.Start();
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "E2E bridge: soak scheduler arming failed (scheduler signals stay invalid)");
         }
     }
 
@@ -339,6 +363,16 @@ public sealed class BotDriveBridge
 
         // Slice #6 — PlayerBotScheduler wake-latency metrics (null when the
         // scheduler isn't registered in DI, e.g. a build without slice #6).
+        // The soak lane drives bots synchronously past the scheduler: every
+        // bridge command executes GameplayActor legs inline and returns the
+        // result in the same command, so async scheduler cadence can never
+        // drive it — bridge-driven bots are never Woken and never run
+        // scheduler steps. TryStart arms the scheduler (live scan/workers/
+        // tick-drain, idle when no bot is enrolled) so isRunning is a real
+        // liveness signal, but only presence/admin-enrolled bots produce
+        // steps. Gate precondition: wake-latency/due-depth/utilization are
+        // valid ONLY when signalsValid (isRunning && totalStepsRun > 0); a
+        // zero step count INVALIDATES the signals, never passes them.
         object scheduler = null;
         try
         {
@@ -357,6 +391,7 @@ public sealed class BotDriveBridge
                     inFlight = m.InFlight,
                     totalStepsRun = m.TotalStepsRun,
                     totalStepsSkipped = m.TotalStepsSkipped,
+                    signalsValid = s.IsRunning && m.TotalStepsRun > 0,
                     totalStepsFailed = m.TotalStepsFailed,
                     totalStepsTimedOut = m.TotalStepsTimedOut,
                     avgWakeLatencyMs = m.AverageWakeLatencyMs,
@@ -492,8 +527,12 @@ public sealed class BotDriveBridge
             save = new { available = false, error = ex.Message };
         }
         // A5 — per-iteration physics telemetry (loop gap, sleep overshoot,
-        // Step duration, broadcast duration, workload counts). Null when the
-        // world's physics telemetry is disabled or has no samples yet.
+        // Step duration, broadcast duration, workload counts). The sampler is
+        // off by default in prod config, which is why the soak lane saw
+        // available=false every cycle despite the physics loop calling
+        // Record: Record early-returns while disabled. The first metrics poll
+        // arms sampling (sticky, test-lane only), so subsequent per-cycle
+        // snapshots carry real percentiles + body/ship/force counts.
         object physics = null;
         try
         {
@@ -506,6 +545,7 @@ public sealed class BotDriveBridge
             var telemetry = world?.Physics?.Telemetry;
             if (telemetry != null)
             {
+                telemetry.EnsureEnabled();
                 var m = telemetry.Snapshot();
                 physics = new
                 {
