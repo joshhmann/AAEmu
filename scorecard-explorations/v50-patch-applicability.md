@@ -43,7 +43,7 @@ Legend: ✅ VERIFIED (checked against our tree, evidence cited) ·
 | npc-cave-float-clamp | 🔶 COMPARE, don't copy | `Models/Game/NPChar/TrackAndStoreCoordinates.cs` + `NpcPathfindingImproved.cs` ABSENT at checked paths (2026-09-07 session) — their fix has no direct seam here. Their MaxGroundRise-8m rise-reject vs our ±2m deadband + whitelist + dry-run telemetry (Phase 1 landed). Different philosophy, same cave problem. Needs a compare pass against our height-resolution path. |
 | quest-offer-freeze-on-reject | ✅ LANDED in a2b82ef1 | Error replies on the two silent `AddQuest` paths; supply-item path already replied; template-null / StartQuest-false / TryAdd-race intentionally untouched. |
 | quest-sphere-component-match | ⏸️ PARKED | Requires client `quest_sign_sphere.g` geometry + `ClientData.Sources`; verify ordinary 1.2 behavior/assets first. |
-| stuck-player-ghost / stuck-rider-autorecover | ⛔ NO-GO (closed, no code change) | No 1.2 path produces an attached-but-missing target (orderly detach on all removals); `CSMoveUnitPacket` null branch stays log-only; upstream ghost variant was reverted. Left out of every pending queue. |
+| stuck-player-ghost / stuck-rider-autorecover | ⏸️ DEFERRED (no code change) | Today's finding: no 1.2 path produces an attached-but-missing target (orderly detach on all removals — see row evidence); `CSMoveUnitPacket` null branch stays log-only, unchanged; upstream ghost variant was reverted. A future live 1.2 repro reopens this. Out of all pending queues until then. |
 | well-gather-fix | ⏸️ PARKED | Broadens `Use.Execute` target selection (nearest-doodad fallback) — not generic; verify ordinary 1.2 gather behavior first. |
 | doodad-aoe-target-quest-credit | 🔶 CHECK | `Skill.cs` AoE quest credit path. |
 | doodad-save-batching | 🔶 CHECK | Beyond the boot-burst guard: batching + null guards. |
@@ -90,10 +90,8 @@ Landed — out of the pending queue:
 - npc-pos-skill-aim → Pos-facing fix `8f7f1b8e`
 - quest-offer-freeze-on-reject → `a2b82ef1`
 - npc-respawn-floors config floor → `a2b82ef1`
-
+Deferred (not closed — a live 1.2 repro reopens): stuck-player-ghost / stuck-rider-autorecover — no code change (see row).
 Covered, not queued: vehicle-oob-movement-oom (`VehicleMovementModel` bounds).
-
-Closed NO-GO: stuck-player-ghost / stuck-rider-autorecover — no code change (see row).
 
 Pending queue:
 
