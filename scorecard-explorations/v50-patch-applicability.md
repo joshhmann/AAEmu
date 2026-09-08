@@ -43,14 +43,14 @@ Legend: ✅ VERIFIED (checked against our tree, evidence cited) ·
 | npc-cave-float-clamp | 🔶 COMPARE, don't copy | `Models/Game/NPChar/TrackAndStoreCoordinates.cs` + `NpcPathfindingImproved.cs` ABSENT at checked paths (2026-09-07 session) — their fix has no direct seam here. Their MaxGroundRise-8m rise-reject vs our ±2m deadband + whitelist + dry-run telemetry (Phase 1 landed). Different philosophy, same cave problem. Needs a compare pass against our height-resolution path. |
 | quest-offer-freeze-on-reject | ✅ LANDED in a2b82ef1 | Error replies on the two silent `AddQuest` paths; supply-item path already replied; template-null / StartQuest-false / TryAdd-race intentionally untouched. |
 | quest-sphere-component-match | ⏸️ PARKED | Requires client `quest_sign_sphere.g` geometry + `ClientData.Sources`; verify ordinary 1.2 behavior/assets first. |
-| stuck-player-ghost / stuck-rider-autorecover | 🔶 NARROWED | Vehicle-OOB portion already covered by `VehicleMovementModel` bounds checks; only the invalid-target stuck-rider branch in `CSMoveUnitPacket` remains pending. |
+| stuck-player-ghost / stuck-rider-autorecover | ⛔ NO-GO (closed, no code change) | No 1.2 path produces an attached-but-missing target (orderly detach on all removals); `CSMoveUnitPacket` null branch stays log-only; upstream ghost variant was reverted. Left out of every pending queue. |
 | well-gather-fix | ⏸️ PARKED | Broadens `Use.Execute` target selection (nearest-doodad fallback) — not generic; verify ordinary 1.2 gather behavior first. |
 | doodad-aoe-target-quest-credit | 🔶 CHECK | `Skill.cs` AoE quest credit path. |
 | doodad-save-batching | 🔶 CHECK | Beyond the boot-burst guard: batching + null guards. |
 | quest-doodad-requirequest-and-rotation | 🔶 CHECK | Quest 307-class fixes + spawn rotation. |
 | quest-act-types-and-disable | 🔶 PARTIAL | `Models/Game/Quests/Acts/QuestActConReportNpcGroup.cs` ABSENT at checked path (2026-09-07 session); other targets exist — verify each. |
 | transfer-path-cell-offset | 🔶 CHECK | Transfer route loading + offsets; our TransferRideE2e passes, so compare carefully. |
-| vehicle-oob-movement-oom | 🔶 COVERED (pending verification, not queued) | `Core/Packets/C2G/CSStartedCinema2Packet.cs` ABSENT at checked path (2026-09-07 session; `CSStartedCinemaPacket.cs` exists); `CSMoveUnitPacket` validation + `WorldManager` bounds already cover the OOB case — verification only, no port queued. |
+| vehicle-oob-movement-oom | ✅ COVERED (not queued) | Covered by `VehicleMovementModel` bounds checks — no port queued, verification only. (`CSStartedCinema2Packet.cs` ABSENT at checked path, 2026-09-07 session; `CSStartedCinemaPacket.cs` exists.) |
 | vehicle-world-streaming | 🔶 CHECK | Seat-offset runaway occupant position. |
 | vehicle-summon-fx-sound | 🔶 CHECK | Stuck cast FX on summon skill 15802. |
 | corpse-casting-skill-controller | 🔶 CHECK | `Unit.cs` corpse-casting guard. |
@@ -84,9 +84,18 @@ Legend: ✅ VERIFIED (checked against our tree, evidence cited) ·
 
 ## Recommended import order (security/correctness first, verified bugs only)
 
-1. npc-ai-params wrong-type variant (10,893 silent NPCs — highest impact)
-2. npc-pos-skill-aim (identical lines, near-trivial port)
-3. npc-respawn-floors config floor (data disease confirmed, additive config)
-4. quest-offer-freeze + quest-sphere-component-match (player-visible freezes)
-5. stuck-player/rider + vehicle-oob (after confirming each bug here)
-6. Everything else only after target-file verification per patch.
+Landed — out of the pending queue:
+
+- npc-ai-params wrong-type variant → Almighty fix `03c381241`
+- npc-pos-skill-aim → Pos-facing fix `8f7f1b8e`
+- quest-offer-freeze-on-reject → `a2b82ef1`
+- npc-respawn-floors config floor → `a2b82ef1`
+
+Covered, not queued: vehicle-oob-movement-oom (`VehicleMovementModel` bounds).
+
+Closed NO-GO: stuck-player-ghost / stuck-rider-autorecover — no code change (see row).
+
+Pending queue:
+
+1. quest-sphere-component-match (player-visible freeze path still open)
+2. Everything else only after target-file verification per patch.
