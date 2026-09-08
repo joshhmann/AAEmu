@@ -91,6 +91,7 @@ Landed — out of the pending queue:
 - quest-offer-freeze-on-reject → `a2b82ef1`
 - npc-respawn-floors config floor → `a2b82ef1`
 - npc-cave-float-clamp horizontal leash (2D) → `7b7e7e27`
+- Hasla flat-z spawn-height correction → `2bc61c4d2` (26 rows: Citizens 12335/12336/12337/12340/12341, Maid 12339, Ravra 9631; zone 272 e_hasla_2 + 9631 in 155 e_hasla_1; 24,385 rows unchanged). The overlay is an UNCAPPED data correction — not equivalent to the 30m D2b runtime-clamp cap concept (that cap was clamp safety, not data truth). UnitId 9631 corrected 614.7→472.59 (~142m) is verified via audit §4 match (harness bilinear 472.5882), the magnitude reflecting how wrong the flat value was, not uncertainty.
 Deferred (not closed — a live 1.2 repro reopens): stuck-player-ghost / stuck-rider-autorecover — no code change (see row).
 Covered-code, NOT verified-live (not queued — a live 1.2 repro or asset delivery reopens): well-gather-fix (`Use.cs` nearest fallback), quest-sphere-component-match (needs game_pak `quest_sign_sphere.g`).
 Covered, not queued: vehicle-oob-movement-oom (`VehicleMovementModel` bounds).
