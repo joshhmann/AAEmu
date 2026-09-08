@@ -39,24 +39,23 @@ Legend: ✅ VERIFIED (checked against our tree, evidence cited) ·
 |---|---|---|
 | npc-ai-params-wrong-type | ✅ BUG PRESENT (variant) | MCP: 10,893 NPCs have `npc_ai_param_id` 0/NULL; `lookup_row npc_ai_params id=0` empty; `GetAiParamsForId` returns null (`AiGameData.cs:27-32`); `LoadAiParams` assigns null (`NpcManager.cs:899-905`); attack behaviors bail on `is not X` (`ArcherAttackBehavior.cs:53`, `BigMonsterAttackBehavior.cs:40`) → NPCs never reach skill selection. Our tree lacks the `??= DefaultAiParams` line but fails identically via null. Needs adapted fix (correct-type fallback or null-tolerant behaviors). |
 | npc-pos-skill-aim | ✅ BUG PRESENT | Our `Behavior.cs:167-175` builds Pos-targeted casts at the CASTER's own position — identical lines. Needs port (target-position fix). |
-| npc-respawn-floors | ✅ DATA DISEASE PRESENT | MCP: 11,773 spawner rows at exactly 10.0/10.0 (theirs: 11,774 in `compact.server.table.sqlite3` — 5.0-only store, same placeholder pattern). Config-floor concept applies; no code overlap issue. |
+| npc-respawn-floors | ✅ LANDED in a2b82ef1 | 90s normal / 300s elite floors (WorldConfig keys + World.json, live-tunable via /reloadconfig), elite = grade>=7, 10s placeholder threshold (both delays must be at/below), raise-only — authored timers untouched; 6 focused tests (`NpcRespawnFloorTests`). |
 | npc-cave-float-clamp | 🔶 COMPARE, don't copy | `Models/Game/NPChar/TrackAndStoreCoordinates.cs` + `NpcPathfindingImproved.cs` ABSENT at checked paths (2026-09-07 session) — their fix has no direct seam here. Their MaxGroundRise-8m rise-reject vs our ±2m deadband + whitelist + dry-run telemetry (Phase 1 landed). Different philosophy, same cave problem. Needs a compare pass against our height-resolution path. |
-| quest-offer-freeze-on-reject | 🔶 CHECK | Silent `AddQuest` rejection vs `SCQuestContextStartedPacket` expectation — verify our `CharacterQuests.AddQuest` reply paths. |
+| quest-offer-freeze-on-reject | ✅ LANDED in a2b82ef1 | Error replies on the two silent `AddQuest` paths; supply-item path already replied; template-null / StartQuest-false / TryAdd-race intentionally untouched. |
 | quest-sphere-component-match | ⏸️ PARKED | Requires client `quest_sign_sphere.g` geometry + `ClientData.Sources`; verify ordinary 1.2 behavior/assets first. |
-| stuck-player-ghost / stuck-rider-autorecover | 🔶 CHECK | `CSMoveUnitPacket` invalid-target recovery vs ours; needs target-file compare. |
+| stuck-player-ghost / stuck-rider-autorecover | 🔶 NARROWED | Vehicle-OOB portion already covered by `VehicleMovementModel` bounds checks; only the invalid-target stuck-rider branch in `CSMoveUnitPacket` remains pending. |
 | well-gather-fix | ⏸️ PARKED | Broadens `Use.Execute` target selection (nearest-doodad fallback) — not generic; verify ordinary 1.2 gather behavior first. |
 | doodad-aoe-target-quest-credit | 🔶 CHECK | `Skill.cs` AoE quest credit path. |
 | doodad-save-batching | 🔶 CHECK | Beyond the boot-burst guard: batching + null guards. |
 | quest-doodad-requirequest-and-rotation | 🔶 CHECK | Quest 307-class fixes + spawn rotation. |
 | quest-act-types-and-disable | 🔶 PARTIAL | `Models/Game/Quests/Acts/QuestActConReportNpcGroup.cs` ABSENT at checked path (2026-09-07 session); other targets exist — verify each. |
 | transfer-path-cell-offset | 🔶 CHECK | Transfer route loading + offsets; our TransferRideE2e passes, so compare carefully. |
-| vehicle-oob-movement-oom | 🔶 PARTIAL | `Core/Packets/C2G/CSStartedCinema2Packet.cs` ABSENT at checked path (2026-09-07 session; `CSStartedCinemaPacket.cs` exists); check `CSMoveUnitPacket` validation + `WorldManager` bounds. |
+| vehicle-oob-movement-oom | 🔶 COVERED (pending verification, not queued) | `Core/Packets/C2G/CSStartedCinema2Packet.cs` ABSENT at checked path (2026-09-07 session; `CSStartedCinemaPacket.cs` exists); `CSMoveUnitPacket` validation + `WorldManager` bounds already cover the OOB case — verification only, no port queued. |
 | vehicle-world-streaming | 🔶 CHECK | Seat-offset runaway occupant position. |
 | vehicle-summon-fx-sound | 🔶 CHECK | Stuck cast FX on summon skill 15802. |
 | corpse-casting-skill-controller | 🔶 CHECK | `Unit.cs` corpse-casting guard. |
 | log-noise-perf-cleanup | 🔶 CHECK | WARN-rate + NLog drops; needs our log-rate measurement first. |
 | doodad-boot-save-burst (residual) | 🔶 CHECK | Beyond the load guard: climate `growth_time` discard + save-origin telemetry. |
-| npc-respawn-floors (code part) | 🔶 CHECK | Respawn floor config keys. |
 | mate-death-revive | 🔶 CHECK | Mate death + revive cooldown paths differ here; verify. |
 | autoattack-continuous | 🔶 CHECK | Server-side repeat wiring for basic attack. |
 | gathering-min-level-config | 🔶 CHECK | Config-gated gathering minimums. |
