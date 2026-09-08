@@ -1278,8 +1278,17 @@ public partial class A5Tier3AcceptanceProbeTests
     private static int? FindGamePid()
     {
         var root = Path.GetFullPath(E2eStack.E2eRoot);
-        if (_gamePid.HasValue && IsGameProcess(_gamePid.Value, root))
-            return _gamePid;
+        // A dead/stale cached pid makes IsGameProcess throw (/proc vanished).
+        // Clear and fall through to the rescan loop instead of poisoning
+        // every later read (SHAPE 2026-09-08: arm-T RSS stuck at -1).
+        if (_gamePid.HasValue)
+        {
+            bool alive;
+            try { alive = IsGameProcess(_gamePid.Value, root); }
+            catch { alive = false; }
+            if (alive)
+                return _gamePid;
+        }
         _gamePid = null;
 
         foreach (var proc in Process.GetProcessesByName("dotnet"))
