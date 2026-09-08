@@ -40,11 +40,11 @@ Legend: ✅ VERIFIED (checked against our tree, evidence cited) ·
 | npc-ai-params-wrong-type | ✅ BUG PRESENT (variant) | MCP: 10,893 NPCs have `npc_ai_param_id` 0/NULL; `lookup_row npc_ai_params id=0` empty; `GetAiParamsForId` returns null (`AiGameData.cs:27-32`); `LoadAiParams` assigns null (`NpcManager.cs:899-905`); attack behaviors bail on `is not X` (`ArcherAttackBehavior.cs:53`, `BigMonsterAttackBehavior.cs:40`) → NPCs never reach skill selection. Our tree lacks the `??= DefaultAiParams` line but fails identically via null. Needs adapted fix (correct-type fallback or null-tolerant behaviors). |
 | npc-pos-skill-aim | ✅ BUG PRESENT | Our `Behavior.cs:167-175` builds Pos-targeted casts at the CASTER's own position — identical lines. Needs port (target-position fix). |
 | npc-respawn-floors | ✅ LANDED in a2b82ef1 | 90s normal / 300s elite floors (WorldConfig keys + World.json, live-tunable via /reloadconfig), elite = grade>=7, 10s placeholder threshold (both delays must be at/below), raise-only — authored timers untouched; 6 focused tests (`NpcRespawnFloorTests`). |
-| npc-cave-float-clamp | 🔶 COMPARE, don't copy | `Models/Game/NPChar/TrackAndStoreCoordinates.cs` + `NpcPathfindingImproved.cs` ABSENT at checked paths (2026-09-07 session) — their fix has no direct seam here. Their MaxGroundRise-8m rise-reject vs our ±2m deadband + whitelist + dry-run telemetry (Phase 1 landed). Different philosophy, same cave problem. Needs a compare pass against our height-resolution path. |
+| npc-cave-float-clamp | ✅ LANDED in 7b7e7e27 | Horizontal (2D) leash: `ShouldReturn` x2 (`BaseCombatBehavior.cs:269-270`) + `CheckIfEmptyAggroToReturn` x2 (`Npc.cs:1091,1106`) ignore Z — cave idle-Z resolving to the surface above no longer instant-evades on aggro. Thresholds preserved (returnDistance 50 / absoluteReturnDistance 200 + template overrides; 4m arrival checks). MoveInRange, Archer gap-phase, aggro-sort, path-arrival intentionally untouched. No behavior-test harness exists — verified via Release build + gate.sh + archaeology-cycle.sh (all green). |
 | quest-offer-freeze-on-reject | ✅ LANDED in a2b82ef1 | Error replies on the two silent `AddQuest` paths; supply-item path already replied; template-null / StartQuest-false / TryAdd-race intentionally untouched. |
-| quest-sphere-component-match | ⏸️ PARKED | Requires client `quest_sign_sphere.g` geometry + `ClientData.Sources`; verify ordinary 1.2 behavior/assets first. |
+| quest-sphere-component-match | ✅ COVERED-CODE (live-unverified, client-asset prerequisite) | Server code path present: `SphereQuestManager.LoadQuestSpheres` reads `quest_sign_sphere.g` via `ClientFileManager`, consumed by `QuestActCheckSphere`; but `quest_sign_sphere.g` is absent locally — runtime reachability unverified, needs a local game_pak extract. Covered-code, NOT verified-live. |
 | stuck-player-ghost / stuck-rider-autorecover | ⏸️ DEFERRED (no code change) | Today's finding: no 1.2 path produces an attached-but-missing target (orderly detach on all removals — see row evidence); `CSMoveUnitPacket` null branch stays log-only, unchanged; upstream ghost variant was reverted. A future live 1.2 repro reopens this. Out of all pending queues until then. |
-| well-gather-fix | ⏸️ PARKED | Broadens `Use.Execute` target selection (nearest-doodad fallback) — not generic; verify ordinary 1.2 gather behavior first. |
+| well-gather-fix | ✅ COVERED-CODE (live-unverified) | Nearest-fallback exists in `Use.cs:54-87` (`Models/Game/World/Interactions/Use.cs`: self-targeted gather skills fall back to the nearest skill-matching doodad within 6m). Selection is full-3D including Z (line 73), so no cave-safe claim; live/client reachability unverified. Covered-code, NOT verified-live. |
 | doodad-aoe-target-quest-credit | 🔶 CHECK | `Skill.cs` AoE quest credit path. |
 | doodad-save-batching | 🔶 CHECK | Beyond the boot-burst guard: batching + null guards. |
 | quest-doodad-requirequest-and-rotation | 🔶 CHECK | Quest 307-class fixes + spawn rotation. |
@@ -90,13 +90,14 @@ Landed — out of the pending queue:
 - npc-pos-skill-aim → Pos-facing fix `8f7f1b8e`
 - quest-offer-freeze-on-reject → `a2b82ef1`
 - npc-respawn-floors config floor → `a2b82ef1`
+- npc-cave-float-clamp horizontal leash (2D) → `7b7e7e27`
 Deferred (not closed — a live 1.2 repro reopens): stuck-player-ghost / stuck-rider-autorecover — no code change (see row).
+Covered-code, NOT verified-live (not queued — a live 1.2 repro or asset delivery reopens): well-gather-fix (`Use.cs` nearest fallback), quest-sphere-component-match (needs game_pak `quest_sign_sphere.g`).
 Covered, not queued: vehicle-oob-movement-oom (`VehicleMovementModel` bounds).
 
 Pending queue:
 
-1. quest-sphere-component-match (player-visible freeze path still open)
-2. Everything else only after target-file verification per patch.
+1. Everything else only after target-file verification per patch.
 
 ## Parked upstream phases (not queued)
 
