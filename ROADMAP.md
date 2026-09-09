@@ -30,7 +30,7 @@
 
 - G2-A3 wake-storm: 1,000-bot transition p99 < 100 ms — MET 2026-08-25 (unstaggered 0.00008 ms / staggered 0.000061 ms)
 - G2-A4 save: autosave p95 < 2 s @ 250 characters, zero `_isSaving` skips — MET (p95 393.1 ms, 80.3% headroom)
-- G2-A5 FINAL Tier-3: (a) SHAPE + (b1) 6 h quiescence-budget leg + (b2) business-state progression — OPEN (reconciliation below)
+- G2-A5 FINAL Tier-3: (a) SHAPE + (b1) 6 h quiescence-budget leg + (b2) business-state progression — CLOSED 2026-09-08 ((a) SHAPE re-shown 4/4 at engine `a23cdc33e`; (b1)/(b2) historical — see :173 entry for detail)
 - M8 exit: 2 farmers / 1 crafter / 2 haulers / 3 adventurers, full day, ≥3 restarts, auditable economy, 25 embodied in G1 budgets — QUALIFIED exit 2026-09-08 (C5 re-soak 24/24 + 4 kill-9 restarts; one accepted 1112 ms transient + DB-volume INVALID by design)
 - M5.3: IMPL COMPLETE + MERGED 2026-08-17 + Rei gate ACCEPT — dossier t_5189977b → Move rework 8e9c0713a → Observe/Stop/Target/Cast + exit 7b9e81d7f → rework 6b4ffe1d2; full 2102/0/1 + targeted 13/13 + 1/1 + 30/30 + 5/5; H UNKNOWN (progression-board.md DoD-table M5.3 row + `M5.3 core surface COMPLETE + MERGED` entry — preserved historic evidence, not restated as fresh missing work). Today's open scope is geometry/fidelity REGRADE against changed movement (trapezoidal profile a38484f9e, corner-blending proposal → Q3). Update 2026-09-06: corner-blending dropped (→ Q3 outcome), regrade scope is the trapezoidal profile only.
 - Ledger rule: bot/proxy evidence never flips state 7; H UNKNOWN (no verdict attempted) vs DEFERRED (recorded Josh-owned decision) kept distinct per item below
