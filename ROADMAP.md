@@ -18,8 +18,8 @@
 
 ## Post-M7 readiness — roadmap zoom-out: prioritized post-M7 work and M8 horizon (2026-09-05, docs-only)
 
-- Provenance: develop `0f2ff824f` (code tip includes Q4 grant rig + live hunt-leg, singleton lane, Q6 probe, seam salvage, M8 C3 farmer, Phase 1 audit telemetry + registry hardening, gap tests, handoff doc, GM guide; zoom-out authored docs-only over source/test `322390b32` — that baseline is now historical)
-  - docs-only HEAD over source/test `322390b32`; no code/test/config/data edits, no builds/gates/deploys
+- Provenance (2026-09-08): develop `301944000` (since `0f2ff824f`: 5.0 ports, DI-deadlock fix, SHAPE/A5 CLOSED, C4/Crafter/C5 slices, travel-leg, Hasla overlay, whitelist, soak assembly, telemetry, re-soak to QUALIFIED M8 exit)
+  - docs-only HEAD; no code/test/config/data edits, no builds/gates/deploys
 - IDs: stable existing only (M0–M8, PB-001/002/005/007, A1–A6, B1–B5, C1–C5, G0–G4, REQ-*, deferred gates #1–#4 + M7 feel, ledger states 1–7); no new kanban IDs
 - History below preserved with dates; the current register in this section stands alone (act on this section without reconciling old paragraphs)
 - Grades: VERIFIED = opened this session; SESSION-REPORT = prior dated record or assignment-supplied baseline trusted as record (not re-executed); INFERENCE marked
@@ -31,7 +31,7 @@
 - G2-A3 wake-storm: 1,000-bot transition p99 < 100 ms — MET 2026-08-25 (unstaggered 0.00008 ms / staggered 0.000061 ms)
 - G2-A4 save: autosave p95 < 2 s @ 250 characters, zero `_isSaving` skips — MET (p95 393.1 ms, 80.3% headroom)
 - G2-A5 FINAL Tier-3: (a) SHAPE + (b1) 6 h quiescence-budget leg + (b2) business-state progression — OPEN (reconciliation below)
-- M8 exit: 2 farmers / 1 crafter / 2 haulers / 3 adventurers, full day, ≥3 restarts, auditable economy, 25 embodied in G1 budgets — OPEN
+- M8 exit: 2 farmers / 1 crafter / 2 haulers / 3 adventurers, full day, ≥3 restarts, auditable economy, 25 embodied in G1 budgets — QUALIFIED exit 2026-09-08 (C5 re-soak 24/24 + 4 kill-9 restarts; one accepted 1112 ms transient + DB-volume INVALID by design)
 - M5.3: IMPL COMPLETE + MERGED 2026-08-17 + Rei gate ACCEPT — dossier t_5189977b → Move rework 8e9c0713a → Observe/Stop/Target/Cast + exit 7b9e81d7f → rework 6b4ffe1d2; full 2102/0/1 + targeted 13/13 + 1/1 + 30/30 + 5/5; H UNKNOWN (progression-board.md DoD-table M5.3 row + `M5.3 core surface COMPLETE + MERGED` entry — preserved historic evidence, not restated as fresh missing work). Today's open scope is geometry/fidelity REGRADE against changed movement (trapezoidal profile a38484f9e, corner-blending proposal → Q3). Update 2026-09-06: corner-blending dropped (→ Q3 outcome), regrade scope is the trapezoidal profile only.
 - Ledger rule: bot/proxy evidence never flips state 7; H UNKNOWN (no verdict attempted) vs DEFERRED (recorded Josh-owned decision) kept distinct per item below
 
