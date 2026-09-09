@@ -93,3 +93,18 @@ requires its trigger to fire.
 - **Revisit trigger:** Each promotes individually once shaped — i.e. given a
   concrete proposal with scope and acceptance criteria that an owner
   accepts onto a lane.
+
+## 11. MySQL binary-prepare driver defect
+- **Status:** SETTLED WORKAROUND, NO UPSTREAM FILING (fork direction:
+  upstream intake-only; playerbots divergence).
+- **Reason:** MySql.Data 9.7.0 PreparableStatement.Execute() NREs
+  client-side between Prepare-response and Execute-send under parallel
+  boot; no known issue matches (closest #116257 excluded: needs OTel +
+  second-Execute), no fixed version (checked through 26.7.0); workaround
+  = deleted explicit Prepare() calls (text protocol), proven by A/B
+  (revert = fatal boot defect).
+- **Revisit trigger:** ONLY if text-protocol shows measured regression
+  (save-p95/tick budgets) or a newer driver line documents a
+  prepared-statement race fix — then re-evaluate, never blindly upgrade.
+- **Reference:** `/tmp/driver-research-tail.md` (outside repo; not copied
+  in).
