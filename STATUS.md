@@ -26,6 +26,7 @@ gates; slices sit inside those tracks or gates; H is deferred human/client
 acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
+> Active recommendation: R1 rumor graph + B1 housing R-run proceed on their lanes; what stays parked lives in [deferred-not-now.md](scorecard-explorations/deferred-not-now.md).
 
 ## 2026-09-08 — M8 QUALIFIED exit: .165 day-scale C5 re-soak evidence
 

@@ -3520,6 +3520,7 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
 ---
 
 ## M9/LaneD task cards (proposed 2026-09-09, owner approval required)
+> Active recommendation: R1 rumor graph + B1 housing R-run proceed on their lanes; what stays parked lives in [deferred-not-now.md](scorecard-explorations/deferred-not-now.md).
 
 ### Roadmap Tasks Draft — Lane D quick wins, justice, prison, M9 substrate, M9.5, blocked prerequisites (DRAFT, owner approval required)
 

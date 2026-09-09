@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
+using AAEmu.Commons.Network.Core;
 using AAEmu.Commons.Network;
 using AAEmu.Commons.IO;
 using AAEmu.Commons.Utils;
@@ -13,6 +14,7 @@ using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Connections;
+using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Auction;
 using AAEmu.Game.Models.Game.Char;
@@ -284,6 +286,8 @@ public sealed class BotDriveBridge
                 return HandleMailOp(root);
             case "seedDormant":
                 return HandleSeedDormant(root);
+            case "housing":
+                return HandleHousingOp(root);
             default:
                 return Err($"unknown cmd '{cmd}'");
         }
@@ -3021,6 +3025,269 @@ public sealed class BotDriveBridge
         => root.TryGetProperty(name, out var el) && el.TryGetInt64(out var v) ? v : defaultValue;
 
     #endregion
+
+    #region B1 HOUSING-01 R-run E2E seam (persistent headless bots + real housing paths)
+
+    /// <summary>
+    /// B1 HOUSING-01 R-run seam (E2E-ONLY, additive): claim + construct +
+    /// decorate a house through the REAL engine paths on a persistent
+    /// headless bot, for the kill-9 byte-equality run. Ops:
+    ///   rig       — set money + stock the canonical design item (21166 → 172)
+    ///               and deco item (8229 → design 62) via the normal
+    ///               acquisition path (PlayerBotController.StockInventory).
+    ///   build     — attach a null-session GameConnection when the headless
+    ///               character has none (the M5.2 rig AttachConnection shape:
+    ///               packets encode and vanish) and call
+    ///               GameplayActor.BuildHouse → HousingManager.Build (the exact
+    ///               CSCreateHousePacket call), spiralling over the world's
+    ///               housing-polygon centroids (+ M3b fallback grid) until the
+    ///               engine Completes a placement. Rejections consume nothing.
+    ///   construct — drive House.AddBuildAction to CurrentStep -1 (the state
+    ///               transition CraftEffect's Building group performs).
+    ///   decorate  — HousingManager.DecorateHouse (the CSDecorateHousePacket
+    ///               path, DecoLimitEvaluator gate included).
+    ///   status    — observable house + doodad counts for the runner.
+    /// </summary>
+    private string HandleHousingOp(JsonElement root)
+    {
+        const uint HouseDesignId = 172;
+        const uint DesignItemTemplateId = 21166;
+        const uint DecoDesignId = 62;
+        const uint DecoItemTemplateId = 8229;
+        const uint DecoDoodadTemplateId = 1256;
+
+        if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var b) ? b.GetString() : null, out var character, out var err))
+            return Err(err);
+
+        var op = root.GetProperty("op").GetString();
+        switch (op)
+        {
+            case "rig":
+            {
+                if (root.TryGetProperty("money", out var moneyEl) && moneyEl.TryGetInt64(out var money))
+                    character!.Money = money;
+                var controller = new PlayerBotController(character!);
+                controller.StockInventory(DesignItemTemplateId, GetInt(root, "designCount", 3));
+                controller.StockInventory(DecoItemTemplateId, GetInt(root, "decoCount", 2));
+                return Ok(new
+                {
+                    name = character!.Name,
+                    id = character.Id,
+                    money = character.Money,
+                    designs = controller.InventoryCount(DesignItemTemplateId),
+                    decos = controller.InventoryCount(DecoItemTemplateId)
+                });
+            }
+            case "build":
+            {
+                var world = character!.ParentWorld;
+                if (world == null)
+                    return Err("housing build: bot has no parent world");
+                if (HousingGameData.Instance.GetTemplate(HouseDesignId) == null)
+                    return Err($"housing build: unknown house design {HouseDesignId}");
+                if (character.Connection == null)
+                {
+                    var conn = new GameConnection(new E2eNullSession());
+                    conn.ActiveChar = character;
+                    conn.AccountId = character.AccountId;
+                    character.Connection = conn;
+                }
+
+                var before = HousingManager.Instance.GetAllHouses().Select(h => h.Id).ToHashSet();
+                var candidates = HousingBuildCandidates(world, character.Transform.World.Position.Z);
+                var attempts = 0;
+                var rejects = new List<string>();
+                foreach (var pos in candidates)
+                {
+                    attempts++;
+                    var actor = new GameplayActor(character);
+                    var request = actor.BuildHouse(HouseDesignId, DesignItemTemplateId, pos, 0f,
+                        idempotencyKey: $"b1-housing-{attempts}");
+                    if (request.State == ActorLifecycleState.Completed)
+                    {
+                        var house = HousingManager.Instance.GetAllHouses()
+                            .FirstOrDefault(h => h.OwnerId == character.Id && !before.Contains(h.Id));
+                        if (house == null)
+                            return Err($"housing build: engine Completed but no new house registered for '{character.Name}' (attempt {attempts})");
+                        var p = house.Transform.World.Position;
+                        return Ok(new
+                        {
+                            state = request.State.ToString(),
+                            houseId = house.Id,
+                            houseTlId = house.TlId,
+                            currentStep = house.CurrentStep,
+                            x = p.X,
+                            y = p.Y,
+                            z = p.Z,
+                            attempts
+                        });
+                    }
+                    if (rejects.Count < 5)
+                        rejects.Add($"[{pos.X:F1},{pos.Y:F1},{pos.Z:F1}] {request.State}/{request.Failure}: {request.Detail ?? ""}");
+                    if (request.State == ActorLifecycleState.Interrupted)
+                        return Err($"housing build: AMBIGUOUS engine interrupt at attempt {attempts} ({request.Detail ?? "no detail"}) — placement may or may not have applied; aborting spiral. Rejects so far: {string.Join(" | ", rejects)}");
+                }
+                return Err($"housing build: engine refused all {attempts} candidates. Sample: {string.Join(" | ", rejects)}");
+            }
+            case "construct":
+            {
+                var house = ResolveHousingBotHouse(character!, root);
+                if (house == null)
+                    return Err($"housing construct: no house for bot '{character!.Name}' (build first)");
+                var applied = 0;
+                while (house.CurrentStep != -1 && applied < 10)
+                {
+                    house.AddBuildAction();
+                    applied++;
+                }
+                house.IsDirty = true;
+                return Ok(new
+                {
+                    houseId = house.Id,
+                    houseTlId = house.TlId,
+                    applied,
+                    currentStep = house.CurrentStep,
+                    currentAction = house.NumAction
+                });
+            }
+            case "decorate":
+            {
+                var house = ResolveHousingBotHouse(character!, root);
+                if (house == null)
+                    return Err($"housing decorate: no house for bot '{character!.Name}' (build first)");
+                character!.Inventory.Bag.GetAllItemsByTemplate(DecoItemTemplateId, -1, out var decoItems, out _);
+                var decoItem = decoItems.FirstOrDefault();
+                if (decoItem == null)
+                    return Err($"housing decorate: bot has no deco item {DecoItemTemplateId} in bag (run rig first)");
+                var lx = root.TryGetProperty("lx", out var lxEl) && lxEl.ValueKind == JsonValueKind.Number ? lxEl.GetSingle() : 1f;
+                var ly = root.TryGetProperty("ly", out var lyEl) && lyEl.ValueKind == JsonValueKind.Number ? lyEl.GetSingle() : 0f;
+                var lz = root.TryGetProperty("lz", out var lzEl) && lzEl.ValueKind == JsonValueKind.Number ? lzEl.GetSingle() : 2f;
+                var ok = HousingManager.Instance.DecorateHouse(character, house.TlId, DecoDesignId,
+                    new System.Numerics.Vector3(lx, ly, lz), System.Numerics.Quaternion.Identity,
+                    house.ObjId, decoItem.Id);
+                if (!ok)
+                    return Err($"housing decorate: engine refused design {DecoDesignId} on house {house.Id} (limit gate?)");
+                var doodad = house.ParentWorld.GetDoodadByHouseDbId(house.Id)
+                    .FirstOrDefault(d => d.TemplateId == DecoDoodadTemplateId);
+                return Ok(new
+                {
+                    decorated = ok,
+                    houseId = house.Id,
+                    doodadObjId = doodad?.ObjId ?? 0u,
+                    doodadTemplate = DecoDoodadTemplateId
+                });
+            }
+            case "status":
+            {
+                var houses = HousingManager.Instance.GetAllHouses()
+                    .Where(h => h.OwnerId == character!.Id).OrderBy(h => h.Id).ToList();
+                return Ok(new
+                {
+                    name = character!.Name,
+                    id = character.Id,
+                    houses = houses.Select(h => new
+                    {
+                        houseId = h.Id,
+                        houseTlId = h.TlId,
+                        template = h.TemplateId,
+                        currentStep = h.CurrentStep,
+                        currentAction = h.NumAction,
+                        x = h.Transform.World.Position.X,
+                        y = h.Transform.World.Position.Y,
+                        z = h.Transform.World.Position.Z,
+                        doodads = h.ParentWorld.GetDoodadByHouseDbId(h.Id).Select(d => new
+                        {
+                            objId = d.ObjId,
+                            template = d.TemplateId,
+                            attach = (int)d.AttachPoint
+                        }).ToArray()
+                    }).ToArray()
+                });
+            }
+            default:
+                return Err($"unknown housing op '{op}'");
+        }
+    }
+
+    /// <summary>
+    /// Newest house owned by the bot (or the explicit houseTlId): the B1
+    /// run owns exactly one house, so newest-owned is unambiguous.
+    /// </summary>
+    private static AAEmu.Game.Models.Game.Housing.House? ResolveHousingBotHouse(Character character, JsonElement root)
+    {
+        var tlId = GetUInt(root, "houseTlId");
+        var houses = HousingManager.Instance.GetAllHouses();
+        if (tlId > 0)
+            return houses.FirstOrDefault(h => h.TlId == (ushort)tlId);
+        return houses
+            .OrderByDescending(h => h.Id)
+            .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Deterministic build-candidate spiral: housing-polygon centroids from
+    /// the live world template (world coords) with a 3x3 clearing grid each,
+    /// then the M3b fallback grid. Z comes from the height sampler with a
+    /// caller-supplied fallback (validator-unrejected attempts consume
+    /// nothing, so probing is safe).
+    /// </summary>
+    private static List<System.Numerics.Vector3> HousingBuildCandidates(AAEmu.Game.Models.Game.World.WorldInstance world, float fallbackZ)
+    {
+        var spots = new List<System.Numerics.Vector3>();
+        try
+        {
+            var areas = world.Template.HousingZones.Values
+                .SelectMany(v => v).OrderBy(a => a.Id).Take(8).ToList();
+            foreach (var area in areas)
+            {
+                var pts = area.Points;
+                if (pts == null || pts.Count == 0)
+                    continue;
+                var cx = pts.Average(p => p.X);
+                var cy = pts.Average(p => p.Y);
+                float gz;
+                try
+                {
+                    var zk = WorldManager.Instance.GetZoneId(world.Template, cx, cy);
+                    gz = WorldManager.Instance.GetHeight(zk, cx, cy, fallbackZ);
+                }
+                catch
+                {
+                    gz = fallbackZ;
+                }
+                foreach (var (dx, dy) in new[] { (0f, 0f), (10f, 0f), (-10f, 0f), (0f, 10f), (0f, -10f), (20f, 0f), (-20f, 0f), (0f, 20f), (0f, -20f) })
+                    spots.Add(new System.Numerics.Vector3(cx + dx, cy + dy, gz));
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "housing build: polygon-centroid candidates unavailable — M3b fallback grid only");
+        }
+        foreach (var (dx, dy) in new[] { (0f, 0f), (10f, 0f), (-10f, 0f), (0f, 10f), (0f, -10f), (20f, 0f), (-20f, 0f), (0f, 20f), (0f, -20f) })
+            spots.Add(new System.Numerics.Vector3(20010f + dx, 20020f + dy, fallbackZ));
+        return spots;
+    }
+
+    /// <summary>
+    /// E2E-only null session for the B1 housing seam: lets a headless
+    /// character traverse the connection-mediated Build path (the M5.2 rig
+    /// AttachConnection shape). Packets encode and vanish.
+    /// </summary>
+    private sealed class E2eNullSession : ISession
+    {
+        private readonly Dictionary<string, object> _attributes = [];
+        public IPAddress Ip => IPAddress.Loopback;
+        public uint SessionId => 0xE2E1;
+        public System.Net.Sockets.Socket Socket => null!;
+        public void SendPacket(byte[] packet) { }
+        public void AddAttribute(string name, object attribute) => _attributes[name] = attribute;
+        public object GetAttribute(string name) => _attributes.GetValueOrDefault(name)!;
+        public void ClearAttribute(string name) => _attributes.Remove(name);
+        public void Close() { }
+    }
+
+    #endregion
+
 
     #region Fresh provisioning (template rig hygiene)
 
