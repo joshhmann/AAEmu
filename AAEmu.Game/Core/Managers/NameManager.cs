@@ -79,6 +79,17 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
             _characterNameRegex = new Regex(characterNameRegex, RegexOptions.Compiled);
         }
 
+        // Retry-safe: boot retries re-run Load whole (ManagerOrchestrator),
+        // so the registries reset first — otherwise a mid-fill transient
+        // would leave partial rows and the re-run would die on duplicate
+        // keys, masking the original error.
+        lock (_registryLock)
+        {
+            _characterIds.Clear();
+            _characterNames.Clear();
+            _characterAccounts.Clear();
+        }
+
         using (var connection = MySQL.CreateConnection())
         {
             using (var command = connection.CreateCommand())

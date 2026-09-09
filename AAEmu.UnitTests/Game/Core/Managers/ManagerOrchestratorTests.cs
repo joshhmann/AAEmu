@@ -1,6 +1,7 @@
 using AAEmu.Game.Core.Managers;
 
 using Microsoft.Extensions.DependencyInjection;
+using MySql.Data.MySqlClient;
 
 namespace AAEmu.UnitTests.Game.Core.Managers;
 
@@ -189,6 +190,148 @@ public class ManagerOrchestratorTests
         await orchestrator.RunLoadAsync();
 
         await Assert.That(loadCalled).Contains("A");
+    }
+
+    // -------------------------------------------------------------------------
+    // Boot resilience (ExecuteWithBootRetry) — stampede hardening: parallel
+    // boot fires dozens of managers at MySQL at once and the connector
+    // answers overload with internal failures. Transience needs
+    // connector-internal evidence (MySqlException, or NRE thrown by /
+    // through MySql.Data frames) — a manager-thrown NRE fails fast so a
+    // retry never re-runs partial mutations. Failures keep the manager's
+    // identity; retried Load bodies must be clear-first (boot-loader survey).
+    // -------------------------------------------------------------------------
+
+    [Test]
+    public async Task ExecuteWithBootRetry_TransientMySqlThenSuccess_SucceedsAfterRetries()
+    {
+        // Real transient evidence (dead-port connection refused): the first
+        // two attempts fail inside the connector, the third succeeds.
+        var attempts = 0;
+        ManagerOrchestrator.ExecuteWithBootRetry(() =>
+        {
+            attempts++;
+            if (attempts < 3)
+            {
+                using var _ = new MySqlConnection(
+                    "Server=127.0.0.1;Port=1;User ID=root;Password=e2e;Connection Timeout=2");
+                _.Open();
+            }
+        }, "FlakyManager", "Load");
+
+        await Assert.That(attempts).IsEqualTo(3);
+    }
+
+    [Test]
+    public async Task ExecuteWithBootRetry_ManagerThrownNre_FailsImmediatelyWithoutRetry()
+    {
+        // Game-code NRE (test frames, no MySql.Data evidence): NOT transient —
+        // retrying would re-run partial mutations, so it fails on attempt 1
+        // with the manager's identity.
+        var attempts = 0;
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            ManagerOrchestrator.ExecuteWithBootRetry(() =>
+            {
+                attempts++;
+                throw new NullReferenceException("genuine manager defect");
+            }, "BuggyManager", "Load"));
+
+        await Assert.That(attempts).IsEqualTo(1);
+        await Assert.That(ex.Message).Contains("BuggyManager");
+        await Assert.That(ex.InnerException).IsTypeOf<NullReferenceException>();
+    }
+
+    [Test]
+    public async Task ExecuteWithBootRetry_NonTransient_ThrowsImmediatelyWithoutRetry()
+    {
+        var attempts = 0;
+        var original = new InvalidOperationException("genuine manager defect");
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            ManagerOrchestrator.ExecuteWithBootRetry(() =>
+            {
+                attempts++;
+                throw original;
+            }, "BrokenManager", "Initialize"));
+
+        await Assert.That(attempts).IsEqualTo(1);
+        await Assert.That(ex.Message).Contains("BrokenManager");
+        await Assert.That(ReferenceEquals(ex.InnerException, original)).IsTrue();
+    }
+
+    [Test]
+    public async Task ExecuteWithBootRetry_MySqlConnectionFailure_RetriedThenThrowsWithIdentity()
+    {
+        // A real connector failure (nothing listens on port 1): proves the
+        // MySqlException arm of the transient classifier retries instead of
+        // failing the boot on first contact.
+        var attempts = 0;
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            ManagerOrchestrator.ExecuteWithBootRetry(() =>
+            {
+                attempts++;
+                using var connection = new MySqlConnection(
+                    "Server=127.0.0.1;Port=1;User ID=root;Password=e2e;Connection Timeout=2");
+                connection.Open();
+            }, "DbManager", "Load"));
+
+        await Assert.That(attempts).IsEqualTo(ManagerOrchestrator.MaxBootAttempts);
+        await Assert.That(ex.Message).Contains("DbManager");
+    }
+
+
+    [Test]
+    public async Task ExecuteWithBootRetry_ClearFirstLoader_FailThenSucceed_LeavesExactlyOneCopy()
+    {
+        // The retry contract every retried Load body must keep
+        // (clear-first, then fill — the CrimeManager / FriendManager /
+        // NameManager shape): a transient mid-fill failure followed by a
+        // successful re-run converges to exactly one copy of every row —
+        // never duplicated, never partial.
+        var store = new Dictionary<uint, string>();
+        var attempts = 0;
+        ManagerOrchestrator.ExecuteWithBootRetry(() =>
+        {
+            attempts++;
+            store.Clear();
+            store.Add(1u, "a");
+            if (attempts == 1)
+            {
+                using var _ = new MySqlConnection(
+                    "Server=127.0.0.1;Port=1;User ID=root;Password=e2e;Connection Timeout=2");
+                _.Open(); // real MySqlException mid-fill
+            }
+            store.Add(2u, "b");
+        }, "ClearingLoader", "Load");
+
+        await Assert.That(attempts).IsEqualTo(2);
+        await Assert.That(store.Count).IsEqualTo(2);
+        await Assert.That(store[1u]).IsEqualTo("a");
+        await Assert.That(store[2u]).IsEqualTo("b");
+    }
+
+    [Test]
+    public async Task IsTransientBootFailure_MySqlFramedNonNre_ReturnsFalse()
+    {
+        // Same MySql.Data frames as the production trace, but the wrong type:
+        // the type gate holds — only connector-internal NREs (and
+        // MySqlExceptions) are transient.
+        var framed = Capture(() => { using var _ = new MySqlCommand("SELECT 1").ExecuteReader(); });
+
+        await Assert.That(framed).IsTypeOf<InvalidOperationException>();
+        await Assert.That(ManagerOrchestrator.IsTransientBootFailure(framed)).IsFalse();
+    }
+
+    private static Exception Capture(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception ex)
+        {
+            return ex;
+        }
+        throw new InvalidOperationException("capture operation did not throw");
     }
 
     // Tracking helper — injected via type registration so ImplementationType is set in the descriptor.
