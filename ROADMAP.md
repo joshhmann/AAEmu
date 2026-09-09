@@ -189,6 +189,7 @@
 - Optional expansion candidates behind the dependable loop (listed, never required; absence-of-code alone never promotes them): AGGRO-PACK-01, RESPAWN-LADDER-01, AUCTION-BANK-DOODAD-01, NPC-INTERACTION-01, BOOK-01 (`undefined-world-mechanics-2026-08-31.md`)
 - H per item, ledger-accurate: C1/C2 H UNKNOWN (no verdict attempted); M8 exit feel has NO recorded deferral yet, so it stays UNKNOWN (not DEFERRED) until a decision records otherwise
 - LLM LAST (standing rule, unchanged): zero-LLM launch (canned + procedural first); the model selects validated goals only, never raw commands
+- 2026-09-08 — M8 QUALIFIED exit (runtime evidence; contracts unchanged): .165 day-scale C5 re-soak report `c5-resoak-day-report.json` (tested revision `a4d35fee8` = develop HEAD) — ledger 24/24 PASS, 4 kill-9 restarts with byte-equality (PIDs 3125422→3128152→3130855→3133248→3135565), scheduler VALID (+21,616 lease/wake steps, failed 0), physics/autosave PASS, DB-volume INVALID by design (deferred, never PASS). One accepted transient: single 1112 ms ActiveRegionTick at +162 s post-boot (verified WorldManager.cs per-character budget-check placement; 0 recurrence after; warmup-blind unchanged; no code fix). Chain: C4/Crafter/C5 slices as landed. Exit line above ("M8 exit … OPEN") is now evidenced-qualified; H stays UNKNOWN.
 
 > **Historical note (2026-09-05):** the "Current source/test checkpoint (2026-08-30)" paragraph below is retained verbatim as history; the current register is the section above.
 

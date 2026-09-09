@@ -27,6 +27,12 @@ acceptance. M0–M7 are the landed foundation/product milestones. The roadmap
 formally defines a future **M8 — Living Village**; readiness labels are not
 renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map).
 
+## 2026-09-08 — M8 QUALIFIED exit: .165 day-scale C5 re-soak evidence
+
+- Report `/root/aaemu-e2e-c5-resoak/logs/c5-resoak-day-report.json` (testing .165, fresh clone @ `a4d35fee8` = develop HEAD, canon assets md5 `78b3bdbf038db3b927056106efdf91af`): ledger **24/24 cycles PASS** (all 6 required criteria each cycle; Phase S 173/173 load cycles passed); **4/4 PID-verified kill-9 restarts with byte-equality** (cold boot + 4 restarts; game PIDs 3125422→3128152→3130855→3133248→3135565; MySQL char/item/meta/audit equality at restart #1); **scheduler VALID** via the real lease/wake path (+21,616 steps across the window, failed 0, timedOut 0); physics/autosave budgets PASS (0 physics-slow, 0 overruns; autosave p95 108.5 ms); **DB-volume INVALID by design** (no scoped counter; deferred, never PASS).
+- **QUALIFIED exit, not raw green:** one accepted transient exception — single 1112 ms ActiveRegionTick at +162 s post-boot (first farm-region activation inside one character tick; mechanism verified: WorldManager.cs per-character budget-check placement; 0 recurrence in 78 min after; 340+ repeats at zero cost). Warmup-blind window unchanged; no code fix.
+- Chain: C4 / Crafter / C5 slice commits as landed on develop (`078eec705` C4-s1 → `a4d35fee8` arming tip; tested revision = HEAD). No H claim (M8 exit feel stays UNKNOWN per the ledger rule).
+
 ## 2026-09-08 — A5 CLOSED: SHAPE 4/4 re-shown at the fixed tip
 
 - SHAPE re-show PASS at engine `a23cdc33e` (report `g2-a5-tier3-report.json` runAtUtc 2026-09-08T08:43:32Z, isolated lane `/root/aaemu-e2e-a5-shape`, 15m02s, probe 1/1): 1000/1000 dormant seeded (SQL-verified, 4.1 min sequential), exactly 50 embodied / 50 dematerialized on human leave (0 after), RSS Δ -12.9% (6204.9 → 5404.7 MB medians, within ±15%), wake-to-visible p95 256.2 ms (p50 221.4, max 277.8; window 33.0 s at default 3/sweep @ 2 s pacing). Steps/min parity 29956 vs 29965; tick p95 1.6 vs 1.7 ms.
