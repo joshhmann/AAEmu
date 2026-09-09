@@ -11,6 +11,10 @@ public static class MySQL
 
     static MySQL()
     {
+        // Process-wide statement-volume counters (connector-net ActivityListener).
+        // The listener is passive counting only; every connection created here
+        // is observed without touching any call site.
+        MySqlStatementCounters.EnsureStarted();
         SetConfiguration(null);
     }
 

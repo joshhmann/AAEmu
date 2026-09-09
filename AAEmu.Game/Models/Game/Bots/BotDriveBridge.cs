@@ -576,15 +576,42 @@ public sealed class BotDriveBridge
             Logger.Debug(ex, "gate metrics: physics telemetry unavailable");
             physics = new { available = false, error = ex.Message };
         }
+        // DB statement volume (MySqlStatementCounters over the provider
+        // connector-net activities — TOTAL statements, not writes: MySql.Data
+        // omits statement text/rows for user DML, so no read/write split is
+        // possible here. DbWritesAvailable stays false until call-site write
+        // instrumentation exists; the gate must NOT treat statement volume
+        // as write volume.
+        object db = null;
+        try
+        {
+            var s = MySqlStatementCounters.Snapshot();
+            db = new
+            {
+                available = true,
+                statements = s.Statements,
+                failedStatements = s.FailedStatements,
+                gameStatements = s.GameStatements,
+                loginStatements = s.LoginStatements,
+                otherStatements = s.OtherStatements,
+                dbWritesAvailable = false,
+                dbWritesReason = "provider activities carry no statement text or rows-affected; write split needs call-site instrumentation"
+            };
+        }
+        catch (Exception ex)
+        {
+            Logger.Debug(ex, "gate metrics: db statement counters unavailable");
+            db = new { available = false, error = ex.Message };
+        }
 
         return new
         {
             tick,
             regionTick,
             scheduler,
-            population,
             save,
             physics,
+            db,
             uptimeMs = Environment.TickCount64
         };
     }
