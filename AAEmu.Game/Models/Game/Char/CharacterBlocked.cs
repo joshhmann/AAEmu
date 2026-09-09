@@ -96,7 +96,6 @@ public class CharacterBlocked(Character owner)
 
                 command.CommandText = "DELETE FROM blocked WHERE owner = @owner AND blocked_id IN(" + string.Join(",", _removedBlocked) + ")";
                 command.Parameters.AddWithValue("@owner", Owner.Id);
-                command.Prepare();
                 command.ExecuteNonQuery();
                 _removedBlocked.Clear();
             }

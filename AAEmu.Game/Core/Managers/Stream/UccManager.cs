@@ -37,7 +37,6 @@ public class UccManager(IUccIdManager uccIdManager) : Singleton<UccManager>, IUc
         {
             command.CommandText = "SELECT OCTET_LENGTH(data) FROM uccs WHERE id = @id";
             command.Parameters.AddWithValue("@id", uccId);
-            command.Prepare();
             var res = command.ExecuteScalar();
             if (res is long resVal)
                 return resVal;
@@ -60,7 +59,6 @@ public class UccManager(IUccIdManager uccIdManager) : Singleton<UccManager>, IUc
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT * FROM uccs";
-                command.Prepare();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())

@@ -95,7 +95,6 @@ public partial class NameManager(Lazy<ICharacterManager> characterManager = null
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT id, name, account_id, deleted FROM characters";
-                command.Prepare();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())

@@ -192,7 +192,6 @@ public class CharacterMates(Character owner)
 
             command.CommandText = $"DELETE FROM mates WHERE owner = @owner AND id IN({string.Join(",", _removedMates)})";
             command.Parameters.AddWithValue("@owner", Owner.Id);
-            command.Prepare();
             command.ExecuteNonQuery();
             _removedMates.Clear();
         }

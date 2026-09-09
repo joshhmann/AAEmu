@@ -62,7 +62,6 @@ public class ExpeditionManager(IExpeditionIdManager expeditionIdManager, ITeamMa
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT * FROM expeditions";
-                command.Prepare();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -92,7 +91,6 @@ public class ExpeditionManager(IExpeditionIdManager expeditionIdManager, ITeamMa
                 {
                     command.CommandText = "SELECT * FROM expedition_members WHERE expedition_id = @expedition_id";
                     command.Parameters.AddWithValue("@expedition_id", expedition.Id);
-                    command.Prepare();
                     using (var reader = command.ExecuteReader())
                     {
                         while (reader.Read())
@@ -123,7 +121,6 @@ public class ExpeditionManager(IExpeditionIdManager expeditionIdManager, ITeamMa
                     command.CommandText =
                         "SELECT * FROM expedition_role_policies WHERE expedition_id = @expedition_id";
                     command.Parameters.AddWithValue("@expedition_id", expedition.Id);
-                    command.Prepare();
                     using (var reader = command.ExecuteReader())
                     {
                         while (reader.Read())

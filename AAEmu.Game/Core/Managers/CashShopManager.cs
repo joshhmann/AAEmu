@@ -43,7 +43,6 @@ public class CashShopManager(IWorldManager worldManager, IAccountManager account
         using (var command = connection.CreateCommand())
         {
             command.CommandText = "SELECT * FROM ics_skus ORDER BY shop_id, position";
-            command.Prepare();
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
@@ -72,7 +71,6 @@ public class CashShopManager(IWorldManager worldManager, IAccountManager account
         using (var command = connection.CreateCommand())
         {
             command.CommandText = "SELECT * FROM ics_shop_items";
-            command.Prepare();
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {
@@ -128,7 +126,6 @@ public class CashShopManager(IWorldManager worldManager, IAccountManager account
         using (var command = connection.CreateCommand())
         {
             command.CommandText = "SELECT * FROM ics_menu ORDER BY main_tab, sub_tab, tab_pos";
-            command.Prepare();
             using var reader = command.ExecuteReader();
             while (reader.Read())
             {

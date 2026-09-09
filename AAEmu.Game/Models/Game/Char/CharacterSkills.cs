@@ -219,7 +219,6 @@ public class CharacterSkills(Character owner)
 
             command.CommandText = "DELETE FROM skills WHERE owner = @owner AND id IN(" + string.Join(",", _removed) + ")";
             command.Parameters.AddWithValue("@owner", Owner.Id);
-            command.Prepare();
             command.ExecuteNonQuery();
             _removed.Clear();
         }

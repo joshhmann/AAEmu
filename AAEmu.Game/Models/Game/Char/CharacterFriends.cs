@@ -92,7 +92,6 @@ public class CharacterFriends(Character owner)
 
                 command.CommandText = "DELETE FROM friends WHERE owner = @owner AND friend_id IN(" + string.Join(",", _removedFriends) + ")";
                 command.Parameters.AddWithValue("@owner", Owner.Id);
-                command.Prepare();
                 command.ExecuteNonQuery();
                 _removedFriends.Clear();
             }

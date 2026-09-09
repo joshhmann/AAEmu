@@ -1519,7 +1519,6 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
                     {
                         var removedItemList = string.Join(",", _removedItems);
                         deleteCommand.CommandText = $"DELETE FROM items WHERE `id` IN({removedItemList})";
-                        deleteCommand.Prepare();
                         deleteCount += deleteCommand.ExecuteNonQuery();
                     }
 
@@ -1779,7 +1778,6 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
         deleteCommand.CommandText = "DELETE FROM item_containers WHERE `container_id` = @id";
         deleteCommand.Parameters.Clear();
         deleteCommand.Parameters.AddWithValue("@id", idToRemove);
-        deleteCommand.Prepare();
         if (deleteCommand.ExecuteNonQuery() <= 0)
             Logger.Error($"Failed to delete ItemContainer from DB container_id: {idToRemove}");
 

@@ -26,7 +26,6 @@ public class FriendMananger : Singleton<FriendMananger>, IFriendManager
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT * FROM friends";
-                command.Prepare();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())

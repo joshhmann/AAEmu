@@ -31,7 +31,6 @@ public class FamilyManager(IWorldManager worldManager, IChatManager chatManager,
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT DISTINCT family FROM characters";
-                command.Prepare();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())

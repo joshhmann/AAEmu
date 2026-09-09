@@ -1096,7 +1096,6 @@ public class Doodad : BaseUnit
         command.Parameters.AddWithValue("@item_container_id", GetItemContainerId());
         command.Parameters.AddWithValue("@data", Data);
         command.Parameters.AddWithValue("@farm_type", FarmType);
-        command.Prepare();
         command.ExecuteNonQuery();
     }
 

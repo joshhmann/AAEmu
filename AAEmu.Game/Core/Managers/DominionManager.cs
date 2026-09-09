@@ -201,7 +201,6 @@ public class DominionManager(
         using (var command = connection.CreateCommand())
         {
             command.CommandText = "SELECT * FROM dominions";
-            command.Prepare();
             using (var reader = command.ExecuteReader())
             {
                 while (reader.Read())

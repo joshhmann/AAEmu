@@ -118,7 +118,6 @@ public class IdManager
 
         command.CommandText = "SELECT COUNT(*), COUNT(DISTINCT " + _objTables[0, 1] + ") FROM ( " + query +
                               " ) AS all_ids";
-        command.Prepare();
         int count;
         using (var reader = command.ExecuteReader())
         {
@@ -136,7 +135,6 @@ public class IdManager
         Logger.Info($"{_name}: Extracting {count} used id's from data tables...");
 
         command.CommandText = query;
-        command.Prepare();
         using (var reader = command.ExecuteReader())
         {
             var idx = 0;

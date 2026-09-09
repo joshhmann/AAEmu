@@ -285,7 +285,6 @@ public class HousingManager(
                 {
                     command.CommandText =
                         $"DELETE FROM housings WHERE id IN({string.Join(",", _removedHousings)})";
-                    command.Prepare();
                     command.ExecuteNonQuery();
                     deleteCount++;
                 }

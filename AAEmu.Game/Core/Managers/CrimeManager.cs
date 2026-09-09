@@ -55,7 +55,6 @@ public class CrimeManager() : Singleton<CrimeManager>, ICrimeManager
         using var connection = MySQL.CreateConnection();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT * FROM crime";
-        command.Prepare();
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
@@ -99,7 +98,6 @@ public class CrimeManager() : Singleton<CrimeManager>, ICrimeManager
                     {
                         var removedItemList = string.Join(",", DeletedEventIds);
                         deleteCommand.CommandText = $"DELETE FROM crime WHERE `id` IN({removedItemList})";
-                        deleteCommand.Prepare();
                         deleteCount += deleteCommand.ExecuteNonQuery();
                     }
 

@@ -29,7 +29,6 @@ public class MusicManager(IMusicIdManager musicIdManager, IItemManager itemManag
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT * FROM music";
-                command.Prepare();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -64,7 +63,6 @@ public class MusicManager(IMusicIdManager musicIdManager, IItemManager itemManag
                 command.Parameters.AddWithValue("@author", songData.AuthorId);
                 command.Parameters.AddWithValue("@title", songData.Title);
                 command.Parameters.AddWithValue("@song", songData.Song);
-                command.Prepare();
                 if (command.ExecuteNonQuery() != 1)
                 {
                     Logger.Warn("Error saving song to DB for {0} ({1})", songData.Title, songData.Id);

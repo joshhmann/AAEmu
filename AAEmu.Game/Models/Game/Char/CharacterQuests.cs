@@ -608,7 +608,6 @@ public class CharacterQuests(Character owner)
 
                 command.CommandText = $"DELETE FROM quests WHERE owner = @owner AND template_id IN({string.Join(",", ids)})";
                 command.Parameters.AddWithValue("@owner", Owner.Id);
-                command.Prepare();
                 command.ExecuteNonQuery();
             }
         }

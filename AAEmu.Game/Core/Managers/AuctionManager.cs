@@ -387,7 +387,6 @@ public class AuctionManager(IItemManager itemManager, INameManager nameManager, 
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = "SELECT * FROM auction_house";
-                    command.Prepare();
                     using (var reader = command.ExecuteReader())
                     {
                         while (reader.Read())
@@ -444,7 +443,6 @@ public class AuctionManager(IItemManager itemManager, INameManager nameManager, 
                 command.Connection = connection;
                 command.Transaction = transaction;
                 command.CommandText = "DELETE FROM auction_house WHERE `id` IN(" + string.Join(",", DeletedAuctionItemIds) + ")";
-                command.Prepare();
                 deletedCount = command.ExecuteNonQuery();
             }
             DeletedAuctionItemIds.Clear();
@@ -489,7 +487,6 @@ public class AuctionManager(IItemManager itemManager, INameManager nameManager, 
             command.Transaction = transaction;
             command.CommandText = BuildInsertQuery();
             AddParametersToCommand(command, lot);
-            command.Prepare();
             updatedCount += command.ExecuteNonQuery();
             lot.IsDirty = false;
         }

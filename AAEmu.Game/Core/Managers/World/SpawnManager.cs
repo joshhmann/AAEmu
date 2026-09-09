@@ -742,7 +742,6 @@ public class SpawnManager(WorldInstance parentWorld)
             command.Parameters.AddWithValue("OwnerType", (byte)ownerTypeToSpawn);
             if (ownerToSpawnId >= 0)
                 command.Parameters.AddWithValue("OwnerId", ownerToSpawnId);
-            command.Prepare();
             using (var reader = command.ExecuteReader())
             {
                 while (reader.Read())

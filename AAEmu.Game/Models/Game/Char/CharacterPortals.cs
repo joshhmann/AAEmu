@@ -181,7 +181,6 @@ public class CharacterPortals(Character owner)
 
                 command.CommandText = "DELETE FROM portal_visited_district WHERE owner = @owner AND subzone IN(" + string.Join(",", _removedVisitedDistricts) + ")";
                 command.Parameters.AddWithValue("@owner", Owner.Id);
-                command.Prepare();
                 command.ExecuteNonQuery();
                 _removedVisitedDistricts.Clear();
             }
@@ -196,7 +195,6 @@ public class CharacterPortals(Character owner)
 
                 command.CommandText = "DELETE FROM portal_book_coords WHERE owner = @owner AND id IN(" + string.Join(",", _removedPrivatePortals) + ")";
                 command.Parameters.AddWithValue("@owner", Owner.Id);
-                command.Prepare();
                 command.ExecuteNonQuery();
                 _removedPrivatePortals.Clear();
             }

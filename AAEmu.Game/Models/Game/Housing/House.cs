@@ -317,7 +317,6 @@ public sealed class House : Unit
             command.Parameters.AddWithValue("@sellto", SellToPlayerId);
             command.Parameters.AddWithValue("@sellprice", SellPrice);
             command.Parameters.AddWithValue("@allowrecover", AllowRecover);
-            command.Prepare();
             command.ExecuteNonQuery();
         }
 

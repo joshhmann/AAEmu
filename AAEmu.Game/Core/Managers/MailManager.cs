@@ -131,7 +131,6 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT * FROM mails";
-                command.Prepare();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -227,7 +226,6 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
                     command.Connection = connection;
                     command.Transaction = transaction;
                     command.CommandText = "DELETE FROM mails WHERE `id` IN(" + string.Join(",", _deletedMailIds) + ")";
-                    command.Prepare();
                     command.ExecuteNonQuery();
                 }
                 _deletedMailIds.Clear();
@@ -283,7 +281,6 @@ public class MailManager(IMailIdManager mailIdManager, INameManager nameManager,
                         command.Parameters.AddWithValue("@attachment" + i.ToString(), mtbs.Value.Body.Attachments[i].Id);
                 }
 
-                command.Prepare();
                 command.ExecuteNonQuery();
                 updatedCount++;
                 mtbs.Value.IsDirty = false;
