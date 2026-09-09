@@ -3516,3 +3516,393 @@ density lock/scheduler ceiling → autosave wall → dormancy/fan-out/memory)
   G0/G2 hardening → M3/M4 → M7 spike → M8) or enforce the written order.
 - Human-capacity realism: M3a/M3b/M4/M7 gates assume 2-4 humans; define the
   automated fallback (M5 contract bots as stand-ins) or name the humans.
+
+---
+
+## M9/LaneD task cards (proposed 2026-09-09, owner approval required)
+
+### Roadmap Tasks Draft — Lane D quick wins, justice, prison, M9 substrate, M9.5, blocked prerequisites (DRAFT, owner approval required)
+
+> DRAFT ONLY. No edits to ROADMAP.md / SCORECARD.md / STATUS.md were made.
+> Each entry mirrors the Q-card/C-card format: Contract, Negative, Evidence EXISTS/PLANNED,
+> Dependencies, Non-goals, Done-criteria. Sources: `/tmp/lane-d-review.md` (Lane D audit),
+> `/tmp/m9-substrate-report.md` (M9 substrate), ROADMAP.md M9/M9.5/M10/M8.5 sections.
+
+## Provenance (applies to every data fact below)
+
+- Repo HEAD: `2b35c752d04585f35d6da9f88e341f2e4ea3243a` (branch `develop`).
+- Canonical DB: `AAEmu.Game/Data/compact.sqlite3`, md5 `78b3bdbf038db3b927056106efdf91af`
+  (matches AGENTS.md baseline; 679 tables confirmed), read-only (`mode=ro`).
+- Method: re-grounded 2026-09-09 through the ACTUAL archaeology MCP server
+  (`AAEmu.ArchaeologyMcp/bin/Release/net10.0/AAEmu.ArchaeologyMcp.dll`,
+  server `aaemu-archaeology` v1.1.0, JSON-RPC stdio:
+  `initialize` → `notifications/initialized` → `tools/call`), not direct sqlite reads.
+  Tool mapping actually used: `query_sql` for every DB row/count read;
+  `lookup_row` for one single-template spot check (`doodad_almighties` 877);
+  `search_files` (root `game-source` = `/root/aaemu-dev/AAEmu.Game`) for every code fact;
+  `list_sources` / `list_databases` to pin the source (`compact.sqlite3`,
+  `1.2 r208022`, 119054336 bytes, `read_only: true`).
+  `read_file` was attempted (relative, source-prefixed, and absolute path forms) and
+  rejected by the server allowlist (`path not allowed or not found`), so code facts
+  are grounded via `search_files` match text (file:line pinned) instead.
+  `trace_*` not needed — no cross-table chains asserted here.
+  Confidence: `exact` for every DB value below (MCP `truncated: false` on all calls);
+  code facts are MCP `search_files` matches (match text quoted in stamps); the Crime E2E
+  artifact is MCP-UNVERIFIABLE (no allowlisted source covers `AAEmu.IntegrationTests`;
+  unrooted `search_files` scans only the Data dir) — its draft file:line stands on the
+  prior direct read.
+- Per-fact MCP verdicts: 17/18 MATCH, 0 MISMATCH, 1 MCP-UNVERIFIABLE (E2E artifact).
+  DB provenance (all: `tool=query_sql`, `source_id=compact.sqlite3`,
+  `path=/root/aaemu-dev/AAEmu.Game/Data/compact.sqlite3`, `version=1.2 r208022`):
+  - Bloodstains 877 `작은 핏자국` / 878 `큰 핏자국` — MATCH, `generated_at=2026-09-09T09:36:54.3961173+00:00`.
+  - Footprints 3313/3314 `발자국` — MATCH, `:54.3996456`.
+  - Duel flag 5014 `결투용 깃발` — MATCH, `:54.4001485`.
+  - Kiosk 7983 `무인 창고` / test corpse 6669 `코끼리 시체_테스트` — MATCH, `:54.4005574`.
+  - Potato 2259 `감자` / calf 2672 `젖소 송아지` — MATCH, `:54.4010461`.
+  - Prisoner buffs 631/2028 `수감자` — MATCH, `:54.4014759`.
+  - Wanted 3710 `현상 수배` / no-escape 6729 `탈출 불가 버프` — MATCH, `:54.4018838`.
+  - Respawn ladder 10 rows `(id,penalty_duration,waiting_time,siege_waiting_time)` =
+    `(1,600,0,20),(2,600,5,15),(3,600,45,10),(4,600,90,5),(5..10,600,180,0)` — MATCH, `:54.4021282`.
+  - `aggro_links` 130 / `npc_aggro_links` 643 — MATCH, `:54.4024362` / `:54.4026835`.
+  - `npc_interaction_sets` 111 / `npc_interactions` 114 — MATCH, `:54.4028903` / `:54.4031289`.
+  - `siege_zones` 6 / `siege_settings` 11 / `siege_plans` 158 — MATCH,
+    `:54.4033380` / `:54.4035290` / `:54.4037795`.
+  - `books` 72 / `item_open_papers` 551 — MATCH, `:54.4048003` / `:54.4050562`.
+  - `doodad_func_auction_uis` 2 / `doodad_func_bank_uis` 2 — MATCH,
+    `:54.4052471` / `:54.4054829`.
+  - `transfers` 117 / `slaves` 140 / `spawn_fish_effects` 12 — MATCH,
+    `:54.4057042` / `:54.4059126` / `:54.4061282`.
+  - Spot `lookup_row doodad_almighties:877` — MATCH, `generated_at=2026-09-09T09:36:54.4150222+00:00`.
+  Code provenance (all: `tool=search_files`, `source_id=game-source`,
+  `path=/root/aaemu-dev/AAEmu.Game`, `version=null` — source `game-source` reports `fork develop`):
+  - Crime thresholds `WantedCrimePointThreshold = 50` (`CrimeManager.cs:25`) — MATCH,
+    `generated_at=2026-09-09T09:37:22.7903048+00:00`; `PirateCrimePointThreshold = 3000`
+    (`CrimeManager.cs:26`) — MATCH, `:09:37:31.1944710`.
+  - `BuffConstants.cs`: `Prisoner_Nuian = 631` (:15), `Prisoner_Haranyan = 2028` (:25),
+    `Retribution = 2167` (:26), `CourtHouse = 4970` (:42), `CannotEscapeBuff = 6729` (:48) —
+    all MATCH, `:09:37:31.2404370`.
+  - Jail site: buff adds at `TrialManager.cs:774/777` + `TeleportReason.Jail` teleport at `:787`
+    (draft `:768-787`) — MATCH, `:09:37:31.2744047`; jury teleport-back comment at `:278`,
+    `AllowJuryEscape` gate at `:279`, `TeleportReason.Jury` at `:295` (draft `:279-296`) —
+    MATCH, `:09:38:10.9680954`; release cleanup `RemoveBuffs(…TagPrisoner)` at `:815` +
+    `RemoveBuff(…Trial_Defendant)` at `:816` (draft `:815-818`) — MATCH, `:09:37:40.3880883`.
+    Precision note: `CannotEscapeBuff` applications live in `TrialData.cs:184` (defendant)
+    and `:285` (jury, 10s) — MATCH, `:09:37:54.9609432` — not in `TrialManager.cs`
+    (0 matches there); the draft cites TrialManager only for the jury-escape-allowed gate,
+    which is correct as cited.
+  - Bot modules `Program.cs:301/305/306/307` = SchedulePhase / PresenceRoam / ConflictJoin /
+    Idle, no party/guild module (draft `:300-307`) — MATCH, `:09:37:31.3161503`.
+  - Crime E2E artifact (`AAEmu.IntegrationTests/E2e/JusticeCrimeE2eTests.cs:57`, stages JSON
+    writer `:319-321`) — MCP-UNVERIFIABLE: 0 matches, `generated_at=2026-09-09T09:37:40.5048999`
+    / `:09:37:40.5239115` (IntegrationTests outside allowlisted roots); draft value stands
+    on the prior direct read, flagged here — not claimed as MCP evidence.
+
+### Grounded data-fact table (exact reads, 2026-09-09)
+
+| Fact | Value (exact) | Query |
+|---|---|---|
+| Bloodstains | `doodad_almighties` 877 `작은 핏자국` (small), 878 `큰 핏자국` (large) | `SELECT * FROM doodad_almighties WHERE id IN (877,878,…)` |
+| Footprints | `doodad_almighties` 3313 `발자국`, 3314 `발자국` | same |
+| Duel flag | `doodad_almighties` 5014 `결투용 깃발` | same |
+| Kiosk / test corpse | `doodad_almighties` 7983 `무인 창고`, 6669 `코끼리 시체_테스트` | same |
+| Potato / calf | `doodad_almighties` 2259 `감자`, 2672 `젖소 송아지` | same |
+| Prisoner buffs | `buffs` 631 `수감자`, 2028 `수감자`; `BuffConstants.Prisoner_Nuian=631`, `Prisoner_Haranyan=2028` (`AAEmu.Game/Models/Game/Skills/BuffConstants.cs:15,25`) | `SELECT id,name FROM buffs WHERE id IN (…)` + code |
+| Wanted / no-escape | `buffs` 3710 `현상 수배`, 6729 `탈출 불가 버프`; `Retribution=2167`, `CannotEscapeBuff=6729`, `CourtHouse=4970` (BuffConstants.cs:26,48,42) | same |
+| Crime thresholds | `CrimeManager.WantedCrimePointThreshold=50`, `PirateCrimePointThreshold=3000` (`CrimeManager.cs:25-26`) | code |
+| Jail site | buff+teleport at `TrialManager.cs:768-787`; jury-escape/teleport-back at `:279-296`; release cleanup at `:815-818` | code |
+| Respawn ladder | `resurrection_waiting_times` 10 rows: `(1,600,0,20),(2,600,5,15),(3,600,45,10),(4,600,90,5),(5..9,600,180,0),(10,600,180,0)` | `SELECT * FROM resurrection_waiting_times` |
+| Aggro packs | `aggro_links` 130 rows; `npc_aggro_links` 643 rows | COUNT(*) |
+| NPC interaction | `npc_interaction_sets` 111 rows; `npc_interactions` 114 rows | COUNT(*) |
+| Siege data | `siege_zones` 6; `siege_settings` 11; `siege_plans` 158 | COUNT(*) |
+| Books | `books` 72; `item_open_papers` 551 | COUNT(*) |
+| Kiosk funcs | `doodad_func_auction_uis` 2; `doodad_func_bank_uis` 2 | COUNT(*) |
+| Transport/slaves/fish | `transfers` 117; `slaves` 140; `spawn_fish_effects` 12 | COUNT(*) |
+| Bot modules | `Program.cs:300-307`: only SchedulePhase, PresenceRoam, ConflictJoin, Idle — no party/guild module | code |
+| Crime E2E artifact | `AAEmu.IntegrationTests/E2e/JusticeCrimeE2eTests.cs:57` (`Justice_Crime_KillReportPersistsAcrossRestart_OnLiveServer_EndToEnd`), stage list serialized to `justice-crime-e2e-stages.json` (`:319-321`) | code |
+
+---
+
+## 1. Partition-B near-H-blocked quick wins (evidence runs only, minimal/no code)
+
+General rule for all B-cards: H stays U (actual-player runs are Josh-owned); scripted-actor
+evidence promotes at most W/A/R/S. Each card is an evidence run or audit pass, not a build.
+
+### B1 — HOUSING-01 R run (restart persistence E2E)
+
+- Contract: claimed house + constructed structure + placed décor survive a kill-9 restart
+  with byte-equality (owner, position, deco-limit state), over the real
+  `HousingManager.Build` path (M3a validator + `CraftEffect` construction + DecoLimitEvaluator
+  already W/A=2).
+- Negative: in-memory rig replay or GM-provisioned placement is NOT the artifact — the run
+  must go through the live server with process kill between pre/post snapshots.
+- Evidence EXISTS: `HomesteadPlacementScenarioTests` 29/29, `HousingM3aConstructionTests` 18/18,
+  M3a exit (Rei t_72c787c8); `m3-canonical-audit.md` (2026-08-11); deco-limit data
+  (`housing_deco_limits`/`housing_deco_limit_elems` per M3a record).
+- Evidence PLANNED: one kill-9 restart E2E (pre==post house/doodad rows + deco counts),
+  recorded as a dated artifact under `scorecard-explorations/generated/`.
+- Dependencies: none (live E2E stack only). Non-goals: new placement rules, tax/demolish
+  changes (PROPERTY-01 owns unpaid-tax-demolish), H run.
+- Done: artifact green → HOUSING-01 R=2 (row becomes 2/2/U/2/2/N/A).
+
+### B2 — FARM-01 R run (restart recovery E2E; S stays open separately)
+
+- Contract: growing crop (potato loop: seed 15659 → doodad 2259 `감자`, grounded above) and
+  livestock (calf 2672 `젖소 송아지`, grounded above) survive kill-9 with growth-timer state
+  intact; post-restart harvest still yields via `DoodadFuncCropHarvest`/FruitPick.
+- Negative: asserting only the harvest math without a restart does NOT close this card
+  (growth-timer recovery is the gap, not the loot table).
+- Evidence EXISTS: `CropHarvestLoopTests` 6/6, M3a exit (Rei t_72c787c8), M3b-2 restart-recovery
+  8/8 (livestock leg), watering FIX-4 / feed FIX-1 records.
+- Evidence PLANNED: one kill-9 restart E2E (crop + livestock legs); soak (S) explicitly
+  deferred to a follow-up card.
+- Dependencies: none. Non-goals: growth-rebalance, rot-timer changes, S soak, H run.
+- Done: artifact green → FARM-01 R=2 (S remains U, recorded as its own open card).
+
+### B3 — PROPERTY-01 A run (behavior assertions; R=2 already)
+
+- Contract: furniture place/pickup, storage deposit/withdraw, and phase persistence asserted
+  through observable Character/world state (not save-file inspection): item conservation
+  across place→restart→pickup, `ReturnHouseItemsToOwner` path covered, unpaid-tax-demolish
+  deviation re-confirmed as documented behavior.
+- Negative: R=2 evidence (`M3bExitPersistenceE2eTests` N=3 crash cycles) must NOT be re-cited
+  as A proof — this card needs behavior assertions on the live path.
+- Evidence EXISTS: `m3-canonical-audit.md` MySQL housings+doodads contract; M3b exit
+  (t_accb1c63, M3b-1..4); `M3bExitPersistenceE2eTests` N=3.
+- Evidence PLANNED: behavior-assertion suite/run (furniture + storage + demolish-deviation legs).
+- Dependencies: none. Non-goals: new furniture mechanics, tax-rule changes, H run.
+- Done: assertions green → PROPERTY-01 A=2 (row becomes 2/2/U/2/2/U).
+
+### B4 — PACK-01 / SLAVE-01 S runs (soak/load budgets)
+
+- Contract: pack full loop (craft → carry → load → sell) and Slave lifecycle (summon 140
+  slave templates grounded via `slaves` COUNT; despawn gates owner/312/288/801, BindSlave 324,
+  RidersEscape 640 per M4-3 record) each run under a named soak/load budget (concurrent actors,
+  duration, kill-9 mid-soak) with ledger/attachment byte-equality and zero dup/loss.
+- Negative: re-running the existing single-pass E2Es without a budget table does NOT close
+  this card — S requires stated budgets (actors × duration × restarts) with measured results.
+- Evidence EXISTS: `SpecialtyManagerTests` 21/21, `M4_2TradePackRestartE2eTests` (kill-9 2m12s),
+  `SlaveLifecycleTests` 29/29, `M4VehiclesE2eTests` 2× kill-9 3m09s, M4Exit pack-load legs.
+- Evidence PLANNED: two budgeted soak runs (one PACK, one SLAVE) with budget tables + artifacts.
+- Dependencies: none. Non-goals: route/economy rebalance, new vehicle physics, H runs.
+- Done: both artifacts green within budget → PACK-01 / SLAVE-01 S=2.
+
+### B5 — DOMINION-01 S run (curated tax/phase scope; siege combat descoped)
+
+- Contract: dominion declare → tax-rate change round-trip → phase-cron advance
+  (Peace→Declare→Warmup→Siege→Payoff announcements) → kill-9 persistence, against the grounded
+  data (`siege_zones` 6 / `siege_settings` 11 / `siege_plans` 158) and additive
+  `aaemu_game.dominions` table, within a stated soak budget.
+- Negative: siege combat is explicitly descoped — any combat assertion FAILS this card's scope;
+  combat belongs to a future slice, never smuggled into S.
+- Evidence EXISTS: dominion-domain.md; branch d42e708f5→66f124533; `CSUpdateDominionTaxRatePacket`
+  round-trip; kill-9 persistence E2E PASS (2026-08-26).
+- Evidence PLANNED: one budgeted S run (tax/phase/persistence legs) + artifact.
+- Dependencies: none. Non-goals: siege combat, declare-trigger UI path (recorded UNKNOWN),
+  H run.
+- Done: artifact green → DOMINION-01 S=2.
+
+### B6 — MERCHANT-01 R promotion / audit pass (+ C audit)
+
+- Contract: EITHER (a) promote R=2 by re-checking the recorded m8 economy-cycle kill-9
+  money/bank/items hold artifact (`/root/aaemu-e2e/logs/m8-economy-cycle-reconcile.md`) against
+  the current promotion rules, OR (b) run one fresh kill-9 merchant-conservation E2E on the
+  real `CSBuyItems`/`CSSellItemsPacket` paths (post-trio merge `e5db6d390`); PLUS open the
+  C canonical audit (vendor/stock/refund breadth beyond the trio).
+- Negative: the trio rig tests (`MerchantRigTests`) alone do NOT promote R — R requires a
+  process-restart conservation artifact, rig or live.
+- Evidence EXISTS: trio (`cb514c42e` funds, `beaf9b82e` buyback, `3ba33b3af` rollback, merge
+  `e5db6d390`); `EconomyDayCycleE2eTests` live conservation incl. kill-9 hold (unpromoted).
+- Evidence PLANNED: promotion ruling (a) with artifact citation, or fresh run (b); C-audit dossier.
+- Dependencies: none. Non-goals: price/stock rebalance, buyback-window changes, H run.
+- Done: R ruling recorded (promoted or fresh-run green) + C audit filed.
+
+### B7 — AUCTION-01 / MAIL-01 C canonical audits (W/A/R already 2)
+
+- Contract: per mechanic, a canonical 1.2 audit dossier: intended behavior + required data +
+  engine-path mapping + explicit gap list. AUCTION: list/search/bid/settle/expire breadth
+  (W/A/R=2 via `AuctionHouseRestartE2eTests` 3m26s kill-9). MAIL: send/attach/return/expire/
+  persist breadth incl. COD + expiry/bounce gaps (W/A/R=2 for the S3 flow via
+  `MailS3RestartE2eTests` 1/1 in 2m39s, `SlotType.Mail=5`, return opcode `0x0a2`
+  STRONGLY_INFERRED — must be recorded as gap, never inferred closed).
+- Negative: no code, no re-runs — a C audit that prescribes engine changes FAILS the card
+  (prescriptions become separate C-partition code cards).
+- Evidence EXISTS: W/A/R artifacts named above; `f3bb787ce` expiry-sweep hardening;
+  `31045d033` ownership guards.
+- Evidence PLANNED: two audit dossiers (read-only; archaeology-gated per AGENTS.md checkpoints).
+- Dependencies: archaeology MCP + canonical DB only. Non-goals: engine changes, H runs.
+- Done: dossiers filed → AUCTION-01 / MAIL-01 C=2 (S stays U, recorded separately).
+
+---
+
+## 2. Crime W/A promotion (verify-only slice; no new code unless the artifact fails)
+
+- Contract: re-check the wave-7 `JusticeCrimeE2eTests` artifact (8 stages incl. restart
+  persistence + wanted seam; `MarkDirty()` setter fix) against the CURRENT promotion rules for
+  the work-item-6 vertical: bot-A-kills-same-faction-bot-B unprovoked → large-bloodstain
+  doodad 878 `큰 핏자국` spawns (Owner=A/Data=B) → `CSReportCrimePacket` seam →
+  CrimePoint/InfamyPoint rise (thresholds 50/3000, grounded above) + `SCCrimeChanged` emitted +
+  MySQL `crime` row → restart persistence. Promote W and/or A exactly as far as the artifact
+  proves; record per-stage mapping (artifact stage → W/A/R criterion).
+- Negative: if ANY stage cannot be mapped to a current criterion, the card does NOT promote on
+  partial credit — it records the gap and stops (no new-code smuggling; a failing vertical
+  spawns a code card instead of stretching this one). `TrialData.cs:240` packet-order TODO and
+  the jury-summon order gap stay OPEN regardless (they belong to TRIAL-01 W).
+- Evidence EXISTS: wave-7 artifact (`JusticeCrimeE2eTests.cs:57`,
+  `justice-crime-e2e-stages.json` writer at `:319-321`); justice-domain.md C=2 dossier
+  (bloodstains 877/878 + footprints 3313/3314 grounded above; 12/12 C2G registered, 21/25 G2C
+  live-sent; `crime` table `SQL/aaemu_game.sql:622-641`; `CrimeManager.Load:57/Save:85-168`).
+- Evidence PLANNED: promotion ruling with stage→criterion mapping; re-run ONLY if the stored
+  artifact is stale/unmappable (same vertical, no scope change).
+- Dependencies: none. Non-goals: jury-summon order, TRIAL-01, PrisonManager, threshold changes
+  (50/3000 locked), H run.
+- Done: CRIME-01 W and/or A promoted with mapping, or gap recorded + code follow-up filed.
+  (Also corrects the stale ROADMAP M9 detail line §3014-3016 "W=1 stubs" → "W=1 unverified,
+  engine wired" per the audit §5.3 — wording fix only, part of this card's ruling.)
+
+## 3. Prison scoping decision packet (owner decision required before any slice)
+
+- Contract: a decision packet presenting EXACTLY two scoped options with evidence for each —
+  Option A (buff+teleport contract): lock the existing `TrialManager.cs:768-787` behavior
+  (Prisoner buff 631/2028 grounded above + `TeleportReason.Jail` to `Justice.json` jails) with
+  the single missing piece named (release-on-expiry: buff expiry currently triggers no
+  teleport/gate/release logic) + contract tests; Option B (escape reconstruction): labor /
+  escape tunnels / guard NPCs / release cinematic as a sized multi-slice program with
+  per-slice exit tests. Packet includes: current-code inventory (no PrisonManager exists —
+  verified; `CannotEscapeBuff` 6729 applies to defendant/jury during trial only,
+  `TrialManager.cs:279-283` jury-escape-allowed), data inventory (jails config, no
+  cell-geometry tables), and a RECOMMENDATION with cost/risk per option.
+- Negative: no code in this card — an implementation diff attached to the packet FAILS the
+  card (implementation follows the recorded decision as its own slice).
+- Evidence EXISTS: justice-domain.md annotation; code sites pinned in Provenance above.
+- Evidence PLANNED: decision packet doc + recorded Josh ruling (A vs B vs deferred).
+- Dependencies: Crime W/A ruling (§2) recommended first (sentence math feeds jail-time inputs),
+  not strictly required. Non-goals: PrisonManager build, labor/escape mechanics, H runs.
+- Done: ruling recorded; the chosen option becomes a scoped slice card (not written here).
+
+## 4. M9 substrate slices R1 → N1 → J1 (order per substrate report §Cross-cutting)
+
+Standing constraints (all three): additive layer only (AGENTS.md #9/#10 — compose around
+ordinary `Character` records + normal services, never parallel implementations); M8
+composer+rig discipline (`GameplayActorTestRig`, `MethodName_Scenario_ExpectedResult`,
+Tier-1 `scripts/gate.sh` green); no H claims (rig/bot evidence is A-proxy at most);
+DI concrete+interface in `Program.cs` where services land; SQL workflow
+(`SQL/updates/` + base patch + `EnsureSchema` + SaveManager hook) for any later table.
+
+### R1 — Rumor graph (in-memory; dependency-free; unblocks both exit tests)
+
+- Contract: `RumorStore` in-memory graph (`Publish/Observe/TickRetell`): witness holds
+  confidence-1.0 exact copy; hop-1 retell degrades (actor name dropped after hop 1 and/or
+  count ±1) with decayed confidence (exact bound pinned by slice, e.g. 0.7); hop-4+ refused
+  fail-closed; ground truth unreachable via consumer API (`TryGetHearsay` noisy-copy only);
+  determinism (same seed → identical retells); ~2 new Game files + 1 test file
+  (`RumorPropagationTests`, 5 assertions per substrate report §C3); zero diffs to
+  `ChatManager`/`BotChatterService`/`PlayerBotMetadataStore`/`SaveManager`/SQL.
+- Negative: any DB table, tick wiring, chat emission, or LLM involvement FAILS R1 (those are
+  R2/R3). A perfect-information event bus is explicitly rejected — degradation IS the feature.
+- Evidence EXISTS: none (greenfield; only flavor-NPC-name grep + chatter-service consumer
+  inventory per substrate report §C1).
+- Evidence PLANNED: `RumorPropagationTests` 5/5 + Tier-1 green; exit sketch E1/E2/E3 +
+  propagation proof (rumor flips merchant/arbiter choice; hearsay-wrong-details behavior
+  change) + R2 restart leg (`bot_rumors` table + `behavior_config lastSeenRumorTick` kill-9
+  equality) deferred to R2 card.
+- Dependencies: none (first in order). Non-goals: `bot_rumors` table (R2), retell→sink
+  binding (R3, behind `Bots.EnableRumors` with M8.5 budget proof), LLM wording, merchant/guard
+  AI consumption, packets.
+- Done: 5/5 green + gate green with diff limited to 2 Game files + 1 test file.
+
+### N1 — Needs evaluator + one composer leg (no tick, no persistence)
+
+- Contract: pure `BotNeedsEvaluator` (`GoldNeed/LaborNeed/FoodNeed-proxy/LumberNeed/Urgency`)
+  + `NeedsDecisionScenario` composer routing Harvest-vs-Buy-vs-Rest through EXISTING
+  `GameplayActor` actions only; 5 assertions per substrate report §A3 (broke→Work,
+  stocked→Rest, low-labor refuses craft fail-closed, determinism, Empty-defaults never-throw);
+  diff limited to 2 new Game files + 1 test file; no engine diffs.
+- Negative: no hunger simulation on Character, no labor-regen/economy-price changes, no
+  Personality mutation, no new columns, no CrimeManager/TrialManager touches.
+- Evidence EXISTS: observation snapshot economy fields (`ActorObservation.cs:15-19`);
+  `EconomyDecisionScenario` fixed-priority precedent; ledger-from-observable-state rule.
+- Evidence PLANNED: `BotNeedsEvaluatorTests` 5/5 + Tier-1 green; exit sketch S1/S2/S3 +
+  propagation proof (needs flips `BotGoalArbiter` choice; day-ledger deltas keyed to needs) +
+  restart leg (`behavior_config` needs-keys byte equality) — restart leg may ride R2's
+  SaveManager pattern.
+- Dependencies: R1 first (rumor consumer legs reference needs-driven choice). Non-goals: tick
+  service (later slice), LLM goal choice (M8.6 boundary), guard/merchant behavior changes.
+- Done: 5/5 green + gate green, no engine-file diff.
+
+### J1 — Theft→footprint→report→points→sentence-math (rig-only, zero packet/TrialManager diffs)
+
+- Contract: `SentenceCalculator` (pure shadow of `TrialData.cs:85-132`: Murder 20 / Theft 8 /
+  Assault 0, sub-30 victim ×10, infamy multiplier, pirate flat 40) + `BotWitnessPolicy`
+  (Report/Defer/Ignore with reason; legality-before-preference) + `TheftReportComposer`
+  driving REAL reachable engine seams (`CrimeManager.GenerateEvidenceFromTheft` + `ReportCrime`
+  + calculator); 5 assertions per substrate report §B3 (footprint created w/ owner preserved,
+  foreign doodad → null fail-closed per `CrimeManager.cs:357-358`; CrimePoint += CrimeValue +
+  one `CrimeEvents` entry; sentence table match; policy matrix incl. self-report guard
+  `CrimeManager.cs:182-187`; determinism); no `CrimeManager`/`TrialManager`/Character/packet edits.
+- Negative: no PrisonManager, no guard pursuit/arrest AI, no jury voting, no prison
+  labor/escape/release, no threshold changes (50/3000 locked), no faction/pirate-rule changes.
+- Evidence EXISTS: engine inventory (substrate report §B1); footprint/victim data grounded
+  above (`doodad_almighties` 3313/3314; `doodad_func_evidence_item_loots` shape confirmed);
+  `CrimeFakeTrialSubCommand.cs:121-130` manual seams.
+- Evidence PLANNED: `CrimeJusticeSubstrateTests` 5/5 + Tier-1 green; exit sketch T1/T2/T3 +
+  propagation proof (defendant arbiter denies theft leg while Wanted; witness rumor consumer
+  gains one hearsay edge keyed to the `CrimeEvent` id — consumes R1) + restart leg
+  (`crime` rows + `crime_point` kill-9 equality via `SaveManager.cs:125` + `MarkDirty`).
+- Dependencies: R1 (hearsay-edge consumer), N1 (motive leg: needs-driven theft choice).
+  Non-goals as above.
+- Done: 5/5 green + gate green, diff limited to 2 Game files + 1 test file.
+
+## 5. M9.5 fishing contest (locked launch activity + exit test)
+
+- Contract: ONE scheduled event (fishing contest; everything else stays candidate): start →
+  finish with bot participants + ≥1 human-or-M5-stand-in, auditable results (entries, scores,
+  winner, rewards settled in the ledger), world outside the event within G1 budgets; built as
+  a B3 activity module (an activity IS a module per M9.5 Depends).
+- Negative: a second activity (race-track/caravan/hunt/festival) or Music/FX wiring inside
+  this card FAILS scope (Lane C owns music/FX; other candidates need their own cards).
+  Claiming the contest proves FISH-01 sports-stratum closure is rejected — the sports stratum
+  (`spawn_fish_effects` 12 rows grounded above; `SpawnFishEffect` unreachable,
+  catch/convert/buy stubbed per FISH-01 record) stays honestly open unless this slice wires it,
+  in which case the wiring is named as an explicit sub-leg with its own assertions.
+- Evidence EXISTS: FISH-01 W=2/A=1 base (plot-809 engine path, `FishingVerificationE2eTests`
+  labor −5/worm/loot legs); M9.5 exit-test text (ROADMAP §3035-3040).
+- Evidence PLANNED: contest module + scheduled-event run artifact (results ledger +
+  budget tables); sports-stratum sub-leg verdict (wired-with-assertions or recorded-open).
+- Dependencies: M8 residents + B3 module system (existing); R1/N1/J1 NOT required (contest is
+  independent of the substrate order). Non-goals: other candidates, Lane C music/FX, H feel
+  verdict.
+- Done: exit test green (results auditable, budgets met) + sports-stratum verdict recorded.
+
+## 6. Blocked prerequisites (noted, not opened — no work proposed)
+
+### M8.5 social (feeds M9 rumors; runtime state)
+
+- Note: 8.5a == C2 social v1 (deduplicated, landed `8c198f13d`: `BotChatterService`, 8
+  archetypes × 4 lines, default OFF); 8.5b async-LLM-bridge rule (never in tick/step; bridge
+  down → canned fallback) and 8.5c live-state-only rule stand. Exit test (≥1 day social,
+  ≥3 greetings/visitor, zero spam, disabled-isolation) is the recorded gate.
+- Blocked/owner-gated: full exit-test execution + any 8.5b bridge work stay unopened until the
+  M9 substrate (R1 retell→sink binding, R3) calls for them. No card proposed here.
+
+### M10 slice-1 prerequisites (measurable preconditions, ROADMAP §3058-3064)
+
+- Note: "guilds work" (create/invite/rank/bank scenarios), "combat stable" (M7 exit), "bots
+  form groups" (party module in production), "economy worth controlling" (inter-village trade
+  volume > 0 for 7 days). Slice-1 exit = ownership + tax state survive ≥3 restarts.
+- Blocked: guild substrate = `ExpeditionManager` exists (engine; `Program.cs:178-179`) but bot
+  contract actions + persistence proof are open (EXPEDITION-01 A=1 rig-only, R=U); party
+  module = NO bot activity module exists (`Program.cs:300-307` shows only SchedulePhase /
+  PresenceRoam / ConflictJoin / Idle — verified above). No M10 card proposed until PARTY-01 /
+  EXPEDITION-01 leave the C-partition and the party module lands.
+- Non-goals (standing): Slice-2 combat-lite is not scoped here.
+
+---
+
+## Cardinality check (draft completeness vs task)
+
+1. Partition-B quick wins: B1–B7 above (HOUSING R, FARM R, PROPERTY A, PACK/SLAVE S, DOMINION S, MERCHANT R+C, AUCTION/MAIL C). ✅
+2. Crime W/A promotion (verify-only, work-item-6 vertical, wave-7 artifact re-check). ✅
+3. Prison scoping decision packet (Option A vs B + ruling). ✅
+4. M9 substrate R1/N1/J1 (substrate order + exit sketches). ✅
+5. M9.5 fishing contest (locked activity + exit test). ✅
+6. M8.5 + M10-slice-1 blocked prerequisites noted. ✅
