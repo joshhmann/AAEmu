@@ -611,6 +611,12 @@ Circular manager deps: inject `Lazy<T>` so the orchestrator does not treat them 
 6. **Verify** — `dotnet build` and `dotnet test` must pass before claiming done.
 7. **Document** — update `Docs/wiki/` only when user-facing setup, config, or behavior changes; follow `Documentation-Maintenance.md`. Do not add unsolicited markdown elsewhere.
 
+### MySQL Prepare / connector-net listener rule (standing — RCA 2026-09-09)
+NEVER call explicit `command.Prepare()` on parameterless MySQL statements — MySql.Data 9.7.0 NREs at `PreparableStatement.Execute` (IL_0x00BB) when any connector-net listener exists and `_nullMap` is null; use text protocol by default.
+Adding ANY `ActivitySource` listener on `connector-net` (or OTel) re-arms the same crash for any future parameterless `Prepare` — treat listener additions as boot-fatal-risk changes requiring a parameterless-`Prepare` audit first.
+Parameterized prepares are safe (`_nullMap` allocated) but keep parameters bound.
+`ManagerOrchestrator` boot retry + identity is the backstop, not the fix.
+
 **Avoid:** drive-by refactors, new frameworks, reformatting unrelated files, renaming domain terms away from wiki vocabulary, and broad style “cleanup” outside the requested change.
 
 ---
