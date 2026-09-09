@@ -93,7 +93,6 @@ public class Expedition : SystemFaction
                 command.Transaction = transaction;
 
                 command.CommandText = $"DELETE FROM expedition_members WHERE character_id IN ({removedMembers})";
-                command.Prepare();
                 command.ExecuteNonQuery();
             }
 
@@ -103,7 +102,6 @@ public class Expedition : SystemFaction
                 command.Transaction = transaction;
 
                 command.CommandText = $"UPDATE characters SET expedition_id = 0 WHERE `characters`.`id` IN ({removedMembers})";
-                command.Prepare();
                 command.ExecuteNonQuery();
             }
 

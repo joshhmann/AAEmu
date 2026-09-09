@@ -120,7 +120,6 @@ internal class MailController : BaseController
                         {
                             command.CommandText =
                                 "SELECT `id`, `name`, `account_id` FROM `characters` where `deleted` = 0";
-                            command.Prepare();
                             using (var reader = command.ExecuteReader())
                             {
                                 while (reader.Read())

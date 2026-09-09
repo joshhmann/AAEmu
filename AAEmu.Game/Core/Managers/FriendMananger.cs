@@ -99,7 +99,6 @@ public class FriendMananger : Singleton<FriendMananger>, IFriendManager
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT * FROM characters WHERE id IN(" + string.Join(",", offlineIds) + ")";
-                command.Prepare();
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
