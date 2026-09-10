@@ -3012,8 +3012,9 @@ below has an exit test it is a **vision section, not a milestone**. Required
 substrate work before any M9 credit: (a) **needs/incentives layer** — the
 reason a bot farms or steals (food/gold/lumber demand signals), which today
 does not exist in any form; (b) **crime/justice substrate** — SCORECARD
-shows CRIME-01/TRIAL-01 as W=1 stubs and PRISON-01 with no PrisonManager at
-all; card the engine substrate first; (c) **rumor propagation store** —
+shows CRIME-01 crime leg live-proven (scoped), TRIAL-01 W=1 unverified,
+engine wired, and PRISON-01 with no PrisonManager at all; card the engine
+substrate first; (c) **rumor propagation store** —
 event → witness → hearsay graph with imperfect information, persisted per
 B4. Per-system exit tests follow the standing three-scenario rule; each
 must demonstrate propagation evidence (system A's output observably changes
