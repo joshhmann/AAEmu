@@ -192,24 +192,52 @@ public class CSBuyItemsPacket() : GamePacket(CSOffsets.CSBuyItemsPacket, 1)
             return;
         }
 
+        var reboughtItems = new List<Item>();
+        var rebuyFailed = false;
         foreach (var (item, index) in itemsBuyBack)
         {
-            Connection.ActiveChar.Inventory.Bag.AddOrMoveExistingItem(ItemTaskType.StoreBuy, item);
-            tasks.Add(new ItemBuyback(item));
-            /*
-            var res = Connection.ActiveChar.Inventory.AddItem(ItemTaskType.StoreBuy, item);
-            if (res == null)
+            if (Connection.ActiveChar.Inventory.Bag.AddOrMoveExistingItem(ItemTaskType.StoreBuy, item))
             {
-                ItemManager.Instance.ReleaseId(item.Id);
-                return;
+                reboughtItems.Add(item);
+                tasks.Add(new ItemBuyback(item));
+                continue;
             }
 
-            if (res.Id != item.Id)
-                tasks.Add(new ItemCountUpdate(res, item.Count));
-            else
-                tasks.Add(new ItemBuyback(item));
-            Connection.ActiveChar.BuyBack[index] = null;
-            */
+            Logger.Warn($"Failed to move buyback itemId {item.Id} ({item.TemplateId}) to Bag for {Connection.ActiveChar.Name}");
+            rebuyFailed = true;
+            break;
+        }
+
+        if (rebuyFailed)
+        {
+            // Roll the whole packet back atomically BEFORE any charge: undo
+            // every partial grant (trio #3 shape) so a full bag leaves bag,
+            // buyback and money untouched. Charging here took the refund
+            // price while the item stayed in the non-persisted BuyBack
+            // container — a paid-for item wiped on relogin (paid + lost).
+            var undoTasks = new List<ItemTask>();
+            foreach (var (merged, prevCount) in mergedStacks)
+            {
+                var delta = prevCount - merged.Count;
+                if (delta == 0)
+                    continue;
+                merged.Count = prevCount;
+                undoTasks.Add(new ItemCountUpdate(merged, delta));
+            }
+            foreach (var granted in grantedNewItems)
+                bag.RemoveItem(ItemTaskType.Invalid, granted, true);
+            foreach (var granted in grantedNewItems)
+                undoTasks.Add(new ItemRemoveSlot(granted));
+            // Earlier buyback lines already left BuyBack: move them back so
+            // the window still holds every item (StoreBuy re-emits the
+            // compensating add/remove packets, like the forward moves did).
+            foreach (var moved in reboughtItems)
+                Connection.ActiveChar.BuyBackItems.AddOrMoveExistingItem(ItemTaskType.StoreBuy, moved);
+
+            if (undoTasks.Count > 0)
+                Connection.SendPacket(new SCItemTaskSuccessPacket(ItemTaskType.StoreBuy, undoTasks, []));
+            Connection.ActiveChar.SendErrorMessage(ErrorMessageType.BagFull);
+            return;
         }
 
         if (honorPoints > 0)

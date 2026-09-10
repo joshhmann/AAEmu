@@ -2,12 +2,14 @@ using AAEmu.Commons.Network;
 
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Network.Connections;
+using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Merchant;
 using AAEmu.Game.Models.Game.NPChar;
 
 using AAEmu.UnitTests.Game.Core.Managers.Bots;
+using AAEmu.UnitTests.Game.Housing;
 
 namespace AAEmu.UnitTests.Game.Core.Managers;
 
@@ -125,6 +127,62 @@ public class MerchantRigTests
         ps.Write(item.Id);
         ps.Write(0u); // unkId
         return ps;
+    }
+    /// <summary>
+    /// Encodes the buyback half of the CSBuyItemsPacket client payload
+    /// (nBuy = 0, nBuyBack = slotIndices.Length, per-entry buyback slot
+    /// index i32, useAAPoint bool).
+    /// </summary>
+    private static PacketStream BuybackPayload(uint npcObjId, params int[] slotIndices)
+    {
+        var ps = new PacketStream();
+        ps.WriteBc(npcObjId);
+        ps.WriteBc(0); // doodadObjId — unused for NPC shops
+        ps.Write(0u);  // unkId (shop type?)
+        ps.Write((byte)0); // nBuy
+        ps.Write((byte)slotIndices.Length); // nBuyBack
+        foreach (var slot in slotIndices)
+            ps.Write(slot);
+        ps.Write(false); // useAAPoint
+        return ps;
+    }
+
+    /// <summary>
+    /// Attaches a FRESH capture-backed connection we can inspect (Rig's
+    /// connection hides its session) and returns both ends.
+    /// </summary>
+    private static (GameConnection Conn, PacketCaptureSession Capture) InspectableConn(GameplayActor actor)
+    {
+        var capture = new PacketCaptureSession();
+        var conn = new GameConnection(capture) { ActiveChar = actor.Character };
+        actor.Character.Connection = conn;
+        return (conn, capture);
+    }
+
+    /// <summary>Counts captured packets carrying the given G2C opcode.</summary>
+    private static int CapturedOpcodeCount(PacketCaptureSession capture, ushort opcode)
+    {
+        var count = 0;
+        foreach (var bytes in capture.CapturedPackets)
+        {
+            try
+            {
+                var stream = new PacketStream();
+                stream.Write(bytes);
+                stream.ReadUInt16(); // length prefix
+                stream.ReadByte();   // 0xdd
+                stream.ReadByte();   // level (1)
+                stream.ReadByte();   // hash (0)
+                stream.ReadByte();   // count (0)
+                if (stream.ReadUInt16() == opcode) // TypeId
+                    count++;
+            }
+            catch
+            {
+                // malformed capture — skip
+            }
+        }
+        return count;
     }
 
     /// <summary>
@@ -287,6 +345,78 @@ public class MerchantRigTests
         await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.SellItemTemplateId)).IsNotNull();
         await Assert.That(actor.Character.Money).IsEqualTo(1_000); // refund withheld
         await Assert.That(actor.Character.BuyBackItems.GetItemByItemId(item!.Id)).IsNull();
+    }
+    // ---- 6. buyback rebuy with a full bag — paid + lost without the fix ---
+
+    [Test]
+    public async Task BuyBack_FullBag_RefusedAtomically_NoChargeItemStaysInBuyBack()
+    {
+        var (actor, session, _, npcObjId) = Rig("merch-buyback-full");
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        var (conn, capture) = InspectableConn(actor);
+
+        // Sell one item: it leaves the bag for the (non-persisted) buyback
+        // window and the refund is credited (25 * 100/100 * 1 = 25).
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.SellItemTemplateId, 1);
+        var item = GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.SellItemTemplateId);
+        await Assert.That(item).IsNotNull();
+        var soldItemId = item!.Id;
+        new AAEmu.Game.Core.Packets.C2G.CSSellItemsPacket()
+            .Tap(p => Deliver(p, conn, SellPayload(npcObjId, item)));
+        var buybackSlot = actor.Character.BuyBackItems.GetItemByItemId(soldItemId)?.Slot;
+        await Assert.That(buybackSlot).IsNotNull();
+        var moneyBeforeRebuy = actor.Character.Money;
+
+        // Fill the single-slot bag with an unrelated max stack — the rebuy
+        // grant cannot land (AddOrMoveExistingItem returns false).
+        actor.Character.Inventory.Bag.ContainerSize = 1;
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestItemTemplateId, 99);
+        capture.CapturedPackets.Clear();
+
+        new AAEmu.Game.Core.Packets.C2G.CSBuyItemsPacket()
+            .Tap(p => Deliver(p, conn, BuybackPayload(npcObjId, buybackSlot!.Value)));
+
+        // FIXED (CSBuyItemsPacket.cs buyback path): fail-closed — the refund
+        // price is NOT charged, the item stays in the buyback window (a
+        // charged-but-ungranted item would sit in the non-persisted BuyBack
+        // container and be wiped on relogin: paid + lost), no success packet
+        // is emitted, and the client gets the BagFull error idiom.
+        await Assert.That(actor.Character.Money).IsEqualTo(moneyBeforeRebuy); // untouched
+        await Assert.That(actor.Character.BuyBackItems.GetItemByItemId(soldItemId)).IsNotNull();
+        await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.SellItemTemplateId)).IsNull();
+        await Assert.That(CapturedOpcodeCount(capture, SCOffsets.SCItemTaskSuccessPacket)).IsEqualTo(0);
+        await Assert.That(CapturedOpcodeCount(capture, SCOffsets.SCErrorMsgPacket)).IsEqualTo(1);
+    }
+
+    // ---- 7. buyback rebuy happy path (must stay green before/after) --------
+
+    [Test]
+    public async Task BuyBack_WithSpace_GrantsItemAndChargesRefund()
+    {
+        var (actor, session, _, npcObjId) = Rig("merch-buyback-ok");
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        var (conn, capture) = InspectableConn(actor);
+
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.SellItemTemplateId, 3);
+        var item = GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.SellItemTemplateId);
+        await Assert.That(item).IsNotNull();
+        var soldItemId = item!.Id;
+        new AAEmu.Game.Core.Packets.C2G.CSSellItemsPacket()
+            .Tap(p => Deliver(p, conn, SellPayload(npcObjId, item)));
+        // Refund formula: Refund(25) * RefundMultiplier(grade0=100)/100 * Count(3) = 75.
+        await Assert.That(actor.Character.Money).IsEqualTo(10_075);
+        var buybackSlot = actor.Character.BuyBackItems.GetItemByItemId(soldItemId)?.Slot;
+        await Assert.That(buybackSlot).IsNotNull();
+        capture.CapturedPackets.Clear();
+
+        new AAEmu.Game.Core.Packets.C2G.CSBuyItemsPacket()
+            .Tap(p => Deliver(p, conn, BuybackPayload(npcObjId, buybackSlot!.Value)));
+
+        // Sell + rebuy roundtrip is money-neutral and item-neutral.
+        await Assert.That(actor.Character.Money).IsEqualTo(10_000);
+        await Assert.That(GameplayActorTestRig.FindBagItem(actor, GameplayActorTestRig.SellItemTemplateId)).IsNotNull();
+        await Assert.That(actor.Character.BuyBackItems.GetItemByItemId(soldItemId)).IsNull();
+        await Assert.That(CapturedOpcodeCount(capture, SCOffsets.SCItemTaskSuccessPacket)).IsGreaterThanOrEqualTo(1);
     }
 }
 

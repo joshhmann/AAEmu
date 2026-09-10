@@ -292,6 +292,8 @@ public static class Program
                 // highest priority wins, ties break by registration order.
                 // The existing behaviors are the first modules:
                 //   Schedules(100) — C1 phase behavior when EnableSchedules is on
+                //   ConflictJoin(75) — war-horn join in active-conflict zones
+                //   FishingContest(60) — M9.5 scheduled contest window (default OFF)
                 //   PresenceRoam(50) — baseline presence roam (schedules off)
                 //   Idle(0) — terminal fallback (clear route, dormant)
                 services.AddSingleton(_ => BotScheduleOptions.FromEnvironment());
@@ -302,8 +304,10 @@ public static class Program
                         sp.GetRequiredService<BotScheduleOptions>(),
                         sp.GetRequiredService<IBotScheduleBehavior>(),
                         authoritativeScheduleService: sp.GetRequiredService<BotScheduleService>()));
+                services.AddSingleton(_ => FishingContestModuleOptions.FromEnvironment());
                 services.AddSingleton<IBotActivityModule, PresenceRoamActivityModule>();
                 services.AddSingleton<IBotActivityModule, ConflictJoinActivityModule>();
+                services.AddSingleton<IBotActivityModule, FishingContestActivityModule>();
                 services.AddSingleton<IBotActivityModule, IdleActivityModule>();
                 services.AddSingleton<BotGoalArbiter>();
                 services.AddSingleton<IBotGoalArbiter>(sp => sp.GetRequiredService<BotGoalArbiter>());
