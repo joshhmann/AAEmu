@@ -2733,6 +2733,10 @@ public sealed class BotDriveBridge
     ///             (zoneGroup, expeditionId, expeditionName, taxRate)
     ///   list    — dump the manager's in-memory dominion store (post-restart
     ///             this reflects what was reloaded from MySQL)
+    ///   phase   — live schedule visibility for the phase-cron leg: per-zone
+    ///             phase from the same GetCurrentPhase the 15 s cron announces,
+    ///             cycle anchors when inside a cycle window, and the loaded
+    ///             siege_zones/settings/plans counts
     /// </summary>
     private string HandleDominionOp(JsonElement root)
     {
@@ -2765,6 +2769,47 @@ public sealed class BotDriveBridge
                         declaredAt = d.DeclaredAt
                     }).ToArray();
                 return Ok(new { count = dominions.Length, dominions });
+            }
+            case "phase":
+            {
+                var now = DateTime.UtcNow;
+                var phaseManager = Core.Managers.DominionManager.Instance;
+                var zones = phaseManager.SiegeZones
+                    .Select(z =>
+                    {
+                        var cycleSunday = phaseManager.FindCycleSiegeSunday(z, now);
+                        var phase = phaseManager.GetCurrentPhase(z, now);
+                        object? anchors = null;
+                        if (cycleSunday != null)
+                        {
+                            var (declareStart, warmupStart, siegeStart, siegeEnd, payoff) =
+                                z.Anchors(cycleSunday.Value);
+                            anchors = new
+                            {
+                                cycleSunday = cycleSunday.Value,
+                                declareStart, warmupStart, siegeStart, siegeEnd, payoff,
+                                siegeMinutes = (siegeEnd - siegeStart).TotalMinutes
+                            };
+                        }
+                        return new
+                        {
+                            zoneGroupId = z.ZoneGroupId,
+                            templateId = z.Id,
+                            phase = (byte)phase,
+                            phaseName = phase.ToString(),
+                            cycleSunday,
+                            anchors
+                        };
+                    }).ToArray();
+                return Ok(new
+                {
+                    now,
+                    siegeZones = phaseManager.SiegeZones.Count,
+                    siegeSettings = phaseManager.SiegeSettings.Count,
+                    siegePlans = phaseManager.SiegePlans.Count,
+                    dominions = phaseManager.Dominions.Count,
+                    zones
+                });
             }
             default:
                 return Err($"unknown dominion op '{op}'");
