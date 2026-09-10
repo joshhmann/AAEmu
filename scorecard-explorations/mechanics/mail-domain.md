@@ -122,3 +122,100 @@ Source: `game/scriptsbin/x2ui/mailbox/**` from the deployed 1.2 `game_pak` — L
 **Return button handler VERIFIED** (`dec/x2ui/mailbox/mail/read_mail.lua:991-1009`, mirrored in `comercialmail/read_mia_mail.lua`): `returnButton:OnClick` → confirmation dialog ("return_title"/"return_content") → `X2Mail:ReturnMailById(window.mailId)`. Return is offered only for readable sender mails (`returnButton:Enable(not isMySelf)` paths, lines 65-96). The opcode itself is native-bound (x2game.dll strings are obfuscated — ASCII and UTF-16 sweeps found nothing), but slot arithmetic pins it: the full `X2Mail:*` send-API set used by the UI enumerates 1:1 onto AAEmu's contiguous C2S mail block — Send=0x098, List/ListContinue=0x09a/b, Read=0x09c, TakeItem=0x09d, TakeMoney=0x09e, TakeSequentially=0x09f, PayChargeMoney=0x0a0, Delete=0x0a1, ReportSpam=0x0a3. Every operation has a known opcode except Return, and the only gap in the block is **0x0a2**. The stale comment at `GameNetwork.cs:174` proposing 0x0a1 collides with `CSDeleteMailPacket=0x0a1`. Grade: **STRONGLY_INFERRED 0x0a2** — wire `CSReturnMailPacket` there.
 
 **Fee constants VERIFIED** (`mailbox/mail/write_mail.lua:125-134`): normal mail = **50 copper + 30 per attachment**; express = **100 + 80 per attachment** — matches the fee schedule already assumed in S3. `MAX_ATTACHMENT_COUNT = 10` (`mailbox/mail/common.lua:2`). `X2Mail:SendMail(mailInfo)` payload fields: `receiver, title, text, gold, silver, copper, doodadId, type, withReceiver` (`write_mail.lua:91-103`) — consistent with `CSSendMailPacket`'s field order expectations. No client-side delay/expiry constants exist (server-owned), supporting the dossier's server-side delay model.
+
+---
+
+## Addendum A2 (2026-09-10) — MAIL-01 canonical 1.2 audit (B7)
+
+Audit HEAD: `402042ae7ae561fe080cfea78eeb24408d46b437` (develop). Canonical DB md5
+`78b3bdbf038db3b927056106efdf91af` (verified `md5sum` this audit). C stays U: no
+live-client capture pins any mail wire bytes; all wire claims are code-read against
+1.2 offsets. **Do NOT edit SCORECARD.md per this audit** (grade flips are a separate
+ruling); row at writing still reads W=2/A=2/R=2/C=U on the S3 acceptance.
+
+### A2.1 Required data (canonical DB, read-only MCP provenance)
+
+MCP source for every row below: `source_id=compact.sqlite3`,
+`path=/root/aaemu-dev/AAEmu.Game/Data/compact.sqlite3`, `version=1.2 r208022`
+(`list_sources`; query window `generated_at=2026-09-10T10:43:15Z`–`10:43:48Z`).
+
+| # | Claim | Tool / input | Result |
+|---|---|---|---|
+| M-D1 | Mail-adjacent reference tables | `query_sql`: `sqlite_master` `instr(name,'mail')` | 7 tables: `doodad_func_navi_open_mailboxes`, `quest_act_obj_send_mails`, `quest_mail_attachment_items`, `quest_mail_attachments`, `quest_mail_sends`, `quest_mails`, `sphere_quest_mails` |
+| M-D2 | Mailbox doodad funcs (send-proximity basis) | `query_sql`: `SELECT * FROM doodad_func_navi_open_mailboxes` | 7 rows (ids 1–7); `duration` is 0 or 1800 — presence/channel-time shape, NOT coordinates; the 5m rule itself is engine-side (`CSSendMailPacket`), uncorroborated |
+| M-D3 | Quest-mail template chain | `query_sql`: `SELECT * FROM quest_mails LIMIT 5` + `sql FROM sqlite_master WHERE name='quest_mails'` + counts | n=1 `quest_mails` row (FK `npc_id→npcs(id)`, `quest_mail_attachment_id→quest_mail_attachments(id)` — declared FKs, `exact` linkage); n=2 `quest_mail_attachments` rows (both named "테스트"/test). Engine-side quest-overflow mail (`MailManager.CreateQuestRewardMails`, `SysExpress`) does NOT consume these rows — `QuestActObjSendMail` stays under `Quests/UnusedActs/` (data only). So: reference quest-mail content exists but is unused by the live path |
+| M-D4 | Canonical item rows for the S3 flow | `lookup_row items 5318` + `query_sql SELECT ... WHERE id IN (10000,5318)` | 5318 = sellable, max_stack 1, auction cats (1,1,1); `items` n=21482 |
+| M-D5 | No fee/delay/expiry reference rows | negative: no mail-fee/delay table among M-D1; A1 client-side finding (no delay/expiry constants in `x2ui/mailbox`) | Normal 30-min delay, 14-day expiry, 50+30n / 100+80n fee schedule are engine+client-UI constants only — implemented and E2E-pinned, never reference-proven |
+
+Mutable persistence (provenance: repo file @ HEAD, not MCP): `mails` table
+`SQL/aaemu_game.sql:354-384` (unchanged since the 2026-08-25 audit §3 — id/type/
+status/title/text/sender+receiver ids+names/attachment_count/3 dates/returned/extra/
+3 money fields/`attachment0..9` item-id refs). Attachments persist as full `items`
+rows under `SlotType.Mail=5`.
+
+### A2.2 S3 flow restatement (W/A/R=2 basis, no re-run — READ-ONLY audit)
+
+`AAEmu.IntegrationTests/E2e/MailS3RestartE2eTests.cs`
+`Mail_EquipmentAndCopper_SurviveRestart_AndTakeByRealPackets` (commit `31045d033`,
+PASS 1/1, 2m39s): sender rigs equipment template 5318 (grade 3, durability 77,
+rune 1234, temper 3/4) + 1234 copper → REAL `CSSendMailPacket` near a mailbox →
+kill -9/restart → receiver over an authenticated link uses `CSListMail`/`CSReadMail`/
+`CSTakeAttachmentSequentially`/`CSDeleteMail`. Assertions: instance-faithful item
+(grade/durability/rune/temper/`details` blob), exact copper, Normal fee 50+30 debited,
+`SlotType.Mail=5` in DB across the restart, unread recount 1, per-item
+`SCAttachmentTakenPacket`, mail deletable afterwards. This is the W/A/R=2 anchor for
+send/attach/receive/take/persist.
+
+### A2.3 What changed since the 2026-08-25 baseline (§§1–6)
+
+1. **0x0a2 is now REGISTERED (was "defined, NOT registered").** `CSOffsets.cs:164`
+   still flags `CSReturnMailPacket = 0x0a2` as STRONGLY_INFERRED with the same slot-
+   arithmetic evidence chain, but `GameNetwork.cs:174-177` now REGISTERS it
+   (`RegisterPacket(CSReturnMailPacket, 1, typeof(CSReturnMailPacket))`, with a
+   do-not-move-to-0x0a1 guard comment). `CSReturnMailPacket.Read` reads one int64
+   mailId → `ActiveChar.Mails.ReturnMail(mailId)` (`CSReturnMailPacket.cs:11-19`).
+   The opcode value itself REMAINS an inference (no client capture) — see gap G1.
+2. **Return path hardened (was "engine-side ReturnMail validated+tested").**
+   `MailManager.ReturnMail` (`MailManager.cs:357-401`) is now fail-closed: unknown
+   mail → `MailNotFound`; non-receiver → `MailNotAllowedToReturn` + warn; unread →
+   refused; already-`Returned` → refused; sender must still resolve via `NameManager`
+   or the bounce refuses (`BounceMailToOriginalSender`, `:408-433`); interactive
+   return emits `SCMailReturnedPacket`, expiry-bounce stays silent. This narrows —
+   but does NOT close — the §1 ownership finding: read/take-item/take-money/delete
+   still lack `ReceiverId` checks (only SequentialTake + now ReturnMail check).
+3. **Packet inventory otherwise unchanged** (§§1–2, 6 verified current): dead
+   `SCMailReceiverOpenedPacket` / `SCMailRemovedPacket` still never constructed;
+   `CSListMailContinuePacket` still a stub; `BaseMail.ReturnToSender` legacy path
+   still present alongside `MailManager.ReturnMail`.
+
+### A2.4 Explicit gap list (canonical-audit view: send/attach/return/expire/persist + COD)
+
+1. **G1 — Return opcode 0x0a2 STRONGLY_INFERRED, never inferred closed.** Value rests
+   on UI `X2Mail:ReturnMailById` + contiguous-block slot arithmetic (A1) — the only
+   free slot between Delete=0x0a1 and ReportSpam=0x0a3. Now registered and E2E/rig
+   exercised, but a live-client capture is still required before VERIFIED. Per task
+   rule this MUST stay a gap.
+2. **G2 — COD unenforced (unchanged).** `Charged` mail type advertised; `GetAttached`
+   hands over attachments/money with no payment gate. Only tax `Billing` mail gates
+   via `PayChargeMoney`. Fix-or-flag choice from §S5 still open.
+3. **G3 — Ownership checks missing on 4 receive paths (narrowed, not closed).**
+   Read / take-item / take-money / delete trust client `mailId`; SequentialTake and
+   ReturnMail now check. S1 slice (mirror the check into the other four) still stands.
+4. **G4 — Expiry/bounce gaps.** (a) Expiry derived from `received_date` + 14d engine
+   constant (M-D5: no canonical row; code comment itself suggests retail may be 30d —
+   value unproven). (b) System-mail/second-expiry destruction trashes attachments
+   (`trashItems: true` deletes `items` rows) — no seller/owner recourse, no GM restore
+   path. (c) Crash between send and `SaveManager` tick loses the mail (item survives
+   as sender-owned `SlotType.Mail` row — recoverable but orphaned from any header).
+   (d) No promotion of the rig-tested bounce to a restart-spanning E2E (S4 slice open).
+5. **G5 — Sent-tab unmanageable (unchanged).** `isSent=true` delete no-op; sender
+   cannot purge sent-but-unclaimed mail. S2 slice open.
+6. **G6 — Mailbox proximity is send-only (unchanged).** Receiving/reading/taking has
+   no doodad check (M-D2: func rows exist but encode no radius). Server-side mailbox
+   is effectively remote-access for reads.
+7. **G7 — Quest-mail reference chain unused (new).** M-D3: canonical `quest_mails`
+   (+2 attachments, FK-exact) exists but the live quest-overflow path mints
+   `SysExpress` mails from code instead. Either the reference chain should drive the
+   content or the divergence should be documented as intentional.
+8. **G8 — C stays U; H UNKNOWN.** No live-client bytes for any mail opcode; no human
+   mailbox session. S3 is bot-contract + real-packet evidence, not human feel.
