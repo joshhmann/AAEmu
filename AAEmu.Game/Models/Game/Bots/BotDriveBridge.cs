@@ -286,6 +286,8 @@ public sealed class BotDriveBridge
                 return HandleMailOp(root);
             case "seedDormant":
                 return HandleSeedDormant(root);
+            case "farm":
+                return HandleFarmOp(root);
             case "housing":
                 return HandleHousingOp(root);
             default:
@@ -3285,6 +3287,180 @@ public sealed class BotDriveBridge
         public void ClearAttribute(string name) => _attributes.Remove(name);
         public void Close() { }
     }
+
+    /// <summary>
+    /// B2 FARM-01 R-run seam (additive, E2E-only): plant / interact / harvest
+    /// over the REAL M5 contracts on a persistent bot session — the exact
+    /// calls the village/economy scenarios drive live
+    /// (<see cref="AAEmu.Game.Core.Managers.Bots.GameplayActor.Plant"/>,
+    /// <see cref="AAEmu.Game.Core.Managers.Bots.GameplayActor.Harvest"/>,
+    /// <see cref="AAEmu.Game.Core.Managers.Bots.GameplayActor.Interact"/>).
+    /// No direct DB writes, no bot-side placement: every mutation flows
+    /// through the engine (DoodadManager.CreatePlayerDoodad,
+    /// Doodad.Use → DoodadFuncCropHarvest/FruitPick → loot).
+    /// Ops:
+    ///   rig      — stock seeds + calves through the ordinary
+    ///              PlayerBotController acquisition path, top up labor.
+    ///   plant    — GameplayActor.Plant(seed item, bot pos + dx/dy).
+    ///   find     — resolve live ObjIds by stable doodad DbIds (ObjIds are
+    ///              reassigned on every boot; DbIds persist in MySQL).
+    ///   status   — live doodad state per ObjId + bag counts per item.
+    ///   interact — GameplayActor.Interact(objId, skill) (watering / feed).
+    ///   harvest  — GameplayActor.Harvest(objId) (the crop-loop yield path).
+    /// </summary>
+    private string HandleFarmOp(JsonElement root)
+    {
+        const uint PotatoSeedItemId = 15659;
+        const uint CalfItemId = 16225;
+
+        if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var b) ? b.GetString() : null, out var character, out var err))
+            return Err(err);
+
+        var op = root.GetProperty("op").GetString();
+        switch (op)
+        {
+            case "rig":
+            {
+                var seeds = GetInt(root, "seeds", 5);
+                var calves = GetInt(root, "calves", 2);
+                var labor = GetInt(root, "labor", 5000);
+                var controller = new PlayerBotController(character!);
+                if (seeds > 0)
+                    controller.StockInventory(PotatoSeedItemId, seeds);
+                if (calves > 0)
+                    controller.StockInventory(CalfItemId, calves);
+                if (labor > 0)
+                    character!.LaborPower = (short)Math.Clamp(labor, 0, short.MaxValue);
+                return Ok(new
+                {
+                    name = character!.Name,
+                    id = character.Id,
+                    seeds = controller.InventoryCount(PotatoSeedItemId),
+                    calves = controller.InventoryCount(CalfItemId),
+                    labor = character.LaborPower,
+                });
+            }
+            case "plant":
+            {
+                var seedItem = GetUInt(root, "seed");
+                if (seedItem == 0)
+                    return Err("farm plant requires 'seed' (plantable item template id)");
+                var dx = GetFloat(root, "dx", 0f);
+                var dy = GetFloat(root, "dy", 0f);
+                var basePos = character!.Transform.World.Position;
+                var pos = new System.Numerics.Vector3(basePos.X + dx, basePos.Y + dy, basePos.Z);
+                var actor = new GameplayActor(character);
+                var request = actor.Plant(seedItem, pos,
+                    idempotencyKey: $"b2farm-plant-{seedItem}-{dx}-{dy}");
+                if (request.State != ActorLifecycleState.Completed)
+                    return Err($"farm plant: engine {request.State}/{request.Failure}: {request.Detail ?? "no detail"}");
+                var objId = ReadVillageObjId(request.Result);
+                var doodad = objId != 0 ? character.ParentWorld?.GetDoodad(objId) : null;
+                return Ok(new
+                {
+                    state = request.State.ToString(),
+                    objId,
+                    dbId = doodad?.DbId ?? 0u,
+                    template = doodad?.TemplateId ?? 0u,
+                    phase = doodad?.FuncGroupId ?? 0u,
+                    detail = request.Detail ?? "",
+                });
+            }
+            case "find":
+            {
+                var dbIds = root.TryGetProperty("dbIds", out var idsEl) && idsEl.ValueKind == JsonValueKind.Array
+                    ? idsEl.EnumerateArray().Select(e => e.GetUInt32()).ToList()
+                    : [];
+                var world = character!.ParentWorld;
+                var found = new List<object>();
+                foreach (var dbId in dbIds)
+                {
+                    var doodad = world?.GetAllDoodads().FirstOrDefault(d => d.DbId == dbId);
+                    found.Add(doodad == null
+                        ? new { dbId, found = false, objId = 0u, template = 0u, phase = 0u }
+                        : new { dbId, found = true, objId = doodad.ObjId, template = doodad.TemplateId, phase = doodad.FuncGroupId });
+                }
+                return Ok(new { doodads = found.ToArray() });
+            }
+            case "status":
+            {
+                var objIds = root.TryGetProperty("objIds", out var oidsEl) && oidsEl.ValueKind == JsonValueKind.Array
+                    ? oidsEl.EnumerateArray().Select(e => e.GetUInt32()).ToList()
+                    : [];
+                var itemTemplates = root.TryGetProperty("items", out var itemsEl) && itemsEl.ValueKind == JsonValueKind.Array
+                    ? itemsEl.EnumerateArray().Select(e => e.GetUInt32()).ToList()
+                    : [];
+                var world = character!.ParentWorld;
+                var doodads = new List<object>();
+                foreach (var objId in objIds)
+                {
+                    var doodad = world?.GetDoodad(objId);
+                    if (doodad == null)
+                    {
+                        doodads.Add(new { objId, found = false, dbId = 0u, template = 0u, phase = 0u, x = 0f, y = 0f, z = 0f });
+                        continue;
+                    }
+                    var p = doodad.Transform.World.Position;
+                    doodads.Add(new
+                    {
+                        objId, found = true, dbId = doodad.DbId, template = doodad.TemplateId,
+                        phase = doodad.FuncGroupId, x = p.X, y = p.Y, z = p.Z,
+                    });
+                }
+                var controller = new PlayerBotController(character);
+                var counts = itemTemplates.Select(t => new { template = t, count = controller.InventoryCount(t) }).ToArray();
+                return Ok(new
+                {
+                    name = character.Name,
+                    id = character.Id,
+                    labor = character.LaborPower,
+                    money = character.Money,
+                    doodads = doodads.ToArray(),
+                    items = counts,
+                });
+            }
+            case "interact":
+            {
+                var objId = GetUInt(root, "objId");
+                var skill = GetUInt(root, "skill");
+                if (objId == 0 || skill == 0)
+                    return Err("farm interact requires 'objId' and 'skill'");
+                var request = new GameplayActor(character!).Interact(objId, skill);
+                var doodad = character!.ParentWorld?.GetDoodad(objId);
+                return Ok(new
+                {
+                    state = request.State.ToString(),
+                    failure = request.Failure.ToString(),
+                    detail = request.Detail ?? "",
+                    phase = doodad?.FuncGroupId ?? 0u,
+                });
+            }
+            case "harvest":
+            {
+                var objId = GetUInt(root, "objId");
+                if (objId == 0)
+                    return Err("farm harvest requires 'objId'");
+                var request = new GameplayActor(character!).Harvest(objId);
+                var after = character!.ParentWorld?.GetDoodad(objId);
+                return Ok(new
+                {
+                    state = request.State.ToString(),
+                    failure = request.Failure.ToString(),
+                    detail = request.Detail ?? "",
+                    yield = request.Result is int y ? y : 0,
+                    phaseAfter = after?.FuncGroupId ?? 0u,
+                    deleted = after == null,
+                });
+            }
+            default:
+                return Err($"unknown farm op '{op}'");
+        }
+    }
+
+    private static float GetFloat(JsonElement root, string name, float defaultValue = 0f)
+        => root.TryGetProperty(name, out var el) && el.TryGetSingle(out var v) ? v : defaultValue;
+
+
 
     #endregion
 
