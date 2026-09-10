@@ -965,9 +965,31 @@ public static class M3aM4ReplayScenario
         return origin;
     }
 
+    /// <summary>
+    /// Resolves the actor's OWN freshly placed pack doodad: owner- and
+    /// item-linked, unattached, never a loaded cargo pack. The template-only
+    /// scan this replaces matched any 6068/26488 doodad in the world —
+    /// including a sibling bot's loaded cargo (owner_type Slave) or a consumed
+    /// husk (ItemId 0) — so a concurrent bot picked up and loaded someone
+    /// else's pack (B4 PACK-01 S-run defect, 2026-09-10: one item id aboard
+    /// two wagons). Fail-closed (null) when nothing matches: the caller fails
+    /// LOUD at PACKPICKUP instead of silently driving another bot's pack.
+    /// Live put-down spawns Character-owned packs (DoodadManager.Create) and
+    /// the route avoids house plots, so a Housing-owned match is out of scope
+    /// by construction. Unit fixture packs carry the same owner shape
+    /// (GameplayActorTestRig.PlacePackDoodad).
+    /// </summary>
     private static Doodad? FindPlacedPackDoodad(Character character, uint packItemTemplateId, uint placedDoodadTemplateId)
         => character.ParentWorld?.GetAllDoodads()
-            .FirstOrDefault(d => d.ItemTemplateId == packItemTemplateId && d.TemplateId == placedDoodadTemplateId);
+            .Where(d => d.ItemTemplateId == packItemTemplateId
+                && d.TemplateId == placedDoodadTemplateId
+                && d.ItemId > 0
+                && d.OwnerType == DoodadOwnerType.Character
+                && d.OwnerId == character.Id
+                && d.ParentObjId == 0
+                && d.AttachPoint == AttachPointKind.None)
+            .OrderByDescending(d => d.ObjId)
+            .FirstOrDefault();
 
     private static Doodad? FindLoadedPackDoodad(Character character, uint packItemTemplateId, uint slaveObjId)
         => character.ParentWorld?.GetAllDoodads()
