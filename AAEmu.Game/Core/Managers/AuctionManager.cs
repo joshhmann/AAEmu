@@ -127,20 +127,28 @@ public class AuctionManager(IItemManager itemManager, INameManager nameManager, 
             return;
         }
 
-        var newItem = itemManager.Create(auctionLot.Item.TemplateId, auctionLot.Item.Count, auctionLot.Item.Grade);
-        if (newItem != null)
+        // Return the ORIGINAL listed instance (enchant/durability/details intact),
+        // mirroring the expiry path (RemoveAuctionLotFail): FinalizeForCancel moves
+        // the real item out of SlotType.Auction into the cancel mail. A template
+        // mint would orphan the listed row and lose the instance's details.
+        var newItem = itemManager.GetItemByItemId(auctionLot.Item?.Id ?? 0);
+        if (newItem == null)
         {
-            // itemList[0] = newItem;
-
-            // TODO: Read this from saved data
-            var recalculatedFee = auctionLot.DirectMoney * .01 * ((int)auctionLot.Duration + 1);
-            if (recalculatedFee > MaxListingFee) recalculatedFee = MaxListingFee;
-
-            var cancelMail = new MailForAuction(newItem, auctionLot.ClientId, auctionLot.DirectMoney,
-                (int)recalculatedFee);
-            cancelMail.FinalizeForCancel();
-            cancelMail.Send();
+            Logger.Warn(
+                $"Auction lot {auctionLot.Id}: item {auctionLot.Item?.Id} not found in item memory — cancelling WITHOUT return mail to {auctionLot.ClientName}");
+            RemoveAuctionLot(auctionLot);
+            player.SendPacket(new SCAuctionCanceledPacket(auctionLot));
+            return;
         }
+
+        // TODO: Read this from saved data
+        var recalculatedFee = auctionLot.DirectMoney * .01 * ((int)auctionLot.Duration + 1);
+        if (recalculatedFee > MaxListingFee) recalculatedFee = MaxListingFee;
+
+        var cancelMail = new MailForAuction(newItem, auctionLot.ClientId, auctionLot.DirectMoney,
+            (int)recalculatedFee);
+        cancelMail.FinalizeForCancel();
+        cancelMail.Send();
 
         RemoveAuctionLot(auctionLot);
         player.SendPacket(new SCAuctionCanceledPacket(auctionLot));
