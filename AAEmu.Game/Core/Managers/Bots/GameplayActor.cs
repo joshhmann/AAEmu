@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers.UnitManagers;
@@ -2403,10 +2403,9 @@ public class GameplayActor : IGameplayActor
         if (template == null)
             return Reject(request, ActorFailureReason.RejectedAction, $"unknown item template {itemTemplateId}");
 
-        // 5. Money gate (money pool only; honor/vocation currency is out of
-        //    the v1 surface). The packet's check is buggy (uses && instead
-        //    of ||); the actor performs the correct pre-flight so the engine
-        //    is never entered without funds.
+        // 5. Money-only, single-line actor scope; honor/vocation currencies and
+        //    atomic multi-line rollback are intentionally outside this proxy
+        //    surface. R-level claims require the real wire packet path.
         var money = (long)template.Price * count;
         if (money > Character.Money)
             return Reject(request, ActorFailureReason.RejectedAction, $"not enough money ({money} needed)");

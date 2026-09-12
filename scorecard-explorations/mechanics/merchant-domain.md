@@ -75,25 +75,15 @@ and a successful buyback move. Doodad shops are an unvalidated TODO
 
 ## 6. Residuals
 
-- **R1 — FIX-CARD CANDIDATE (new, exact path): buyback-rebuy ignores the grant
-  result.** `CSBuyItemsPacket.cs:195-198` calls
-  `Bag.AddOrMoveExistingItem(ItemTaskType.StoreBuy, item)` and discards the
-  bool, then unconditionally adds the `ItemBuyback` task while the rebuy price
-  was already folded into the charge (`:112-114`, deducted at `:225-228`).
-  Full-bag rebuy therefore charges + claims without granting; the item sits in
-  the non-persisted BuyBack container, which is wiped on relogin (§4) → paid
-  money AND lost item. Same bug class as trio #3, one path over. Not covered
-  by the B6 run (bag never full). Recommended: skip-or-rollback on rebuy-move
-  failure mirroring the shop-buy atomic path, plus a rig regression test.
+- **R1 — RESOLVED (`c00090c97`, atomic buyback rebuy):** the rebuy path checks `AddOrMoveExistingItem`, and on failure rolls back merged stacks, removes granted items, and returns the item to buyback before charging.
 - **R2 — stale proxy annotation + proxy/wire divergence (no code change).**
   `GameplayActor.Buy` still comments "The packet's check is buggy (uses &&
   instead of ||)" (`GameplayActor.cs:2407-2409`) — true before 2026-08-26,
   stale after the trio. The actor is also money-only, single-line, with no
   atomic multi-line rollback. Bot-driven merchant evidence therefore stays
   proxy/A-level; R-level claims require the wire paths (as the B6 run uses).
-- **R3 — known limits (document, no action):** doodad-shop TODO (§5);
-  `merchant_price_ratios` empty so nothing to wire; `SiegeShop` lines
-  fail closed (§3).
+- **R3 — SERVER-SIDE CHAIN IMPLEMENTED:** doodad current `FuncGroupId` resolves `DoodadFuncStoreUi` via `DoodadManager.GetFuncsForGroup`/`GetFuncTemplate`, then `MerchantPackId` → `NpcManager.GetGoods`; unconditional `SellsItem` membership enforcement keeps crafted templates closed. `DoodadFuncStoreUi.Use()` remains a `Logger.Trace` no-op, so the client cannot yet be told/presented the shop. No existing rig/test depends on doodad buying.
+
 
 ## 7. Promotion link
 

@@ -6,6 +6,7 @@ using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
+using AAEmu.Game.Models.Game.DoodadObj.Funcs;
 using AAEmu.Game.Models.Game.Merchant;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils;
@@ -56,6 +57,22 @@ public class CSBuyItemsPacket() : GamePacket(CSOffsets.CSBuyItemsPacket, 1)
                 return;
             }
         }
+        if (doodadObjId != 0 && npcObjId == 0)
+        {
+            // Resolve a real StoreUi goods pack from the doodad's current func group.
+            var storeUi = DoodadManager.Instance.GetFuncsForGroup(doodad.FuncGroupId)
+                .Where(func => func.FuncType == "DoodadFuncStoreUi")
+                .Select(func => DoodadManager.Instance.GetFuncTemplate(func.FuncId, func.FuncType))
+                .OfType<DoodadFuncStoreUi>()
+                .FirstOrDefault();
+            pack = storeUi == null ? null : NpcManager.Instance.GetGoods(storeUi.MerchantPackId);
+            if (pack == null || pack.Items.Count == 0)
+            {
+                Logger.Error($"Doodad shop purchase refused: no goods pack for doodad {doodadObjId} group {doodad.FuncGroupId}");
+                Connection.ActiveChar.SendErrorMessage(ErrorMessageType.InvalidTarget);
+                return;
+            }
+        }
 
         var money = 0;
         var honorPoints = 0;
@@ -71,13 +88,13 @@ public class CSBuyItemsPacket() : GamePacket(CSOffsets.CSBuyItemsPacket, 1)
             var currency = (ShopCurrencyType)stream.ReadByte();
 
             // If using a NPC shop, check if the NPC is selling the specified item
-            if (npcObjId != 0 && (pack == null || !pack.SellsItem(itemId)))
+            if (pack == null || !pack.SellsItem(itemId))
                 continue;
 
             if (doodadObjId != 0)
             {
-                // TODO: validate doodad "shop" (mirage furniture for example)
-                // unkId value looks related to the "shop type" for buying, but unsure how it's all linked
+                // StoreUi goods resolution is implemented above. DoodadFuncStoreUi.Use
+                // remains a Logger.Trace no-op, so client-side shop presentation is separate.
             }
 
             itemsBuy.Add((itemId, grade, count));
