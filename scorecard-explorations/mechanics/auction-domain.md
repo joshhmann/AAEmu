@@ -7,6 +7,11 @@ Audit HEAD: `402042ae7ae561fe080cfea78eeb24408d46b437` (develop).
 C stays U: no live-client packet capture pins the wire format; all wire claims below
 are code-read against 1.2 offsets, never client-proven.
 
+UPDATE (2026-09-12): G3 (G-cancel) is CLOSED, and the settled-buy path was found to
+carry the same container-orphan defect (recorded as G-settle-buy in §4) — also
+closed. Evidence is live-stack E2E on the .165 testing host (bot-driven real C2G
+packets), NOT human, and still no live-client capture — so `C` remains `U`.
+
 ## 1. Intended behavior (1.2)
 
 A consignment house: a seller lists an item instance for a fixed duration with a
@@ -55,9 +60,9 @@ transaction; 5s `AuctionHouseTask` → `UpdateAuctionHouse` expiry sweep).
 | My bids | `CSAuctionMyBidListPacket` 0x0bb → `GetBidAuctionLots` | filter `BidderId == player.Id`, same 9/page | 0x12f |
 | Lowest price | `CSAuctionLowestPricePacket` 0x0bc → `CheapestAuctionLot` | min `DirectMoney` per template | `SCAuctionLowestPricePacket` 0x130 |
 | Bid | `CSBidAuctionPacket` 0x0b9 → `BidOnAuctionLot` bid branch | outbid previous bidder (refund BY MAIL `FinalizeForBidFail`); `SubtractMoney` bid; `IsDirty=true` | `SCAuctionBidPacket` 0x131 |
-| Buyout | `CSBidAuctionPacket` 0x0b9 → `BidOnAuctionLot` buy-now branch (`bid.Money >= DirectMoney`) | `SubtractMoney` full price; `RemoveAuctionLotSold` → seller mail 90% (`FinalizeForSaleSeller`, `MailType.AucOffSuccess`=14) + buyer mail with item (`FinalizeForSaleBuyer`, `AucBidWin`=16) | lot removed; mails via mail sweep |
-| Cancel | `CSCancelAuctionPacket` 0x0ba → `CancelAuctionLot` | refused if any bidder; else cancel mail + `SCAuctionCanceledPacket` 0x132 | `SCAuctionCanceledPacket` 0x132 |
-| Expire sweep | `AuctionHouseTask` (5s) → `UpdateAuctionHouse` → per-lot try/catch isolation | bid lot → `RemoveAuctionLotSold` (settle-as-sale); no-bid lot → `RemoveAuctionLotFail` → return mail (`FinalizeForFail`, `AucOffFail`=15); missing-item lot expires WITHOUT mail (warn, never wedges sweep); mail exception logged, lot still expires | settlement mails |
+| Buyout | `CSBidAuctionPacket` 0x0b9 → `BidOnAuctionLot` buy-now branch (`bid.Money >= DirectMoney`) | `SubtractMoney` full price; `RemoveAuctionLotSold` → seller mail 90% (`FinalizeForSaleSeller`, `MailType.AucOffSuccess`=14) + buyer mail with item (`FinalizeForSaleBuyer`, `AucBidWin`=16; relocates the SOLD instance into the buyer's MAIL container — see G-settle-buy, §4) | lot removed; mails via mail sweep |
+| Cancel | `CSCancelAuctionPacket` 0x0ba → `CancelAuctionLot` | refused if any bidder; else cancel mail (`FinalizeForCancel`, returning the ORIGINAL instance and relocating it into the seller's MAIL container — G3 CLOSED, §4) + `SCAuctionCanceledPacket` 0x132 | `SCAuctionCanceledPacket` 0x132 |
+| Expire sweep | `AuctionHouseTask` (5s) → `UpdateAuctionHouse` → per-lot try/catch isolation | bid lot → `RemoveAuctionLotSold` (settle-as-sale); no-bid lot → `RemoveAuctionLotFail` → return mail (`FinalizeForFail`, `AucOffFail`=15; relocates the ORIGINAL instance into the seller's MAIL container — same defect as G3, §4); missing-item lot expires WITHOUT mail (warn, never wedges sweep); mail exception logged, lot still expires | settlement mails |
 | `SCAuctionMessagePacket` 0x133 | — | NEVER constructed anywhere in tree (offset defined, zero send sites) — dead wire slot | — |
 
 Settlement mail model: `Models/Game/Mails/MailForAuction.cs` — titles
@@ -86,12 +91,63 @@ AucOffSuccess=14, AucOffFail=15, AucBidWin=16 (match `MailType.cs:18-22`).
    return is ignored in both branches (`:179,205`). If `SubtractMoney` can fail
    open (lag/race), the lot settles without payment. Needs a fail-closed assert
    + test; code-read only.
-3. **Cancel path mints a FRESH item, orphans the listed instance (G-cancel).**
-   `CancelAuctionLot` (`:130-143`) does `itemManager.Create(template,count,grade)`
-   and mails the copy — enchant/durability/details of the listed instance are
-   lost, and the original `lot.Item` row is never moved out of `SlotType.Auction`
-   (orphan). Code-read; needs an E2E cancel-with-enchanted-gear leg (no cancel leg
-   exists in the restart test).
+3. **~~Cancel path mints a FRESH item, orphans the listed instance (G-cancel).~~
+   CLOSED (2026-09-12, instance-faithful return + container relocation).**
+   Two distinct defects were found on this path, and both are fixed:
+   a. `CancelAuctionLot` used to `itemManager.Create(template,count,grade)` and
+      mail the copy, losing the listed instance's enchant/durability/details
+      (fixed earlier by commit `e2abd29b`: it now mails the ORIGINAL instance).
+   b. The cancel mail only stamped `OwnerId`/`SlotType` and never relocated the
+      instance into the recipient's MAIL container, so `ItemManager.Save`
+      persisted `container_id` = the seller's listing (auction) container
+      (`ItemManager.Save` writes `container_id` from `item._holdingContainer`,
+      `ItemManager.cs:1636`). On reboot `ItemManager.LoadUserItems` re-added the
+      row to that container and `ItemContainer.AddOrMoveExistingItem` re-stamped
+      `SlotType` from the container's type (`ItemContainer.cs:433`) — the
+      returned item booted back as a `SlotType.Auction` orphan.
+   Fixed by routing cancel, expiry AND settled-buy attachments through one
+   `MailForAuction.AttachItemForReturn(item, receiverId)` helper that relocates
+   the SAME instance via `ItemManager.GetItemContainerForCharacter(receiverId,
+   SlotType.Mail, null, 0)` — the offline-safe owner-id path (interface
+   `IItemManager.cs:50`, impl `ItemManager.cs:1701`; same owner-id shape as
+   `AuctionController.cs:173` for `SlotType.Auction` and `HousingManager.cs:1277`
+   for `SlotType.System`), so it works while the recipient is offline. The
+   lookup uses `PeekInstance` (the documented headless-degrade idiom,
+   `Singleton.cs`) so DI-less unit rigs stamp-and-log instead of throwing; a
+   failed relocation also falls back to the stamp with a loud Error, preserving
+   the "never wedge the return, never lose the instance" invariant.
+   EVIDENCE (live-stack E2E on the .165 testing host — NOT human, and NOT a live
+   client, so `C` stays `U`): `AAEmu.IntegrationTests.E2e.
+   AuctionHouseRestartE2eTests.Auction_CancelEnchantedListing_
+   ReturnsOriginalInstance_AndSurvivesKill9` — RED before the fix
+   (`soak-artifacts/auction-cancel/20260912-025046`: `reloaded_attachment_slot_type
+   = 6`, `auction_orphans_post_restart = 1`, `persistence_round_trip_mail =
+   false`), GREEN after (`soak-artifacts/auction-cancel/20260912-035828`:
+   `slot_type = 5`, `auction_orphans_post_restart = 0`,
+   `persistence_round_trip_mail = true`, details blob byte-identical across
+   before/after-cancel/after-restart). The leg drives the REAL
+   `CSAuectionPostPacket`/`CSCancelAuctionPacket` over the game link, so the
+   cancel wire round trip is exercised — but the bytes remain bot-driven, not
+   client-captured.
+3b. **Settled-buy path had the IDENTICAL container orphan (G-settle-buy).
+   CLOSED (2026-09-12).** `PostLotOnAuction` lists the item out of the seller's
+   Auction container (`AuctionManager.cs:677`) and `RemoveAuctionLotSold`
+   re-fetches that SAME instance (`AuctionManager.cs:37`) for the buyer's mail,
+   but `FinalizeForSaleBuyer` only stamped `OwnerId`/`SlotType` +
+   `Body.Attachments.Add`. The sold item therefore persisted `container_id` =
+   the seller's listing container and booted back as a `SlotType.Auction` orphan
+   owned by the buyer. Fixed by the same helper
+   (`AttachItemForReturn(_item, _buyerId)`). This survived the original audit
+   because AUCTION-01 asserted `slot_type`/`owner` but NEVER `container_id`, and
+   never rebooted after a settle — the existing AUCTION-01 leg now rides its
+   second kill -9 to pin container-id identity on the sold item.
+   EVIDENCE: RED with the `FinalizeForSaleBuyer` hunk reverted (`sold item
+   16777236 persisted container_id=65541 (want the buyer's Mail container
+   65547)`; with the settle-time check bypassed, the reboot assertion fired:
+   `reloaded with container_id=65541 ... slot_type=6`), GREEN after
+   (`auction-restart-e2e-report.json` `sold_item_leg`: `settle_container_id =
+   buyer_mail_container_id = 65547`, `reloaded_slot_type = 5`,
+   `auction_orphans_post_restart = 0`).
 4. **Bid refunds are mail-locked, not instant (B-bid).** Outbid money returns via
    `FinalizeForBidFail` mail subject to the 14-day mail expiry/bounce cycle —
    a griefer-adjacent lockup vector vs instant refund. Intended 1.2 behavior
@@ -115,8 +171,12 @@ AucOffSuccess=14, AucOffFail=15, AucBidWin=16 (match `MailType.cs:18-22`).
 
 ## 5. Slice plan to close (not in scope for this audit)
 
-S1 (S): cancel-leg E2E with enchanted gear — proves G3 fixed (instance-faithful
-return, no orphan `SlotType.Auction` row). S2 (S): fail-closed money gates on
+S1 (S): cancel-leg E2E with enchanted gear — DONE (2026-09-12): proves G3 fixed
+(instance-faithful return, no orphan `SlotType.Auction` row) and additionally
+closed G-settle-buy (same container-orphan defect in `FinalizeForSaleBuyer`), by
+routing cancel/expiry/settled-buy attachments through one
+`AttachItemForReturn` helper and pinning container-id identity across a real
+kill -9 reload. S2 (S): fail-closed money gates on
 bid/buyout + insufficient-funds test. S3 (M): auctioneer-proximity gate (needs a
 live-client or 1.2-script corroboration of the intended radius first — D4 + client
 `auction` UI strings). S4 (S, optional): retire or wire 0x133.

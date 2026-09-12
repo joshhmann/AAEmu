@@ -1,10 +1,15 @@
 ﻿using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Items.Actions;
+
+using NLog;
 
 namespace AAEmu.Game.Models.Game.Mails;
 
 public class MailForAuction : BaseMail
 {
+    private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
+
     private uint _buyerId;
     private readonly uint _sellerId;
     private readonly Item _item;
@@ -90,9 +95,13 @@ public class MailForAuction : BaseMail
         Header.ReceiverId = _buyerId;
 
         Body.Text = string.Format("body('{0}', {1}, {2})", _itemName, _item.Count, _itemBuyoutPrice);
-        _item.OwnerId = _buyerId;
-        _item.SlotType = SlotType.Mail;
-        Body.Attachments.Add(_item);
+        // The sold instance was listed OUT of the seller's Auction container
+        // (PostLotOnAuction → AuctionAttachments.AddOrMoveExistingItem), so it
+        // must be relocated into the BUYER's Mail container — stamping SlotType
+        // alone would persist container_id = the seller's listing container and
+        // the reboot would re-home the bought item as a SlotType.Auction orphan
+        // owned by the buyer.
+        AttachItemForReturn(_item, _buyerId);
 
         return true;
     }
@@ -127,6 +136,63 @@ public class MailForAuction : BaseMail
     }
 
     /// <summary>
+    /// Hands <paramref name="item"/> to a returning mail as an attachment,
+    /// relocating it into the receiver's MAIL container.
+    ///
+    /// Stamping SlotType alone is NOT enough: ItemManager.Save persists
+    /// container_id from item._holdingContainer, so an instance left in its
+    /// listing container reloads (ItemManager.LoadUserItems →
+    /// ItemContainer.AddOrMoveExistingItem) with SlotType rewritten from THAT
+    /// container's type — the returned item would come back as a
+    /// SlotType.Auction orphan after a reboot. The relocation must happen on
+    /// the SAME instance (no template mint) so the enchant/durability/details
+    /// survive, exactly as MailPlayerToPlayer.FinalizeAttachments does for
+    /// player mail.
+    ///
+    /// Auction mail is created server-side while the seller may be OFFLINE, so
+    /// the receiver's container is resolved by owner id through
+    /// ItemManager.GetItemContainerForCharacter (the same owner-id path
+    /// AuctionController uses for an offline client) rather than through a live
+    /// Character.Inventory reference.
+    /// </summary>
+    private void AttachItemForReturn(Item item, uint receiverId)
+    {
+        // The receiving character may be OFFLINE (auction mail is created
+        // server-side), so the MAIL container is resolved by owner id through
+        // the manager — the same owner-id path AuctionController uses — never
+        // through a live Character.Inventory reference. PeekInstance (not
+        // Instance) keeps headless rigs that have no ItemManager loadable: they
+        // hold no containers at all, so there is nothing to relocate into.
+        var mailContainer = ItemManager.PeekInstance
+            ?.GetItemContainerForCharacter(receiverId, SlotType.Mail, null, 0);
+        if (mailContainer == null)
+        {
+            Logger.Warn(
+                $"Auction mail to {receiverId}: no ItemManager mail container available (headless rig) — " +
+                $"item {item.Id} ({item.TemplateId}) keeps container {item._holdingContainer?.ContainerId ?? 0}");
+            item.OwnerId = receiverId;
+            item.SlotType = SlotType.Mail;
+        }
+        else if (!mailContainer.AddOrMoveExistingItem(ItemTaskType.Invalid, item))
+        {
+            // Mail containers are unlimited, so this should never fail. If it
+            // somehow does, adopt the instance where it stands and log loudly —
+            // never wedge the return or lose the item.
+            Logger.Error(
+                $"Auction mail to {receiverId}: could not move item {item.Id} ({item.TemplateId}) into the mail container " +
+                $"(container {mailContainer.ContainerId}) — leaving it in container {item._holdingContainer?.ContainerId ?? 0}, " +
+                "the row will persist with its current container");
+            item.OwnerId = receiverId;
+            item.SlotType = SlotType.Mail;
+        }
+
+        // The container relocation above is what makes the persisted row reload
+        // as Mail; this list is what the mail itself carries (mails.attachmentN
+        // and the wire body).
+        Body.Attachments.Add(item);
+    }
+
+    /// <summary>
     /// Prepare mail for returning item to owner because of cancel
     /// </summary>
     /// <returns></returns>
@@ -146,9 +212,7 @@ public class MailForAuction : BaseMail
         Title = TitleCancel;
 
         Body.Text = string.Format("body('{0}', {1})", _itemName, _item.Count);
-        _item.OwnerId = _sellerId;
-        _item.SlotType = SlotType.Mail;
-        Body.Attachments.Add(_item);
+        AttachItemForReturn(_item, _sellerId);
 
         return true;
     }
@@ -173,9 +237,7 @@ public class MailForAuction : BaseMail
         Title = TitleNotSold;
 
         Body.Text = string.Format("body('{0}', {1})", _itemName, _item.Count);
-        _item.OwnerId = _sellerId;
-        _item.SlotType = SlotType.Mail;
-        Body.Attachments.Add(_item);
+        AttachItemForReturn(_item, _sellerId);
 
         return true;
     }
