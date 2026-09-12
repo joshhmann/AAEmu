@@ -1734,3 +1734,7 @@ deploy is a separate Josh decision.
 - STATUS.md is fork-local — never in an upstream PR
 - One screen max; Nei updates it on every completed task (the "what changed"
   one-liner is the input contract — see `.kanban-templates/tracking.md`)
+
+## 2026-09-12 — QA-suite validation findings recorded
+
+- Recorded three already-fixed defects in `EVIDENCE-LEDGER.md`: LoginNetwork shutdown reconnect storm (`a5b7cafb1`), Rowboat E2E log-path drift, and E2E teardown MySQL container leak (both `5e8d7d73f`). Evidence is automated/live-stack smoke-tier Rowboat E2E on the .165 testing server, with the green lane artifact root `/root/aaemu-dev/soak-artifacts/smoke-rb/20260912-014234`; LOG-HYGIENE reached 0 unhandled/fatal errors. No human/client-feel claim.
