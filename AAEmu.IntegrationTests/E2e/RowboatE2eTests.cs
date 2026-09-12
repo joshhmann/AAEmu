@@ -77,11 +77,15 @@ public class RowboatE2eTests
     /// sits at open-sea level (3090.0, 29778.0, z≈0.05; both spawns in water).
     /// teleportToNpc resolves FirstOrDefault(UnitId), so the first-entry position is what we get.</summary>
     private const uint SeaNpcTemplateId = 13763u;
-
     private static string EvidenceDir => Path.Combine(
         Environment.GetEnvironmentVariable("E2E_ROOT") ?? "/root/aaemu-e2e", "logs");
 
-    private static string GameLogPath => Path.Combine(EvidenceDir, "game.log");
+    // E2EStack captures server stdout at E2E_ROOT/logs/game.log, but NLog's
+    // File target writes lifecycle Debug records under runtime/game/Logs.
+    // Physics registration assertions must read the NLog file, not stdout.
+    private static string GameLogPath => Path.Combine(
+        Environment.GetEnvironmentVariable("E2E_ROOT") ?? "/root/aaemu-e2e",
+        "runtime", "game", "Logs", "Server.log");
 
     private sealed record SlaveSpawn(ushort TlId, uint ObjId);
 

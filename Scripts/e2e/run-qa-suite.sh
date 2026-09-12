@@ -275,7 +275,8 @@ teardown_lane() {
     return 0
   }
   echo "== teardown (lane $LANE, PID-verified, pkill banned)"
-  run_remote "LANE_ROOT='$LANE_ROOT' COMPOSE_PROJECT='$COMPOSE_PROJECT'" <<'REMOTE' || true
+  echo "   teardown trap: before run_remote"
+  run_remote "LANE_ROOT='$LANE_ROOT' COMPOSE_PROJECT='$COMPOSE_PROJECT' LOGIN='$LOGIN' LOGIN_INT='$LOGIN_INT' GAME='$GAME' STREAM='$STREAM' BRIDGE='$BRIDGE' WEBAPI='$WEBAPI' DB_PORT='$DB_PORT'" <<'REMOTE'
     set -euo pipefail
     kill_lane_procs() {
       local d pid cwd sig
@@ -293,11 +294,26 @@ teardown_lane() {
         [ "$sig" = TERM ] && sleep 3
       done
     }
+    set +e
     kill_lane_procs
-    docker compose -p "$COMPOSE_PROJECT" -f "$LANE_ROOT/repo/Scripts/e2e/docker-compose.yaml" \
-      --env-file "$LANE_ROOT/.env" down -v >/dev/null 2>&1 || true
-    echo '   teardown complete (our lane processes + our compose project only)'
+    set -e
+    compose_cmd=(docker compose -p "$COMPOSE_PROJECT" -f "$LANE_ROOT/repo/Scripts/e2e/docker-compose.yaml" --env-file "$LANE_ROOT/.env" down -v)
+    echo "   teardown compose command: ${compose_cmd[*]}"
+    set +e
+    "${compose_cmd[@]}"
+    compose_rc=$?
+    set -e
+    echo "   teardown compose exit: $compose_rc"
+    [ "$compose_rc" -eq 0 ] || exit "$compose_rc"
+    for port in "$LOGIN" "$LOGIN_INT" "$GAME" "$STREAM" "$BRIDGE" "$WEBAPI" "$DB_PORT"; do
+      if ss -ltn 2>/dev/null | awk '{print $4}' | grep -q "[:.]${port}$"; then
+        echo "error: teardown left lane port $port bound" >&2
+        exit 2
+      fi
+    done
+    echo '   teardown complete (our lane processes + our compose project only; ports free)'
 REMOTE
+  echo "   teardown trap: after run_remote"
 }
 
 trap 'rc=$?; teardown_lane; trap - EXIT; exit "$rc"' EXIT
@@ -377,6 +393,15 @@ echo "   ensure-log-caps.sh provisioned at $LANE_ROOT"
 
 # 4) provision canonical game-data into the lane (read-only rsync FROM the
 #    retained canonical lane tree), then md5-verify compact.sqlite3 (HARD gate).
+if [ "$TIER" = "smoke" ]; then
+  run_remote "LANE_ROOT='$LANE_ROOT'" <<'REMOTE'
+    set -euo pipefail
+    cfg="$LANE_ROOT/runtime/game/NLog.config"
+    [ -f "$cfg" ] || exit 0
+    sed -i 's/minlevel="\${environment:AAEMU_E2E_LOG_LEVEL:whenEmpty=Info}"/minlevel="Debug"/' "$cfg"
+    grep -q 'minlevel="Debug" maxlevel="Warn" writeTo="file"' "$cfg"
+REMOTE
+fi
 run_remote "LANE_ROOT='$LANE_ROOT' CANONICAL_DATA_SRC='$CANONICAL_DATA_SRC' CANONICAL_MD5='$CANONICAL_MD5'" <<'REMOTE'
   set -euo pipefail
   rm -rf "$LANE_ROOT/runtime/game-data"
@@ -392,10 +417,14 @@ run_remote "LANE_ROOT='$LANE_ROOT' CANONICAL_DATA_SRC='$CANONICAL_DATA_SRC' CANO
   echo 'canonical md5 verified'
 REMOTE
 echo "== game-data md5 verified ($CANONICAL_MD5)"
-# Optional duration override is passed only when requested; keep it defined
-# under set -u for ordinary smoke/QA runs.
+# Smoke needs the two per-ship Debug lifecycle records that Rowboat asserts;
+# QA/soak retain the capped Info default to avoid log storms.
 DURATION_ENV=""
+LOG_LEVEL_ENV=""
 SIXHOUR_GATE=""
+if [ "$TIER" = "smoke" ]; then
+  LOG_LEVEL_ENV="AAEMU_E2E_LOG_LEVEL=Debug"
+fi
 if [ -n "$MINUTES" ]; then
   DURATION_ENV="E2E_DURATION_MINUTES='$MINUTES'"
 fi
@@ -413,7 +442,7 @@ for CLASS in "${RUN_CLASSES[@]}"; do
               E2E_LOGIN_PORT='$LOGIN' E2E_GAME_PORT='$GAME' E2E_STREAM_PORT='$STREAM' \
               E2E_BRIDGE_PORT='$BRIDGE' E2E_INTERNAL_PORT='$LOGIN_INT' E2E_WEBAPI_PORT='$WEBAPI' \
               E2E_DB_PORT='$DB_PORT' DB_HOST_PORT='$DB_PORT' COMPOSE_PROJECT_NAME='$COMPOSE_PROJECT' \
-              $DURATION_ENV $SIXHOUR_GATE" <<'REMOTE'
+              $LOG_LEVEL_ENV $DURATION_ENV $SIXHOUR_GATE" <<'REMOTE'
     set -euo pipefail
     export E2E_ROOT="$LANE_ROOT" \
            E2E_LOGIN_PORT="$E2E_LOGIN_PORT" E2E_GAME_PORT="$E2E_GAME_PORT" \
