@@ -30,6 +30,15 @@ is a confirmed 0xfff placeholder with no recoverable 1.2 value.
   `SpecialtyManager._priceRatios`, which is config-built, not table-fed. Dead table.
 - `merchant_packs` (263 rows) has no loader — merchant-ship pack economy unwired
   (already noted in mechanics/trade-packs.md:234).
+  **2026-09-12 correction (read-only sweep):** the literal first clause HOLDS (0 direct
+  reads of `merchant_packs`), but the conclusion is **overstated — the merchant/ship-pack
+  goods economy is NOT unwired.** Stock loads through the sibling `merchant_goods` table
+  (3,246 rows / 2,036 distinct items) at `NpcManager.cs:870-890`, linked by the `merchants`
+  table (`:846-860`), with working membership enforcement (`MerchantGoods.cs:17-24`,
+  `SellsItem` gate at `CSBuyItemsPacket.cs:74`). `merchant_packs` carries only header
+  metadata (`id, name, owner_npc_id, kind_id`) that the sale path does not require — so
+  "no loader" is a metadata gap, not a missing economy. Do not budget "wire the
+  merchant-ship pack economy".
 
 ### Packet flow (real opcodes from CSOffsets.cs)
 | Step | Opcode | File |

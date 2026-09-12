@@ -1,5 +1,39 @@
 # Zero-Wired Domains — Nitty-Gritty Report
 
+> **⚠ 2026-09-12 — HISTORICAL SNAPSHOT, NOT LIVE EVIDENCE.** This report is frozen at
+> `320bd6384` (2026-08-08; body authored 2026-08-03, `d248a691e`). `SCORECARD.md`
+> still cites it as current at the zero-data-wired / watch-item lines, so its known-stale
+> negatives are catalogued here rather than rewritten in the body (the audit trail is
+> preserved). **A read-only negative-claim sweep on 2026-09-12 (`41906276b`) confirmed
+> these specific negatives are no longer true:**
+> - **§2 siege (:43 body row, :96) — "`No` CastleManager / SiegeManager / DominionManager;
+>   no MySQL persistence tables; no timers/scheduler" — STALE.** `DominionManager` +
+>   `IDominionManager` exist (`d42e708f5`, 2026-08-26) and read `siege_zones`
+>   (`DominionManager.cs:91`), `siege_settings` (:142), `siege_plans` (:166); a phase cron
+>   broadcasts `SCSiegeAlertPacket`; `aaemu_game.dominions` provides persistence
+>   (`SQL/aaemu_game.sql:197`, `SQL/updates/2026-08-26_aaemu_game_dominions.sql`). See the
+>   corrected `SCORECARD.md` zero-data-wired `siege` bullet (3 of 5 tables now wired;
+>   `siege_items` / `siege_ticket_offense_prices` remain unread).
+> - **§8 :217 — "QuestActEtcItemObtain … Engine no-op — the live objective never credits"
+>   — STALE (`6b2f15a6d`, 2026-08-23).** Now returns the objective comparison and credits
+>   via `OnItemGather` → `AddObjective`.
+> - **§8 :218 — "Cinema domain zero-wired server-side — no client-triggered cinema flow"
+>   — PARTIALLY WRONG.** The content tables are unread, but the C2G cinema packets are
+>   registered (`GameNetwork.cs:210-212`) and drive `QuestActObjCinema` objective credit.
+> - **Cross-domain note 3 (:236) — "state (dominion ownership, …) needs new MySQL
+>   tables — the runtime DB currently has none for these domains" — STALE for dominion**
+>   (`aaemu_game.dominions`, above). Still true for premium/rank/race state.
+>
+> Sections not re-verified on 2026-09-12 (fx-visuals, ranks, premium, moulds, race-tracks,
+> music) should be re-checked before being cited as current. The `moulds` section's own
+> "data-dead" wording (:43 table row) remains accurate. *(All cited line numbers are
+> post-annotation, i.e. as of this header's insertion.)*
+>
+> **2026-09-12 provenance correction to this report's own header (`**Data source:**` / `**Runtime DB:**` lines below).** Flagged by the same sweep, same class as the findings above:
+> - **Data source — the path below now holds a PATCHED DB, not the canonical one.** `/root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3` on `192.168.0.165` currently md5s `2ebc3e64d452bd76da858bc6375da554` (119,054,336 bytes, mtime **2026-08-11 22:50**) — **not** the canonical `78b3bdbf038db3b927056106efdf91af`. **The patch postdates this report, so the counts below were canonical when taken:** the report is dated 2026-08-03 and the earliest compact patch in the repo is `SQL/patches/compact/2026-08-04-fix-quest-data-defects.sql` (committed 2026-08-04 23:19:52, `git log`), five days before the file's mtime. So this is a **stale header, not a wrong-when-written count**. (The patched md5 `2ebc3e64…` appears **nowhere** in git history or any tracked file — `grep -rIn` over the tree and `git log --all -S` both return nothing as of `41906276b` — so the patch is an uncommitted local application; it could not have been known as a distinct "patched" identity on 2026-08-03, when the DB had never yet been patched. The canonical-vs-patched split only became dateable once `SQL/patches/compact/` gained committed entries.)
+> - **Domain counts still agree.** Verified 2026-09-12 against both files: 679 tables at each md5, and every table count this report cites that I re-read is identical across patched and canonical (`siege_zones` 6, `siege_plans` 158, `siege_settings` 11, `siege_items` 13, `siege_ticket_offense_prices` 10, `ranks` 4, `rank_scopes`/`rank_rewards` 40, `premium_benefits` 2, `moulds` 0, `race_tracks` 2, `race_track_shapes` 14, `model_bindings` 1858, `world_groups` 6, `fx_items` 2856, `fx_groups` 1846, `fx_particles` 2253, `fx_group_fx_items` 3162, `music_note_limits` 11, `instrument_sounds` 199, `books` 72, `item_open_papers` 551). The patch touches the quest-corpus tables, not the domains this report surveys — e.g. `quest_contexts` 4579 patched vs 4876 canonical (the 297 documented drops) and `quest_acts` 26,802 vs 26,886, neither of which this report cites. **Caveat for future readers: cite the canonical md5, never this path, until the local file is re-baselined.**
+> - **Runtime DB — "only 36 tables; nothing else is persisted" is STALE.** `aaemu-db-1` (mysql 8.0.36, the same container the report names) now has **38** tables in `aaemu_game`, including **`dominions`** (`SQL/aaemu_game.sql:197`) — so at least one of the seven domains this report calls unpersisted is now persisted. The report's own `music` observation still holds (`music` exists, **0 rows**). I did not determine which single table besides `dominions` accounts for 36 → 38.
+
 **Repo:** /root/aaemu-dev (AAEmu 1.2 fork, .NET 10)
 **Data source:** `/root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3` (119 MB, 679 tables) on 192.168.0.165 — queried live via ssh+python3 sqlite3
 **Runtime DB:** MySQL `aaemu_game` (docker `aaemu-db-1`, mysql 8.0.36) — only **36 tables**; of all 7 domains below, only `music` exists there (0 rows). Nothing else is persisted or loaded at runtime.

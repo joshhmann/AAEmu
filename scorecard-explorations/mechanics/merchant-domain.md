@@ -76,12 +76,7 @@ and a successful buyback move. Doodad shops are an unvalidated TODO
 ## 6. Residuals
 
 - **R1 — RESOLVED (`c00090c97`, atomic buyback rebuy):** the rebuy path checks `AddOrMoveExistingItem`, and on failure rolls back merged stacks, removes granted items, and returns the item to buyback before charging.
-- **R2 — stale proxy annotation + proxy/wire divergence (no code change).**
-  `GameplayActor.Buy` still comments "The packet's check is buggy (uses &&
-  instead of ||)" (`GameplayActor.cs:2407-2409`) — true before 2026-08-26,
-  stale after the trio. The actor is also money-only, single-line, with no
-  atomic multi-line rollback. Bot-driven merchant evidence therefore stays
-  proxy/A-level; R-level claims require the wire paths (as the B6 run uses).
+- **R2 — SCOPE LIMITATION (comment corrected; no code defect).** `GameplayActor.Buy`'s stale packet comment was corrected in `8f1d0f263`; the actor remains money-only and single-line, with no atomic multi-line rollback. Bot-driven merchant evidence therefore stays proxy/A-level; R-level claims require the wire paths (as the B6 run uses).
 - **R3 — SERVER-SIDE CHAIN IMPLEMENTED:** doodad current `FuncGroupId` resolves `DoodadFuncStoreUi` via `DoodadManager.GetFuncsForGroup`/`GetFuncTemplate`, then `MerchantPackId` → `NpcManager.GetGoods`; unconditional `SellsItem` membership enforcement keeps crafted templates closed. `DoodadFuncStoreUi.Use()` remains a `Logger.Trace` no-op, so the client cannot yet be told/presented the shop. No existing rig/test depends on doodad buying.
 
 
