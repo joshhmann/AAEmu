@@ -53,6 +53,13 @@ CANONICAL_DATA_SRC="/root/aaemu-e2e-a5-tier3-sixhour/runtime/game-data" # verifi
 PROD_PORTS="1234 1237 1239 1250 1260 1280 3306"          # NEVER derived
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ARTIFACTS_BASE="${ARTIFACTS_BASE:-$REPO_ROOT/soak-artifacts}"
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+if { [ ! -e "$REPO_ROOT/.git" ] && ! git -C "$REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; } ||
+   [ ! -f "$REPO_ROOT/AAEmu.slnx" ] ||
+   [ "$SCRIPT_PATH" != "$REPO_ROOT/Scripts/e2e/run-qa-suite.sh" ]; then
+  echo "error: run-qa-suite.sh must be launched from the DEV-HOST repo checkout (e.g. /root/aaemu-dev); it rsyncs the working tree to $SSH_HOST and is NOT run on the testing host" >&2
+  exit 2
+fi
 
 # ---- argument surface ------------------------------------------------------
 TIER=""

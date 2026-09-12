@@ -4,6 +4,7 @@
 
 All E2E **soak** and **QA** runs happen on the **testing server
 `root@192.168.0.165`** in isolated lanes under `/root/aaemu-e2e-<lane>`. The
+launcher itself runs on the dev host; only the isolated lane runs remotely. The
 local dev host runs soaks for **smoke only** (short, throwaway checks); the
 local host must stay free for build/gate work and must not be burned by
 day-scale or multi-hour windows.
@@ -22,9 +23,10 @@ PID-verified teardown. **pkill is banned.** Prod `/root/AAEmu` (ports
 | `soak` | long | Budgeted S-runs (B4 PACK/SLAVE/FARM, Dominion cycle, Village full-day) | asserted by the class |
 
 ## How to invoke
+Run these commands from the **DEV HOST** in your repo checkout (`/root/aaemu-dev`). The suite rsyncs the working tree to .165 and builds there — **never invoke it on .165 itself**, which has no dev checkout.
 
 ```bash
-# all on .165, isolated lane, artifacts rsynced back
+# launched locally; execution is isolated on .165; artifacts rsynced back
 ./Scripts/e2e/run-qa-suite.sh --tier smoke                 # cheap lane smoke
 ./Scripts/e2e/run-qa-suite.sh --tier qa                     # B-series functional
 ./Scripts/e2e/run-qa-suite.sh --tier qa --target B6MerchantConservationE2eTests
