@@ -879,9 +879,48 @@ public class Buffs : IBuffs
 
     #region Buff Persistence
     /// <summary>
+    /// True when <paramref name="buff"/> is a prison sentence
+    /// (<see cref="BuffConstants.TagPrisoner"/>, compact.sqlite3 <c>tagged_buffs</c>
+    /// tag 344 — the members are Prisoner_Nuian 631 / Prisoner_Haranyan 2028 and
+    /// the courtroom-movement buffs). Tag-driven on purpose: no buff id is
+    /// hardcoded, so a data refresh that re-points the tag needs no code change.
+    /// Degrades safely to false when the tag table is unavailable (headless rigs).
+    /// </summary>
+    private static bool IsPrisonSentence(Buff buff)
+    {
+        var tags = SkillManager.PeekInstance?.GetBuffTags(buff.Template.BuffId);
+        return tags != null && tags.Contains((uint)BuffConstants.TagPrisoner);
+    }
+
+    /// <summary>
+    /// Remaining time (ms) to restore for a persisted buff row, or a value
+    /// &lt;= 0 when the row must not be restored.
+    ///
+    /// <paramref name="realTime"/> false (the game-time case, which both prison
+    /// sentence buffs use) means the timer was PAUSED offline, so the saved
+    /// remaining time is resumed as-is — a sentence saved at 12 of 30 minutes
+    /// resumes with 12 minutes left, it does not restart at 30.
+    /// <paramref name="realTime"/> true ticks offline time down.
+    ///
+    /// Extracted as a pure seam (the <c>ShouldLoadHouseRow</c> precedent) so the
+    /// persistence round trip is verifiable without opening MySQL.
+    /// </summary>
+    internal static int ComputeRemainingMs(int timeLeft, bool realTime, DateTime savedAt, DateTime nowUtc)
+    {
+        if (timeLeft <= 0)
+            return 0;
+
+        if (!realTime)
+            return timeLeft;
+
+        var offlineMs = (int)(nowUtc - savedAt).TotalMilliseconds;
+        return timeLeft - offlineMs;
+    }
+
+    /// <summary>
     /// Determines whether a buff should be saved to the database on logout.
     /// </summary>
-    private static bool ShouldPersistBuff(Buff buff)
+    internal static bool ShouldPersistBuff(Buff buff)
     {
         if (buff == null)
             return false;
@@ -905,6 +944,18 @@ public class Buffs : IBuffs
         // Don't save buffs in Finishing/Finished state
         if (buff.State == EffectState.Finishing || buff.State == EffectState.Finished)
             return false;
+
+        // Prison sentences must survive logout: persist them even though they are
+        // Bad and may be shorter than the standard-buff floor below, otherwise a
+        // mid-sentence logout silently voided the sentence (no buff, no timer, and
+        // therefore no expiry release). On load the REMAINING time is restored —
+        // the sentence buffs are real_time=0, so LoadActiveBuffs resumes the timer
+        // rather than restarting it — and AddBuff re-subscribes the canonical
+        // Timeout trigger, so the release still fires on the resumed expiry.
+        // Tag-driven from the `tagged_buffs` rows in compact.sqlite3; no buff ids
+        // are hardcoded here.
+        if (IsPrisonSentence(buff))
+            return true;
 
         // --- SaveRule differentiation ---
 
@@ -1053,28 +1104,17 @@ public class Buffs : IBuffs
                         continue;
                     }
 
-                    // Calculate remaining time
-                    int remainingMs;
-                    if (row.realTime)
-                    {
-                        // RealTime: subtract offline time
-                        var offlineMs = (int)(DateTime.UtcNow - row.savedAt).TotalMilliseconds;
-                        remainingMs = row.timeLeft - offlineMs;
-
-                        if (remainingMs <= 0)
-                        {
-                            Logger.Debug($"LoadActiveBuffs: RealTime buff {row.buffId} expired offline");
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        // GameTime: timer was paused → restore full remaining time
-                        remainingMs = row.timeLeft;
-                    }
+                    // Calculate remaining time: game-time buffs resume the saved
+                    // remaining time (paused offline); real-time buffs tick down.
+                    var remainingMs = ComputeRemainingMs(row.timeLeft, row.realTime, row.savedAt, DateTime.UtcNow);
 
                     if (remainingMs <= 0)
+                    {
+                        Logger.Debug(row.realTime
+                            ? $"LoadActiveBuffs: RealTime buff {row.buffId} expired offline"
+                            : $"LoadActiveBuffs: Buff {row.buffId} had no remaining time");
                         continue;
+                    }
 
                     // Check if buff is already active (e.g. from passive skills)
                     if (CheckBuff(row.buffId))
