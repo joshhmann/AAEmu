@@ -2,6 +2,12 @@
 
 Updated: 2026-09-08 · docs reconciliation to QUALIFIED M8 exit @ `301944000`
 Branch of record: develop `301944000` (queue Q1–Q6 done/dropped, A5 CLOSED, M8 QUALIFIED exit; Q7/Q8 positions unchanged)
+
+## 2026-09-12 — Exploit-class merchant/auction findings fixed
+
+- Merchant buy shop-source bypass fixed at `8f1d0f263`; unconditional goods membership plus real doodad StoreUi pack resolution; `MerchantRigTests` 12/12 with pre-fix arbitrary-template reproduction.
+- Auction mail attachment container relocation fixed (commit SHA pending): cancel, expiry, and buyer settlement now relocate the same item instance into the receiver Mail container; live .165 E2E changed one post-restart Auction orphan to zero.
+
 (combat bonus-snapshot + aggro-table kill races; prior `9ad5735b2`
 bot-wildlife crash cluster). M5's
 `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` bounded decision
