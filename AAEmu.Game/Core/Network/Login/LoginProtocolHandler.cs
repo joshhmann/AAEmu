@@ -32,6 +32,12 @@ public class LoginProtocolHandler : BaseProtocolHandler
 
     public override void OnDisconnect(ISession session)
     {
+        if (LoginNetwork.Instance.IsStopping)
+        {
+            Logger.Debug("Ignoring LoginServer disconnect during shutdown");
+            return;
+        }
+
         Logger.Info("Connection to LoginServer has been lost");
         LoginNetwork.Instance.SetConnection(null);
         session.Close();
@@ -42,7 +48,8 @@ public class LoginProtocolHandler : BaseProtocolHandler
         }
 
         // TODO Hard Restart
-        LoginNetwork.Instance.Stop();
+        // The disconnect callback already observes the old client as disconnected;
+        // do not call Stop here because Stop marks the network as shutting down.
         LoginNetwork.Instance.Start();
     }
 
