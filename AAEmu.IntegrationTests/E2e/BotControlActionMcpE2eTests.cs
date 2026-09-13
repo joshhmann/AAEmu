@@ -69,7 +69,7 @@ public class BotControlActionMcpE2eTests
             // ------------------------------------------------ tools/list
             var toolsList = await sidecar.RpcAsync("tools/list");
             var tools = toolsList!["result"]!["tools"]!.AsArray();
-            Assert.Equal(19, tools.Count);
+            Assert.Equal(24, tools.Count);
             var names = tools.Select(t => t!["name"]!.GetValue<string>()).ToArray();
             Assert.Contains("observe", names);
             Assert.Contains("move", names);
@@ -91,6 +91,11 @@ public class BotControlActionMcpE2eTests
             Assert.Contains("turn_in_doodad", names);
             Assert.Contains("auto_turn_in", names);
             Assert.Contains("interrupt", names);
+            Assert.Contains("repair", names);
+            Assert.Contains("sell_specialty", names);
+            Assert.Contains("trade_offer", names);
+            Assert.Contains("trade_putup", names);
+            Assert.Contains("trade_lock_ok", names);
             // No management verbs (t_2ea94a20 surface stays in AAEmu.BotControl)
             Assert.DoesNotContain("bot_add", names);
             Assert.DoesNotContain("bot_remove", names);

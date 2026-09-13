@@ -3892,7 +3892,7 @@ DI concrete+interface in `Program.cs` where services land; SQL workflow
   form groups" (party module in production), "economy worth controlling" (inter-village trade
   volume > 0 for 7 days). Slice-1 exit = ownership + tax state survive ≥3 restarts.
 - Blocked: guild substrate = `ExpeditionManager` exists (engine; `Program.cs:178-179`) but bot
-  contract actions + persistence proof are open (EXPEDITION-01 A=1 rig-only, R=U); party
+  contract actions + persistence proof are open (EXPEDITION-01 A=2 formation-live 2026-09-13, R=U); party
   module = NO bot activity module exists (`Program.cs:300-307` shows only SchedulePhase /
   PresenceRoam / ConflictJoin / Idle — verified above). No M10 card proposed until PARTY-01 /
   EXPEDITION-01 leave the C-partition and the party module lands.

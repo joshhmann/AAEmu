@@ -853,7 +853,11 @@ public sealed class BotDriveBridge
                     objId = character.ObjId,
                     connectionId = connection.Id,
                     state = connection.State.ToString(),
-                    activeQuests = character.Quests.ActiveQuests.Count
+                    activeQuests = character.Quests.ActiveQuests.Count,
+                    hp = character.Hp,
+                    maxHp = character.MaxHp,
+                    mp = character.Mp,
+                    maxMp = character.MaxMp
                 });
             case "cast":
             {
@@ -1113,12 +1117,18 @@ public sealed class BotDriveBridge
         // provisioning + execution flow.
         if (templateName == PartyFollowAssistScenario.ScenarioName)
             return HandlePartyFollowAssistScenario(root);
+        if (templateName == TradeHandshakeScenario.ScenarioName)
+            return HandleTradeHandshakeScenario(root);
+        if (templateName == ExpeditionFormationScenario.ScenarioName)
+            return HandleExpeditionFormationScenario(root);
         if (templateName == PartySpikeScenario.ScenarioName)
             return HandlePartySpikeScenario(root);
         if (templateName == VillageDayCycle.ScenarioName)
             return HandleVillageDayCycleScenario(root);
         if (templateName == VillageFullDayCycle.ScenarioName)
             return HandleVillageFullDayScenario(root);
+        if (templateName == EconomyDayCycleScenario.ScenarioName)
+            return HandleEconomyDayCycleScenario(root);
 
         var template = templateName != null ? BotScenarioTemplates.Get(templateName) : null;
         if (template == null)
@@ -1359,6 +1369,178 @@ public sealed class BotDriveBridge
         finally
         {
             DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions);
+        }
+    }
+    /// <summary>
+    /// Two-actor execution seam (TRADE-01): runs
+    /// <see cref="TradeHandshakeScenario"/> on two real provisioned bots
+    /// through the live E2E bridge. Request (all fields optional except "template"):
+    ///
+    ///   {"cmd":"scenario","template":"trade-handshake",
+    ///    "alice":"trade-alice","bob":"trade-bob",
+    ///    "itemTemplate":91204,"itemCount":1}
+    ///
+    /// Flow: shared <see cref="ProvisionBotParty"/> machinery (wipe →
+    /// provision → convergence) → stock the item into alice's bag via the
+    /// ordinary acquisition path → run the handshake (offer → put-up →
+    /// lock+ok both sides → conservation verify).
+    /// </summary>
+    private string HandleTradeHandshakeScenario(JsonElement root)
+    {
+        var aliceName = (root.TryGetProperty("alice", out var a) && a.GetString() is { Length: > 0 } an
+            ? an
+            : "trade-alice").NormalizeName();
+        var bobName = (root.TryGetProperty("bob", out var b) && b.GetString() is { Length: > 0 } bn
+            ? bn
+            : "trade-bob").NormalizeName();
+
+        const byte level = 10;
+        var provisionError = ProvisionBotParty(
+            TradeHandshakeScenario.ScenarioName, [aliceName, bobName], level, out var sessions);
+        if (provisionError != null)
+            return provisionError;
+
+        var aliceChar = sessions[0].Character;
+        var bobChar = sessions[1].Character;
+
+        try
+        {
+            var itemTemplate = GetUInt(root, "itemTemplate");
+            if (itemTemplate == 0)
+                itemTemplate = 7992u;
+            var itemCount = GetInt(root, "itemCount", 1);
+            // Trade range is 5 m — converge bob onto alice before the offer.
+            TeleportWithRegionSync(bobChar, aliceChar.Transform.Local.Position +
+                new System.Numerics.Vector3(2f, 0f, 0f), aliceChar.Transform.ZoneId);
+            new PlayerBotController(aliceChar).StockInventory(itemTemplate, itemCount);
+
+            var result = TradeHandshakeScenario.Run(aliceChar, bobChar,
+                new TradeHandshakeScenario.HandshakeOptions(itemTemplate, itemCount));
+
+            var payload = new
+            {
+                template = result.Template,
+                passed = result.Passed,
+                failStage = result.FailStage,
+                failure = result.Failure?.ToString(),
+                failReason = result.FailReason,
+                gates = result.Gates,
+                stages = result.Stages,
+                criteria = result.Criteria,
+                traceRecords = result.TraceRecords.Select(r => r.ToJson()).ToList(),
+                actorRequests = result.ActorRequests,
+                rigNotes = result.RigNotes,
+                trace = result.TraceRecords
+                    .Select(r => JsonSerializer.Deserialize<JsonElement>(r.ToJson()))
+                    .ToArray(),
+                evidence = result.Evidence(),
+                characters = new[]
+                {
+                    new { name = aliceChar.Name, level = aliceChar.Level, objId = aliceChar.ObjId, id = aliceChar.Id },
+                    new { name = bobChar.Name, level = bobChar.Level, objId = bobChar.ObjId, id = bobChar.Id }
+                }
+            };
+            Logger.Info("scenario '{Template}': {Verdict} on '{Alice}'/'{Bob}' ({Stage}{Failure})",
+                TradeHandshakeScenario.ScenarioName, result.Passed ? "PASS" : "FAIL",
+                aliceName, bobName, result.FailStage, result.Failure is { } f ? $", {f}" : "");
+            return Ok(payload);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "scenario '{Template}': run crashed on '{Alice}'/'{Bob}'",
+                TradeHandshakeScenario.ScenarioName, aliceName, bobName);
+            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            DeactivateParty(TradeHandshakeScenario.ScenarioName, sessions);
+        }
+    }
+
+
+    /// <summary>
+    /// Five-actor execution seam (EXPEDITION-01): runs
+    /// <see cref="ExpeditionFormationScenario"/> on five real provisioned
+    /// bots through the live E2E bridge. Request (all fields optional except "template"):
+    ///
+    ///   {"cmd":"scenario","template":"expedition-formation",
+    ///    "bots":["exp-a","exp-b","exp-c","exp-d","exp-e"],
+    ///    "name":"ExpLiveProof"}
+    ///
+    /// Flow: shared <see cref="ProvisionBotParty"/> machinery (wipe →
+    /// provision → convergence) → fund 10k copper each via the ordinary
+    /// acquisition path (expedition create cost) → run the formation
+    /// (party ×4 → create → membership verify).
+    /// </summary>
+    private string HandleExpeditionFormationScenario(JsonElement root)
+    {
+        var botNames = root.TryGetProperty("bots", out var botsEl) && botsEl.ValueKind == JsonValueKind.Array
+            ? botsEl.EnumerateArray()
+                .Select(e => e.GetString())
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Select(n => n!.NormalizeName())
+                .ToList()
+            : ["ExpA", "ExpB", "ExpC", "ExpD", "ExpE"];
+        while (botNames.Count < 5)
+            botNames.Add($"Exp{(char)('A' + botNames.Count)}");
+        var expeditionName = root.TryGetProperty("name", out var nm) && nm.GetString() is { Length: > 0 } raw
+            ? raw
+            : "ExpLiveProof";
+
+        const byte level = 10;
+        var provisionError = ProvisionBotParty(
+            ExpeditionFormationScenario.ScenarioName, botNames, level, out var sessions);
+        if (provisionError != null)
+            return provisionError;
+
+        try
+        {
+            // Expedition create costs 10k copper — fund every bot.
+            foreach (var session in sessions)
+                session.Character.Money = Math.Max(session.Character.Money, 100_000);
+
+            var result = ExpeditionFormationScenario.Run(
+                sessions.Select(s => s.Character).ToList(),
+                new ExpeditionFormationScenario.FormationOptions(expeditionName));
+
+            var payload = new
+            {
+                template = result.Template,
+                passed = result.Passed,
+                failStage = result.FailStage,
+                failure = result.Failure?.ToString(),
+                failReason = result.FailReason,
+                gates = result.Gates,
+                stages = result.Stages,
+                criteria = result.Criteria,
+                traceRecords = result.TraceRecords.Select(r => r.ToJson()).ToList(),
+                actorRequests = result.ActorRequests,
+                rigNotes = result.RigNotes,
+                trace = result.TraceRecords
+                    .Select(r => JsonSerializer.Deserialize<JsonElement>(r.ToJson()))
+                    .ToArray(),
+                evidence = result.Evidence(),
+                expeditionId = sessions[0].Character.Expedition?.Id ?? 0,
+                characters = sessions.Select(s => new
+                {
+                    name = s.Character.Name, level = s.Character.Level,
+                    objId = s.Character.ObjId, id = s.Character.Id
+                }).ToArray()
+            };
+            Logger.Info("scenario '{Template}': {Verdict} ({Stage}{Failure})",
+                ExpeditionFormationScenario.ScenarioName, result.Passed ? "PASS" : "FAIL",
+                result.FailStage, result.Failure is { } f ? $", {f}" : "");
+            return Ok(payload);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "scenario '{Template}': run crashed",
+                ExpeditionFormationScenario.ScenarioName);
+            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
+        }
+        finally
+        {
+            DeactivateParty(ExpeditionFormationScenario.ScenarioName, sessions);
         }
     }
 
@@ -3051,6 +3233,84 @@ public sealed class BotDriveBridge
                 }).ToArray();
                 return Ok(new { items });
             }
+            case "repair":
+            {
+                var npcObjId = GetUInt(root, "npcObjId");
+                if (npcObjId == 0)
+                {
+                    var npcTemplate = GetUInt(root, "npc");
+                    npcObjId = character!.ParentWorld.GetNpcByTemplateId(npcTemplate)?.ObjId ?? 0u;
+                    if (npcObjId == 0)
+                        return Err($"mail repair: NPC template {npcTemplate} not in world");
+                }
+                var actor = new GameplayActor(character!);
+                var request = actor.Repair(npcObjId, (ulong)GetLong(root, "itemId", 0L));
+                return Ok(new
+                {
+                    state = request.State.ToString(),
+                    failure = request.Failure.ToString(),
+                    detail = request.Detail ?? ""
+                });
+            }
+            case "wound":
+            {
+                // E2E-ONLY, additive: honest engine HP reduction through the
+                // ordinary Unit.ReduceCurrentHp path (packets + death logic
+                // included; direct HP math, not DamageEffect, so the
+                // login-protection immunity window does not apply).
+                var amount = GetInt(root, "amount", 0);
+                var hpBefore = character!.Hp;
+                if (amount <= 0)
+                    amount = Math.Max(1, character.MaxHp / 2);
+                amount = Math.Min(amount, Math.Max(0, character.Hp - 1));
+                character.ReduceCurrentHp(character, amount, AAEmu.Game.Models.Game.Units.Static.KillReason.Damage);
+                return Ok(new
+                {
+                    hpBefore,
+                    hpAfter = character.Hp,
+                    maxHp = character.MaxHp,
+                    wounded = character.Hp < hpBefore
+                });
+            }
+            case "use":
+            {
+                // E2E-ONLY, additive: the REAL GameplayActor.UseItem contract
+                // path (Skill.Use with a SkillItem caster — the exact
+                // CSStartSkillPacket SkillItem branch), NOT the
+                // PlayerBotController event-fire used by the drive useItem op.
+                var itemTemplate = GetUInt(root, "itemTemplate");
+                if (itemTemplate == 0)
+                    return Err("mail use requires 'itemTemplate'");
+                var hpBefore = character!.Hp;
+                var actor = new GameplayActor(character!);
+                var request = actor.UseItem(itemTemplate);
+                return Ok(new
+                {
+                    state = request.State.ToString(),
+                    failure = request.Failure.ToString(),
+                    detail = request.Detail ?? "",
+                    hpBefore,
+                    hpAfter = character.Hp,
+                    maxHp = character.MaxHp
+                });
+            }
+            case "stock":
+            {
+                // E2E-ONLY, additive: stock a consumable through the normal
+                // acquisition path (no equipment-grade requirement — the
+                // mail "rig" op refuses non-equipment).
+                var templateId = GetUInt(root, "itemTemplate");
+                if (templateId == 0)
+                    return Err("mail stock requires 'itemTemplate'");
+                var count = GetInt(root, "count", 1);
+                character!.Inventory.Bag.AcquireDefaultItem(
+                    ItemTaskType.QuestSupplyItems, templateId, count, GetInt(root, "grade", 0));
+                return Ok(new
+                {
+                    template = templateId,
+                    count = character.Inventory.GetItemsCount(templateId)
+                });
+            }
             default:
                 return Err($"unknown mail op '{op}'");
         }
@@ -3358,7 +3618,8 @@ public sealed class BotDriveBridge
         const uint PotatoSeedItemId = 15659;
         const uint CalfItemId = 16225;
 
-        if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var b) ? b.GetString() : null, out var character, out var err))
+        if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var b) ? b.GetString() : null, out var character, out var err)
+            && !TryResolveNetworkedBot(root.TryGetProperty("bot", out var b2) ? b2.GetString() : null, out character, out err))
             return Err(err);
 
         var op = root.GetProperty("op").GetString();

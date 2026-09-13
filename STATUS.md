@@ -1,6 +1,17 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
 Updated: 2026-09-08 · docs reconciliation to QUALIFIED M8 exit @ `301944000`
+
+## 2026-09-13 — Six live-stack E2E proofs close the backlog (35/35, automated evidence only)
+
+- All runs solo-sequential on the isolated E2E stack (parallel E2E raced `RestartGameServer`); canonical DB md5 `78b3bdbf038db3b927056106efdf91af` unchanged; working tree at `c7351b242` + uncommitted bot/E2E/bridge changes (binaries republished per run).
+- **Heal (COMBAT-01 leg):** `RecoveryHealingE2eTests` PASS — wound 720→1, potion 8515 (fixed heal 990) via real `GameplayActor.UseItem` restores 1→991 (+990); report `recovery-heal-report.json`.
+- **Repair:** `EquipmentRepairE2eTests` PASS — sword 5639 durability 10→65 at spawned smith 10997; report `economy-repair-report.json`. REPAIR-01 → W=2/A=2.
+- **Pack sale:** `SpecialtyPackSaleE2eTests` PASS — hauler=true chain ends SELL-GOLD @10664, payout mail 124540c == formula, labor −60; report `specialty-pack-sale-report.json`. Dispatch + full-recipe-stock fixes landed.
+- **Trade:** `DirectTradeE2eTests` PASS — OFFER→PUTUP→LOCK×2 with conservation criteria; report `trade-handshake-report.json`. TRADE-01 → A=2 (item leg).
+- **Butcher:** `LivestockButcherE2eTests` PASS — 5782→9907 (loot tail), beef 8048 ×14; report `agriculture-butcher-report.json`. Farm ops gained a networked-bot fallback.
+- **Expedition:** `ExpeditionFlowE2eTests` PASS — 5-bot party → create, both membership criteria green; report `expedition-formation-report.json`. EXPEDITION-01 → A=2 (formation live).
+- Tier-1 gate green on clean ports (3130/3129/0/1, MCP 44, archaeology 24); archaeology-cycle 156/156 green. One `BridgeDarkByDefault` failure traced to a stray E2E stack on port 1260 (environmental; 2/2 clean after kill). H stays UNKNOWN everywhere; no human/client-feel claim.
 Branch of record: develop `301944000` (queue Q1–Q6 done/dropped, A5 CLOSED, M8 QUALIFIED exit; Q7/Q8 positions unchanged)
 
 ## 2026-09-12 — Exploit-class merchant/auction findings fixed

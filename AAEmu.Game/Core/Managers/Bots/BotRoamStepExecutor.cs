@@ -1,11 +1,13 @@
 using System.Collections.Concurrent;
 using System.Numerics;
 
+using AAEmu.Game.GameData;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Faction;
@@ -199,6 +201,13 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
 
         public uint TargetButcherDoodadObjId { get; set; }
         public DateTime LastButcherScanUtc { get; set; } = DateTime.MinValue;
+
+        /// <summary>
+        /// Tier 0 needs-work flag: set when the needs leg ran work this wake.
+        /// Consumed by the hunt/butcher/route gates so needs work preempts
+        /// wildlife but never party handling, PvP, or quest work.
+        /// </summary>
+        public bool NeedsLegActive { get; set; }
     }
 
     private readonly ConcurrentDictionary<uint, BotRoamState> _states = [];
@@ -467,6 +476,21 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             && pvpActivity.StartsWith("conflict.", StringComparison.Ordinal))
         {
             pvpEngaged = StepPvpEngagement(bot, actor, state, now);
+        }
+        // 0b. Tier 0 needs-farm leg: while the arbiter holds a needs.*
+        // activity, run one NeedsDecisionScenario leg per wake against the
+        // bot's existing actor (GetOrCreateActor — the SAME actor the
+        // scheduler ticks, never a second instance). Needs work preempts
+        // wildlife/butcher/route but never party handling, PvP, or quest work.
+        // Skipped while the actor is busy (TryBegin semantics — the
+        // hunt-engage precedent). Null provider preserves today's behavior exactly.
+        state.NeedsLegActive = false;
+        if (!handledByParty && !pvpEngaged
+            && ActiveActivityProvider?.Invoke(bot.CharacterId) is string needsActivity
+            && needsActivity.StartsWith("needs.", StringComparison.Ordinal)
+            && actor.ActiveRequest is not { IsTerminal: false })
+        {
+            state.NeedsLegActive = StepNeedsFarmLeg(bot, actor, state);
         }
 
         // 1. Opportunistic wildlife hunt loop (skipped while fighting players)
@@ -893,6 +917,132 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             ? (state.CadenceOverride.HasValue ? Task.FromResult<TimeSpan?>(effectiveCadence) : (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence)))
             : DormantTask;
     }
+
+    /// <summary>
+    /// Tier 0 canonical ids (real 1.2 rows): potato seed 15659 → crop 2259 →
+    /// yield 7992 (the <c>CropHarvestLoopTests</c> chain).
+    /// </summary>
+    public const uint NeedsFarmSeedItemTemplateId = 15659;
+    public const uint NeedsFarmFoodItemTemplateId = 7992;
+    public const long NeedsFarmSeedUnitPrice = 25;
+
+    /// <summary>
+    /// Tier 0 needs-farm leg (branch 0b): one <see cref="NeedsDecisionScenario"/>
+    /// run per wake with per-wake target resolution (merchant objId and crop
+    /// objId are resolved fresh — never stored). Buy is offered only while
+    /// standing at a merchant whose pack sells the seed (shop range); the
+    /// crop scan hands the nearest owned/public crop to the engine, whose
+    /// own fail-closed gates refuse immature/foreign targets. Plant sows at
+    /// the bot's own position — the engine zeroes labor on public farms and
+    /// charges it elsewhere.
+    ///
+    /// Returns true only when work actually landed (Completed) — reject/rest
+    /// wakes return false so the route still provides travel toward the
+    /// merchant and farm instead of reject-spinning in place.
+    /// </summary>
+    private bool StepNeedsFarmLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
+    {
+        var character = bot.Character;
+        var world = character.ParentWorld;
+        var position = character.Transform.World.Position;
+        uint merchantObjId = 0;
+        if (world != null)
+        {
+            var bestDist = GameplayActor.MaxShopRange;
+            var merchants = NearbyNpcProvider != null
+                ? NearbyNpcProvider(character, GameplayActor.MaxShopRange)
+                : world.GetAllNpcs();
+            foreach (var npc in merchants)
+            {
+                if (npc?.Template == null || !npc.Template.Merchant || npc.Template.MerchantPackId == 0)
+                    continue;
+                var pack = NpcManager.Instance.GetGoods(npc.Template.MerchantPackId);
+                if (pack == null || !pack.SellsItem(NeedsFarmSeedItemTemplateId))
+                    continue;
+                var d = MathUtil.CalculateDistance(position, npc.Transform.World.Position, false);
+                if (d <= bestDist)
+                {
+                    bestDist = d;
+                    merchantObjId = npc.ObjId;
+                }
+            }
+        }
+
+        uint cropObjId = 0;
+        var nearbyCrops = NearbyDoodadProvider != null
+            ? NearbyDoodadProvider(character, ButcherPerceptionRadius)
+            : world?.SpawnManager?.GetAllPlayerDoodads() ?? [];
+        {
+            var bestDist = float.MaxValue;
+            foreach (var doodad in nearbyCrops)
+            {
+                if (doodad == null || doodad.Despawn > DateTime.MinValue)
+                    continue;
+                if (!IsNeedsFarmCrop(doodad, character))
+                    continue;
+                var d = MathUtil.CalculateDistance(position, doodad.Transform.World.Position, false);
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    cropObjId = doodad.ObjId;
+                }
+            }
+        }
+
+        if (actor is not GameplayActor concreteActor)
+            return false;
+
+        var result = NeedsDecisionScenario.Run(concreteActor, new NeedsDecisionScenario.NeedsOptions
+        {
+            CycleId = $"needs-farm-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}",
+            HarvestDoodadObjId = cropObjId,
+            PlantSeedItemTemplateId = NeedsFarmSeedItemTemplateId,
+            PlantPosition = position,
+            MerchantNpcObjId = merchantObjId,
+            BuyItemTemplateId = NeedsFarmSeedItemTemplateId,
+            BuyCount = 1,
+            BuyUnitPrice = NeedsFarmSeedUnitPrice,
+            FoodItemTemplateId = NeedsFarmFoodItemTemplateId
+        });
+
+        if (result.WorkSelected && result.Request?.State == ActorLifecycleState.Completed)
+        {
+            Logger.Debug("Roam needs leg completed for bot {CharacterId}: {Action} ({Detail})",
+                bot.CharacterId, result.SelectedAction, result.Request.Detail);
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Tier 0 crop rule: directly character-owned by the bot, or house-bound
+    /// where the house allows interaction (the FarmerCycleScenario owned-plot
+    /// precedent). System-owned crops on public-farm soil are also accepted
+    /// after PublicFarmTick expiry clears their owner. Maturity stays the
+    /// engine's own fail-closed gate at dispatch.
+    /// </summary>
+    private static bool IsNeedsFarmCrop(Doodad doodad, Character character)
+    {
+        if (doodad.OwnerType == DoodadOwnerType.Character)
+            return doodad.OwnerId == character.Id;
+        if (doodad.OwnerType == DoodadOwnerType.Housing)
+            return HousingManager.Instance.GetHouseById(doodad.OwnerDbId)?.AllowedToInteract(character) == true;
+        if (doodad.OwnerType != DoodadOwnerType.System && doodad.OwnerId != 0)
+            return false;
+
+        var world = doodad.ParentWorld;
+        if (world == null)
+            return false;
+        var position = doodad.Transform.World.Position;
+        if (!PublicFarmManager.Instance.InPublicFarm(world.Template, position) ||
+            PublicFarmManager.IsProtected(doodad))
+            return false;
+
+        var farmType = PublicFarmManager.Instance.GetFarmType(world, position);
+        return CommonFarmGameData.Instance.GetAllowedDoodads(farmType).Contains(doodad.TemplateId);
+    }
+
 
     /// <summary>
     /// Builds the movement payload for the broadcast — deriving 3D velocity from

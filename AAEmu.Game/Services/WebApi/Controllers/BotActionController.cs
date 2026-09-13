@@ -651,6 +651,150 @@ internal class BotActionController : BaseController
             return Error(ex, "sell failed");
         }
     }
+    [WebApiPost("^/api/actors/repair$")]
+    public HttpResponse Repair(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<RepairRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.BlacksmithNpcObjId.HasValue || body.BlacksmithNpcObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("blacksmithNpcObjId is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.Repair,
+                    TargetId: body.BlacksmithNpcObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey,
+                    Payload: new SellActionParams(body.ItemId ?? 0UL)));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "repair failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/sell_specialty$")]
+    public HttpResponse SellSpecialty(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<SellSpecialtyRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.TraderNpcObjId.HasValue || body.TraderNpcObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("traderNpcObjId is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.SellSpecialty,
+                    TargetId: body.TraderNpcObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "sell_specialty failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/trade_offer$")]
+    public HttpResponse TradeOffer(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<TradeOfferRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.TargetCharacterObjId.HasValue || body.TargetCharacterObjId.Value == 0)
+                return BadRequestJson(new ErrorModel("targetCharacterObjId is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.TradeOffer,
+                    TargetId: body.TargetCharacterObjId.Value,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "trade_offer failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/trade_putup$")]
+    public HttpResponse TradePutup(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<TradePutupRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+            if (!body.ItemTemplateId.HasValue || body.ItemTemplateId.Value == 0)
+                return BadRequestJson(new ErrorModel("itemTemplateId is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.TradePutup,
+                    TargetId: body.ItemTemplateId.Value,
+                    IdempotencyKey: body.IdempotencyKey,
+                    Payload: new BuyActionParams(body.ItemTemplateId.Value, body.Count ?? 1)));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "trade_putup failed");
+        }
+    }
+
+    [WebApiPost("^/api/actors/trade_lock_ok$")]
+    public HttpResponse TradeLockOk(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<TradeLockOkRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.Bot))
+                return BadRequestJson(new ErrorModel("bot is required"));
+
+            return EnqueueResponse(body.Bot,
+                new BotActionSpec(BotActionKind.TradeLockOk,
+                    IdempotencyKey: body.IdempotencyKey));
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "trade_lock_ok failed");
+        }
+    }
+
 
     [WebApiPost("^/api/actors/pack_pickup$")]
     public HttpResponse PackPickup(HttpRequest request)

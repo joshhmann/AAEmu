@@ -82,7 +82,17 @@ public enum BotActionKind : byte
     /// <summary>Load a trade pack onto a vehicle cargo box.</summary>
     LoadPackOntoVehicle = 37,
     /// <summary>Routed navigation to a unit via navmesh A* with waypoint stepping (PB-001).</summary>
-    NavigateToUnit = 38
+    NavigateToUnit = 38,
+    /// <summary>Repair equipment at a blacksmith NPC.</summary>
+    Repair = 39,
+    /// <summary>Sell a carried trade pack at a specialty trader.</summary>
+    SellSpecialty = 40,
+    /// <summary>Offer a direct player trade to a character.</summary>
+    TradeOffer = 41,
+    /// <summary>Put up an item stack into the active trade.</summary>
+    TradePutup = 42,
+    /// <summary>Lock and confirm the active trade.</summary>
+    TradeLockOk = 43
 }
 
 /// <summary>Money amount parameter for DepositMoney/WithdrawMoney.</summary>
@@ -675,6 +685,27 @@ public sealed class BotActionCommandQueue
                 return (actor.Sell(spec.TargetId, itemId, key), null);
             }
 
+            case BotActionKind.Repair:
+            {
+                var repairItemId = spec.Payload is SellActionParams rp ? rp.ItemId : 0UL;
+                return (actor.Repair(spec.TargetId, repairItemId, key), null);
+            }
+
+            case BotActionKind.SellSpecialty:
+                return (actor.SellSpecialty(spec.TargetId, key), null);
+
+            case BotActionKind.TradeOffer:
+                return (actor.TradeOffer(spec.TargetId, key), null);
+
+            case BotActionKind.TradePutup:
+            {
+                var putupCount = spec.Payload is BuyActionParams pp ? pp.Count : 1;
+                return (actor.TradePutup(spec.TargetId, putupCount, key), null);
+            }
+
+            case BotActionKind.TradeLockOk:
+                return (actor.TradeLockOk(key), null);
+
             case BotActionKind.BoardVehicle:
             {
                 var attach = spec.Payload is BoardVehicleActionParams p ? p.AttachPoint : AttachPointKind.Driver;
@@ -866,6 +897,11 @@ public sealed class BotActionCommandQueue
             BotActionKind.Harvest => ActorActionType.Harvest,
             BotActionKind.Buy => ActorActionType.Buy,
             BotActionKind.Sell => ActorActionType.Sell,
+            BotActionKind.Repair => ActorActionType.Repair,
+            BotActionKind.SellSpecialty => ActorActionType.SellSpecialty,
+            BotActionKind.TradeOffer => ActorActionType.TradeOffer,
+            BotActionKind.TradePutup => ActorActionType.TradePutup,
+            BotActionKind.TradeLockOk => ActorActionType.TradeLockOk,
             BotActionKind.BoardVehicle => ActorActionType.BoardVehicle,
             BotActionKind.UnboardVehicle => ActorActionType.UnboardVehicle,
             BotActionKind.DriveVehicle => ActorActionType.Drive,

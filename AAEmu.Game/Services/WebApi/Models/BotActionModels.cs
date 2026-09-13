@@ -98,6 +98,21 @@ public sealed record BuyRequest(string? Bot, uint? MerchantNpcObjId, uint? ItemT
 /// <summary>POST /api/actors/sell — sell an item to an NPC merchant.</summary>
 public sealed record SellRequest(string? Bot, uint? MerchantNpcObjId, ulong? ItemId, string? IdempotencyKey);
 
+/// <summary>POST /api/actors/repair — repair equipment at a blacksmith NPC.</summary>
+public sealed record RepairRequest(string? Bot, uint? BlacksmithNpcObjId, ulong? ItemId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/sell_specialty — sell the carried trade pack at a specialty trader.</summary>
+public sealed record SellSpecialtyRequest(string? Bot, uint? TraderNpcObjId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/trade_offer — offer a direct trade to a character.</summary>
+public sealed record TradeOfferRequest(string? Bot, uint? TargetCharacterObjId, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/trade_putup — put up an item stack into the active trade.</summary>
+public sealed record TradePutupRequest(string? Bot, uint? ItemTemplateId, int? Count, string? IdempotencyKey);
+
+/// <summary>POST /api/actors/trade_lock_ok — lock and confirm the active trade.</summary>
+public sealed record TradeLockOkRequest(string? Bot, string? IdempotencyKey);
+
 /// <summary>POST /api/actors/pack_pickup — pick up a placed trade pack doodad.</summary>
 public sealed record PackPickupRequest(string? Bot, uint? DoodadObjId, string? IdempotencyKey);
 

@@ -1,4 +1,8 @@
+using System.Numerics;
+using AAEmu.Game.Core.Managers;
+using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.CommonFarm.Static;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -20,10 +24,10 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     <see cref="BotDecisionSelector"/> with personality weight 0 —
 ///     Personality is never read or mutated);
 ///   - dispatch calls the existing actor methods only — Harvest, Buy, Craft,
-///     Stop — no new gameplay path, no direct DB / Transform / ZoneId / GM /
+///     Plant, Stop — no new gameplay path, no direct DB / Transform / ZoneId / GM /
 ///     reflection shortcuts;
 ///   - urgency at or below the rest line offers Rest alone; otherwise Work
-///     candidates (Craft, then Buy, then Harvest) are offered with the
+///     candidates (Craft, then Plant, then Buy, then Harvest) are offered with the
 ///     always-legal Rest fallback, so an empty or impossible work set idles
 ///     instead of throwing.
 ///
@@ -58,9 +62,14 @@ public static class NeedsDecisionScenario
 
         /// <summary>Policy version stamped on every proposal.</summary>
         public string PolicyVersion { get; init; } = "needs-v1";
-
         /// <summary>Live crop/lumber doodad objId the harvest candidate targets (0 = unconfigured).</summary>
         public uint HarvestDoodadObjId { get; init; }
+
+        /// <summary>Seed item template the plant candidate sows (0 = unconfigured).</summary>
+        public uint PlantSeedItemTemplateId { get; init; }
+
+        /// <summary>World position the plant candidate sows at. Null = unconfigured.</summary>
+        public Vector3? PlantPosition { get; init; }
 
         /// <summary>Merchant NPC objId the buy candidate targets (0 = unconfigured).</summary>
         public uint MerchantNpcObjId { get; init; }
@@ -103,6 +112,7 @@ public static class NeedsDecisionScenario
 
         // ---- fixed priorities (policy; personality weight stays 0) ----
         public int CraftPriority { get; init; } = 30;
+        public int PlantPriority { get; init; } = 25;
         public int BuyPriority { get; init; } = 20;
         public int HarvestPriority { get; init; } = 10;
     }
@@ -154,6 +164,15 @@ public static class NeedsDecisionScenario
             var moneyBefore = snapshot.Money;
             var materialBefore = BagCountOf(context, opts.CraftMaterialItemId);
             var buyItemBefore = BagCountOf(context, opts.BuyItemTemplateId);
+            var seedBefore = BagCountOf(context, opts.PlantSeedItemTemplateId);
+            // Perception-time plant placement gate (the same legality the Plant
+            // engine path pre-flights — public-farm membership plus the
+            // CommonFarmGameData allowlist the CanPlace gate reads — resolved
+            // here through ordinary service reads, so the plant preconditions
+            // below close over the result and never touch live world state
+            // during selection; the engine revalidates placement fail-closed
+            // at dispatch).
+            var (plantOnPublicFarm, plantDoodadAllowed) = ResolvePlantFarmGate(actor, opts);
             var proposals = new List<BotDecisionProposal>
             {
                 RestProposal(actor, opts, moneyBefore)
@@ -161,6 +180,7 @@ public static class NeedsDecisionScenario
             if (needs.Urgency > opts.Thresholds.RestUrgency)
             {
                 proposals.Add(CraftProposal(actor, opts, materialBefore));
+                proposals.Add(PlantProposal(actor, opts, seedBefore, plantOnPublicFarm, plantDoodadAllowed));
                 proposals.Add(BuyProposal(actor, opts, buyItemBefore));
                 proposals.Add(HarvestProposal(actor, opts, foodBefore));
             }
@@ -230,9 +250,62 @@ public static class NeedsDecisionScenario
                 new BotProposalPrecondition("labor-sufficient",
                     observed => observed.LaborPower >= opts.CraftLaborCost)
             ]);
+    private static BotDecisionProposal PlantProposal(GameplayActor actor, NeedsOptions opts, int seedBefore, bool onPublicFarm, bool doodadAllowed)
+        => new(
+            goal: "needs.plant",
+            action: ActorActionType.Plant,
+            targetId: opts.PlantSeedItemTemplateId,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"plant consumes seed item {opts.PlantSeedItemTemplateId} below the {seedBefore} before the step",
+                observed => BagCountOf(observed, opts.PlantSeedItemTemplateId) < seedBefore),
+            idempotencyKey: $"needs:{actor.ActorId}:{opts.CycleId}:plant",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: "sow the seed off the food/gold need",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.PlantPriority,
+            tieBreakKey: $"plant:{opts.PlantSeedItemTemplateId}",
+            payload: opts.PlantPosition is { } position ? new PlantParams(position, 0f, 1f) : null,
+            hardPreconditions:
+            [
+                new BotProposalPrecondition("seed-configured", _ => opts.PlantSeedItemTemplateId != 0),
+                new BotProposalPrecondition("position-configured", _ => opts.PlantPosition is { } position && position.IsFinite()),
+                new BotProposalPrecondition("seed-present",
+                    observed => BagCountOf(observed, opts.PlantSeedItemTemplateId) > 0),
+                new BotProposalPrecondition("on-public-farm", _ => onPublicFarm),
+                new BotProposalPrecondition("farm-allows-doodad", _ => doodadAllowed)
+            ]);
+    /// <summary>
+    /// Perception-time plant placement gate (ordinary service reads — the same
+    /// gates the <see cref="IGameplayActor.Plant"/> engine path pre-flights:
+    /// public-farm membership via <c>PublicFarmManager.InPublicFarm</c> /
+    /// <c>GetFarmType</c> plus the <c>CommonFarmGameData</c> allowlist the
+    /// <c>CanPlace</c> gate reads for the doodad type). The engine revalidates
+    /// placement (including the per-farm count cap) fail-closed at dispatch;
+    /// this gate only mirrors the farm-membership and doodad-type legs so an
+    /// off-farm or disallowed plant is refused BEFORE preference and the
+    /// decision falls through to buy/harvest/rest. <c>CanPlace</c> itself is
+    /// never called here because it emits error packets on failure (a
+    /// decision-time side effect).
+    /// </summary>
+    private static (bool OnPublicFarm, bool DoodadAllowed) ResolvePlantFarmGate(GameplayActor actor, NeedsOptions opts)
+    {
+        if (opts.PlantSeedItemTemplateId == 0 || opts.PlantPosition is not { } position || !position.IsFinite())
+            return (false, false);
+        var world = actor.Character.ParentWorld;
+        if (world == null)
+            return (false, false);
+        if (!PublicFarmManager.Instance.InPublicFarm(world.Template, position))
+            return (false, false);
+        var farmType = PublicFarmManager.Instance.GetFarmType(world, position);
+        if (farmType == FarmType.Invalid)
+            return (false, false);
+        var doodadId = ItemManager.Instance.GetDoodadIdFromItem(opts.PlantSeedItemTemplateId);
+        if (doodadId == 0)
+            return (true, false);
+        return (true, CommonFarmGameData.Instance.GetAllowedDoodads(farmType).Contains(doodadId));
+    }
     private static int BagCountOf(BotObservedContext context, uint itemTemplateId)
         => itemTemplateId != 0 && context.BagItemCounts.TryGetValue(itemTemplateId, out var count) ? count : 0;
-
 
     private static BotDecisionProposal BuyProposal(GameplayActor actor, NeedsOptions opts, int itemBefore)
         => new(
@@ -308,6 +381,8 @@ public static class NeedsDecisionScenario
         {
             ActorActionType.Craft when proposal.Payload is CraftParams craft => gameplayActor.Craft(
                 proposal.TargetId, craft.DoodadObjId, null, proposal.IdempotencyKey),
+            ActorActionType.Plant when proposal.Payload is PlantParams plant => gameplayActor.Plant(
+                proposal.TargetId, plant.Position, plant.ZRot, plant.Scale, proposal.IdempotencyKey),
             ActorActionType.Buy when proposal.Payload is BuyParams buy => gameplayActor.Buy(
                 proposal.TargetId, buy.ItemTemplateId, buy.Count, proposal.IdempotencyKey),
             ActorActionType.Harvest => gameplayActor.Harvest(

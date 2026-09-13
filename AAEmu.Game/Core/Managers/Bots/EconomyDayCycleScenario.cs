@@ -514,6 +514,11 @@ public static class EconomyDayCycleScenario
 
             // The pack-craft material (canonical: golden potato 19887) is not
             // merchant-sold either — same stocking convention as the aux water.
+            // Craft 5404's full recipe additionally needs the specialty
+            // certificate 4747 x1 and yew leaves 15768 x5 per pack, plus one
+            // farm-wagon summon scroll 18660 per cycle for the SUMMON leg —
+            // none merchant-sold in the replay's reach, so all ride the same
+            // ordinary acquisition path.
             if (options.Hauler)
             {
                 var packMaterialTotal = options.PackMaterialAmount * options.Cycles;
@@ -522,13 +527,19 @@ public static class EconomyDayCycleScenario
                     controller.StockInventory(options.PackMaterialItemId, packMaterialTotal);
                     rigNotes.Add($"stocked {packMaterialTotal} x pack material {options.PackMaterialItemId} (not merchant-sold)");
                 }
-
+                const uint PackCertificateItemId = 4747;
+                const uint PackLeafItemId = 15768;
+                controller.StockInventory(PackCertificateItemId, options.Cycles);
+                controller.StockInventory(PackLeafItemId, 5 * options.Cycles);
+                controller.StockInventory(options.FarmWagonSummonScrollItemId, options.Cycles);
+                rigNotes.Add($"stocked {options.Cycles} x pack certificate {PackCertificateItemId} + {5 * options.Cycles} x yew leaves {PackLeafItemId} + {options.Cycles} x wagon scroll {options.FarmWagonSummonScrollItemId}");
                 ledger.PackCraftLaborCostEach =
                     SkillLaborCost(CraftManager.Instance.GetCraftById(options.PackCraftId)?.SkillId ?? 0);
                 ledger.SpecialtySellLaborCostEach = SellLaborCostPerPack;
                 rigNotes.Add($"hauler leg ON: pack craft {options.PackCraftId} → pack {options.PackItemTemplateId}, " +
                              $"gold trader {options.GoldTraderNpcTemplateId}");
             }
+
 
             ledger.StartMoney = character.Money;
             ledger.StartBank = character.Money2;

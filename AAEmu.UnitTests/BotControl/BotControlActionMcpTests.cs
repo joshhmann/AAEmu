@@ -77,21 +77,22 @@ public class BotControlActionMcpTests
     }
 
     [Test]
-    public async Task ToolsList_ExposesThirtyNineContractActionTools()
+    public async Task ToolsList_ExposesFortyFourContractActionTools()
     {
         var server = new ActionMcpServer(new FakeClient());
 
         var response = Parse(await server.HandleAsync("""{"jsonrpc":"2.0","id":2,"method":"tools/list"}"""));
 
         var tools = response?["result"]?["tools"]?.AsArray();
-        await Assert.That(tools).HasCount().EqualTo(39);
+        await Assert.That(tools).HasCount().EqualTo(44);
         var names = tools!.Select(t => t?["name"]?.GetValue<string>()).OrderBy(n => n).ToArray();
         await Assert.That(names).IsEquivalentTo(new[]
         {
             "accept_quest", "action_status", "advance_quest", "auto_turn_in", "board_vehicle", "buy", "cast", "craft",
             "deposit_item", "deposit_money", "discover_quests", "discover_self_quests", "dismount", "drive_vehicle", "equip", "harvest", "interact",
             "interact_with", "interrupt", "load_pack_onto_vehicle", "loot", "mount", "move", "move_to_unit",
-            "observe", "pack_pickup", "plant", "put_down", "sell", "stop", "talk", "target", "trace", "turn_in_doodad",
+            "observe", "pack_pickup", "plant", "put_down", "repair", "sell", "sell_specialty", "stop", "talk", "target", "trace",
+            "trade_lock_ok", "trade_offer", "trade_putup", "turn_in_doodad",
             "turn_in_quest", "unboard_vehicle", "use_item", "withdraw_item", "withdraw_money",
         });
     }
