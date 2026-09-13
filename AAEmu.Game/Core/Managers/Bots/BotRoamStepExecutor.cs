@@ -1292,6 +1292,12 @@ public enum NeedsFarmLoopPhase
             case ActorActionType.Buy when landed:
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle, "seed bought — re-evaluating");
                 break;
+            case ActorActionType.Sell when landed:
+                // Earn leg landed: surplus liquidated toward the seed price.
+                // Idle re-evaluates to buy on the NEXT wake — never a scripted
+                // sell-then-buy chain in one wake (re-evaluation discipline).
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle, "surplus sold — re-evaluating");
+                break;
             default:
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle,
                     $"rest/reject ({result.SelectedAction}) — yielding");
@@ -1641,7 +1647,14 @@ public enum NeedsFarmLoopPhase
             BuyItemTemplateId = NeedsFarmSeedItemTemplateId,
             BuyCount = 1,
             BuyUnitPrice = NeedsFarmSeedUnitPrice,
-            FoodItemTemplateId = NeedsFarmFoodItemTemplateId
+            FoodItemTemplateId = NeedsFarmFoodItemTemplateId,
+            // Earn leg: the same in-range seed merchant is the sell target
+            // (Sell needs ANY live merchant — no pack/range gate), and the
+            // harvested food output is the sellable surplus. The seed itself
+            // is excluded by the surplus-not-seed precondition, so the loop
+            // can never liquidate the seed it needs to plant.
+            SellMerchantNpcObjId = merchantObjId,
+            SellSurplusItemTemplateId = NeedsFarmFoodItemTemplateId
         });
     }
 

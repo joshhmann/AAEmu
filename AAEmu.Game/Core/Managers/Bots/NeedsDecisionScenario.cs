@@ -24,12 +24,14 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     <see cref="BotDecisionSelector"/> with personality weight 0 —
 ///     Personality is never read or mutated);
 ///   - dispatch calls the existing actor methods only — Harvest, Buy, Craft,
-///     Plant, Stop — no new gameplay path, no direct DB / Transform / ZoneId / GM /
-///     reflection shortcuts;
+///     Plant, Sell, Stop — no new gameplay path, no direct DB / Transform /
+///     ZoneId / GM / reflection shortcuts;
 ///   - urgency at or below the rest line offers Rest alone; otherwise Work
-///     candidates (Craft, then Plant, then Buy, then Harvest) are offered with the
-///     always-legal Rest fallback, so an empty or impossible work set idles
-///     instead of throwing.
+///     candidates (Craft, then Plant, then Buy, then Harvest, then Sell) are
+///     offered with the always-legal Rest fallback, so an empty or impossible
+///     work set idles instead of throwing. Sell is the earn leg: below every
+///     other work candidate, above Rest — it only wins when Buy is refused
+///     for funds and a sellable surplus sits in the bag.
 ///
 /// Rest rides <see cref="IGameplayActor.Stop"/> (the existing halt action —
 /// there is no separate rest action in the v1 vocabulary). Craft is a
@@ -109,12 +111,18 @@ public static class NeedsDecisionScenario
 
         /// <summary>Need targets and the rest line.</summary>
         public BotNeedsThresholds Thresholds { get; init; } = new();
-
         // ---- fixed priorities (policy; personality weight stays 0) ----
         public int CraftPriority { get; init; } = 30;
         public int PlantPriority { get; init; } = 25;
         public int BuyPriority { get; init; } = 20;
         public int HarvestPriority { get; init; } = 10;
+        // Earn leg: below every other work candidate, above Rest (0). Only
+        // wins when higher work is refused and a sellable surplus is held.
+        public int SellPriority { get; init; } = 5;
+        /// <summary>Merchant NPC objId the sell candidate targets (0 = unconfigured).</summary>
+        public uint SellMerchantNpcObjId { get; init; }
+        /// <summary>Bag template the sell candidate liquidates (0 = none held).</summary>
+        public uint SellSurplusItemTemplateId { get; init; }
     }
 
     /// <summary>Structured run result — decision-path evidence attached.</summary>
@@ -183,8 +191,8 @@ public static class NeedsDecisionScenario
                 proposals.Add(PlantProposal(actor, opts, seedBefore, plantOnPublicFarm, plantDoodadAllowed));
                 proposals.Add(BuyProposal(actor, opts, buyItemBefore));
                 proposals.Add(HarvestProposal(actor, opts, foodBefore));
+                proposals.Add(SellProposal(actor, opts, moneyBefore));
             }
-
             var decision = BotDecisionSelector.Select(context, proposals);
             if (!decision.HasProposal)
             {
@@ -332,6 +340,75 @@ public static class NeedsDecisionScenario
                     observed => observed.Money >= opts.BuyUnitPrice * opts.BuyCount)
             ]);
 
+    private static BotDecisionProposal SellProposal(GameplayActor actor, NeedsOptions opts, long moneyBefore)
+    {
+        // The item INSTANCE resolves at perception time from the live bag
+        // (the Sell engine path addresses Item.Id, not the template): the
+        // first sellable stack of the surplus template. Template Sellable +
+        // grade-template presence mirror the engine's own fail-closed gates
+        // so an unsellable or unpriced surplus is refused BEFORE preference
+        // and the decision falls through to rest. The engine revalidates
+        // ownership, sellability, and the refund at dispatch.
+        var sellItemId = ResolveSellableItem(actor, opts.SellSurplusItemTemplateId);
+        return new(
+            goal: "needs.sell",
+            action: ActorActionType.Sell,
+            targetId: opts.SellMerchantNpcObjId,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"sell pays copper above the {moneyBefore} before the step",
+                observed => observed.Money > moneyBefore),
+            idempotencyKey: $"needs:{actor.ActorId}:{opts.CycleId}:sell",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: "sell the surplus off the gold need",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.SellPriority,
+            tieBreakKey: $"sell:{opts.SellSurplusItemTemplateId}",
+            payload: sellItemId != 0 ? new SellParams(sellItemId) : null,
+            hardPreconditions:
+            [
+                new BotProposalPrecondition("sell-merchant-configured", _ => opts.SellMerchantNpcObjId != 0),
+                new BotProposalPrecondition("surplus-configured", _ => opts.SellSurplusItemTemplateId != 0),
+                // The seed itself is never the surplus: selling the seed the
+                // loop needs to plant would un-plant the farm goal.
+                new BotProposalPrecondition("surplus-not-seed",
+                    _ => opts.SellSurplusItemTemplateId != opts.PlantSeedItemTemplateId
+                        && opts.SellSurplusItemTemplateId != opts.BuyItemTemplateId),
+                new BotProposalPrecondition("sellable-surplus-present", _ => sellItemId != 0)
+            ]);
+    }
+    /// <summary>
+    /// Perception-time sellable lookup: the first bag stack of the surplus
+    /// template whose template is Sellable with a known grade refund (the
+    /// same gates the <see cref="IGameplayActor.Sell"/> engine path
+    /// pre-flights). Returns the item instance id, 0 when no sellable stack
+    /// is held. The engine revalidates ownership and pricing at dispatch.
+    /// </summary>
+    private static ulong ResolveSellableItem(GameplayActor actor, uint surplusTemplateId)
+    {
+        if (surplusTemplateId == 0)
+            return 0;
+        try
+        {
+            var bag = actor.Character.Inventory?.Bag;
+            if (bag == null)
+                return 0;
+            foreach (var item in bag.GetItemsSnapshot())
+            {
+                if (item == null || item.TemplateId != surplusTemplateId)
+                    continue;
+                if (item.Template == null || !item.Template.Sellable)
+                    return 0;
+                if (ItemManager.Instance.GetGradeTemplate(item.Grade) == null)
+                    return 0;
+                return item.Id;
+            }
+        }
+        catch
+        {
+            return 0;
+        }
+        return 0;
+    }
     private static BotDecisionProposal HarvestProposal(GameplayActor actor, NeedsOptions opts, int foodBefore)
         => new(
             goal: "needs.harvest",
@@ -385,6 +462,8 @@ public static class NeedsDecisionScenario
                 proposal.TargetId, plant.Position, plant.ZRot, plant.Scale, proposal.IdempotencyKey),
             ActorActionType.Buy when proposal.Payload is BuyParams buy => gameplayActor.Buy(
                 proposal.TargetId, buy.ItemTemplateId, buy.Count, proposal.IdempotencyKey),
+            ActorActionType.Sell when proposal.Payload is SellParams sell => gameplayActor.Sell(
+                proposal.TargetId, sell.ItemId, proposal.IdempotencyKey),
             ActorActionType.Harvest => gameplayActor.Harvest(
                 proposal.TargetId, proposal.IdempotencyKey),
             ActorActionType.Stop => gameplayActor.Stop(),

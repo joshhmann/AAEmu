@@ -3841,6 +3841,15 @@ public sealed class BotDriveBridge
                 var plants = liveAudit?.Count(r => r.Action == Core.Managers.Bots.ActorActionType.Plant) ?? 0;
                 var harvests = liveAudit?.Count(r => r.Action == Core.Managers.Bots.ActorActionType.Harvest) ?? 0;
                 var moves = liveAudit?.Count(r => r.Action == Core.Managers.Bots.ActorActionType.Move) ?? 0;
+                // Earn-leg evidence (the needs.farm sell/buy path): counts of
+                // ALL terminal Sell/Buy attempts (any result) plus the last
+                // Sell/Buy outcome, so a dispatched-but-rejected trade reads
+                // differently from a decision-level refusal (both surface as
+                // Idle + inactive, but only the former moves these counters).
+                var sells = liveAudit?.Count(r => r.Action == Core.Managers.Bots.ActorActionType.Sell) ?? 0;
+                var buys = liveAudit?.Count(r => r.Action == Core.Managers.Bots.ActorActionType.Buy) ?? 0;
+                var lastSell = liveAudit?.LastOrDefault(r => r.Action == Core.Managers.Bots.ActorActionType.Sell);
+                var lastBuy = liveAudit?.LastOrDefault(r => r.Action == Core.Managers.Bots.ActorActionType.Buy);
                 var lastMove = liveAudit?.LastOrDefault(r => r.Action == Core.Managers.Bots.ActorActionType.Move);
                 var route = st?.Path;
                 var liveReq = st?.Actor.ActiveRequest;
@@ -3861,10 +3870,11 @@ public sealed class BotDriveBridge
                     soilZ = st?.NeedsFarmSoilTarget?.Z,
                     cropObjId = st?.NeedsFarmCropObjId ?? 0u,
                     plants, harvests, moves,
-                    lastMoveState = lastMove?.Result.ToString(),
-                    lastMoveDetail = lastMove?.Detail,
-                    routeWaypoints = route?.Waypoints.Count ?? 0,
-                    routeFinished = route?.IsFinished ?? true,
+                    sells, buys,
+                    lastSellState = lastSell?.Result.ToString(),
+                    lastSellDetail = lastSell?.Detail,
+                    lastBuyState = lastBuy?.Result.ToString(),
+                    lastBuyDetail = lastBuy?.Detail,
                     liveAction = liveReq?.Action.ToString(),
                     liveState = liveReq?.State.ToString(),
                     liveDetail = liveReq?.Detail,

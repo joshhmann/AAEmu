@@ -1113,4 +1113,196 @@ public class NeedsFarmModuleTests
         await Assert.That(executor.GetBotState(runtime.CharacterId)?.NeedsFarmPhase
             ?? NeedsFarmLoopPhase.Idle).IsEqualTo(NeedsFarmLoopPhase.Idle);
     }
+    // ------------------------------------------------------------ earn leg (seed-absent + funds-short)
+
+    // Own earn fixture ids (N1 88xxx/91xxx range, never collide with sibling-suite rig ids).
+    private const uint EarnSurplusItemId = 91_109;
+    private const uint EarnMerchantNpcTemplateId = 91_206;
+    private const uint EarnFundedMerchantNpcTemplateId = 91_207;
+
+    private static (int Price, int Refund, bool Sellable) SnapshotTrade(uint templateId)
+    {
+        var template = ItemManager.Instance.GetTemplate(templateId);
+        return template == null ? (0, 0, false) : (template.Price, template.Refund, template.Sellable);
+    }
+
+    private static void RestoreTrade(uint templateId, (int Price, int Refund, bool Sellable) snapshot)
+        => GameplayActorTestRig.SeedTradeItemTemplate(templateId, snapshot.Price, snapshot.Refund, snapshot.Sellable);
+
+    [Test]
+    public async Task Run_BrokeSeedless_WithSurplus_SellsThroughRealPath_MoneyRises()
+    {
+        // Broke + seedless with a sellable surplus: Buy is refused for funds,
+        // so the earn leg (Sell) is the only legal work — copper rises through
+        // the REAL CSSellItemsPacket engine path.
+        var (actor, session) = CreateActorOnUniqueWorld("nf-earn-1");
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 0);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(FoodBuyItemId, FoodPrice, 0, false);
+        GameplayActorTestRig.SeedTradeItemTemplate(EarnSurplusItemId, price: 0, refund: 30, sellable: true);
+        GameplayActorTestRig.StockItem(session, EarnSurplusItemId, 1);
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session, npcTemplateId: EarnMerchantNpcTemplateId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId, TestPosition);
+        var options = new NeedsDecisionScenario.NeedsOptions
+        {
+            CycleId = "nf-earn-91109",
+            MerchantNpcObjId = merchantObjId,
+            BuyItemTemplateId = FoodBuyItemId,
+            BuyCount = 1,
+            BuyUnitPrice = FoodPrice,
+            SellMerchantNpcObjId = merchantObjId,
+            SellSurplusItemTemplateId = EarnSurplusItemId
+        };
+
+        var result = NeedsDecisionScenario.Run(actor, options);
+
+        await Assert.That(result.WorkSelected).IsTrue();
+        await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.Sell);
+        await Assert.That(result.Request?.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(result.ExpectedPostconditionSatisfied).IsTrue();
+        await Assert.That(actor.Character.Money).IsEqualTo(30);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, EarnSurplusItemId)).IsEqualTo(0);
+        await Assert.That(result.Rejections.Any(r =>
+            r.Proposal.Action == ActorActionType.Buy && r.Reason.Contains("funds-sufficient"))).IsTrue();
+    }
+
+    [Test]
+    public async Task Run_EarnExhausted_StillBroke_RestsBounded_NoResell()
+    {
+        // The earn pays too little for the seed: once the surplus is gone the
+        // sell candidate is refused BEFORE preference and the decision rests —
+        // no repeated sell dispatch, no spin.
+        var (actor, session) = CreateActorOnUniqueWorld("nf-earn-2");
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 0);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(FoodBuyItemId, FoodPrice, 0, false);
+        GameplayActorTestRig.SeedTradeItemTemplate(EarnSurplusItemId, price: 0, refund: 5, sellable: true);
+        GameplayActorTestRig.StockItem(session, EarnSurplusItemId, 1);
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session, npcTemplateId: EarnMerchantNpcTemplateId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId, TestPosition);
+        var options = new NeedsDecisionScenario.NeedsOptions
+        {
+            CycleId = "nf-earn-91109-a",
+            MerchantNpcObjId = merchantObjId,
+            BuyItemTemplateId = FoodBuyItemId,
+            BuyCount = 1,
+            BuyUnitPrice = FoodPrice,
+            SellMerchantNpcObjId = merchantObjId,
+            SellSurplusItemTemplateId = EarnSurplusItemId
+        };
+
+        var first = NeedsDecisionScenario.Run(actor, options);
+
+        await Assert.That(first.SelectedAction).IsEqualTo(ActorActionType.Sell);
+        await Assert.That(first.Request?.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.Money).IsEqualTo(5);
+
+        var second = NeedsDecisionScenario.Run(actor, options with { CycleId = "nf-earn-91109-b" });
+
+        await Assert.That(second.WorkSelected).IsFalse();
+        await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.Stop);
+        await Assert.That(actor.Character.Money).IsEqualTo(5);
+        await Assert.That(second.Rejections.Any(r =>
+            r.Proposal.Action == ActorActionType.Sell && r.Reason.Contains("sellable-surplus-present"))).IsTrue();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Sell)).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task Run_Funded_WithSurplus_BuyOutranksSell()
+    {
+        // Funded bots buy as before even with a sellable surplus in the bag:
+        // Buy outranks Sell, so the earn leg never preempts real work and the
+        // surplus stays untouched.
+        var (actor, session) = CreateActorOnUniqueWorld("nf-earn-3");
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(FoodBuyItemId, FoodPrice, 0, false);
+        SeedIsolatedMerchantPack();
+        GameplayActorTestRig.SeedTradeItemTemplate(EarnSurplusItemId, price: 0, refund: 30, sellable: true);
+        GameplayActorTestRig.StockItem(session, EarnSurplusItemId, 1);
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: EarnFundedMerchantNpcTemplateId, packId: SeedPackId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId, TestPosition);
+        var options = new NeedsDecisionScenario.NeedsOptions
+        {
+            CycleId = "nf-earn-91109-c",
+            MerchantNpcObjId = merchantObjId,
+            BuyItemTemplateId = FoodBuyItemId,
+            BuyCount = 1,
+            BuyUnitPrice = FoodPrice,
+            SellMerchantNpcObjId = merchantObjId,
+            SellSurplusItemTemplateId = EarnSurplusItemId
+        };
+
+        var result = NeedsDecisionScenario.Run(actor, options);
+
+        await Assert.That(result.WorkSelected).IsTrue();
+        await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.Buy);
+        await Assert.That(result.Request?.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.Money).IsEqualTo(10_000 - FoodPrice);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, EarnSurplusItemId)).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task StepAsync_SeedlessBrokeWithSurplus_SellsThenBuysNextWake()
+    {
+        // Seed-absent + funds-short with a sellable harvest surplus: wake 1
+        // lands exactly one Sell (re-evaluation discipline — never a scripted
+        // sell-then-buy chain in one wake); wake 2 re-evaluates funded and
+        // lands the seed Buy through the existing loop.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-earn-4");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 0);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId,
+            price: (int)BotRoamStepExecutor.NeedsFarmSeedUnitPrice, refund: 0, sellable: false);
+        NeedsPreemptionRig.SeedNeedsMerchantPack();
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: NeedsPreemptionRig.NeedsMerchantNpcTemplateId,
+            packId: NeedsPreemptionRig.NeedsMerchantPackId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId, TestPosition);
+        var merchant = session.World.GetNpc(merchantObjId)!;
+        // The harvested food output is the loop's sellable surplus: patch the
+        // canonical potato additively (the M3aM4 SeedSellableHarvestYield
+        // precedent) and restore it after — sibling suites read it unsellable.
+        var potato = BotRoamStepExecutor.NeedsFarmFoodItemTemplateId;
+        var snapshot = SnapshotTrade(potato);
+        try
+        {
+            GameplayActorTestRig.SeedTradeItemTemplate(potato, price: 100, refund: 30, sellable: true);
+            GameplayActorTestRig.StockItem(session, potato, 3);
+            var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "needs.farm",
+                nearbyNpcs: (_, _) => [merchant],
+                nearbyDoodads: (_, _) => []);
+
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(runtime, CancellationToken.None);
+
+            await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Sell
+                && r.Result == ActorLifecycleState.Completed)).IsEqualTo(1);
+            await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Buy)).IsFalse();
+            await Assert.That(actor.Character.Money).IsEqualTo(90);
+            var afterEarn = executor.GetBotState(runtime.CharacterId)!;
+            await Assert.That(afterEarn.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Idle);
+            await Assert.That(afterEarn.NeedsFarmReason.Contains("surplus sold")).IsTrue();
+
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(runtime, CancellationToken.None);
+
+            await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Buy
+                && r.Result == ActorLifecycleState.Completed)).IsTrue();
+            await Assert.That(GameplayActorTestRig.BagCount(actor,
+                BotRoamStepExecutor.NeedsFarmSeedItemTemplateId)).IsEqualTo(1);
+        }
+        finally
+        {
+            RestoreTrade(potato, snapshot);
+        }
+    }
 }
