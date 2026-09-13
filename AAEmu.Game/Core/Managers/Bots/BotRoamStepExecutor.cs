@@ -592,8 +592,9 @@ public enum NeedsFarmLoopPhase
             state.NeedsLegActive = StepNeedsFarmLeg(bot, actor, state);
         }
 
-        // 1. Opportunistic wildlife hunt loop (skipped while fighting players)
-        if (!handledByParty && !pvpEngaged && EnableWildlifeHunt)
+        // 1. Opportunistic wildlife hunt loop (skipped while fighting players,
+        // or while the needs leg landed work — needs preempts hunt acquisition/engagement).
+        if (!handledByParty && !pvpEngaged && !state.NeedsLegActive && EnableWildlifeHunt)
         {
             if (state.TargetNpcObjId != 0)
             {
@@ -757,10 +758,10 @@ public enum NeedsFarmLoopPhase
         // never assumed). NPC corpses NEVER become doodads: there is no
         // corpse→doodad pipeline here (B stays gated); the leg only scans
         // world doodads already standing on a butcherable phase, approaches
-        // into interaction range, and fires the existing Interact
         // ActorRequest. Logging only on the terminal outcome (slice 1/3
-        // idiom) — zero success-path change.
-        if (!handledByParty && EnableWildlifeButcher)
+        // idiom) — zero success-path change. Skipped while the needs leg
+        // landed work (needs preempts butcher acquisition/engagement).
+        if (!handledByParty && !state.NeedsLegActive && EnableWildlifeButcher)
         {
             if (state.TargetButcherDoodadObjId != 0)
             {
