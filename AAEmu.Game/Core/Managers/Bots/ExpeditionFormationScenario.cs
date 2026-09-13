@@ -6,8 +6,8 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// <summary>
 /// EXPEDITION-01 live scenario: five ordinary Characters form a real party
 /// then found an expedition through the real ExpeditionManager path —
-/// PartyInvite/Accept ×4 → ExpeditionCreate → invite/accept outsider.
-/// Membership rows on both sides are the proof.
+/// PartyInvite/Accept ×4 → ExpeditionCreate.
+/// Shared membership rows on all five members are the proof.
 /// </summary>
 public static class ExpeditionFormationScenario
 {

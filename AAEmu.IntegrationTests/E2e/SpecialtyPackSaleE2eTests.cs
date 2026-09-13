@@ -5,8 +5,8 @@ using Xunit;
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// PACK-SALE-01 live-stack proof: a REAL game server boots, ONE bot is
-/// provisioned through the scenario bridge, and the m8 economy cycle runs
+/// PACK-SALE-01 live-stack proof: a REAL game server boots, ONE bot
+/// receives E2E setup through the scenario bridge, and the m8 economy cycle runs
 /// with hauler=true — full craft → summon → board → load → drive →
 /// unload → SELL-GOLD chain through the M5 contract ONLY. The SELL-GOLD
 /// Completed stage + the payout-formula criterion (mail copper delta ==

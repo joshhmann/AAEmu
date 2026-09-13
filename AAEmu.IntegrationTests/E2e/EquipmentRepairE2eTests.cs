@@ -10,9 +10,9 @@ namespace AAEmu.IntegrationTests.E2e;
 /// <summary>
 /// ECONOMY-REPAIR-01 live-stack proof, single-plane on the networked bot: a
 /// REAL game server boots, the bot enters through the real login flow, the
-/// mail-family rig stocks an equipment item with damaged durability, the bot
-/// teleports to a live blacksmith spawner, and the mail-family repair op
-/// runs the real GameplayActor.Repair path (Character.DoRepair).
+/// E2E setup stocks an equipment item with damaged durability through the
+/// mail-family rig, then the bot teleports to a live blacksmith spawner; the
+/// mail-family repair op runs the real GameplayActor.Repair path
 /// Durability before/after via the mail inv op is the proof.
 ///
 /// H stays UNKNOWN.
@@ -46,7 +46,7 @@ public class EquipmentRepairE2eTests
             Assert.True(net.InWorld, "net bot must be in-world");
             using var bridge = new BotDriveClient(E2eStack.BridgePort);
 
-            // ------------------------------------------------ rig damaged gear + funds
+            // ------------------------------------------------ E2E setup: damaged gear + fixture funds
             var rig = bridge.Call($"{{\"cmd\":\"mail\",\"bot\":\"{NetName}\",\"op\":\"rig\",\"money\":100000,\"itemTemplate\":{EquipTemplate},\"count\":1,\"durability\":10}}", 30_000);
             Assert.True(rig.TryGetProperty("durability", out var dur0) && dur0.GetInt32() == 10,
                 "rig must stock damaged gear: " + rig);

@@ -5,8 +5,8 @@ using Xunit;
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// TRADE-01 live-stack proof: a REAL game server boots, TWO bots are
-/// provisioned through the scenario bridge, and the trade-handshake
+/// TRADE-01 live-stack proof: a REAL game server boots, TWO bots receive
+/// E2E setup through the scenario bridge, and the trade-handshake
 /// scenario drives offer → put-up → lock+ok on both sides through the M5
 /// IGameplayActor contract ONLY, with item conservation as the proof.
 /// H stays UNKNOWN.

@@ -5,8 +5,8 @@ using Xunit;
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// EXPEDITION-01 live-stack proof: a REAL game server boots, FIVE bots are
-/// provisioned through the scenario bridge, and the expedition-formation
+/// EXPEDITION-01 live-stack proof: a REAL game server boots, FIVE bots
+/// receive E2E setup through the scenario bridge, and the expedition-formation
 /// scenario drives party invite/accept ×4 → ExpeditionCreate through the
 /// M5 IGameplayActor contract ONLY. Shared expedition membership rows on
 /// all five bots are the proof.

@@ -8,8 +8,8 @@ namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
 /// AGRICULTURE-BUTCHER-01 live-stack proof: a REAL game server boots, ONE
-/// networked bot enters through the real login flow, rigs a dairy calf
-/// through the farm bridge, plants it through the REAL GameplayActor.Plant
+/// networked bot receives a seeded calf prerequisite through the farm bridge,
+/// plants it through the REAL GameplayActor.Plant
 /// path, waits out the E2E-compressed growth (GrowthRate 3600: 3.4 h +
 /// 30.9 h canonical → ~35 s live), butchers the mature cow through the
 /// farm interact op (real GameplayActor.Interact → Doodad.Use chain, the
@@ -59,7 +59,7 @@ public class LivestockButcherE2eTests
             using var bridge = new BotDriveClient(E2eStack.BridgePort);
             bridge.Call("{\"cmd\":\"drive\",\"bot\":\"" + NetName + "\",\"op\":\"setLevel\",\"level\":10}", 30_000);
 
-            // ------------------------------------------------ rig calf + labor
+            // ------------------------------------------------ E2E setup: calf prerequisite + labor
             var rig = bridge.Call("{\"cmd\":\"farm\",\"bot\":\"" + NetName + "\",\"op\":\"rig\"," +
                 "\"seeds\":0,\"calves\":2,\"labor\":5000}", 30_000);
             Assert.True(rig.TryGetProperty("calves", out var calves) && calves.GetInt32() >= 1,

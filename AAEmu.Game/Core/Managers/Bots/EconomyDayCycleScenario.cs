@@ -36,8 +36,8 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///   - craft 2846 삶은 감자 (Boiled Potato): water 15694 ×1 + potato ×1 →
 ///     boiled potato 16187 (skill 11086 요리하기, consume_lp 2, no bench
 ///     requirement, need_learn f);
-///   - water 15694 is NOT merchant-sold — provisioned through the ordinary
-///     acquisition path (StockInventory, the millet-seed convention);
+///   - water 15694 is NOT merchant-sold — injected as a fixture prerequisite
+///     (StockInventory, the millet-seed convention);
 ///   - product 16187 is sellable (refund 60) — sold to the general merchant
 ///     8524 (the same merchant pair the m3a-m4-replay drives).
 ///
@@ -94,7 +94,8 @@ public static class EconomyDayCycleScenario
     /// <summary>감자 (potato — the crop yield and craft material).</summary>
     public const uint PotatoItemId = 7992;
 
-    /// <summary>물 (water — craft auxiliary, NOT merchant-sold: stocked).</summary>
+    /// <summary>물 (water — craft auxiliary, NOT merchant-sold: fixture
+    /// prerequisite).</summary>
     public const uint WaterItemId = 15694;
 
     /// <summary>삶은 감자 (boiled potato — craft product, sellable refund 60).</summary>
@@ -114,7 +115,7 @@ public static class EconomyDayCycleScenario
     public const uint FarmWagonSummonScrollItemId = 18660;
 
     /// <summary>샛노란 감자 (golden potato — pack-craft material, NOT merchant-sold:
-    /// stocked through the ordinary acquisition path like the aux water).</summary>
+    /// seeded as a fixture prerequisite like the aux water).</summary>
     public const uint GoldenPotatoItemId = 19887;
 
     /// <summary>황금 감자 꾸러미 recipe (craft 5404: golden potato ×3 → pack 26489;
@@ -182,7 +183,7 @@ public static class EconomyDayCycleScenario
         public uint PackItemTemplateId { get; init; } = GoldenPotatoPackItemId;
 
         /// <summary>Pack-craft material (canonical golden potato 19887 — not
-        /// merchant-sold: stocked like the auxiliary water).</summary>
+        /// merchant-sold: seeded fixture prerequisite).</summary>
         public uint PackMaterialItemId { get; init; } = GoldenPotatoItemId;
         public int PackMaterialAmount { get; init; } = 3;
 
@@ -503,7 +504,7 @@ public static class EconomyDayCycleScenario
             rigNotes.Add($"rig: level {options.RigLevel}, money {options.SeedMoney}, labor {DefaultLaborPool}, cycles {options.Cycles}");
 
             // The auxiliary craft material (canonical: water 15694) is not
-            // merchant-sold — provision through the normal acquisition path
+            // merchant-sold — inject as a fixture prerequisite
             // (the millet-seed convention from m3a-m4-replay).
             var auxTotal = options.AuxiliaryMaterialAmount * options.Cycles;
             if (auxTotal > 0)
@@ -517,8 +518,8 @@ public static class EconomyDayCycleScenario
             // Craft 5404's full recipe additionally needs the specialty
             // certificate 4747 x1 and yew leaves 15768 x5 per pack, plus one
             // farm-wagon summon scroll 18660 per cycle for the SUMMON leg —
-            // none merchant-sold in the replay's reach, so all ride the same
-            // ordinary acquisition path.
+            // none merchant-sold in the replay's reach, so all are injected
+            // as seeded prerequisites.
             if (options.Hauler)
             {
                 var packMaterialTotal = options.PackMaterialAmount * options.Cycles;
