@@ -172,6 +172,18 @@ public class GameplayActor : IGameplayActor
     private readonly ActorEffectLedger _ledger = new();
     private ActorRequest? _active;
 
+    /// <summary>
+    /// Pending decision context for trace enrichment (Wave: audit
+    /// candidates+seed): set by scenario composers BEFORE dispatch, stamped
+    /// onto the next created request, then cleared. Single-writer safe —
+    /// the actor is driven from exactly one execution context at a time.
+    /// </summary>
+    private (string? Goal, string? Policy, int Candidates, int Rejections, string? Seed)? _pendingDecision;
+
+    /// <summary>Stages decision context for the next created request.</summary>
+    public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed)
+        => _pendingDecision = (goal, policy, candidates, rejections, seed);
+
     public uint ActorId => Character.ObjId;
 
     public Character Character { get; }
@@ -765,8 +777,10 @@ public class GameplayActor : IGameplayActor
 
         if (action != ActorActionType.AutoTurnIn && targetObjId != 0)
         {
-            var target = ResolveUnit(targetObjId);
-            if (target == null)
+            var resolved = action == ActorActionType.TurnInDoodad
+                ? Character.ParentWorld?.GetDoodad(targetObjId) as object
+                : ResolveUnit(targetObjId);
+            if (resolved == null)
                 return Reject(request, ActorFailureReason.RejectedAction,
                     $"turn-in target {targetObjId} not found in world (quest {questId})");
         }
@@ -4099,7 +4113,15 @@ public class GameplayActor : IGameplayActor
     private ActorRequest NewRequest(ActorActionType action, uint targetId,
         Vector3? destination = null, uint skillId = 0, TimeSpan? timeout = null, object? payload = null,
         string? idempotencyKey = null)
-        => new(action, targetId, destination, skillId, timeout, payload, idempotencyKey);
+    {
+        var request = new ActorRequest(action, targetId, destination, skillId, timeout, payload, idempotencyKey);
+        if (_pendingDecision is { } pending)
+        {
+            request.AnnotateDecision(pending.Goal, pending.Policy, pending.Candidates, pending.Rejections, pending.Seed);
+            _pendingDecision = null;
+        }
+        return request;
+    }
 
     /// <summary>
     /// Single-writer gate: accepts the request as the new active one, or
@@ -4193,7 +4215,10 @@ public class GameplayActor : IGameplayActor
         _trace.Add(new ActorAuditRecord(
             request.TraceId, ActorId, request.Action, request.TargetId,
             request.RequestedAtUtc, request.StartedAtUtc, request.CompletedAtUtc,
-            request.State, request.Failure, request.Detail, request.StateChanges.ToList()));
+            request.State, request.Failure, request.Detail, request.StateChanges.ToList(),
+            DecisionGoal: request.DecisionGoal, DecisionPolicy: request.DecisionPolicy,
+            DecisionCandidates: request.DecisionCandidates, DecisionRejections: request.DecisionRejections,
+            DecisionSeed: request.DecisionSeed));
         if (_trace.Count > MaxTraceRecords)
             _trace.RemoveRange(0, _trace.Count - MaxTraceRecords);
         if (ReferenceEquals(_active, request))

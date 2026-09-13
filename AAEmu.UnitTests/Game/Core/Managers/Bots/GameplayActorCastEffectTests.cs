@@ -199,13 +199,15 @@ public class GameplayActorCastEffectTests
         var root = json.RootElement;
 
         // Exact key set: every v1 name identical + exactly the four v2
-        // additive names. A rename here is an API contract break.
+        // additive names + exactly the five v3 decision-context names.
+        // A rename here is an API contract break.
         var keys = root.EnumerateObject().Select(p => p.Name).ToArray();
         await Assert.That(keys).IsEquivalentTo(new[]
         {
             "trace_id", "actor_id", "action", "target_id", "requested_at", "started_at",
             "completed_at", "result", "failure", "detail", "state_changes",
-            "target_hp_before", "target_hp_after", "effect_observed", "effect_wait_ms"
+            "target_hp_before", "target_hp_after", "effect_observed", "effect_wait_ms",
+            "decision_goal", "decision_policy", "decision_candidates", "decision_rejections", "decision_seed"
         });
 
         await Assert.That(root.GetProperty("trace_id").GetGuid()).IsEqualTo(traceId);

@@ -58,7 +58,12 @@ public sealed record ActorAuditRecord(
     int? TargetHpBefore = null,
     int? TargetHpAfter = null,
     bool? EffectObserved = null,
-    TimeSpan? EffectWait = null)
+    TimeSpan? EffectWait = null,
+    string? DecisionGoal = null,
+    string? DecisionPolicy = null,
+    int DecisionCandidates = 0,
+    int DecisionRejections = 0,
+    string? DecisionSeed = null)
 {
     /// <summary>Stable one-line log form (structured fields, no packet content).</summary>
     public override string ToString()
@@ -96,6 +101,12 @@ public sealed record ActorAuditRecord(
             target_hp_before = TargetHpBefore,
             target_hp_after = TargetHpAfter,
             effect_observed = EffectObserved,
-            effect_wait_ms = EffectWait?.TotalMilliseconds
+            effect_wait_ms = EffectWait?.TotalMilliseconds,
+            // v3 additive decision-context fields (Wave: trace enrichment).
+            decision_goal = DecisionGoal,
+            decision_policy = DecisionPolicy,
+            decision_candidates = DecisionCandidates,
+            decision_rejections = DecisionRejections,
+            decision_seed = DecisionSeed
         });
 }

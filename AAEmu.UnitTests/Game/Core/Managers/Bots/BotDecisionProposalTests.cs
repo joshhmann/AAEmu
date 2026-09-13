@@ -24,6 +24,7 @@ public class BotDecisionProposalTests
         public Character Character => null!;
         public ActorRequest? ActiveRequest => null;
         public IReadOnlyList<ActorAuditRecord> AuditTrace => [];
+        public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed) { }
 
         public ActorObservation Observe() => new()
         {

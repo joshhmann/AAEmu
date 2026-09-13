@@ -56,6 +56,12 @@ public interface IGameplayActor
     /// <summary>The currently active request, or null when idle.</summary>
     ActorRequest? ActiveRequest { get; }
 
+    /// <summary>
+    /// Stages decision context (goal/policy/candidates/rejections/seed) for
+    /// the next created request — copied into its audit record at Finish.
+    /// </summary>
+    void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed);
+
     /// <summary>Structured trace of every request (newest last, bounded).</summary>
     IReadOnlyList<ActorAuditRecord> AuditTrace { get; }
 

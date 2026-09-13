@@ -79,6 +79,27 @@ public sealed class ActorRequest
     /// </summary>
     internal bool IsDedupeRejection { get; set; }
 
+    /// <summary>
+    /// Decision context for trace enrichment (Wave: audit candidates+seed):
+    /// which goal/policy chose this action, from how many candidates with
+    /// how many rejections, under which seed. Set by scenario composers
+    /// before dispatch; copied into the audit record at Finish.
+    /// </summary>
+    public string? DecisionGoal { get; private set; }
+    public string? DecisionPolicy { get; private set; }
+    public int DecisionCandidates { get; private set; }
+    public int DecisionRejections { get; private set; }
+    public string? DecisionSeed { get; private set; }
+
+    public void AnnotateDecision(string? goal, string? policy, int candidates, int rejections, string? seed)
+    {
+        DecisionGoal = goal;
+        DecisionPolicy = policy;
+        DecisionCandidates = candidates;
+        DecisionRejections = rejections;
+        DecisionSeed = seed;
+    }
+
     public ActorRequest(ActorActionType action, uint targetId, System.Numerics.Vector3? destination,
         uint skillId, TimeSpan? timeout, object? payload = null, string? idempotencyKey = null)
     {
