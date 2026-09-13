@@ -11,6 +11,7 @@ using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Faction;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Skills.Effects;
@@ -163,6 +164,13 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
 
     /// <summary>Livestock-doodad resolver seam (null → Character.ParentWorld?.GetDoodad).</summary>
     public Func<Character, uint, Doodad?>? DoodadResolver { get; init; }
+    /// <summary>
+    /// Farm-soil probe seam for the travel-to-soil branch (null → the real
+    /// farm/subzone lookups: InPublicFarm + GetFarmType + the seed→doodad
+    /// allowlist. Tests inject a position map; the DESTINATION is always
+    /// resolved by the bounded spiral, never fixture-injected).
+    /// </summary>
+    public Func<Character, Vector3, bool>? FarmSoilProvider { get; set; }
 
     /// <summary>
     /// Butcher-skill resolver seam: the interaction skill for a livestock
@@ -171,6 +179,38 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// </summary>
     public Func<Doodad, uint>? ButcherSkillResolver { get; init; }
 
+
+/// <summary>
+/// Observable phase of the Tier 0 needs-farm loop (TRAVEL-TO-SOIL +
+/// MATURITY-WAIT/RESUME). Readable off <see cref="BotRoamStepExecutor.BotRoamState"/>
+/// via the <c>GetBotState</c> seam (tests) and mirrored into log lines on
+/// transition (production observability — no tracing framework).
+///
+/// RESTART BEHAVIOR (documented, not persisted): BotRoamState is per-bot
+/// in-memory only. A restart drops the tracked crop id, the soil target,
+/// and the travel/reject counters. Post-restart the bot RE-DISCOVERS rather
+/// than resumes: the nearest owned crop re-resolves through the bounded
+/// perception scan and soil re-resolves through the farm lookups. No
+/// persistence was invented for this (the scheduler's per-bot execution
+/// lease + memory-only state contract stands).
+/// </summary>
+public enum NeedsFarmLoopPhase
+{
+    /// <summary>No farm-loop work this wake (needs inactive, rest/buy path, or idle).</summary>
+    Idle,
+    /// <summary>Seed present but off valid soil; resolving a reachable soil destination (or bounded-deferred).</summary>
+    SeekingSoil,
+    /// <summary>Route layer armed to a soil (or mature-crop) destination; MoveTo legs carry the bot.</summary>
+    Traveling,
+    /// <summary>Plant dispatched on valid soil this wake but not yet landed.</summary>
+    Planting,
+    /// <summary>Tracked crop exists but reads immature; deferred — no Harvest issued.</summary>
+    WaitingMaturity,
+    /// <summary>Harvest dispatched on a mature crop this wake (or approaching one).</summary>
+    Harvesting,
+    /// <summary>Harvest completed; re-evaluating (seed+output → replant) next wake.</summary>
+    Replanting
+}
 
     internal sealed class BotRoamState
     {
@@ -208,6 +248,65 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         /// wildlife but never party handling, PvP, or quest work.
         /// </summary>
         public bool NeedsLegActive { get; set; }
+
+        /// <summary>
+        /// Tier 0 needs-farm loop observability: the current loop phase
+        /// (seeking-soil/traveling/planting/waiting-maturity/harvesting/
+        /// replanting — <see cref="NeedsFarmLoopPhase"/>), reset to Idle at
+        /// the top of every needs wake and set by the branch that owns the
+        /// wake. Restart drops this with the rest of the state (memory-only —
+        /// see <see cref="NeedsFarmLoopPhase"/>).
+        /// </summary>
+        public NeedsFarmLoopPhase NeedsFarmPhase { get; set; } = NeedsFarmLoopPhase.Idle;
+
+        /// <summary>
+        /// Resolved farm-soil destination the travel path is walking toward
+        /// (null = none). Set when the route layer is armed to soil; cleared
+        /// on arrival, on discard, and on bounded defer.
+        /// </summary>
+        public Vector3? NeedsFarmSoilTarget { get; set; }
+
+        /// <summary>
+        /// Tracked planted crop: the objId handed back by a landed Plant
+        /// (0 = none tracked). While nonzero the wait branch does a cheap
+        /// per-wake liveness check (world lookup + phase read — not a scan)
+        /// and harvests via the normal path once the phase reads mature.
+        /// </summary>
+        public uint NeedsFarmCropObjId { get; set; }
+
+        /// <summary>
+        /// Template of the tracked crop (for phase-shape tolerance — a
+        /// foreign template under the same objId drops the track).
+        /// </summary>
+        public uint NeedsFarmCropTemplateId { get; set; }
+
+        /// <summary>
+        /// Human-readable reason for the current phase (soil resolve source,
+        /// defer cause, stale-drop cause, discard cause). Feeds log lines and
+        /// test asserts; never a tracing framework.
+        /// </summary>
+        public string NeedsFarmReason { get; set; } = "";
+
+        /// <summary>
+        /// Bounded soil-resolve attempts since the last successful plant or
+        /// arrival: stale/unreachable destinations discard and re-resolve
+        /// only up to <see cref="NeedsFarmMaxSoilAttempts"/> per discovery
+        /// episode, then the leg defers (never spins forever).
+        /// </summary>
+        public int NeedsFarmSoilAttempts { get; set; }
+
+        /// <summary>
+        /// Consecutive no-farm-nearby defers (bounded: past
+        /// <see cref="NeedsFarmMaxDeferWakes"/> the leg keeps deferring but
+        /// stops re-logging every wake — still never spins).
+        /// </summary>
+        public int NeedsFarmDeferWakes { get; set; }
+        /// <summary>
+        /// Patrol route stashed while a soil/crop approach route owns the
+        /// ordinary route layer (restored on arrival/defer so travel never
+        /// permanently clobbers the coordinator-armed patrol).
+        /// </summary>
+        public BotPath? NeedsFarmStashedRoute { get; set; }
     }
 
     private readonly ConcurrentDictionary<uint, BotRoamState> _states = [];
@@ -762,9 +861,8 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
                 }
             }
         }
-
-        // 2. Issue the next leg when idle, not in party, not hunting, not butchering, and a route is active.
-        if (!handledByParty && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
+        // 2. Issue the next leg when idle, not in party, not hunting, not butchering, not needs-working, and a route is active.
+        if (!handledByParty && !state.NeedsLegActive && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
         {
             var target = state.Path.CurrentTarget;
             var leg = actor.MoveTo(target, RoamSpeed, RoamLegTimeout);
@@ -799,9 +897,10 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             if (flat <= state.Path.ArrivalRadius)
                 _ = actor.Stop();
         }
-
         // 3b. Route advance on arrival: when the pending Move leg reached a terminal state
-        if (state.TargetNpcObjId == 0
+        // (deferred while the needs leg landed work — needs preempts route advancement too).
+        if (!state.NeedsLegActive
+            && state.TargetNpcObjId == 0
             && state.TargetButcherDoodadObjId == 0
             && state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move }
             && state.Path is { IsFinished: false })
@@ -925,78 +1024,617 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     public const uint NeedsFarmSeedItemTemplateId = 15659;
     public const uint NeedsFarmFoodItemTemplateId = 7992;
     public const long NeedsFarmSeedUnitPrice = 25;
+    /// <summary>
+    /// Bounded perception radius for needs-farm discovery when no injectable
+    /// provider is set (the hunt/butcher loop discipline: prefer the shared
+    /// radius seams via <see cref="WorldManager.GetAround{T}"/> over
+    /// whole-world scans every wake).
+    /// </summary>
+    public const float NeedsFarmPerceptionRadius = 45f;
+    /// <summary>
+    /// Discovery extension for soil resolution: the perception-radius spiral
+    /// runs first; when it finds nothing, a coarser spiral out to this bound
+    /// runs before the leg defers (bounded discovery fallback — never a
+    /// whole-world scan).
+    /// </summary>
+    public const float NeedsFarmSoilDiscoveryRadius = 150f;
+
+    /// <summary>Coarse spiral step for the discovery extension.</summary>
+    public const float NeedsFarmSoilDiscoveryStep = 15f;
 
     /// <summary>
-    /// Tier 0 needs-farm leg (branch 0b): one <see cref="NeedsDecisionScenario"/>
-    /// run per wake with per-wake target resolution (merchant objId and crop
-    /// objId are resolved fresh — never stored). Buy is offered only while
-    /// standing at a merchant whose pack sells the seed (shop range); the
-    /// crop scan hands the nearest owned/public crop to the engine, whose
-    /// own fail-closed gates refuse immature/foreign targets. Plant sows at
-    /// the bot's own position — the engine zeroes labor on public farms and
-    /// charges it elsewhere.
+    /// Soil-destination discards per discovery episode before the leg stops
+    /// re-resolving and holds the defer (stale/unreachable destinations
+    /// discard and re-resolve only this often — never spin). Reset on
+    /// arrival/plant.
+    /// </summary>
+    public const int NeedsFarmMaxSoilAttempts = 3;
+
+    /// <summary>
+    /// Resolve tries run on defer wake 1, then every this many defer wakes
+    /// (cheap counters per wake; spiral probes only on resolve wakes).
+    /// </summary>
+    public const int NeedsFarmSoilResolveIntervalWakes = 10;
+
+    /// <summary>
+    /// Tier 0 needs-farm leg (branch 0b): legible per-wake re-evaluation, not
+    /// a script — observe → seed absent? buy path; seed + invalid soil?
+    /// travel path; seed + valid soil? plant; tracked/scanned crop immature?
+    /// deferred wait; mature? harvest via the normal path; output + seed?
+    /// replant next wake.
     ///
-    /// Returns true only when work actually landed (Completed) — reject/rest
-    /// wakes return false so the route still provides travel toward the
-    /// merchant and farm instead of reject-spinning in place.
+    /// TRAVEL-TO-SOIL arms an ordinary <see cref="BotPath"/> (single-leg
+    /// <c>PathTo</c>) to a spiral-resolved soil destination and returns false
+    /// so the route layer's own MoveTo legs + arrival advance carry the bot
+    /// (no teleport, no Transform writes — movement applies through the
+    /// actor tick exactly like patrol legs). Arrival re-observes and plants
+    /// normally. MATURITY-WAIT tracks the planted crop (objId + template) and
+    /// defers while its phase reads immature — no Harvest is issued on wait
+    /// wakes; the engine stays the sole maturity authority at dispatch.
+    ///
+    /// Returns true only when decision work actually landed (Completed) —
+    /// reject/rest/wait/travel/defer wakes return false so the route still
+    /// walks and the scheduler keeps its cadence instead of spinning.
     /// </summary>
     private bool StepNeedsFarmLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
     {
         var character = bot.Character;
-        var world = character.ParentWorld;
         var position = character.Transform.World.Position;
-        uint merchantObjId = 0;
-        if (world != null)
+
+        // ---- 1. Tracked crop: cheap per-wake liveness check (one world
+        // lookup + phase read — not a scan). Gone/harvested/despawned/
+        // ownership-changed → drop the stale id and re-evaluate below.
+        if (state.NeedsFarmCropObjId != 0)
         {
-            var bestDist = GameplayActor.MaxShopRange;
-            var merchants = NearbyNpcProvider != null
-                ? NearbyNpcProvider(character, GameplayActor.MaxShopRange)
-                : world.GetAllNpcs();
-            foreach (var npc in merchants)
+            var tracked = ResolveDoodad(character, state.NeedsFarmCropObjId);
+            if (!IsTrackedCropLive(tracked, character, state))
             {
-                if (npc?.Template == null || !npc.Template.Merchant || npc.Template.MerchantPackId == 0)
-                    continue;
-                var pack = NpcManager.Instance.GetGoods(npc.Template.MerchantPackId);
-                if (pack == null || !pack.SellsItem(NeedsFarmSeedItemTemplateId))
-                    continue;
-                var d = MathUtil.CalculateDistance(position, npc.Transform.World.Position, false);
-                if (d <= bestDist)
-                {
-                    bestDist = d;
-                    merchantObjId = npc.ObjId;
-                }
+                DropTrackedCrop(state, bot, "crop gone/harvested/despawned/ownership-changed — re-evaluating");
+            }
+            else if (IsCropMature(tracked!))
+            {
+                return StepNeedsFarmMatureCrop(bot, actor, state, character, position, tracked!);
+            }
+            else
+            {
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
+                    $"crop {tracked!.ObjId} immature — deferred, no harvest issued");
+                return false; // yield to idle/other behavior
             }
         }
 
-        uint cropObjId = 0;
-        var nearbyCrops = NearbyDoodadProvider != null
-            ? NearbyDoodadProvider(character, ButcherPerceptionRadius)
-            : world?.SpawnManager?.GetAllPlayerDoodads() ?? [];
+        // ---- 2. Untracked scan: nearest owned/public crop in perception.
+        // Mature → harvest path; immature → adopt the track and defer (an
+        // immature target never reaches the decision, so no Harvest issues
+        // each wake).
+        var scanned = NearestNeedsFarmCrop(character, position);
+        if (scanned != null)
         {
-            var bestDist = float.MaxValue;
-            foreach (var doodad in nearbyCrops)
-            {
-                if (doodad == null || doodad.Despawn > DateTime.MinValue)
-                    continue;
-                if (!IsNeedsFarmCrop(doodad, character))
-                    continue;
-                var d = MathUtil.CalculateDistance(position, doodad.Transform.World.Position, false);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    cropObjId = doodad.ObjId;
-                }
-            }
-        }
-
-        if (actor is not GameplayActor concreteActor)
+            if (IsCropMature(scanned))
+                return StepNeedsFarmMatureCrop(bot, actor, state, character, position, scanned);
+            state.NeedsFarmCropObjId = scanned.ObjId;
+            state.NeedsFarmCropTemplateId = scanned.TemplateId;
+            SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
+                $"adopted crop {scanned.ObjId} immature — deferred, no harvest issued");
             return false;
+        }
 
-        var result = NeedsDecisionScenario.Run(concreteActor, new NeedsDecisionScenario.NeedsOptions
+        // ---- 3. Seed branches: seed absent → buy path; seed + valid soil →
+        // plant; seed + invalid soil → travel path.
+        var merchantObjId = ResolveSeedMerchant(character, position);
+        if (SeedInBag(character) > 0)
+        {
+            if (IsValidFarmSoil(character, position))
+            {
+                state.NeedsFarmSoilAttempts = 0;
+                state.NeedsFarmDeferWakes = 0;
+                RestoreFarmRoute(state, bot, "on valid soil");
+                return AfterNeedsFarmDispatch(state, bot,
+                    DispatchNeedsFarmLeg(bot, actor, merchantObjId, 0, position));
+            }
+            return StepNeedsFarmTravel(bot, actor, state, character, position);
+        }
+
+        state.NeedsFarmSoilAttempts = 0;
+        state.NeedsFarmDeferWakes = 0;
+        return AfterNeedsFarmDispatch(state, bot,
+            DispatchNeedsFarmLeg(bot, actor, merchantObjId, 0, position));
+    }
+
+    /// <summary>
+    /// Mature-crop branch: in harvest range → harvest via the normal decision
+    /// path; out of range → approach through the ordinary route layer with
+    /// bounded re-arms (never spin), harvesting on arrival.
+    /// </summary>
+    private bool StepNeedsFarmMatureCrop(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state,
+        Character character, Vector3 position, Doodad crop)
+    {
+        state.NeedsFarmCropObjId = crop.ObjId;
+        state.NeedsFarmCropTemplateId = crop.TemplateId;
+        var dist = MathUtil.CalculateDistance(position, crop.Transform.World.Position, false);
+        if (dist > GameplayActor.MaxInteractRange)
+        {
+            var enRoute = state.NeedsFarmSoilTarget is { } soil
+                && state.Path is { IsFinished: false }
+                && MathUtil.CalculateDistance(state.Path.CurrentTarget, soil, false)
+                    <= GameplayActor.ArrivalRadius + 1f;
+            if (!enRoute)
+            {
+                if (state.NeedsFarmSoilAttempts >= NeedsFarmMaxSoilAttempts)
+                {
+                    SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
+                        $"mature crop {crop.ObjId} unreachable ({dist:F1}m) — holding, no harvest issued");
+                    return false;
+                }
+                state.NeedsFarmSoilAttempts++;
+                state.NeedsFarmSoilTarget = null; // stale/detoured destination discarded before re-arm
+                ArmFarmRoute(state, bot, crop.Transform.World.Position,
+                    $"mature crop {crop.ObjId} at {dist:F1}m — approaching");
+            }
+            SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Traveling,
+                $"mature crop {crop.ObjId} at {dist:F1}m — approaching");
+            return false;
+        }
+        state.NeedsFarmSoilAttempts = 0;
+        var merchantObjId = ResolveSeedMerchant(character, position);
+        return AfterNeedsFarmDispatch(state, bot,
+            DispatchNeedsFarmLeg(bot, actor, merchantObjId, crop.ObjId, position, offerPlant: false));
+    }
+
+    /// <summary>
+    /// Travel-to-soil branch: on soil → restore the patrol, clear the
+    /// episode, and plant normally this wake; en-route → yield the wake to
+    /// the route layer; stale/finished route while still off soil → discard
+    /// and boundedly re-resolve, else bounded defer (never spin forever).
+    /// </summary>
+    private bool StepNeedsFarmTravel(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state,
+        Character character, Vector3 position)
+    {
+        if (IsValidFarmSoil(character, position))
+        {
+            state.NeedsFarmSoilAttempts = 0;
+            state.NeedsFarmDeferWakes = 0;
+            RestoreFarmRoute(state, bot, "arrived on valid soil");
+            var merchantObjId = ResolveSeedMerchant(character, position);
+            return AfterNeedsFarmDispatch(state, bot,
+                DispatchNeedsFarmLeg(bot, actor, merchantObjId, 0, position));
+        }
+        if (state.NeedsFarmSoilTarget is { } target
+            && state.Path is { IsFinished: false }
+            && MathUtil.CalculateDistance(state.Path.CurrentTarget, target, false) <= GameplayActor.ArrivalRadius + 1f)
+        {
+            // En-route: yield the wake to the route layer WITHOUT running
+            // the decision — the decision's Rest fallback would Stop() the
+            // live route MoveTo leg through the same actor every wake,
+            // strangling the walk to one tick per wake (live E2E finding).
+            SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Traveling,
+                $"en-route to soil ({target.X:F0},{target.Y:F0})");
+            return false;
+        }
+        if (state.NeedsFarmSoilTarget != null)
+        {
+            state.NeedsFarmSoilTarget = null;
+            state.NeedsFarmSoilAttempts++;
+            state.NeedsFarmReason = "soil destination stale/unreachable — discarded";
+        }
+        state.NeedsFarmDeferWakes++;
+        var resolveWake = state.NeedsFarmDeferWakes <= 1
+            || (state.NeedsFarmDeferWakes - 1) % NeedsFarmSoilResolveIntervalWakes == 0;
+        if (resolveWake && state.NeedsFarmSoilAttempts <= NeedsFarmMaxSoilAttempts)
+        {
+            var resolved = ResolveSoilTarget(character, position);
+            if (resolved != null)
+            {
+                state.NeedsFarmDeferWakes = 0;
+                ArmFarmRoute(state, bot, resolved.Value,
+                    $"soil resolved ({resolved.Value.X:F0},{resolved.Value.Y:F0}) — traveling");
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Traveling, state.NeedsFarmReason);
+                return false;
+            }
+        }
+        RestoreFarmRoute(state, bot, "no farm nearby — bounded defer");
+        SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.SeekingSoil,
+            state.NeedsFarmSoilAttempts > NeedsFarmMaxSoilAttempts
+                ? "no farm nearby — resolve budget spent, holding defer"
+                : "no farm nearby — bounded defer");
+        return false;
+    }
+
+    /// <summary>
+    /// Dispatch tail: maps the decision outcome onto the loop phase (the
+    /// observability seam — phase + target + reason stay readable off the
+    /// state) and records a landed plant's crop for the wait branch. Keeps
+    /// the 0b contract: true only when decision work landed (Completed).
+    /// </summary>
+    private bool AfterNeedsFarmDispatch(BotRoamState state, PlayerBotRuntime bot,
+        NeedsDecisionScenario.NeedsRunResult? result)
+    {
+        if (result == null)
+        {
+            SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle, "actor seam unavailable");
+            return false;
+        }
+        var landed = result.WorkSelected && result.Request?.State == ActorLifecycleState.Completed;
+        if (landed)
+        {
+            Logger.Debug("Roam needs leg completed for bot {CharacterId}: {Action} ({Detail})",
+                bot.CharacterId, result.SelectedAction, result.Request!.Detail);
+        }
+        switch (result.SelectedAction)
+        {
+            case ActorActionType.Plant when landed
+                && result.Request!.Result is uint plantedObjId && plantedObjId != 0:
+                state.NeedsFarmCropObjId = plantedObjId;
+                state.NeedsFarmCropTemplateId =
+                    ResolveDoodad(bot.Character, plantedObjId)?.TemplateId ?? 0;
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
+                    $"planted crop {plantedObjId} — waiting maturity");
+                break;
+            case ActorActionType.Plant when landed:
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Planting, "plant landed without crop objId");
+                break;
+            case ActorActionType.Plant:
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Planting,
+                    $"plant dispatched ({result.Request?.State})");
+                break;
+            case ActorActionType.Harvest when landed:
+                var harvested = state.NeedsFarmCropObjId;
+                state.NeedsFarmCropObjId = 0;
+                state.NeedsFarmCropTemplateId = 0;
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Replanting,
+                    $"harvested crop {harvested} — re-evaluating (seed+output → replant)");
+                break;
+            case ActorActionType.Harvest:
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Harvesting,
+                    $"harvest dispatched ({result.Request?.State})");
+                break;
+            case ActorActionType.Buy when landed:
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle, "seed bought — re-evaluating");
+                break;
+            default:
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle,
+                    $"rest/reject ({result.SelectedAction}) — yielding");
+                break;
+        }
+        return landed;
+    }
+
+    /// <summary>
+    /// Seed-merchant discovery (the existing shop-range head of the leg,
+    /// extracted verbatim): nearest in-range merchant whose pack sells the
+    /// seed, 0 when none.
+    /// </summary>
+    private uint ResolveSeedMerchant(Character character, Vector3 position)
+    {
+        var world = character.ParentWorld;
+        uint merchantObjId = 0;
+        if (world == null)
+            return 0;
+        var bestDist = GameplayActor.MaxShopRange;
+        var merchants = (NearbyNpcProvider ?? DefaultNearbyNpcs)(character, NeedsFarmPerceptionRadius);
+        foreach (var npc in merchants)
+        {
+            if (npc?.Template == null || !npc.Template.Merchant || npc.Template.MerchantPackId == 0)
+                continue;
+            var pack = NpcManager.Instance.GetGoods(npc.Template.MerchantPackId);
+            if (pack == null || !pack.SellsItem(NeedsFarmSeedItemTemplateId))
+                continue;
+            var d = MathUtil.CalculateDistance(position, npc.Transform.World.Position, false);
+            if (d <= bestDist)
+            {
+                bestDist = d;
+                merchantObjId = npc.ObjId;
+            }
+        }
+        return merchantObjId;
+    }
+
+    /// <summary>
+    /// Nearest owned/public crop in perception (the existing crop-scan head
+    /// of the leg, extracted verbatim but returning the doodad so the wait
+    /// branch can read its phase without a second lookup).
+    /// </summary>
+    private Doodad? NearestNeedsFarmCrop(Character character, Vector3 position)
+    {
+        Doodad? best = null;
+        var bestDist = float.MaxValue;
+        foreach (var doodad in (NearbyDoodadProvider ?? DefaultNearbyDoodads)(character, NeedsFarmPerceptionRadius))
+        {
+            if (doodad == null || doodad.Despawn > DateTime.MinValue)
+                continue;
+            if (!IsNeedsFarmCrop(doodad, character))
+                continue;
+            var d = MathUtil.CalculateDistance(position, doodad.Transform.World.Position, false);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = doodad;
+            }
+        }
+        return best;
+    }
+
+    private static int SeedInBag(Character character)
+        => character.Inventory?.GetItemsCount(SlotType.Inventory, NeedsFarmSeedItemTemplateId) ?? 0;
+
+    private Doodad? ResolveDoodad(Character character, uint doodadObjId)
+        => DoodadResolver != null
+            ? DoodadResolver(character, doodadObjId)
+            : character.ParentWorld?.GetDoodad(doodadObjId);
+
+    /// <summary>
+    /// Tracked-crop liveness: null/gone, despawn-scheduled, template-swapped,
+    /// or no longer ours (ownership change) all read stale. Maturity stays
+    /// the engine's gate — this only decides whether the track is OURS.
+    /// </summary>
+    private static bool IsTrackedCropLive(Doodad? tracked, Character character, BotRoamState state)
+    {
+        if (tracked == null || tracked.Despawn > DateTime.MinValue)
+            return false;
+        if (state.NeedsFarmCropTemplateId != 0 && tracked.TemplateId != state.NeedsFarmCropTemplateId)
+            return false;
+        try
+        {
+            return IsNeedsFarmCrop(tracked, character);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void DropTrackedCrop(BotRoamState state, PlayerBotRuntime bot, string reason)
+    {
+        state.NeedsFarmCropObjId = 0;
+        state.NeedsFarmCropTemplateId = 0;
+        state.NeedsFarmReason = reason;
+        Logger.Debug("Roam needs-farm loop bot {CharacterId}: dropped tracked crop — {Reason}",
+            bot.CharacterId, reason);
+    }
+
+    /// <summary>
+    /// Maturity read: the same data-driven harvestability the Harvest engine
+    /// path resolves (current phase carries a loot-linked interaction).
+    /// Never mutates — a probe, not a transition.
+    /// </summary>
+    private static bool IsCropMature(Doodad doodad)
+    {
+        try
+        {
+            return M3aM4ReplayScenario.TryGetHarvestSkill(doodad, out _);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Valid plant soil for our seed: the same membership + doodad-type legs
+    /// the decision's perception gate mirrors (the engine revalidates the
+    /// count cap fail-closed at dispatch).
+    /// </summary>
+    private bool IsValidFarmSoil(Character character, Vector3 position)
+    {
+        if (FarmSoilProvider != null)
+        {
+            try
+            {
+                return FarmSoilProvider(character, position);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        var world = character.ParentWorld;
+        if (world == null)
+            return false;
+        if (!PublicFarmManager.Instance.InPublicFarm(world.Template, position))
+            return false;
+        var farmType = PublicFarmManager.Instance.GetFarmType(world, position);
+        if (farmType == FarmType.Invalid)
+            return false;
+        var doodadId = ItemManager.Instance.GetDoodadIdFromItem(NeedsFarmSeedItemTemplateId);
+        if (doodadId == 0)
+            return false;
+        return CommonFarmGameData.Instance.GetAllowedDoodads(farmType).Contains(doodadId);
+    }
+
+    /// <summary>
+    /// Nearest valid soil: deterministic spiral (8 compass points per ring)
+    /// to the perception radius, then a coarser bounded discovery extension.
+    /// The decision says "need valid soil"; this owns waypoints.
+    /// </summary>
+    private Vector3? ResolveSoilTarget(Character character, Vector3 from)
+    {
+        foreach (var candidate in SoilSpiralCandidates(from, NeedsFarmPerceptionRadius, 5f))
+        {
+            if (IsValidFarmSoil(character, candidate))
+                return WithGroundZ(character, candidate, from.Z);
+        }
+        foreach (var candidate in SoilSpiralCandidates(from, NeedsFarmSoilDiscoveryRadius,
+                     NeedsFarmSoilDiscoveryStep, NeedsFarmPerceptionRadius))
+        {
+            if (IsValidFarmSoil(character, candidate))
+                return WithGroundZ(character, candidate, from.Z);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Ground-pins a resolved soil destination (live E2E finding): the
+    /// spiral carries the anchor's Z, but terrain along the walk can sit
+    /// meters below it — and the actor's MoveTo arrival gate is 3D
+    /// (flat AND Z within <see cref="GameplayActor.ArrivalRadius"/>), so a
+    /// stale-Z target never completes and the bot parks at its destination
+    /// reporting Traveling forever. Sample the same height source the step
+    /// clamp reads (terrain height, else reference height); 0 = no data →
+    /// keep the anchor Z.
+    /// </summary>
+    private Vector3 WithGroundZ(Character character, Vector3 candidate, float fallbackZ)
+    {
+        float groundZ;
+        try
+        {
+            groundZ = GroundHeightProvider != null
+                ? GroundHeightProvider(candidate, character.Transform.ZoneId)
+                : (WorldManager.PeekInstance?.GetTerrainHeight(character.Transform.ZoneId, candidate.X, candidate.Y) is { } th && th != 0f
+                    ? th
+                    : WorldManager.PeekInstance?.GetReferenceHeight(
+                        null, candidate.X, candidate.Y, candidate.Z, character.Transform.ZoneId) ?? 0f);
+        }
+        catch
+        {
+            groundZ = 0f;
+        }
+        return groundZ != 0f ? new Vector3(candidate.X, candidate.Y, groundZ) : candidate;
+    }
+
+    private static IEnumerable<Vector3> SoilSpiralCandidates(Vector3 origin, float maxRadius, float step,
+        float skipWithin = 0f)
+    {
+        for (var r = step; r <= maxRadius + 0.001f; r += step)
+        {
+            if (r <= skipWithin)
+                continue;
+            for (var k = 0; k < 8; k++)
+            {
+                var a = (float)(k * Math.PI / 4);
+                yield return new Vector3(
+                    origin.X + MathF.Cos(a) * r,
+                    origin.Y + MathF.Sin(a) * r,
+                    origin.Z);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Arms the ordinary route layer toward a farm destination (soil or a
+    /// mature crop): stashes an unfinished patrol once, then walks a
+    /// single-leg <c>PathTo</c> through the standard MoveTo legs. Never
+    /// writes the Transform — the actor tick owns movement.
+    /// </summary>
+    private void ArmFarmRoute(BotRoamState state, PlayerBotRuntime bot, Vector3 target, string reason)
+    {
+        if (state.NeedsFarmStashedRoute == null && state.Path is { IsFinished: false })
+            state.NeedsFarmStashedRoute = state.Path;
+        state.NeedsFarmSoilTarget = target;
+        state.NeedsFarmReason = reason;
+        SetRoamRoute(bot.Character, BotPath.PathTo(target));
+    }
+
+    /// <summary>
+    /// Yields the route layer back: restores the stashed patrol, or clears a
+    /// spent soil route to tick-only/dormant.
+    /// </summary>
+    private void RestoreFarmRoute(BotRoamState state, PlayerBotRuntime bot, string why)
+    {
+        if (state.NeedsFarmStashedRoute != null)
+        {
+            SetRoamRoute(bot.Character, state.NeedsFarmStashedRoute);
+            state.NeedsFarmStashedRoute = null;
+            Logger.Debug("Roam needs-farm loop bot {CharacterId}: patrol route restored ({Why})",
+                bot.CharacterId, why);
+        }
+        else if (state.Path is { IsFinished: true })
+        {
+            SetRoamRoute(bot.Character, null);
+        }
+        state.NeedsFarmSoilTarget = null;
+    }
+
+    /// <summary>
+    /// Phase observability: state-readable every wake (the test seam) plus
+    /// one log line per TRANSITION (steady states stay quiet).
+    /// </summary>
+    private void SetNeedsFarmPhase(BotRoamState state, PlayerBotRuntime bot, NeedsFarmLoopPhase phase, string reason)
+    {
+        state.NeedsFarmReason = reason;
+        if (state.NeedsFarmPhase == phase)
+            return;
+        state.NeedsFarmPhase = phase;
+        var target = state.NeedsFarmCropObjId != 0
+            ? $"crop={state.NeedsFarmCropObjId}"
+            : state.NeedsFarmSoilTarget is { } soil
+                ? $"soil=({soil.X:F0},{soil.Y:F0})"
+                : "target=-";
+        Logger.Info("Roam needs-farm loop bot {CharacterId}: {Phase} {Target} — {Reason}",
+            bot.CharacterId, phase, target, reason);
+    }
+
+    /// <summary>
+    /// Bounded production merchant discovery (the no-provider path): radius
+    /// discipline via <see cref="WorldManager.GetAround{T}"/> when the
+    /// character carries a region; the same radius over the world registry
+    /// for headless/test worlds without regions (production characters
+    /// always carry one, so the fallback never runs live). The shop-range
+    /// gate still applies per candidate — this only bounds the SCAN.
+    /// </summary>
+    private IEnumerable<Npc> DefaultNearbyNpcs(Character character, float radius)
+    {
+        var position = character.Transform.World.Position;
+        if (character.Region != null)
+            return WorldManager.GetAround<Npc>(character, radius);
+        var world = character.ParentWorld;
+        return world?.GetAllNpcs().Where(npc =>
+            npc != null && MathUtil.CalculateDistance(position, npc.Transform.World.Position, false) <= radius) ?? [];
+    }
+
+    /// <summary>
+    /// Bounded production crop discovery (the no-provider path): same shape
+    /// as <see cref="DefaultNearbyNpcs"/> over the player-doodad spawn
+    /// registry. Authoritative dispatch still validates at the engine gates.
+    /// </summary>
+    private IEnumerable<Doodad> DefaultNearbyDoodads(Character character, float radius)
+    {
+        var position = character.Transform.World.Position;
+        if (character.Region != null)
+            return WorldManager.GetAround<Doodad>(character, radius);
+        var world = character.ParentWorld;
+        return world?.SpawnManager?.GetAllPlayerDoodads()?.Where(doodad =>
+            doodad != null && MathUtil.CalculateDistance(position, doodad.Transform.World.Position, false) <= radius) ?? [];
+    }
+
+    /// <summary>
+    /// Needs-farm dispatch tail: runs one <see cref="NeedsDecisionScenario"/>
+    /// decision against the resolved targets. Split from the discovery head
+    /// so the bounded-discovery helpers sit between them as siblings. Returns
+    /// the run result so the caller can map phases and record the planted
+    /// crop; the 0b contract (true only on landed work) lives in
+    /// <see cref="AfterNeedsFarmDispatch"/> — not here.
+    /// </summary>
+    private NeedsDecisionScenario.NeedsRunResult? DispatchNeedsFarmLeg(PlayerBotRuntime bot, IGameplayActor actor, uint merchantObjId, uint cropObjId, Vector3 position)
+    {
+        return DispatchNeedsFarmLeg(bot, actor, merchantObjId, cropObjId, position, offerPlant: true);
+    }
+
+    /// <summary>
+    /// Needs-farm dispatch tail: runs one <see cref="NeedsDecisionScenario"/>
+    /// decision against the resolved targets. Split from the discovery head
+    /// so the bounded-discovery helpers sit between them as siblings. Returns
+    /// the run result so the caller can map phases and record the planted
+    /// crop; the 0b contract (true only on landed work) lives in
+    /// <see cref="AfterNeedsFarmDispatch"/> — not here.
+    ///
+    /// Mature-harvest precedence (live E2E finding): the decision's fixed
+    /// priorities rank Plant (25) above Harvest (10), so a bot standing on
+    /// soil with seed would plant FOREVER and starve its own mature crop.
+    /// The mature branch therefore dispatches with the plant candidate
+    /// unconfigured (seed 0 → refused before preference) — the decision's
+    /// own preconditions do the suppression, no priority surgery, no new
+    /// gameplay path.
+    /// </summary>
+    private NeedsDecisionScenario.NeedsRunResult? DispatchNeedsFarmLeg(PlayerBotRuntime bot, IGameplayActor actor, uint merchantObjId, uint cropObjId, Vector3 position, bool offerPlant)
+    {
+        if (actor is not GameplayActor concreteActor)
+            return null;
+
+        return NeedsDecisionScenario.Run(concreteActor, new NeedsDecisionScenario.NeedsOptions
         {
             CycleId = $"needs-farm-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}",
             HarvestDoodadObjId = cropObjId,
-            PlantSeedItemTemplateId = NeedsFarmSeedItemTemplateId,
+            PlantSeedItemTemplateId = offerPlant ? NeedsFarmSeedItemTemplateId : 0,
             PlantPosition = position,
             MerchantNpcObjId = merchantObjId,
             BuyItemTemplateId = NeedsFarmSeedItemTemplateId,
@@ -1004,15 +1642,6 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
             BuyUnitPrice = NeedsFarmSeedUnitPrice,
             FoodItemTemplateId = NeedsFarmFoodItemTemplateId
         });
-
-        if (result.WorkSelected && result.Request?.State == ActorLifecycleState.Completed)
-        {
-            Logger.Debug("Roam needs leg completed for bot {CharacterId}: {Action} ({Detail})",
-                bot.CharacterId, result.SelectedAction, result.Request.Detail);
-            return true;
-        }
-
-        return false;
     }
 
     /// <summary>

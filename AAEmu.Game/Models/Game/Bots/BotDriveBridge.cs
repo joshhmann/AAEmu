@@ -3646,6 +3646,49 @@ public sealed class BotDriveBridge
                     labor = character.LaborPower,
                 });
             }
+            case "place":
+            {
+                // SETUP-ONLY positioning for the needs-farm E2E loop: moves
+                // the bot to an explicit world position ONCE before the loop
+                // starts (the test then drives wakes only — no per-action
+                // commands). Region bookkeeping synced like the mailbox op.
+                // E2E-only, additive.
+                var px = GetFloat(root, "x", 0f);
+                var py = GetFloat(root, "y", 0f);
+                var pz = GetFloat(root, "z", 0f);
+                if (px == 0f && py == 0f)
+                    return Err("farm place requires 'x' and 'y'");
+                TeleportWithRegionSync(character!,
+                    new System.Numerics.Vector3(px, py, pz),
+                    character!.Transform.ZoneId);
+                character!.MarkDirty();
+                var p = character.Transform.World.Position;
+                var groundZ = 0f;
+                try
+                {
+                    groundZ = Core.Managers.World.WorldManager.Instance.GetTerrainHeight(
+                        character.Transform.ZoneId, p.X, p.Y);
+                }
+                catch
+                {
+                }
+                if (groundZ == 0f)
+                {
+                    try
+                    {
+                        groundZ = Core.Managers.World.WorldManager.Instance.GetReferenceHeight(
+                            null, p.X, p.Y, p.Z, character.Transform.ZoneId);
+                    }
+                    catch
+                    {
+                    }
+                }
+                return Ok(new
+                {
+                    x = p.X, y = p.Y, z = p.Z, zoneId = character.Transform.ZoneId,
+                    groundZ
+                });
+            }
             case "plant":
             {
                 var seedItem = GetUInt(root, "seed");
@@ -3741,6 +3784,123 @@ public sealed class BotDriveBridge
                     phase = doodad?.FuncGroupId ?? 0u,
                 });
             }
+            case "needs":
+            {
+                // LIVE needs-farm wake driver for the Tier 0 E2E loop (additive,
+                // E2E-only): enrolls the resolved bot in the live bot registry
+                // (Spawn + Activate when not already Active), wakes the live
+                // PlayerBotScheduler for it, waits for at least one scheduler
+                // step to run, then reports the observable loop state off the
+                // live BotRoamStepExecutor (phase + soil target + tracked crop
+                // + reason) plus position and audit evidence. No gameplay
+                // action is issued here — the scheduler wake owns the whole
+                // decision (buy/travel/plant/wait/harvest/replant); this op
+                // only enrolls, wakes, and observes.
+                var sub = root.TryGetProperty("op2", out var subEl) ? subEl.GetString()
+                    : root.TryGetProperty("sub", out var subEl2) ? subEl2.GetString() : "wake";
+                if (!string.Equals(sub, "wake", StringComparison.OrdinalIgnoreCase))
+                    return Err($"farm needs: unknown sub '{sub}' (want 'wake')");
+                var manager = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.IPlayerBotManager>();
+                var scheduler = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.IPlayerBotScheduler>();
+                var executor = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.BotRoamStepExecutor>();
+                if (manager == null || scheduler == null || executor == null)
+                    return Err("farm needs: bot scheduler/registry unavailable in DI");
+                var before = scheduler.GetMetrics().TotalStepsRun;
+                if (!manager.TryGet(character!.Id, out var runtime) || runtime == null)
+                {
+                    if (!manager.Spawn(character, "e2e-needs"))
+                        return Err($"farm needs: spawn refused for '{character.Name}'");
+                    if (!manager.TryGet(character.Id, out runtime) || runtime == null)
+                        return Err($"farm needs: '{character.Name}' not registered after spawn");
+                }
+                if (runtime.State != Core.Managers.Bots.PlayerBotState.Active)
+                {
+                    if (!manager.Activate(character.Id,
+                            new global::AAEmu.Game.Models.Game.Bots.BotContext { BotId = character.Id, Name = character.Name }, "e2e-needs"))
+                        return Err($"farm needs: activate refused for '{character.Name}'");
+                }
+                if (!scheduler.Wake(character.Id))
+                    return Err($"farm needs: scheduler refused wake for '{character.Name}'");
+                var waitMs = GetInt(root, "waitMs", 15000);
+                var deadline = Environment.TickCount64 + Math.Clamp(waitMs, 1000, 120000);
+                long afterSteps = before;
+                while (Environment.TickCount64 < deadline)
+                {
+                    afterSteps = scheduler.GetMetrics().TotalStepsRun;
+                    if (afterSteps > before)
+                        break;
+                    Thread.Sleep(200);
+                }
+                var p = character.Transform.World.Position;
+                var st = executor.GetBotState(character.Id);
+                // Audit evidence comes from the EXECUTOR's live actor (the
+                // instance the scheduler ticks) — a fresh GameplayActor
+                // carries an empty trace and would blind plant/harvest
+                // detection. Same for the live route (waypoints/finish).
+                var liveAudit = st?.Actor.AuditTrace;
+                var plants = liveAudit?.Count(r => r.Action == Core.Managers.Bots.ActorActionType.Plant) ?? 0;
+                var harvests = liveAudit?.Count(r => r.Action == Core.Managers.Bots.ActorActionType.Harvest) ?? 0;
+                var moves = liveAudit?.Count(r => r.Action == Core.Managers.Bots.ActorActionType.Move) ?? 0;
+                var lastMove = liveAudit?.LastOrDefault(r => r.Action == Core.Managers.Bots.ActorActionType.Move);
+                var route = st?.Path;
+                var liveReq = st?.Actor.ActiveRequest;
+                return Ok(new
+                {
+                    name = character.Name,
+                    id = character.Id,
+                    stepsBefore = before,
+                    stepsAfter = afterSteps,
+                    stepped = afterSteps > before,
+                    x = p.X, y = p.Y, z = p.Z,
+                    zoneId = character.Transform.ZoneId,
+                    needsLegActive = st?.NeedsLegActive ?? false,
+                    phase = st?.NeedsFarmPhase.ToString() ?? "unknown",
+                    reason = st?.NeedsFarmReason ?? "",
+                    soilX = st?.NeedsFarmSoilTarget?.X,
+                    soilY = st?.NeedsFarmSoilTarget?.Y,
+                    soilZ = st?.NeedsFarmSoilTarget?.Z,
+                    cropObjId = st?.NeedsFarmCropObjId ?? 0u,
+                    plants, harvests, moves,
+                    lastMoveState = lastMove?.Result.ToString(),
+                    lastMoveDetail = lastMove?.Detail,
+                    routeWaypoints = route?.Waypoints.Count ?? 0,
+                    routeFinished = route?.IsFinished ?? true,
+                    liveAction = liveReq?.Action.ToString(),
+                    liveState = liveReq?.State.ToString(),
+                    liveDetail = liveReq?.Detail,
+                });
+            }
+            case "soil":
+            {
+                const uint ProbeSeedItemId = 15659;
+                var world = character!.ParentWorld;
+                if (world == null)
+                    return Err("farm soil: bot has no world");
+                var from = character.Transform.World.Position;
+                var here = IsLiveFarmSoil(world, from, ProbeSeedItemId);
+                var nearX = GetFloat(root, "nearX", from.X);
+                var nearY = GetFloat(root, "nearY", from.Y);
+                var nearZ = GetFloat(root, "nearZ", from.Z);
+                var radius = GetFloat(root, "radius", 150f);
+                var step = GetFloat(root, "step", 5f);
+                var near = new System.Numerics.Vector3(nearX, nearY, nearZ);
+                var resolved = FindLiveFarmSoil(world, near, ProbeSeedItemId,
+                    Math.Clamp(radius, 5f, 500f), Math.Clamp(step, 1f, 25f));
+                return Ok(new
+                {
+                    x = from.X, y = from.Y, z = from.Z,
+                    zoneId = character.Transform.ZoneId,
+                    onSoil = here,
+                    found = resolved.HasValue,
+                    soilX = resolved?.X ?? 0f,
+                    soilY = resolved?.Y ?? 0f,
+                    soilZ = resolved?.Z ?? 0f,
+                    dist = resolved.HasValue
+                        ? System.Numerics.Vector3.Distance(from,
+                            new System.Numerics.Vector3(resolved.Value.X, resolved.Value.Y, from.Z))
+                        : -1f,
+                });
+            }
             case "harvest":
             {
                 var objId = GetUInt(root, "objId");
@@ -3765,6 +3925,58 @@ public sealed class BotDriveBridge
 
     private static float GetFloat(JsonElement root, string name, float defaultValue = 0f)
         => root.TryGetProperty(name, out var el) && el.TryGetSingle(out var v) ? v : defaultValue;
+
+    /// <summary>
+    /// Live valid-soil predicate for the soil probe: the same membership +
+    /// doodad-type legs the needs decision mirrors (the engine revalidates
+    /// the count cap fail-closed at dispatch — never called here, it emits
+    /// error packets on failure).
+    /// </summary>
+    private static bool IsLiveFarmSoil(AAEmu.Game.Models.Game.World.WorldInstance world,
+        System.Numerics.Vector3 position, uint seedItemTemplateId)
+    {
+        try
+        {
+            if (!Core.Managers.PublicFarmManager.Instance.InPublicFarm(world.Template, position))
+                return false;
+            var farmType = Core.Managers.PublicFarmManager.Instance.GetFarmType(world, position);
+            if (farmType == AAEmu.Game.Models.Game.CommonFarm.Static.FarmType.Invalid)
+                return false;
+            var doodadId = Core.Managers.ItemManager.Instance.GetDoodadIdFromItem(seedItemTemplateId);
+            if (doodadId == 0)
+                return false;
+            return GameData.CommonFarmGameData.Instance.GetAllowedDoodads(farmType).Contains(doodadId);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Deterministic spiral search for the nearest valid soil around a live
+    /// anchor (8 compass points per ring — the same shape the executor's
+    /// travel branch walks). Bounded by radius/step; null when none found.
+    /// </summary>
+    private static System.Numerics.Vector3? FindLiveFarmSoil(
+        AAEmu.Game.Models.Game.World.WorldInstance world,
+        System.Numerics.Vector3 anchor, uint seedItemTemplateId, float radius, float step)
+    {
+        for (var r = step; r <= radius + 0.001f; r += step)
+        {
+            for (var k = 0; k < 8; k++)
+            {
+                var a = (float)(k * Math.PI / 4);
+                var candidate = new System.Numerics.Vector3(
+                    anchor.X + MathF.Cos(a) * r,
+                    anchor.Y + MathF.Sin(a) * r,
+                    anchor.Z);
+                if (IsLiveFarmSoil(world, candidate, seedItemTemplateId))
+                    return candidate;
+            }
+        }
+        return null;
+    }
 
 
 

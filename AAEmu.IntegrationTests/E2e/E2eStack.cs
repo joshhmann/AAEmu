@@ -537,6 +537,13 @@ public static class E2eStack
             RedirectStandardError = true,
             UseShellExecute = false
         };
+        // The Tier 0 needs-farm module reads AAEMU_NEEDS_FARM_ENABLED at
+        // process boot (FromEnvironment, default OFF): inherit an explicit
+        // opt-in from the test runner so the live loop test can drive the
+        // needs.farm activity without touching the shared default.
+        var needsFarm = Environment.GetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED");
+        if (!string.IsNullOrEmpty(needsFarm))
+            psi.Environment["AAEMU_NEEDS_FARM_ENABLED"] = needsFarm;
 
         var p = Process.Start(psi)!;
         p.OutputDataReceived += (_, e) => { if (e.Data != null) WriteLog(log, e.Data); };

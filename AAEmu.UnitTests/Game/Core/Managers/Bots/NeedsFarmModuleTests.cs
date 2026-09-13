@@ -9,15 +9,26 @@ using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
+using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Models.Game.NPChar;
+using Microsoft.Extensions.Time.Testing;
 using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Merchant;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Tasks.Doodads;
 using AAEmu.UnitTests.Game.Housing;
 using AAEmu.UnitTests.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Utils;
+using System.Reflection;
+using AAEmu.Game.Models.Game.CommonFarm;
+using AAEmu.Game.Models.Game.CommonFarm.Static;
+using NeedsFarmLoopPhase = AAEmu.Game.Core.Managers.Bots.BotRoamStepExecutor.NeedsFarmLoopPhase;
+using AAEmu.Game.GameData;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -402,5 +413,704 @@ public class NeedsFarmModuleTests
         if (crop.FuncGroupId != CropHarvestLoopTests.MaturePhase)
             throw new InvalidOperationException($"crop did not reach mature phase (got {crop.FuncGroupId})");
         return crop;
+    }
+    // ------------------------------------------------------------ executor preemption (FIX 1)
+
+    private static class NeedsPreemptionRig
+    {
+        internal const uint NeedsMerchantNpcTemplateId = 91_201;
+        internal static uint NeedsMerchantPackId = 91_301;
+
+        internal static void SeedNeedsMerchantPack()
+        {
+            const System.Reflection.BindingFlags Flags =
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            var goodsField = typeof(NpcManager).GetField("Goods", Flags)
+                ?? typeof(NpcManager).GetField("<Goods>k__BackingField", Flags)
+                ?? throw new InvalidOperationException("Cannot locate NpcManager.Goods backing field");
+            var goods = (Dictionary<uint, MerchantGoods>)goodsField.GetValue(NpcManager.Instance)!;
+            if (!goods.TryGetValue(NeedsMerchantPackId, out var pack))
+            {
+                pack = new MerchantGoods(NeedsMerchantPackId);
+                goods[NeedsMerchantPackId] = pack;
+            }
+            pack.AddItemToStock(BotRoamStepExecutor.NeedsFarmSeedItemTemplateId, 0);
+        }
+
+        internal static (BotRoamStepExecutor Executor, GameplayActor Actor, PlayerBotRuntime Runtime, FakeTimeProvider Clock) CreateExecutor(
+            (GameplayActor Actor, HeadlessSession Session) rigged,
+            string activity,
+            Func<Character, float, IEnumerable<Npc>>? nearbyNpcs = null,
+            Func<Character, float, IEnumerable<Doodad>>? nearbyDoodads = null)
+        {
+            var (actor, _) = rigged;
+            var runtime = new PlayerBotRuntime(actor.Character, "needs-preempt");
+            var clock = new FakeTimeProvider();
+            BotRoamStepExecutor executor = new()
+            {
+                ActorFactory = _ => actor,
+                TimeProvider = clock,
+                ActiveCadence = TimeSpan.FromMilliseconds(100),
+                RoamSpeed = 2f,
+                EnableWildlifeHunt = true,
+                EnableWildlifeButcher = true,
+                HuntScanInterval = TimeSpan.FromMilliseconds(100),
+                ButcherScanInterval = TimeSpan.FromMilliseconds(100),
+                HuntCastInterval = TimeSpan.FromMilliseconds(100),
+                ActiveActivityProvider = _ => activity,
+                NearbyNpcProvider = nearbyNpcs,
+                NearbyDoodadProvider = nearbyDoodads,
+                UnitResolver = (c, id) => c.ParentWorld?.GetUnit(id),
+                DoodadResolver = (c, id) => c.ParentWorld?.GetDoodad(id)
+            };
+            return (executor, actor, runtime, clock);
+        }
+
+        internal static Npc SpawnWildlife(GameplayActor actor, Vector3 position)
+        {
+            var wildlife = new Npc
+            {
+                ObjId = (uint)Random.Shared.Next(50_000, 60_000),
+                Hp = 100,
+                MaxHp = 100,
+                Faction = new SystemFaction { Id = (FactionsEnum)115 }
+            };
+            wildlife.Transform.World.Position = position;
+            return wildlife;
+        }
+
+        internal static Doodad SpawnOwnedCrop(GameplayActor actor, HeadlessSession session, Vector3 position)
+        {
+            var crop = new Doodad
+            {
+                TemplateId = CropHarvestLoopTests.PotatoDoodadId,
+                OwnerType = DoodadOwnerType.Character,
+                OwnerId = actor.Character.Id
+            };
+            crop.FuncGroupId = CropHarvestLoopTests.MaturePhase;
+            crop.Transform = actor.Character.Transform.CloneDetached(crop);
+            crop.IsPersistent = false;
+            session.World.AddObject(crop);
+            session.World.SpawnManager?.AddPlayerDoodad(crop);
+            crop.Transform.Local.SetPosition(position);
+            return crop;
+        }
+    }
+
+    [Test]
+    public async Task StepAsync_NeedsFarmActiveAndWorkCompletes_PreemptsWildlifeAcquisitionAndRoute()
+    {
+        // CASE 1: needs.farm active + a completable needs action (buy the
+        // seed at an in-range merchant) + visible wildlife + an armed route
+        // → needs executes (Buy lands), NO wildlife target is acquired, NO
+        // roam leg is issued.
+        var rigged = CreateActorOnUniqueWorld("nf-preempt-1");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId,
+            price: (int)BotRoamStepExecutor.NeedsFarmSeedUnitPrice, refund: 0, sellable: false);
+        NeedsPreemptionRig.SeedNeedsMerchantPack();
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: NeedsPreemptionRig.NeedsMerchantNpcTemplateId,
+            packId: NeedsPreemptionRig.NeedsMerchantPackId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId, TestPosition);
+        var merchant = session.World.GetNpc(merchantObjId)!;
+        var wildlife = NeedsPreemptionRig.SpawnWildlife(actor, TestPosition + new Vector3(2f, 0f, 0f));
+        var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "needs.farm",
+            nearbyNpcs: (_, _) => [wildlife, merchant],
+            nearbyDoodads: (_, _) => []);
+        executor.SetRoamRoute(runtime.Character,
+            new BotPath([TestPosition + new Vector3(50f, 0f, 0f)], BotPath.LoopMode.Loop));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Buy
+            && r.Result == ActorLifecycleState.Completed)).IsTrue();
+        await Assert.That(actor.Character.CurrentTarget).IsNull();
+        await Assert.That(executor.GetBotState(runtime.CharacterId)?.TargetNpcObjId ?? 0).IsEqualTo(0u);
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Move)).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_NeedsFarmActive_PreemptsButcherAcquisition()
+    {
+        // CASE 2: needs.farm active + completable needs work (buy) +
+        // butcherable livestock + an armed route → needs wins the wake: no
+        // butcher target acquired, no Interact issued, no roam leg issued.
+        LivestockInteractionRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-preempt-2");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId,
+            price: (int)BotRoamStepExecutor.NeedsFarmSeedUnitPrice, refund: 0, sellable: false);
+        NeedsPreemptionRig.SeedNeedsMerchantPack();
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: NeedsPreemptionRig.NeedsMerchantNpcTemplateId,
+            packId: NeedsPreemptionRig.NeedsMerchantPackId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId, TestPosition);
+        var merchant = session.World.GetNpc(merchantObjId)!;
+        var cow = new Doodad
+        {
+            TemplateId = LivestockInteractionTests.DairyCalfDoodadId,
+            OwnerType = DoodadOwnerType.Character,
+            OwnerId = actor.Character.Id,
+            IsPersistent = false
+        };
+        cow.FuncGroupId = LivestockInteractionTests.CowPhase;
+        cow.Transform = actor.Character.Transform.CloneDetached(cow);
+        cow.Transform.Local.SetPosition(TestPosition + new Vector3(2f, 0f, 0f));
+        session.World.AddObject(cow);
+        session.World.SpawnManager?.AddPlayerDoodad(cow);
+        var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "needs.farm",
+            nearbyNpcs: (_, _) => [merchant],
+            nearbyDoodads: (_, _) => [cow]);
+        executor.SetRoamRoute(runtime.Character,
+            new BotPath([TestPosition + new Vector3(50f, 0f, 0f)], BotPath.LoopMode.Loop));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Buy
+            && r.Result == ActorLifecycleState.Completed)).IsTrue();
+        await Assert.That(executor.GetBotState(runtime.CharacterId)?.TargetButcherDoodadObjId ?? 0).IsEqualTo(0u);
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Interact)).IsFalse();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Move)).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_NoNeedsActivity_WildlifeButcherAndRouteUnchanged()
+    {
+        // CASE 3: no needs activity → the opportunistic legs behave exactly
+        // as before: wildlife is acquired and the route still issues legs
+        // when nothing competes.
+        var rigged = CreateActorOnUniqueWorld("nf-preempt-3");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        var wildlife = NeedsPreemptionRig.SpawnWildlife(actor, TestPosition + new Vector3(2f, 0f, 0f));
+        var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "presence.roam",
+            nearbyNpcs: (_, _) => [wildlife],
+            nearbyDoodads: (_, _) => []);
+        executor.SetRoamRoute(runtime.Character,
+            new BotPath([TestPosition + new Vector3(50f, 0f, 0f)], BotPath.LoopMode.Loop));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.Character.CurrentTarget).IsNotNull();
+        await Assert.That(actor.Character.CurrentTarget!.ObjId).IsEqualTo(wildlife.ObjId);
+        await Assert.That(executor.GetBotState(runtime.CharacterId)?.NeedsLegActive ?? true).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_ConflictActivity_PreemptsNeedsFarm()
+    {
+        // CASE 4: a higher-priority conflict activity preempts needs — the
+        // needs branch never runs (no Buy) while PvP engages the hostile.
+        GameplayActorTestRig.ForceSeedTeamManager();
+        var rigged = CreateActorOnUniqueWorld("nf-preempt-4");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId,
+            price: (int)BotRoamStepExecutor.NeedsFarmSeedUnitPrice, refund: 0, sellable: false);
+        NeedsPreemptionRig.SeedNeedsMerchantPack();
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: NeedsPreemptionRig.NeedsMerchantNpcTemplateId,
+            packId: NeedsPreemptionRig.NeedsMerchantPackId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId, TestPosition);
+        var (foe, foeSession) = GameplayActorTestRig.CreateActor("nf-preempt-4-foe");
+        GameplayActorTestRig.JoinActorWorld(session, foe);
+        GameplayActorTestRig.SetPosition(foe, TestPosition + new Vector3(2f, 0f, 0f));
+        var runtime = new PlayerBotRuntime(actor.Character, "needs-preempt");
+        var clock = new FakeTimeProvider();
+        BotRoamStepExecutor executor = new()
+        {
+            ActorFactory = _ => actor,
+            TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            RoamSpeed = 2f,
+            EnableWildlifeHunt = true,
+            ActiveActivityProvider = _ => "conflict.23163",
+            CanAttackPlayer = (_, _) => true,
+            NearbyCharacterProvider = (_, _) => [foe.Character],
+            NearbyNpcProvider = (_, _) => [],
+            NearbyDoodadProvider = (_, _) => [],
+            UnitResolver = (c, id) => c.ParentWorld?.GetUnit(id),
+            DoodadResolver = (c, id) => c.ParentWorld?.GetDoodad(id)
+        };
+        _ = foeSession;
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Buy)).IsFalse();
+        await Assert.That(actor.Character.CurrentTarget).IsNotNull();
+        await Assert.That(actor.Character.CurrentTarget!.ObjId).IsEqualTo(foe.Character.ObjId);
+        await Assert.That(executor.GetBotState(runtime.CharacterId)?.NeedsLegActive ?? true).IsFalse();
+    }
+
+    // ------------------------------------------------------------ bounded discovery (FIX 2)
+
+    [Test]
+    public async Task StepAsync_NeedsCropOutsidePerceptionRange_NotSelected()
+    {
+        // Production no-provider path with a crop beyond the perception
+        // radius → bounded discovery drops it: no harvest dispatches.
+        var rigged = CreateActorOnUniqueWorld("nf-bound-1");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        actor.Character.LaborPower = 100;
+        var far = NeedsPreemptionRig.SpawnOwnedCrop(actor, session,
+            TestPosition + new Vector3(BotRoamStepExecutor.NeedsFarmPerceptionRadius + 20f, 0f, 0f));
+        var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "needs.farm",
+            nearbyNpcs: (_, _) => [],
+            nearbyDoodads: null); // null → production bounded path
+        _ = far;
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Harvest)).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_NeedsCropInsidePerceptionRange_SelectsHarvest()
+    {
+        // Same no-provider path with the crop inside the radius → the
+        // harvest dispatches and completes through the real engine path.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-bound-2");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 0);
+        actor.Character.LaborPower = 0;
+        actor.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.DoodadCreate,
+            CropHarvestLoopTests.PotatoSeedItemId, 5);
+        var crop = CropHarvestLoopRig.Plant(actor.Character, session.World,
+            CropHarvestLoopRig.MakeHouse(actor.Character));
+        crop.Transform.Local.SetPosition(TestPosition + new Vector3(2f, 0f, 0f));
+        (crop.FuncTask as DoodadFuncGrowthTask)?.Execute();
+        (crop.FuncTask as DoodadFuncGrowthTask)?.Execute();
+        if (crop.FuncGroupId != CropHarvestLoopTests.MaturePhase)
+            throw new InvalidOperationException($"crop did not reach mature phase (got {crop.FuncGroupId})");
+        var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "needs.farm",
+            nearbyNpcs: (_, _) => [],
+            nearbyDoodads: null); // null → production bounded path
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Harvest
+            && r.Result == ActorLifecycleState.Completed)).IsTrue();
+    }
+
+    [Test]
+    public async Task StepAsync_NeedsMerchantOutsidePerceptionRange_NotSelected()
+    {
+        // A seed merchant beyond the perception radius → bounded discovery
+        // never resolves it: no Buy dispatches (the rest Stop lands instead).
+        var rigged = CreateActorOnUniqueWorld("nf-bound-3");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId,
+            price: (int)BotRoamStepExecutor.NeedsFarmSeedUnitPrice, refund: 0, sellable: false);
+        NeedsPreemptionRig.SeedNeedsMerchantPack();
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: NeedsPreemptionRig.NeedsMerchantNpcTemplateId,
+            packId: NeedsPreemptionRig.NeedsMerchantPackId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId,
+            TestPosition + new Vector3(BotRoamStepExecutor.NeedsFarmPerceptionRadius + 20f, 0f, 0f));
+        var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "needs.farm",
+            nearbyNpcs: null, // null → production bounded path
+            nearbyDoodads: (_, _) => []);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Buy)).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_NeedsMerchantInsidePerceptionRange_SelectsBuy()
+    {
+        // The same merchant inside the radius and in shop range → the buy
+        // dispatches and completes through the real engine path.
+        var rigged = CreateActorOnUniqueWorld("nf-bound-4");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId,
+            price: (int)BotRoamStepExecutor.NeedsFarmSeedUnitPrice, refund: 0, sellable: false);
+        NeedsPreemptionRig.SeedNeedsMerchantPack();
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: NeedsPreemptionRig.NeedsMerchantNpcTemplateId,
+            packId: NeedsPreemptionRig.NeedsMerchantPackId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId, TestPosition);
+        var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "needs.farm",
+            nearbyNpcs: null, // null → production bounded path
+            nearbyDoodads: (_, _) => []);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Buy
+            && r.Result == ActorLifecycleState.Completed)).IsTrue();
+    }
+
+    [Test]
+    public async Task StepAsync_NeedsDiscoveryNoProvider_UsesBoundedCandidateSet()
+    {
+        // The no-provider production path hands the leg a bounded candidate
+        // set, not the whole world: a far merchant + a far crop coexist with
+        // an in-range merchant, and the leg resolves the NEAR one while the
+        // far candidates never surface (asserted through the world lookups
+        // the engine itself validates at dispatch).
+        var rigged = CreateActorOnUniqueWorld("nf-bound-5");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId,
+            price: (int)BotRoamStepExecutor.NeedsFarmSeedUnitPrice, refund: 0, sellable: false);
+        NeedsPreemptionRig.SeedNeedsMerchantPack();
+        var nearObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: NeedsPreemptionRig.NeedsMerchantNpcTemplateId,
+            packId: NeedsPreemptionRig.NeedsMerchantPackId);
+        GameplayActorTestRig.SetNpcPosition(session, nearObjId, TestPosition);
+        var farObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: NeedsPreemptionRig.NeedsMerchantNpcTemplateId + 1,
+            packId: NeedsPreemptionRig.NeedsMerchantPackId);
+        GameplayActorTestRig.SetNpcPosition(session, farObjId,
+            TestPosition + new Vector3(BotRoamStepExecutor.NeedsFarmPerceptionRadius + 20f, 0f, 0f));
+        var farCrop = NeedsPreemptionRig.SpawnOwnedCrop(actor, session,
+            TestPosition + new Vector3(BotRoamStepExecutor.NeedsFarmPerceptionRadius + 30f, 0f, 0f));
+        var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "needs.farm",
+            nearbyNpcs: null, nearbyDoodads: null); // null → production bounded path
+        _ = farCrop;
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        var buys = actor.AuditTrace.Where(r => r.Action == ActorActionType.Buy).ToList();
+        await Assert.That(buys).IsNotEmpty();
+        await Assert.That(buys.All(r => r.TargetId == nearObjId)).IsTrue();
+        await Assert.That(buys.Any(r => r.TargetId == farObjId)).IsFalse();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Harvest)).IsFalse();
+    }
+
+    // ------------------------------------------------------------ travel-to-soil + maturity-wait/RESUME
+
+    private static (BotRoamStepExecutor Executor, PlayerBotRuntime Runtime, FakeTimeProvider Clock) FarmLoopRig(
+        (GameplayActor Actor, HeadlessSession Session) rigged,
+        Func<Character, Vector3, bool> soil,
+        Func<Character, float, IEnumerable<Doodad>>? doodads = null)
+    {
+        var (actor, _) = rigged;
+        var runtime = new PlayerBotRuntime(actor.Character, "needs-farm-loop");
+        var clock = new FakeTimeProvider();
+        BotRoamStepExecutor executor = new()
+        {
+            ActorFactory = _ => actor,
+            TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            RoamSpeed = 2f,
+            GroundHeightProvider = (_, _) => 0f,
+            ActiveActivityProvider = _ => "needs.farm",
+            NearbyNpcProvider = (_, _) => [],
+            NearbyDoodadProvider = doodads,
+            FarmSoilProvider = soil,
+            UnitResolver = (c, id) => c.ParentWorld?.GetUnit(id),
+            DoodadResolver = (c, id) => c.ParentWorld?.GetDoodad(id)
+        };
+        return (executor, runtime, clock);
+    }
+
+    private static void StockLoopSeed((GameplayActor Actor, HeadlessSession Session) rigged)
+        => GameplayActorTestRig.GrantItem(rigged.Actor,
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId, 3);
+
+    private static void SeedLoopPotatoAllowlist()
+    {
+        // The executor plants the CANONICAL potato seed (15659 → doodad
+        // 2259): IsValidFarmSoil reads the live CommonFarmGameData
+        // allowlist for Farm, which the TestSeed (93001) helper never
+        // touches. Missing-only additive — id-keyed so TearDown-safe.
+        var flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        var data = CommonFarmGameData.Instance;
+        var field = typeof(CommonFarmGameData).GetField("_farmGroupDoodads", flags)
+            ?? throw new InvalidOperationException("Cannot locate CommonFarmGameData._farmGroupDoodads");
+        var doodads = (Dictionary<uint, FarmGroupDoodads>)field.GetValue(data)!;
+        if (doodads == null)
+        {
+            doodads = [];
+            field.SetValue(data, doodads);
+        }
+        const uint LoopKey = 0x9F10_0001;
+        if (!doodads.TryGetValue(LoopKey, out var row)
+            || row.FarmGroupId != FarmType.Farm
+            || row.DoodadId != CropHarvestLoopTests.PotatoDoodadId)
+        {
+            doodads[LoopKey] = new FarmGroupDoodads
+            {
+                Id = LoopKey,
+                FarmGroupId = FarmType.Farm,
+                DoodadId = CropHarvestLoopTests.PotatoDoodadId,
+                ItemId = CropHarvestLoopTests.PotatoSeedItemId
+            };
+        }
+        var farmZones = (Dictionary<uint, FarmType>)GameplayActorTestRig.GetField(
+            PublicFarmManager.Instance, "_farmZones");
+        if (!farmZones.ContainsKey(GameplayActorTestRig.TestFarmSubZoneId))
+            farmZones[GameplayActorTestRig.TestFarmSubZoneId] = FarmType.Farm;
+    }
+
+    [Test]
+    public async Task StepAsync_SeedPresentOffSoil_ArmsRouteToSoil_NoTeleport()
+    {
+        // Seed present + off-soil → the route layer arms a BotPath to a
+        // resolved soil destination. The route layer walks on the SAME wake
+        // (branch 2 issues the MoveTo leg after the needs leg returns false,
+        // and the actor tick advances it) — so the bot must have moved TOWARD
+        // soil by a small bounded step (never teleported: displacement ≪
+        // the 10 m to soil), and no Plant dispatches off-soil.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-travel-1");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        StockLoopSeed(rigged);
+        GameplayActorTestRig.SetFarmGateEnabled(true);
+        SeedLoopPotatoAllowlist();
+        var soil = TestPosition + new Vector3(10f, 0f, 0f);
+        var (executor, runtime, clock) = FarmLoopRig(rigged,
+            (c, p) => MathUtil.CalculateDistance(p, soil, false) <= 1f,
+            (_, _) => []);
+        var before = actor.Character.Transform.World.Position;
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Traveling);
+        await Assert.That(state.NeedsFarmSoilTarget).IsNotNull();
+        var route = executor.GetRoamRoute(runtime.CharacterId);
+        await Assert.That(route).IsNotNull();
+        await Assert.That(MathUtil.CalculateDistance(route!.CurrentTarget, soil, false) <= 1f).IsTrue();
+        var moved = MathUtil.CalculateDistance(before, actor.Character.Transform.World.Position, false);
+        await Assert.That(moved > 0f && moved < 5f).IsTrue();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Plant)).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_TravelArrival_PlantsNormally()
+    {
+        // Armed soil route + arrival (position AT soil) → patrol restored,
+        // plant dispatches through the normal decision path.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-travel-2");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        StockLoopSeed(rigged);
+        GameplayActorTestRig.SetFarmGateEnabled(true);
+        SeedLoopPotatoAllowlist();
+        var soil = TestPosition + new Vector3(10f, 0f, 0f);
+        var (executor, runtime, clock) = FarmLoopRig(rigged,
+            (c, p) => MathUtil.CalculateDistance(p, soil, false) <= 1f,
+            (_, _) => []);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        // Arrival: stop the walk where it is NOT (the route leg is live),
+        // then stand the bot on soil and clear the spent route the way
+        // branch 3b would on arrival.
+        if (actor.ActiveRequest is { IsTerminal: false })
+            _ = actor.Stop();
+        GameplayActorTestRig.SetPosition(actor, soil);
+        executor.SetRoamRoute(actor.Character, null);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Plant)).IsTrue();
+        await Assert.That(executor.GetBotState(runtime.CharacterId)!.NeedsFarmSoilTarget).IsNull();
+    }
+
+    [Test]
+    public async Task StepAsync_StaleSoilDestination_DiscardsAndReResolvesBoundedly()
+    {
+        var rigged = CreateActorOnUniqueWorld("nf-travel-3");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        StockLoopSeed(rigged);
+        var soil = TestPosition + new Vector3(10f, 0f, 0f);
+        var (executor, runtime, clock) = FarmLoopRig(rigged, (c, p) => false, (_, _) => []);
+        executor.SetRoamRoute(actor.Character, BotPath.PathTo(soil));
+        executor.GetBotState(runtime.CharacterId)!.NeedsFarmSoilTarget = soil;
+        for (var i = 0; i < 60; i++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(runtime, CancellationToken.None);
+        }
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmSoilAttempts <= BotRoamStepExecutor.NeedsFarmMaxSoilAttempts + 1).IsTrue();
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.SeekingSoil);
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Plant)).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_NoFarmNearby_BoundedDefer_NoSpin()
+    {
+        var rigged = CreateActorOnUniqueWorld("nf-travel-4");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        StockLoopSeed(rigged);
+        var probes = 0;
+        var (executor, runtime, clock) = FarmLoopRig(rigged,
+            (c, p) => { probes++; return false; }, (_, _) => []);
+        for (var i = 0; i < 25; i++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(runtime, CancellationToken.None);
+        }
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.SeekingSoil);
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action is ActorActionType.Plant or ActorActionType.Move)).IsFalse();
+        await Assert.That(probes < 25 * 73).IsTrue();
+    }
+
+    [Test]
+    public async Task StepAsync_PlantedImmature_Defers_NoHarvestIssued()
+    {
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-wait-1");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        actor.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.DoodadCreate,
+            CropHarvestLoopTests.PotatoSeedItemId, 5);
+        var crop = CropHarvestLoopRig.Plant(actor.Character, session.World,
+            CropHarvestLoopRig.MakeHouse(actor.Character));
+        crop.Transform.Local.SetPosition(TestPosition + new Vector3(2f, 0f, 0f));
+        var (executor, runtime, clock) = FarmLoopRig(rigged, (c, p) => true, (_, _) => [crop]);
+        for (var i = 0; i < 3; i++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(runtime, CancellationToken.None);
+        }
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Harvest)).IsFalse();
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.WaitingMaturity);
+        await Assert.That(state.NeedsFarmCropObjId).IsEqualTo(crop.ObjId);
+    }
+
+    [Test]
+    public async Task StepAsync_CropVanished_StaleDropped_ReEvaluates()
+    {
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-wait-2");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        actor.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.DoodadCreate,
+            CropHarvestLoopTests.PotatoSeedItemId, 5);
+        var crop = CropHarvestLoopRig.Plant(actor.Character, session.World,
+            CropHarvestLoopRig.MakeHouse(actor.Character));
+        crop.Transform.Local.SetPosition(TestPosition + new Vector3(2f, 0f, 0f));
+        List<Doodad> crops = [crop];
+        var (executor, runtime, clock) = FarmLoopRig(rigged, (c, p) => true, (_, _) => crops);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        session.World.RemoveObject(crop);
+        crops.Clear(); // scan no longer sees it either — gone means gone
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(executor.GetBotState(runtime.CharacterId)!.NeedsFarmCropObjId).IsEqualTo(0u);
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Harvest)).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_MatureCrop_HarvestsViaNormalPath()
+    {
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-wait-3");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        actor.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.DoodadCreate,
+            CropHarvestLoopTests.PotatoSeedItemId, 5);
+        var crop = CropHarvestLoopRig.Plant(actor.Character, session.World,
+            CropHarvestLoopRig.MakeHouse(actor.Character));
+        crop.Transform.Local.SetPosition(TestPosition + new Vector3(2f, 0f, 0f));
+        (crop.FuncTask as DoodadFuncGrowthTask)?.Execute();
+        (crop.FuncTask as DoodadFuncGrowthTask)?.Execute();
+        if (crop.FuncGroupId != CropHarvestLoopTests.MaturePhase)
+            throw new InvalidOperationException($"crop did not reach mature phase (got {crop.FuncGroupId})");
+        var (executor, runtime, clock) = FarmLoopRig(rigged, (c, p) => true, (_, _) => [crop]);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Harvest
+            && r.Result == ActorLifecycleState.Completed)).IsTrue();
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Replanting);
+        await Assert.That(state.NeedsFarmCropObjId).IsEqualTo(0u);
+    }
+
+    [Test]
+    public async Task StepAsync_NeedsInactive_RoamUnchanged()
+    {
+        var rigged = CreateActorOnUniqueWorld("nf-wait-4");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        var clock = new FakeTimeProvider();
+        BotRoamStepExecutor executor = new()
+        {
+            ActorFactory = _ => actor,
+            TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            RoamSpeed = 2f,
+            GroundHeightProvider = (_, _) => 0f,
+            ActiveActivityProvider = _ => "presence.roam",
+            NearbyNpcProvider = (_, _) => [],
+            NearbyDoodadProvider = (_, _) => []
+        };
+        var runtime = NewBot(actor);
+        executor.SetRoamRoute(runtime.Character,
+            new BotPath([TestPosition + new Vector3(10f, 0f, 0f)], BotPath.LoopMode.Loop));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        // The route layer issues the MoveTo leg on the same wake (the leg is
+        // Running, not terminal — audit emits only on terminal transition —
+        // so the live ActiveRequest is the proof, the BotRoamStepExecutorTests
+        // precedent).
+        await Assert.That(actor.ActiveRequest).IsNotNull();
+        await Assert.That(actor.ActiveRequest!.Action).IsEqualTo(ActorActionType.Move);
+        await Assert.That(executor.GetBotState(runtime.CharacterId)?.NeedsFarmPhase
+            ?? NeedsFarmLoopPhase.Idle).IsEqualTo(NeedsFarmLoopPhase.Idle);
     }
 }
