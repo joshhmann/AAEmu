@@ -207,6 +207,7 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
         => Actor.BuyAuction(lotId, price, idempotencyKey);
 
     public ActorAuditRecord? FindByKey(string idempotencyKey) => Actor.FindByKey(idempotencyKey);
+    public bool RecordBackstopTimeout(ActorRequest request) => Actor.RecordBackstopTimeout(request);
 
     public void Tick(TimeSpan elapsed) => Actor.Tick(elapsed);
 

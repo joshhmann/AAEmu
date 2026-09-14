@@ -4229,6 +4229,18 @@ public class GameplayActor : IGameplayActor
         => _ledger.TryGetOutcome(idempotencyKey, out var entry)
             ? _trace.LastOrDefault(r => r.TraceId == entry.TraceId)
             : null;
+    /// <inheritdoc />
+    public bool RecordBackstopTimeout(ActorRequest request)
+    {
+        // Q-ledger parity: the queue expired this request past its budget
+        // without Finish running. Lock the explicit key as TimedOut — the
+        // execution started and the effect may have applied, exactly like
+        // any other TimedOut. Dedupe refusals never reach Running, so they
+        // carry no outcome to record (same guard as Finish).
+        if (request is not { State: ActorLifecycleState.TimedOut, IsDedupeRejection: false })
+            return false;
+        return _ledger.TryRecordOutcome(request.IdempotencyKey, request.TraceId, request.State, request.Failure);
+    }
 
     private Unit? ResolveUnit(uint objId)
     {

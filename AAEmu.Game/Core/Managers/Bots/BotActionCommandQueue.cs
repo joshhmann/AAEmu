@@ -401,6 +401,10 @@ public sealed class BotActionCommandQueue
             {
                 _ = request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action), "action budget exceeded (queue backstop)");
                 _apiOwned.TryRemove(requestTraceId, out _);
+                // Q-ledger parity: the actor's Finish never ran, so record
+                // the TimedOut outcome explicitly — otherwise a same-key
+                // retry after backstop-expiry would execute (not dedupe-safe).
+                _ = entry.Actor?.RecordBackstopTimeout(request);
                 CaptureAudit(entry, request);
                 PublishSnapshot(entry);
                 continue;

@@ -339,6 +339,39 @@ public class BotActionCommandQueueTests
         await Assert.That(rig.Queue.TryGetSnapshot(observe.TraceId, out var o)).IsTrue();
         await Assert.That(o.State).IsEqualTo(nameof(ActorLifecycleState.Completed));
     }
+    [Test]
+    public async Task BackstopExpiry_RecordsLedgerOutcome_SameKeyRetryRefused()
+    {
+        // Q-ledger parity: a backstop-expired request must lock its explicit
+        // key as TimedOut even though the actor's Finish never ran —
+        // otherwise the same-key retry would execute instead of being
+        // dedupe-refused (double-effect risk when the stalled execution had
+        // already applied).
+        var rig = CreateRig();
+
+        var first = rig.Queue.Enqueue("api-bot",
+            new BotActionSpec(BotActionKind.Move,
+                Destination: new Vector3(50, 0, 0),
+                Timeout: TimeSpan.FromSeconds(2),
+                IdempotencyKey: "k-ledger"));
+        rig.Queue.DrainCommands();
+
+        rig.Clock.Advance(TimeSpan.FromSeconds(5));
+        rig.Queue.DrainCommands();
+
+        await Assert.That(rig.Queue.TryGetSnapshot(first.TraceId, out var f)).IsTrue();
+        await Assert.That(f.State).IsEqualTo(nameof(ActorLifecycleState.TimedOut));
+
+        var retry = rig.Queue.Enqueue("api-bot",
+            new BotActionSpec(BotActionKind.Move,
+                Destination: new Vector3(50, 0, 0), IdempotencyKey: "k-ledger"));
+        rig.Queue.DrainCommands();
+
+        await Assert.That(rig.Queue.TryGetSnapshot(retry.TraceId, out var s)).IsTrue();
+        await Assert.That(s.State).IsEqualTo(nameof(ActorLifecycleState.Rejected));
+        await Assert.That(s.Detail).Contains("duplicate idempotency key");
+        await Assert.That(s.Detail).Contains("k-ledger");
+    }
 
     [Test]
     public async Task Enqueue_NoDrain_ThenDrainLater_Executes()

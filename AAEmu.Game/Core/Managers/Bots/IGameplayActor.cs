@@ -841,6 +841,16 @@ public interface IGameplayActor
     /// re-executing.
     /// </summary>
     ActorAuditRecord? FindByKey(string idempotencyKey);
+    /// <summary>
+    /// Records a queue-backstop expiry as a ledger outcome: the request was
+    /// force-transitioned to TimedOut without the actor's Finish running, so
+    /// without this the explicit idempotency key stays unrecorded and a
+    /// same-key retry would execute instead of being dedupe-refused.
+    /// Returns true when an outcome was recorded. Default no-op (false) so
+    /// delegating/fake implementations are unaffected; the production actor
+    /// overrides this to lock the key exactly like any other TimedOut.
+    /// </summary>
+    bool RecordBackstopTimeout(ActorRequest request) => false;
 
     /// <summary>
     /// Advances the active request one step (movement legs, timeout
