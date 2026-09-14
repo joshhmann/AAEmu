@@ -586,10 +586,18 @@ public enum NeedsFarmLoopPhase
         state.NeedsLegActive = false;
         if (!handledByParty && !pvpEngaged
             && ActiveActivityProvider?.Invoke(bot.CharacterId) is string needsActivity
-            && needsActivity.StartsWith("needs.", StringComparison.Ordinal)
-            && actor.ActiveRequest is not { IsTerminal: false })
+            && needsActivity.StartsWith("needs.", StringComparison.Ordinal))
         {
-            state.NeedsLegActive = StepNeedsFarmLeg(bot, actor, state);
+            if (actor.ActiveRequest is { IsTerminal: false } liveNeeds
+                && liveNeeds.Action == ActorActionType.Move
+                && state.NeedsFarmPhase != NeedsFarmLoopPhase.Traveling)
+            {
+                _ = actor.Stop();
+            }
+            if (actor.ActiveRequest is not { IsTerminal: false })
+            {
+                state.NeedsLegActive = StepNeedsFarmLeg(bot, actor, state);
+            }
         }
 
         // 1. Opportunistic wildlife hunt loop (skipped while fighting players,

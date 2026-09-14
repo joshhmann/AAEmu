@@ -1305,4 +1305,83 @@ public class NeedsFarmModuleTests
             RestoreTrade(potato, snapshot);
         }
     }
+    [Test]
+    public async Task StepAsync_BusyPatrolMove_PausesForDecision_BuyLands()
+    {
+        // Live-wake starvation (.165 finding): a patrolling bot holds a live
+        // Move leg, which TryBegin-skipped the needs leg forever while
+        // needs.farm stayed active. The 0b gate now pauses patrol/hunt
+        // movement for the decision tick: funded + seedless + merchant in
+        // range lands the seed Buy on the SAME wake instead of skipping.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-busy-1");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 10_000);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SeedTradeItemTemplate(
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId,
+            price: (int)BotRoamStepExecutor.NeedsFarmSeedUnitPrice, refund: 0, sellable: false);
+        NeedsPreemptionRig.SeedNeedsMerchantPack();
+        var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session,
+            npcTemplateId: NeedsPreemptionRig.NeedsMerchantNpcTemplateId,
+            packId: NeedsPreemptionRig.NeedsMerchantPackId);
+        GameplayActorTestRig.SetNpcPosition(session, merchantObjId, TestPosition);
+        var merchant = session.World.GetNpc(merchantObjId)!;
+        var (executor, _, runtime, clock) = NeedsPreemptionRig.CreateExecutor(rigged, "needs.farm",
+            nearbyNpcs: (_, _) => [merchant],
+            nearbyDoodads: (_, _) => []);
+
+        // Patrol-like movement: a live Move leg 50 m out (never arrives in
+        // one wake), the exact shape that starved the leg live.
+        _ = actor.MoveTo(TestPosition + new Vector3(50f, 0f, 0f), 2f, TimeSpan.FromSeconds(30));
+        await Assert.That(actor.ActiveRequest is { IsTerminal: false }).IsTrue();
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Stop)).IsTrue();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Buy
+            && r.Result == ActorLifecycleState.Completed)).IsTrue();
+        await Assert.That(GameplayActorTestRig.BagCount(actor,
+            BotRoamStepExecutor.NeedsFarmSeedItemTemplateId)).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task StepAsync_FarmTravelEnRoute_PreservesMovement_NoStop()
+    {
+        // The pause must never strangle farm travel itself: en-route to soil
+        // (Traveling phase, live farm-route Move) skips the decision without
+        // stopping, and the route layer keeps advancing the walk.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-busy-2");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        StockLoopSeed(rigged);
+        GameplayActorTestRig.SetFarmGateEnabled(true);
+        SeedLoopPotatoAllowlist();
+        var soil = TestPosition + new Vector3(10f, 0f, 0f);
+        var (executor, runtime, clock) = FarmLoopRig(rigged,
+            (c, p) => MathUtil.CalculateDistance(p, soil, false) <= 1f,
+            (_, _) => []);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(executor.GetBotState(runtime.CharacterId)!.NeedsFarmPhase)
+            .IsEqualTo(NeedsFarmLoopPhase.Traveling);
+        var distAfterWake1 = MathUtil.CalculateDistance(
+            actor.Character.Transform.World.Position, soil, false);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Stop)).IsFalse();
+        await Assert.That(executor.GetBotState(runtime.CharacterId)!.NeedsFarmPhase)
+            .IsEqualTo(NeedsFarmLoopPhase.Traveling);
+        await Assert.That(executor.GetBotState(runtime.CharacterId)!.NeedsLegActive).IsFalse();
+        var distAfterWake2 = MathUtil.CalculateDistance(
+            actor.Character.Transform.World.Position, soil, false);
+        await Assert.That(distAfterWake2 < distAfterWake1).IsTrue();
+    }
 }
