@@ -568,6 +568,14 @@ public class GameplayActor : IGameplayActor
 
         // Execute through the REAL engine path — the same call the
         // CSStartSkillPacket learned-skill branch makes.
+        //
+        // Q-gcd-shape (Phase-0 decision, for Phase-1 implementation): the
+        // no-bypass rule is locked — actor casts must ride the human gate
+        // (bypassGcd=false, SkillLastUsed/GlobalCooldown enforced) instead
+        // of the current Unit.UseSkill bypass. CooldownTime refusals map to
+        // Reject with the engine result in the audit detail (refusal-trace).
+        // No NPC-paced exception exists today; one requires a scoped,
+        // tagged justification, never a silent bypass.
         var result = Character.UseSkill(skillId, target);
         if (result == SkillResult.Success)
         {
@@ -1137,13 +1145,18 @@ public class GameplayActor : IGameplayActor
         request.Start($"playing cinema {cinemaId}");
 
         // The REAL packet path — CSStartedCinemaPacket (0x0cf) followed by CSCompletedCinemaPacket (0x0ce)
+        //
+        // Q-cinema (Phase-0 decision): presentation-fixture, explicitly
+        // tagged — no client round trip exists for a bot, so Started+Ended
+        // fire back-to-back to let quest progression observe them. NOT
+        // removed: LevelingLoopScenario drives quest cinema through here.
+        // Never cite this path as engine-emission evidence.
         Character.CurrentlyPlayingCinemaId = cinemaId;
         Character.Events.OnCinemaStarted(Character, new OnCinemaStartedArgs { CinemaId = cinemaId });
         Character.Events.OnCinemaEnded(Character, new OnCinemaEndedArgs { CinemaId = cinemaId });
 
-        return Complete(request, $"cinema {cinemaId} played");
+        return Complete(request, $"cinema {cinemaId} played (presentation-fixture: no client round trip)");
     }
-
     /// <summary>
     /// True when AddQuest would accept this quest RIGHT NOW (pre-conditions
     /// only — no mutation): known template, no active duplicate, supply-item
