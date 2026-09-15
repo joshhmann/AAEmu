@@ -350,6 +350,27 @@ public class DominionManager(
         command.ExecuteNonQuery();
     }
 
+    /// <summary>
+    /// Pure validation core of the skill-13661 declare path (DeclareDominion effect).
+    /// Returns null when allowed, otherwise the refusal error to log.
+    /// Order mirrors the tax-rate gate: known zone, expedition, policy, window.
+    /// Declare-item and monument targeting stay follow-ups: the live trigger is a
+    /// planted-pack putdown (dominion-domain.md addendum A1), not this skill path.
+    /// </summary>
+    internal static ErrorMessageType? ValidateDeclare(SiegeZoneTemplate zone, uint? senderExpeditionId,
+        bool senderHasDeclarePolicy, SiegePhase currentPhase)
+    {
+        if (zone == null)
+            return ErrorMessageType.SiegeDeclareBadZone; // no such siege zone
+        if (senderExpeditionId == null)
+            return ErrorMessageType.DominionNotInExpedition; // caster has no expedition
+        if (!senderHasDeclarePolicy)
+            return ErrorMessageType.SiegeMasterOnly; // role lacks dominion_declare
+        if (currentPhase != SiegePhase.Declare)
+            return ErrorMessageType.DominionNotDeclareTime; // outside the declare window
+        return null;
+    }
+
     // ------------------------------------------------------------------ tax rate
 
     /// <summary>

@@ -5,6 +5,7 @@ using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
+using AAEmu.Game.Models.Game.Siege;
 using AAEmu.Game.Models.Game.Units;
 
 namespace AAEmu.Game.Models.Game.Skills.Effects.SpecialEffects;
@@ -28,35 +29,58 @@ public class DeclareDominion : SpecialEffectAction
     {
         if (caster is Character) { Logger.Debug("Special effects: DeclareDominion value1 {0}, value2 {1}, value3 {2}, value4 {3}", value1, value2, value3, value4); }
 
-        if (((Unit)caster).Expedition == null)
+        if (caster is not Unit unit || unit.Expedition == null)
             return;
 
         // Check target is not already claimed
         if (target is not House lodestone)
             return;
 
-        // Get target zone, radius, etc..
+        // Slice-2 gates: the zone must ship siege data, the caster's expedition
+        // role must carry dominion_declare, and the zone must be inside its
+        // declare window. Declare-item and monument targeting stay follow-ups.
+        var zoneGroupId = ZoneManager.Instance.GetZoneByKey(lodestone.Transform.ZoneId).GroupId;
+        var manager = DominionManager.Instance;
+        var zone = manager.GetSiegeZoneByGroup(zoneGroupId);
 
-        // Advance building step on target
+        uint? expeditionId = (uint)unit.Expedition.Id;
+        var hasPolicy = false;
+        if (caster is Character policyCharacter)
+        {
+            var member = unit.Expedition.GetMember(policyCharacter);
+            hasPolicy = member != null && unit.Expedition.GetPolicyByRole(member.Role)?.DominionDeclare == true;
+        }
+
+        var phase = zone == null ? SiegePhase.Peace : manager.GetCurrentPhase(zone, DateTime.UtcNow);
+        var refusal = DominionManager.ValidateDeclare(zone, expeditionId, hasPolicy, phase);
+        if (refusal != null)
+        {
+            Logger.Debug("Special effects: DeclareDominion refused {0} (zone_group {1}, expedition {2})",
+                refusal, zoneGroupId, expeditionId);
+            return;
+        }
 
         // Create new dominion data (canonical blob shape lives in DominionManager),
         // persist it in the MySQL dominions table and broadcast server-wide.
-        // Slice-2 will replace the remaining seed values with real zone data,
-        // monument targeting and declare-window/permission checks.
-        var expedition = ((Unit)caster).Expedition;
+        var expedition = unit.Expedition;
         var position = lodestone.Transform.World.Position;
         var dominion = DominionManager.BuildDominionData(
-            ZoneManager.Instance.GetZoneByKey(lodestone.Transform.ZoneId).GroupId,
-            (uint)expedition.Id,
+            zoneGroupId,
+            expeditionId.Value,
             lodestone.Id,
             position.X, position.Y, position.Z,
             50,
             DateTime.UtcNow);
-        DominionManager.Instance.Declare(dominion, expedition.Name);
+        manager.Declare(dominion, expedition.Name);
         if (caster is Character character)
         {
             // character.Inventory.Equipment.
             var backpack = character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);
+            if (backpack == null)
+            {
+                Logger.Warn("Special effects: DeclareDominion has no backpack equipped to consume for {0}", character.Name);
+                return;
+            }
             character.Inventory.Equipment.ConsumeItem(ItemTaskType.SkillReagents, backpack.TemplateId, 1, backpack);
         }
     }

@@ -273,6 +273,55 @@ public class DominionScheduleTests : IDisposable
         var error = DominionManager.ValidateTaxRateChange(OwnedDominion(), 7, true, 10);
         await Assert.That(error).IsNull();
     }
+
+    // ------------------------------------------------------------------ declare policy
+
+    [Test]
+    public async Task Declare_UnknownZone_IsRefused()
+    {
+        var error = DominionManager.ValidateDeclare(null!, 7, true, SiegePhase.Declare);
+        await Assert.That(error).IsEqualTo(ErrorMessageType.SiegeDeclareBadZone);
+    }
+
+    [Test]
+    public async Task Declare_NoExpedition_IsRefused()
+    {
+        var error = DominionManager.ValidateDeclare(RealShapeZone(), null, false, SiegePhase.Declare);
+        await Assert.That(error).IsEqualTo(ErrorMessageType.DominionNotInExpedition);
+    }
+
+    [Test]
+    public async Task Declare_MissingDeclarePolicy_IsRefused()
+    {
+        var error = DominionManager.ValidateDeclare(RealShapeZone(), 7, false, SiegePhase.Declare);
+        await Assert.That(error).IsEqualTo(ErrorMessageType.SiegeMasterOnly);
+    }
+
+    [Test]
+    public async Task Declare_OutsideWindow_IsRefused()
+    {
+        await Assert.That(DominionManager.ValidateDeclare(RealShapeZone(), 7, true, SiegePhase.Peace))
+            .IsEqualTo(ErrorMessageType.DominionNotDeclareTime);
+        await Assert.That(DominionManager.ValidateDeclare(RealShapeZone(), 7, true, SiegePhase.Warmup))
+            .IsEqualTo(ErrorMessageType.DominionNotDeclareTime);
+        await Assert.That(DominionManager.ValidateDeclare(RealShapeZone(), 7, true, SiegePhase.Siege))
+            .IsEqualTo(ErrorMessageType.DominionNotDeclareTime);
+    }
+
+    [Test]
+    public async Task Declare_OwningExpeditionWithPolicyInWindow_IsAllowed()
+    {
+        var error = DominionManager.ValidateDeclare(RealShapeZone(), 7, true, SiegePhase.Declare);
+        await Assert.That(error).IsNull();
+    }
+
+    [Test]
+    public async Task Declare_ZoneCheckBeatsPolicyCheck()
+    {
+        // Unknown zone wins even when every other gate would also refuse.
+        var error = DominionManager.ValidateDeclare(null!, null, false, SiegePhase.Peace);
+        await Assert.That(error).IsEqualTo(ErrorMessageType.SiegeDeclareBadZone);
+    }
 }
 
 /// <summary>
