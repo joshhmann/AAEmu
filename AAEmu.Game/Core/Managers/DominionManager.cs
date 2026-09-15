@@ -353,12 +353,25 @@ public class DominionManager(
     /// <summary>
     /// Pure validation core of the skill-13661 declare path (DeclareDominion effect).
     /// Returns null when allowed, otherwise the refusal error to log.
-    /// Order mirrors the tax-rate gate: known zone, expedition, policy, window.
-    /// Declare-item and monument targeting stay follow-ups: the live trigger is a
-    /// planted-pack putdown (dominion-domain.md addendum A1), not this skill path.
+    /// Order mirrors the tax-rate gate: known zone, expedition, policy, window,
+    /// then declare-item. The item gate is fail-closed: when the zone ships a
+    /// non-zero <c>DeclareItemId</c>, the caster must have exactly that backpack
+    /// template equipped (<paramref name="equippedBackpackTemplateId"/> 0 = none
+    /// equipped); a zero <c>DeclareItemId</c> means the data ships no requirement
+    /// and the gate is skipped. Refusal reuses <c>SiegeNoTicket</c>: the declare
+    /// pack is the siege item the declaration consumes, and no new enum values
+    /// may be added for this gate.
+    /// Monument verdict (investigate-only, NO CODE): this skill path targets a
+    /// House lodestone, not the <c>MonumentDoodadId</c> Dominion Statue
+    /// (7229-7234). Per dominion-domain.md addendum A1 the live trigger is a
+    /// planted-pack putdown at the monument (doodad-create traffic into
+    /// DoodadFuncDeclareSiege state 7627), not this legacy/dev skill path, so
+    /// there is no canonical proximity/presence semantic to check here — any
+    /// radius or instance rule would be invented. A monument check belongs to
+    /// the future putdown path, never to this validator.
     /// </summary>
     internal static ErrorMessageType? ValidateDeclare(SiegeZoneTemplate zone, uint? senderExpeditionId,
-        bool senderHasDeclarePolicy, SiegePhase currentPhase)
+        bool senderHasDeclarePolicy, SiegePhase currentPhase, uint equippedBackpackTemplateId = 0)
     {
         if (zone == null)
             return ErrorMessageType.SiegeDeclareBadZone; // no such siege zone
@@ -368,6 +381,8 @@ public class DominionManager(
             return ErrorMessageType.SiegeMasterOnly; // role lacks dominion_declare
         if (currentPhase != SiegePhase.Declare)
             return ErrorMessageType.DominionNotDeclareTime; // outside the declare window
+        if (zone.DeclareItemId != 0 && equippedBackpackTemplateId != zone.DeclareItemId)
+            return ErrorMessageType.SiegeNoTicket; // zone's declare pack not equipped
         return null;
     }
 

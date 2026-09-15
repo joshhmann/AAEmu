@@ -37,8 +37,9 @@ public class DeclareDominion : SpecialEffectAction
             return;
 
         // Slice-2 gates: the zone must ship siege data, the caster's expedition
-        // role must carry dominion_declare, and the zone must be inside its
-        // declare window. Declare-item and monument targeting stay follow-ups.
+        // role must carry dominion_declare, the zone must be inside its declare
+        // window, and the zone's declare pack must be equipped (fail-closed when
+        // the zone ships a non-zero DeclareItemId).
         var zoneGroupId = ZoneManager.Instance.GetZoneByKey(lodestone.Transform.ZoneId).GroupId;
         var manager = DominionManager.Instance;
         var zone = manager.GetSiegeZoneByGroup(zoneGroupId);
@@ -51,8 +52,12 @@ public class DeclareDominion : SpecialEffectAction
             hasPolicy = member != null && unit.Expedition.GetPolicyByRole(member.Role)?.DominionDeclare == true;
         }
 
+        uint equippedBackpackTemplateId = 0;
+        if (caster is Character declareCharacter)
+            equippedBackpackTemplateId = declareCharacter.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack)?.TemplateId ?? 0;
+
         var phase = zone == null ? SiegePhase.Peace : manager.GetCurrentPhase(zone, DateTime.UtcNow);
-        var refusal = DominionManager.ValidateDeclare(zone, expeditionId, hasPolicy, phase);
+        var refusal = DominionManager.ValidateDeclare(zone, expeditionId, hasPolicy, phase, equippedBackpackTemplateId);
         if (refusal != null)
         {
             Logger.Debug("Special effects: DeclareDominion refused {0} (zone_group {1}, expedition {2})",

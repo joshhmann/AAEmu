@@ -315,6 +315,57 @@ public class DominionScheduleTests : IDisposable
         await Assert.That(error).IsNull();
     }
 
+    // ------------------------------------------------------------------ declare item
+
+    private static SiegeZoneTemplate DeclareItemZone() => new()
+    {
+        Id = 1,
+        ZoneGroupId = 33,
+        StartSiegeWeekday = 0, StartSiegeHour = 21, StartSiegeMin = 0,
+        SiegeDays = 0, SiegeHours = 1, SiegeMins = 30,
+        PayWeekday = 0, PayHour = 23, PayMin = 55,
+        StartDeclareWeekday = 5, StartDeclareHour = 22, StartDeclareMin = 30,
+        StartWarmupWeekday = 0, StartWarmupHour = 20, StartWarmupMin = 30,
+        DeclareItemId = 21134
+    };
+
+    [Test]
+    public async Task Declare_MatchingDeclareItem_IsAllowed()
+    {
+        var error = DominionManager.ValidateDeclare(DeclareItemZone(), 7, true, SiegePhase.Declare, 21134);
+        await Assert.That(error).IsNull();
+    }
+
+    [Test]
+    public async Task Declare_MismatchedDeclareItem_IsRefused()
+    {
+        var error = DominionManager.ValidateDeclare(DeclareItemZone(), 7, true, SiegePhase.Declare, 21130);
+        await Assert.That(error).IsEqualTo(ErrorMessageType.SiegeNoTicket);
+    }
+
+    [Test]
+    public async Task Declare_NoBackpackEquipped_IsRefused()
+    {
+        var error = DominionManager.ValidateDeclare(DeclareItemZone(), 7, true, SiegePhase.Declare, 0);
+        await Assert.That(error).IsEqualTo(ErrorMessageType.SiegeNoTicket);
+    }
+
+    [Test]
+    public async Task Declare_ZeroDeclareItemId_IgnoresBackpack()
+    {
+        // RealShapeZone ships DeclareItemId 0: no requirement, any pack (or none) passes.
+        await Assert.That(DominionManager.ValidateDeclare(RealShapeZone(), 7, true, SiegePhase.Declare, 0)).IsNull();
+        await Assert.That(DominionManager.ValidateDeclare(RealShapeZone(), 7, true, SiegePhase.Declare, 21134)).IsNull();
+    }
+
+    [Test]
+    public async Task Declare_WindowCheckBeatsItemCheck()
+    {
+        // Outside the window the window refusal wins even with a mismatched pack.
+        var error = DominionManager.ValidateDeclare(DeclareItemZone(), 7, true, SiegePhase.Peace, 21130);
+        await Assert.That(error).IsEqualTo(ErrorMessageType.DominionNotDeclareTime);
+    }
+
     [Test]
     public async Task Declare_ZoneCheckBeatsPolicyCheck()
     {
