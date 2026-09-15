@@ -64,11 +64,18 @@ public class CraftEffect : EffectTemplate
                             shipyard.AddBuildAction();
                             //Logger.Trace("[Shipyard] BaseAction {0}, NumAction {1}, CurrentAction {2}", shipyard.BaseAction, shipyard.NumAction, shipyard.CurrentAction);
                             //Logger.Trace("[Shipyard] AllAction {0}, CurrentStep {1}, ShipyardSteps.Count {2}", shipyard.AllAction, shipyard.CurrentStep, shipyard.Template.ShipyardSteps.Count);
+                            // A finished frame reports the completed state — unless its launch
+                            // ceremony already started (Step is the ceremony sentinel): repeat
+                            // build-skill hits must leave it alone, or the completion guard
+                            // below could grant the scroll twice.
                             if (shipyard.CurrentStep == -1)
                             {
-                                shipyard.ShipyardData.Actions = shipyard.AllAction;
-                                shipyard.ShipyardData.Step = shipyard.Template.ShipyardSteps.Count;
-                                Logger.Trace("[Shipyard] Actions {0}, Step {1}", shipyard.AllAction, shipyard.Template.ShipyardSteps.Count);
+                                if (shipyard.ShipyardData.Step != ShipyardManager.LaunchCeremonyStep)
+                                {
+                                    shipyard.ShipyardData.Actions = shipyard.AllAction;
+                                    shipyard.ShipyardData.Step = shipyard.Template.ShipyardSteps.Count;
+                                    Logger.Trace("[Shipyard] Actions {0}, Step {1}", shipyard.AllAction, shipyard.Template.ShipyardSteps.Count);
+                                }
                             }
                             else
                             {
@@ -77,7 +84,17 @@ public class CraftEffect : EffectTemplate
                                 Logger.Trace("[Shipyard] Actions {0}, Step {1}", shipyard.CurrentAction, shipyard.CurrentStep);
                             }
 
-                            character.BroadcastPacket(new SCShipyardStatePacket(shipyard.ShipyardData), true);
+                            // A finished frame whose last contribution came from the owner starts
+                            // the launch ceremony immediately. The scroll grant + ceremony live in
+                            // the default branch below, which a Craft-group build skill never
+                            // reaches — without this the frame strands at step -1.
+                            // ShipyardCompletedTask broadcasts the ceremony state itself and
+                            // ignores repeat calls, so a later default-branch interaction can
+                            // never grant the scroll twice.
+                            if (shipyard.CurrentStep == -1 && shipyard.ShipyardData.OwnerName == character.Name)
+                                ShipyardManager.Instance.ShipyardCompletedTask(shipyard);
+                            else
+                                character.BroadcastPacket(new SCShipyardStatePacket(shipyard.ShipyardData), true);
                             if (!character.Craft.EndCraft())
                                 source.Skill.Cancelled = true;
                         }

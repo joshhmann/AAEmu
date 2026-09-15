@@ -18,6 +18,8 @@ namespace AAEmu.Game.Core.Managers;
 public class ShipyardManager(ITaskManager taskManager, IObjectIdManager objectIdManager, IShipyardIdManager shipyardIdManager, IWorldManager worldManager, ITaxationsManager taxationsManager, ISkillManager skillManager) : Singleton<ShipyardManager>, IShipyardManager
 {
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
+    /// <summary>Client-visible step marking a frame whose launch ceremony has started.</summary>
+    internal const int LaunchCeremonyStep = 1000;
 
     public Dictionary<uint, ShipyardsTemplate> _shipyardsTemplate = [];
     private Dictionary<uint, Shipyard> _shipyard = [];
@@ -192,11 +194,16 @@ public class ShipyardManager(ITaskManager taskManager, IObjectIdManager objectId
 
     public void ShipyardCompletedTask(Shipyard shipyard)
     {
+        // The Craft-branch finish hit and a later default-branch interaction can
+        // both reach this for the same frame — grant the scroll only once.
+        if (shipyard.ShipyardData.Step == LaunchCeremonyStep)
+            return;
+
         var character = worldManager.GetCharacter(shipyard.ShipyardData.OwnerName);
         character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Shipyard, shipyard.Template.ItemId, 1, 0);
         var shipyardCompleteTask = new ShipyardCompleteTask { _shipyard = shipyard };
 
-        shipyard.ShipyardData.Step = 1000; // last step, the ceremony of launching the ship
+        shipyard.ShipyardData.Step = LaunchCeremonyStep; // last step, the ceremony of launching the ship
         character.BroadcastPacket(new SCShipyardStatePacket(shipyard.ShipyardData), true);
 
         var animTime = shipyard.Template.CeremonyAnimTime;
