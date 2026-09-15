@@ -1,19 +1,22 @@
-# Presence-demo hotfix overlay (M6) — captured in-repo 2026-08-09 from the
-# live deploy dir /root/aaemu-deploy-hotfix3/docker-compose.presence.yaml.
+# Presence-demo overlay — live tester (.165) tuning captured 2026-09-15.
 # Apply on top of the repo-root stack:
 #   docker compose -f docker-compose.yaml -f docker-compose.presence.yaml up -d game
-# Uses the prebuilt presence-demo image (not the repo version-tagged one) and
-# the env-driven patrol-home override from c22575d9d
-# (AAEMU_PRESENCE_HOME_X/Y/Z, P0 t_118484a7).
+# Uses the prebuilt presence-demo image (not the repo version-tagged one).
+# History: captured 2026-08-09 from /root/aaemu-deploy-hotfix3 (M6 hotfix,
+# patrol home at Josh's spawn via c22575d9d, P0 t_118484a7); retuned live
+# 2026-09 (250 bots, hunt mode, NeedsFarm on, home 14460/14400/109).
 services:
   game:
     image: aaemu-game:presence-demo
     environment:
       AAEMU_PRESENCE_DEMO: "1"
-      # P0 HOTFIX #3 (t_118484a7, Aya scope-add 2026-08-08 12:05): patrol home
-      # relocated to Josh's spawn (zone 179, Asssaa 15572/15364/126.5) so the
-      # sighting is instant when visibility lands — bots embody + roam AT him.
-      AAEMU_PRESENCE_HOME_X: "15572"
-      AAEMU_PRESENCE_HOME_Y: "15364"
-      AAEMU_PRESENCE_HOME_Z: "126.5"
+      # Live tester tuning 2026-09: 250 bots hunting around 14460/14400/109.
+      AAEMU_PRESENCE_BOT_COUNT: "250"
+      AAEMU_PRESENCE_MAX_BOTS: "250"
+      AAEMU_PRESENCE_HOME_X: "14460"
+      AAEMU_PRESENCE_HOME_Y: "14400"
+      AAEMU_PRESENCE_HOME_Z: "109.0"
+      AAEMU_PRESENCE_HUNT: "1"
+      AAEMU_PRESENCE_HUNT_RADIUS: "45"
       AAEMU_PRESENCE_BROADCAST_HZ: "15"
+      AAEMU_NEEDS_FARM_ENABLED: "1"
