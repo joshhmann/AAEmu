@@ -149,6 +149,53 @@ public class NeedsFarmModuleTests
     private static NeedsFarmActivityModule EnabledModule(Func<ServerPressure>? pressure = null)
         => new(new NeedsFarmModuleOptions { Enabled = true }, pressure);
 
+
+    // --------------------------------------- FromEnvironment precedence
+
+    [Test]
+    public async Task FromEnvironment_Unset_DefaultsOff()
+    {
+        var previous = Environment.GetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED");
+        try
+        {
+            Environment.SetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED", null);
+            await Assert.That(NeedsFarmModuleOptions.FromEnvironment().Enabled).IsFalse();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED", previous);
+        }
+    }
+
+    [Test]
+    public async Task FromEnvironment_ExplicitFalse_Wins()
+    {
+        var previous = Environment.GetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED");
+        try
+        {
+            Environment.SetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED", "0");
+            await Assert.That(NeedsFarmModuleOptions.FromEnvironment().Enabled).IsFalse();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED", previous);
+        }
+    }
+
+    [Test]
+    public async Task FromEnvironment_ExplicitTrue_OptsIn()
+    {
+        var previous = Environment.GetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED");
+        try
+        {
+            Environment.SetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED", "1");
+            await Assert.That(NeedsFarmModuleOptions.FromEnvironment().Enabled).IsTrue();
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED", previous);
+        }
+    }
     // ------------------------------------------------------------ gate matrix
 
     [Test]

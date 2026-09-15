@@ -36,36 +36,37 @@ public sealed record NeedsFarmModuleOptions
     /// <summary>Bag template counted as lumber (0 = lumber dimension ignored — treated as satisfied).</summary>
     public uint LumberItemTemplateId { get; init; }
 
-    /// <summary>Reads the deployment gate from the environment or config (default OFF).</summary>
+    /// <summary>
+    /// Reads the deployment gate: explicit env false always wins (default
+    /// OFF); otherwise env true, otherwise the machine-local
+    /// <c>Config.Local.json</c> opt-in. Shared <c>Config.json</c> is never
+    /// consulted — a fleet-wide default must not switch farm bots on for
+    /// every checkout.
+    /// </summary>
     public static NeedsFarmModuleOptions FromEnvironment()
     {
         var env = Environment.GetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED");
-        var enabled = env is "1" or "true" or "True";
-        if (!enabled)
+        if (env is "0" or "false" or "False")
+            return new NeedsFarmModuleOptions { Enabled = false };
+        if (env is "1" or "true" or "True")
+            return new NeedsFarmModuleOptions { Enabled = true };
+        try
         {
-            foreach (var fileName in new[] { "Config.Local.json", "Config.json" })
+            const string localConfig = "Config.Local.json";
+            if (File.Exists(localConfig))
             {
-                try
-                {
-                    if (File.Exists(fileName))
-                    {
-                        var text = File.ReadAllText(fileName);
-                        using var doc = System.Text.Json.JsonDocument.Parse(text);
-                        if (doc.RootElement.TryGetProperty("Bots", out var bots)
-                            && bots.TryGetProperty("EnableNeedsFarm", out var prop)
-                            && prop.GetBoolean())
-                        {
-                            enabled = true;
-                            break;
-                        }
-                    }
-                }
-                catch
-                {
-                }
+                var text = File.ReadAllText(localConfig);
+                using var doc = System.Text.Json.JsonDocument.Parse(text);
+                if (doc.RootElement.TryGetProperty("Bots", out var bots)
+                    && bots.TryGetProperty("EnableNeedsFarm", out var prop)
+                    && prop.ValueKind == System.Text.Json.JsonValueKind.True)
+                    return new NeedsFarmModuleOptions { Enabled = true };
             }
         }
-        return new NeedsFarmModuleOptions { Enabled = enabled };
+        catch
+        {
+        }
+        return new NeedsFarmModuleOptions { Enabled = false };
     }
 }
 
