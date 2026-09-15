@@ -1,12 +1,12 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-15 · Solzreed surveyor pilot shipped to fork develop (tester deploy frozen on prod drift)
+Updated: 2026-09-15 · Solzreed surveyor pilot deployed to tester .165 (live bridge verified)
 
-## 2026-09-15 — Solzreed surveyor pilot + multi-lane ship to fork develop `d476de492`; .165 deploy FROZEN
+## 2026-09-15 — Solzreed surveyor pilot DEPLOYED to tester .165 (`a97de994e`)
 
-- **Ship (fork `develop` `d476de492`, via `feat/ship-20260915-solzreed-surveyor` + merge):** Solzreed-scoped surveyor pilot — `BotSurveySenses` vision/lidar sweeps, `SurveyLegRunner` Start-walk-Stop harness, `SurveyGridBaker` tool + `.client_files/survey-grids/solzreed.f32` (257×155, max 384.50m corroborated), calibrated dashboard map with route authoring, tester-targeted live bridge (`AAEMU_GAME_API_BASE`). Full-world rollout explicitly deferred. Also carries in-flight lane slices (roads, party, recovery, shipyards). World-wide work stays parked.
-- **Gates:** `./scripts/gate.sh` GREEN (3270 total / 3269 pass / 0 fail / 1 skip `Provision_Activate_Persist_Deactivate_RoundTrip`); `./scripts/archaeology-cycle.sh` GREEN (156/156 + 24-tool smoke); `BotSurveySensesTests` 13/13; compact md5 unchanged. Tier2 `ShipyardFramePersistenceE2eTests` pending at ship time.
-- **Deploy FROZEN (no runtime change on .165):** prod `/root/AAEmu` merged ff to `d476de492` but its tree carries ~44 files of uncommitted in-flight work (+1409/−451, harvest/M5.1 lane) from another hand — building would bake unreviewed code into prod containers. No container rebuilt. Owner decision needed: stash-and-deploy-clean vs wait. Additive `shipyards` migration reviewed safe (`CREATE TABLE IF NOT EXISTS`).
+- **Deploy (tester `/root/AAEmu` @ `a97de994e`, game rebuilt from repo):** all services healthy, `Registered GameServer` confirmed, `shipyards` table live (0 rows), WebApi :1280 published and answering over LAN, dashboard `:8085` retargeted via `AAEMU_GAME_API_BASE` (`server_online:true`). Manifest in `deployments/production.json` (tester-local, uncommitted by design — drift check exempts it). DB backup: `/tmp/tester-aaemu_game-pre-c59b87063.sql` on tester.
+- **Deploy incidents (recovered):** (1) game crash-looped 8× on missing `shipyards` table — image ships no `SQL/updates` folder so the migrator never ran; applied `2026-09-15_aaemu_game_shipyards.sql` manually. Follow-up slice: COPY SQL/updates into the image or ro-mount. (2) Tester tree carried stale pre-merge drift — file-level review found zero prod-unique code value (all features already shipped; only live presence tuning preserved into `docker-compose.presence.yaml`); stale dups moved to `/tmp/tester-stale-backup`, tester-local M5.2 manifest commit superseded. (3) Presence overlay was never applied to the live stack (base compose only) — WebApi port went into base `docker-compose.yaml` instead.
+- **Drift verdict (supersedes the FROZEN entry below):** deploy unfrozen after the review above. Open follow-ups: SQL-updates-in-image slice; MovementStopInterrupt Tier2 already green on isolated lane (velocity/run-walk broadcast path covered).
 
 ## 2026-09-14 — Human golden actions deployed to .165; PlayerBot Target Architecture v1 ratified into Phase 0
 
