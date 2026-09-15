@@ -1,5 +1,6 @@
 using AAEmu.Commons.Network;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Network.Game;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Units;
@@ -9,6 +10,12 @@ namespace AAEmu.Game.Core.Packets.C2G;
 
 public class CSStartInteractionPacket() : GamePacket(CSOffsets.CSStartInteractionPacket, 1)
 {
+    public uint NpcObjId { get; private set; }
+    public uint TargetObjId { get; private set; }
+    public int ExtraInfo { get; private set; }
+    public int PickId { get; private set; }
+    public byte MouseButton { get; private set; }
+
     public override void Read(PacketStream stream)
     {
         var npcObjId = stream.ReadBc();
@@ -17,6 +24,12 @@ public class CSStartInteractionPacket() : GamePacket(CSOffsets.CSStartInteractio
         var pickId = stream.ReadInt32();
         var mouseButton = stream.ReadByte();
         var modifierKeys = stream.ReadInt32();
+
+        NpcObjId = npcObjId;
+        TargetObjId = objId;
+        ExtraInfo = extraInfo;
+        PickId = pickId;
+        MouseButton = mouseButton;
 
         Logger.Warn("StartInteraction, NpcObjId: {0}, objId: {1}, extraInfo: {2}, pickId: {3}, mouse: {4}, mods: {5}",
             npcObjId, objId, extraInfo, pickId, mouseButton, modifierKeys);
@@ -60,8 +73,9 @@ public class CSStartInteractionPacket() : GamePacket(CSOffsets.CSStartInteractio
             else if (npc.Template.Blacksmith)
                 option = SkillsEnum.ItemFusion; // Open Item Fuse dialog ?
 
+            var skillList = NpcManager.Instance.BuildInteractionSkillList(option, npc.Template.NpcInteractionSetId);
             Connection.ActiveChar.SendPacket(new SCNpcInteractionSkillListPacket(npcObjId, objId, extraInfo,
-                pickId, mouseButton, modifierKeys, [option]));
+                pickId, mouseButton, modifierKeys, skillList));
         }
 
         var slave = Connection.ActiveChar?.ParentWorld?.GetUnit(npcObjId);

@@ -35,6 +35,10 @@ public class NpcManager(IObjectIdManager objectIdManager, IModelManager modelMan
     /// </summary>
     private Dictionary<uint, NpcTemplate> Templates { get; } = [];
     /// <summary>
+    /// Data-driven right-click interaction skills per npc_interaction_set (npc_interactions.skill_id)
+    /// </summary>
+    private Dictionary<int, List<uint>> NpcInteractionSkills { get; } = [];
+    /// <summary>
     /// List of goods a merchant sells
     /// </summary>
     private Dictionary<uint, MerchantGoods> Goods { get; } = [];
@@ -107,6 +111,38 @@ public class NpcManager(IObjectIdManager objectIdManager, IModelManager modelMan
     public MerchantGoods GetGoods(uint id)
     {
         return Goods.GetValueOrDefault(id);
+    }
+
+    /// <summary>
+    /// Returns the data-driven interaction skill ids for an npc_interaction_set, or empty when unknown
+    /// </summary>
+    /// <param name="interactionSetId"></param>
+    /// <returns></returns>
+    public IReadOnlyList<uint> GetNpcInteractionSkills(int interactionSetId)
+    {
+        if (interactionSetId <= 0)
+            return [];
+        return NpcInteractionSkills.TryGetValue(interactionSetId, out var skills) ? skills : [];
+    }
+
+    /// <summary>
+    /// Builds the SCNpcInteractionSkillList skill list: the hardcoded default option first,
+    /// followed by the data-driven npc_interactions skills for the NPC's interaction set.
+    /// The client executes the first entry regardless, so NPCs without a set stay byte-identical
+    /// </summary>
+    /// <param name="defaultOption"></param>
+    /// <param name="interactionSetId"></param>
+    /// <returns></returns>
+    public uint[] BuildInteractionSkillList(uint defaultOption, int interactionSetId)
+    {
+        var setSkills = GetNpcInteractionSkills(interactionSetId);
+        if (setSkills.Count == 0)
+            return [defaultOption];
+        var skillList = new uint[setSkills.Count + 1];
+        skillList[0] = defaultOption;
+        for (var i = 0; i < setSkills.Count; i++)
+            skillList[i + 1] = setSkills[i];
+        return skillList;
     }
 
     /// <summary>
@@ -391,6 +427,7 @@ public class NpcManager(IObjectIdManager objectIdManager, IModelManager modelMan
             return;
 
         Templates.Clear();
+        NpcInteractionSkills.Clear();
         Goods.Clear();
         TccLookup.Clear();
         TotalCharacterCustoms.Clear();
@@ -856,6 +893,27 @@ public class NpcManager(IObjectIdManager objectIdManager, IModelManager modelMan
                         if (!Templates.TryGetValue(id, out var template))
                             continue;
                         template.MerchantPackId = reader.GetUInt32("merchant_pack_id");
+                    }
+                }
+            }
+
+            // Load data-driven right-click interaction skills per npc_interaction_set
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT npc_interaction_set_id, skill_id FROM npc_interactions ORDER BY id";
+                command.Prepare();
+                using (var reader = new SQLiteWrapperReader(command.ExecuteReader()))
+                {
+                    while (reader.Read())
+                    {
+                        var setId = reader.GetInt32("npc_interaction_set_id");
+                        var skillId = reader.GetUInt32("skill_id");
+                        if (!NpcInteractionSkills.TryGetValue(setId, out var skills))
+                        {
+                            skills = [];
+                            NpcInteractionSkills.Add(setId, skills);
+                        }
+                        skills.Add(skillId);
                     }
                 }
             }
