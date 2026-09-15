@@ -1,6 +1,12 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-14 · golden traces deployed to .165 + Consolidated v1 Architecture Phase 0
+Updated: 2026-09-15 · Solzreed surveyor pilot shipped to fork develop (tester deploy frozen on prod drift)
+
+## 2026-09-15 — Solzreed surveyor pilot + multi-lane ship to fork develop `d476de492`; .165 deploy FROZEN
+
+- **Ship (fork `develop` `d476de492`, via `feat/ship-20260915-solzreed-surveyor` + merge):** Solzreed-scoped surveyor pilot — `BotSurveySenses` vision/lidar sweeps, `SurveyLegRunner` Start-walk-Stop harness, `SurveyGridBaker` tool + `.client_files/survey-grids/solzreed.f32` (257×155, max 384.50m corroborated), calibrated dashboard map with route authoring, tester-targeted live bridge (`AAEMU_GAME_API_BASE`). Full-world rollout explicitly deferred. Also carries in-flight lane slices (roads, party, recovery, shipyards). World-wide work stays parked.
+- **Gates:** `./scripts/gate.sh` GREEN (3270 total / 3269 pass / 0 fail / 1 skip `Provision_Activate_Persist_Deactivate_RoundTrip`); `./scripts/archaeology-cycle.sh` GREEN (156/156 + 24-tool smoke); `BotSurveySensesTests` 13/13; compact md5 unchanged. Tier2 `ShipyardFramePersistenceE2eTests` pending at ship time.
+- **Deploy FROZEN (no runtime change on .165):** prod `/root/AAEmu` merged ff to `d476de492` but its tree carries ~44 files of uncommitted in-flight work (+1409/−451, harvest/M5.1 lane) from another hand — building would bake unreviewed code into prod containers. No container rebuilt. Owner decision needed: stash-and-deploy-clean vs wait. Additive `shipyards` migration reviewed safe (`CREATE TABLE IF NOT EXISTS`).
 
 ## 2026-09-14 — Human golden actions deployed to .165; PlayerBot Target Architecture v1 ratified into Phase 0
 
