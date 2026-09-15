@@ -192,6 +192,7 @@ When code needs a schema change:
 1. Add `SQL/updates/YYYY-MM-DD_aaemu_{login|game}_*.sql` (date orders application).
 2. **Also** patch the base file `SQL/aaemu_login.sql` or `SQL/aaemu_game.sql`.
 3. Servers apply relevant updates once at startup (`MySqlDatabaseUpdater`); applied scripts are recorded in an updates table.
+4. **Prove the table, don't just author it.** A migration file in the repo is not a table in any database: the game image does not ship `SQL/updates`, so `MySqlDatabaseUpdater` finds nothing at container boot (2026-09-15 incident: new `shipyards` table missing → game crash-looped 8× until manual apply). Every new implementation needing persistence MUST, before deploy: (a) Tier2 persistence proof on an isolated lane — place → restart → byte-equal reload (`ShipyardFramePersistenceE2eTests` pattern), 1/1 green; (b) post-deploy `SHOW TABLES LIKE` verification before the deploy is recorded. Until the image-ships-updates slice lands, every schema deploy also needs a pre-deploy MySQL dump and a manual apply with the exact update file.
 
 See `SQL/updates/readme.txt`. Prefer `SQL/patches/compact/` only for intentional compact.sqlite3 fixups (not normal gameplay state).
 
