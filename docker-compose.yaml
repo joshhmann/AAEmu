@@ -118,6 +118,8 @@ services:
         environment:
             DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: 1
         ports:
+            # WebApi for the dashboard live bridge + bot control gateway.
+            - 1280:1280
             - 1239:1239
             - 1250:1250
         develop:

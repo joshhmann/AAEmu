@@ -8,9 +8,8 @@
 services:
   game:
     image: aaemu-game:presence-demo
-    # Tester LAN needs the WebApi for the dashboard live bridge (:8085).
-    ports:
-      - "1280:1280"
+    # Tester tuning below rides the overlay; WebApi port lives in the base
+    # compose (dev/tester parity) — do not duplicate ports here.
     environment:
       # Live tester tuning 2026-09: 250 bots hunting around 14460/14400/109.
       AAEMU_PRESENCE_BOT_COUNT: "250"
