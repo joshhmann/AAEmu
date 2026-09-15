@@ -23,7 +23,9 @@ internal static class BotPresenceBootstrap
     [ModuleInitializer]
     internal static void Init()
     {
-        if (!BotPresenceCoordinator.IsEnabled())
+        var runPresence = BotPresenceCoordinator.IsEnabled();
+        var runAutoRestore = BotAdminService.IsAutoRestoreEnabled();
+        if (!runPresence && !runAutoRestore)
             return;
 
         _ = Task.Run(async () =>
@@ -69,39 +71,43 @@ internal static class BotPresenceBootstrap
                 if (!worldReady)
                 {
                     BotPresenceCoordinator.LogWarn(
-                        "world never became ready — presence demo aborted (no bots provisioned)");
+                        "world never became ready — presence demo / bot auto-restore aborted");
                     return;
                 }
 
-                var coordinator = new BotPresenceCoordinator(
-                    SingletonContainer.ServiceProvider.GetRequiredService<IPlayerBotManager>(),
-                    SingletonContainer.ServiceProvider.GetRequiredService<IPlayerBotScheduler>(),
-                    SingletonContainer.ServiceProvider.GetRequiredService<IPopulationDirector>(),
-                    SingletonContainer.ServiceProvider.GetRequiredService<BotRoamStepExecutor>());
+                if (runPresence)
+                {
+                    var coordinator = new BotPresenceCoordinator(
+                        SingletonContainer.ServiceProvider.GetRequiredService<IPlayerBotManager>(),
+                        SingletonContainer.ServiceProvider.GetRequiredService<IPlayerBotScheduler>(),
+                        SingletonContainer.ServiceProvider.GetRequiredService<IPopulationDirector>(),
+                        SingletonContainer.ServiceProvider.GetRequiredService<BotRoamStepExecutor>());
 
-                var count = BotPresenceCoordinator.ReadBotCount();
-                // Optional patrol-home relocation (t_118484a7 scope-add):
-                // AAEMU_PRESENCE_HOME_X/Y/Z moves the 8-waypoint loop to a
-                // specific position (Josh's spawn, zone 179) so a logging-in
-                // human sees the bots instantly. Unset → template spawn.
-                var home = BotPresenceCoordinator.ReadHomePosition();
-                coordinator.Start(new BotPresenceCoordinator.BotPresenceConfig(
-                    BotCount: count,
-                    ZoneId: WorldManager.DefaultWorldTemplateId,
-                    HomePosition: home,
-                    RoamRadius: 30f,
-                    RoamSpeed: 2.5f,
-                    Level: 5,
-                    NamePrefix: "Citizen",
-                    AccountPrefix: "presence",
-                    // G2-A6: configurable roster safety bound (also clamps a
-                    // manifest-driven roster).
-                    MaxPresenceBots: BotPresenceCoordinator.ReadMaxPresenceBots()));
+                    var count = BotPresenceCoordinator.ReadBotCount();
+                    var home = BotPresenceCoordinator.ReadHomePosition();
+                    coordinator.Start(new BotPresenceCoordinator.BotPresenceConfig(
+                        BotCount: count,
+                        ZoneId: WorldManager.DefaultWorldTemplateId,
+                        HomePosition: home,
+                        RoamRadius: 30f,
+                        RoamSpeed: 2.5f,
+                        Level: 5,
+                        NamePrefix: "Citizen",
+                        AccountPrefix: "presence",
+                        MaxPresenceBots: BotPresenceCoordinator.ReadMaxPresenceBots()));
+                }
+
+                if (runAutoRestore)
+                {
+                    var admin = BotAdminService.FromContainer();
+                    var result = admin.Restore();
+                    BotPresenceCoordinator.LogWarn($"Auto-restore bots on boot: {result.Message}");
+                }
             }
             catch (Exception ex)
             {
-                // The presence demo must never take the server down.
-                BotPresenceCoordinator.LogError(ex, "presence demo bootstrap failed");
+                // The presence demo / auto-restore must never take the server down.
+                BotPresenceCoordinator.LogError(ex, "presence demo / auto-restore bootstrap failed");
             }
         });
     }

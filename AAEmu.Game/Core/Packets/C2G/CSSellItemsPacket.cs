@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Network;
+using AAEmu.Commons.Network;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Network.Game;
 using AAEmu.Game.Models.Game.Items;
@@ -8,9 +8,13 @@ namespace AAEmu.Game.Core.Packets.C2G;
 
 public class CSSellItemsPacket() : GamePacket(CSOffsets.CSSellItemsPacket, 1)
 {
+    public uint NpcObjId { get; private set; }
+    public List<(ulong ItemId, uint TemplateId, int Count)> SoldItems { get; } = [];
+
     public override void Read(PacketStream stream)
     {
         var npcObjId = stream.ReadBc();
+        NpcObjId = npcObjId;
         var npc = Connection.ActiveChar.ParentWorld.GetNpc(npcObjId);
         if (npc == null || !npc.Template.Merchant)
             return;
@@ -36,7 +40,10 @@ public class CSSellItemsPacket() : GamePacket(CSOffsets.CSSellItemsPacket, 1)
             //                else if (slotType == SlotType.Bank)
             //                    item = Connection.ActiveChar.Inventory.Bank[slot];
             if (item != null && item.Id == itemId)
+            {
                 items.Add(item);
+                SoldItems.Add((item.Id, item.TemplateId, item.Count));
+            }
         }
 
         //var tasks = new List<ItemTask>();

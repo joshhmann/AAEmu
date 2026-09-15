@@ -8,13 +8,14 @@
 
 **PlayerBots are not the feature. The living world is the feature.**
 
+Development is at M8 — Living Village, transitioning toward M9 — Emergent world systems.
+M8 has a qualified engineering/runtime exit, not human acceptance. The outstanding formal
+M1–M7 human acceptance backlog does not globally block PlayerBot progression testing or
+later milestone development. Humans and bots exercise the same gameplay systems in parallel;
+acceptance remains scoped to the evidence actually obtained.
+
 The objective is not to simulate thousands of online players. The objective
 is to recreate the emergent systems that made early ArcheAge memorable:
-
-- Homesteads · Farming · Illegal tree farms · Trade pack runs · Caravans
-- Piracy · Crime · Trials · Prison · Villages · Persistent economies
-
-Bots exist to keep those systems alive even when players are offline.
 
 ## Lessons from AzerothCore
 

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.Creatures;
@@ -257,6 +257,41 @@ public class DoodadManager(IObjectIdManager objectIdManager, IDoodadIdManager do
                             BondKindId = (BondKind)reader.GetByte("bond_kind_id")
                         };
                         _funcTemplates["DoodadFuncAttachment"].Add(func.Id, func);
+                    }
+                }
+            }
+            // doodad_func_auction_uis
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM doodad_func_auction_uis";
+                command.Prepare();
+                using (var reader = new SQLiteWrapperReader(command.ExecuteReader()))
+                {
+                    while (reader.Read())
+                    {
+                        var func = new DoodadFuncAuctionUi
+                        {
+                            Id = reader.GetUInt32("id")
+                        };
+                        _funcTemplates["DoodadFuncAuctionUi"].Add(func.Id, func);
+                    }
+                }
+            }
+
+            // doodad_func_bank_uis
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM doodad_func_bank_uis";
+                command.Prepare();
+                using (var reader = new SQLiteWrapperReader(command.ExecuteReader()))
+                {
+                    while (reader.Read())
+                    {
+                        var func = new DoodadFuncBankUi
+                        {
+                            Id = reader.GetUInt32("id")
+                        };
+                        _funcTemplates["DoodadFuncBankUi"].Add(func.Id, func);
                     }
                 }
             }
@@ -3075,6 +3110,20 @@ public class DoodadManager(IObjectIdManager objectIdManager, IDoodadIdManager do
         doodad.Spawn();
         doodad.Save();
         character.ParentWorld.SpawnManager.AddPlayerDoodad(doodad);
+
+        if (AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+        {
+            AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordWorld(character, "doodad_created", doodad.ObjId, doodad.TemplateId, new
+            {
+                X = x,
+                Y = y,
+                Z = z,
+                ZRot = zRot,
+                Scale = scale,
+                ItemId = itemId,
+                FarmType = farmType.ToString()
+            });
+        }
 
         return doodad;
     }

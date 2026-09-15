@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Network;
+using AAEmu.Commons.Network;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Game;
@@ -10,6 +10,9 @@ namespace AAEmu.Game.Core.Packets.C2G;
 
 public class CSSendChatMessagePacket() : GamePacket(CSOffsets.CSSendChatMessagePacket, 1)
 {
+    public string Message { get; private set; } = string.Empty;
+    public bool IsCommand { get; private set; }
+
     public override void Read(PacketStream stream)
     {
         var type = (ChatType)stream.ReadInt16();
@@ -21,10 +24,12 @@ public class CSSendChatMessagePacket() : GamePacket(CSOffsets.CSSendChatMessageP
         var languageType = stream.ReadByte();
         var ability = stream.ReadInt32();
 
+        Message = message;
         Logger.Debug(message);
 
         if (message.StartsWith(CommandManager.CommandPrefix))
         {
+            IsCommand = true;
             if (CommandManager.Instance.Handle(Connection.ActiveChar, message.Substring(CommandManager.CommandPrefix.Length).Trim(), out _))
                 return;
         }

@@ -257,6 +257,7 @@ public class Unit : BaseUnit, IUnit
     public UnitCustomModelParams ModelParams { get; set; } = new();
     public byte ActiveWeapon { get; set; }
     public bool IdleStatus { get; set; }
+    public UnitStance Stance { get; set; } = UnitStance.Stand;
     public bool ForceAttack { get; set; }
     public bool Invisible { get; set; }
     public uint OwnerId { get; set; }

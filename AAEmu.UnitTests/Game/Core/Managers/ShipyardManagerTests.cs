@@ -18,7 +18,8 @@ public class ShipyardManagerTests
             Mock.Of<IShipyardIdManager>().Object,
             Mock.Of<IWorldManager>().Object,
             Mock.Of<ITaxationsManager>().Object,
-            Mock.Of<ISkillManager>().Object);
+            Mock.Of<ISkillManager>().Object,
+            Mock.Of<IShipyardFrameStore>().Object);
         manager.Initialize();
 
         mockTask.Schedule(Any<AaEmuTask>(), Any<TimeSpan?>(), Any<TimeSpan?>(), Any<int>()).WasCalled(Times.Once);

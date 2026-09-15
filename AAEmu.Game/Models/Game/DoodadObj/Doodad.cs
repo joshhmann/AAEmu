@@ -427,6 +427,16 @@ public class Doodad : BaseUnit
             DevMapperService.Instance.RecordInteract(recordPlayer.Id, ObjId, TemplateId, Transform.World.Position, startedSkillId);
         }
 
+        if (caster is Character tracePlayer && AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+        {
+            AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordInteraction(tracePlayer, "doodad_use", ObjId, "Doodad", new
+            {
+                TemplateId,
+                Phase = FuncGroupId,
+                SkillId = startedSkillId
+            });
+        }
+
         // Fix #1443 (defense in depth): Refuse interaction with any doodad that has been
         // scheduled for despawn (Despawn > DateTime.MinValue). The primary fix for #1443 is in
         // SlaveManager.Delete, which now deletes child doodads immediately (mirroring DoDie's
@@ -788,7 +798,16 @@ public class Doodad : BaseUnit
 
         // the phase change packet call must be after the phase functions to have the correct FuncGroupId in the packet
         if (!_deleted)
+        {
             BroadcastPacket(new SCDoodadPhaseChangedPacket(this), true); // change the phase to display doodad
+            if (caster is Character traceChar && AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+            {
+                AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordWorld(traceChar, "doodad_phase_changed", ObjId, TemplateId, new
+                {
+                    NewPhase = nextPhase
+                });
+            }
+        }
 
         return stop; // if true, it did not pass the check for the quest (it must be aborted)
     }

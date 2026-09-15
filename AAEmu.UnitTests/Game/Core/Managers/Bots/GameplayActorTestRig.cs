@@ -500,6 +500,41 @@ public static class GameplayActorTestRig
             };
         }
 
+        // Default auto-attack skills (Skill 2 = melee, Skill 4 = ranged)
+        var defSkillsDict = (Dictionary<uint, AAEmu.Game.Models.Game.Skills.DefaultSkill>)typeof(SkillManager).GetField("_defaultSkills", flags)!.GetValue(manager)!;
+        if (!skills.ContainsKey(2))
+        {
+            var t2 = new SkillTemplate
+            {
+                Id = 2,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 0,
+                MaxRange = 4,
+                TargetType = AAEmu.Game.Models.Game.Skills.SkillTargetType.Hostile,
+                TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target
+            };
+            skills[2] = t2;
+            defSkillsDict[2] = new AAEmu.Game.Models.Game.Skills.DefaultSkill { Template = t2 };
+        }
+        if (!skills.ContainsKey(4))
+        {
+            var t4 = new SkillTemplate
+            {
+                Id = 4,
+                ManaCost = 0,
+                CastingTime = 0,
+                CooldownTime = 0,
+                MinRange = 4,
+                MaxRange = 20,
+                TargetType = AAEmu.Game.Models.Game.Skills.SkillTargetType.Hostile,
+                TargetSelection = AAEmu.Game.Models.Game.Skills.SkillTargetSelection.Target
+            };
+            skills[4] = t4;
+            defSkillsDict[4] = new AAEmu.Game.Models.Game.Skills.DefaultSkill { Template = t4 };
+        }
+
         // Reagent mapping: using the item consumes one unit of the item
         // template through the ordinary skill-pipeline consumption path.
         var reagents = (Dictionary<uint, SkillReagent>?)typeof(SkillManager)
@@ -875,6 +910,9 @@ public static class GameplayActorTestRig
             // Template.Scale); a template-less mate would NRE mid-mount.
             Template = new NpcTemplate { Scale = 1f }
         };
+        typeof(GameObject).GetField("_parentWorld",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!
+            .SetValue(mate, session.World);
         session.World.AddObject(mate);
 
         // Register in MateManager._activeMates keyed by the owner character
@@ -3009,6 +3047,41 @@ public static class GameplayActorTestRig
         RegisterQuestAct(nameof(QuestActConReportNpc), readyComponentId,
             new QuestActConReportNpc(readyComponent) { DetailId = readyComponentId, ActId = readyComponentId, NpcId = reportNpcTemplateId });
     }
+    /// <summary>
+    /// Seeds a delivery quest reported to a doodad: Start component offered
+    /// by <paramref name="offerNpcTemplateId"/> (via <see
+    /// cref="SeedQuestOffer"/>) and Ready component carrying a
+    /// QuestActConReportDoodad for <paramref name="reportDoodadTemplateId"/>.
+    /// </summary>
+    public static void SeedQuestReportDoodad(uint questId, uint startComponentId, uint readyComponentId,
+        uint offerNpcTemplateId, uint reportDoodadTemplateId, byte level = 15)
+    {
+        SeedQuestOffer(questId, startComponentId, offerNpcTemplateId, level: level);
+
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GetField(manager, "_questTemplates");
+        var questTemplate = questTemplates[questId];
+
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GetField(manager, "_componentTemplates");
+        if (!componentTemplates.TryGetValue(readyComponentId, out var readyComponent))
+        {
+            readyComponent = new QuestComponentTemplate(questTemplate)
+            {
+                Id = readyComponentId,
+                KindId = QuestComponentKind.Ready
+            };
+            componentTemplates[readyComponentId] = readyComponent;
+        }
+        if (!questTemplate.Components.ContainsKey(readyComponentId))
+            questTemplate.Components[readyComponentId] = readyComponent;
+
+        if (!readyComponent.ActTemplates.OfType<QuestActConReportDoodad>().Any(a => a.DoodadId == reportDoodadTemplateId))
+        {
+            RegisterQuestAct(nameof(QuestActConReportDoodad), readyComponentId,
+                new QuestActConReportDoodad(readyComponent) { DetailId = readyComponentId, ActId = readyComponentId, DoodadId = reportDoodadTemplateId });
+        }
+    }
+
 
     /// <summary>
     /// Seeds a complete hunt quest: Start component offered by <paramref name="offerNpcTemplateId"/>,

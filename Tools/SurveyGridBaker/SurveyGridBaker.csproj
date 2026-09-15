@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <AssemblyName>SurveyGridBaker</AssemblyName>
+    <!--
+      Offline planning-only height-grid baker for Solzreed.
+      Reuses the client heightmap decoder by compiling the exact game
+      sources (no fork, no copy): Hmap / NodeCell / AABB.
+    -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\AAEmu.Game\Models\ClientData\Hmap.cs" />
+    <Compile Include="..\..\AAEmu.Game\Models\ClientData\NodeCell.cs" />
+    <Compile Include="..\..\AAEmu.Game\Models\ClientData\AABB.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AAEmu.Commons\AAEmu.Commons.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="System.Drawing.Primitives" />
+  </ItemGroup>
+
+</Project>

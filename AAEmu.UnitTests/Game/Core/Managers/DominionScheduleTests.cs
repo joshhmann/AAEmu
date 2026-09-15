@@ -359,6 +359,18 @@ public class DominionScheduleTests : IDisposable
     }
 
     [Test]
+    public async Task Declare_ZeroDeclareItemId_NoBackpack_ReachesDeclare()
+    {
+        // Execute-side consume guard (DeclareDominion.Execute) is code-reviewed-only:
+        // driving Execute needs a full Character/Inventory rig. This pins the validator
+        // half of the contract — a zero-DeclareItemId zone with no backpack equipped
+        // still returns null (reaches Declare), so the guarded consume must not run there.
+        var zone = RealShapeZone();
+        await Assert.That(zone.DeclareItemId).IsEqualTo(0u);
+        await Assert.That(DominionManager.ValidateDeclare(zone, 7, true, SiegePhase.Declare, 0)).IsNull();
+    }
+
+    [Test]
     public async Task Declare_WindowCheckBeatsItemCheck()
     {
         // Outside the window the window refusal wins even with a mismatched pack.

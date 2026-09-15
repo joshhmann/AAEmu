@@ -359,5 +359,106 @@ public class GameplayActorB1ActionsTests
         await Assert.That(actor.Character.IsRiding).IsFalse();
     }
 
+    [Test]
+    public async Task DismissMate_ActiveMate_DespawnsMateSuccessfully()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("b1-dismiss-1");
+        var mateObjId = GameplayActorTestRig.SummonMate(session, actor);
+        await Assert.That(session.World.MateManager.GetActiveMates(actor.Character.Id)).IsNotEmpty();
+
+        var request = actor.DismissMate();
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.Result).IsEqualTo(true);
+        await Assert.That(session.World.MateManager.GetActiveMates(actor.Character.Id)).IsEmpty();
+    }
+
+    [Test]
+    public async Task DismissMate_WhileMounted_UnmountsAndDespawns()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("b1-dismiss-2");
+        var mateObjId = GameplayActorTestRig.SummonMate(session, actor);
+        actor.Mount(mateObjId);
+        await Assert.That(actor.Character.IsRiding).IsTrue();
+
+        var request = actor.DismissMate();
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.IsRiding).IsFalse();
+        await Assert.That(session.World.MateManager.GetIsMounted(actor.ActorId, out _)).IsNull();
+        await Assert.That(session.World.MateManager.GetActiveMates(actor.Character.Id)).IsEmpty();
+    }
+
+    [Test]
+    public async Task DismissMate_NoActiveMate_RejectedStateTransition()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("b1-dismiss-3");
+
+        var request = actor.DismissMate();
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.StateTransition);
+    }
+
+    #endregion
+
+    #region AutoAttack — continuous combat loop
+
+    [Test]
+    public async Task AutoAttack_ValidTarget_StartsAutoSkillAndSetsFlag()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("b1-autoattack-1");
+        var targetObjId = GameplayActorTestRig.SpawnNpc(session);
+
+        var request = actor.AutoAttack(targetObjId);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.IsAutoAttack).IsTrue();
+        await Assert.That(actor.Character.CurrentTarget?.ObjId).IsEqualTo(targetObjId);
+        await Assert.That(actor.Character.AutoAttackTask).IsNotNull();
+    }
+
+    [Test]
+    public async Task AutoAttack_AlreadyActive_CompletesImmediately()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("b1-autoattack-2");
+        var targetObjId = GameplayActorTestRig.SpawnNpc(session);
+
+        var r1 = actor.AutoAttack(targetObjId);
+        await Assert.That(r1.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        var r2 = actor.AutoAttack(targetObjId);
+        await Assert.That(r2.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(r2.Detail?.Contains("already active")).IsTrue();
+    }
+
+    [Test]
+    public async Task StopAutoAttack_WhileActive_CancelsTaskAndClearsFlag()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("b1-autoattack-3");
+        var targetObjId = GameplayActorTestRig.SpawnNpc(session);
+
+        actor.AutoAttack(targetObjId);
+        await Assert.That(actor.Character.IsAutoAttack).IsTrue();
+
+        var stopRequest = actor.StopAutoAttack();
+        await Assert.That(stopRequest.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.IsAutoAttack).IsFalse();
+        await Assert.That(actor.Character.AutoAttackTask).IsNull();
+    }
+
+    [Test]
+    public async Task AutoAttack_DeadTarget_Rejected()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("b1-autoattack-4");
+        var targetObjId = GameplayActorTestRig.SpawnNpc(session);
+        var target = session.World.GetUnit(targetObjId);
+        target.Hp = 0;
+
+        var request = actor.AutoAttack(targetObjId);
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+    }
+
     #endregion
 }

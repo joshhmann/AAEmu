@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Network;
+using AAEmu.Commons.Network;
 using AAEmu.Game.Core.Network.Game;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Units;
@@ -49,6 +49,14 @@ public class CSMoveUnitPacket() : GamePacket(CSOffsets.CSMoveUnitPacket, 1)
 
         if (character == null) return;
         character.LastPacketActivityTime = DateTime.UtcNow;
+
+        if (AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+        {
+            var isMoving = _moveType.Flags.HasFlag(AAEmu.Game.Models.StaticValues.MoveTypeFlags.Moving);
+            var pos = new System.Numerics.Vector3(_moveType.X, _moveType.Y, _moveType.Z);
+            var vel = new System.Numerics.Vector3(_moveType.VelX, _moveType.VelY, _moveType.VelZ);
+            AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordMovementSample(character, isMoving, pos, _moveType.RotationZ, vel);
+        }
 
         // if movement is forbidden when teleporting to instances, then to exit
         if (character.DisabledSetPosition) return;

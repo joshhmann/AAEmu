@@ -137,6 +137,19 @@ public interface IGameplayActor
     ActorRequest CastAt(uint skillId, Vector3 position, string? idempotencyKey = null);
 
     /// <summary>
+    /// Starts authentic continuous auto-attack against the specified target
+    /// (Skill 2 for melee, Skill 4 for ranged) via the server's UseAutoAttackSkillTask.
+    /// Continuous auto-attacks fire on attack-delay cadence and automatically pause
+    /// during active skill casts and GCD, resuming cleanly.
+    /// </summary>
+    ActorRequest AutoAttack(uint targetObjId, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Explicitly stops continuous auto-attack on the character.
+    /// </summary>
+    ActorRequest StopAutoAttack(string? idempotencyKey = null);
+
+    /// <summary>
     /// Interacts with a doodad through the real engine path (Doodad.Use —
     /// the same call the interaction skills / Interactions make). skillId 0
     /// executes the skill-less loot-func branch (LootItem/LootPack/
@@ -347,6 +360,13 @@ public interface IGameplayActor
     /// cannot double-dismount.
     /// </summary>
     ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null);
+
+    /// <summary>
+    /// Dismisses an active companion/mount mate through the real engine path
+    /// (Character.Mates.DespawnMate — the CSRemoveMatePacket call).
+    /// tlId 0 = first active mate owned by the character.
+    /// </summary>
+    ActorRequest DismissMate(uint tlId = 0, string? idempotencyKey = null);
 
     /// <summary>
     /// Boards a vehicle through the REAL engine path — the vehicle/transfer
@@ -721,6 +741,12 @@ public interface IGameplayActor
     ActorRequest Talk(uint npcObjId, string? idempotencyKey = null);
 
     /// <summary>
+    /// Ambient or interactive NPC conversation through CSStartInteractionPacket / CSInteractNPCPacket.
+    /// Broadcasts target change, interaction skill list, credits quest objectives if any, and completes.
+    /// </summary>
+    ActorRequest InteractNpc(uint npcObjId, string? idempotencyKey = null);
+
+    /// <summary>
     /// Quest-DISCOVERY perception primitive v2 — the offer channels whose
     /// preconditions are perceivable from the actor's OWN state, with no
     /// world target required. Enumerates:
@@ -1020,7 +1046,19 @@ public enum ActorActionType : byte
     PlayCinema = 49,
 
     /// <summary>Equipment repair through Character.DoRepair (CSRepairAllEquipmentsPacket path).</summary>
-    Repair = 50
+    Repair = 50,
+
+    /// <summary>Mate/pet dismissal through Character.Mates.DespawnMate (CSRemoveMatePacket path).</summary>
+    DismissMate = 51,
+
+    /// <summary>General/ambient NPC interaction dialogue through CSStartInteractionPacket / CSInteractNPCPacket.</summary>
+    InteractNpc = 52,
+
+    /// <summary>Starting authentic continuous auto-attack (Skill 2 for melee, Skill 4 for ranged).</summary>
+    AutoAttack = 53,
+
+    /// <summary>Explicitly cancelling auto-attack.</summary>
+    StopAutoAttack = 54
 }
 
 /// <summary>Lifecycle of a single actor request.</summary>

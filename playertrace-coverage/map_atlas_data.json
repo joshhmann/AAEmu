@@ -1,0 +1,5371 @@
+{
+  "version": "2.0.0",
+  "zones": [
+    {
+      "id": 11,
+      "name": "e_falcony_plateau",
+      "display_name": "매사냥 고원",
+      "continent": "haranya",
+      "x": 21004.8,
+      "y": 7424.0,
+      "w": 5898.67,
+      "h": 3539.2
+    },
+    {
+      "id": 12,
+      "name": "e_singing_land",
+      "display_name": "노래의 땅",
+      "continent": "haranya",
+      "x": 19655.27,
+      "y": 9216.0,
+      "w": 4066.91,
+      "h": 2439.27
+    },
+    {
+      "id": 14,
+      "name": "e_steppe_belt",
+      "display_name": "초원의 띠",
+      "continent": "haranya",
+      "x": 22642.0,
+      "y": 5666.0,
+      "w": 4900.0,
+      "h": 2936.0
+    },
+    {
+      "id": 15,
+      "name": "e_ruins_of_hariharalaya",
+      "display_name": "하리하랄라야의 폐허",
+      "continent": "haranya",
+      "x": 24982.0,
+      "y": 5342.0,
+      "w": 6082.0,
+      "h": 3644.0
+    },
+    {
+      "id": 16,
+      "name": "e_lokas_checkers",
+      "display_name": "로카의 장기말들",
+      "continent": "haranya",
+      "x": 22343.0,
+      "y": 7972.0,
+      "w": 6407.0,
+      "h": 3839.0
+    },
+    {
+      "id": 17,
+      "name": "e_ynystere",
+      "display_name": "이니스테르",
+      "continent": "haranya",
+      "x": 18585.3,
+      "y": 11264.0,
+      "w": 4185.3,
+      "h": 2512.37
+    },
+    {
+      "id": 18,
+      "name": "w_white_forest",
+      "display_name": "하얀 숲",
+      "continent": "nuia",
+      "x": 7697.0,
+      "y": 11815.0,
+      "w": 4287.83,
+      "h": 2569.0
+    },
+    {
+      "id": 19,
+      "name": "w_the_carcass",
+      "display_name": "뼈의 땅",
+      "continent": "nuia",
+      "x": 7960.0,
+      "y": 15544.0,
+      "w": 4872.0,
+      "h": 2919.0
+    },
+    {
+      "id": 1,
+      "name": "w_gweonid_forest",
+      "display_name": "그위오니드 숲",
+      "continent": "nuia",
+      "x": 8888.0,
+      "y": 14196.0,
+      "w": 3984.0,
+      "h": 2387.0
+    },
+    {
+      "id": 20,
+      "name": "w_cross_plains",
+      "display_name": "십자별 평원",
+      "continent": "nuia",
+      "x": 12597.33,
+      "y": 10617.9,
+      "w": 4220.95,
+      "h": 2537.14
+    },
+    {
+      "id": 22,
+      "name": "w_golden_plains",
+      "display_name": "황금 평원",
+      "continent": "nuia",
+      "x": 7368.65,
+      "y": 9216.0,
+      "w": 4919.35,
+      "h": 2952.65
+    },
+    {
+      "id": 23,
+      "name": "e_hasla",
+      "display_name": "하슬라",
+      "continent": "haranya",
+      "x": 25933.0,
+      "y": 6245.0,
+      "w": 6667.91,
+      "h": 3995.0
+    },
+    {
+      "id": 24,
+      "name": "e_tiger_spine_mountains",
+      "display_name": "호랑이 등뼈 산맥",
+      "continent": "haranya",
+      "x": 20156.31,
+      "y": 7491.69,
+      "w": 3457.23,
+      "h": 2075.08
+    },
+    {
+      "id": 25,
+      "name": "e_ancient_forest",
+      "display_name": "고대의 숲",
+      "continent": "haranya",
+      "x": 21604.17,
+      "y": 10548.87,
+      "w": 3909.57,
+      "h": 2347.13
+    },
+    {
+      "id": 26,
+      "name": "w_hell_swamp",
+      "display_name": "지옥 늪지대",
+      "continent": "nuia",
+      "x": 4649.93,
+      "y": 7265.1,
+      "w": 6196.97,
+      "h": 3723.03
+    },
+    {
+      "id": 27,
+      "name": "w_long_sand",
+      "display_name": "긴 모래톱",
+      "continent": "nuia",
+      "x": 7398.0,
+      "y": 7846.0,
+      "w": 4493.0,
+      "h": 2692.0
+    },
+    {
+      "id": 2,
+      "name": "w_marianople",
+      "display_name": "마리아노플",
+      "continent": "nuia",
+      "x": 9677.47,
+      "y": 10910.32,
+      "w": 3174.18,
+      "h": 1904.28
+    },
+    {
+      "id": 30,
+      "name": "s_lostway_sea",
+      "display_name": "길 잃은 바다",
+      "continent": "ocean",
+      "x": 11927.23,
+      "y": 8192.0,
+      "w": 10225.42,
+      "h": 6144.0
+    },
+    {
+      "id": 31,
+      "name": "instance_training_camp",
+      "display_name": "훈련 야영지",
+      "continent": "other",
+      "x": 827.53,
+      "y": 273.61,
+      "w": 697.05,
+      "h": 417.98
+    },
+    {
+      "id": 33,
+      "name": "o_salpimari",
+      "display_name": "살피마리",
+      "continent": "auroria",
+      "x": 18841.78,
+      "y": 23335.11,
+      "w": 2480.0,
+      "h": 1488.89
+    },
+    {
+      "id": 34,
+      "name": "o_nuimari",
+      "display_name": "누이마리",
+      "continent": "auroria",
+      "x": 20601.26,
+      "y": 23392.84,
+      "w": 2350.32,
+      "h": 1412.21
+    },
+    {
+      "id": 36,
+      "name": "s_silent_sea",
+      "display_name": "고요한 바다",
+      "continent": "ocean",
+      "x": 8192.0,
+      "y": 13312.0,
+      "w": 22149.91,
+      "h": 13312.0
+    },
+    {
+      "id": 39,
+      "name": "s_golden_sea",
+      "display_name": "황금 바다",
+      "continent": "ocean",
+      "x": 8509.17,
+      "y": 5120.0,
+      "w": 8512.19,
+      "h": 5120.0
+    },
+    {
+      "id": 3,
+      "name": "w_garangdol_plains",
+      "display_name": "가랑돌 평원",
+      "continent": "nuia",
+      "x": 9934.63,
+      "y": 12160.0,
+      "w": 5185.83,
+      "h": 3112.23
+    },
+    {
+      "id": 40,
+      "name": "s_crescent_sea",
+      "display_name": "초승달 바다",
+      "continent": "ocean",
+      "x": 12288.0,
+      "y": 11916.96,
+      "w": 4096.0,
+      "h": 2468.7
+    },
+    {
+      "id": 43,
+      "name": "o_seonyeokmari",
+      "display_name": "서녘마리",
+      "continent": "auroria",
+      "x": 19087.67,
+      "y": 24516.57,
+      "w": 1831.18,
+      "h": 1102.37
+    },
+    {
+      "id": 44,
+      "name": "o_rest_land",
+      "display_name": "안식의 땅",
+      "continent": "auroria",
+      "x": 20423.71,
+      "y": 24509.69,
+      "w": 2168.29,
+      "h": 1303.13
+    },
+    {
+      "id": 45,
+      "name": "instance_burntcastle_armory",
+      "display_name": "불탄 성 무기고",
+      "continent": "other",
+      "x": -69.0,
+      "y": 61.0,
+      "w": 590.0,
+      "h": 354.0
+    },
+    {
+      "id": 46,
+      "name": "instance_hadir_farm",
+      "display_name": "하디르의 농장",
+      "continent": "other",
+      "x": 438.0,
+      "y": 451.0,
+      "w": 589.0,
+      "h": 353.0
+    },
+    {
+      "id": 47,
+      "name": "instance_sal_temple",
+      "display_name": "서방 이슈바라 왕궁 지하",
+      "continent": "other",
+      "x": 337.0,
+      "y": 211.0,
+      "w": 467.34,
+      "h": 280.0
+    },
+    {
+      "id": 49,
+      "name": "arche_mall",
+      "display_name": "신기루 섬",
+      "continent": "other",
+      "x": 2524.0,
+      "y": 3116.0,
+      "w": 3441.0,
+      "h": 2062.0
+    },
+    {
+      "id": 4,
+      "name": "e_sunrise_peninsula",
+      "display_name": "동틀녘 반도",
+      "continent": "haranya",
+      "x": 14144.0,
+      "y": 6955.79,
+      "w": 4712.42,
+      "h": 2836.21
+    },
+    {
+      "id": 50,
+      "name": "instance_cuttingwind_deadmine",
+      "display_name": "칼바람 폐광",
+      "continent": "other",
+      "x": 147.0,
+      "y": 210.0,
+      "w": 902.96,
+      "h": 541.0
+    },
+    {
+      "id": 51,
+      "name": "instance_howling_abyss",
+      "display_name": "울부짖는 구렁텅이",
+      "continent": "other",
+      "x": 174.0,
+      "y": 387.0,
+      "w": 679.31,
+      "h": 407.0
+    },
+    {
+      "id": 52,
+      "name": "instance_cradle_of_destruction",
+      "display_name": "파괴의 요람",
+      "continent": "other",
+      "x": -103.0,
+      "y": 291.0,
+      "w": 1181.7,
+      "h": 708.0
+    },
+    {
+      "id": 54,
+      "name": "o_abyss_gate",
+      "display_name": "심연의 입구",
+      "continent": "auroria",
+      "x": 20657.0,
+      "y": 23625.0,
+      "w": 5097.32,
+      "h": 3054.0
+    },
+    {
+      "id": 56,
+      "name": "o_land_of_sunlights",
+      "display_name": "태양의 들녘",
+      "continent": "auroria",
+      "x": 20076.0,
+      "y": 25213.0,
+      "w": 4059.17,
+      "h": 2432.0
+    },
+    {
+      "id": 58,
+      "name": "instance_howling_abyss_2",
+      "display_name": "(고대)울부짖는 구렁텅이",
+      "continent": "other",
+      "x": 174.0,
+      "y": 387.0,
+      "w": 679.31,
+      "h": 407.0
+    },
+    {
+      "id": 59,
+      "name": "s_freedom_island",
+      "display_name": "빛너울 바다",
+      "continent": "ocean",
+      "x": 16587.0,
+      "y": 15330.0,
+      "w": 8886.1,
+      "h": 5324.0
+    },
+    {
+      "id": 5,
+      "name": "w_solzreed",
+      "display_name": "솔즈리드 반도",
+      "continent": "nuia",
+      "x": 11925.0,
+      "y": 13266.0,
+      "w": 4810.24,
+      "h": 2882.0
+    },
+    {
+      "id": 60,
+      "name": "s_pirate_island",
+      "display_name": "일렁이는 바다",
+      "continent": "ocean",
+      "x": 12597.0,
+      "y": 21483.0,
+      "w": 5204.14,
+      "h": 3118.0
+    },
+    {
+      "id": 61,
+      "name": "o_shining_shore",
+      "display_name": "빛나는 해안",
+      "continent": "auroria",
+      "x": 18137.0,
+      "y": 26303.0,
+      "w": 2755.63,
+      "h": 1651.0
+    },
+    {
+      "id": 62,
+      "name": "instance_immortal_isle",
+      "display_name": "영원의 섬",
+      "continent": "other",
+      "x": 1579.0,
+      "y": 1244.0,
+      "w": 233.67,
+      "h": 140.0
+    },
+    {
+      "id": 64,
+      "name": "instance_immortal_isle_easy",
+      "display_name": "[주말던전] 영원의 섬",
+      "continent": "other",
+      "x": 1579.0,
+      "y": 1244.0,
+      "w": 233.67,
+      "h": 140.0
+    },
+    {
+      "id": 65,
+      "name": "o_library_2",
+      "display_name": "푸르른 휴게실",
+      "continent": "auroria",
+      "x": 2300.0,
+      "y": 28047.0,
+      "w": 474.01,
+      "h": 284.0
+    },
+    {
+      "id": 67,
+      "name": "o_library_1",
+      "display_name": "아늑한 휴게실",
+      "continent": "auroria",
+      "x": 2301.0,
+      "y": 30096.0,
+      "w": 474.01,
+      "h": 284.0
+    },
+    {
+      "id": 69,
+      "name": "o_library_3",
+      "display_name": "밤하늘 휴게실",
+      "continent": "auroria",
+      "x": 2300.0,
+      "y": 25999.0,
+      "w": 474.01,
+      "h": 284.0
+    },
+    {
+      "id": 6,
+      "name": "w_lilyut_meadow",
+      "display_name": "릴리엇 구릉지",
+      "continent": "nuia",
+      "x": 10919.27,
+      "y": 14613.82,
+      "w": 4101.82,
+      "h": 2462.55
+    },
+    {
+      "id": 70,
+      "name": "instance_library_1",
+      "display_name": "무한한 지식의 열람실",
+      "continent": "other",
+      "x": -612.0,
+      "y": -98.0,
+      "w": 2249.9,
+      "h": 1348.0
+    },
+    {
+      "id": 71,
+      "name": "instance_library_2",
+      "display_name": "책 읽는 정원",
+      "continent": "other",
+      "x": -612.0,
+      "y": 1950.0,
+      "w": 2249.9,
+      "h": 1348.0
+    },
+    {
+      "id": 72,
+      "name": "instance_library_3",
+      "display_name": "비명 서고",
+      "continent": "other",
+      "x": -611.0,
+      "y": 3998.0,
+      "w": 2249.9,
+      "h": 1348.0
+    },
+    {
+      "id": 7,
+      "name": "e_rainbow_field",
+      "display_name": "무지개 벌판",
+      "continent": "haranya",
+      "x": 18868.51,
+      "y": 5952.0,
+      "w": 4629.33,
+      "h": 2781.54
+    },
+    {
+      "id": 8,
+      "name": "w_two_crowns",
+      "display_name": "두 왕관",
+      "continent": "nuia",
+      "x": 10592.0,
+      "y": 9727.0,
+      "w": 4596.6,
+      "h": 2754.0
+    },
+    {
+      "id": 9,
+      "name": "e_mahadevi",
+      "display_name": "마하데비",
+      "continent": "haranya",
+      "x": 17014.15,
+      "y": 7378.05,
+      "w": 4642.46,
+      "h": 2784.82
+    }
+  ],
+  "junctions": [
+    {
+      "id": "rb-junction-arcum-iris-J1",
+      "label": "Arcum Iris J1: joins Serpent's Pass + Arcum Iris",
+      "x": 21602.44,
+      "y": 7325.04,
+      "z": 236.39,
+      "routes": [
+        "04379932-0aa1-4143-9130-fc9f6044df18",
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+      ],
+      "what": "display_pixel [548.05, 281.54]; kinds nearby-recording-join; gap_m 0.03; status candidate-not-movement-validated; routes 04379932-0aa1-4143-9130-fc9f6044df18,2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J2",
+      "label": "Arcum Iris J2: joins Arcum Iris + Widesleeves camp + Arcum Iris to Tigerspine Mountains",
+      "x": 22264.31,
+      "y": 7069.93,
+      "z": 277.77,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "3186a33d-384d-4c07-a08b-6db198dae386",
+        "930e72d1-3820-4383-8011-803756ca8b80"
+      ],
+      "what": "display_pixel [680.72, 332.54]; kinds nearby-recording-join; gap_m 0.17; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,3186a33d-384d-4c07-a08b-6db198dae386,930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J3",
+      "label": "Arcum Iris J3: joins Serpent's Pass + Arcum Iris + Widesleeves camp",
+      "x": 22124.56,
+      "y": 7036.64,
+      "z": 272.8,
+      "routes": [
+        "04379932-0aa1-4143-9130-fc9f6044df18",
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "3186a33d-384d-4c07-a08b-6db198dae386"
+      ],
+      "what": "display_pixel [652.71, 339.19]; kinds nearby-recording-join; gap_m 0.14; status candidate-not-movement-validated; routes 04379932-0aa1-4143-9130-fc9f6044df18,2881e1a9-13c1-4d6d-9e40-c23ad4223042,3186a33d-384d-4c07-a08b-6db198dae386"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J4",
+      "label": "Arcum Iris J4: joins Arcum Iris + Hatora",
+      "x": 20004.62,
+      "y": 7595.86,
+      "z": 179.25,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "7e2e4256-a07b-47bf-b115-c1b1946d52fc"
+      ],
+      "what": "display_pixel [227.75, 227.41]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,7e2e4256-a07b-47bf-b115-c1b1946d52fc"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J5",
+      "label": "Arcum Iris J5: joins Arcum Iris + Hatora",
+      "x": 19974.64,
+      "y": 7586.97,
+      "z": 179.72,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "7e2e4256-a07b-47bf-b115-c1b1946d52fc"
+      ],
+      "what": "display_pixel [221.74, 229.19]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,7e2e4256-a07b-47bf-b115-c1b1946d52fc"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J6",
+      "label": "Arcum Iris J6: joins Arcum Iris + Hatora",
+      "x": 19946.45,
+      "y": 7571.95,
+      "z": 181.24,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "7e2e4256-a07b-47bf-b115-c1b1946d52fc"
+      ],
+      "what": "display_pixel [216.08, 232.19]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,7e2e4256-a07b-47bf-b115-c1b1946d52fc"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J7",
+      "label": "Arcum Iris J7: joins Arcum Iris + Arcum iris side path main road",
+      "x": 19566.54,
+      "y": 7531.11,
+      "z": 204.06,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "34230432-89c2-4ed9-8f77-37ccdf8d1363"
+      ],
+      "what": "display_pixel [139.93, 240.35]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,34230432-89c2-4ed9-8f77-37ccdf8d1363"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J8",
+      "label": "Arcum Iris J8: joins Arcum Iris + Arcum iris side path main road",
+      "x": 19715.12,
+      "y": 7488.96,
+      "z": 204.74,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "34230432-89c2-4ed9-8f77-37ccdf8d1363"
+      ],
+      "what": "display_pixel [169.71, 248.78]; kinds nearby-recording-join; gap_m 2.73; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,34230432-89c2-4ed9-8f77-37ccdf8d1363"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J9",
+      "label": "Arcum Iris J9: joins Arcum iris side path main road 2 + Arcum Iris",
+      "x": 20259.17,
+      "y": 7432.4,
+      "z": 191.16,
+      "routes": [
+        "21548fd0-9302-4fc7-af5e-b30005f0023b",
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+      ],
+      "what": "display_pixel [278.77, 260.08]; kinds nearby-recording-join; gap_m 10.09; status candidate-not-movement-validated; routes 21548fd0-9302-4fc7-af5e-b30005f0023b,2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J10",
+      "label": "Arcum Iris J10: joins Arcum Iris + Sancita Oasis quest + Sancita Oasis",
+      "x": 21394.05,
+      "y": 7413.81,
+      "z": 235.74,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "d8bc75ef-3365-4174-821c-5a0c505cdded",
+        "e22ecbf2-c105-49a9-8abd-16d036ec8a62"
+      ],
+      "what": "display_pixel [506.27, 263.8]; kinds nearby-recording-join; gap_m 1.23; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,d8bc75ef-3365-4174-821c-5a0c505cdded,e22ecbf2-c105-49a9-8abd-16d036ec8a62"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J11",
+      "label": "Arcum Iris J11: joins Road to Snake Eye Den + Road to Snake Eye Den sidepath",
+      "x": 22476.08,
+      "y": 7082.24,
+      "z": 278.79,
+      "routes": [
+        "0d1b0d8e-8f0c-483d-9ebe-88e0eb7629dc",
+        "993a3185-e1ad-4744-96b7-13d3dcf6ba43"
+      ],
+      "what": "display_pixel [723.18, 330.08]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 0d1b0d8e-8f0c-483d-9ebe-88e0eb7629dc,993a3185-e1ad-4744-96b7-13d3dcf6ba43"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J12",
+      "label": "Arcum Iris J12: joins Arcum Iris + Widesleeves camp",
+      "x": 22235.29,
+      "y": 7059.37,
+      "z": 277.84,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "3186a33d-384d-4c07-a08b-6db198dae386"
+      ],
+      "what": "display_pixel [674.91, 334.65]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,3186a33d-384d-4c07-a08b-6db198dae386"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J13",
+      "label": "Arcum Iris J13: joins Widesleeves camp + Road to sunbite wilds",
+      "x": 22280.3,
+      "y": 7005.35,
+      "z": 277.89,
+      "routes": [
+        "3186a33d-384d-4c07-a08b-6db198dae386",
+        "efe8c064-dd2a-434c-ab2a-8d82fa4bf974"
+      ],
+      "what": "display_pixel [683.93, 345.45]; kinds nearby-recording-join; gap_m 1.72; status candidate-not-movement-validated; routes 3186a33d-384d-4c07-a08b-6db198dae386,efe8c064-dd2a-434c-ab2a-8d82fa4bf974"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J14",
+      "label": "Arcum Iris J14: joins Widesleeves camp + Road to sunbite wilds",
+      "x": 22313.68,
+      "y": 6993.74,
+      "z": 276.95,
+      "routes": [
+        "3186a33d-384d-4c07-a08b-6db198dae386",
+        "efe8c064-dd2a-434c-ab2a-8d82fa4bf974"
+      ],
+      "what": "display_pixel [690.62, 347.77]; kinds nearby-recording-join; gap_m 1.19; status candidate-not-movement-validated; routes 3186a33d-384d-4c07-a08b-6db198dae386,efe8c064-dd2a-434c-ab2a-8d82fa4bf974"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J15",
+      "label": "Arcum Iris J15: joins Road to Snake Eye Den + Road to sunbite wilds",
+      "x": 22387.34,
+      "y": 6939.61,
+      "z": 252.77,
+      "routes": [
+        "0d1b0d8e-8f0c-483d-9ebe-88e0eb7629dc",
+        "efe8c064-dd2a-434c-ab2a-8d82fa4bf974"
+      ],
+      "what": "display_pixel [705.39, 358.59]; kinds nearby-recording-join; gap_m 3.09; status candidate-not-movement-validated; routes 0d1b0d8e-8f0c-483d-9ebe-88e0eb7629dc,efe8c064-dd2a-434c-ab2a-8d82fa4bf974"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J16",
+      "label": "Arcum Iris J16: joins Serpent's Pass + Serpent's pass side paths",
+      "x": 21424.54,
+      "y": 6583.66,
+      "z": 151.47,
+      "routes": [
+        "04379932-0aa1-4143-9130-fc9f6044df18",
+        "4a93f38f-7254-437d-a593-58fe98308516"
+      ],
+      "what": "display_pixel [512.38, 429.74]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 04379932-0aa1-4143-9130-fc9f6044df18,4a93f38f-7254-437d-a593-58fe98308516"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J17",
+      "label": "Arcum Iris J17: joins Serpent's Pass + Serpent's pass side paths",
+      "x": 21867.37,
+      "y": 6561.18,
+      "z": 188.06,
+      "routes": [
+        "04379932-0aa1-4143-9130-fc9f6044df18",
+        "4a93f38f-7254-437d-a593-58fe98308516"
+      ],
+      "what": "display_pixel [601.15, 434.23]; kinds nearby-recording-join; gap_m 6.62; status candidate-not-movement-validated; routes 04379932-0aa1-4143-9130-fc9f6044df18,4a93f38f-7254-437d-a593-58fe98308516"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J18",
+      "label": "Arcum Iris J18: joins Serpent's Pass + Serpent's pass side paths",
+      "x": 21740.58,
+      "y": 6550.42,
+      "z": 162.76,
+      "routes": [
+        "04379932-0aa1-4143-9130-fc9f6044df18",
+        "4a93f38f-7254-437d-a593-58fe98308516"
+      ],
+      "what": "display_pixel [575.74, 436.38]; kinds nearby-recording-join; gap_m 0.31; status candidate-not-movement-validated; routes 04379932-0aa1-4143-9130-fc9f6044df18,4a93f38f-7254-437d-a593-58fe98308516"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J19",
+      "label": "Arcum Iris J19: joins Arcum Iris + Parchsun Settlement",
+      "x": 20496.05,
+      "y": 7151.98,
+      "z": 192.59,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "2b1a2a0f-df0b-4377-8960-e0d205bdc004"
+      ],
+      "what": "display_pixel [326.26, 316.14]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,2b1a2a0f-df0b-4377-8960-e0d205bdc004"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J20",
+      "label": "Arcum Iris J20: joins Arcum Iris + Parchsun Settlement",
+      "x": 20517.7,
+      "y": 7129.47,
+      "z": 192.51,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "2b1a2a0f-df0b-4377-8960-e0d205bdc004"
+      ],
+      "what": "display_pixel [330.6, 320.64]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,2b1a2a0f-df0b-4377-8960-e0d205bdc004"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J21",
+      "label": "Arcum Iris J21: joins Arcum Iris + Parchsun Settlement",
+      "x": 20542.01,
+      "y": 7123.5,
+      "z": 193.14,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "2b1a2a0f-df0b-4377-8960-e0d205bdc004"
+      ],
+      "what": "display_pixel [335.47, 321.83]; kinds nearby-recording-join; gap_m 1.19; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,2b1a2a0f-df0b-4377-8960-e0d205bdc004"
+    },
+    {
+      "id": "rb-junction-arcum-iris-J22",
+      "label": "Arcum Iris J22: joins Arcum Iris + Parchsun Settlement",
+      "x": 20588.46,
+      "y": 7121.26,
+      "z": 194.78,
+      "routes": [
+        "2881e1a9-13c1-4d6d-9e40-c23ad4223042",
+        "2b1a2a0f-df0b-4377-8960-e0d205bdc004"
+      ],
+      "what": "display_pixel [344.78, 322.28]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2881e1a9-13c1-4d6d-9e40-c23ad4223042,2b1a2a0f-df0b-4377-8960-e0d205bdc004"
+    },
+    {
+      "id": "rb-junction-falcorth-J1",
+      "label": "Falcorth Plains J1: joins Graymist + Firran Spawn side path",
+      "x": 24150.85,
+      "y": 9655.45,
+      "z": 538.81,
+      "routes": [
+        "d79869f3-910f-469a-871f-72dfc1770cd5",
+        "fdd00072-3254-429b-87c5-2e989f86caaa"
+      ],
+      "what": "display_pixel [494.95, 205.44]; kinds nearby-recording-join; gap_m 6.54; status candidate-not-movement-validated; routes d79869f3-910f-469a-871f-72dfc1770cd5,fdd00072-3254-429b-87c5-2e989f86caaa"
+    },
+    {
+      "id": "rb-junction-falcorth-J2",
+      "label": "Falcorth Plains J2: joins Bleakbreath Cave + Cloudgrain",
+      "x": 22871.34,
+      "y": 9334.29,
+      "z": 596.78,
+      "routes": [
+        "393b59f9-71e9-495c-b35c-b101a3e796b0",
+        "95d5d1c3-b16f-4cf1-a2c4-f5b35a04c8d6"
+      ],
+      "what": "display_pixel [293.65, 255.9]; kinds nearby-recording-join; gap_m 2.96; status candidate-not-movement-validated; routes 393b59f9-71e9-495c-b35c-b101a3e796b0,95d5d1c3-b16f-4cf1-a2c4-f5b35a04c8d6"
+    },
+    {
+      "id": "rb-junction-falcorth-J3",
+      "label": "Falcorth Plains J3: joins Oxion Clan - Camp pathing + Oxion Clan to Halfmoon + Oxion Clan to Graymist",
+      "x": 23756.5,
+      "y": 9197.26,
+      "z": 580.98,
+      "routes": [
+        "32d28470-f2ee-469d-af5e-1482200af306",
+        "83341096-9553-490d-88d3-59a1290fbd61",
+        "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+      ],
+      "what": "display_pixel [432.91, 277.43]; kinds nearby-recording-join; gap_m 0.42; status candidate-not-movement-validated; routes 32d28470-f2ee-469d-af5e-1482200af306,83341096-9553-490d-88d3-59a1290fbd61,e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "id": "rb-junction-falcorth-J4",
+      "label": "Falcorth Plains J4: joins Cloudgrain + Eye of Night",
+      "x": 22961.36,
+      "y": 9176.57,
+      "z": 625.14,
+      "routes": [
+        "95d5d1c3-b16f-4cf1-a2c4-f5b35a04c8d6",
+        "b212cc68-4759-4522-8e71-0fe2b1f012a9"
+      ],
+      "what": "display_pixel [307.81, 280.68]; kinds nearby-recording-join; gap_m 10.56; status candidate-not-movement-validated; routes 95d5d1c3-b16f-4cf1-a2c4-f5b35a04c8d6,b212cc68-4759-4522-8e71-0fe2b1f012a9"
+    },
+    {
+      "id": "rb-junction-falcorth-J5",
+      "label": "Falcorth Plains J5: joins Cloudgrain to Oxion Clan + Oxion Clan - Camp pathing + Oxion Clan to Halfmoon + Oxion Clan to Graymist",
+      "x": 23780.55,
+      "y": 9175.95,
+      "z": 581.2,
+      "routes": [
+        "00d2557e-1503-44d6-a034-f6ca81e74804",
+        "32d28470-f2ee-469d-af5e-1482200af306",
+        "83341096-9553-490d-88d3-59a1290fbd61",
+        "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+      ],
+      "what": "display_pixel [436.69, 280.77]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 00d2557e-1503-44d6-a034-f6ca81e74804,32d28470-f2ee-469d-af5e-1482200af306,83341096-9553-490d-88d3-59a1290fbd61,e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "id": "rb-junction-falcorth-J6",
+      "label": "Falcorth Plains J6: joins Cloudgrain to Oxion Clan + Cloudgrain camp + Cloudgrain + Tigerspine Mountatins to Falcorth Plains + Halfmoon to Cloudgrain",
+      "x": 23250.61,
+      "y": 9083.49,
+      "z": 651.5,
+      "routes": [
+        "00d2557e-1503-44d6-a034-f6ca81e74804",
+        "7564ca36-b5c8-498b-89b9-522b8204eb40",
+        "95d5d1c3-b16f-4cf1-a2c4-f5b35a04c8d6",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee",
+        "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+      ],
+      "what": "display_pixel [353.32, 295.3]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 00d2557e-1503-44d6-a034-f6ca81e74804,7564ca36-b5c8-498b-89b9-522b8204eb40,95d5d1c3-b16f-4cf1-a2c4-f5b35a04c8d6,a78dfdf0-3045-4efb-a7b2-5c91181c64ee,d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "id": "rb-junction-falcorth-J7",
+      "label": "Falcorth Plains J7: joins Cloudgrain camp + Tigerspine Mountatins to Falcorth Plains + Eye of Night",
+      "x": 23234.48,
+      "y": 9034.8,
+      "z": 657.76,
+      "routes": [
+        "7564ca36-b5c8-498b-89b9-522b8204eb40",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee",
+        "b212cc68-4759-4522-8e71-0fe2b1f012a9"
+      ],
+      "what": "display_pixel [350.78, 302.95]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 7564ca36-b5c8-498b-89b9-522b8204eb40,a78dfdf0-3045-4efb-a7b2-5c91181c64ee,b212cc68-4759-4522-8e71-0fe2b1f012a9"
+    },
+    {
+      "id": "rb-junction-falcorth-J8",
+      "label": "Falcorth Plains J8: joins Graymist camp pathing + Graymist + Oxion Clan to Graymist",
+      "x": 24031.65,
+      "y": 8630.41,
+      "z": 566.86,
+      "routes": [
+        "9df6946c-a3e0-4db6-8d42-d7ca5f593a55",
+        "d79869f3-910f-469a-871f-72dfc1770cd5",
+        "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+      ],
+      "what": "display_pixel [476.2, 366.48]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 9df6946c-a3e0-4db6-8d42-d7ca5f593a55,d79869f3-910f-469a-871f-72dfc1770cd5,e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "id": "rb-junction-falcorth-J9",
+      "label": "Falcorth Plains J9: joins Oxion Clan to Halfmoon + Halfmoon - Camp pathing + Halfmoon to Cloudgrain",
+      "x": 23626.78,
+      "y": 9835.5,
+      "z": 587.26,
+      "routes": [
+        "83341096-9553-490d-88d3-59a1290fbd61",
+        "83b0e96e-bfa4-4f3f-a9b2-4d0e3ca9a380",
+        "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+      ],
+      "what": "display_pixel [412.5, 177.16]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 83341096-9553-490d-88d3-59a1290fbd61,83b0e96e-bfa4-4f3f-a9b2-4d0e3ca9a380,d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "id": "rb-junction-falcorth-J10",
+      "label": "Falcorth Plains J10: joins Oxion Clan to Halfmoon + Halfmoon - Camp pathing",
+      "x": 23597.71,
+      "y": 9833.49,
+      "z": 589.67,
+      "routes": [
+        "83341096-9553-490d-88d3-59a1290fbd61",
+        "83b0e96e-bfa4-4f3f-a9b2-4d0e3ca9a380"
+      ],
+      "what": "display_pixel [407.93, 177.47]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 83341096-9553-490d-88d3-59a1290fbd61,83b0e96e-bfa4-4f3f-a9b2-4d0e3ca9a380"
+    },
+    {
+      "id": "rb-junction-falcorth-J11",
+      "label": "Falcorth Plains J11: joins Oxion Clan to Halfmoon + Halfmoon - Camp pathing + Halfmoon to Cloudgrain",
+      "x": 23657.07,
+      "y": 9815.12,
+      "z": 584.49,
+      "routes": [
+        "83341096-9553-490d-88d3-59a1290fbd61",
+        "83b0e96e-bfa4-4f3f-a9b2-4d0e3ca9a380",
+        "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+      ],
+      "what": "display_pixel [417.27, 180.36]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 83341096-9553-490d-88d3-59a1290fbd61,83b0e96e-bfa4-4f3f-a9b2-4d0e3ca9a380,d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "id": "rb-junction-falcorth-J12",
+      "label": "Falcorth Plains J12: joins Cloudgrain to Oxion Clan + Oxion Clan - Camp pathing",
+      "x": 23736.8,
+      "y": 9157.93,
+      "z": 581.8,
+      "routes": [
+        "00d2557e-1503-44d6-a034-f6ca81e74804",
+        "32d28470-f2ee-469d-af5e-1482200af306"
+      ],
+      "what": "display_pixel [429.81, 283.6]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 00d2557e-1503-44d6-a034-f6ca81e74804,32d28470-f2ee-469d-af5e-1482200af306"
+    },
+    {
+      "id": "rb-junction-falcorth-J13",
+      "label": "Falcorth Plains J13: joins Oxion Clan - Camp pathing + Falcorth plains fishing stand + Oxion Clan to Graymist",
+      "x": 23820.7,
+      "y": 9156.82,
+      "z": 580.84,
+      "routes": [
+        "32d28470-f2ee-469d-af5e-1482200af306",
+        "9430c545-18ac-4f36-bbbe-8d34c70db998",
+        "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+      ],
+      "what": "display_pixel [443.01, 283.78]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 32d28470-f2ee-469d-af5e-1482200af306,9430c545-18ac-4f36-bbbe-8d34c70db998,e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "id": "rb-junction-falcorth-J14",
+      "label": "Falcorth Plains J14: joins Cloudgrain camp + Tigerspine Mountatins to Falcorth Plains + Halfmoon to Cloudgrain",
+      "x": 23277.47,
+      "y": 9135.5,
+      "z": 648.62,
+      "routes": [
+        "7564ca36-b5c8-498b-89b9-522b8204eb40",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee",
+        "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+      ],
+      "what": "display_pixel [357.54, 287.13]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 7564ca36-b5c8-498b-89b9-522b8204eb40,a78dfdf0-3045-4efb-a7b2-5c91181c64ee,d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "id": "rb-junction-falcorth-J15",
+      "label": "Falcorth Plains J15: joins Cloudgrain camp + Tigerspine Mountatins to Falcorth Plains + Halfmoon to Cloudgrain",
+      "x": 23266.05,
+      "y": 9103.86,
+      "z": 650.55,
+      "routes": [
+        "7564ca36-b5c8-498b-89b9-522b8204eb40",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee",
+        "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+      ],
+      "what": "display_pixel [355.75, 292.1]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 7564ca36-b5c8-498b-89b9-522b8204eb40,a78dfdf0-3045-4efb-a7b2-5c91181c64ee,d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "id": "rb-junction-falcorth-J16",
+      "label": "Falcorth Plains J16: joins Falcorth plains fishing stand + Oxion Clan to Graymist",
+      "x": 23902.66,
+      "y": 9000.91,
+      "z": 582.88,
+      "routes": [
+        "9430c545-18ac-4f36-bbbe-8d34c70db998",
+        "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+      ],
+      "what": "display_pixel [455.9, 308.27]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 9430c545-18ac-4f36-bbbe-8d34c70db998,e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "id": "rb-junction-falcorth-J17",
+      "label": "Falcorth Plains J17: joins Reedpine dens sidepath + Tigerspine Mountatins to Falcorth Plains",
+      "x": 23439.74,
+      "y": 8850.53,
+      "z": 640.52,
+      "routes": [
+        "9ba1a414-7c41-41b3-93d4-100bda1cc5f1",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+      ],
+      "what": "display_pixel [383.07, 331.9]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 9ba1a414-7c41-41b3-93d4-100bda1cc5f1,a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "id": "rb-junction-falcorth-J18",
+      "label": "Falcorth Plains J18: joins Graymist camp pathing + Oxion Clan to Graymist",
+      "x": 24018.47,
+      "y": 8669.05,
+      "z": 566.77,
+      "routes": [
+        "9df6946c-a3e0-4db6-8d42-d7ca5f593a55",
+        "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+      ],
+      "what": "display_pixel [474.12, 360.41]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 9df6946c-a3e0-4db6-8d42-d7ca5f593a55,e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "id": "rb-junction-falcorth-J19",
+      "label": "Falcorth Plains J19: joins Graymist camp pathing + Graymist",
+      "x": 24066.17,
+      "y": 8659.88,
+      "z": 566.51,
+      "routes": [
+        "9df6946c-a3e0-4db6-8d42-d7ca5f593a55",
+        "d79869f3-910f-469a-871f-72dfc1770cd5"
+      ],
+      "what": "display_pixel [481.63, 361.85]; kinds nearby-recording-join; gap_m 0.03; status candidate-not-movement-validated; routes 9df6946c-a3e0-4db6-8d42-d7ca5f593a55,d79869f3-910f-469a-871f-72dfc1770cd5"
+    },
+    {
+      "id": "rb-junction-falcorth-J20",
+      "label": "Falcorth Plains J20: joins Graymist camp pathing + Graymist to eye of day",
+      "x": 24043.27,
+      "y": 8606.57,
+      "z": 566.52,
+      "routes": [
+        "9df6946c-a3e0-4db6-8d42-d7ca5f593a55",
+        "a03c2b4b-83dd-4af8-ae38-805d02240820"
+      ],
+      "what": "display_pixel [478.02, 370.22]; kinds nearby-recording-join; gap_m 0.4; status candidate-not-movement-validated; routes 9df6946c-a3e0-4db6-8d42-d7ca5f593a55,a03c2b4b-83dd-4af8-ae38-805d02240820"
+    },
+    {
+      "id": "rb-junction-falcorth-J21",
+      "label": "Falcorth Plains J21: joins Hulkflesh Ravine sidepath + Tigerspine Mountatins to Falcorth Plains",
+      "x": 23495.34,
+      "y": 8595.65,
+      "z": 610.5,
+      "routes": [
+        "0c252dd2-0ee4-49bc-846c-b27dc4bcd616",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+      ],
+      "what": "display_pixel [391.82, 371.94]; kinds nearby-recording-join; gap_m 6.26; status candidate-not-movement-validated; routes 0c252dd2-0ee4-49bc-846c-b27dc4bcd616,a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "id": "rb-junction-falcorth-J22",
+      "label": "Falcorth Plains J22: joins Graymist camp pathing + Graymist to eye of day",
+      "x": 24069.06,
+      "y": 8571.3,
+      "z": 565.0,
+      "routes": [
+        "9df6946c-a3e0-4db6-8d42-d7ca5f593a55",
+        "a03c2b4b-83dd-4af8-ae38-805d02240820"
+      ],
+      "what": "display_pixel [482.08, 375.76]; kinds nearby-recording-join; gap_m 0.08; status candidate-not-movement-validated; routes 9df6946c-a3e0-4db6-8d42-d7ca5f593a55,a03c2b4b-83dd-4af8-ae38-805d02240820"
+    },
+    {
+      "id": "rb-junction-falcorth-J23",
+      "label": "Falcorth Plains J23: joins Hulkflesh Ravine sidepath + Tigerspine Mountatins to Falcorth Plains",
+      "x": 23493.1,
+      "y": 8406.11,
+      "z": 576.97,
+      "routes": [
+        "0c252dd2-0ee4-49bc-846c-b27dc4bcd616",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+      ],
+      "what": "display_pixel [391.47, 401.71]; kinds nearby-recording-join; gap_m 0.14; status candidate-not-movement-validated; routes 0c252dd2-0ee4-49bc-846c-b27dc4bcd616,a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "id": "rb-junction-falcorth-J24",
+      "label": "Falcorth Plains J24: joins Fork before Eye of Day to cave + Graymist to eye of day",
+      "x": 24233.25,
+      "y": 8403.72,
+      "z": 554.23,
+      "routes": [
+        "3e114218-e550-4dcb-8eab-8b374cde43ca",
+        "a03c2b4b-83dd-4af8-ae38-805d02240820"
+      ],
+      "what": "display_pixel [507.91, 402.09]; kinds nearby-recording-join; gap_m 1.6; status candidate-not-movement-validated; routes 3e114218-e550-4dcb-8eab-8b374cde43ca,a03c2b4b-83dd-4af8-ae38-805d02240820"
+    },
+    {
+      "id": "rb-junction-falcorth-J25",
+      "label": "Falcorth Plains J25: joins Fork before Eye of Day to cave + Darkeflght cave",
+      "x": 24742.72,
+      "y": 8384.56,
+      "z": 638.59,
+      "routes": [
+        "3e114218-e550-4dcb-8eab-8b374cde43ca",
+        "d7dea450-8299-4ac3-82fc-5f5c3259fb0e"
+      ],
+      "what": "display_pixel [588.06, 405.1]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 3e114218-e550-4dcb-8eab-8b374cde43ca,d7dea450-8299-4ac3-82fc-5f5c3259fb0e"
+    },
+    {
+      "id": "rb-junction-tigerspine-J1",
+      "label": "Tigerspine Mountains J1: joins Arcum Iris to Tigerspine Mountains + Tigerspine Mountatins to Falcorth Plains + Anviton + Anvilton",
+      "x": 21752.58,
+      "y": 8118.01,
+      "z": 404.18,
+      "routes": [
+        "930e72d1-3820-4383-8011-803756ca8b80",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee",
+        "ba664a35-e265-43a5-b3e6-4ee4339f6108",
+        "e2f26136-b6bb-41a0-8407-8c65f7caac27"
+      ],
+      "what": "display_pixel [428.48, 388.18]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 930e72d1-3820-4383-8011-803756ca8b80,a78dfdf0-3045-4efb-a7b2-5c91181c64ee,ba664a35-e265-43a5-b3e6-4ee4339f6108,e2f26136-b6bb-41a0-8407-8c65f7caac27"
+    },
+    {
+      "id": "rb-junction-tigerspine-J2",
+      "label": "Tigerspine Mountains J2: joins Tigerspine Mountatins to Falcorth Plains + Flamehawk canyon side path 2",
+      "x": 22263.08,
+      "y": 8113.5,
+      "z": 464.41,
+      "routes": [
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee",
+        "ba13d8f8-bb26-4b45-9ad3-1d821a9608e4"
+      ],
+      "what": "display_pixel [565.51, 389.39]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes a78dfdf0-3045-4efb-a7b2-5c91181c64ee,ba13d8f8-bb26-4b45-9ad3-1d821a9608e4"
+    },
+    {
+      "id": "rb-junction-tigerspine-J3",
+      "label": "Tigerspine Mountains J3: joins Tigerspine Mountatins to Falcorth Plains + Flamehawk canyon side path 1",
+      "x": 22474.32,
+      "y": 8058.0,
+      "z": 508.68,
+      "routes": [
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee",
+        "ec98265c-78ad-42de-9b30-60ab4c2ff923"
+      ],
+      "what": "display_pixel [622.21, 404.26]; kinds nearby-recording-join; gap_m 4.24; status candidate-not-movement-validated; routes a78dfdf0-3045-4efb-a7b2-5c91181c64ee,ec98265c-78ad-42de-9b30-60ab4c2ff923"
+    },
+    {
+      "id": "rb-junction-tigerspine-J4",
+      "label": "Tigerspine Mountains J4: joins Anvilton to Tiger's Eye + Tiger's Eye",
+      "x": 21675.38,
+      "y": 8696.88,
+      "z": 508.63,
+      "routes": [
+        "7c3ad2fd-93b1-499d-81d9-b36917c928f8",
+        "7ed6e918-5d61-4965-9f99-04ed6d6522a4"
+      ],
+      "what": "display_pixel [407.75, 233.08]; kinds nearby-recording-join; gap_m 1.29; status candidate-not-movement-validated; routes 7c3ad2fd-93b1-499d-81d9-b36917c928f8,7ed6e918-5d61-4965-9f99-04ed6d6522a4"
+    },
+    {
+      "id": "rb-junction-tigerspine-J5",
+      "label": "Tigerspine Mountains J5: joins Anvilton to Tiger's Eye + Tiger's Eye + Tigerseye to City of towers",
+      "x": 21633.34,
+      "y": 8659.15,
+      "z": 495.39,
+      "routes": [
+        "7c3ad2fd-93b1-499d-81d9-b36917c928f8",
+        "7ed6e918-5d61-4965-9f99-04ed6d6522a4",
+        "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+      ],
+      "what": "display_pixel [396.47, 243.19]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 7c3ad2fd-93b1-499d-81d9-b36917c928f8,7ed6e918-5d61-4965-9f99-04ed6d6522a4,fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "id": "rb-junction-tigerspine-J6",
+      "label": "Tigerspine Mountains J6: joins Anviton + Automaton Factory",
+      "x": 21986.76,
+      "y": 8399.82,
+      "z": 436.31,
+      "routes": [
+        "ba664a35-e265-43a5-b3e6-4ee4339f6108",
+        "c79b8ddd-23c5-4768-a204-b207af16e12d"
+      ],
+      "what": "display_pixel [491.33, 312.67]; kinds nearby-recording-join; gap_m 4.03; status candidate-not-movement-validated; routes ba664a35-e265-43a5-b3e6-4ee4339f6108,c79b8ddd-23c5-4768-a204-b207af16e12d"
+    },
+    {
+      "id": "rb-junction-tigerspine-J7",
+      "label": "Tigerspine Mountains J7: joins Anviton + Automaton Factory",
+      "x": 22002.95,
+      "y": 8353.96,
+      "z": 425.98,
+      "routes": [
+        "ba664a35-e265-43a5-b3e6-4ee4339f6108",
+        "c79b8ddd-23c5-4768-a204-b207af16e12d"
+      ],
+      "what": "display_pixel [495.68, 324.96]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes ba664a35-e265-43a5-b3e6-4ee4339f6108,c79b8ddd-23c5-4768-a204-b207af16e12d"
+    },
+    {
+      "id": "rb-junction-tigerspine-J8",
+      "label": "Tigerspine Mountains J8: joins Anviton + Automaton Factory",
+      "x": 21847.07,
+      "y": 8298.14,
+      "z": 405.49,
+      "routes": [
+        "ba664a35-e265-43a5-b3e6-4ee4339f6108",
+        "c79b8ddd-23c5-4768-a204-b207af16e12d"
+      ],
+      "what": "display_pixel [453.84, 339.92]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes ba664a35-e265-43a5-b3e6-4ee4339f6108,c79b8ddd-23c5-4768-a204-b207af16e12d"
+    },
+    {
+      "id": "rb-junction-tigerspine-J9",
+      "label": "Tigerspine Mountains J9: joins Anviton + Automaton Factory + Anvilton",
+      "x": 21727.71,
+      "y": 8248.55,
+      "z": 404.93,
+      "routes": [
+        "ba664a35-e265-43a5-b3e6-4ee4339f6108",
+        "c79b8ddd-23c5-4768-a204-b207af16e12d",
+        "e2f26136-b6bb-41a0-8407-8c65f7caac27"
+      ],
+      "what": "display_pixel [421.8, 353.21]; kinds nearby-recording-join; gap_m 0.0; status candidate-not-movement-validated; routes ba664a35-e265-43a5-b3e6-4ee4339f6108,c79b8ddd-23c5-4768-a204-b207af16e12d,e2f26136-b6bb-41a0-8407-8c65f7caac27"
+    },
+    {
+      "id": "rb-junction-tigerspine-J10",
+      "label": "Tigerspine Mountains J10: joins Anvilton to Tiger's Eye + Arcum Iris to Tigerspine Mountains + Tigerspine Mountatins to Falcorth Plains + Anvilton",
+      "x": 21773.77,
+      "y": 8084.08,
+      "z": 403.55,
+      "routes": [
+        "7c3ad2fd-93b1-499d-81d9-b36917c928f8",
+        "930e72d1-3820-4383-8011-803756ca8b80",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee",
+        "e2f26136-b6bb-41a0-8407-8c65f7caac27"
+      ],
+      "what": "display_pixel [434.16, 397.28]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 7c3ad2fd-93b1-499d-81d9-b36917c928f8,930e72d1-3820-4383-8011-803756ca8b80,a78dfdf0-3045-4efb-a7b2-5c91181c64ee,e2f26136-b6bb-41a0-8407-8c65f7caac27"
+    },
+    {
+      "id": "rb-junction-tigerspine-J11",
+      "label": "Tigerspine Mountains J11: joins Anvilton to Tiger's Eye + Arcum Iris to Tigerspine Mountains + Tigerspine Mountatins to Falcorth Plains + Anvilton",
+      "x": 21789.52,
+      "y": 8059.24,
+      "z": 398.43,
+      "routes": [
+        "7c3ad2fd-93b1-499d-81d9-b36917c928f8",
+        "930e72d1-3820-4383-8011-803756ca8b80",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee",
+        "e2f26136-b6bb-41a0-8407-8c65f7caac27"
+      ],
+      "what": "display_pixel [438.39, 403.93]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 7c3ad2fd-93b1-499d-81d9-b36917c928f8,930e72d1-3820-4383-8011-803756ca8b80,a78dfdf0-3045-4efb-a7b2-5c91181c64ee,e2f26136-b6bb-41a0-8407-8c65f7caac27"
+    },
+    {
+      "id": "rb-junction-tigerspine-J12",
+      "label": "Tigerspine Mountains J12: joins Fork before Avilton + Anvilton to Tiger's Eye + Arcum Iris to Tigerspine Mountains + Tigerspine Mountatins to Falcorth Plains",
+      "x": 21833.46,
+      "y": 8007.24,
+      "z": 387.71,
+      "routes": [
+        "39a87e24-d629-439b-a9e0-2509457a870e",
+        "7c3ad2fd-93b1-499d-81d9-b36917c928f8",
+        "930e72d1-3820-4383-8011-803756ca8b80",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+      ],
+      "what": "display_pixel [450.19, 417.86]; kinds nearby-recording-join; gap_m 1.21; status candidate-not-movement-validated; routes 39a87e24-d629-439b-a9e0-2509457a870e,7c3ad2fd-93b1-499d-81d9-b36917c928f8,930e72d1-3820-4383-8011-803756ca8b80,a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "id": "rb-junction-tigerspine-J13",
+      "label": "Tigerspine Mountains J13: joins Avilton Public farm + Arcum Iris to Tigerspine Mountains + Tigerspine Mountatins to Falcorth Plains",
+      "x": 21920.38,
+      "y": 7989.23,
+      "z": 385.12,
+      "routes": [
+        "59c4548c-34de-43dd-9ae8-21f5b28e7fc7",
+        "930e72d1-3820-4383-8011-803756ca8b80",
+        "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+      ],
+      "what": "display_pixel [473.52, 422.69]; kinds nearby-recording-join; gap_m 4.72; status candidate-not-movement-validated; routes 59c4548c-34de-43dd-9ae8-21f5b28e7fc7,930e72d1-3820-4383-8011-803756ca8b80,a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "id": "rb-junction-tigerspine-J14",
+      "label": "Tigerspine Mountains J14: joins Fork before Avilton + Arcum Iris to Tigerspine Mountains",
+      "x": 21929.83,
+      "y": 7900.65,
+      "z": 372.78,
+      "routes": [
+        "39a87e24-d629-439b-a9e0-2509457a870e",
+        "930e72d1-3820-4383-8011-803756ca8b80"
+      ],
+      "what": "display_pixel [476.05, 446.42]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 39a87e24-d629-439b-a9e0-2509457a870e,930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "id": "rb-junction-tigerspine-J15",
+      "label": "Tigerspine Mountains J15: joins Gnawbones Cave + North Devi River",
+      "x": 21202.38,
+      "y": 9011.86,
+      "z": 442.82,
+      "routes": [
+        "850272be-6cf1-475e-afdd-c5048afa2623",
+        "c3877940-3361-4210-bb78-2d3c6af063f9"
+      ],
+      "what": "display_pixel [280.79, 148.68]; kinds nearby-recording-join; gap_m 0.41; status candidate-not-movement-validated; routes 850272be-6cf1-475e-afdd-c5048afa2623,c3877940-3361-4210-bb78-2d3c6af063f9"
+    },
+    {
+      "id": "rb-junction-tigerspine-J16",
+      "label": "Tigerspine Mountains J16: joins North Devi River + Tigerseye to City of towers",
+      "x": 21121.04,
+      "y": 8854.14,
+      "z": 428.42,
+      "routes": [
+        "c3877940-3361-4210-bb78-2d3c6af063f9",
+        "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+      ],
+      "what": "display_pixel [258.96, 190.94]; kinds nearby-recording-join; gap_m 1.32; status candidate-not-movement-validated; routes c3877940-3361-4210-bb78-2d3c6af063f9,fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "id": "rb-junction-tigerspine-J17",
+      "label": "Tigerspine Mountains J17: joins Tigerspine mountain side path + Tigerseye to City of towers",
+      "x": 21010.86,
+      "y": 8834.12,
+      "z": 412.06,
+      "routes": [
+        "54bd74bc-6c21-485d-8ed0-f80d4878a160",
+        "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+      ],
+      "what": "display_pixel [229.38, 196.31]; kinds nearby-recording-join; gap_m 7.18; status candidate-not-movement-validated; routes 54bd74bc-6c21-485d-8ed0-f80d4878a160,fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "id": "rb-junction-tigerspine-J18",
+      "label": "Tigerspine Mountains J18: joins Path to Hal Hahpa + Tigerseye to City of towers",
+      "x": 21395.7,
+      "y": 8774.68,
+      "z": 448.47,
+      "routes": [
+        "a38a7e81-13f3-4e73-8ce5-b9ce08f61f84",
+        "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+      ],
+      "what": "display_pixel [332.68, 212.23]; kinds nearby-recording-join; gap_m 1.62; status candidate-not-movement-validated; routes a38a7e81-13f3-4e73-8ce5-b9ce08f61f84,fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "id": "rb-junction-tigerspine-J19",
+      "label": "Tigerspine Mountains J19: joins Crystal Lake + Tigerseye to City of towers",
+      "x": 20893.32,
+      "y": 8731.54,
+      "z": 398.48,
+      "routes": [
+        "03272519-3d39-4f1b-968c-5fdd86b915f7",
+        "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+      ],
+      "what": "display_pixel [197.83, 223.79]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 03272519-3d39-4f1b-968c-5fdd86b915f7,fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "id": "rb-junction-tigerspine-J20",
+      "label": "Tigerspine Mountains J20: joins Crystal Lake + Watermist",
+      "x": 20995.94,
+      "y": 8532.55,
+      "z": 376.16,
+      "routes": [
+        "03272519-3d39-4f1b-968c-5fdd86b915f7",
+        "fde6ca7e-edfb-4eaa-8678-fea42f962bec"
+      ],
+      "what": "display_pixel [225.38, 277.11]; kinds nearby-recording-join; gap_m 0.62; status candidate-not-movement-validated; routes 03272519-3d39-4f1b-968c-5fdd86b915f7,fde6ca7e-edfb-4eaa-8678-fea42f962bec"
+    },
+    {
+      "id": "rb-junction-tigerspine-J21",
+      "label": "Tigerspine Mountains J21: joins Junkyard + Watermist",
+      "x": 21103.06,
+      "y": 8301.14,
+      "z": 376.22,
+      "routes": [
+        "782a5f0b-0981-4ced-afb9-169d857dcca6",
+        "fde6ca7e-edfb-4eaa-8678-fea42f962bec"
+      ],
+      "what": "display_pixel [254.13, 339.12]; kinds nearby-recording-join; gap_m 0.12; status candidate-not-movement-validated; routes 782a5f0b-0981-4ced-afb9-169d857dcca6,fde6ca7e-edfb-4eaa-8678-fea42f962bec"
+    },
+    {
+      "id": "rb-junction-tigerspine-J22",
+      "label": "Tigerspine Mountains J22: joins Junkyard + Anvilton to Tiger's Eye",
+      "x": 21404.55,
+      "y": 8237.2,
+      "z": 385.33,
+      "routes": [
+        "782a5f0b-0981-4ced-afb9-169d857dcca6",
+        "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+      ],
+      "what": "display_pixel [335.06, 356.25]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 782a5f0b-0981-4ced-afb9-169d857dcca6,7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "id": "rb-junction-tigerspine-J23",
+      "label": "Tigerspine Mountains J23: joins Anvilton to Tiger's Eye + Arach Hollow Side path",
+      "x": 21514.85,
+      "y": 8077.26,
+      "z": 379.64,
+      "routes": [
+        "7c3ad2fd-93b1-499d-81d9-b36917c928f8",
+        "a6829cf4-bf7d-4537-8177-a35ae7b78798"
+      ],
+      "what": "display_pixel [364.66, 399.1]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 7c3ad2fd-93b1-499d-81d9-b36917c928f8,a6829cf4-bf7d-4537-8177-a35ae7b78798"
+    },
+    {
+      "id": "rb-junction-dewstone-J1",
+      "label": "Dewstone Plains J1: joins Royster's Camp public farm + Royster's Camp to Sandcloud + Windshade to Roysters Camp",
+      "x": 12938.05,
+      "y": 14520.8,
+      "z": 138.71,
+      "routes": [
+        "4518e21a-edb9-4283-ab70-dd2e41a060fe",
+        "71a837ac-b342-4932-822d-c34a555f6c9f",
+        "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+      ],
+      "what": "display_pixel [537.46, 134.24]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 4518e21a-edb9-4283-ab70-dd2e41a060fe,71a837ac-b342-4932-822d-c34a555f6c9f,a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "id": "rb-junction-dewstone-J2",
+      "label": "Dewstone Plains J2: joins Royster's Camp to Sandcloud + Windshade to Roysters Camp + Royster's Camp",
+      "x": 12895.91,
+      "y": 14452.88,
+      "z": 140.89,
+      "routes": [
+        "71a837ac-b342-4932-822d-c34a555f6c9f",
+        "a05e29b3-ea4a-408b-8ba0-85ef16495780",
+        "bc00b487-fc79-411a-aa9e-a2e5107a974b"
+      ],
+      "what": "display_pixel [529.92, 146.38]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 71a837ac-b342-4932-822d-c34a555f6c9f,a05e29b3-ea4a-408b-8ba0-85ef16495780,bc00b487-fc79-411a-aa9e-a2e5107a974b"
+    },
+    {
+      "id": "rb-junction-dewstone-J3",
+      "label": "Dewstone Plains J3: joins Royster's Camp to Sandcloud + Windshade to Roysters Camp + Royster's Camp",
+      "x": 12871.96,
+      "y": 14430.26,
+      "z": 141.85,
+      "routes": [
+        "71a837ac-b342-4932-822d-c34a555f6c9f",
+        "a05e29b3-ea4a-408b-8ba0-85ef16495780",
+        "bc00b487-fc79-411a-aa9e-a2e5107a974b"
+      ],
+      "what": "display_pixel [525.63, 150.42]; kinds nearby-recording-join; gap_m 0.24; status candidate-not-movement-validated; routes 71a837ac-b342-4932-822d-c34a555f6c9f,a05e29b3-ea4a-408b-8ba0-85ef16495780,bc00b487-fc79-411a-aa9e-a2e5107a974b"
+    },
+    {
+      "id": "rb-junction-dewstone-J4",
+      "label": "Dewstone Plains J4: joins Royster's Camp to Sandcloud + Construction Site",
+      "x": 13000.66,
+      "y": 14294.35,
+      "z": 117.23,
+      "routes": [
+        "71a837ac-b342-4932-822d-c34a555f6c9f",
+        "bf4aacfc-60e9-4419-9462-a4de752c7f3e"
+      ],
+      "what": "display_pixel [548.66, 174.7]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 71a837ac-b342-4932-822d-c34a555f6c9f,bf4aacfc-60e9-4419-9462-a4de752c7f3e"
+    },
+    {
+      "id": "rb-junction-dewstone-J5",
+      "label": "Dewstone Plains J5: joins Royster's Camp to Sandcloud + Construction Site",
+      "x": 12994.95,
+      "y": 14230.02,
+      "z": 114.77,
+      "routes": [
+        "71a837ac-b342-4932-822d-c34a555f6c9f",
+        "bf4aacfc-60e9-4419-9462-a4de752c7f3e"
+      ],
+      "what": "display_pixel [547.64, 186.19]; kinds nearby-recording-join; gap_m 0.69; status candidate-not-movement-validated; routes 71a837ac-b342-4932-822d-c34a555f6c9f,bf4aacfc-60e9-4419-9462-a4de752c7f3e"
+    },
+    {
+      "id": "rb-junction-dewstone-J6",
+      "label": "Dewstone Plains J6: joins Bloodwind Cliff + Tomb of the colossus",
+      "x": 11915.87,
+      "y": 14075.48,
+      "z": 182.29,
+      "routes": [
+        "047d0b90-47ff-44b5-979b-1b0353bffc7b",
+        "ec650e95-0caa-461f-a3f3-2adc8635ee54"
+      ],
+      "what": "display_pixel [354.54, 213.8]; kinds nearby-recording-join; gap_m 2.93; status candidate-not-movement-validated; routes 047d0b90-47ff-44b5-979b-1b0353bffc7b,ec650e95-0caa-461f-a3f3-2adc8635ee54"
+    },
+    {
+      "id": "rb-junction-dewstone-J7",
+      "label": "Dewstone Plains J7: joins Hellsdame Oasis + Hellsdame Oasis to Tomb of the colossus",
+      "x": 12419.63,
+      "y": 14011.6,
+      "z": 115.75,
+      "routes": [
+        "0201a046-8e1c-4be3-955c-996b0afc839a",
+        "7dec2c17-f05e-4a37-b75f-808d9f9fb0a4"
+      ],
+      "what": "display_pixel [444.69, 225.21]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 0201a046-8e1c-4be3-955c-996b0afc839a,7dec2c17-f05e-4a37-b75f-808d9f9fb0a4"
+    },
+    {
+      "id": "rb-junction-dewstone-J8",
+      "label": "Dewstone Plains J8: joins Hellsdame Oasis + Lonesoul Cliff river area + Royster's Camp to Sandcloud + Hellsdame Oasis to Tomb of the colossus",
+      "x": 12454.13,
+      "y": 13992.12,
+      "z": 112.28,
+      "routes": [
+        "0201a046-8e1c-4be3-955c-996b0afc839a",
+        "06831002-050a-43a4-bace-ef36345e2db4",
+        "71a837ac-b342-4932-822d-c34a555f6c9f",
+        "7dec2c17-f05e-4a37-b75f-808d9f9fb0a4"
+      ],
+      "what": "display_pixel [450.86, 228.69]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 0201a046-8e1c-4be3-955c-996b0afc839a,06831002-050a-43a4-bace-ef36345e2db4,71a837ac-b342-4932-822d-c34a555f6c9f,7dec2c17-f05e-4a37-b75f-808d9f9fb0a4"
+    },
+    {
+      "id": "rb-junction-dewstone-J9",
+      "label": "Dewstone Plains J9: joins Bloodmist Mine + Tomb of the colossus",
+      "x": 11594.58,
+      "y": 13976.59,
+      "z": 231.98,
+      "routes": [
+        "e764024d-9640-4535-a807-7cadaf199549",
+        "ec650e95-0caa-461f-a3f3-2adc8635ee54"
+      ],
+      "what": "display_pixel [297.05, 231.47]; kinds nearby-recording-join; gap_m 2.45; status candidate-not-movement-validated; routes e764024d-9640-4535-a807-7cadaf199549,ec650e95-0caa-461f-a3f3-2adc8635ee54"
+    },
+    {
+      "id": "rb-junction-dewstone-J10",
+      "label": "Dewstone Plains J10: joins Hellsdame Oasis + Royster's Camp to Sandcloud",
+      "x": 12405.93,
+      "y": 13967.69,
+      "z": 113.4,
+      "routes": [
+        "0201a046-8e1c-4be3-955c-996b0afc839a",
+        "71a837ac-b342-4932-822d-c34a555f6c9f"
+      ],
+      "what": "display_pixel [442.24, 233.06]; kinds nearby-recording-join; gap_m 22.33; status candidate-not-movement-validated; routes 0201a046-8e1c-4be3-955c-996b0afc839a,71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "id": "rb-junction-dewstone-J11",
+      "label": "Dewstone Plains J11: joins Sandcloud + Royster's Camp to Sandcloud",
+      "x": 12169.78,
+      "y": 13409.74,
+      "z": 160.74,
+      "routes": [
+        "1afd9d3d-c586-4b8b-864b-bcb26336cb36",
+        "71a837ac-b342-4932-822d-c34a555f6c9f"
+      ],
+      "what": "display_pixel [399.98, 332.73]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 1afd9d3d-c586-4b8b-864b-bcb26336cb36,71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "id": "rb-junction-dewstone-J12",
+      "label": "Dewstone Plains J12: joins Sandcloud + Royster's Camp to Sandcloud",
+      "x": 12132.49,
+      "y": 13361.75,
+      "z": 165.81,
+      "routes": [
+        "1afd9d3d-c586-4b8b-864b-bcb26336cb36",
+        "71a837ac-b342-4932-822d-c34a555f6c9f"
+      ],
+      "what": "display_pixel [393.31, 341.31]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 1afd9d3d-c586-4b8b-864b-bcb26336cb36,71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "id": "rb-junction-dewstone-J13",
+      "label": "Dewstone Plains J13: joins Sandcloud + Royster's Camp to Sandcloud",
+      "x": 12130.44,
+      "y": 13337.28,
+      "z": 165.9,
+      "routes": [
+        "1afd9d3d-c586-4b8b-864b-bcb26336cb36",
+        "71a837ac-b342-4932-822d-c34a555f6c9f"
+      ],
+      "what": "display_pixel [392.94, 345.68]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 1afd9d3d-c586-4b8b-864b-bcb26336cb36,71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "id": "rb-junction-dewstone-J14",
+      "label": "Dewstone Plains J14: joins Sandcloud + Royster's Camp to Sandcloud",
+      "x": 12140.66,
+      "y": 13310.9,
+      "z": 166.44,
+      "routes": [
+        "1afd9d3d-c586-4b8b-864b-bcb26336cb36",
+        "71a837ac-b342-4932-822d-c34a555f6c9f"
+      ],
+      "what": "display_pixel [394.77, 350.39]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 1afd9d3d-c586-4b8b-864b-bcb26336cb36,71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "id": "rb-junction-dewstone-J15",
+      "label": "Dewstone Plains J15: joins Sandcloud + Royster's Camp to Sandcloud",
+      "x": 12102.64,
+      "y": 13240.13,
+      "z": 151.36,
+      "routes": [
+        "1afd9d3d-c586-4b8b-864b-bcb26336cb36",
+        "71a837ac-b342-4932-822d-c34a555f6c9f"
+      ],
+      "what": "display_pixel [387.96, 363.03]; kinds nearby-recording-join; gap_m 3.52; status candidate-not-movement-validated; routes 1afd9d3d-c586-4b8b-864b-bcb26336cb36,71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "id": "rb-junction-lilyut-J1",
+      "label": "Lilyut Hills J1: joins Tibbec's sawmil + Solzreed to Lilyut",
+      "x": 13075.15,
+      "y": 15184.85,
+      "z": 237.75,
+      "routes": [
+        "53b482e4-af87-4ce2-9f5c-7525899e5428",
+        "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+      ],
+      "what": "display_pixel [487.75, 427.07]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 53b482e4-af87-4ce2-9f5c-7525899e5428,942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "id": "rb-junction-lilyut-J2",
+      "label": "Lilyut Hills J2: joins Old Pine Paths + Western Ronbann Mine",
+      "x": 11888.07,
+      "y": 16304.37,
+      "z": 301.94,
+      "routes": [
+        "9847f35f-1dda-4696-aad2-d0d07d8da66d",
+        "d89c0ba7-5d5f-4610-b276-5c163442777c"
+      ],
+      "what": "display_pixel [219.18, 174.3]; kinds nearby-recording-join; gap_m 0.99; status candidate-not-movement-validated; routes 9847f35f-1dda-4696-aad2-d0d07d8da66d,d89c0ba7-5d5f-4610-b276-5c163442777c"
+    },
+    {
+      "id": "rb-junction-lilyut-J3",
+      "label": "Lilyut Hills J3: joins Riverspan to Eastern Ronbann mine + Eastern Ronbann mine",
+      "x": 13135.07,
+      "y": 16251.91,
+      "z": 308.13,
+      "routes": [
+        "988a1989-6875-4811-ade8-9cbeda5798ca",
+        "ba140f6d-8670-4780-b623-142a99ac0e3e"
+      ],
+      "what": "display_pixel [501.31, 186.15]; kinds nearby-recording-join; gap_m 0.09; status candidate-not-movement-validated; routes 988a1989-6875-4811-ade8-9cbeda5798ca,ba140f6d-8670-4780-b623-142a99ac0e3e"
+    },
+    {
+      "id": "rb-junction-lilyut-J4",
+      "label": "Lilyut Hills J4: joins Rockmar Barrow + Ronbann Castle",
+      "x": 12808.8,
+      "y": 16211.93,
+      "z": 364.25,
+      "routes": [
+        "08b37886-ece7-4780-949e-fe1a953e46c7",
+        "b90bec5f-b736-4f24-89f9-35b9aa98dd89"
+      ],
+      "what": "display_pixel [427.49, 195.17]; kinds nearby-recording-join,recorded-crossing; gap_m 0.0; status candidate-not-movement-validated; routes 08b37886-ece7-4780-949e-fe1a953e46c7,b90bec5f-b736-4f24-89f9-35b9aa98dd89"
+    },
+    {
+      "id": "rb-junction-lilyut-J5",
+      "label": "Lilyut Hills J5: joins Rockmar Barrow + Rockmar Barrow to Windshade",
+      "x": 12807.65,
+      "y": 16175.33,
+      "z": 349.47,
+      "routes": [
+        "08b37886-ece7-4780-949e-fe1a953e46c7",
+        "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+      ],
+      "what": "display_pixel [427.23, 203.44]; kinds nearby-recording-join; gap_m 1.55; status candidate-not-movement-validated; routes 08b37886-ece7-4780-949e-fe1a953e46c7,092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "id": "rb-junction-lilyut-J6",
+      "label": "Lilyut Hills J6: joins Rockmar Barrow + Rockmar Barrow to Windshade",
+      "x": 12812.82,
+      "y": 16159.69,
+      "z": 342.59,
+      "routes": [
+        "08b37886-ece7-4780-949e-fe1a953e46c7",
+        "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+      ],
+      "what": "display_pixel [428.4, 206.97]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 08b37886-ece7-4780-949e-fe1a953e46c7,092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "id": "rb-junction-lilyut-J7",
+      "label": "Lilyut Hills J7: joins Rockmar Barrow + Old Pine",
+      "x": 12721.67,
+      "y": 16158.29,
+      "z": 338.39,
+      "routes": [
+        "08b37886-ece7-4780-949e-fe1a953e46c7",
+        "2a5872e4-9b4b-4e17-a956-7dc356644fc9"
+      ],
+      "what": "display_pixel [407.78, 207.29]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 08b37886-ece7-4780-949e-fe1a953e46c7,2a5872e4-9b4b-4e17-a956-7dc356644fc9"
+    },
+    {
+      "id": "rb-junction-lilyut-J8",
+      "label": "Lilyut Hills J8: joins Rockmar Barrow + Old Pine",
+      "x": 12782.38,
+      "y": 16153.77,
+      "z": 348.06,
+      "routes": [
+        "08b37886-ece7-4780-949e-fe1a953e46c7",
+        "2a5872e4-9b4b-4e17-a956-7dc356644fc9"
+      ],
+      "what": "display_pixel [421.51, 208.3]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 08b37886-ece7-4780-949e-fe1a953e46c7,2a5872e4-9b4b-4e17-a956-7dc356644fc9"
+    },
+    {
+      "id": "rb-junction-lilyut-J9",
+      "label": "Lilyut Hills J9: joins Rockmar Barrow + Old Pine",
+      "x": 12689.4,
+      "y": 16145.68,
+      "z": 332.19,
+      "routes": [
+        "08b37886-ece7-4780-949e-fe1a953e46c7",
+        "2a5872e4-9b4b-4e17-a956-7dc356644fc9"
+      ],
+      "what": "display_pixel [400.48, 210.13]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 08b37886-ece7-4780-949e-fe1a953e46c7,2a5872e4-9b4b-4e17-a956-7dc356644fc9"
+    },
+    {
+      "id": "rb-junction-lilyut-J10",
+      "label": "Lilyut Hills J10: joins Riverspan to Eastern Ronbann mine + Ronbann Castle",
+      "x": 13114.68,
+      "y": 16134.75,
+      "z": 302.26,
+      "routes": [
+        "988a1989-6875-4811-ade8-9cbeda5798ca",
+        "b90bec5f-b736-4f24-89f9-35b9aa98dd89"
+      ],
+      "what": "display_pixel [496.69, 212.6]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 988a1989-6875-4811-ade8-9cbeda5798ca,b90bec5f-b736-4f24-89f9-35b9aa98dd89"
+    },
+    {
+      "id": "rb-junction-lilyut-J11",
+      "label": "Lilyut Hills J11: joins Rockmar Barrow + Ronbann Castle",
+      "x": 13072.68,
+      "y": 16132.36,
+      "z": 309.71,
+      "routes": [
+        "08b37886-ece7-4780-949e-fe1a953e46c7",
+        "b90bec5f-b736-4f24-89f9-35b9aa98dd89"
+      ],
+      "what": "display_pixel [487.19, 213.14]; kinds nearby-recording-join; gap_m 0.21; status candidate-not-movement-validated; routes 08b37886-ece7-4780-949e-fe1a953e46c7,b90bec5f-b736-4f24-89f9-35b9aa98dd89"
+    },
+    {
+      "id": "rb-junction-lilyut-J12",
+      "label": "Lilyut Hills J12: joins Old Pine + Windshade to Old Pine + Old Pine Paths",
+      "x": 12093.73,
+      "y": 15967.28,
+      "z": 225.38,
+      "routes": [
+        "2a5872e4-9b4b-4e17-a956-7dc356644fc9",
+        "3a307872-2dd3-476d-8337-4ba7c33f47ab",
+        "9847f35f-1dda-4696-aad2-d0d07d8da66d"
+      ],
+      "what": "display_pixel [265.71, 250.41]; kinds nearby-recording-join,recorded-crossing; gap_m 0.0; status candidate-not-movement-validated; routes 2a5872e4-9b4b-4e17-a956-7dc356644fc9,3a307872-2dd3-476d-8337-4ba7c33f47ab,9847f35f-1dda-4696-aad2-d0d07d8da66d"
+    },
+    {
+      "id": "rb-junction-lilyut-J13",
+      "label": "Lilyut Hills J13: joins Windshade to Old Pine + Old Pine Paths",
+      "x": 12104.62,
+      "y": 15944.2,
+      "z": 227.04,
+      "routes": [
+        "3a307872-2dd3-476d-8337-4ba7c33f47ab",
+        "9847f35f-1dda-4696-aad2-d0d07d8da66d"
+      ],
+      "what": "display_pixel [268.17, 255.62]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 3a307872-2dd3-476d-8337-4ba7c33f47ab,9847f35f-1dda-4696-aad2-d0d07d8da66d"
+    },
+    {
+      "id": "rb-junction-lilyut-J14",
+      "label": "Lilyut Hills J14: joins Riverspan + Windshade to Riverspan + Riverspan to Eastern Ronbann mine",
+      "x": 13532.72,
+      "y": 15914.13,
+      "z": 170.16,
+      "routes": [
+        "66614344-5641-4cc1-a9f7-d3fa6e1e78c5",
+        "8a2b667c-2abc-4b46-ac60-3d5a92afef61",
+        "988a1989-6875-4811-ade8-9cbeda5798ca"
+      ],
+      "what": "display_pixel [591.27, 262.41]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 66614344-5641-4cc1-a9f7-d3fa6e1e78c5,8a2b667c-2abc-4b46-ac60-3d5a92afef61,988a1989-6875-4811-ade8-9cbeda5798ca"
+    },
+    {
+      "id": "rb-junction-lilyut-J15",
+      "label": "Lilyut Hills J15: joins Riverspan + Windshade to Riverspan + Riverspan to Eastern Ronbann mine",
+      "x": 13507.97,
+      "y": 15911.84,
+      "z": 168.9,
+      "routes": [
+        "66614344-5641-4cc1-a9f7-d3fa6e1e78c5",
+        "8a2b667c-2abc-4b46-ac60-3d5a92afef61",
+        "988a1989-6875-4811-ade8-9cbeda5798ca"
+      ],
+      "what": "display_pixel [585.67, 262.93]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 66614344-5641-4cc1-a9f7-d3fa6e1e78c5,8a2b667c-2abc-4b46-ac60-3d5a92afef61,988a1989-6875-4811-ade8-9cbeda5798ca"
+    },
+    {
+      "id": "rb-junction-lilyut-J16",
+      "label": "Lilyut Hills J16: joins Windshade to Old Pine + Old Pine Paths",
+      "x": 12052.15,
+      "y": 15892.01,
+      "z": 230.58,
+      "routes": [
+        "3a307872-2dd3-476d-8337-4ba7c33f47ab",
+        "9847f35f-1dda-4696-aad2-d0d07d8da66d"
+      ],
+      "what": "display_pixel [256.3, 267.41]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 3a307872-2dd3-476d-8337-4ba7c33f47ab,9847f35f-1dda-4696-aad2-d0d07d8da66d"
+    },
+    {
+      "id": "rb-junction-lilyut-J17",
+      "label": "Lilyut Hills J17: joins Riverspan + Windshade to Riverspan",
+      "x": 13569.86,
+      "y": 15884.34,
+      "z": 176.05,
+      "routes": [
+        "66614344-5641-4cc1-a9f7-d3fa6e1e78c5",
+        "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+      ],
+      "what": "display_pixel [599.67, 269.14]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 66614344-5641-4cc1-a9f7-d3fa6e1e78c5,8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "id": "rb-junction-lilyut-J18",
+      "label": "Lilyut Hills J18: joins Riverspan + Windshade to Riverspan",
+      "x": 13599.65,
+      "y": 15873.0,
+      "z": 185.43,
+      "routes": [
+        "66614344-5641-4cc1-a9f7-d3fa6e1e78c5",
+        "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+      ],
+      "what": "display_pixel [606.41, 271.7]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 66614344-5641-4cc1-a9f7-d3fa6e1e78c5,8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "id": "rb-junction-lilyut-J19",
+      "label": "Lilyut Hills J19: joins Riverspan to Bear Mountain + Riverspan + Windshade to Riverspan",
+      "x": 13662.38,
+      "y": 15865.07,
+      "z": 196.04,
+      "routes": [
+        "493ae67d-ce4d-4b54-8b35-9fcd5f5beaec",
+        "66614344-5641-4cc1-a9f7-d3fa6e1e78c5",
+        "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+      ],
+      "what": "display_pixel [620.6, 273.49]; kinds nearby-recording-join,recorded-crossing; gap_m 0.0; status candidate-not-movement-validated; routes 493ae67d-ce4d-4b54-8b35-9fcd5f5beaec,66614344-5641-4cc1-a9f7-d3fa6e1e78c5,8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "id": "rb-junction-lilyut-J20",
+      "label": "Lilyut Hills J20: joins Fallen Fortress + Windshade to Riverspan",
+      "x": 13529.5,
+      "y": 15763.22,
+      "z": 179.69,
+      "routes": [
+        "078f84c8-65d7-4e93-9b04-8955739af79f",
+        "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+      ],
+      "what": "display_pixel [590.54, 296.48]; kinds nearby-recording-join; gap_m 0.7; status candidate-not-movement-validated; routes 078f84c8-65d7-4e93-9b04-8955739af79f,8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "id": "rb-junction-lilyut-J21",
+      "label": "Lilyut Hills J21: joins Great Couloir + Windshade to Old Pine",
+      "x": 12142.95,
+      "y": 15569.12,
+      "z": 191.55,
+      "routes": [
+        "0e12e3fb-4040-4ce0-920a-ca4a60a6b199",
+        "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+      ],
+      "what": "display_pixel [276.85, 340.31]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 0e12e3fb-4040-4ce0-920a-ca4a60a6b199,3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "id": "rb-junction-lilyut-J22",
+      "label": "Lilyut Hills J22: joins Rockmar Barrow to Windshade + Windshade + Windshade to Old Pine + Windshade to Riverspan",
+      "x": 12612.86,
+      "y": 15522.81,
+      "z": 160.29,
+      "routes": [
+        "092fe968-7eb6-43cc-84ed-d243bc2810c5",
+        "2df5c94d-3258-4eda-b16f-810e1ab2d35e",
+        "3a307872-2dd3-476d-8337-4ba7c33f47ab",
+        "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+      ],
+      "what": "display_pixel [383.16, 350.76]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 092fe968-7eb6-43cc-84ed-d243bc2810c5,2df5c94d-3258-4eda-b16f-810e1ab2d35e,3a307872-2dd3-476d-8337-4ba7c33f47ab,8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "id": "rb-junction-lilyut-J23",
+      "label": "Lilyut Hills J23: joins Windshade + Windshade to Old Pine",
+      "x": 12544.98,
+      "y": 15517.39,
+      "z": 163.1,
+      "routes": [
+        "2df5c94d-3258-4eda-b16f-810e1ab2d35e",
+        "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+      ],
+      "what": "display_pixel [367.8, 351.99]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2df5c94d-3258-4eda-b16f-810e1ab2d35e,3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "id": "rb-junction-lilyut-J24",
+      "label": "Lilyut Hills J24: joins Rockmar Barrow to Windshade + Windshade + Windshade to Riverspan",
+      "x": 12619.59,
+      "y": 15486.97,
+      "z": 158.95,
+      "routes": [
+        "092fe968-7eb6-43cc-84ed-d243bc2810c5",
+        "2df5c94d-3258-4eda-b16f-810e1ab2d35e",
+        "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+      ],
+      "what": "display_pixel [384.68, 358.86]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 092fe968-7eb6-43cc-84ed-d243bc2810c5,2df5c94d-3258-4eda-b16f-810e1ab2d35e,8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "id": "rb-junction-lilyut-J25",
+      "label": "Lilyut Hills J25: joins Windshade + Windshade to Old Pine",
+      "x": 12602.18,
+      "y": 15458.66,
+      "z": 156.48,
+      "routes": [
+        "2df5c94d-3258-4eda-b16f-810e1ab2d35e",
+        "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+      ],
+      "what": "display_pixel [380.74, 365.25]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2df5c94d-3258-4eda-b16f-810e1ab2d35e,3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "id": "rb-junction-lilyut-J26",
+      "label": "Lilyut Hills J26: joins Rockmar Barrow to Windshade + Windshade + Windshade to Old Pine + Solzreed to Lilyut",
+      "x": 12607.75,
+      "y": 15432.81,
+      "z": 154.91,
+      "routes": [
+        "092fe968-7eb6-43cc-84ed-d243bc2810c5",
+        "2df5c94d-3258-4eda-b16f-810e1ab2d35e",
+        "3a307872-2dd3-476d-8337-4ba7c33f47ab",
+        "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+      ],
+      "what": "display_pixel [382.0, 371.08]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 092fe968-7eb6-43cc-84ed-d243bc2810c5,2df5c94d-3258-4eda-b16f-810e1ab2d35e,3a307872-2dd3-476d-8337-4ba7c33f47ab,942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "id": "rb-junction-lilyut-J27",
+      "label": "Lilyut Hills J27: joins Windshade + Solzreed to Lilyut + Windshade to Roysters Camp + Windshade to Children of Ipnya Encampment",
+      "x": 12604.27,
+      "y": 15406.08,
+      "z": 156.39,
+      "routes": [
+        "2df5c94d-3258-4eda-b16f-810e1ab2d35e",
+        "942aaa87-8f38-4cd7-a41a-348303f8ef3b",
+        "a05e29b3-ea4a-408b-8ba0-85ef16495780",
+        "a1335af4-3719-4f8b-8e09-6007b93f9901"
+      ],
+      "what": "display_pixel [381.22, 377.12]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2df5c94d-3258-4eda-b16f-810e1ab2d35e,942aaa87-8f38-4cd7-a41a-348303f8ef3b,a05e29b3-ea4a-408b-8ba0-85ef16495780,a1335af4-3719-4f8b-8e09-6007b93f9901"
+    },
+    {
+      "id": "rb-junction-lilyut-J28",
+      "label": "Lilyut Hills J28: joins Windshade + Windshade + Solzreed to Lilyut + Windshade to Roysters Camp + Windshade to Children of Ipnya Encampment",
+      "x": 12604.03,
+      "y": 15361.56,
+      "z": 158.73,
+      "routes": [
+        "2df5c94d-3258-4eda-b16f-810e1ab2d35e",
+        "8cc2792c-b894-4df6-aac1-5a8bf6f130d0",
+        "942aaa87-8f38-4cd7-a41a-348303f8ef3b",
+        "a05e29b3-ea4a-408b-8ba0-85ef16495780",
+        "a1335af4-3719-4f8b-8e09-6007b93f9901"
+      ],
+      "what": "display_pixel [381.16, 387.17]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 2df5c94d-3258-4eda-b16f-810e1ab2d35e,8cc2792c-b894-4df6-aac1-5a8bf6f130d0,942aaa87-8f38-4cd7-a41a-348303f8ef3b,a05e29b3-ea4a-408b-8ba0-85ef16495780,a1335af4-3719-4f8b-8e09-6007b93f9901"
+    },
+    {
+      "id": "rb-junction-lilyut-J29",
+      "label": "Lilyut Hills J29: joins Windshade + Windshade to Roysters Camp + Windshade to Children of Ipnya Encampment",
+      "x": 12548.3,
+      "y": 15253.98,
+      "z": 146.56,
+      "routes": [
+        "8cc2792c-b894-4df6-aac1-5a8bf6f130d0",
+        "a05e29b3-ea4a-408b-8ba0-85ef16495780",
+        "a1335af4-3719-4f8b-8e09-6007b93f9901"
+      ],
+      "what": "display_pixel [368.55, 411.46]; kinds nearby-recording-join; gap_m 0.39; status candidate-not-movement-validated; routes 8cc2792c-b894-4df6-aac1-5a8bf6f130d0,a05e29b3-ea4a-408b-8ba0-85ef16495780,a1335af4-3719-4f8b-8e09-6007b93f9901"
+    },
+    {
+      "id": "rb-junction-solzreed-J1",
+      "label": "Solzreed Peninsula J1: joins Moonswept bay + Farmland path",
+      "x": 14548.96,
+      "y": 14333.85,
+      "z": 117.76,
+      "routes": [
+        "2ebbac34-8390-4406-b52f-b3eedc4c6f08",
+        "927409ce-b42e-4926-bb22-7ac3c503f628"
+      ],
+      "what": "display_pixel [506.22, 349.99]; kinds nearby-recording-join,recorded-crossing; gap_m 0.0; status candidate-not-movement-validated; routes 2ebbac34-8390-4406-b52f-b3eedc4c6f08,927409ce-b42e-4926-bb22-7ac3c503f628"
+    },
+    {
+      "id": "rb-junction-solzreed-J2",
+      "label": "Solzreed Peninsula J2: joins Wardton + Wardton",
+      "x": 14834.45,
+      "y": 14287.98,
+      "z": 118.7,
+      "routes": [
+        "595fd4a7-9c36-4afd-a218-ecff77ec517f",
+        "b58b2756-bae6-43fc-be9a-8c2fc6ba19a3"
+      ],
+      "what": "display_pixel [561.3, 358.84]; kinds nearby-recording-join; gap_m 0.38; status candidate-not-movement-validated; routes 595fd4a7-9c36-4afd-a218-ecff77ec517f,b58b2756-bae6-43fc-be9a-8c2fc6ba19a3"
+    },
+    {
+      "id": "rb-junction-solzreed-J3",
+      "label": "Solzreed Peninsula J3: joins Wardton + Crescent Throne",
+      "x": 15277.85,
+      "y": 14021.58,
+      "z": 143.87,
+      "routes": [
+        "b58b2756-bae6-43fc-be9a-8c2fc6ba19a3",
+        "c9e28588-a137-4204-96f2-4af866c51756"
+      ],
+      "what": "display_pixel [646.84, 410.23]; kinds nearby-recording-join; gap_m 2.74; status candidate-not-movement-validated; routes b58b2756-bae6-43fc-be9a-8c2fc6ba19a3,c9e28588-a137-4204-96f2-4af866c51756"
+    },
+    {
+      "id": "rb-junction-solzreed-J4",
+      "label": "Solzreed Peninsula J4: joins Wardton + Crescent Throne",
+      "x": 15310.83,
+      "y": 13943.01,
+      "z": 145.81,
+      "routes": [
+        "b58b2756-bae6-43fc-be9a-8c2fc6ba19a3",
+        "c9e28588-a137-4204-96f2-4af866c51756"
+      ],
+      "what": "display_pixel [653.2, 425.39]; kinds nearby-recording-join; gap_m 0.65; status candidate-not-movement-validated; routes b58b2756-bae6-43fc-be9a-8c2fc6ba19a3,c9e28588-a137-4204-96f2-4af866c51756"
+    },
+    {
+      "id": "rb-junction-solzreed-J5",
+      "label": "Solzreed Peninsula J5: joins Crescent Throne + Crescent Throne to moonswept bay",
+      "x": 15194.34,
+      "y": 13584.7,
+      "z": 103.69,
+      "routes": [
+        "c9e28588-a137-4204-96f2-4af866c51756",
+        "eff86593-95bc-4ee1-928f-fc72615bb8eb"
+      ],
+      "what": "display_pixel [630.73, 494.52]; kinds nearby-recording-join; gap_m 0.53; status candidate-not-movement-validated; routes c9e28588-a137-4204-96f2-4af866c51756,eff86593-95bc-4ee1-928f-fc72615bb8eb"
+    },
+    {
+      "id": "rb-junction-solzreed-J6",
+      "label": "Solzreed Peninsula J6: joins Moonswept bay + Crescent Throne to moonswept bay",
+      "x": 14853.93,
+      "y": 13548.32,
+      "z": 100.51,
+      "routes": [
+        "2ebbac34-8390-4406-b52f-b3eedc4c6f08",
+        "eff86593-95bc-4ee1-928f-fc72615bb8eb"
+      ],
+      "what": "display_pixel [565.05, 501.54]; kinds nearby-recording-join; gap_m 0.08; status candidate-not-movement-validated; routes 2ebbac34-8390-4406-b52f-b3eedc4c6f08,eff86593-95bc-4ee1-928f-fc72615bb8eb"
+    },
+    {
+      "id": "rb-junction-solzreed-J7",
+      "label": "Solzreed Peninsula J7: joins Nymph Sanctuary + Castigant Ruins",
+      "x": 14003.74,
+      "y": 15528.74,
+      "z": 209.17,
+      "routes": [
+        "6d39c6ae-9382-426d-a25d-b6f337e4c0b7",
+        "d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+      ],
+      "what": "display_pixel [401.03, 119.47]; kinds nearby-recording-join; gap_m 0.69; status candidate-not-movement-validated; routes 6d39c6ae-9382-426d-a25d-b6f337e4c0b7,d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+    },
+    {
+      "id": "rb-junction-solzreed-J8",
+      "label": "Solzreed Peninsula J8: joins Solzreed to Lilyut + Castigant Ruins",
+      "x": 13448.14,
+      "y": 15071.72,
+      "z": 211.7,
+      "routes": [
+        "942aaa87-8f38-4cd7-a41a-348303f8ef3b",
+        "d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+      ],
+      "what": "display_pixel [293.85, 207.64]; kinds nearby-recording-join; gap_m 5.27; status candidate-not-movement-validated; routes 942aaa87-8f38-4cd7-a41a-348303f8ef3b,d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+    },
+    {
+      "id": "rb-junction-solzreed-J9",
+      "label": "Solzreed Peninsula J9: joins Nymph Sanctuary + Lacton to Blackreath Keep",
+      "x": 14165.01,
+      "y": 15069.28,
+      "z": 127.63,
+      "routes": [
+        "6d39c6ae-9382-426d-a25d-b6f337e4c0b7",
+        "95c25795-b42f-456a-86f7-e918694c093c"
+      ],
+      "what": "display_pixel [432.15, 208.11]; kinds nearby-recording-join; gap_m 0.58; status candidate-not-movement-validated; routes 6d39c6ae-9382-426d-a25d-b6f337e4c0b7,95c25795-b42f-456a-86f7-e918694c093c"
+    },
+    {
+      "id": "rb-junction-solzreed-J10",
+      "label": "Solzreed Peninsula J10: joins Blackreath Keep + Lacton to Blackreath Keep",
+      "x": 14257.54,
+      "y": 14997.7,
+      "z": 121.62,
+      "routes": [
+        "5f359a17-6f48-4528-8a4b-f9413f8818e8",
+        "95c25795-b42f-456a-86f7-e918694c093c"
+      ],
+      "what": "display_pixel [450.0, 221.92]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 5f359a17-6f48-4528-8a4b-f9413f8818e8,95c25795-b42f-456a-86f7-e918694c093c"
+    },
+    {
+      "id": "rb-junction-solzreed-J11",
+      "label": "Solzreed Peninsula J11: joins Blackreath Keep + Lacton to Blackreath Keep",
+      "x": 14065.35,
+      "y": 14926.9,
+      "z": 123.35,
+      "routes": [
+        "5f359a17-6f48-4528-8a4b-f9413f8818e8",
+        "95c25795-b42f-456a-86f7-e918694c093c"
+      ],
+      "what": "display_pixel [412.92, 235.58]; kinds nearby-recording-join; gap_m 1.99; status candidate-not-movement-validated; routes 5f359a17-6f48-4528-8a4b-f9413f8818e8,95c25795-b42f-456a-86f7-e918694c093c"
+    },
+    {
+      "id": "rb-junction-solzreed-J12",
+      "label": "Solzreed Peninsula J12: joins Lacton side path + Solzreed to Lilyut + Castigant Ruins",
+      "x": 13510.02,
+      "y": 14806.16,
+      "z": 135.14,
+      "routes": [
+        "729225b6-2b4f-4b47-94d7-1a8d1c25ad6c",
+        "942aaa87-8f38-4cd7-a41a-348303f8ef3b",
+        "d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+      ],
+      "what": "display_pixel [305.79, 258.87]; kinds nearby-recording-join; gap_m 2.83; status candidate-not-movement-validated; routes 729225b6-2b4f-4b47-94d7-1a8d1c25ad6c,942aaa87-8f38-4cd7-a41a-348303f8ef3b,d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+    },
+    {
+      "id": "rb-junction-solzreed-J13",
+      "label": "Solzreed Peninsula J13: joins Lacton Paths + Solzreed to Lilyut + Castigant Ruins",
+      "x": 13650.28,
+      "y": 14664.36,
+      "z": 113.14,
+      "routes": [
+        "6be905ee-fa8c-48cf-b5de-7c55dad004aa",
+        "942aaa87-8f38-4cd7-a41a-348303f8ef3b",
+        "d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+      ],
+      "what": "display_pixel [332.84, 286.23]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 6be905ee-fa8c-48cf-b5de-7c55dad004aa,942aaa87-8f38-4cd7-a41a-348303f8ef3b,d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+    },
+    {
+      "id": "rb-junction-solzreed-J14",
+      "label": "Solzreed Peninsula J14: joins Lacton Paths + Solzreed to Lilyut + Lacton to Blackreath Keep + Farmland to Lacton",
+      "x": 13677.2,
+      "y": 14583.01,
+      "z": 109.43,
+      "routes": [
+        "6be905ee-fa8c-48cf-b5de-7c55dad004aa",
+        "942aaa87-8f38-4cd7-a41a-348303f8ef3b",
+        "95c25795-b42f-456a-86f7-e918694c093c",
+        "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+      ],
+      "what": "display_pixel [338.04, 301.92]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 6be905ee-fa8c-48cf-b5de-7c55dad004aa,942aaa87-8f38-4cd7-a41a-348303f8ef3b,95c25795-b42f-456a-86f7-e918694c093c,cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "id": "rb-junction-solzreed-J15",
+      "label": "Solzreed Peninsula J15: joins Lacton Paths + Solzreed to Lilyut + Farmland to Lacton",
+      "x": 13654.27,
+      "y": 14574.0,
+      "z": 108.56,
+      "routes": [
+        "6be905ee-fa8c-48cf-b5de-7c55dad004aa",
+        "942aaa87-8f38-4cd7-a41a-348303f8ef3b",
+        "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+      ],
+      "what": "display_pixel [333.61, 303.66]; kinds nearby-recording-join; gap_m 0.69; status candidate-not-movement-validated; routes 6be905ee-fa8c-48cf-b5de-7c55dad004aa,942aaa87-8f38-4cd7-a41a-348303f8ef3b,cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "id": "rb-junction-solzreed-J16",
+      "label": "Solzreed Peninsula J16: joins Lacton Paths + Farmland to Lacton",
+      "x": 13599.94,
+      "y": 14524.04,
+      "z": 109.07,
+      "routes": [
+        "6be905ee-fa8c-48cf-b5de-7c55dad004aa",
+        "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+      ],
+      "what": "display_pixel [323.13, 313.3]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 6be905ee-fa8c-48cf-b5de-7c55dad004aa,cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "id": "rb-junction-solzreed-J17",
+      "label": "Solzreed Peninsula J17: joins Lacton Paths + Lacton side path",
+      "x": 13528.66,
+      "y": 14498.35,
+      "z": 110.34,
+      "routes": [
+        "6be905ee-fa8c-48cf-b5de-7c55dad004aa",
+        "729225b6-2b4f-4b47-94d7-1a8d1c25ad6c"
+      ],
+      "what": "display_pixel [309.38, 318.25]; kinds nearby-recording-join; gap_m 0.68; status candidate-not-movement-validated; routes 6be905ee-fa8c-48cf-b5de-7c55dad004aa,729225b6-2b4f-4b47-94d7-1a8d1c25ad6c"
+    },
+    {
+      "id": "rb-junction-solzreed-J18",
+      "label": "Solzreed Peninsula J18: joins Lacton Paths + Farmland to Lacton",
+      "x": 13536.66,
+      "y": 14437.83,
+      "z": 110.51,
+      "routes": [
+        "6be905ee-fa8c-48cf-b5de-7c55dad004aa",
+        "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+      ],
+      "what": "display_pixel [310.92, 329.93]; kinds recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 6be905ee-fa8c-48cf-b5de-7c55dad004aa,cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "id": "rb-junction-solzreed-J19",
+      "label": "Solzreed Peninsula J19: joins Farmland side paths + Farmland path + Farmland to Lacton",
+      "x": 14393.45,
+      "y": 14418.94,
+      "z": 108.87,
+      "routes": [
+        "061360e2-f174-4fce-bb68-e44e21c2e5bc",
+        "927409ce-b42e-4926-bb22-7ac3c503f628",
+        "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+      ],
+      "what": "display_pixel [476.22, 333.57]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 061360e2-f174-4fce-bb68-e44e21c2e5bc,927409ce-b42e-4926-bb22-7ac3c503f628,cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "id": "rb-junction-solzreed-J20",
+      "label": "Solzreed Peninsula J20: joins Farmland path + Farmland to Lacton",
+      "x": 14426.97,
+      "y": 14410.29,
+      "z": 108.34,
+      "routes": [
+        "927409ce-b42e-4926-bb22-7ac3c503f628",
+        "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+      ],
+      "what": "display_pixel [482.68, 335.24]; kinds nearby-recording-join; gap_m 0.04; status candidate-not-movement-validated; routes 927409ce-b42e-4926-bb22-7ac3c503f628,cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "id": "rb-junction-solzreed-J21",
+      "label": "Solzreed Peninsula J21: joins Lacton Paths + Farmland to Lacton",
+      "x": 13516.92,
+      "y": 14405.43,
+      "z": 110.64,
+      "routes": [
+        "6be905ee-fa8c-48cf-b5de-7c55dad004aa",
+        "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+      ],
+      "what": "display_pixel [307.12, 336.18]; kinds nearby-recording-join,recorded-crossing; gap_m 0; status candidate-not-movement-validated; routes 6be905ee-fa8c-48cf-b5de-7c55dad004aa,cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "id": "rb-junction-solzreed-J22",
+      "label": "Solzreed Peninsula J22: joins Farmland path + Farmland to Lacton",
+      "x": 14517.93,
+      "y": 14358.21,
+      "z": 112.74,
+      "routes": [
+        "927409ce-b42e-4926-bb22-7ac3c503f628",
+        "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+      ],
+      "what": "display_pixel [500.23, 345.29]; kinds nearby-recording-join; gap_m 1.78; status candidate-not-movement-validated; routes 927409ce-b42e-4926-bb22-7ac3c503f628,cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    }
+  ],
+  "edges": [
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J16",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J17",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J18",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J16",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J17",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J18",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J16",
+      "to": "rb-junction-arcum-iris-J17",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J16",
+      "to": "rb-junction-arcum-iris-J18",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J17",
+      "to": "rb-junction-arcum-iris-J18",
+      "route": "04379932-0aa1-4143-9130-fc9f6044df18"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J2",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J4",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J10",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J12",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J19",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J20",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J21",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J1",
+      "to": "rb-junction-arcum-iris-J22",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J4",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J2",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J2",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J2",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J20",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J21",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-arcum-iris-J22",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J3",
+      "to": "rb-junction-arcum-iris-J4",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J3",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J3",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J3",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J3",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J3",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J20",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J21",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J22",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J4",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J4",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J4",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J4",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J4",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J4",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J4",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J4",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J20",
+      "to": "rb-junction-arcum-iris-J4",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J21",
+      "to": "rb-junction-arcum-iris-J4",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J22",
+      "to": "rb-junction-arcum-iris-J4",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J5",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J5",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J5",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J5",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J20",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J21",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J22",
+      "to": "rb-junction-arcum-iris-J5",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J6",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J6",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J6",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J20",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J21",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J22",
+      "to": "rb-junction-arcum-iris-J6",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J7",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J7",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J20",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J21",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J22",
+      "to": "rb-junction-arcum-iris-J7",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J8",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J20",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J21",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J22",
+      "to": "rb-junction-arcum-iris-J8",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J20",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J21",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J22",
+      "to": "rb-junction-arcum-iris-J9",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J12",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J19",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J20",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J21",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J10",
+      "to": "rb-junction-arcum-iris-J22",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J19",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J20",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J21",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J22",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J20",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J21",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J19",
+      "to": "rb-junction-arcum-iris-J22",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J20",
+      "to": "rb-junction-arcum-iris-J21",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J20",
+      "to": "rb-junction-arcum-iris-J22",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J21",
+      "to": "rb-junction-arcum-iris-J22",
+      "route": "2881e1a9-13c1-4d6d-9e40-c23ad4223042"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J13",
+      "to": "rb-junction-arcum-iris-J2",
+      "route": "3186a33d-384d-4c07-a08b-6db198dae386"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J14",
+      "to": "rb-junction-arcum-iris-J2",
+      "route": "3186a33d-384d-4c07-a08b-6db198dae386"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J13",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "3186a33d-384d-4c07-a08b-6db198dae386"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J14",
+      "to": "rb-junction-arcum-iris-J3",
+      "route": "3186a33d-384d-4c07-a08b-6db198dae386"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J13",
+      "route": "3186a33d-384d-4c07-a08b-6db198dae386"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J12",
+      "to": "rb-junction-arcum-iris-J14",
+      "route": "3186a33d-384d-4c07-a08b-6db198dae386"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J13",
+      "to": "rb-junction-arcum-iris-J14",
+      "route": "3186a33d-384d-4c07-a08b-6db198dae386"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-tigerspine-J1",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-tigerspine-J10",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J2",
+      "to": "rb-junction-tigerspine-J14",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J10",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J14",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J14",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J14",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J12",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J12",
+      "to": "rb-junction-tigerspine-J14",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-tigerspine-J13",
+      "to": "rb-junction-tigerspine-J14",
+      "route": "930e72d1-3820-4383-8011-803756ca8b80"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J11",
+      "to": "rb-junction-arcum-iris-J15",
+      "route": "0d1b0d8e-8f0c-483d-9ebe-88e0eb7629dc"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J13",
+      "to": "rb-junction-arcum-iris-J15",
+      "route": "efe8c064-dd2a-434c-ab2a-8d82fa4bf974"
+    },
+    {
+      "from": "rb-junction-arcum-iris-J14",
+      "to": "rb-junction-arcum-iris-J15",
+      "route": "efe8c064-dd2a-434c-ab2a-8d82fa4bf974"
+    },
+    {
+      "from": "rb-junction-falcorth-J1",
+      "to": "rb-junction-falcorth-J8",
+      "route": "d79869f3-910f-469a-871f-72dfc1770cd5"
+    },
+    {
+      "from": "rb-junction-falcorth-J1",
+      "to": "rb-junction-falcorth-J19",
+      "route": "d79869f3-910f-469a-871f-72dfc1770cd5"
+    },
+    {
+      "from": "rb-junction-falcorth-J19",
+      "to": "rb-junction-falcorth-J8",
+      "route": "d79869f3-910f-469a-871f-72dfc1770cd5"
+    },
+    {
+      "from": "rb-junction-falcorth-J2",
+      "to": "rb-junction-falcorth-J4",
+      "route": "95d5d1c3-b16f-4cf1-a2c4-f5b35a04c8d6"
+    },
+    {
+      "from": "rb-junction-falcorth-J2",
+      "to": "rb-junction-falcorth-J6",
+      "route": "95d5d1c3-b16f-4cf1-a2c4-f5b35a04c8d6"
+    },
+    {
+      "from": "rb-junction-falcorth-J4",
+      "to": "rb-junction-falcorth-J6",
+      "route": "95d5d1c3-b16f-4cf1-a2c4-f5b35a04c8d6"
+    },
+    {
+      "from": "rb-junction-falcorth-J3",
+      "to": "rb-junction-falcorth-J5",
+      "route": "32d28470-f2ee-469d-af5e-1482200af306"
+    },
+    {
+      "from": "rb-junction-falcorth-J12",
+      "to": "rb-junction-falcorth-J3",
+      "route": "32d28470-f2ee-469d-af5e-1482200af306"
+    },
+    {
+      "from": "rb-junction-falcorth-J13",
+      "to": "rb-junction-falcorth-J3",
+      "route": "32d28470-f2ee-469d-af5e-1482200af306"
+    },
+    {
+      "from": "rb-junction-falcorth-J12",
+      "to": "rb-junction-falcorth-J5",
+      "route": "32d28470-f2ee-469d-af5e-1482200af306"
+    },
+    {
+      "from": "rb-junction-falcorth-J13",
+      "to": "rb-junction-falcorth-J5",
+      "route": "32d28470-f2ee-469d-af5e-1482200af306"
+    },
+    {
+      "from": "rb-junction-falcorth-J12",
+      "to": "rb-junction-falcorth-J13",
+      "route": "32d28470-f2ee-469d-af5e-1482200af306"
+    },
+    {
+      "from": "rb-junction-falcorth-J3",
+      "to": "rb-junction-falcorth-J9",
+      "route": "83341096-9553-490d-88d3-59a1290fbd61"
+    },
+    {
+      "from": "rb-junction-falcorth-J10",
+      "to": "rb-junction-falcorth-J3",
+      "route": "83341096-9553-490d-88d3-59a1290fbd61"
+    },
+    {
+      "from": "rb-junction-falcorth-J11",
+      "to": "rb-junction-falcorth-J3",
+      "route": "83341096-9553-490d-88d3-59a1290fbd61"
+    },
+    {
+      "from": "rb-junction-falcorth-J5",
+      "to": "rb-junction-falcorth-J9",
+      "route": "83341096-9553-490d-88d3-59a1290fbd61"
+    },
+    {
+      "from": "rb-junction-falcorth-J10",
+      "to": "rb-junction-falcorth-J5",
+      "route": "83341096-9553-490d-88d3-59a1290fbd61"
+    },
+    {
+      "from": "rb-junction-falcorth-J11",
+      "to": "rb-junction-falcorth-J5",
+      "route": "83341096-9553-490d-88d3-59a1290fbd61"
+    },
+    {
+      "from": "rb-junction-falcorth-J10",
+      "to": "rb-junction-falcorth-J9",
+      "route": "83341096-9553-490d-88d3-59a1290fbd61"
+    },
+    {
+      "from": "rb-junction-falcorth-J11",
+      "to": "rb-junction-falcorth-J9",
+      "route": "83341096-9553-490d-88d3-59a1290fbd61"
+    },
+    {
+      "from": "rb-junction-falcorth-J10",
+      "to": "rb-junction-falcorth-J11",
+      "route": "83341096-9553-490d-88d3-59a1290fbd61"
+    },
+    {
+      "from": "rb-junction-falcorth-J3",
+      "to": "rb-junction-falcorth-J8",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J16",
+      "to": "rb-junction-falcorth-J3",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J18",
+      "to": "rb-junction-falcorth-J3",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J5",
+      "to": "rb-junction-falcorth-J8",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J16",
+      "to": "rb-junction-falcorth-J5",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J18",
+      "to": "rb-junction-falcorth-J5",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J13",
+      "to": "rb-junction-falcorth-J8",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J16",
+      "to": "rb-junction-falcorth-J8",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J18",
+      "to": "rb-junction-falcorth-J8",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J13",
+      "to": "rb-junction-falcorth-J16",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J13",
+      "to": "rb-junction-falcorth-J18",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J16",
+      "to": "rb-junction-falcorth-J18",
+      "route": "e3f1b87f-738c-4080-93c6-65905ea32dc5"
+    },
+    {
+      "from": "rb-junction-falcorth-J4",
+      "to": "rb-junction-falcorth-J7",
+      "route": "b212cc68-4759-4522-8e71-0fe2b1f012a9"
+    },
+    {
+      "from": "rb-junction-falcorth-J5",
+      "to": "rb-junction-falcorth-J6",
+      "route": "00d2557e-1503-44d6-a034-f6ca81e74804"
+    },
+    {
+      "from": "rb-junction-falcorth-J12",
+      "to": "rb-junction-falcorth-J6",
+      "route": "00d2557e-1503-44d6-a034-f6ca81e74804"
+    },
+    {
+      "from": "rb-junction-falcorth-J6",
+      "to": "rb-junction-falcorth-J7",
+      "route": "7564ca36-b5c8-498b-89b9-522b8204eb40"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-falcorth-J6",
+      "route": "7564ca36-b5c8-498b-89b9-522b8204eb40"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-falcorth-J6",
+      "route": "7564ca36-b5c8-498b-89b9-522b8204eb40"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-falcorth-J7",
+      "route": "7564ca36-b5c8-498b-89b9-522b8204eb40"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-falcorth-J7",
+      "route": "7564ca36-b5c8-498b-89b9-522b8204eb40"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-falcorth-J15",
+      "route": "7564ca36-b5c8-498b-89b9-522b8204eb40"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-falcorth-J6",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-falcorth-J6",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J23",
+      "to": "rb-junction-falcorth-J6",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J6",
+      "to": "rb-junction-tigerspine-J1",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J6",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J6",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J6",
+      "to": "rb-junction-tigerspine-J10",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J6",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J6",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J6",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-falcorth-J7",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-falcorth-J7",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J23",
+      "to": "rb-junction-falcorth-J7",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J7",
+      "to": "rb-junction-tigerspine-J1",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J7",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J7",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J7",
+      "to": "rb-junction-tigerspine-J10",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J7",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J7",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J7",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-falcorth-J17",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-falcorth-J21",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-falcorth-J23",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-tigerspine-J1",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-tigerspine-J10",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-falcorth-J17",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-falcorth-J21",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-falcorth-J23",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-tigerspine-J1",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-tigerspine-J10",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-falcorth-J21",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-falcorth-J23",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-tigerspine-J1",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-tigerspine-J10",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J17",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-falcorth-J23",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-tigerspine-J1",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-tigerspine-J10",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J21",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J23",
+      "to": "rb-junction-tigerspine-J1",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J23",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J23",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J23",
+      "to": "rb-junction-tigerspine-J10",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J23",
+      "to": "rb-junction-tigerspine-J11",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J23",
+      "to": "rb-junction-tigerspine-J12",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J23",
+      "to": "rb-junction-tigerspine-J13",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J2",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J12",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J13",
+      "to": "rb-junction-tigerspine-J2",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J12",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-tigerspine-J13",
+      "to": "rb-junction-tigerspine-J3",
+      "route": "a78dfdf0-3045-4efb-a7b2-5c91181c64ee"
+    },
+    {
+      "from": "rb-junction-falcorth-J6",
+      "to": "rb-junction-falcorth-J9",
+      "route": "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "from": "rb-junction-falcorth-J11",
+      "to": "rb-junction-falcorth-J6",
+      "route": "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "from": "rb-junction-falcorth-J14",
+      "to": "rb-junction-falcorth-J9",
+      "route": "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "from": "rb-junction-falcorth-J15",
+      "to": "rb-junction-falcorth-J9",
+      "route": "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "from": "rb-junction-falcorth-J11",
+      "to": "rb-junction-falcorth-J14",
+      "route": "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "from": "rb-junction-falcorth-J11",
+      "to": "rb-junction-falcorth-J15",
+      "route": "d315920f-62f8-4ff1-8a57-d3dcce93e2d3"
+    },
+    {
+      "from": "rb-junction-falcorth-J20",
+      "to": "rb-junction-falcorth-J8",
+      "route": "9df6946c-a3e0-4db6-8d42-d7ca5f593a55"
+    },
+    {
+      "from": "rb-junction-falcorth-J22",
+      "to": "rb-junction-falcorth-J8",
+      "route": "9df6946c-a3e0-4db6-8d42-d7ca5f593a55"
+    },
+    {
+      "from": "rb-junction-falcorth-J18",
+      "to": "rb-junction-falcorth-J19",
+      "route": "9df6946c-a3e0-4db6-8d42-d7ca5f593a55"
+    },
+    {
+      "from": "rb-junction-falcorth-J18",
+      "to": "rb-junction-falcorth-J20",
+      "route": "9df6946c-a3e0-4db6-8d42-d7ca5f593a55"
+    },
+    {
+      "from": "rb-junction-falcorth-J18",
+      "to": "rb-junction-falcorth-J22",
+      "route": "9df6946c-a3e0-4db6-8d42-d7ca5f593a55"
+    },
+    {
+      "from": "rb-junction-falcorth-J19",
+      "to": "rb-junction-falcorth-J20",
+      "route": "9df6946c-a3e0-4db6-8d42-d7ca5f593a55"
+    },
+    {
+      "from": "rb-junction-falcorth-J19",
+      "to": "rb-junction-falcorth-J22",
+      "route": "9df6946c-a3e0-4db6-8d42-d7ca5f593a55"
+    },
+    {
+      "from": "rb-junction-falcorth-J20",
+      "to": "rb-junction-falcorth-J22",
+      "route": "9df6946c-a3e0-4db6-8d42-d7ca5f593a55"
+    },
+    {
+      "from": "rb-junction-falcorth-J20",
+      "to": "rb-junction-falcorth-J24",
+      "route": "a03c2b4b-83dd-4af8-ae38-805d02240820"
+    },
+    {
+      "from": "rb-junction-falcorth-J22",
+      "to": "rb-junction-falcorth-J24",
+      "route": "a03c2b4b-83dd-4af8-ae38-805d02240820"
+    },
+    {
+      "from": "rb-junction-falcorth-J24",
+      "to": "rb-junction-falcorth-J25",
+      "route": "3e114218-e550-4dcb-8eab-8b374cde43ca"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J6",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J7",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J8",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J1",
+      "to": "rb-junction-tigerspine-J9",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J6",
+      "to": "rb-junction-tigerspine-J7",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J6",
+      "to": "rb-junction-tigerspine-J8",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J6",
+      "to": "rb-junction-tigerspine-J9",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J7",
+      "to": "rb-junction-tigerspine-J8",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J7",
+      "to": "rb-junction-tigerspine-J9",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J8",
+      "to": "rb-junction-tigerspine-J9",
+      "route": "ba664a35-e265-43a5-b3e6-4ee4339f6108"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J9",
+      "route": "e2f26136-b6bb-41a0-8407-8c65f7caac27"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J9",
+      "route": "e2f26136-b6bb-41a0-8407-8c65f7caac27"
+    },
+    {
+      "from": "rb-junction-tigerspine-J4",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J4",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J4",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J12",
+      "to": "rb-junction-tigerspine-J4",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J22",
+      "to": "rb-junction-tigerspine-J4",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J23",
+      "to": "rb-junction-tigerspine-J4",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J12",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J22",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J23",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J22",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J10",
+      "to": "rb-junction-tigerspine-J23",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J22",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J11",
+      "to": "rb-junction-tigerspine-J23",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J12",
+      "to": "rb-junction-tigerspine-J22",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J12",
+      "to": "rb-junction-tigerspine-J23",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J22",
+      "to": "rb-junction-tigerspine-J23",
+      "route": "7c3ad2fd-93b1-499d-81d9-b36917c928f8"
+    },
+    {
+      "from": "rb-junction-tigerspine-J16",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J17",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J18",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J19",
+      "to": "rb-junction-tigerspine-J5",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J16",
+      "to": "rb-junction-tigerspine-J17",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J16",
+      "to": "rb-junction-tigerspine-J18",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J16",
+      "to": "rb-junction-tigerspine-J19",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J17",
+      "to": "rb-junction-tigerspine-J18",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J17",
+      "to": "rb-junction-tigerspine-J19",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J18",
+      "to": "rb-junction-tigerspine-J19",
+      "route": "fbd8c570-d8b6-4a37-b0bc-a82f2a779d4f"
+    },
+    {
+      "from": "rb-junction-tigerspine-J15",
+      "to": "rb-junction-tigerspine-J16",
+      "route": "c3877940-3361-4210-bb78-2d3c6af063f9"
+    },
+    {
+      "from": "rb-junction-tigerspine-J19",
+      "to": "rb-junction-tigerspine-J20",
+      "route": "03272519-3d39-4f1b-968c-5fdd86b915f7"
+    },
+    {
+      "from": "rb-junction-tigerspine-J20",
+      "to": "rb-junction-tigerspine-J21",
+      "route": "fde6ca7e-edfb-4eaa-8678-fea42f962bec"
+    },
+    {
+      "from": "rb-junction-tigerspine-J21",
+      "to": "rb-junction-tigerspine-J22",
+      "route": "782a5f0b-0981-4ced-afb9-169d857dcca6"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J2",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J3",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J4",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J10",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J11",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J12",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J13",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J14",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-dewstone-J15",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J2",
+      "to": "rb-junction-dewstone-J3",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J2",
+      "to": "rb-junction-dewstone-J4",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J2",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J2",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J2",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J11",
+      "to": "rb-junction-dewstone-J2",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J12",
+      "to": "rb-junction-dewstone-J2",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J13",
+      "to": "rb-junction-dewstone-J2",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J14",
+      "to": "rb-junction-dewstone-J2",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J15",
+      "to": "rb-junction-dewstone-J2",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J3",
+      "to": "rb-junction-dewstone-J4",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J3",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J3",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J3",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J11",
+      "to": "rb-junction-dewstone-J3",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J12",
+      "to": "rb-junction-dewstone-J3",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J13",
+      "to": "rb-junction-dewstone-J3",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J14",
+      "to": "rb-junction-dewstone-J3",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J15",
+      "to": "rb-junction-dewstone-J3",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J4",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J4",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J4",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J11",
+      "to": "rb-junction-dewstone-J4",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J12",
+      "to": "rb-junction-dewstone-J4",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J13",
+      "to": "rb-junction-dewstone-J4",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J14",
+      "to": "rb-junction-dewstone-J4",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J15",
+      "to": "rb-junction-dewstone-J4",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J5",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J11",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J12",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J13",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J14",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J15",
+      "to": "rb-junction-dewstone-J5",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J11",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J12",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J13",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J14",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J15",
+      "to": "rb-junction-dewstone-J8",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J11",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J12",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J13",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J14",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J15",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J11",
+      "to": "rb-junction-dewstone-J12",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J11",
+      "to": "rb-junction-dewstone-J13",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J11",
+      "to": "rb-junction-dewstone-J14",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J11",
+      "to": "rb-junction-dewstone-J15",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J12",
+      "to": "rb-junction-dewstone-J13",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J12",
+      "to": "rb-junction-dewstone-J14",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J12",
+      "to": "rb-junction-dewstone-J15",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J13",
+      "to": "rb-junction-dewstone-J14",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J13",
+      "to": "rb-junction-dewstone-J15",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J14",
+      "to": "rb-junction-dewstone-J15",
+      "route": "71a837ac-b342-4932-822d-c34a555f6c9f"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-lilyut-J27",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-lilyut-J28",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-dewstone-J1",
+      "to": "rb-junction-lilyut-J29",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-dewstone-J2",
+      "to": "rb-junction-lilyut-J27",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-dewstone-J2",
+      "to": "rb-junction-lilyut-J28",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-dewstone-J2",
+      "to": "rb-junction-lilyut-J29",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-dewstone-J3",
+      "to": "rb-junction-lilyut-J27",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-dewstone-J3",
+      "to": "rb-junction-lilyut-J28",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-dewstone-J3",
+      "to": "rb-junction-lilyut-J29",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-lilyut-J27",
+      "to": "rb-junction-lilyut-J28",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-lilyut-J27",
+      "to": "rb-junction-lilyut-J29",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-lilyut-J28",
+      "to": "rb-junction-lilyut-J29",
+      "route": "a05e29b3-ea4a-408b-8ba0-85ef16495780"
+    },
+    {
+      "from": "rb-junction-dewstone-J6",
+      "to": "rb-junction-dewstone-J9",
+      "route": "ec650e95-0caa-461f-a3f3-2adc8635ee54"
+    },
+    {
+      "from": "rb-junction-dewstone-J7",
+      "to": "rb-junction-dewstone-J8",
+      "route": "0201a046-8e1c-4be3-955c-996b0afc839a"
+    },
+    {
+      "from": "rb-junction-dewstone-J10",
+      "to": "rb-junction-dewstone-J7",
+      "route": "0201a046-8e1c-4be3-955c-996b0afc839a"
+    },
+    {
+      "from": "rb-junction-lilyut-J1",
+      "to": "rb-junction-lilyut-J26",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J1",
+      "to": "rb-junction-lilyut-J27",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J1",
+      "to": "rb-junction-lilyut-J28",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J1",
+      "to": "rb-junction-solzreed-J8",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J1",
+      "to": "rb-junction-solzreed-J12",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J1",
+      "to": "rb-junction-solzreed-J13",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J1",
+      "to": "rb-junction-solzreed-J14",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J1",
+      "to": "rb-junction-solzreed-J15",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J26",
+      "to": "rb-junction-lilyut-J27",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J26",
+      "to": "rb-junction-lilyut-J28",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J26",
+      "to": "rb-junction-solzreed-J8",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J26",
+      "to": "rb-junction-solzreed-J12",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J26",
+      "to": "rb-junction-solzreed-J13",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J26",
+      "to": "rb-junction-solzreed-J14",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J26",
+      "to": "rb-junction-solzreed-J15",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J27",
+      "to": "rb-junction-solzreed-J8",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J27",
+      "to": "rb-junction-solzreed-J12",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J27",
+      "to": "rb-junction-solzreed-J13",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J27",
+      "to": "rb-junction-solzreed-J14",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J27",
+      "to": "rb-junction-solzreed-J15",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J28",
+      "to": "rb-junction-solzreed-J8",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J28",
+      "to": "rb-junction-solzreed-J12",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J28",
+      "to": "rb-junction-solzreed-J13",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J28",
+      "to": "rb-junction-solzreed-J14",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J28",
+      "to": "rb-junction-solzreed-J15",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J12",
+      "to": "rb-junction-solzreed-J8",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J13",
+      "to": "rb-junction-solzreed-J8",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J8",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J15",
+      "to": "rb-junction-solzreed-J8",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J12",
+      "to": "rb-junction-solzreed-J13",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J12",
+      "to": "rb-junction-solzreed-J14",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J12",
+      "to": "rb-junction-solzreed-J15",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J13",
+      "to": "rb-junction-solzreed-J14",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J13",
+      "to": "rb-junction-solzreed-J15",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J15",
+      "route": "942aaa87-8f38-4cd7-a41a-348303f8ef3b"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J2",
+      "route": "9847f35f-1dda-4696-aad2-d0d07d8da66d"
+    },
+    {
+      "from": "rb-junction-lilyut-J13",
+      "to": "rb-junction-lilyut-J2",
+      "route": "9847f35f-1dda-4696-aad2-d0d07d8da66d"
+    },
+    {
+      "from": "rb-junction-lilyut-J16",
+      "to": "rb-junction-lilyut-J2",
+      "route": "9847f35f-1dda-4696-aad2-d0d07d8da66d"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J13",
+      "route": "9847f35f-1dda-4696-aad2-d0d07d8da66d"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J16",
+      "route": "9847f35f-1dda-4696-aad2-d0d07d8da66d"
+    },
+    {
+      "from": "rb-junction-lilyut-J13",
+      "to": "rb-junction-lilyut-J16",
+      "route": "9847f35f-1dda-4696-aad2-d0d07d8da66d"
+    },
+    {
+      "from": "rb-junction-lilyut-J10",
+      "to": "rb-junction-lilyut-J3",
+      "route": "988a1989-6875-4811-ade8-9cbeda5798ca"
+    },
+    {
+      "from": "rb-junction-lilyut-J14",
+      "to": "rb-junction-lilyut-J3",
+      "route": "988a1989-6875-4811-ade8-9cbeda5798ca"
+    },
+    {
+      "from": "rb-junction-lilyut-J15",
+      "to": "rb-junction-lilyut-J3",
+      "route": "988a1989-6875-4811-ade8-9cbeda5798ca"
+    },
+    {
+      "from": "rb-junction-lilyut-J10",
+      "to": "rb-junction-lilyut-J14",
+      "route": "988a1989-6875-4811-ade8-9cbeda5798ca"
+    },
+    {
+      "from": "rb-junction-lilyut-J10",
+      "to": "rb-junction-lilyut-J15",
+      "route": "988a1989-6875-4811-ade8-9cbeda5798ca"
+    },
+    {
+      "from": "rb-junction-lilyut-J14",
+      "to": "rb-junction-lilyut-J15",
+      "route": "988a1989-6875-4811-ade8-9cbeda5798ca"
+    },
+    {
+      "from": "rb-junction-lilyut-J4",
+      "to": "rb-junction-lilyut-J5",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J4",
+      "to": "rb-junction-lilyut-J6",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J4",
+      "to": "rb-junction-lilyut-J7",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J4",
+      "to": "rb-junction-lilyut-J8",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J4",
+      "to": "rb-junction-lilyut-J9",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J11",
+      "to": "rb-junction-lilyut-J4",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J5",
+      "to": "rb-junction-lilyut-J6",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J5",
+      "to": "rb-junction-lilyut-J7",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J5",
+      "to": "rb-junction-lilyut-J8",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J5",
+      "to": "rb-junction-lilyut-J9",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J11",
+      "to": "rb-junction-lilyut-J5",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J6",
+      "to": "rb-junction-lilyut-J7",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J6",
+      "to": "rb-junction-lilyut-J8",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J6",
+      "to": "rb-junction-lilyut-J9",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J11",
+      "to": "rb-junction-lilyut-J6",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J7",
+      "to": "rb-junction-lilyut-J8",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J7",
+      "to": "rb-junction-lilyut-J9",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J11",
+      "to": "rb-junction-lilyut-J7",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J8",
+      "to": "rb-junction-lilyut-J9",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J11",
+      "to": "rb-junction-lilyut-J8",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J11",
+      "to": "rb-junction-lilyut-J9",
+      "route": "08b37886-ece7-4780-949e-fe1a953e46c7"
+    },
+    {
+      "from": "rb-junction-lilyut-J10",
+      "to": "rb-junction-lilyut-J4",
+      "route": "b90bec5f-b736-4f24-89f9-35b9aa98dd89"
+    },
+    {
+      "from": "rb-junction-lilyut-J10",
+      "to": "rb-junction-lilyut-J11",
+      "route": "b90bec5f-b736-4f24-89f9-35b9aa98dd89"
+    },
+    {
+      "from": "rb-junction-lilyut-J22",
+      "to": "rb-junction-lilyut-J5",
+      "route": "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J24",
+      "to": "rb-junction-lilyut-J5",
+      "route": "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J26",
+      "to": "rb-junction-lilyut-J5",
+      "route": "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J22",
+      "to": "rb-junction-lilyut-J6",
+      "route": "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J24",
+      "to": "rb-junction-lilyut-J6",
+      "route": "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J26",
+      "to": "rb-junction-lilyut-J6",
+      "route": "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J22",
+      "to": "rb-junction-lilyut-J24",
+      "route": "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J22",
+      "to": "rb-junction-lilyut-J26",
+      "route": "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J24",
+      "to": "rb-junction-lilyut-J26",
+      "route": "092fe968-7eb6-43cc-84ed-d243bc2810c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J7",
+      "route": "2a5872e4-9b4b-4e17-a956-7dc356644fc9"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J8",
+      "route": "2a5872e4-9b4b-4e17-a956-7dc356644fc9"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J9",
+      "route": "2a5872e4-9b4b-4e17-a956-7dc356644fc9"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J21",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J22",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J23",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J25",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J12",
+      "to": "rb-junction-lilyut-J26",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J13",
+      "to": "rb-junction-lilyut-J21",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J13",
+      "to": "rb-junction-lilyut-J22",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J13",
+      "to": "rb-junction-lilyut-J23",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J13",
+      "to": "rb-junction-lilyut-J25",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J13",
+      "to": "rb-junction-lilyut-J26",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J16",
+      "to": "rb-junction-lilyut-J21",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J16",
+      "to": "rb-junction-lilyut-J22",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J16",
+      "to": "rb-junction-lilyut-J23",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J16",
+      "to": "rb-junction-lilyut-J25",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J16",
+      "to": "rb-junction-lilyut-J26",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J21",
+      "to": "rb-junction-lilyut-J22",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J21",
+      "to": "rb-junction-lilyut-J23",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J21",
+      "to": "rb-junction-lilyut-J25",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J21",
+      "to": "rb-junction-lilyut-J26",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J22",
+      "to": "rb-junction-lilyut-J23",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J22",
+      "to": "rb-junction-lilyut-J25",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J23",
+      "to": "rb-junction-lilyut-J25",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J23",
+      "to": "rb-junction-lilyut-J26",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J25",
+      "to": "rb-junction-lilyut-J26",
+      "route": "3a307872-2dd3-476d-8337-4ba7c33f47ab"
+    },
+    {
+      "from": "rb-junction-lilyut-J14",
+      "to": "rb-junction-lilyut-J17",
+      "route": "66614344-5641-4cc1-a9f7-d3fa6e1e78c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J14",
+      "to": "rb-junction-lilyut-J18",
+      "route": "66614344-5641-4cc1-a9f7-d3fa6e1e78c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J14",
+      "to": "rb-junction-lilyut-J19",
+      "route": "66614344-5641-4cc1-a9f7-d3fa6e1e78c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J15",
+      "to": "rb-junction-lilyut-J17",
+      "route": "66614344-5641-4cc1-a9f7-d3fa6e1e78c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J15",
+      "to": "rb-junction-lilyut-J18",
+      "route": "66614344-5641-4cc1-a9f7-d3fa6e1e78c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J15",
+      "to": "rb-junction-lilyut-J19",
+      "route": "66614344-5641-4cc1-a9f7-d3fa6e1e78c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J17",
+      "to": "rb-junction-lilyut-J18",
+      "route": "66614344-5641-4cc1-a9f7-d3fa6e1e78c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J17",
+      "to": "rb-junction-lilyut-J19",
+      "route": "66614344-5641-4cc1-a9f7-d3fa6e1e78c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J18",
+      "to": "rb-junction-lilyut-J19",
+      "route": "66614344-5641-4cc1-a9f7-d3fa6e1e78c5"
+    },
+    {
+      "from": "rb-junction-lilyut-J14",
+      "to": "rb-junction-lilyut-J20",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J14",
+      "to": "rb-junction-lilyut-J22",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J14",
+      "to": "rb-junction-lilyut-J24",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J15",
+      "to": "rb-junction-lilyut-J20",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J15",
+      "to": "rb-junction-lilyut-J22",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J15",
+      "to": "rb-junction-lilyut-J24",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J17",
+      "to": "rb-junction-lilyut-J20",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J17",
+      "to": "rb-junction-lilyut-J22",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J17",
+      "to": "rb-junction-lilyut-J24",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J18",
+      "to": "rb-junction-lilyut-J20",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J18",
+      "to": "rb-junction-lilyut-J22",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J18",
+      "to": "rb-junction-lilyut-J24",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J19",
+      "to": "rb-junction-lilyut-J20",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J19",
+      "to": "rb-junction-lilyut-J22",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J19",
+      "to": "rb-junction-lilyut-J24",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J20",
+      "to": "rb-junction-lilyut-J22",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J20",
+      "to": "rb-junction-lilyut-J24",
+      "route": "8a2b667c-2abc-4b46-ac60-3d5a92afef61"
+    },
+    {
+      "from": "rb-junction-lilyut-J22",
+      "to": "rb-junction-lilyut-J27",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-lilyut-J22",
+      "to": "rb-junction-lilyut-J28",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-lilyut-J23",
+      "to": "rb-junction-lilyut-J24",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-lilyut-J23",
+      "to": "rb-junction-lilyut-J27",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-lilyut-J23",
+      "to": "rb-junction-lilyut-J28",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-lilyut-J24",
+      "to": "rb-junction-lilyut-J25",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-lilyut-J24",
+      "to": "rb-junction-lilyut-J27",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-lilyut-J24",
+      "to": "rb-junction-lilyut-J28",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-lilyut-J25",
+      "to": "rb-junction-lilyut-J27",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-lilyut-J25",
+      "to": "rb-junction-lilyut-J28",
+      "route": "2df5c94d-3258-4eda-b16f-810e1ab2d35e"
+    },
+    {
+      "from": "rb-junction-solzreed-J1",
+      "to": "rb-junction-solzreed-J6",
+      "route": "2ebbac34-8390-4406-b52f-b3eedc4c6f08"
+    },
+    {
+      "from": "rb-junction-solzreed-J1",
+      "to": "rb-junction-solzreed-J19",
+      "route": "927409ce-b42e-4926-bb22-7ac3c503f628"
+    },
+    {
+      "from": "rb-junction-solzreed-J1",
+      "to": "rb-junction-solzreed-J20",
+      "route": "927409ce-b42e-4926-bb22-7ac3c503f628"
+    },
+    {
+      "from": "rb-junction-solzreed-J1",
+      "to": "rb-junction-solzreed-J22",
+      "route": "927409ce-b42e-4926-bb22-7ac3c503f628"
+    },
+    {
+      "from": "rb-junction-solzreed-J19",
+      "to": "rb-junction-solzreed-J20",
+      "route": "927409ce-b42e-4926-bb22-7ac3c503f628"
+    },
+    {
+      "from": "rb-junction-solzreed-J19",
+      "to": "rb-junction-solzreed-J22",
+      "route": "927409ce-b42e-4926-bb22-7ac3c503f628"
+    },
+    {
+      "from": "rb-junction-solzreed-J20",
+      "to": "rb-junction-solzreed-J22",
+      "route": "927409ce-b42e-4926-bb22-7ac3c503f628"
+    },
+    {
+      "from": "rb-junction-solzreed-J2",
+      "to": "rb-junction-solzreed-J3",
+      "route": "b58b2756-bae6-43fc-be9a-8c2fc6ba19a3"
+    },
+    {
+      "from": "rb-junction-solzreed-J2",
+      "to": "rb-junction-solzreed-J4",
+      "route": "b58b2756-bae6-43fc-be9a-8c2fc6ba19a3"
+    },
+    {
+      "from": "rb-junction-solzreed-J3",
+      "to": "rb-junction-solzreed-J4",
+      "route": "b58b2756-bae6-43fc-be9a-8c2fc6ba19a3"
+    },
+    {
+      "from": "rb-junction-solzreed-J3",
+      "to": "rb-junction-solzreed-J5",
+      "route": "c9e28588-a137-4204-96f2-4af866c51756"
+    },
+    {
+      "from": "rb-junction-solzreed-J4",
+      "to": "rb-junction-solzreed-J5",
+      "route": "c9e28588-a137-4204-96f2-4af866c51756"
+    },
+    {
+      "from": "rb-junction-solzreed-J5",
+      "to": "rb-junction-solzreed-J6",
+      "route": "eff86593-95bc-4ee1-928f-fc72615bb8eb"
+    },
+    {
+      "from": "rb-junction-solzreed-J7",
+      "to": "rb-junction-solzreed-J9",
+      "route": "6d39c6ae-9382-426d-a25d-b6f337e4c0b7"
+    },
+    {
+      "from": "rb-junction-solzreed-J7",
+      "to": "rb-junction-solzreed-J8",
+      "route": "d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+    },
+    {
+      "from": "rb-junction-solzreed-J12",
+      "to": "rb-junction-solzreed-J7",
+      "route": "d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+    },
+    {
+      "from": "rb-junction-solzreed-J13",
+      "to": "rb-junction-solzreed-J7",
+      "route": "d1f6b0be-f5ca-4169-938d-02ad9de93b60"
+    },
+    {
+      "from": "rb-junction-solzreed-J10",
+      "to": "rb-junction-solzreed-J9",
+      "route": "95c25795-b42f-456a-86f7-e918694c093c"
+    },
+    {
+      "from": "rb-junction-solzreed-J11",
+      "to": "rb-junction-solzreed-J9",
+      "route": "95c25795-b42f-456a-86f7-e918694c093c"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J9",
+      "route": "95c25795-b42f-456a-86f7-e918694c093c"
+    },
+    {
+      "from": "rb-junction-solzreed-J10",
+      "to": "rb-junction-solzreed-J11",
+      "route": "95c25795-b42f-456a-86f7-e918694c093c"
+    },
+    {
+      "from": "rb-junction-solzreed-J10",
+      "to": "rb-junction-solzreed-J14",
+      "route": "95c25795-b42f-456a-86f7-e918694c093c"
+    },
+    {
+      "from": "rb-junction-solzreed-J11",
+      "to": "rb-junction-solzreed-J14",
+      "route": "95c25795-b42f-456a-86f7-e918694c093c"
+    },
+    {
+      "from": "rb-junction-solzreed-J12",
+      "to": "rb-junction-solzreed-J17",
+      "route": "729225b6-2b4f-4b47-94d7-1a8d1c25ad6c"
+    },
+    {
+      "from": "rb-junction-solzreed-J13",
+      "to": "rb-junction-solzreed-J16",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J13",
+      "to": "rb-junction-solzreed-J17",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J13",
+      "to": "rb-junction-solzreed-J18",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J13",
+      "to": "rb-junction-solzreed-J21",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J16",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J17",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J18",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J21",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J15",
+      "to": "rb-junction-solzreed-J16",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J15",
+      "to": "rb-junction-solzreed-J17",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J15",
+      "to": "rb-junction-solzreed-J18",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J15",
+      "to": "rb-junction-solzreed-J21",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J16",
+      "to": "rb-junction-solzreed-J17",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J16",
+      "to": "rb-junction-solzreed-J18",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J16",
+      "to": "rb-junction-solzreed-J21",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J17",
+      "to": "rb-junction-solzreed-J18",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J17",
+      "to": "rb-junction-solzreed-J21",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J18",
+      "to": "rb-junction-solzreed-J21",
+      "route": "6be905ee-fa8c-48cf-b5de-7c55dad004aa"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J19",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J20",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J14",
+      "to": "rb-junction-solzreed-J22",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J15",
+      "to": "rb-junction-solzreed-J19",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J15",
+      "to": "rb-junction-solzreed-J20",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J15",
+      "to": "rb-junction-solzreed-J22",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J16",
+      "to": "rb-junction-solzreed-J19",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J16",
+      "to": "rb-junction-solzreed-J20",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J16",
+      "to": "rb-junction-solzreed-J22",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J18",
+      "to": "rb-junction-solzreed-J19",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J18",
+      "to": "rb-junction-solzreed-J20",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J18",
+      "to": "rb-junction-solzreed-J22",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J19",
+      "to": "rb-junction-solzreed-J21",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J20",
+      "to": "rb-junction-solzreed-J21",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    },
+    {
+      "from": "rb-junction-solzreed-J21",
+      "to": "rb-junction-solzreed-J22",
+      "route": "cfa07aaf-be30-4d01-b9e3-0e5e96168ad4"
+    }
+  ],
+  "pois": [
+    {
+      "id": "sextant-growlgate-01",
+      "type": "shipwreck",
+      "label": "Near Growlgate: W 5.34.41, S 5.54.49 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -5.913611,
+      "lng": -5.578056,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-growlgate-02",
+      "type": "shipwreck",
+      "label": "Near Growlgate: W 4.39.22, S 6.19.24 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -6.323333,
+      "lng": -4.656111,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-growlgate-03",
+      "type": "shipwreck",
+      "label": "Near Growlgate: W 3.21.13, S 4.37.38 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -4.627222,
+      "lng": -3.353611,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-growlgate-04",
+      "type": "shipwreck",
+      "label": "Near Growlgate: W 2.36.53, S 5.54.31 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -5.908611,
+      "lng": -2.614722,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-growlgate-05",
+      "type": "shipwreck",
+      "label": "Near Growlgate: W 1.23.34, S 5.37.24 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -5.623333,
+      "lng": -1.392778,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-sunspeckW-06",
+      "type": "shipwreck",
+      "label": "West Sunspeck Sea: W 4.2.52, S 9.28.25 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -9.473611,
+      "lng": -4.047778,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-sunspeckE-07",
+      "type": "shipwreck",
+      "label": "East Sunspeck Sea: E 1.27.37, S 6.37.40 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -6.627778,
+      "lng": 1.460278,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-sunspeckE-08",
+      "type": "shipwreck",
+      "label": "East Sunspeck Sea: E 2.41.24, S 6.37.20 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -6.622222,
+      "lng": 2.69,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-sunspeckE-09",
+      "type": "shipwreck",
+      "label": "East Sunspeck Sea: E 3.2.4, S 5.27.7 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -5.451944,
+      "lng": 3.034444,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-sunspeckE-10",
+      "type": "shipwreck",
+      "label": "East Sunspeck Sea: E 3.57.4, S 5.24.38 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -5.410556,
+      "lng": 3.951111,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-sunspeckE-11",
+      "type": "shipwreck",
+      "label": "East Sunspeck Sea: E 2.57.18, S 5.23.47 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -5.396389,
+      "lng": 2.955,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-sunspeckE-12",
+      "type": "shipwreck",
+      "label": "East Sunspeck Sea: E 2.48.3, S 5.35.20 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -5.588889,
+      "lng": 2.800833,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-thunder-13",
+      "type": "shipwreck",
+      "label": "South of Thunder Island: W 3.22.17, S 17.26.28 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -17.441111,
+      "lng": -3.371389,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-thunder-14",
+      "type": "shipwreck",
+      "label": "South of Thunder Island: W 3.16.34, S 17.48.23 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -17.806389,
+      "lng": -3.276111,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "sextant-thunder-15",
+      "type": "shipwreck",
+      "label": "South of Thunder Island: W 3.53.45, S 18.19.2 (verbatim; x=E+/W-, y=N+/S- decimal)",
+      "lat": -18.317222,
+      "lng": -3.895833,
+      "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    }
+  ]
+}

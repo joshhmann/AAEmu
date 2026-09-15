@@ -335,6 +335,16 @@ public class Skill
 
         if (castTime > 0)
         {
+            if (caster is Character charCaster && AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+            {
+                AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordSkill(charCaster, "cast_started", Id, new
+                {
+                    CastTimeMs = castTime,
+                    TargetObjId = target?.ObjId ?? 0,
+                    TargetType = target?.GetType().Name
+                });
+            }
+
             // Has casting time, schedule a task for it
             caster.BroadcastPacket(new SCSkillStartedPacket(Id, TlId, casterCaster, targetCaster, this, skillObject)
             {
@@ -347,6 +357,15 @@ public class Skill
         }
         else
         {
+            if (caster is Character charCaster && AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+            {
+                AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordSkill(charCaster, "instant_cast", Id, new
+                {
+                    TargetObjId = target?.ObjId ?? 0,
+                    TargetType = target?.GetType().Name
+                });
+            }
+
             // Immediate skill
             Cast(caster, casterCaster, target, targetCaster, skillObject);
         }

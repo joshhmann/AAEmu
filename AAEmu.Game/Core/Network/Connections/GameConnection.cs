@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using AAEmu.Commons.Network;
 using AAEmu.Commons.Network.Core;
 using AAEmu.Commons.Utils.DB;
@@ -56,6 +56,11 @@ public class GameConnection
         {
             Logger.Error("Dropping invalid game packet with opcode 0xFFF.");
             return;
+        }
+
+        if (ActiveChar != null && AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+        {
+            AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordPacketOut(ActiveChar, packet);
         }
 
         packet.Connection = this;

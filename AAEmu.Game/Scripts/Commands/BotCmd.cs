@@ -33,6 +33,8 @@ public class BotCmd : SubCommandBase, ICommand, ICommandV2
         Register(new BotGoSubCommand(), "go");
         Register(new BotToSubCommand(), "to");
         Register(new BotLabSubCommand(), "lab");
+        Register(new BotRestoreSubCommand(), "restore");
+        Register(new BotPartySubCommand(), "party");
     }
 
     public void OnLoad()

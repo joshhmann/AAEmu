@@ -243,9 +243,18 @@ public enum NeedsFarmLoopPhase
         public DateTime LastButcherScanUtc { get; set; } = DateTime.MinValue;
 
         /// <summary>
+        /// Copper-bootstrap quest-work flag: set when the quest leg ran work
+        /// this wake. Consumed by the hunt/butcher/route gates so quest work
+        /// preempts wildlife but never party handling or PvP. Independent of
+        /// the needs flag: the arbiter holds ONE activity per wake, so at most
+        /// one of the two legs fires — both flags stay readable for tests.
+        /// </summary>
+        public bool QuestLegActive { get; set; }
+
+        /// <summary>
         /// Tier 0 needs-work flag: set when the needs leg ran work this wake.
         /// Consumed by the hunt/butcher/route gates so needs work preempts
-        /// wildlife but never party handling, PvP, or quest work.
+        /// wildlife but never party handling or PvP.
         /// </summary>
         public bool NeedsLegActive { get; set; }
 
@@ -307,6 +316,21 @@ public enum NeedsFarmLoopPhase
         /// permanently clobbers the coordinator-armed patrol).
         /// </summary>
         public BotPath? NeedsFarmStashedRoute { get; set; }
+
+        /// <summary>Timestamp of the last leisure micro-wander step while WaitingMaturity.</summary>
+        public DateTime LastLeisureStepUtc { get; set; } = DateTime.MinValue;
+
+        /// <summary>Next loiter duration at a leisure position before moving again.</summary>
+        public TimeSpan NextLeisureInterval { get; set; } = TimeSpan.FromSeconds(8);
+
+        /// <summary>Timestamp until which the bot is browsing/shopping at a merchant before buying.</summary>
+        public DateTime ShoppingUntilUtc { get; set; } = DateTime.MinValue;
+
+        /// <summary>Timestamp until which the bot loiters after planting before moving again.</summary>
+        public DateTime PlantingUntilUtc { get; set; } = DateTime.MinValue;
+
+        /// <summary>Timestamp until which the bot loiters after harvesting before moving again.</summary>
+        public DateTime HarvestingUntilUtc { get; set; } = DateTime.MinValue;
     }
 
     private readonly ConcurrentDictionary<uint, BotRoamState> _states = [];
@@ -580,9 +604,14 @@ public enum NeedsFarmLoopPhase
         // activity, run one NeedsDecisionScenario leg per wake against the
         // bot's existing actor (GetOrCreateActor — the SAME actor the
         // scheduler ticks, never a second instance). Needs work preempts
-        // wildlife/butcher/route but never party handling, PvP, or quest work.
-        // Skipped while the actor is busy (TryBegin semantics — the
-        // hunt-engage precedent). Null provider preserves today's behavior exactly.
+        // wildlife/butcher/route but never party handling or PvP.
+        // Patrol/hunt movement is paused for the decision tick: a live Move
+        // leg would TryBegin-skip the leg forever on hunt-enabled
+        // deployments (.165 finding: needs.farm active all session, leg body
+        // never ran). Farm-travel movement (Traveling phase) and executing
+        // trade legs are never interrupted — the former advances through the
+        // route layer, the latter ARE the landed work. Null provider
+        // preserves today's behavior exactly.
         state.NeedsLegActive = false;
         if (!handledByParty && !pvpEngaged
             && ActiveActivityProvider?.Invoke(bot.CharacterId) is string needsActivity
@@ -600,9 +629,28 @@ public enum NeedsFarmLoopPhase
             }
         }
 
+        // 0a. Copper-bootstrap quest leg: while the arbiter holds a quest.*
+        // activity, run one QuestDecisionScenario leg per wake against the
+        // bot's existing actor (the SAME actor the scheduler ticks, never a
+        // second instance). Quest work preempts wildlife/butcher/route but
+        // never party handling or PvP — same arbitration discipline as 0b.
+        // Skipped while the actor is busy (TryBegin semantics — the
+        // hunt-engage precedent). Null provider preserves today's behavior
+        // exactly. The arbiter holds ONE activity per wake, so at most one
+        // of the 0a/0b legs fires; both flags stay readable for tests.
+        state.QuestLegActive = false;
+        if (!handledByParty && !pvpEngaged
+            && ActiveActivityProvider?.Invoke(bot.CharacterId) is string questActivity
+            && questActivity.StartsWith("quest.", StringComparison.Ordinal)
+            && actor.ActiveRequest is not { IsTerminal: false })
+        {
+            state.QuestLegActive = StepQuestLeg(bot, actor, state);
+        }
+
         // 1. Opportunistic wildlife hunt loop (skipped while fighting players,
-        // or while the needs leg landed work — needs preempts hunt acquisition/engagement).
-        if (!handledByParty && !pvpEngaged && !state.NeedsLegActive && EnableWildlifeHunt)
+        // or while a work leg landed, or while actively farming — needs/quest preempt hunt acquisition/engagement).
+        var isFarmingActive = state.NeedsFarmPhase != NeedsFarmLoopPhase.Idle;
+        if (!handledByParty && !pvpEngaged && !state.NeedsLegActive && !state.QuestLegActive && !isFarmingActive && EnableWildlifeHunt)
         {
             if (state.TargetNpcObjId != 0)
             {
@@ -635,6 +683,11 @@ public enum NeedsFarmLoopPhase
                         else if (loot.IsTerminal)
                             Logger.Debug("Roam loot rejected for bot {CharacterId}: corpse {NpcName} ({NpcId}, template {TemplateId}) — {State} ({Detail})",
                                 bot.CharacterId, targetUnit.Name, targetUnit.ObjId, targetUnit.TemplateId, loot.State, loot.Detail);
+                    }
+
+                    if (bot.Character.IsAutoAttack)
+                    {
+                        actor.StopAutoAttack();
                     }
 
                     if (bot.Character.CurrentTarget?.ObjId == state.TargetNpcObjId)
@@ -689,6 +742,11 @@ public enum NeedsFarmLoopPhase
                         var angle = MathUtil.CalculateAngleFrom(bot.Character.Transform.World.Position, targetUnit.Transform.World.Position);
                         bot.Character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
                         bot.Character.Transform.FinalizeTransform();
+
+                        if (!bot.Character.IsAutoAttack)
+                        {
+                            actor.AutoAttack(targetUnit.ObjId);
+                        }
 
                         if (now - state.LastCastUtc >= HuntCastInterval)
                         {
@@ -767,9 +825,9 @@ public enum NeedsFarmLoopPhase
         // corpse→doodad pipeline here (B stays gated); the leg only scans
         // world doodads already standing on a butcherable phase, approaches
         // ActorRequest. Logging only on the terminal outcome (slice 1/3
-        // idiom) — zero success-path change. Skipped while the needs leg
-        // landed work (needs preempts butcher acquisition/engagement).
-        if (!handledByParty && !state.NeedsLegActive && EnableWildlifeButcher)
+        // idiom) — zero success-path change. Skipped while a work leg landed
+        // or while actively farming (needs/quest preempt butcher acquisition/engagement).
+        if (!handledByParty && !state.NeedsLegActive && !state.QuestLegActive && !isFarmingActive && EnableWildlifeButcher)
         {
             if (state.TargetButcherDoodadObjId != 0)
             {
@@ -870,8 +928,10 @@ public enum NeedsFarmLoopPhase
                 }
             }
         }
-        // 2. Issue the next leg when idle, not in party, not hunting, not butchering, not needs-working, and a route is active.
-        if (!handledByParty && !state.NeedsLegActive && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
+        // 2. Issue the next leg when idle, not in party, not hunting, not butchering, not work-legged, not waiting for crop, and a route is active.
+        if (!handledByParty && !state.NeedsLegActive && !state.QuestLegActive
+            && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
+            && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
         {
             var target = state.Path.CurrentTarget;
             var leg = actor.MoveTo(target, RoamSpeed, RoamLegTimeout);
@@ -907,8 +967,9 @@ public enum NeedsFarmLoopPhase
                 _ = actor.Stop();
         }
         // 3b. Route advance on arrival: when the pending Move leg reached a terminal state
-        // (deferred while the needs leg landed work — needs preempts route advancement too).
-        if (!state.NeedsLegActive
+        // (deferred while a work leg landed — needs/quest preempt route advancement too).
+        if (!state.NeedsLegActive && !state.QuestLegActive
+            && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0
             && state.TargetButcherDoodadObjId == 0
             && state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move }
@@ -1066,6 +1127,38 @@ public enum NeedsFarmLoopPhase
     public const int NeedsFarmSoilResolveIntervalWakes = 10;
 
     /// <summary>
+    /// Copper-bootstrap quest leg (branch 0a): one QuestDecisionScenario leg
+    /// per wake — advance each active quest once, otherwise discover from the
+    /// nearest in-range NPCs and accept the lowest-level in-band offer.
+    /// Objective pursuit itself (kill, gather, talk) rides the existing
+    /// hunt/interact branches — this leg only advances the step machine and
+    /// acquires new quests through the existing actor quest actions.
+    ///
+    /// Returns true only when decision work actually landed (Completed) —
+    /// the 0b contract: reject/decide-fail wakes return false so the route
+    /// still walks and the scheduler keeps its cadence instead of spinning.
+    /// </summary>
+    private bool StepQuestLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
+    {
+        if (actor is not GameplayActor concreteActor)
+            return false;
+
+        Func<Character, float, IEnumerable<Npc>> nearbyNpcs =
+            NearbyNpcProvider ?? DefaultNearbyNpcs;
+        var result = QuestDecisionScenario.Run(concreteActor, nearbyNpcs,
+            new QuestDecisionScenario.QuestOptions
+            {
+                CycleId = $"quest-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}"
+            });
+        var landed = result.WorkSelected && result.Request?.State == ActorLifecycleState.Completed;
+        if (landed)
+        {
+            Logger.Debug("Roam quest leg completed for bot {CharacterId}: {Action} ({Detail})",
+                bot.CharacterId, result.SelectedAction, result.Request!.Detail);
+        }
+        return landed;
+    }
+
     /// Tier 0 needs-farm leg (branch 0b): legible per-wake re-evaluation, not
     /// a script — observe → seed absent? buy path; seed + invalid soil?
     /// travel path; seed + valid soil? plant; tracked/scanned crop immature?
@@ -1089,6 +1182,20 @@ public enum NeedsFarmLoopPhase
     {
         var character = bot.Character;
         var position = character.Transform.World.Position;
+        var now = TimeProvider.GetUtcNow().UtcDateTime;
+
+        // Post-action standstill cadences (human-like pacing)
+        if (now < state.HarvestingUntilUtc)
+        {
+            BroadcastStandstill(character);
+            return false;
+        }
+
+        if (now < state.PlantingUntilUtc)
+        {
+            BroadcastStandstill(character);
+            return false;
+        }
 
         // ---- 1. Tracked crop: cheap per-wake liveness check (one world
         // lookup + phase read — not a scan). Gone/harvested/despawned/
@@ -1107,8 +1214,9 @@ public enum NeedsFarmLoopPhase
             else
             {
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
-                    $"crop {tracked!.ObjId} immature — deferred, no harvest issued");
-                return false; // yield to idle/other behavior
+                    $"crop {tracked!.ObjId} immature — waiting at plot, no harvest issued");
+                StepFarmLeisure(bot, actor, state, character, tracked!.Transform.World.Position);
+                return false;
             }
         }
 
@@ -1124,24 +1232,66 @@ public enum NeedsFarmLoopPhase
             state.NeedsFarmCropObjId = scanned.ObjId;
             state.NeedsFarmCropTemplateId = scanned.TemplateId;
             SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
-                $"adopted crop {scanned.ObjId} immature — deferred, no harvest issued");
+                $"adopted crop {scanned.ObjId} immature — waiting at plot, no harvest issued");
+            StepFarmLeisure(bot, actor, state, character, scanned.Transform.World.Position);
             return false;
         }
 
         // ---- 3. Seed branches: seed absent → buy path; seed + valid soil →
         // plant; seed + invalid soil → travel path.
-        var merchantObjId = ResolveSeedMerchant(character, position);
+        var (nearestMerchant, merchantDist) = ResolveNearestSeedMerchant(character, position);
+        var merchantObjId = merchantDist <= GameplayActor.MaxShopRange ? nearestMerchant?.ObjId ?? 0 : 0;
         if (SeedInBag(character) > 0)
         {
-            if (IsValidFarmSoil(character, position))
+            var tooCloseToMerchant = nearestMerchant != null && merchantDist <= 5.0f;
+            if (IsValidFarmSoil(character, position) && !tooCloseToMerchant)
             {
                 state.NeedsFarmSoilAttempts = 0;
                 state.NeedsFarmDeferWakes = 0;
                 RestoreFarmRoute(state, bot, "on valid soil");
+                if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+                {
+                    _ = actor.Stop();
+                    state.PendingLeg = null;
+                }
+                BroadcastStandstill(character);
                 return AfterNeedsFarmDispatch(state, bot,
                     DispatchNeedsFarmLeg(bot, actor, merchantObjId, 0, position));
             }
             return StepNeedsFarmTravel(bot, actor, state, character, position);
+        }
+
+        if (nearestMerchant != null && merchantDist > GameplayActor.MaxShopRange)
+        {
+            // Seed needed and merchant visible in perception, but out of shop range — approach merchant!
+            var merchantPos = nearestMerchant.Transform.World.Position;
+            var enRoute = state.NeedsFarmSoilTarget is { } target
+                && state.Path is { IsFinished: false }
+                && MathUtil.CalculateDistance(state.Path.CurrentTarget, merchantPos, false) <= GameplayActor.MaxShopRange;
+            if (!enRoute)
+            {
+                ArmFarmRoute(state, bot, merchantPos,
+                    $"seed merchant {nearestMerchant.ObjId} at {merchantDist:F1}m — approaching");
+            }
+            SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Traveling,
+                $"seed merchant {nearestMerchant.ObjId} at {merchantDist:F1}m — approaching");
+            return false;
+        }
+
+        if (nearestMerchant != null && merchantDist <= GameplayActor.MaxShopRange)
+        {
+            if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+            {
+                _ = actor.Stop();
+                state.PendingLeg = null;
+            }
+            RestoreFarmRoute(state, bot, "arrived at seed merchant");
+
+            // Face the merchant and broadcast standstill
+            var angle = MathUtil.CalculateAngleFrom(character.Transform.World.Position, nearestMerchant.Transform.World.Position);
+            character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
+            character.Transform.FinalizeTransform();
+            BroadcastStandstill(character);
         }
 
         state.NeedsFarmSoilAttempts = 0;
@@ -1161,7 +1311,8 @@ public enum NeedsFarmLoopPhase
         state.NeedsFarmCropObjId = crop.ObjId;
         state.NeedsFarmCropTemplateId = crop.TemplateId;
         var dist = MathUtil.CalculateDistance(position, crop.Transform.World.Position, false);
-        if (dist > GameplayActor.MaxInteractRange)
+        const float CropHarvestInteractRange = 2.5f;
+        if (dist > CropHarvestInteractRange)
         {
             var enRoute = state.NeedsFarmSoilTarget is { } soil
                 && state.Path is { IsFinished: false }
@@ -1184,6 +1335,20 @@ public enum NeedsFarmLoopPhase
                 $"mature crop {crop.ObjId} at {dist:F1}m — approaching");
             return false;
         }
+
+        // In interact range! Halt approach, face the crop, and broadcast standstill so bot doesn't walk in place
+        if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+        {
+            _ = actor.Stop();
+            state.PendingLeg = null;
+        }
+        RestoreFarmRoute(state, bot, "in harvest range of mature crop");
+
+        var angle = MathUtil.CalculateAngleFrom(character.Transform.World.Position, crop.Transform.World.Position);
+        character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
+        character.Transform.FinalizeTransform();
+        BroadcastStandstill(character);
+
         state.NeedsFarmSoilAttempts = 0;
         var merchantObjId = ResolveSeedMerchant(character, position);
         return AfterNeedsFarmDispatch(state, bot,
@@ -1199,11 +1364,20 @@ public enum NeedsFarmLoopPhase
     private bool StepNeedsFarmTravel(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state,
         Character character, Vector3 position)
     {
-        if (IsValidFarmSoil(character, position))
+        var (nearestMerchant, merchantDist) = ResolveNearestSeedMerchant(character, position);
+        var tooCloseToMerchant = nearestMerchant != null && merchantDist <= 5.0f;
+        if (IsValidFarmSoil(character, position) && !tooCloseToMerchant)
         {
             state.NeedsFarmSoilAttempts = 0;
             state.NeedsFarmDeferWakes = 0;
             RestoreFarmRoute(state, bot, "arrived on valid soil");
+            if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+            {
+                _ = actor.Stop();
+                state.PendingLeg = null;
+            }
+            BroadcastStandstill(character);
+            state.PlantingUntilUtc = TimeProvider.GetUtcNow().UtcDateTime.AddSeconds(2.0);
             var merchantObjId = ResolveSeedMerchant(character, position);
             return AfterNeedsFarmDispatch(state, bot,
                 DispatchNeedsFarmLeg(bot, actor, merchantObjId, 0, position));
@@ -1250,6 +1424,57 @@ public enum NeedsFarmLoopPhase
     }
 
     /// <summary>
+    /// Option 1: Leashed farm leisure / micro-wander while WaitingMaturity.
+    /// Keeps the bot naturally active within 4-8m of its crop instead of
+    /// freezing stiff like a statue or roaming miles away along the highway.
+    /// </summary>
+    private void StepFarmLeisure(PlayerBotRuntime bot, IGameplayActor actor,
+        BotRoamState state, Character character, Vector3 cropPos)
+    {
+        var now = TimeProvider.GetUtcNow().UtcDateTime;
+        var currentPos = character.Transform.World.Position;
+        var distToCrop = MathUtil.CalculateDistance(currentPos, cropPos, false);
+
+        // If drifted outside the 8m farm leash, path back toward the crop
+        if (distToCrop > 8.0f)
+        {
+            if (actor.ActiveRequest is not { IsTerminal: false, Action: ActorActionType.Move })
+            {
+                _ = actor.MoveTo(cropPos, 1.8f, TimeSpan.FromSeconds(10));
+            }
+            return;
+        }
+
+        // While moving on a leisure leg, let it progress naturally
+        if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+            return;
+
+        // When stationary at a vantage point, broadcast standstill so client stays idle
+        BroadcastStandstill(character);
+
+        // When idle at a vantage point, loiter for 8-14s before moving again
+        if (now - state.LastLeisureStepUtc < state.NextLeisureInterval)
+            return;
+
+        state.LastLeisureStepUtc = now;
+        var randomDelaySec = 8 + (int)(bot.CharacterId % 7); // pseudo-random 8..14s
+        state.NextLeisureInterval = TimeSpan.FromSeconds(randomDelaySec);
+
+        // Pick a candidate leisure point 3-6m around the crop on valid soil
+        var angle = ((now.Ticks / TimeSpan.TicksPerSecond) % 360) * MathF.PI / 180f;
+        var radius = 3.0f + (float)((bot.CharacterId + now.Second) % 4);
+        var targetX = cropPos.X + MathF.Cos(angle) * radius;
+        var targetY = cropPos.Y + MathF.Sin(angle) * radius;
+        var candidate = new Vector3(targetX, targetY, cropPos.Z);
+
+        if (IsValidFarmSoil(character, candidate))
+        {
+            var groundZ = WithGroundZ(character, candidate, cropPos.Z);
+            _ = actor.MoveTo(groundZ, 1.8f, TimeSpan.FromSeconds(10));
+        }
+    }
+
+    /// <summary>
     /// Dispatch tail: maps the decision outcome onto the loop phase (the
     /// observability seam — phase + target + reason stay readable off the
     /// state) and records a landed plant's crop for the wait branch. Keeps
@@ -1276,10 +1501,12 @@ public enum NeedsFarmLoopPhase
                 state.NeedsFarmCropObjId = plantedObjId;
                 state.NeedsFarmCropTemplateId =
                     ResolveDoodad(bot.Character, plantedObjId)?.TemplateId ?? 0;
+                state.PlantingUntilUtc = TimeProvider.GetUtcNow().UtcDateTime.AddSeconds(2.0);
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
                     $"planted crop {plantedObjId} — waiting maturity");
                 break;
             case ActorActionType.Plant when landed:
+                state.PlantingUntilUtc = TimeProvider.GetUtcNow().UtcDateTime.AddSeconds(2.0);
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Planting, "plant landed without crop objId");
                 break;
             case ActorActionType.Plant:
@@ -1290,6 +1517,12 @@ public enum NeedsFarmLoopPhase
                 var harvested = state.NeedsFarmCropObjId;
                 state.NeedsFarmCropObjId = 0;
                 state.NeedsFarmCropTemplateId = 0;
+                var castSeconds = 4.0;
+                if (result.Request?.Payload is HarvestParams hp && hp.CastTimeMs > 0)
+                {
+                    castSeconds = hp.CastTimeMs / 1000.0;
+                }
+                state.HarvestingUntilUtc = TimeProvider.GetUtcNow().UtcDateTime.AddSeconds(castSeconds);
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Replanting,
                     $"harvested crop {harvested} — re-evaluating (seed+output → replant)");
                 break;
@@ -1315,17 +1548,16 @@ public enum NeedsFarmLoopPhase
     }
 
     /// <summary>
-    /// Seed-merchant discovery (the existing shop-range head of the leg,
-    /// extracted verbatim): nearest in-range merchant whose pack sells the
-    /// seed, 0 when none.
+    /// Nearest seed merchant in perception radius, regardless of shop range.
+    /// Returns the merchant NPC and distance, or null if none found in perception.
     /// </summary>
-    private uint ResolveSeedMerchant(Character character, Vector3 position)
+    private (Npc? Merchant, float Distance) ResolveNearestSeedMerchant(Character character, Vector3 position)
     {
         var world = character.ParentWorld;
-        uint merchantObjId = 0;
         if (world == null)
-            return 0;
-        var bestDist = GameplayActor.MaxShopRange;
+            return (null, float.MaxValue);
+        Npc? bestMerchant = null;
+        var bestDist = float.MaxValue;
         var merchants = (NearbyNpcProvider ?? DefaultNearbyNpcs)(character, NeedsFarmPerceptionRadius);
         foreach (var npc in merchants)
         {
@@ -1335,13 +1567,23 @@ public enum NeedsFarmLoopPhase
             if (pack == null || !pack.SellsItem(NeedsFarmSeedItemTemplateId))
                 continue;
             var d = MathUtil.CalculateDistance(position, npc.Transform.World.Position, false);
-            if (d <= bestDist)
+            if (d < bestDist)
             {
                 bestDist = d;
-                merchantObjId = npc.ObjId;
+                bestMerchant = npc;
             }
         }
-        return merchantObjId;
+        return (bestMerchant, bestDist);
+    }
+
+    /// <summary>
+    /// Seed-merchant discovery: nearest in-range merchant whose pack sells the
+    /// seed, 0 when none.
+    /// </summary>
+    private uint ResolveSeedMerchant(Character character, Vector3 position)
+    {
+        var (merchant, dist) = ResolveNearestSeedMerchant(character, position);
+        return dist <= GameplayActor.MaxShopRange ? merchant?.ObjId ?? 0 : 0;
     }
 
     /// <summary>
@@ -1463,14 +1705,21 @@ public enum NeedsFarmLoopPhase
     /// </summary>
     private Vector3? ResolveSoilTarget(Character character, Vector3 from)
     {
+        var (nearestMerchant, _) = ResolveNearestSeedMerchant(character, from);
+        var merchantPos = nearestMerchant?.Transform.World.Position;
+
         foreach (var candidate in SoilSpiralCandidates(from, NeedsFarmPerceptionRadius, 5f))
         {
+            if (merchantPos.HasValue && MathUtil.CalculateDistance(candidate, merchantPos.Value, false) <= 5.0f)
+                continue;
             if (IsValidFarmSoil(character, candidate))
                 return WithGroundZ(character, candidate, from.Z);
         }
         foreach (var candidate in SoilSpiralCandidates(from, NeedsFarmSoilDiscoveryRadius,
                      NeedsFarmSoilDiscoveryStep, NeedsFarmPerceptionRadius))
         {
+            if (merchantPos.HasValue && MathUtil.CalculateDistance(candidate, merchantPos.Value, false) <= 5.0f)
+                continue;
             if (IsValidFarmSoil(character, candidate))
                 return WithGroundZ(character, candidate, from.Z);
         }
@@ -1645,12 +1894,25 @@ public enum NeedsFarmLoopPhase
         if (actor is not GameplayActor concreteActor)
             return null;
 
+        var plantPos = position;
+        if (offerPlant)
+        {
+            var rotZ = bot.Character.Transform.Local.Rotation.Z;
+            var forward = new Vector3(-MathF.Sin(rotZ), MathF.Cos(rotZ), 0f);
+            var candidatePos = position + forward * 1.5f;
+            candidatePos = WithGroundZ(bot.Character, candidatePos, position.Z);
+            if (IsValidFarmSoil(bot.Character, candidatePos))
+            {
+                plantPos = candidatePos;
+            }
+        }
+
         return NeedsDecisionScenario.Run(concreteActor, new NeedsDecisionScenario.NeedsOptions
         {
             CycleId = $"needs-farm-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}",
             HarvestDoodadObjId = cropObjId,
             PlantSeedItemTemplateId = offerPlant ? NeedsFarmSeedItemTemplateId : 0,
-            PlantPosition = position,
+            PlantPosition = plantPos,
             MerchantNpcObjId = merchantObjId,
             BuyItemTemplateId = NeedsFarmSeedItemTemplateId,
             BuyCount = 1,
@@ -1790,6 +2052,16 @@ public enum NeedsFarmLoopPhase
     }
 
     /// <summary>
+    /// Broadcasts an authoritative standstill packet to all nearby observers,
+    /// stopping any residual walk/run animation on clients immediately.
+    /// </summary>
+    private static void BroadcastStandstill(Character character)
+    {
+        var moveType = BuildStopMoveType(character, character.Transform.World.Position);
+        character.BroadcastPacket(new SCOneUnitMovementPacket(character.ObjId, moveType), true);
+    }
+
+    /// <summary>
     /// Checks if an NPC is attackable wildlife (monster faction 115, hostile relation, or unfactioned).
     /// Safe against missing FactionManager singleton in test/headless environments.
     /// </summary>
@@ -1838,6 +2110,11 @@ public enum NeedsFarmLoopPhase
                 && now - state.TargetPlayerEngagedUtc <= TimeSpan.FromSeconds(30);
             if (!valid)
             {
+                if (bot.Character.IsAutoAttack)
+                {
+                    actor.StopAutoAttack();
+                }
+
                 if (bot.Character.CurrentTarget?.ObjId == state.TargetPlayerObjId)
                 {
                     bot.Character.CurrentTarget = null;
@@ -1882,6 +2159,11 @@ public enum NeedsFarmLoopPhase
                 var angle = MathUtil.CalculateAngleFrom(bot.Character.Transform.World.Position, target.Transform.World.Position);
                 bot.Character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
                 bot.Character.Transform.FinalizeTransform();
+
+                if (!bot.Character.IsAutoAttack)
+                {
+                    actor.AutoAttack(target.ObjId);
+                }
 
                 if (now - state.LastPvpCastUtc >= HuntCastInterval)
                 {

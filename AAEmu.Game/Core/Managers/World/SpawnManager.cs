@@ -301,6 +301,7 @@ public class SpawnManager(WorldInstance parentWorld)
             Logger.Info($"Loading player housing for {World}");
             HousingManager.Instance.LoadPlayerHousing(World);
             HousingManager.Instance.SpawnAll(); // Houses need to be spawned before doodads
+            ShipyardManager.Instance.SpawnAll(World); // Restored half-built frames join the world with fresh ObjIds
             
             Logger.Info($"Loading persistent doodads for {World}");
             var doodadsSpawned = 0;

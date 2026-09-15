@@ -70,6 +70,7 @@ public sealed class BotAdminService
     private readonly Func<string, bool> _nameIsTaken;
     private readonly Action<Character> _regionUpdater;
     private readonly Action<uint> _susMovementReset;
+    private readonly DormantBotRegistry? _dormantRegistry;
 
     /// <summary>
     /// DI-friendly constructor. <paramref name="provisioner"/> defaults to the
@@ -90,7 +91,8 @@ public sealed class BotAdminService
         Func<Vector3, uint, float>? groundHeightProvider = null,
         Func<string, bool>? nameIsTaken = null,
         Action<Character>? regionUpdater = null,
-        Action<uint>? susMovementReset = null)
+        Action<uint>? susMovementReset = null,
+        DormantBotRegistry? dormantRegistry = null)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
@@ -109,6 +111,7 @@ public sealed class BotAdminService
         // distance (GameObject.DisabledSetPosition precedent). Injectable so
         // the rig can record it without the singleton.
         _susMovementReset = susMovementReset ?? (id => SusManager.PeekInstance?.ResetAnalyzePlayerDeltaMovement(id));
+        _dormantRegistry = dormantRegistry;
     }
 
     /// <summary>
@@ -125,19 +128,21 @@ public sealed class BotAdminService
             sp.GetRequiredService<IPlayerBotManager>(),
             sp.GetRequiredService<IPlayerBotScheduler>(),
             sp.GetRequiredService<IPopulationDirector>(),
-            sp.GetRequiredService<BotRoamStepExecutor>());
+            sp.GetRequiredService<BotRoamStepExecutor>(),
+            dormantRegistry: sp.GetService<DormantBotRegistry>());
     }
 
     /// <summary>Registry + embodied state snapshot: name, id, state, fidelity, position.</summary>
     public BotAdminCommandResult List()
     {
         var runtimes = _manager.GetAll();
-        if (runtimes.Count == 0)
+        var dormantSpecs = _dormantRegistry?.ListSpecs() ?? [];
+        if (runtimes.Count == 0 && dormantSpecs.Count == 0)
             return new BotAdminCommandResult(true, "No player bots registered.");
 
         var lines = new List<string>
         {
-            $"Player bots: {runtimes.Count} registered ({_manager.ActiveCount} active)"
+            $"Player bots: {runtimes.Count} registered ({_manager.ActiveCount} active, {dormantSpecs.Count} dormant)"
         };
         foreach (var runtime in runtimes.OrderBy(r => r.Character.Name))
         {
@@ -146,6 +151,10 @@ public sealed class BotAdminService
             lines.Add(
                 $"  {runtime.Character.Name} (id {runtime.CharacterId}) [{runtime.State}] " +
                 $"fidelity={fidelity} @ {pos.X:F1}/{pos.Y:F1}/{pos.Z:F1}");
+        }
+        foreach (var spec in dormantSpecs.OrderBy(s => s.Name))
+        {
+            lines.Add($"  {spec.Name} (id {spec.CharacterId}) [Dormant] (use '/bot restore' to embody)");
         }
 
         return new BotAdminCommandResult(true, string.Join("\n", lines));
@@ -160,8 +169,7 @@ public sealed class BotAdminService
     public IReadOnlyList<BotStatusRecord> ListStatus()
     {
         var runtimes = _manager.GetAll();
-        return [.. runtimes
-            .OrderBy(r => r.Character.Name)
+        var list = runtimes
             .Select(r =>
             {
                 var pos = r.Character.Transform.World.Position;
@@ -171,7 +179,25 @@ public sealed class BotAdminService
                     r.State.ToString(),
                     _director.GetFidelity(r.CharacterId).ToString(),
                     pos.X, pos.Y, pos.Z);
-            })];
+            }).ToList();
+
+        if (_dormantRegistry != null)
+        {
+            foreach (var spec in _dormantRegistry.ListSpecs())
+            {
+                if (!runtimes.Any(r => r.CharacterId == spec.CharacterId))
+                {
+                    list.Add(new BotStatusRecord(
+                        spec.Name,
+                        spec.CharacterId,
+                        "Dormant",
+                        "Dormant",
+                        0f, 0f, 0f));
+                }
+            }
+        }
+
+        return [.. list.OrderBy(r => r.Name)];
     }
 
     /// <summary>
@@ -477,6 +503,171 @@ public sealed class BotAdminService
                 return new BotAdminCommandResult(false,
                     $"Unknown lab mode '{mode}'. Supported modes: circle, line, ramp, roam, telemetry, or a frequency like 15.");
         }
+    }
+
+    /// <summary>
+    /// Restores dormant or deactivated player bot(s) into the live world.
+    /// When <paramref name="nameOrId"/> is null, empty, "all", or "*", restores all dormant specs.
+    /// Otherwise restores the specified dormant or deactivated bot.
+    /// </summary>
+    public BotAdminCommandResult Restore(string? nameOrId = null)
+    {
+        var isBulk = string.IsNullOrWhiteSpace(nameOrId) ||
+                     nameOrId.Equals("all", StringComparison.OrdinalIgnoreCase) ||
+                     nameOrId == "*";
+
+        if (isBulk)
+        {
+            var restoredCount = 0;
+
+            // 1. Materialize all dormant specs from the dormant registry
+            if (_dormantRegistry != null)
+            {
+                var specs = _dormantRegistry.ListSpecs();
+                foreach (var spec in specs)
+                {
+                    if (_manager.TryGet(spec.CharacterId, out var existing) &&
+                        existing!.State == PlayerBotState.Active)
+                    {
+                        continue;
+                    }
+
+                    if (_dormantRegistry.Materialize(spec))
+                    {
+                        _director.TrySetFidelity(spec.CharacterId, BotFidelity.Reduced, "bot-restore");
+                        _director.TrySetFidelity(spec.CharacterId, BotFidelity.Full, "bot-restore");
+
+                        if (_manager.TryGet(spec.CharacterId, out var runtime))
+                        {
+                            var pos = runtime.Character.Transform.World.Position;
+                            ArmRoam(runtime.Character, pos);
+                            _scheduler.Wake(spec.CharacterId);
+                            restoredCount++;
+                        }
+                    }
+                }
+            }
+
+            // 2. Also re-activate any deactivated/registered bots in the manager
+            foreach (var runtime in _manager.GetAll())
+            {
+                if (runtime.State is PlayerBotState.Deactivated or PlayerBotState.Registered)
+                {
+                    if (_manager.Activate(runtime.CharacterId,
+                            new BotContext { BotId = runtime.CharacterId, Name = runtime.Character.Name }, "bot-restore"))
+                    {
+                        _director.TrySetFidelity(runtime.CharacterId, BotFidelity.Reduced, "bot-restore");
+                        _director.TrySetFidelity(runtime.CharacterId, BotFidelity.Full, "bot-restore");
+
+                        var pos = runtime.Character.Transform.World.Position;
+                        ArmRoam(runtime.Character, pos);
+                        _scheduler.Wake(runtime.CharacterId);
+                        restoredCount++;
+                    }
+                }
+            }
+
+            if (restoredCount == 0)
+                return new BotAdminCommandResult(true, "No dormant or deactivated bots found to restore.");
+
+            return new BotAdminCommandResult(true, $"Restored {restoredCount} bot(s) into the world (Full fidelity, roaming).");
+        }
+
+        // Single bot targeted
+        var existingRuntime = FindByNameOrId(nameOrId);
+        if (existingRuntime != null && existingRuntime.State == PlayerBotState.Active)
+        {
+            return new BotAdminCommandResult(true,
+                $"Bot '{existingRuntime.Character.Name}' (id {existingRuntime.CharacterId}) is already present and active.");
+        }
+
+        // Check dormant registry
+        if (_dormantRegistry != null)
+        {
+            var specs = _dormantRegistry.ListSpecs();
+            var spec = specs.FirstOrDefault(s =>
+                s.Name.Equals(nameOrId, StringComparison.OrdinalIgnoreCase) ||
+                (uint.TryParse(nameOrId, out var parsedId) && s.CharacterId == parsedId));
+
+            if (spec != null)
+            {
+                if (_dormantRegistry.Materialize(spec))
+                {
+                    _director.TrySetFidelity(spec.CharacterId, BotFidelity.Reduced, "bot-restore");
+                    _director.TrySetFidelity(spec.CharacterId, BotFidelity.Full, "bot-restore");
+
+                    if (_manager.TryGet(spec.CharacterId, out var runtime))
+                    {
+                        var pos = runtime.Character.Transform.World.Position;
+                        ArmRoam(runtime.Character, pos);
+                        _scheduler.Wake(spec.CharacterId);
+                        return new BotAdminCommandResult(true,
+                            $"Bot '{spec.Name}' (id {spec.CharacterId}) restored — Full fidelity, roaming at {pos.X:F0}/{pos.Y:F0}/{pos.Z:F0}.");
+                    }
+                }
+                return new BotAdminCommandResult(false, $"Failed to materialize dormant bot '{spec.Name}' — see server log.");
+            }
+        }
+
+        // Check manager registered/deactivated
+        if (existingRuntime != null && existingRuntime.State is PlayerBotState.Deactivated or PlayerBotState.Registered)
+        {
+            if (_manager.Activate(existingRuntime.CharacterId,
+                    new BotContext { BotId = existingRuntime.CharacterId, Name = existingRuntime.Character.Name }, "bot-restore"))
+            {
+                _director.TrySetFidelity(existingRuntime.CharacterId, BotFidelity.Reduced, "bot-restore");
+                _director.TrySetFidelity(existingRuntime.CharacterId, BotFidelity.Full, "bot-restore");
+
+                var pos = existingRuntime.Character.Transform.World.Position;
+                ArmRoam(existingRuntime.Character, pos);
+                _scheduler.Wake(existingRuntime.CharacterId);
+                return new BotAdminCommandResult(true,
+                    $"Bot '{existingRuntime.Character.Name}' (id {existingRuntime.CharacterId}) re-activated — Full fidelity, roaming at {pos.X:F0}/{pos.Y:F0}/{pos.Z:F0}.");
+            }
+            return new BotAdminCommandResult(false, $"Failed to re-activate bot '{existingRuntime.Character.Name}' — see server log.");
+        }
+
+        return new BotAdminCommandResult(false, $"No dormant or deactivated bot found matching '{nameOrId}'.");
+    }
+
+    /// <summary>
+    /// Checks if auto-restore of dormant bots is enabled on server startup.
+    /// Configurable via "Bots": { "AutoRestoreBots": true } in Config.Local.json / Config.json
+    /// or AAEMU_BOT_AUTO_RESTORE environment variable (1/true).
+    /// </summary>
+    public static bool IsAutoRestoreEnabled()
+    {
+        var env = Environment.GetEnvironmentVariable("AAEMU_BOT_AUTO_RESTORE");
+        if (!string.IsNullOrEmpty(env) &&
+            (env == "1" || env.Equals("true", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        foreach (var fileName in new[] { "Config.Local.json", "Config.json" })
+        {
+            var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
+            if (!File.Exists(path))
+                continue;
+
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+                if (doc.RootElement.TryGetProperty("Bots", out var bots) &&
+                    bots.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    (bots.TryGetProperty("AutoRestoreBots", out var flag) || bots.TryGetProperty("AutoRestore", out flag)) &&
+                    flag.ValueKind == System.Text.Json.JsonValueKind.True)
+                {
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "BotAdminService: failed to read {Path}", path);
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using AAEmu.Commons.Utils.DB;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Services.WebApi.Models;
@@ -54,7 +54,10 @@ internal class CharacterController : BaseController
                             level = character.Level;
                         }
 
-                        list.Add(new CharacterModel(id, charName, level, createdAt, character != null));
+                        var posX = character?.Transform.World.Position.X ?? 0f;
+                        var posY = character?.Transform.World.Position.Y ?? 0f;
+                        var posZ = character?.Transform.World.Position.Z ?? 0f;
+                        list.Add(new CharacterModel(id, charName, level, createdAt, character != null, posX, posY, posZ));
                     }
                 }
             }

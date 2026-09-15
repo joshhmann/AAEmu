@@ -221,7 +221,8 @@ public class ShipyardLaunchCeremonyTests
             Mock.Of<IShipyardIdManager>().Object,
             worldManager.Object,
             Mock.Of<ITaxationsManager>().Object,
-            Mock.Of<ISkillManager>().Object);
+            Mock.Of<ISkillManager>().Object,
+            Mock.Of<IShipyardFrameStore>().Object);
         return (manager, taskManager);
     }
 

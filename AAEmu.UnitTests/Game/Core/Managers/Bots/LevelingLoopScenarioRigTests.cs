@@ -3673,6 +3673,46 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedHellswampQuestVillageRulesId)).IsTrue();
     }
 
+    [Test]
+    public async Task LevelingLoop_GweonidStage1_HarpaReturns_DiscoversAndCompletesDelivery()
+    {
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-gweonid-stage1");
+        var character = session.Character;
+        character.Level = 1;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        // Seed canonical Gweonid quest 16: Reseb (389) -> Harpa (390)
+        GameplayActorTestRig.SeedQuestDelivery(
+            LevelingLoopScenario.SeedGweonidQuestHarpaReturnsId, // 16
+            7061, 7062,
+            LevelingLoopScenario.SeedGweonidResebNpcTemplateId, // 389
+            LevelingLoopScenario.SeedGweonidHarpaNpcTemplateId, // 390
+            level: 1);
+
+        SpawnHubNpc(session, LevelingLoopScenario.SeedGweonidResebNpcTemplateId, new Vector3(2f, 0f, 0f));
+        SpawnHubNpc(session, LevelingLoopScenario.SeedGweonidHarpaNpcTemplateId, new Vector3(8f, 0f, 0f));
+
+        var opts = new LevelingLoopScenario.LoopOptions
+        {
+            AdaptiveBand = true,
+            BandMin = 1,
+            BandMax = 9,
+            MaxLinks = 1
+        };
+
+        var result = LevelingLoopScenario.Run(character, opts);
+
+        if (!result.Passed)
+            throw new InvalidOperationException(
+                $"Gweonid loop failed at {result.FailStage} ({result.Failure}): {result.FailReason}\n{result.Evidence()}");
+
+        await Assert.That(result.Passed).IsTrue();
+        await Assert.That(result.Links.Count).IsEqualTo(1);
+        await Assert.That(result.Links[0].QuestId).IsEqualTo(LevelingLoopScenario.SeedGweonidQuestHarpaReturnsId);
+        await Assert.That(character.Quests!.HasQuestCompleted(LevelingLoopScenario.SeedGweonidQuestHarpaReturnsId)).IsTrue();
+    }
+
 
     /// <summary>Index of the first record of the action type at or after start.</summary>
     private static int FirstAtLeast(IReadOnlyList<ActorAuditRecord> trace, ActorActionType action, int start)

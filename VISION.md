@@ -9,20 +9,49 @@
 
 ## The vision
 
+**PlayerBots are not the feature. The living world is the feature.**
+
 A private ArcheAge 1.2 server that feels **alive** — a living, breathing world
-with **player bots**, even when only a few humans are online. Inspired by
-AzerothCore's Playerbots mod.
+where real players and persistent PlayerBots participate in the same ArcheAge 1.2
+progression, property, farming, crafting, trade, party, economy, and world systems.
+Inspired by AzerothCore's Playerbots mod. Only the controller is synthetic:
+humans act through the client, PlayerBots act through an attached controller
+around ordinary `Character` records and normal gameplay services.
 
 Target features (our lane):
 - **Player bots** — simulated players that exist in the world: level, gear,
   roam, farm, trade, chat
-- **LLM-powered talk** — bots you can actually converse with (local LLM via
-  the homelab ollama on gestalt)
 - **Party bots** — bots that group with a human and follow/assist/role
 - **Simulated economy** — bots generating supply/demand, using the auction
   house, crafting, trade runs
 - **Simulated PvP / sieges** — bots populating conflict zones, sieges,
   world events so the world feels fought-over
+- **Conversation and social presence (optional later enhancement)** — bots you can
+  actually converse with (local LLM via the homelab ollama on gestalt), layered
+  over deterministic gameplay and canned/procedural social behavior; never required
+  for progression or ordinary world operation
+
+## Development and acceptance
+
+Development is at M8 — Living Village, transitioning toward M9 — Emergent world systems.
+M8 has a qualified engineering/runtime exit, not human acceptance. The outstanding formal
+M1–M7 human acceptance backlog does not globally block PlayerBot progression testing or
+later milestone development. Humans and bots exercise the same gameplay systems in parallel;
+acceptance remains scoped to the evidence actually obtained.
+
+Three independent evidence lanes (not new numbered milestones):
+
+- **Human:** curated client-visible outcomes, controls, coexistence, and feel; Josh records
+  the actual scenario and verdict.
+- **PlayerBot:** functional replay and autonomous progression are distinct. A controller must
+  perceive, choose legal goals/actions, execute through ordinary services, and verify the
+  outcome to earn autonomous-loop evidence.
+- **Mixed:** human/PlayerBot cooperation and coexistence, including the M7 party and M8
+  village observations; automated stand-ins cannot close its human component.
+
+An open H gate blocks its human acceptance claim, not all engineering. A concrete shared
+gameplay defect or an unmet technical dependency blocks the affected slice; it is not waived
+by parallel development.
 
 ## Division routing (the whole Hyrax division runs this)
 
@@ -77,10 +106,9 @@ Rules:
 
 ## Why
 
-- Community PRs that are clean keep us welcome upstream.
-- But a private server's real value is the EXPERIENCE — bots + LLM make it
+- Upstream is intake-only by permanent policy: pulls keep this fork current so the lane does not drown in drift.
+- A private server's real value is the EXPERIENCE — bots + LLM make it
   alive 24/7 regardless of who's online.
-- Pulling upstream keeps us current so our lane doesn't drown in drift.
 
 ## Reference
 

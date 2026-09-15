@@ -8,6 +8,9 @@ using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Shipyard;
 using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.StaticValues;
+using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.Game.World.Transform;
 using AAEmu.Game.Models.Tasks.Shipyard;
 using AAEmu.Game.Utils.DB;
 
@@ -15,7 +18,7 @@ using NLog;
 
 namespace AAEmu.Game.Core.Managers;
 
-public class ShipyardManager(ITaskManager taskManager, IObjectIdManager objectIdManager, IShipyardIdManager shipyardIdManager, IWorldManager worldManager, ITaxationsManager taxationsManager, ISkillManager skillManager) : Singleton<ShipyardManager>, IShipyardManager
+public class ShipyardManager(ITaskManager taskManager, IObjectIdManager objectIdManager, IShipyardIdManager shipyardIdManager, IWorldManager worldManager, ITaxationsManager taxationsManager, ISkillManager skillManager, IShipyardFrameStore frameStore) : Singleton<ShipyardManager>, IShipyardManager
 {
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
     /// <summary>Client-visible step marking a frame whose launch ceremony has started.</summary>
@@ -91,6 +94,7 @@ public class ShipyardManager(ITaskManager taskManager, IObjectIdManager objectId
 
         _shipyard.Add(shipId, shipyard);
         shipyard.Spawn();
+        PersistShipyard(shipyard);
 
         return shipyard;
     }
@@ -173,6 +177,7 @@ public class ShipyardManager(ITaskManager taskManager, IObjectIdManager objectId
         // Remove Shipyard from Shipyard tables
         _removedShipyards.Add(shipId);
         _shipyard.Remove(shipId);
+        DeleteShipyardRow(shipId);
         shipyardIdManager.ReleaseId(shipId);
         objectIdManager.ReleaseId(shipyard.ObjId);
         shipyard.Delete();
@@ -205,6 +210,7 @@ public class ShipyardManager(ITaskManager taskManager, IObjectIdManager objectId
 
         shipyard.ShipyardData.Step = LaunchCeremonyStep; // last step, the ceremony of launching the ship
         character.BroadcastPacket(new SCShipyardStatePacket(shipyard.ShipyardData), true);
+        PersistShipyard(shipyard);
 
         var animTime = shipyard.Template.CeremonyAnimTime;
         taskManager.Schedule(shipyardCompleteTask, TimeSpan.FromMilliseconds(animTime));
@@ -347,5 +353,155 @@ public class ShipyardManager(ITaskManager taskManager, IObjectIdManager objectId
                 }
             }
         }
+        LoadPlacedFrames();
+    }
+
+    public Shipyard GetShipyard(uint frameId) => _shipyard.GetValueOrDefault(frameId);
+
+    /// <summary>
+    /// Upserts the frame's client-visible build state. Best-effort: on DB failure the
+    /// in-memory dict stays authoritative for the session and the next contribution
+    /// retries the write, so a transient outage never breaks shipbuilding.
+    /// </summary>
+    public void PersistShipyard(Shipyard shipyard)
+    {
+        try
+        {
+            var data = shipyard.ShipyardData;
+            frameStore.Upsert(new ShipyardFrameRow(
+                data.Id, data.TemplateId, data.Type2, data.OwnerName ?? string.Empty,
+                (uint)data.Type3, data.Step, data.Actions, shipyard.Hp,
+                data.X, data.Y, data.Z, data.zRot,
+                shipyard.Transform.ZoneId, data.Spawned));
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e, "Failed to persist shipyard frame id={0}", shipyard.ShipyardData?.Id);
+        }
+    }
+
+    private void DeleteShipyardRow(uint frameId)
+    {
+        try
+        {
+            frameStore.Delete(frameId);
+        }
+        catch (Exception e)
+        {
+            Logger.Error(e, "Failed to delete shipyard frame row id={0}", frameId);
+        }
+    }
+
+    /// <summary>
+    /// Rehydrates placed frames from the store into the live dict (no spawn: world
+    /// instances do not exist yet when Load runs; SpawnAll spawns them later).
+    /// Rows whose template no longer exists are skipped and counted once.
+    /// </summary>
+    public void LoadPlacedFrames()
+    {
+        var rows = frameStore.LoadAll() ?? [];
+        var restored = 0;
+        var skipped = 0;
+        foreach (var row in rows)
+        {
+            if (!_shipyardsTemplate.TryGetValue(row.TemplateId, out var template))
+            {
+                skipped++;
+                continue;
+            }
+            var (currentStep, numAction) = DecomposeProgress(template, row);
+            var shipyard = new Shipyard
+            {
+                Template = template,
+                Level = 30,
+                Name = row.OwnerName,
+            };
+            var faction = FactionManager.PeekInstance?.GetFaction((FactionsEnum)row.FactionId);
+            if (faction != null)
+                shipyard.Faction = faction;
+            shipyard.Hp = row.Hp;
+            shipyard.ShipyardData = new ShipyardData
+            {
+                Id = row.FrameId,
+                TemplateId = row.TemplateId,
+                X = row.X,
+                Y = row.Y,
+                Z = row.Z,
+                zRot = row.Yaw,
+                MoneyAmount = 0,
+                Actions = row.Actions,
+                Type = template.OriginItemId,
+                OwnerName = row.OwnerName,
+                Type2 = row.OwnerId,
+                Type3 = (FactionsEnum)row.FactionId,
+                Spawned = row.Spawned,
+                ObjId = 0, // pre-restart ObjIds die with the session; SpawnAll assigns fresh ones
+                Hp = row.Hp,
+                Step = row.Step
+            };
+            shipyard.RestoreBuildProgress(currentStep, numAction);
+            shipyard.Transform.ApplyWorldSpawnPosition(new WorldSpawnPosition
+            {
+                X = row.X,
+                Y = row.Y,
+                Z = row.Z,
+                Yaw = row.Yaw,
+                ZoneId = row.ZoneId
+            });
+            _shipyard[(uint)row.FrameId] = shipyard;
+            restored++;
+        }
+        if (skipped > 0)
+            Logger.Warn("LoadPlacedFrames: skipped {0} frame row(s) with unknown template", skipped);
+        Logger.Info("Loaded {0} placed shipyard frame(s)", restored);
+    }
+
+    private static (int CurrentStep, int NumAction) DecomposeProgress(ShipyardsTemplate template, ShipyardFrameRow row)
+    {
+        // Finished frames (owner-stranded at step count, or ceremony-in-flight at the
+        // sentinel) carry no live step. Ceremony rows reload as finished-awaiting-launch
+        // WITHOUT re-granting: the scroll grant happens-before the sentinel persist
+        // (ShipyardCompletedTask grants first, then sets Step = sentinel, then persists),
+        // so a sentinel row proves the grant already happened; the sentinel guards in
+        // ShipyardCompletedTask/CraftEffect make any later completion call a no-op, and
+        // the frame simply lives out its decay lifetime. (The lost ShipyardCompleteTask
+        // ship-spawn resume is follow-up, not this slice.)
+        if (row.Step == LaunchCeremonyStep || row.Step == template.ShipyardSteps.Count)
+            return (-1, 0);
+        if (!template.ShipyardSteps.TryGetValue(row.Step, out var stepTemplate) || stepTemplate.NumActions <= 0)
+            return (row.Step, 0);
+        var baseAction = 0;
+        for (var i = 0; i < row.Step; i++)
+            if (template.ShipyardSteps.TryGetValue(i, out var s))
+                baseAction += s.NumActions;
+        return (row.Step, Math.Clamp(row.Actions - baseAction, 0, stepTemplate.NumActions - 1));
+    }
+
+    /// <summary>
+    /// Spawns rehydrated frames into the world with fresh session ObjIds.
+    /// Called once from SpawnManager next to HousingManager.SpawnAll.
+    /// </summary>
+    public void SpawnAll(WorldInstance world)
+    {
+        var spawned = 0;
+        foreach (var shipyard in _shipyard.Values)
+        {
+            if (shipyard.ObjId != 0)
+                continue;
+            var objId = objectIdManager.GetNextId();
+            shipyard.ObjId = objId;
+            shipyard.ShipyardData.ObjId = objId;
+            if (shipyard.Faction == null)
+            {
+                var faction = FactionManager.PeekInstance?.GetFaction(shipyard.ShipyardData.Type3);
+                if (faction != null)
+                    shipyard.Faction = faction;
+            }
+            shipyard.ParentWorld = world;
+            shipyard.Spawn();
+            spawned++;
+        }
+        if (spawned > 0)
+            Logger.Info("Spawned {0} restored shipyard frame(s)", spawned);
     }
 }

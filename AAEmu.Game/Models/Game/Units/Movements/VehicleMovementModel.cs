@@ -253,7 +253,8 @@ public static class VehicleMovementModel
     public static UnitMoveType BuildUnitMove(Vector3 position, float yawRadians, float speed)
     {
         var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
-        var (velX, velY) = MathUtil.AddDistanceToFront(speed * 2048f, 0, 0, yawRadians);
+        var isRunning = speed > 3.0f;
+        var (velX, velY) = MathUtil.AddDistanceToFront(speed * 1000f, 0, 0, yawRadians);
 
         moveType.X = position.X;
         moveType.Y = position.Y;
@@ -263,32 +264,29 @@ public static class VehicleMovementModel
         moveType.RotationX = 0;
         moveType.RotationY = 0;
         moveType.RotationZ = 0;
-        moveType.ActorFlags = 5; // 5-walk
-        moveType.Flags = 0;
-        moveType.DeltaMovement = [0, 63, 0];
-        moveType.Stance = GameStanceType.Relaxed;   // IDLE = 0x1
-        moveType.Alertness = MoveTypeAlertness.Idle; // IDLE = 0x0
+        moveType.ActorFlags = (byte)(isRunning ? 4 : 5); // 4-run, 5-walk
+        moveType.Flags = MoveTypeFlags.Moving;
+        moveType.DeltaMovement = [0, (sbyte)(isRunning ? 127 : 63), 0];
+        moveType.Stance = isRunning ? GameStanceType.Combat : GameStanceType.Relaxed;
+        moveType.Alertness = isRunning ? MoveTypeAlertness.Alert : MoveTypeAlertness.Idle;
         moveType.Time = (uint)(DateTime.UtcNow - DateTime.UtcNow.Date).TotalMilliseconds;
         return moveType;
     }
 
     /// <summary>
     /// Builds the UnitMoveType a client would send for its OWN character
-    /// walking (CSMoveUnitPacket, UnitMoveType case). Same walk shape as
+    /// walking/running (CSMoveUnitPacket, UnitMoveType case). Same walk shape as
     /// <see cref="BuildUnitMove"/> (velocity, walk flags/stance/alertness)
     /// plus the facing rotation bytes — the Simulation.cs:397-409 pattern:
     /// the rotation short encodes the travel heading so the character's
     /// transform (and observers) faces the movement direction instead of
     /// snapping to 0 on every leg.
     /// </summary>
-    /// <summary>Shared walking delta payload (0,63,0) — read-only at
-    /// serialization, safe to share across moveType instances.</summary>
-    private static readonly sbyte[] WalkDelta = [0, 63, 0];
-
     public static UnitMoveType BuildCharacterMove(Vector3 position, float yawRadians, float speed)
     {
         var moveType = (UnitMoveType)MoveType.GetType(MoveTypeEnum.Unit);
-        var (velX, velY) = MathUtil.AddDistanceToFront(speed * 2048f, 0, 0, yawRadians);
+        var isRunning = speed > 3.0f;
+        var (velX, velY) = MathUtil.AddDistanceToFront(speed * 1000f, 0, 0, yawRadians);
 
         moveType.X = position.X;
         moveType.Y = position.Y;
@@ -298,11 +296,11 @@ public static class VehicleMovementModel
         moveType.RotationX = 0;
         moveType.RotationY = 0;
         moveType.RotationZ = MathUtil.ConvertDegreeToSByteDirection(yawRadians.RadToDeg() - 90);
-        moveType.ActorFlags = 5; // 5-walk
-        moveType.Flags = 0;
-        moveType.DeltaMovement = WalkDelta;
-        moveType.Stance = GameStanceType.Relaxed;   // IDLE = 0x1
-        moveType.Alertness = MoveTypeAlertness.Idle; // IDLE = 0x0
+        moveType.ActorFlags = (byte)(isRunning ? 4 : 5); // 4-run, 5-walk
+        moveType.Flags = MoveTypeFlags.Moving;
+        moveType.DeltaMovement = [0, (sbyte)(isRunning ? 127 : 63), 0];
+        moveType.Stance = isRunning ? GameStanceType.Combat : GameStanceType.Relaxed;
+        moveType.Alertness = isRunning ? MoveTypeAlertness.Alert : MoveTypeAlertness.Idle;
         moveType.Time = (uint)(DateTime.UtcNow - DateTime.UtcNow.Date).TotalMilliseconds;
         return moveType;
     }

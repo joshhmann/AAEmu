@@ -515,7 +515,13 @@ public partial class Character : Unit, ICharacter
         get
         {
             var formula =
-                FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.HealthRegen);
+                FormulaManager.Instance?.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.HealthRegen);
+            if (formula == null)
+            {
+                var fallback = Math.Max(1, Level * 2);
+                return Stance == UnitStance.Sit ? (int)(fallback * 2.0) : fallback;
+            }
+
             var parameters = new Dictionary<string, double>
             {
                 ["level"] = Level,
@@ -529,6 +535,8 @@ public partial class Character : Unit, ICharacter
             var res = formula.Evaluate(parameters);
             // res += Spi / 10;
             res = CalculateWithBonuses(res, UnitAttribute.HealthRegen);
+            if (Stance == UnitStance.Sit)
+                res *= 2.0;
 
             return (int)res;
         }
@@ -589,7 +597,13 @@ public partial class Character : Unit, ICharacter
         get
         {
             var formula =
-                FormulaManager.Instance.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.ManaRegen);
+                FormulaManager.Instance?.GetUnitFormula(FormulaOwnerType.Character, UnitFormulaKind.ManaRegen);
+            if (formula == null)
+            {
+                var fallback = Math.Max(1, Level * 2);
+                return Stance == UnitStance.Sit ? (int)(fallback * 2.0) : fallback;
+            }
+
             var parameters = new Dictionary<string, double>
             {
                 ["level"] = Level,
@@ -603,6 +617,8 @@ public partial class Character : Unit, ICharacter
             var res = formula.Evaluate(parameters);
             res += Spi / 10.0;
             res = CalculateWithBonuses(res, UnitAttribute.ManaRegen);
+            if (Stance == UnitStance.Sit)
+                res *= 2.0;
 
             return (int)res;
         }
@@ -1601,6 +1617,11 @@ public partial class Character : Unit, ICharacter
                 break;
         }
         SendPacket(new SCItemTaskSuccessPacket(itemTaskType, itemTasks, []));
+        if (AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+        {
+            var delta = typeTo == SlotType.Inventory ? amount : (typeFrom == SlotType.Inventory ? -amount : 0);
+            AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordResource(this, "money_changed", "money", delta, Money, new { ItemTaskType = itemTaskType.ToString() });
+        }
         return true;
     }
 
@@ -1653,6 +1674,10 @@ public partial class Character : Unit, ICharacter
         }
 
         LaborPower += change;
+        if (AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+        {
+            AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordResource(this, "labor_changed", "labor", change, LaborPower, new { ActabilityId = actabilityId });
+        }
         SendPacket(new SCCharacterLaborPowerChangedPacket(change, actabilityId, actabilityChange, actabilityStep));
     }
 
@@ -2677,6 +2702,7 @@ public partial class Character : Unit, ICharacter
                 try
                 {
                     saved = Save(sqlConnection, transaction);
+                    ItemManager.Instance?.Save(sqlConnection, transaction);
                     transaction.Commit();
                 }
                 catch (Exception e)
@@ -2728,7 +2754,7 @@ public partial class Character : Unit, ICharacter
                     ") VALUES (" +
                     "@id,@account_id,@name,@access_level,@race,@gender,@unit_model_params,@level,@experience,@recoverable_exp," +
                     "@hp,@mp,@consumed_lp,@ability1,@ability2,@ability3," +
-                    "@world_id,@zone_id,@x,@y,@z,@yaw,@pitch,@roll," +
+                    "@world_id,@zone_id,@x,@y,@z,@roll,@pitch,@yaw," +
                     "@faction_id,@faction_name,@expedition_id,@family,@dead_count,@dead_time,@rez_wait_duration,@rez_time,@rez_penalty_duration,@leave_time," +
                     "@money,@money2,@honor_point,@vocation_point,@crime_point,@crime_record,@jury_point," +
                     "@hostile_faction_kills,@pvp_honor,@died_in_pvp,@died_in_pvp_war_zone," +

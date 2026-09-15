@@ -301,6 +301,12 @@ public static class LevelingLoopScenario
     public const uint SeedHellswampQuestVillageRulesId = 3105;
     public const uint SeedHellswampArgoNpcTemplateId = 9247;
     public const uint SeedHellswampUnoNpcTemplateId = 9246;
+    // ---- Canonical Gweonid segment ids (compact.sqlite3 canonical 1.2).
+    // Gweonid Forest opener, Nuia/Elf starter (zone 1).
+    /// <summary>Quest 16 "돌아온 하르파" (Harpa's Return) — Delivery: accept Trainee Reseb (389), report Instructor Harpa (390).</summary>
+    public const uint SeedGweonidQuestHarpaReturnsId = 16;
+    public const uint SeedGweonidResebNpcTemplateId = 389;
+    public const uint SeedGweonidHarpaNpcTemplateId = 390;
 
     /// <summary>Loop parameters. Defaults = the honest L1–9 starter band.</summary>
     public sealed record LoopOptions
@@ -1489,6 +1495,10 @@ public static class LevelingLoopScenario
             var hpRoundStart = target.Hp;
             var executedAnyCast = false;
             var down = false;
+            if (!character.IsAutoAttack)
+            {
+                actor.AutoAttack(target.ObjId);
+            }
             for (var burst = 0; burst < opts.MaxBurstCasts && !down; burst++)
             {
                 var roundExecuted = false;
@@ -1524,6 +1534,11 @@ public static class LevelingLoopScenario
                 }
 
                 continue;
+            }
+
+            if (character.IsAutoAttack)
+            {
+                actor.StopAutoAttack();
             }
 
             // DOWN: the engine's kill path grants the killer's character XP
@@ -1678,6 +1693,10 @@ public static class LevelingLoopScenario
             var hpRoundStart = target.Hp;
             var executedAnyCast = false;
             var down = false;
+            if (!character.IsAutoAttack)
+            {
+                actor.AutoAttack(target.ObjId);
+            }
             for (var burst = 0; burst < opts.MaxBurstCasts && !down; burst++)
             {
                 var roundExecuted = false;
@@ -1709,6 +1728,11 @@ public static class LevelingLoopScenario
                 }
 
                 continue;
+            }
+
+            if (character.IsAutoAttack)
+            {
+                actor.StopAutoAttack();
             }
 
             if (levelXpSeam != null)
@@ -2719,6 +2743,10 @@ public static class LevelingLoopScenario
             var hpRoundStart = target.Hp;
             var executedAnyCast = false;
             var down = false;
+            if (!character.IsAutoAttack)
+            {
+                actor.AutoAttack(target.ObjId);
+            }
             for (var burst = 0; burst < opts.MaxBurstCasts && !down; burst++)
             {
                 var roundExecuted = false;
@@ -2766,6 +2794,11 @@ public static class LevelingLoopScenario
                 }
 
                 continue;
+            }
+
+            if (character.IsAutoAttack)
+            {
+                actor.StopAutoAttack();
             }
 
             if (aggroObjective && act.GetObjective(quest) <= 0)

@@ -461,4 +461,28 @@ public sealed class Shipyard : Unit
             }
         }
     }
+    /// <summary>
+    /// Rehydrates build progress from a persistence row (ShipyardManager reload only).
+    /// Repeats the CurrentStep setter invariants (BaseAction roll-up + ModelId) without
+    /// replaying actions. Takes the decomposed (CurrentStep, NumAction) pair — never the
+    /// launch-ceremony sentinel, which lives only in ShipyardData.Step.
+    /// </summary>
+    internal void RestoreBuildProgress(int step, int numAction)
+    {
+        lock (_lock)
+        {
+            _currentStep = step;
+            _baseAction = 0;
+            if (step > 0 && Template != null)
+                for (var i = 0; i < step; i++)
+                    if (Template.ShipyardSteps.TryGetValue(i, out var s))
+                        _baseAction += s.NumActions;
+            _numAction = Math.Max(0, numAction);
+            if (Template != null)
+                ModelId = step == -1 || !Template.ShipyardSteps.TryGetValue(step, out var cur)
+                    ? Template.MainModelId
+                    : cur.ModelId;
+            _isDirty = true;
+        }
+    }
 }

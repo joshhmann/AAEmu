@@ -95,6 +95,7 @@ public class CraftEffect : EffectTemplate
                                 ShipyardManager.Instance.ShipyardCompletedTask(shipyard);
                             else
                                 character.BroadcastPacket(new SCShipyardStatePacket(shipyard.ShipyardData), true);
+                            ShipyardManager.Instance.PersistShipyard(shipyard);
                             if (!character.Craft.EndCraft())
                                 source.Skill.Cancelled = true;
                         }

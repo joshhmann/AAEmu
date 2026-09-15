@@ -1,0 +1,2510 @@
+nohup: ignoring input
+== run-qa-suite (tier=soak, lane=m8v6-soak, host=root@192.168.0.165)
+   target(s): AAEmu.IntegrationTests.E2e.B4PackSoakE2eTests AAEmu.IntegrationTests.E2e.B4SlaveSoakE2eTests AAEmu.IntegrationTests.E2e.B4FarmSoakE2eTests AAEmu.IntegrationTests.E2e.DominionSoakCycleE2eTests AAEmu.IntegrationTests.E2e.VillageFullDayRestartE2eTests
+   lane root: /root/aaemu-e2e-m8v6-soak (remote)
+   ports: login:27283 login_int:27280 game:27285 stream:27293 bridge:27303 webapi:27323 db:47280
+   compose project: e2e_m8v6-soak
+   HEAD SHA: 41906276b609008db43d5e3f867b8e56707ebef0
+   artifacts will be rsynced to: /root/aaemu-dev/soak-artifacts/m8v6-soak/20260912-083553
+   keep: 0
+remote pre-flight OK
+== remote pre-flight OK (ports free, prod data present)
+== syncing repo (HEAD 41906276b609008db43d5e3f867b8e56707ebef0) to .165:/root/aaemu-e2e-m8v6-soak/repo ...
+non-git-HEAD-noted
+   ensure-log-caps.sh provisioned at /root/aaemu-e2e-m8v6-soak
+== syncing canonical game-data from retained canonical lane ...
+   canonical compact.sqlite3 md5: 78b3bdbf038db3b927056106efdf91af
+canonical md5 verified
+== game-data md5 verified (78b3bdbf038db3b927056106efdf91af)
+==================================================================
+[run-qa-suite] RUN class: AAEmu.IntegrationTests.E2e.B4PackSoakE2eTests (tier=soak lane=m8v6-soak)
+==================================================================
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q [/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj]
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+Running tests from /root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64)
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 17s)
+
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64) passed (19m 18s 547ms)
+
+Test run summary: Passed!
+  total: 1
+  failed: 0
+  succeeded: 1
+  skipped: 0
+  duration: 19m 18s 832ms
+   [run-qa-suite] B4PackSoakE2eTests PASS
+==================================================================
+[run-qa-suite] RUN class: AAEmu.IntegrationTests.E2e.B4SlaveSoakE2eTests (tier=soak lane=m8v6-soak)
+==================================================================
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q [/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj]
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+Running tests from /root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64)
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(13m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(15m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(16m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(18m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(19m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20m 26s)
+
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64) passed (20m 28s 219ms)
+
+Test run summary: Passed!
+  total: 1
+  failed: 0
+  succeeded: 1
+  skipped: 0
+  duration: 20m 28s 509ms
+   [run-qa-suite] B4SlaveSoakE2eTests PASS
+==================================================================
+[run-qa-suite] RUN class: AAEmu.IntegrationTests.E2e.B4FarmSoakE2eTests (tier=soak lane=m8v6-soak)
+==================================================================
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q [/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj]
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+Running tests from /root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64)
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(4m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(6m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(7m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(9m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(10m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(12m 26s)
+
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64) passed (12m 28s 148ms)
+
+Test run summary: Passed!
+  total: 1
+  failed: 0
+  succeeded: 1
+  skipped: 0
+  duration: 12m 28s 433ms
+   [run-qa-suite] B4FarmSoakE2eTests PASS
+==================================================================
+[run-qa-suite] RUN class: AAEmu.IntegrationTests.E2e.DominionSoakCycleE2eTests (tier=soak lane=m8v6-soak)
+==================================================================
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q [/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj]
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+Running tests from /root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64)
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 38s)
+
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64) passed (3m 39s 346ms)
+
+Test run summary: Passed!
+  total: 1
+  failed: 0
+  succeeded: 1
+  skipped: 0
+  duration: 3m 39s 598ms
+   [run-qa-suite] DominionSoakCycleE2eTests PASS
+==================================================================
+[run-qa-suite] RUN class: AAEmu.IntegrationTests.E2e.VillageFullDayRestartE2eTests (tier=soak lane=m8v6-soak)
+==================================================================
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q [/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj]
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.Game/AAEmu.Game.csproj : warning NU1903: Package 'SQLitePCLRaw.lib.e_sqlite3' 2.1.11 has a known high severity vulnerability, https://github.com/advisories/GHSA-2m69-gcr7-jv3q
+Running tests from /root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64)
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(5s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(8s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(1m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 44s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 47s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 50s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 53s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 56s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(2m 59s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 02s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 05s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 08s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 11s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 14s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 17s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 20s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 23s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 26s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 29s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 32s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 35s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 38s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 41s)
+
+[+0/x0/?0] AAEmu.IntegrationTests.dll (net10.0|x64)(3m 44s)
+
+/root/aaemu-e2e-m8v6-soak/repo/AAEmu.IntegrationTests/bin/Release/net10.0/AAEmu.IntegrationTests.dll (net10.0|x64) passed (3m 45s 548ms)
+
+Test run summary: Passed!
+  total: 1
+  failed: 0
+  succeeded: 1
+  skipped: 0
+  duration: 3m 46s 063ms
+   [run-qa-suite] VillageFullDayRestartE2eTests PASS
+== rsyncing lane evidence back to /root/aaemu-dev/soak-artifacts/m8v6-soak/20260912-083553
+==================================================================
+[run-qa-suite] SUMMARY (tier=soak, lane=m8v6-soak, HEAD=41906276b609008db43d5e3f867b8e56707ebef0)
+   passed classes: 5   failed: 0
+   artifacts: /root/aaemu-dev/soak-artifacts/m8v6-soak/20260912-083553
+   tested SHA: 41906276b609008db43d5e3f867b8e56707ebef0
+   RESULT: PASS
+== teardown (lane m8v6-soak, PID-verified, pkill banned)
+   teardown trap: before run_remote
+   stopping lane proc 3953764 (cwd /root/aaemu-e2e-m8v6-soak/runtime/login, SIGTERM)
+   stopping lane proc 3956765 (cwd /root/aaemu-e2e-m8v6-soak/runtime/game, SIGTERM)
+   teardown compose command: docker compose -p e2e_m8v6-soak -f /root/aaemu-e2e-m8v6-soak/repo/Scripts/e2e/docker-compose.yaml --env-file /root/aaemu-e2e-m8v6-soak/.env down -v
+ Container e2e_m8v6-soak-db-1 Stopping 
+ Container e2e_m8v6-soak-db-1 Stopped 
+ Container e2e_m8v6-soak-db-1 Removing 
+ Container e2e_m8v6-soak-db-1 Removed 
+ Volume e2e_m8v6-soak_e2e_db_data Removing 
+ Network e2e_m8v6-soak_default Removing 
+ Volume e2e_m8v6-soak_e2e_db_data Removed 
+ Network e2e_m8v6-soak_default Removed 
+   teardown compose exit: 0
+   teardown complete (our lane processes + our compose project only; ports free)
+   teardown trap: after run_remote

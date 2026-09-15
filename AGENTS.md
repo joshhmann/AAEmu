@@ -2,6 +2,8 @@
 
 Guidance for coding agents working in this repository.
 
+> **Onboarding & Domain Lanes:** New agents should first consult [`START-HERE.md`](START-HERE.md) to review the Universal Gateway and select their specific Domain Lane (Core Engine, PlayerBots, Tracing/Dashboard, Archaeology, or Devops) before picking up tasks.
+
 ## What this repo is
 
 Open-source **ArcheAge** server emulator in **.NET** (`AAEmu.Login`, `AAEmu.Game`, shared `AAEmu.Commons`). Preferred local orchestration is **.NET Aspire** (`AAEmu.Aspire.AppHost`). Branch of record for active work: **`develop`**.

@@ -1,13 +1,33 @@
 # Project Status — "ArcheAge Slums" fork milestones
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on August 5, 2026
+- Last verified against: `develop` on 2026-09-12 (documentation revision `c7351b242`; no fresh gameplay verification)
 - Prerequisites: None
 
 Status of the fork's milestone plan (joshhmann/AAEmu). The canonical plan
 lives in the repo: ROADMAP.md; this page is the short public status.
 
-## Milestones
+## Current direction (2026-09-14)
+
+Development is at M8 — Living Village, transitioning toward M9 — Emergent world
+systems. M8 has a qualified engineering/runtime exit (24/24 ledger cycles, 4/4 kill-9
+restarts, scheduler VALID, physics/autosave PASS, one accepted 1112 ms transient,
+DB-volume INVALID by design; tested revision `a4d35fee8`), not human acceptance.
+On 2026-09-14, live human golden action traces were deployed to `.165` covering crop harvest,
+husbandry chick placement/gather, merchant buy/sell, mounts, and NPC interaction.
+The `PlayerBot Target Architecture — Consolidated v1 Candidate` was ratified, adopting
+Option A (Minimal Extension), 14 locked invariants, 7-value failure routing, and entering
+Phase 0 (Evidence/Integrity) prior to the Two-Potatoes slice.
+Current records: fork `develop`
+[ROADMAP](https://github.com/joshhmann/AAEmu/blob/develop/ROADMAP.md) ·
+[STATUS](https://github.com/joshhmann/AAEmu/blob/develop/STATUS.md) ·
+[SCORECARD](https://github.com/joshhmann/AAEmu/blob/develop/SCORECARD.md) ·
+[PROJECT-CONTROL](https://github.com/joshhmann/AAEmu/blob/develop/PROJECT-CONTROL.md) ·
+[PLAYERBOT-FRAMEWORK](https://github.com/joshhmann/AAEmu/blob/develop/PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md) ·
+[TARGET-ARCHITECTURE-V1](https://github.com/joshhmann/AAEmu/blob/develop/PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md).
+
+## Historical snapshot — 2026-08-05 (superseded table and narrative below; current direction is above)
+### Milestones (historical)
 
 | # | Milestone | State |
 |---|-----------|-------|
