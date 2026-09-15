@@ -5,7 +5,7 @@ Open source server software for ArcheAge written in `.NET`.
 ## Start Here
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on August 5, 2026
+- Last verified against: `develop` on 2026-09-12 (documentation revision `c7351b242`; no fresh gameplay verification)
 - Prerequisites: None
 - Preferred local development: [Aspire Development Guide](Aspire-Development-Guide)
 - Manual setup fallback: [Installation & Setup](Installation-&-Setup)
@@ -17,9 +17,12 @@ Open source server software for ArcheAge written in `.NET`.
 
 ### Project Status
 
-- [Project Status](Project-Status) — fork milestone plan, M0/M1 progress
+- [Project Status](Project-Status) — current direction and historical milestone snapshot
+- [Human-Gate Field Guide](Human-Gate-Field-Guide) — operator run-book for the human acceptance lane: preflight, commands, worksheets, evidence
 - [Golden Route — Solzreed](Golden-Route-Solzreed) — the curated M1 opening progression
 - [Quest Test Harness](Quest-Test-Harness) — scenario harness, game-data graphs, quality gate
+- [Soak-Runs](Soak-Runs) — isolated E2E QA / soak / smoke lanes on the testing server
+- [PlayerBot Progression Framework](../../PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md) — canonical ladder (P→B→L→A→N→G→T), feature matrix dashboard, farming H-gate diagnosis, and testing framework
 
 ### Getting Started
 
@@ -49,6 +52,7 @@ Open source server software for ArcheAge written in `.NET`.
 - [Components](Components)
 - [Code Terminology](Code-Terminology)
 - [Developer Notes](Developer-Notes)
+- [World, Continents, Races & Mirage Isle](World-Continents-Races-and-Mirage-Isle)
 - [Classes](Classes)
 - [Client](Client)
 - [Server](Server)

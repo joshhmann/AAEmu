@@ -4,6 +4,7 @@ using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Packets.G2C;
+using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Items;
@@ -27,9 +28,10 @@ public partial class Character
     /// <summary>War-zone death honor penalty (clamped to victim's current honor).</summary>
     private const int WarZoneHonorLoss = 10;
 
-    /// <summary>Escalating death respawn wait times in seconds. Resets after 5 min without dying.</summary>
-    private static readonly int[] DeathWaitTimesSeconds = [15, 30, 60, 90, 120, 150, 180, 210, 240];
-    private const int DeathCountResetMinutes = 5;
+    /// <summary>
+    /// Consecutive-death counter driving the respawn countdown. Ladder + reset window
+    /// come from ResurrectionGameData (canonical resurrection_waiting_times).
+    /// </summary>
     private int _consecutiveDeathCount;
     private DateTime _lastDeathTime = DateTime.MinValue;
 
@@ -190,18 +192,20 @@ public partial class Character
 
     /// <summary>
     /// Computes the escalating death wait time and stores it in RezWaitDuration.
-    /// After 5 minutes without dying, the counter resets.
+    /// Ladder (waiting_time by consecutive-death index, clamped) and reset window
+    /// (penalty_duration) come from ResurrectionGameData (canonical
+    /// resurrection_waiting_times); the siege_waiting_time leg stays unwired until a
+    /// trustworthy is-in-siege signal exists at this callsite (no packet changes).
     /// </summary>
     private void ComputeDeathWaitTime()
     {
         if (_lastDeathTime != DateTime.MinValue &&
-            (DateTime.UtcNow - _lastDeathTime).TotalMinutes >= DeathCountResetMinutes)
+            (DateTime.UtcNow - _lastDeathTime).TotalSeconds >= ResurrectionGameData.ActivePenaltyWindowSeconds)
         {
             _consecutiveDeathCount = 0;
         }
 
-        var index = Math.Min(_consecutiveDeathCount, DeathWaitTimesSeconds.Length - 1);
-        var waitSeconds = DeathWaitTimesSeconds[index];
+        var waitSeconds = ResurrectionGameData.GetActiveWaitingTimeSeconds(_consecutiveDeathCount);
 
         RezWaitDuration = waitSeconds * 1000;
         DeadTime = DateTime.UtcNow;
@@ -347,13 +351,16 @@ public partial class Character
         {
             // Find the linked doodad of this item's put down effect
             var backpackDoodadId = 0u;
-            var itemSkill = SkillManager.Instance.GetSkillTemplate(backpackTemplate.UseSkillId);
-            foreach (var skillEffect in itemSkill.Effects)
+            var itemSkill = SkillManager.Instance?.GetSkillTemplate(backpackTemplate.UseSkillId);
+            if (itemSkill?.Effects != null)
             {
-                if (skillEffect.Template is PutDownBackpackEffect putDownEffect)
+                foreach (var skillEffect in itemSkill.Effects)
                 {
-                    backpackDoodadId = putDownEffect.BackpackDoodadId;
-                    break;
+                    if (skillEffect.Template is PutDownBackpackEffect putDownEffect)
+                    {
+                        backpackDoodadId = putDownEffect.BackpackDoodadId;
+                        break;
+                    }
                 }
             }
 

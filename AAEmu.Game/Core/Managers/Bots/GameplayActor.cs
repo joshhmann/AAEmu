@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Numerics;
 
 using AAEmu.Game.Core.Managers.UnitManagers;
@@ -672,6 +672,98 @@ public class GameplayActor : IGameplayActor
         return Reject(request, ActorFailureReason.RejectedAction, $"skill {skillId} refused: {result}");
     }
 
+    public ActorRequest AutoAttack(uint targetObjId, string? idempotencyKey = null)
+    {
+        // REQ-M5.3-7 (carries REQ-M5-10): every action executes only on the
+        // A1 marshal seam — AutoAttack mutates Character/world/task state.
+        ExecutionBoundary.AssertOnExecutionThread("AutoAttack");
+
+        var request = NewRequest(ActorActionType.AutoAttack, targetObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "auto attack"))
+            return request;
+
+        var target = ResolveUnit(targetObjId);
+        if (target == null || target.Hp <= 0)
+            return Reject(request, ActorFailureReason.RejectedAction, "auto attack target not found or dead");
+
+        // Target target unit if not already selected
+        if (Character.CurrentTarget?.ObjId != target.ObjId)
+        {
+            Character.CurrentTarget = target;
+            Character.BroadcastPacket(new SCTargetChangedPacket(Character.ObjId, target.ObjId), true);
+        }
+
+        // Determine appropriate auto-attack skill (2 = melee, 4 = ranged)
+        var dist = MathUtil.CalculateDistance(Character.Transform.World.Position, target.Transform.World.Position, false);
+        var role = CombatDecisionTree.InferRole(Character);
+        var hasRangedWeapon = Character.Inventory?.Equipment?.GetItemBySlot((int)EquipmentItemSlot.Ranged) != null
+            || Character.Equipment?.GetItemBySlot((int)EquipmentItemSlot.Ranged) != null;
+
+        uint autoAttackSkillId = (role == CombatRole.RangedPhysical || (dist > 4.0f && hasRangedWeapon))
+            ? CombatDecisionTree.BasicRangedAutoAttackSkillId   // 4u: 원거리 공격 (Ranged Auto Attack)
+            : CombatDecisionTree.BasicMeleeAutoAttackSkillId;  // 2u: 근접 공격 (Melee Auto Attack)
+
+        // If already auto-attacking with the exact same skill on this target, complete immediately
+        if (Character.IsAutoAttack && Character.AutoAttackTask?.Skill?.Template?.Id == autoAttackSkillId)
+        {
+            request.Start($"auto-attack already active ({autoAttackSkillId}) on {target.ObjId}");
+            return Complete(request, $"auto-attack already active ({autoAttackSkillId}) on {target.ObjId}");
+        }
+
+        // If auto-attacking with a different skill, cancel prior task
+        if (Character.AutoAttackTask != null)
+        {
+            Character.AutoAttackTask.Cancelled = true;
+            _ = Character.AutoAttackTask.Cancel();
+            Character.AutoAttackTask = null;
+        }
+
+        var template = SkillManager.Instance?.GetSkillTemplate(autoAttackSkillId);
+        if (template == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"unknown auto attack skill {autoAttackSkillId}");
+
+        request.Start($"starting auto-attack {autoAttackSkillId} on {target.ObjId}");
+
+        var skill = new Skill(template);
+        var caster = SkillCaster.GetByType(SkillCasterType.Unit);
+        caster.ObjId = Character.ObjId;
+
+        var sct = SkillCastTarget.GetByType(SkillCastTargetType.Unit);
+        sct.ObjId = target.ObjId;
+
+        var skillObject = SkillObject.GetByType(SkillObjectType.None);
+
+        // Execute initial strike through engine (bypassGcd=false to respect attack timing)
+        var result = skill.Use(Character, caster, sct, skillObject, false, out _);
+
+        // Start continuous auto-attack loop on the character via TaskManager
+        Character.IsAutoAttack = true;
+        Character.StartAutoSkill(skill);
+
+        return Complete(request, result, $"auto-attack started ({autoAttackSkillId}) on {target.ObjId}");
+    }
+
+    public ActorRequest StopAutoAttack(string? idempotencyKey = null)
+    {
+        ExecutionBoundary.AssertOnExecutionThread("StopAutoAttack");
+
+        var request = NewRequest(ActorActionType.StopAutoAttack, 0, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "stop auto attack"))
+            return request;
+
+        request.Start("stopping auto-attack");
+
+        if (Character.AutoAttackTask != null)
+        {
+            Character.AutoAttackTask.Cancelled = true;
+            _ = Character.AutoAttackTask.Cancel();
+            Character.AutoAttackTask = null;
+        }
+        Character.IsAutoAttack = false;
+
+        return Complete(request, "auto-attack stopped");
+    }
+
     public bool Interrupt(Guid traceId)
     {
         if (_active == null || _active.TraceId != traceId || _active.IsTerminal)
@@ -873,6 +965,14 @@ public class GameplayActor : IGameplayActor
 
         request.Start($"talking to npc {npcObjId} (template {npc.TemplateId})");
 
+        Character.CurrentTarget = npc;
+        Character.BroadcastPacket(new SCTargetChangedPacket(Character.ObjId, npc.ObjId), true);
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordTarget(Character, "target_changed", npc.ObjId, "Npc");
+            PlayerTraceService.Instance.RecordInteraction(Character, "talk_npc", npc.ObjId, "Npc", new { npc.TemplateId, npc.Template?.Name });
+        }
+
         var before = SnapshotTalkState();
 
         // 3. The REAL packet path — CSQuestTalkMadePacket (0x0da) reads
@@ -937,6 +1037,116 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.RejectedAction,
                 $"talking to npc {npcObjId} produced no quest change " +
                 $"(no active talk objective credits template {npc.TemplateId})");
+
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordInteraction(Character, "talk_end", npc.ObjId, "Npc");
+        }
+
+        var result = new TalkResult(npcObjId, npc.TemplateId, changes);
+        return Complete(request, result, $"npc {npcObjId}: {string.Join("; ", changes)}");
+    }
+
+    public ActorRequest InteractNpc(uint npcObjId, string? idempotencyKey = null)
+    {
+        ExecutionBoundary.AssertOnExecutionThread("InteractNpc");
+
+        var request = NewRequest(ActorActionType.InteractNpc, npcObjId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "interact npc"))
+            return request;
+
+        var npc = Character.ParentWorld?.GetNpc(npcObjId);
+        if (npc == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"npc {npcObjId} not found in world");
+
+        if (MathUtil.CalculateDistance(Character.Transform.World.Position, npc.Transform.World.Position, false) > MaxInteractRange)
+            return Reject(request, ActorFailureReason.RejectedAction, $"npc {npcObjId} out of interaction range");
+
+        request.Start($"interacting with npc {npcObjId} (template {npc.TemplateId})");
+
+        Character.CurrentTarget = npc;
+        Character.BroadcastPacket(new SCTargetChangedPacket(Character.ObjId, npc.ObjId), true);
+
+        uint option = 0;
+        if (npc.Template != null)
+        {
+            if (npc.Template.Banker)
+                option = SkillsEnum.UseWarehouse;
+            else if (npc.Template.AbilityChanger)
+                option = SkillsEnum.ChangeSkillsets;
+            else if (npc.Template.Auctioneer)
+                option = SkillsEnum.UseAuctioneer;
+            else if (npc.Template.Priest)
+                option = SkillsEnum.Blessing;
+            else if (npc.Template.Repairman)
+                option = SkillsEnum.Repair;
+            else if (npc.Template.Merchant)
+                option = SkillsEnum.UseStore;
+            else if (npc.Template.Stabler)
+                option = SkillsEnum.HealPetSWounds;
+            else if (npc.Template.Expedition)
+                option = SkillsEnum.FormGuild;
+            else if (npc.Template.RecrutingBattlefieldId > 0)
+                option = SkillsEnum.WarSupport;
+            else if (npc.Template.Blacksmith)
+                option = SkillsEnum.ItemFusion;
+        }
+
+        Character.SendPacket(new SCNpcInteractionSkillListPacket(npc.ObjId, 0, 0, 0, 0, 0, [option]));
+
+        var before = SnapshotTalkState();
+        var talkedQuests = new List<uint>();
+        foreach (var (questId, quest) in Character.Quests.ActiveQuests)
+        {
+            var match = quest.QuestSteps.Values
+                .SelectMany(s => s.Components.Values)
+                .SelectMany(c => c.Template.ActTemplates.Select(a => (Component: c.Template, Act: a)))
+                .FirstOrDefault(pair => pair.Act is QuestActObjTalk or QuestActObjTalkNpcGroup
+                    && (pair.Act is not QuestActObjTalk talk || talk.NpcId == npc.TemplateId)
+                    && (pair.Act is not QuestActObjTalkNpcGroup groupTalk || QuestManager.Instance.CheckGroupNpc(groupTalk.NpcGroupId, npc.TemplateId)));
+            if (match.Act == null)
+                continue;
+            talkedQuests.Add(questId);
+            QuestManager.Instance.DoTalkMadeEvents(Character, Character, npcObjId,
+                questId, match.Component.Id, match.Act.ActId);
+        }
+
+        foreach (var questId in talkedQuests)
+        {
+            var guard = 0;
+            while (Character.Quests.ActiveQuests.TryGetValue(questId, out var quest) && guard++ < 8)
+            {
+                if (!quest.RunCurrentStep())
+                    break;
+            }
+        }
+
+        var changes = new List<string>();
+        foreach (var (questId, was) in before)
+        {
+            if (!Character.Quests.ActiveQuests.TryGetValue(questId, out var quest))
+            {
+                changes.Add($"quest {questId} left active state");
+                continue;
+            }
+            if (quest.Step != was.Step || quest.Status != was.Status)
+                changes.Add($"quest {questId} {was.Step}/{was.Status}→{quest.Step}/{quest.Status}");
+            if (!quest.Objectives.SequenceEqual(was.Objectives))
+                changes.Add($"quest {questId} objectives [{string.Join(",", was.Objectives)}]→[{string.Join(",", quest.Objectives)}]");
+        }
+        foreach (var questId in Character.Quests.ActiveQuests.Keys)
+            if (!before.ContainsKey(questId))
+                changes.Add($"quest {questId} newly active");
+
+        if (changes.Count == 0)
+            changes.Add($"dialogue with npc {npc.TemplateId} ({npc.Template?.Name ?? "unnamed"})");
+
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordTarget(Character, "target_changed", npc.ObjId, "Npc");
+            PlayerTraceService.Instance.RecordInteraction(Character, "talk_npc", npc.ObjId, "Npc", new { npc.TemplateId, npc.Template?.Name });
+            PlayerTraceService.Instance.RecordInteraction(Character, "talk_end", npc.ObjId, "Npc");
+        }
 
         var result = new TalkResult(npcObjId, npc.TemplateId, changes);
         return Complete(request, result, $"npc {npcObjId}: {string.Join("; ", changes)}");
@@ -1190,6 +1400,9 @@ public class GameplayActor : IGameplayActor
 
     /// <summary>Maximum flat distance for an Interact request (doodad interaction range).</summary>
     public const float MaxInteractRange = 25f;
+
+    /// <summary>Maximum flat distance for a Harvest request (close interaction range to crop doodad).</summary>
+    public const float MaxHarvestInteractRange = 3.0f;
 
     public ActorRequest Interact(uint doodadObjId, uint skillId = 0, string? idempotencyKey = null)
     {
@@ -1749,6 +1962,9 @@ public class GameplayActor : IGameplayActor
 
         request.Start($"mounting mate {mate.ObjId} (tl {mate.TlId})");
 
+        Character.CurrentTarget = mate;
+        Character.BroadcastPacket(new SCTargetChangedPacket(Character.ObjId, mate.ObjId), true);
+
         // 3. Real engine path — the same MountMate the CSMountMatePacket
         //    handler drives (character-based entry; packets no-op headless).
         if (!mateManager.MountMate(Character, mate.TlId, AttachPointKind.Driver, AttachUnitReason.None))
@@ -1757,6 +1973,12 @@ public class GameplayActor : IGameplayActor
         // 4. Post-state verification: the engine must have attached the rider.
         if (mateManager.GetIsMounted(Character.ObjId, out _) == null)
             return Reject(request, ActorFailureReason.RejectedAction, $"mount {mateObjId} did not take effect");
+
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordTarget(Character, "target_changed", mate.ObjId, "Mate");
+            PlayerTraceService.Instance.RecordInteraction(Character, "mount_mate", mate.ObjId, "Mate", new { mate.TlId, mate.TemplateId });
+        }
 
         return Complete(request, true, $"mounted mate {mate.ObjId}");
     }
@@ -1791,7 +2013,65 @@ public class GameplayActor : IGameplayActor
         if (mateManager.GetIsMounted(Character.ObjId, out _) != null)
             return Reject(request, ActorFailureReason.RejectedAction, "dismount did not take effect");
 
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordInteraction(Character, "dismount_mate", mate.ObjId, "Mate", new { mate.TlId, mate.TemplateId });
+        }
+
         return Complete(request, true, $"dismounted mate {mate.ObjId}");
+    }
+
+    public ActorRequest DismissMate(uint tlId = 0, string? idempotencyKey = null)
+    {
+        var request = NewRequest(ActorActionType.DismissMate, tlId, idempotencyKey: idempotencyKey);
+        if (!TryBegin(request, "dismiss mate"))
+            return request;
+
+        var mateManager = Character.ParentWorld?.MateManager;
+        if (mateManager == null)
+            return Reject(request, ActorFailureReason.RejectedAction, "no mate manager in world");
+
+        Mate? targetMate = null;
+        if (tlId != 0)
+        {
+            targetMate = mateManager.GetActiveMateByTlId(tlId);
+        }
+        else
+        {
+            targetMate = mateManager.GetActiveMates(Character.Id).FirstOrDefault();
+        }
+
+        if (targetMate == null)
+            return Reject(request, ActorFailureReason.StateTransition, "no active mate found to dismiss");
+
+        if (targetMate.OwnerObjId != Character.ObjId)
+            return Reject(request, ActorFailureReason.RejectedAction, $"mate {targetMate.ObjId} not owned by actor");
+
+        request.Start($"dismissing mate {targetMate.ObjId} (tl {targetMate.TlId})");
+
+        var targetTlId = targetMate.TlId;
+        var mateObjId = targetMate.ObjId;
+        var templateId = targetMate.TemplateId;
+
+        // If currently mounted on this mate, unmount first
+        if (mateManager.GetIsMounted(Character.ObjId, out var seat) == targetMate)
+        {
+            mateManager.UnMountMate(Character, targetTlId, seat, AttachUnitReason.None);
+        }
+
+        // Real engine despawn path (the CSRemoveMatePacket path)
+        if (Character.Mates != null)
+            Character.Mates.DespawnMate(targetTlId);
+        else
+            mateManager.RemoveActiveMateAndDespawn(Character, targetTlId);
+
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordInteraction(Character, "dismiss_mate", mateObjId, "Mate", new { TlId = targetTlId, TemplateId = templateId });
+            PlayerTraceService.Instance.RecordWorld(Character, "mate_despawned", mateObjId, templateId);
+        }
+
+        return Complete(request, true, $"dismissed mate {mateObjId} (tl {targetTlId})");
     }
 
     public ActorRequest DriveVehicle(uint vehicleObjId, Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
@@ -2449,6 +2729,12 @@ public class GameplayActor : IGameplayActor
         if (!Character.ChangeMoney(SlotType.Inventory, -(int)money))
             return Reject(request, ActorFailureReason.RejectedAction, $"currency transfer refused by engine ({money})");
 
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordInteraction(Character, "npc_buy", merchantNpcObjId, "Npc", new { itemTemplateId, count, price = money });
+            PlayerTraceService.Instance.RecordResource(Character, "money_spent", "money", -money, Character.Money, new { itemTemplateId, count });
+        }
+
         // 7. Effect fingerprint for the M8 audit (retry correlation: the
         //    request-key dedupe is the primary retry guard; the fingerprint
         //    proves the purchase landed).
@@ -2497,6 +2783,14 @@ public class GameplayActor : IGameplayActor
         ItemManager.Instance.MarkItemForDbDeletion(item.Id);
         if (!Character.ChangeMoney(SlotType.Inventory, refund))
             return Reject(request, ActorFailureReason.RejectedAction, $"refund transfer refused by engine ({refund})");
+
+        Character.SendPacket(new SCSoldItemListPacket(Character.BuyBackItems.Items));
+
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordInteraction(Character, "npc_sell", merchantNpcObjId, "Npc", new { itemId, templateId = item.TemplateId, refund });
+            PlayerTraceService.Instance.RecordResource(Character, "money_earned", "money", refund, Character.Money, new { itemId, templateId = item.TemplateId });
+        }
 
         _ledger.RecordEffect(ActorIdempotency.EffectKey("tradesell", item.TemplateId, itemId.ToString()), request.TraceId);
         return Complete(request, refund, $"sold item {itemId} for {refund}");
@@ -2787,6 +3081,11 @@ public class GameplayActor : IGameplayActor
         if (laborCost != 0)
             Character.ChangeLabor((short)-laborCost, 0);
 
+        // Turn character to face the planting spot
+        var angle = MathUtil.CalculateAngleFrom(Character.Transform.World.Position, position);
+        Character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
+        Character.Transform.FinalizeTransform();
+
         request.Start($"planting doodad {doodadId} from seed {seedItemTemplateId} at {position}");
 
         // 4. THE real engine path — the same CreatePlayerDoodad call the
@@ -2820,6 +3119,20 @@ public class GameplayActor : IGameplayActor
         if (doodad == null)
             return Reject(request, ActorFailureReason.RejectedAction,
                 $"engine refused to plant doodad {doodadId}");
+
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordWorld(Character, "doodad_created", doodad.ObjId, doodad.TemplateId, new
+            {
+                position.X,
+                position.Y,
+                position.Z,
+                ZRot = zRot,
+                Scale = scale,
+                ItemId = seedItem.Id,
+                FarmType = farmType.ToString()
+            });
+        }
 
         // 5. Record the applied effect (crop doodad spawned from the seed)
         //    for M8 audit correlation. The request-level key dedupe is the
@@ -3152,7 +3465,12 @@ public class GameplayActor : IGameplayActor
         "DoodadFuncHarvest",
         "DoodadFuncCropHarvest",
         "DoodadFuncFruitPick",
-        "DoodadFuncCerealHarvest"
+        "DoodadFuncCerealHarvest",
+        "DoodadFuncButcher",
+        "DoodadFuncShear",
+        "DoodadFuncDairyCollect",
+        "DoodadFuncCutdown",
+        "DoodadFuncCutdowning"
     ];
 
     public ActorRequest Harvest(uint doodadObjId, string? idempotencyKey = null)
@@ -3180,18 +3498,91 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.StateTransition,
                 $"doodad {doodadObjId} not harvestable in phase {doodad.FuncGroupId} (no loot-linked interaction func)");
 
+        // Turn character to face the crop doodad
+        var angle = MathUtil.CalculateAngleFrom(Character.Transform.World.Position, doodad.Transform.World.Position);
+        Character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
+        Character.Transform.FinalizeTransform();
+
         var phaseBefore = doodad.FuncGroupId;
         var yieldBefore = InventoryUnitCount();
         request.Start($"harvesting doodad {doodadObjId} (phase {phaseBefore}, skill {harvestSkillId})");
+
+        // Broadcast skill start so observers in the world see the harvest animation
+        var harvestSkillTemplate = SkillManager.Instance.GetSkillTemplate(harvestSkillId);
+        var castTimeMs = (int)(harvestSkillTemplate?.CastingTime ?? 4000);
+        request.Payload = new HarvestParams(harvestSkillId, castTimeMs);
+
+        if (harvestSkillTemplate != null)
+        {
+            var skill = new Skill(harvestSkillTemplate);
+            var caster = SkillCaster.GetByType(SkillCasterType.Unit);
+            caster.ObjId = Character.ObjId;
+            var target = SkillCastTarget.GetByType(SkillCastTargetType.Doodad);
+            target.ObjId = doodad.ObjId;
+            Character.BroadcastPacket(new SCSkillStartedPacket(harvestSkillId, 0, caster, target, skill, new SkillObject())
+            {
+                BaseCastTimeDiv10 = (ushort)(harvestSkillTemplate.CastingTime / 10),
+                RealCastTimeDiv10 = (ushort)(harvestSkillTemplate.CastingTime / 10)
+            }, true);
+        }
+
+        var doodadTemplateId = doodad.TemplateId;
 
         // The REAL engine path: the same doodad.Use(caster, skill) chain the
         // client's harvest interaction drives. Inside this single call the
         // phase machine runs the whole crop loop synchronously (proven by
         // CropHarvestLoopTests): mature → looting (DoodadFuncLootPack grants
         // the pack through the ordinary inventory grant path) → final →
-        // doodad deleted (plot reset). No bot-only resource creation; labor
-        // consumption, if any, happens inside the engine's own skill path.
+        // doodad deleted (plot reset).
+        //
+        // Q-harvest-seam (Phase-0 decision, for Phase-1 implementation): this
+        // synchronous call + the authored Started/Fired/Ended packets below
+        // must converge onto Skill.Use with a Doodad target and
+        // bypassGcd=false (the CSStartSkillPacket common-skill branch), with
+        // async completion through the real CastTask (hold Running, verify
+        // post-state as today). Labor then flows through the pipeline
+        // (EndSkill: actability multiplier + sufficiency + vocation) and the
+        // manual ChangeLabor below plus all three authored packets are
+        // deleted — observer packets must be engine emissions. Pre-validation
+        // (resolve/range/despawn/phase-skill), facing, post-verification, and
+        // the harvest:<objId> effect fingerprint stay exactly as they are.
         doodad.Use(Character, harvestSkillId);
+
+        // Emit canonical skill fired, deduct labor power, and emit skill ended (matches wire trace)
+        if (harvestSkillTemplate != null)
+        {
+            var skill = new Skill(harvestSkillTemplate);
+            var caster = SkillCaster.GetByType(SkillCasterType.Unit);
+            caster.ObjId = Character.ObjId;
+            var target = SkillCastTarget.GetByType(SkillCastTargetType.Doodad);
+            target.ObjId = doodadObjId;
+            Character.BroadcastPacket(new SCSkillFiredPacket(harvestSkillId, 0, caster, target, skill, new SkillObject()), true);
+        }
+
+        var laborCost = harvestSkillTemplate?.ConsumeLaborPower ?? 0;
+        if (laborCost > 0 && Character.LaborPower >= laborCost)
+        {
+            Character.ChangeLabor((short)-laborCost, harvestSkillTemplate?.ActabilityGroupId ?? 0);
+            if (PlayerTraceService.Instance.IsActive)
+            {
+                PlayerTraceService.Instance.RecordResource(Character, "labor_spent", "labor", -laborCost, Character.LaborPower, new
+                {
+                    ActabilityId = harvestSkillTemplate?.ActabilityGroupId ?? 0
+                });
+            }
+        }
+
+        Character.BroadcastPacket(new SCSkillEndedPacket(0), true);
+
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            PlayerTraceService.Instance.RecordInteraction(Character, "doodad_use", doodadObjId, "Doodad", new
+            {
+                TemplateId = doodadTemplateId,
+                Phase = phaseBefore,
+                SkillId = harvestSkillId
+            });
+        }
 
         // Post-state verification: the crop must be gone (final phase deletes
         // it) or at least advanced. An unchanged phase means the engine

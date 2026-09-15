@@ -1,6 +1,13 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-08 · docs reconciliation to QUALIFIED M8 exit @ `301944000`
+Updated: 2026-09-14 · golden traces deployed to .165 + Consolidated v1 Architecture Phase 0
+
+## 2026-09-14 — Human golden actions deployed to .165; PlayerBot Target Architecture v1 ratified into Phase 0
+
+- **Live Human Golden Action Traces Deployed (.165):** Captured 10 real human golden action traces (`Dingus` id 2) covering `pick_potato` (4.0s cast, -1 labor), `place_chick` (+1.5m yaw offset), `harvest_chicken` (6.5s cast, -10 labor), vendor buy/sell, mount/dismount, pet summon/dismiss, and NPC interaction. Implemented behavioral parity in `GameplayActor`, `BotRoamStepExecutor`, and `PlayerTraceService`. Hardened `IdManager.ReleaseId` against null/bounds NREs. Deployed to `.165` container `aaemu-game:presence-demo` (healthy, bots active). Unit suites green (`GameplayActorB1ActionsTests` 18/18, `GameplayActorTalkTests` 7/7).
+- **PlayerTrace Coverage Mapper & Task Dashboard Deployed (`Scripts/playertrace-coverage/`):** Implemented streamed coverage mapper (`playertrace_coverage.py`), known AAEmu packet scanner (744 classes mapped), noise-filtered sequence n-grams, scenario similarity matrix, conservative candidate action family grouping, gap classification, and ranked next-trace recommendations. Built interactive Human Trace Task Dashboard (`dashboard_server.py` on `:8085`, `dashboard.html`) with per-task instructions, required checklists, one-click copy, and automated trace evaluation engine (`task_evaluator.py`) with strict packet assertion checks. Standardized task creation and evaluation protocol in `TASK_SPEC_AND_EVALUATION_GUIDE.md`.
+- **PlayerBot Target Architecture Ratification:** Ratified `PlayerBot Target Architecture — Consolidated v1 Candidate` (`PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md`) merging Muse proposal and Astra independent review. Adopted Option A (Minimal Extension): ONE lifecycle (`ActorRequest`), one new async verb (`DeferUntil`-shaped), leg-local choreography (`LegPhase`), narrow PAC contract, minimal `ReachSpec`, and 7-value failure vocabulary. All 14 invariants locked.
+- **Phase 0 Authorization Active:** Entered Phase 0 (Evidence/Integrity): tooling upgrades (pos/yaw/range, inbound packet details, refusal tracing, chat filter) and resolution of pre-work questions (`Q-ledger`, `Q-harvest-seam`, `Q-gcd-shape`, `Q-cinema`) prior to Two-Potatoes slice.
 
 ## 2026-09-13 — Six live-stack E2E proofs close the backlog (35/35, automated evidence only)
 
@@ -12,6 +19,7 @@ Updated: 2026-09-08 · docs reconciliation to QUALIFIED M8 exit @ `301944000`
 - **Butcher:** `LivestockButcherE2eTests` PASS — 5782→9907 (loot tail), beef 8048 ×14; report `agriculture-butcher-report.json`. Farm ops gained a networked-bot fallback.
 - **Expedition:** `ExpeditionFlowE2eTests` PASS — 5-bot party → create, both membership criteria green; report `expedition-formation-report.json`. EXPEDITION-01 → A=2 (formation live).
 - Tier-1 gate green on clean ports (3130/3129/0/1, MCP 44, archaeology 24); archaeology-cycle 156/156 green. One `BridgeDarkByDefault` failure traced to a stray E2E stack on port 1260 (environmental; 2/2 clean after kill). H stays UNKNOWN everywhere; no human/client-feel claim.
+- **PlayerBot Architecture & H-Gate Reconciliation:** Codified the canonical `P → B → L → A → N → G → T` progression ladder and orchestrator dashboard in `PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md`. Filed active blocker `PB-FARM-01` in `scorecard-explorations/playerbot-blockers.md` (3m merchant range check, 150m soil spiral horizon, and maturation patrol fallthrough). Formalized GOAP rollout policy in `PROJECT-CONTROL.md`: full A* GOAP postponed until core loops achieve verified `L = 2` closure; activities must be structured "GOAP-ready" with explicit preconditions/effects, driven by simple priority arbiter today.
 Branch of record: develop `301944000` (queue Q1–Q6 done/dropped, A5 CLOSED, M8 QUALIFIED exit; Q7/Q8 positions unchanged)
 
 ## 2026-09-12 — Exploit-class merchant/auction findings fixed

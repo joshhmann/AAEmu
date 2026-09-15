@@ -25,6 +25,18 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 
 ## OPEN
 
+### PB-FARM-01 · Farming loop stalls: 3m merchant range check, 150m soil horizon, and maturation patrol fallthrough
+- Scenario: playerbot executes needs-farm loop (`BotRoamStepExecutor` Branch 0b, `NeedsFarmActivityModule`) during autonomous roaming or live H-gate testing
+- Intended: bot checks bag for seeds; if missing, locates nearest seed merchant, navigates to merchant, purchases seeds; navigates to public/owned farm soil; plants seeds; remains leashed to plot while waiting for crop maturity; harvests mature crop; deposits or sells yield.
+- Observed vs expected:
+  1. **3-Meter Merchant Discovery Trap**: `ResolveSeedMerchant` (`BotRoamStepExecutor.cs:1392`) starts search with `bestDist = GameplayActor.MaxShopRange` (hardcoded 3.0m). Any seed merchant further than 3.0m is ignored (`merchantObjId = 0`). In `NeedsDecisionScenario.cs:335`, `BuyProposal` fails precondition `merchant-configured` (`opts.MerchantNpcObjId != 0`), falling back to `RestProposal` (`actor.Stop()`). Bot freezes in place.
+  2. **150-Meter Soil Horizon Trap**: `ResolveSoilTarget` (`BotRoamStepExecutor.cs:1535`) discovery spiral caps at `150f`. If spawned or roaming >150m from farm soil, 3 failed resolve attempts exhaust the budget (`state.NeedsFarmSoilAttempts > NeedsFarmMaxSoilAttempts`), causing permanent deferral.
+  3. **WaitingMaturity Patrol Fallthrough**: During crop growth (`NeedsFarmLoopPhase.WaitingMaturity`), `StepNeedsFarmLeg` returns `false`, clearing `state.NeedsLegActive`. Execution falls through Branch 0b into Branch 2 (ambient roam patrol), walking the bot >150m away and abandoning the crop before it matures.
+- Layer: BOT-SIDE (`BotRoamStepExecutor.cs`, `NeedsDecisionScenario.cs`)
+- Status: OPEN
+- Evidence: Live test failure with Josh/Muse on .165 test stack; source audit in `PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md`.
+
+
 ### PB-005 · NPC spawn Z is effectively unclamped — systemic ungrounded NPCs (floating / buried)
 - Scenario: any placed NPC whose canonical `npc_spawns.json` z disagrees with local ground by ≥ 1 m (prod human report: "a lot of the NPCs are not really grounded — some floating, some under roads and clipping")
 - Observed vs expected: the old spawn-time correction (`NpcSpawnerNpc.SpawnNpc`) only applied `GeoData.GetHeight` when |spawnerZ − newZ| < 1 m, allowing larger source-data offsets to reach clients unchanged
@@ -242,4 +254,20 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 
 ### PB-F4 · Transfers could never be boarded (TlId shadowing)
 - Fixed 3a534b539; live ride E2E green
+
+### PB-006 · PlayerBot Reboot Persistence & Restoration Gap (Position Wipe & Inactive State)
+- Scenario: PlayerBots created via `/bot add`, `/bot here`, manifests, or scripts persist across server reboots without loss of level, XP, equipment, quest progress, or world position
+- Observed vs expected:
+  1. Dormancy materialization unconditionally overwrote saved DB coordinates back to home/spawn (`<0, 0, 50>` / Nuian spawn) inside `RestoreHomePosition`
+  2. Character SQL serialization swapped `roll` and `yaw` on `Character.Save`
+  3. `Character.SaveDirectlyToDatabase` missed flushing `ItemManager.Instance.Save()` inside the transaction
+  4. Server reboot left offline bot rows dormant in MySQL with no command to re-embody them unless proximity fidelity was enabled and a human player walked within 200m
+- Layer: SERVER (Core / Managers / Bots / Character)
+- FIXED 2026-09-14:
+  1. Position preservation in `DormantBotRegistry.RestoreHomePosition`: preserves existing non-zero DB coordinates
+  2. Fixed roll/pitch/yaw SQL parameter alignment in `Character.Save`
+  3. Added `ItemManager.Instance?.Save(sqlConnection, transaction)` to `Character.SaveDirectlyToDatabase`
+  4. Added `/bot restore [all|<name>|<id>]` command in `BotCmd` / `BotRestoreSubCommand` / `BotAdminService.Restore`
+  5. Added configurable startup auto-restore (`BotAdminService.IsAutoRestoreEnabled` / `BotPresenceBootstrap`)
+  6. Unit tests: `DormantBotRegistryTests` (10/10 green), `BotAdminServiceTests` (32/32 green), full gate 3211/0/1
 

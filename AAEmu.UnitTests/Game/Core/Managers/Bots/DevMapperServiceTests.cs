@@ -217,6 +217,16 @@ public class DevMapperServiceTests
             return req;
         }
 
+        public ActorRequest InteractNpc(uint npcObjId, string? idempotencyKey = null)
+        {
+            Executed.Add($"interactnpc:{npcObjId}");
+            var req = new ActorRequest(ActorActionType.InteractNpc, npcObjId, null, 0, null);
+            req.Accept("test");
+            req.Start("test");
+            req.Complete("interacted");
+            return req;
+        }
+
         public ActorRequest Cast(uint skillId, uint targetObjId, string? idempotencyKey = null)
         {
             Executed.Add($"cast:{skillId}");
@@ -226,6 +236,9 @@ public class DevMapperServiceTests
             req.Complete("casted");
             return req;
         }
+
+        public ActorRequest AutoAttack(uint targetObjId, string? idempotencyKey = null) => Unsupported();
+        public ActorRequest StopAutoAttack(string? idempotencyKey = null) => Unsupported();
 
         private static ActorRequest Unsupported() => throw new NotSupportedException();
         public ActorRequest MoveTo(Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null) => Unsupported();
@@ -247,6 +260,7 @@ public class DevMapperServiceTests
         public ActorRequest TradeLockOk(string? idempotencyKey = null) => Unsupported();
         public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null) => Unsupported();
+        public ActorRequest DismissMate(uint tlId = 0, string? idempotencyKey = null) => Unsupported();
         public ActorRequest BoardVehicle(uint vehicleObjId, AttachPointKind attachPoint = AttachPointKind.Driver, string? idempotencyKey = null) => Unsupported();
         public ActorRequest UnboardVehicle(uint vehicleObjId = 0, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Harvest(uint doodadObjId, string? idempotencyKey = null) => Unsupported();

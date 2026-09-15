@@ -333,6 +333,15 @@ public sealed class DormantBotRegistry
             character.Transform == null)
             return;
 
+        // Preserve saved world position if already placed in the world (non-zero X/Y from DB)
+        var curPos = character.Transform.World.Position;
+        if (curPos.X != 0f || curPos.Y != 0f)
+        {
+            Logger.Debug("True dormancy: preserving saved position for {CharacterName} (id {CharacterId}) at {CurPos}",
+                character.Name, character.Id, curPos);
+            return;
+        }
+
         character.Transform.Local.SetPosition(home);
         Logger.Debug("True dormancy: restored home position for {CharacterName} (id {CharacterId}) at {Home}",
             character.Name, character.Id, home);

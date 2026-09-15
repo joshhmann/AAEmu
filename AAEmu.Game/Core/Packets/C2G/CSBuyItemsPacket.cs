@@ -1,5 +1,6 @@
-﻿using AAEmu.Commons.Network;
+using AAEmu.Commons.Network;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Network.Game;
 using AAEmu.Game.Core.Packets.G2C;
@@ -15,6 +16,12 @@ namespace AAEmu.Game.Core.Packets.C2G;
 
 public class CSBuyItemsPacket() : GamePacket(CSOffsets.CSBuyItemsPacket, 1)
 {
+    public uint NpcObjId { get; private set; }
+    public uint DoodadObjId { get; private set; }
+    public byte NBuy { get; private set; }
+    public byte NBuyBack { get; private set; }
+    public List<(uint ItemId, byte Grade, int Count)> BoughtItems { get; } = [];
+
     public override void Read(PacketStream stream)
     {
         var npcObjId = stream.ReadBc();
@@ -28,6 +35,11 @@ public class CSBuyItemsPacket() : GamePacket(CSOffsets.CSBuyItemsPacket, 1)
         var nBuy = stream.ReadByte();
         var nBuyBack = stream.ReadByte();
 
+        NpcObjId = npcObjId;
+        DoodadObjId = doodadObjId;
+        NBuy = nBuy;
+        NBuyBack = nBuyBack;
+
         Logger.Debug($"NPCObjId:{npcObjId} DoodadObjId:{doodadObjId} unkId:{unkId} nBuy:{nBuy} nBuyBack{nBuyBack}");
 
         // If a NPC was provided, check if it's valid
@@ -39,6 +51,8 @@ public class CSBuyItemsPacket() : GamePacket(CSOffsets.CSBuyItemsPacket, 1)
             var dist = MathUtil.CalculateDistance(Connection.ActiveChar.Transform.World.Position, npc.Transform.World.Position);
             if (dist > 3f) // 3m should be enough for NPC shops
             {
+                if (PlayerTraceService.Instance.IsActive)
+                    PlayerTraceService.Instance.RecordRefusal(Connection.ActiveChar, "buy", npcObjId, "TooFarAway", 0, new { Distance = dist, MaxDistance = 3f });
                 Connection.ActiveChar.SendErrorMessage(ErrorMessageType.TooFarAway);
                 return;
             }
@@ -98,6 +112,7 @@ public class CSBuyItemsPacket() : GamePacket(CSOffsets.CSBuyItemsPacket, 1)
             }
 
             itemsBuy.Add((itemId, grade, count));
+            BoughtItems.Add((itemId, grade, count));
             var template = ItemManager.Instance.GetTemplate(itemId);
 
             if (currency == ShopCurrencyType.Money)

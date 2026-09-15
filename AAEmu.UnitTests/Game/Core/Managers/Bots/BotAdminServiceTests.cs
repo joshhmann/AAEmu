@@ -159,9 +159,11 @@ public class BotAdminServiceTests
         public List<uint> SusMovementResets { get; } = [];
         public HashSet<string> TakenNames { get; } = [];
 
+        public DormantBotRegistry? DormantRegistry { get; set; }
+
         private uint _nextId = 9000;
 
-        public BotAdminService CreateService()
+        public BotAdminService CreateService(DormantBotRegistry? dormantRegistry = null)
         {
             SeedFixtureSingletons();
             return new BotAdminService(
@@ -184,7 +186,8 @@ public class BotAdminServiceTests
                 groundHeightProvider: (pos, zoneId) => 0f, // no heightmap data → route keeps home.Z
                 nameIsTaken: n => TakenNames.Contains(n),
                 regionUpdater: c => RegionUpdates.Add(c),
-                susMovementReset: id => SusMovementResets.Add(id));
+                susMovementReset: id => SusMovementResets.Add(id),
+                dormantRegistry: dormantRegistry ?? DormantRegistry);
         }
 
         /// <summary>Provisioner that throws (squatting / DB failure simulation).</summary>
@@ -711,6 +714,99 @@ public class BotAdminServiceTests
         await Assert.That(result[1].X).IsEqualTo(15597.1f);
         await Assert.That(result[1].Y).IsEqualTo(15363.4f);
         await Assert.That(result[1].Z).IsEqualTo(135.2f);
+    }
+
+    // --------------------------------------------------------- restore
+
+    [Test]
+    public async Task Restore_WhenBulkAndNoDormantOrDeactivated_ReturnsNoBotsMessage()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+
+        var result = service.Restore("all");
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Message).Contains("No dormant or deactivated bots found");
+    }
+
+    [Test]
+    public async Task Restore_DeactivatedBot_ReactivatesAndArmsPatrol()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+        var bot = rig.Manager.Seed(MakeBot(10, "Alice"), PlayerBotState.Deactivated);
+
+        var result = service.Restore("Alice");
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(bot.State).IsEqualTo(PlayerBotState.Active);
+        await Assert.That(rig.Director.GetFidelity(10)).IsEqualTo(BotFidelity.Full);
+        await Assert.That(rig.Executor.GetRoamRoute(10)).IsNotNull();
+        await Assert.That(rig.Scheduler.Wakes).Contains(10u);
+    }
+
+    [Test]
+    public async Task Restore_SpecificActiveBot_ReturnsAlreadyActive()
+    {
+        var rig = new Rig();
+        var service = rig.CreateService();
+        rig.Manager.Seed(MakeBot(11, "ActiveBot"), PlayerBotState.Active);
+
+        var result = service.Restore("ActiveBot");
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Message).Contains("already present and active");
+    }
+
+    [Test]
+    public async Task Restore_DormantBot_MaterializesAndArmsPatrol()
+    {
+        var rig = new Rig();
+        var dormantChar = MakeBot(42, "SleepingBeauty");
+        var specs = new List<DormantBotSpec> { new(42, "SleepingBeauty") };
+        var source = new StubDormantSource(specs);
+        var registry = new DormantBotRegistry(
+            rig.Manager,
+            source,
+            characterLoader: id => id == 42 ? dormantChar : null);
+
+        var service = rig.CreateService(registry);
+
+        var result = service.Restore("SleepingBeauty");
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(rig.Manager.TryGet(42, out var runtime)).IsTrue();
+        await Assert.That(runtime!.State).IsEqualTo(PlayerBotState.Active);
+        await Assert.That(rig.Director.GetFidelity(42)).IsEqualTo(BotFidelity.Full);
+        await Assert.That(rig.Executor.GetRoamRoute(42)).IsNotNull();
+        await Assert.That(rig.Scheduler.Wakes).Contains(42u);
+    }
+
+    [Test]
+    public async Task List_IncludesDormantBots_WhenRegistryPresent()
+    {
+        var rig = new Rig();
+        var specs = new List<DormantBotSpec> { new(50, "DormantCitizen") };
+        var source = new StubDormantSource(specs);
+        var registry = new DormantBotRegistry(
+            rig.Manager,
+            source,
+            characterLoader: _ => null);
+
+        var service = rig.CreateService(registry);
+
+        var result = service.List();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Message).Contains("DormantCitizen");
+        await Assert.That(result.Message).Contains("[Dormant]");
+        await Assert.That(result.Message).Contains("/bot restore");
+    }
+
+    private sealed class StubDormantSource(List<DormantBotSpec> specs) : IDormantBotSource
+    {
+        public IReadOnlyList<DormantBotSpec> ListSpecs() => specs;
     }
 
     // ------------------------------------------------------------- helpers

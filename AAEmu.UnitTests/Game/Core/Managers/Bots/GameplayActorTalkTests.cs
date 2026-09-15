@@ -133,4 +133,31 @@ public class GameplayActorTalkTests
         await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
         await Assert.That(request.Detail!.Contains("not found in world")).IsTrue();
     }
+
+    [Test]
+    public async Task InteractNpc_WithinRange_SucceedsAndSetsTarget()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("pb002-interactnpc-1");
+        var npcObjId = session.SpawnNpc(GameplayActorTestRig.DiscoveryTalkNpcTemplateId);
+
+        var request = actor.InteractNpc(npcObjId);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.CurrentTarget?.ObjId).IsEqualTo(npcObjId);
+        await Assert.That(request.Result is TalkResult).IsTrue();
+    }
+
+    [Test]
+    public async Task InteractNpc_OutOfRange_Rejected()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("pb002-interactnpc-2");
+        var npcObjId = session.SpawnNpc(GameplayActorTestRig.DiscoveryTalkNpcTemplateId);
+        GameplayActorTestRig.SetNpcPosition(session, npcObjId, new System.Numerics.Vector3(500, 500, 0));
+
+        var request = actor.InteractNpc(npcObjId);
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.RejectedAction);
+        await Assert.That(request.Detail!.Contains("interaction range")).IsTrue();
+    }
 }

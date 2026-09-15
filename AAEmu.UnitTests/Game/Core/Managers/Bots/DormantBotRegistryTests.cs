@@ -383,4 +383,21 @@ public class DormantBotRegistryTests
         await Assert.That(rig.Lifecycle.Deactivated).DoesNotContain(203u);
         await Assert.That(rig.Registry.ListSpecs().Count).IsEqualTo(5); // untouched dormant pool
     }
+
+    [Test]
+    public async Task Materialize_PreservesSavedPosition_WhenPlacedInWorld()
+    {
+        using var rig = new Rig();
+        var row = rig.Rows[103];
+        row.Transform.Local.SetPosition(1500f, 2500f, 100f);
+        rig.HomeSource.Homes[103] = (0u, new Vector3(0f, 0f, 50f));
+
+        var spec = new DormantBotSpec(103, "DormantThree");
+        await Assert.That(rig.Registry.Materialize(spec)).IsTrue();
+
+        var pos = row.Transform.World.Position;
+        await Assert.That(pos.X).IsEqualTo(1500f);
+        await Assert.That(pos.Y).IsEqualTo(2500f);
+        await Assert.That(pos.Z).IsEqualTo(100f);
+    }
 }

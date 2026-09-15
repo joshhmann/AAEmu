@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using AAEmu.Commons.Network;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
@@ -11,6 +11,12 @@ namespace AAEmu.Game.Core.Packets.C2G;
 
 public class CSCreateDoodadPacket() : GamePacket(CSOffsets.CSCreateDoodadPacket, 1)
 {
+    public uint DoodadId { get; private set; }
+    public Vector3 Position { get; private set; }
+    public float ZRot { get; private set; }
+    public float Scale { get; private set; }
+    public ulong ItemId { get; private set; }
+
     public override void Read(PacketStream stream)
     {
         var id = stream.ReadUInt32();
@@ -21,9 +27,15 @@ public class CSCreateDoodadPacket() : GamePacket(CSOffsets.CSCreateDoodadPacket,
         var scale = stream.ReadSingle();
         var itemId = stream.ReadUInt64();
 
+        DoodadId = id;
+        Position = new Vector3(x, y, z);
+        ZRot = zRot;
+        Scale = scale;
+        ItemId = itemId;
+
         Logger.Warn($"CreateDoodad, Id: {id}, X: {x}, Y: {y}, Z: {z}, zRot: {zRot}  ItemId: {itemId}");
 
-        var pos = new Vector3(x, y, z);
+        var pos = Position;
         var laborCost = 0;
 
         // Verify actual item

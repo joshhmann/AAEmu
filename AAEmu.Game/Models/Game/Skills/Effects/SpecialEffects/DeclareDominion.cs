@@ -77,7 +77,9 @@ public class DeclareDominion : SpecialEffectAction
             50,
             DateTime.UtcNow);
         manager.Declare(dominion, expedition.Name);
-        if (caster is Character character)
+        // Trimmed-DB case: a zero DeclareItemId means the pack gate was skipped,
+        // so there is nothing to consume (zone null is defensive; validator already refused it).
+        if (caster is Character character && zone != null && zone.DeclareItemId != 0)
         {
             // character.Inventory.Equipment.
             var backpack = character.Inventory.Equipment.GetItemBySlot((int)EquipmentItemSlot.Backpack);

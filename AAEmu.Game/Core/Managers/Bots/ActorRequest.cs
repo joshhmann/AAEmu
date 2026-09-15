@@ -43,7 +43,7 @@ public sealed class ActorRequest
     /// <see cref="QuestAcceptParams"/> / <see cref="QuestTurnInParams"/>.
     /// Payloads are execution inputs, never serialized into audit output.
     /// </summary>
-    public object? Payload { get; }
+    public object? Payload { get; internal set; }
 
     /// <summary>Max wall-clock budget; TimedOut when Running exceeds it (null = no timeout).</summary>
     public TimeSpan? Timeout { get; }
@@ -265,6 +265,13 @@ public sealed record InteractWithResult(
 /// <param name="ZRot">Yaw rotation (radians) of the placed doodad.</param>
 /// <param name="Scale">Doodad scale (0 = template default).</param>
 public sealed record PlantParams(System.Numerics.Vector3 Position, float ZRot, float Scale);
+
+/// <summary>
+/// Harvest request payload — resolved skill and casting duration for doodad harvesting (M5.1).
+/// </summary>
+/// <param name="HarvestSkillId">Resolved harvest interaction skill template ID.</param>
+/// <param name="CastTimeMs">Canonical casting time in milliseconds (e.g. 4000ms for crops, 6500ms for animals).</param>
+public sealed record HarvestParams(uint HarvestSkillId = 0, int CastTimeMs = 4000);
 
 /// <summary>
 /// LoadPackOntoVehicle request payload — the pack source selection for the

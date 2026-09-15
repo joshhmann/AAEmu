@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Network;
+using AAEmu.Commons.Network;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Game;
@@ -64,6 +64,17 @@ public class CSStartSkillPacket() : GamePacket(CSOffsets.CSStartSkillPacket, 1)
         
         Logger.Info($"StartSkill: Id {skillId}, flag {flag}, caster={skillCaster.ObjId}, target={skillCastTarget.ObjId}");
 
+        if (Connection.ActiveChar != null && AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+        {
+            AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordSkill(Connection.ActiveChar, "skill_requested", skillId, new
+            {
+                CasterObjId = skillCaster.ObjId,
+                CasterType = skillCaster.Type.ToString(),
+                TargetObjId = skillCastTarget.ObjId,
+                TargetType = skillCastTarget.Type.ToString()
+            });
+        }
+
         var skillResult = SkillResult.Success;
         var skillResultErrorValue = 0u;
         Skill skill = null;
@@ -83,6 +94,12 @@ public class CSStartSkillPacket() : GamePacket(CSOffsets.CSStartSkillPacket, 1)
             scSkillStartedPacket.SetSkillResult(skillResult);
             scSkillStartedPacket.SetResultUInt(skillResultErrorValue);
             Connection.ActiveChar.SendPacket(scSkillStartedPacket);
+
+            if (Connection.ActiveChar != null && AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+            {
+                AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordRefusal(
+                    Connection.ActiveChar, "skill", skillId, skillResult.ToString(), skillResultErrorValue);
+            }
         }
 
         if (skillCaster is SkillCasterUnit scu)

@@ -77,6 +77,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\playertrace-coverage\map_atlas_data.json" LogicalName="AAEmu.Game.Data.map_atlas_data.json" Condition="Exists('..\playertrace-coverage\map_atlas_data.json')" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Models\Tasks\Telescopes\**" />
     <EmbeddedResource Remove="Models\Tasks\Telescopes\**" />
     <None Remove="Models\Tasks\Telescopes\**" />

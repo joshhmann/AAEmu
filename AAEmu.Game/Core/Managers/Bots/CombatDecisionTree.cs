@@ -1,7 +1,10 @@
 using System.Numerics;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Utils;
 using NLog;
 
 namespace AAEmu.Game.Core.Managers.Bots;
@@ -59,6 +62,10 @@ public static class CombatDecisionTree
     public const float DefaultEmergencyFleeHpPercent = 0.20f;
     public const float DefaultDefensiveHealHpPercent = 0.50f;
 
+    // Basic continuous auto-attack skills
+    public const uint BasicMeleeAutoAttackSkillId = 2;      // 근접 공격 (Melee Auto Attack)
+    public const uint BasicRangedAutoAttackSkillId = 4;     // 원거리 공격 (Ranged Auto Attack)
+
     // Canonical starter combo skill IDs
     // Battlerage (Fight)
     public const uint BattlerageTripleSlashSkillId = 18131; // 3단 베기 (Triple Slash)
@@ -84,6 +91,7 @@ public static class CombatDecisionTree
     public const uint WitchcraftEnervateSkillId = 10159;    // 정신 파괴 (Enervate) [Mana burn, debuff]
 
     // Archery (Wild)
+    public const uint ArcheryShootSkillId = 16064;          // 활쏘기 (Archery Shoot)
     public const uint ArcheryChargedBoltSkillId = 16210;    // 충격 화살 (Charged Bolt)
     public const uint ArcheryEndlessArrowsSkillId = 14835;  // 연속 쏘기 (Endless Arrows)
 
@@ -104,6 +112,123 @@ public static class CombatDecisionTree
     public const uint AuramancyConversionShieldSkillId = 11869; // 활력 방패 (Conversion Shield)
 
     /// <summary>
+    /// Gets canonical or weapon-derived effective (minRange, maxRange) in meters for a skill.
+    /// </summary>
+    public static (float MinRange, float MaxRange) GetSkillEffectiveRange(SkillTemplate template, Character? bot = null)
+    {
+        float minRange = template.MinRange;
+        float maxRange = template.MaxRange;
+
+        if (template.WeaponSlotForRangeId > 0 && bot?.Equipment != null)
+        {
+            var item = bot.Equipment.GetItemBySlot(template.WeaponSlotForRangeId);
+            if (item?.Template is WeaponTemplate weapon && weapon.HoldableTemplate != null)
+            {
+                minRange = Math.Max(minRange, weapon.HoldableTemplate.MinRange);
+                maxRange = Math.Max(maxRange, weapon.HoldableTemplate.MaxRange);
+            }
+        }
+
+        // If template has 0 max range (e.g. melee touch / self), default to 4.0m for offensive melee reach
+        if (maxRange <= 0.01f)
+            maxRange = 4.0f;
+
+        return (minRange, maxRange);
+    }
+
+    /// <summary>
+    /// Fallback static ranges for well-known starter and combo skills (used in unit test/mock environments).
+    /// </summary>
+    public static (float MinRange, float MaxRange) GetKnownSkillRange(uint skillId)
+    {
+        return skillId switch
+        {
+            // Battlerage
+            BattlerageChargeSkillId => (0f, 12f),
+            BattlerageTripleSlashSkillId => (0f, 4f),
+            18132u => (0f, 4f),
+            BattlerageWhirlwindSkillId => (0f, 4f),
+            // Defense
+            DefenseShieldSlamSkillId => (0f, 4f),
+            DefenseBullRushSkillId => (0f, 4f),
+            // Shadowplay
+            ShadowplayOverwhelmSkillId => (0f, 10f),
+            ShadowplayShadowsmiteSkillId => (0f, 4f),
+            ShadowplayRapidStrikesSkillId => (0f, 4f),
+            // Archery
+            ArcheryShootSkillId => (0f, 20f),
+            ArcheryChargedBoltSkillId => (0f, 20f),
+            ArcheryEndlessArrowsSkillId => (0f, 20f),
+            // Sorcery
+            SorceryFlameboltSkillId => (0f, 20f),
+            SorceryFreezingArrowSkillId => (0f, 20f),
+            SorceryChainLightningSkillId => (0f, 20f),
+            // Witchcraft
+            WitchcraftEnervateSkillId => (0f, 20f),
+            WitchcraftEarthenGripSkillId => (0f, 20f),
+            // Occultism
+            OccultismHellSpearSkillId => (0f, 6f),
+            OccultismManaStarsSkillId => (0f, 20f),
+            // Vitalism
+            VitalismAntithesisSkillId => (0f, 25f),
+            VitalismResurgenceSkillId => (0f, 30f),
+            // Songcraft
+            SongcraftStartlingStrainSkillId => (0f, 15f),
+            SongcraftCriticalDiscordSkillId => (0f, 20f),
+            // Basic continuous attacks
+            BasicMeleeAutoAttackSkillId => (0f, 4f),
+            BasicRangedAutoAttackSkillId => (4f, 20f),
+            _ => (0f, 20f)
+        };
+    }
+
+    /// <summary>
+    /// Checks whether a skill is usable given current cooldowns, mana pool, and target distance.
+    /// </summary>
+    public static bool IsSkillInRangeAndReady(
+        Character bot,
+        Unit? target,
+        uint skillId,
+        float distance)
+    {
+        if (skillId == 0)
+            return false;
+
+        // Check cooldown on the character
+        if (bot.Cooldowns?.CheckCooldown(skillId) == true)
+            return false;
+
+        // Template checks (mana, real range, template cooldown)
+        if (SkillManager.Instance != null)
+        {
+            var template = SkillManager.Instance.GetSkillTemplate(skillId);
+            if (template != null)
+            {
+                if (template.ManaCost > 0 && bot.Mp < template.ManaCost)
+                    return false;
+
+                if (target != null)
+                {
+                    var (minRange, maxRange) = GetSkillEffectiveRange(template, bot);
+                    if (distance < minRange || distance > maxRange)
+                        return false;
+                }
+                return true;
+            }
+        }
+
+        // Fallback checks with known ranges when SkillManager is not loaded
+        if (target != null)
+        {
+            var (minRange, maxRange) = GetKnownSkillRange(skillId);
+            if (distance < minRange || distance > maxRange)
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// Infers the primary combat role from the character's primary skill tree (Ability1).
     /// </summary>
     public static CombatRole InferRole(Character character)
@@ -120,7 +245,7 @@ public static class CombatDecisionTree
     }
 
     /// <summary>
-    /// Selects the optimal next skill based on class ability combos and combat history.
+    /// Selects the optimal next skill based on class ability combos, cooldowns, mana, and target distance.
     /// </summary>
     public static uint SelectPrioritizedSkill(
         Character bot,
@@ -138,6 +263,9 @@ public static class CombatDecisionTree
         }
 
         var candidates = new HashSet<uint>(availableSkills);
+        var distance = target != null
+            ? MathUtil.CalculateDistance(bot.Transform.World.Position, target.Transform.World.Position, false)
+            : 0f;
 
         // Class combo rotations
         switch (role)
@@ -145,49 +273,49 @@ public static class CombatDecisionTree
             case CombatRole.Melee:
             {
                 // Defense combo chain: Shield Slam (10399) [Stuns] -> Bull Rush (10501) [Trips stunned target]
-                if (lastSkillUsed == DefenseShieldSlamSkillId && candidates.Contains(DefenseBullRushSkillId))
+                if (lastSkillUsed == DefenseShieldSlamSkillId && candidates.Contains(DefenseBullRushSkillId) && IsSkillInRangeAndReady(bot, target, DefenseBullRushSkillId, distance))
                     return DefenseBullRushSkillId;
 
                 // Shadowplay combo chain: Overwhelm (10648) [Stuns] -> Shadowsmite (10496) [Trips stunned target] -> Rapid Strikes (18125)
-                if (lastSkillUsed == ShadowplayOverwhelmSkillId && candidates.Contains(ShadowplayShadowsmiteSkillId))
+                if (lastSkillUsed == ShadowplayOverwhelmSkillId && candidates.Contains(ShadowplayShadowsmiteSkillId) && IsSkillInRangeAndReady(bot, target, ShadowplayShadowsmiteSkillId, distance))
                     return ShadowplayShadowsmiteSkillId;
 
-                if (lastSkillUsed == ShadowplayShadowsmiteSkillId && candidates.Contains(ShadowplayRapidStrikesSkillId))
+                if (lastSkillUsed == ShadowplayShadowsmiteSkillId && candidates.Contains(ShadowplayRapidStrikesSkillId) && IsSkillInRangeAndReady(bot, target, ShadowplayRapidStrikesSkillId, distance))
                     return ShadowplayRapidStrikesSkillId;
 
                 // Battlerage combo chain: Charge (11918) -> Triple Slash (18131) -> Whirlwind Slash (13282)
-                if (lastSkillUsed == BattlerageChargeSkillId && candidates.Contains(BattlerageTripleSlashSkillId))
+                if (lastSkillUsed == BattlerageChargeSkillId && candidates.Contains(BattlerageTripleSlashSkillId) && IsSkillInRangeAndReady(bot, target, BattlerageTripleSlashSkillId, distance))
                     return BattlerageTripleSlashSkillId;
 
-                if (lastSkillUsed == BattlerageTripleSlashSkillId && candidates.Contains(BattlerageWhirlwindSkillId))
+                if (lastSkillUsed == BattlerageTripleSlashSkillId && candidates.Contains(BattlerageWhirlwindSkillId) && IsSkillInRangeAndReady(bot, target, BattlerageWhirlwindSkillId, distance))
                     return BattlerageWhirlwindSkillId;
 
                 // Openers / default priority:
                 // 1. Crowd-control / gap-closers
-                if (candidates.Contains(DefenseShieldSlamSkillId) && lastSkillUsed != DefenseShieldSlamSkillId)
+                if (candidates.Contains(DefenseShieldSlamSkillId) && lastSkillUsed != DefenseShieldSlamSkillId && IsSkillInRangeAndReady(bot, target, DefenseShieldSlamSkillId, distance))
                     return DefenseShieldSlamSkillId;
 
-                if (candidates.Contains(ShadowplayOverwhelmSkillId) && lastSkillUsed != ShadowplayOverwhelmSkillId)
+                if (candidates.Contains(ShadowplayOverwhelmSkillId) && lastSkillUsed != ShadowplayOverwhelmSkillId && IsSkillInRangeAndReady(bot, target, ShadowplayOverwhelmSkillId, distance))
                     return ShadowplayOverwhelmSkillId;
 
-                if (candidates.Contains(BattlerageChargeSkillId) && lastSkillUsed != BattlerageChargeSkillId)
+                if (candidates.Contains(BattlerageChargeSkillId) && lastSkillUsed != BattlerageChargeSkillId && IsSkillInRangeAndReady(bot, target, BattlerageChargeSkillId, distance))
                     return BattlerageChargeSkillId;
 
                 // 2. Follow-up finishers
-                if (candidates.Contains(DefenseBullRushSkillId))
+                if (candidates.Contains(DefenseBullRushSkillId) && IsSkillInRangeAndReady(bot, target, DefenseBullRushSkillId, distance))
                     return DefenseBullRushSkillId;
 
-                if (candidates.Contains(ShadowplayShadowsmiteSkillId))
+                if (candidates.Contains(ShadowplayShadowsmiteSkillId) && IsSkillInRangeAndReady(bot, target, ShadowplayShadowsmiteSkillId, distance))
                     return ShadowplayShadowsmiteSkillId;
 
                 // 3. Spammers / bread & butter
-                if (candidates.Contains(BattlerageTripleSlashSkillId))
+                if (candidates.Contains(BattlerageTripleSlashSkillId) && IsSkillInRangeAndReady(bot, target, BattlerageTripleSlashSkillId, distance))
                     return BattlerageTripleSlashSkillId;
 
-                if (candidates.Contains(ShadowplayRapidStrikesSkillId))
+                if (candidates.Contains(ShadowplayRapidStrikesSkillId) && IsSkillInRangeAndReady(bot, target, ShadowplayRapidStrikesSkillId, distance))
                     return ShadowplayRapidStrikesSkillId;
 
-                if (candidates.Contains(BattlerageWhirlwindSkillId))
+                if (candidates.Contains(BattlerageWhirlwindSkillId) && IsSkillInRangeAndReady(bot, target, BattlerageWhirlwindSkillId, distance))
                     return BattlerageWhirlwindSkillId;
 
                 break;
@@ -196,47 +324,47 @@ public static class CombatDecisionTree
             case CombatRole.RangedMagic:
             {
                 // Sorcery combo chain: Flamebolt (10752) [inflicts Burn] -> Freezing Arrow (10667) [43% bonus on Burn + Freeze] -> Chain Lightning (11967)
-                if (lastSkillUsed == SorceryFlameboltSkillId && candidates.Contains(SorceryFreezingArrowSkillId))
+                if (lastSkillUsed == SorceryFlameboltSkillId && candidates.Contains(SorceryFreezingArrowSkillId) && IsSkillInRangeAndReady(bot, target, SorceryFreezingArrowSkillId, distance))
                     return SorceryFreezingArrowSkillId;
 
-                if (lastSkillUsed == SorceryFreezingArrowSkillId && candidates.Contains(SorceryChainLightningSkillId))
+                if (lastSkillUsed == SorceryFreezingArrowSkillId && candidates.Contains(SorceryChainLightningSkillId) && IsSkillInRangeAndReady(bot, target, SorceryChainLightningSkillId, distance))
                     return SorceryChainLightningSkillId;
 
                 // Witchcraft combo chain: Enervate (10159) -> Earthen Grip (14376) [bonus damage & life drain on Enervated]
-                if (lastSkillUsed == WitchcraftEnervateSkillId && candidates.Contains(WitchcraftEarthenGripSkillId))
+                if (lastSkillUsed == WitchcraftEnervateSkillId && candidates.Contains(WitchcraftEarthenGripSkillId) && IsSkillInRangeAndReady(bot, target, WitchcraftEarthenGripSkillId, distance))
                     return WitchcraftEarthenGripSkillId;
 
                 // Occultism combo chain: Hell Spear (10135) -> Mana Stars (12759)
-                if (lastSkillUsed == OccultismHellSpearSkillId && candidates.Contains(OccultismManaStarsSkillId))
+                if (lastSkillUsed == OccultismHellSpearSkillId && candidates.Contains(OccultismManaStarsSkillId) && IsSkillInRangeAndReady(bot, target, OccultismManaStarsSkillId, distance))
                     return OccultismManaStarsSkillId;
 
                 // Auramancy utility buff
-                if (candidates.Contains(AuramancyConversionShieldSkillId) && lastSkillUsed != AuramancyConversionShieldSkillId)
+                if (candidates.Contains(AuramancyConversionShieldSkillId) && lastSkillUsed != AuramancyConversionShieldSkillId && IsSkillInRangeAndReady(bot, target, AuramancyConversionShieldSkillId, distance))
                     return AuramancyConversionShieldSkillId;
 
                 // Openers: Burn with Flamebolt or debuff with Enervate
-                if (candidates.Contains(SorceryFlameboltSkillId))
+                if (candidates.Contains(SorceryFlameboltSkillId) && IsSkillInRangeAndReady(bot, target, SorceryFlameboltSkillId, distance))
                     return SorceryFlameboltSkillId;
 
-                if (candidates.Contains(WitchcraftEnervateSkillId))
+                if (candidates.Contains(WitchcraftEnervateSkillId) && IsSkillInRangeAndReady(bot, target, WitchcraftEnervateSkillId, distance))
                     return WitchcraftEnervateSkillId;
 
-                if (candidates.Contains(SorceryFreezingArrowSkillId))
+                if (candidates.Contains(SorceryFreezingArrowSkillId) && IsSkillInRangeAndReady(bot, target, SorceryFreezingArrowSkillId, distance))
                     return SorceryFreezingArrowSkillId;
 
-                if (candidates.Contains(SorceryChainLightningSkillId))
+                if (candidates.Contains(SorceryChainLightningSkillId) && IsSkillInRangeAndReady(bot, target, SorceryChainLightningSkillId, distance))
                     return SorceryChainLightningSkillId;
 
-                if (candidates.Contains(WitchcraftEarthenGripSkillId))
+                if (candidates.Contains(WitchcraftEarthenGripSkillId) && IsSkillInRangeAndReady(bot, target, WitchcraftEarthenGripSkillId, distance))
                     return WitchcraftEarthenGripSkillId;
 
-                if (candidates.Contains(OccultismHellSpearSkillId))
+                if (candidates.Contains(OccultismHellSpearSkillId) && IsSkillInRangeAndReady(bot, target, OccultismHellSpearSkillId, distance))
                     return OccultismHellSpearSkillId;
 
-                if (candidates.Contains(OccultismManaStarsSkillId))
+                if (candidates.Contains(OccultismManaStarsSkillId) && IsSkillInRangeAndReady(bot, target, OccultismManaStarsSkillId, distance))
                     return OccultismManaStarsSkillId;
 
-                if (candidates.Contains(AuramancyThwartSkillId))
+                if (candidates.Contains(AuramancyThwartSkillId) && IsSkillInRangeAndReady(bot, target, AuramancyThwartSkillId, distance))
                     return AuramancyThwartSkillId;
 
                 break;
@@ -245,17 +373,21 @@ public static class CombatDecisionTree
             case CombatRole.RangedPhysical:
             {
                 // Archery combo chain: Charged Bolt (16210) [inflicts Slow] -> Endless Arrows (14835) [bonus vs Slowed]
-                if (lastSkillUsed == ArcheryChargedBoltSkillId && candidates.Contains(ArcheryEndlessArrowsSkillId))
+                if (lastSkillUsed == ArcheryChargedBoltSkillId && candidates.Contains(ArcheryEndlessArrowsSkillId) && IsSkillInRangeAndReady(bot, target, ArcheryEndlessArrowsSkillId, distance))
                     return ArcheryEndlessArrowsSkillId;
 
                 // Opener: slow with Charged Bolt
-                if (candidates.Contains(ArcheryChargedBoltSkillId))
+                if (candidates.Contains(ArcheryChargedBoltSkillId) && IsSkillInRangeAndReady(bot, target, ArcheryChargedBoltSkillId, distance))
                     return ArcheryChargedBoltSkillId;
 
-                if (candidates.Contains(ArcheryEndlessArrowsSkillId))
+                if (candidates.Contains(ArcheryEndlessArrowsSkillId) && IsSkillInRangeAndReady(bot, target, ArcheryEndlessArrowsSkillId, distance))
                     return ArcheryEndlessArrowsSkillId;
 
-                if (candidates.Contains(ShadowplayRapidStrikesSkillId))
+                if (candidates.Contains(ArcheryShootSkillId) && IsSkillInRangeAndReady(bot, target, ArcheryShootSkillId, distance))
+                    return ArcheryShootSkillId;
+
+                // Fallback close-quarters melee skill if target closed in
+                if (candidates.Contains(ShadowplayRapidStrikesSkillId) && IsSkillInRangeAndReady(bot, target, ShadowplayRapidStrikesSkillId, distance))
                     return ShadowplayRapidStrikesSkillId;
 
                 break;
@@ -264,32 +396,38 @@ public static class CombatDecisionTree
             case CombatRole.HealerSupport:
             {
                 // Songcraft combo chain: Startling Strain (11934) [Stuns & Charms] -> Critical Discord (11973) [amplified vs Charmed]
-                if (lastSkillUsed == SongcraftStartlingStrainSkillId && candidates.Contains(SongcraftCriticalDiscordSkillId))
+                if (lastSkillUsed == SongcraftStartlingStrainSkillId && candidates.Contains(SongcraftCriticalDiscordSkillId) && IsSkillInRangeAndReady(bot, target, SongcraftCriticalDiscordSkillId, distance))
                     return SongcraftCriticalDiscordSkillId;
 
                 // Vitalism rotation: Resurgence (10547) [HoT buff] -> Antithesis (10534) [damage/heal]
                 var hpPercent = bot.MaxHp > 0 ? (float)bot.Hp / bot.MaxHp : 1.0f;
-                if (hpPercent < 0.70f && candidates.Contains(VitalismResurgenceSkillId))
+                if (hpPercent < 0.70f && candidates.Contains(VitalismResurgenceSkillId) && IsSkillInRangeAndReady(bot, target, VitalismResurgenceSkillId, distance))
                     return VitalismResurgenceSkillId;
 
-                if (candidates.Contains(SongcraftStartlingStrainSkillId) && lastSkillUsed != SongcraftStartlingStrainSkillId)
+                if (candidates.Contains(SongcraftStartlingStrainSkillId) && lastSkillUsed != SongcraftStartlingStrainSkillId && IsSkillInRangeAndReady(bot, target, SongcraftStartlingStrainSkillId, distance))
                     return SongcraftStartlingStrainSkillId;
 
-                if (candidates.Contains(SongcraftCriticalDiscordSkillId))
+                if (candidates.Contains(SongcraftCriticalDiscordSkillId) && IsSkillInRangeAndReady(bot, target, SongcraftCriticalDiscordSkillId, distance))
                     return SongcraftCriticalDiscordSkillId;
 
-                if (candidates.Contains(VitalismAntithesisSkillId))
+                if (candidates.Contains(VitalismAntithesisSkillId) && IsSkillInRangeAndReady(bot, target, VitalismAntithesisSkillId, distance))
                     return VitalismAntithesisSkillId;
 
-                if (candidates.Contains(VitalismResurgenceSkillId))
+                if (candidates.Contains(VitalismResurgenceSkillId) && IsSkillInRangeAndReady(bot, target, VitalismResurgenceSkillId, distance))
                     return VitalismResurgenceSkillId;
 
                 break;
             }
         }
 
-        // Fallback: return the first available skill in the candidates list
-        return availableSkills[0];
+        // Fallback: return the first available skill in candidates that is in range and ready
+        foreach (var skillId in availableSkills)
+        {
+            if (IsSkillInRangeAndReady(bot, target, skillId, distance))
+                return skillId;
+        }
+
+        return 0u;
     }
 
     /// <summary>
@@ -368,9 +506,29 @@ public static class CombatDecisionTree
         }
         else if (role == CombatRole.Melee)
         {
-            // If melee and beyond melee reach, close the gap
+            // If melee and beyond melee reach, check for gap-closer before walking
             if (distance > maxMeleeRange)
             {
+                var resolvedSkills = availableSkills ?? (bot.Skills?.Skills.Keys.ToList() as IReadOnlyList<uint>) ?? [];
+                var candSet = new HashSet<uint>(resolvedSkills);
+                var gapSkill = 0u;
+
+                if (distance <= 12.0f && candSet.Contains(BattlerageChargeSkillId) && IsSkillInRangeAndReady(bot, target, BattlerageChargeSkillId, distance))
+                    gapSkill = BattlerageChargeSkillId;
+                else if (distance <= 10.0f && candSet.Contains(ShadowplayOverwhelmSkillId) && IsSkillInRangeAndReady(bot, target, ShadowplayOverwhelmSkillId, distance))
+                    gapSkill = ShadowplayOverwhelmSkillId;
+
+                if (gapSkill > 0)
+                {
+                    return new CombatDecision(
+                        Action: CombatTacticalAction.CastSkill,
+                        Rationale: $"gap-closer-in-range ({gapSkill} at {distance:F1}m)",
+                        Priority: 650,
+                        SkillId: gapSkill,
+                        TargetObjId: target.ObjId
+                    );
+                }
+
                 return new CombatDecision(
                     Action: CombatTacticalAction.CloseGap,
                     Rationale: $"close-gap-melee-reach ({distance:F1}m > {maxMeleeRange:F1}m)",
@@ -383,6 +541,27 @@ public static class CombatDecisionTree
 
         // ---------------------------------------------------- 3. CAST COMBAT SKILL
         var selectedSkill = SelectPrioritizedSkill(bot, target, role, availableSkills, lastSkillUsed);
+        if (selectedSkill == 0)
+        {
+            if (role == CombatRole.Melee && distance > DefaultMeleeMin)
+            {
+                return new CombatDecision(
+                    Action: CombatTacticalAction.CloseGap,
+                    Rationale: $"close-gap-no-usable-skill ({distance:F1}m > {DefaultMeleeMin:F1}m)",
+                    Priority: 600,
+                    TargetPosition: targetPos,
+                    TargetObjId: target.ObjId
+                );
+            }
+
+            return new CombatDecision(
+                Action: CombatTacticalAction.HoldAndRegen,
+                Rationale: $"hold-and-regen-cooldowns (dist={distance:F1}m, role={role})",
+                Priority: 200,
+                TargetObjId: target.ObjId
+            );
+        }
+
         var comboInfo = (lastSkillUsed > 0 && selectedSkill > 0) ? $" (combo-following={lastSkillUsed})" : "";
         return new CombatDecision(
             Action: CombatTacticalAction.CastSkill,

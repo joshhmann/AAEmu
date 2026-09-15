@@ -298,4 +298,80 @@ public class CombatDecisionTreeTests
         await Assert.That(d2.Action).IsEqualTo(CombatTacticalAction.CastSkill);
         await Assert.That(d2.SkillId).IsEqualTo(CombatDecisionTree.SongcraftCriticalDiscordSkillId);
     }
+
+    [Test]
+    public async Task Evaluate_Melee_AtDistance_UsesChargeGapCloser()
+    {
+        // Bot is at 8m (outside 3.5m melee reach, but within 12m Charge reach)
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(108, 100, 10));
+        var skills = new uint[]
+        {
+            CombatDecisionTree.BattlerageTripleSlashSkillId, // 4m max
+            CombatDecisionTree.BattlerageChargeSkillId       // 12m max
+        };
+
+        var decision = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills);
+        await Assert.That(decision.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(decision.SkillId).IsEqualTo(CombatDecisionTree.BattlerageChargeSkillId);
+        await Assert.That(decision.Priority).IsEqualTo(650);
+        await Assert.That(decision.Rationale.Contains("gap-closer-in-range")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_Melee_OutOfRangeTripleSlash_ProposesCloseGap()
+    {
+        // Bot is at 8m, only has Triple Slash (4m max range)
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(108, 100, 10));
+        var skills = new uint[]
+        {
+            CombatDecisionTree.BattlerageTripleSlashSkillId // 4m max
+        };
+
+        var decision = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills);
+        await Assert.That(decision.Action).IsEqualTo(CombatTacticalAction.CloseGap);
+        await Assert.That(decision.Priority).IsEqualTo(600);
+        await Assert.That(decision.Rationale.Contains("close-gap-melee-reach")).IsTrue();
+    }
+
+    [Test]
+    public async Task Evaluate_Melee_CooldownFiltering_SkipsCooldownSkill()
+    {
+        // Bot is at 2m (in melee reach). Skills: Charge (opener) and Triple Slash
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(102, 100, 10));
+        var skills = new uint[]
+        {
+            CombatDecisionTree.BattlerageChargeSkillId,
+            CombatDecisionTree.BattlerageTripleSlashSkillId
+        };
+
+        // Put Charge on cooldown (10 seconds remaining)
+        bot.Cooldowns?.AddCooldown(CombatDecisionTree.BattlerageChargeSkillId, 10000);
+
+        var decision = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.Melee, availableSkills: skills);
+        await Assert.That(decision.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(decision.SkillId).IsEqualTo(CombatDecisionTree.BattlerageTripleSlashSkillId);
+    }
+
+    [Test]
+    public async Task Evaluate_Ranged_ArcheryCombo_ChargedBoltThenEndlessArrows()
+    {
+        // Bot is at 16m (ideal archery range).
+        var (bot, target) = CreateMockCombatants(new Vector3(100, 100, 10), new Vector3(116, 100, 10));
+        var skills = new uint[]
+        {
+            CombatDecisionTree.ArcheryShootSkillId,
+            CombatDecisionTree.ArcheryEndlessArrowsSkillId,
+            CombatDecisionTree.ArcheryChargedBoltSkillId
+        };
+
+        // Opener -> Charged Bolt (Slows)
+        var d1 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.RangedPhysical, availableSkills: skills, lastSkillUsed: 0);
+        await Assert.That(d1.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d1.SkillId).IsEqualTo(CombatDecisionTree.ArcheryChargedBoltSkillId);
+
+        // Follow-up -> Endless Arrows (machine gun bonus vs slow)
+        var d2 = CombatDecisionTree.Evaluate(bot, target, roleOverride: CombatRole.RangedPhysical, availableSkills: skills, lastSkillUsed: CombatDecisionTree.ArcheryChargedBoltSkillId);
+        await Assert.That(d2.Action).IsEqualTo(CombatTacticalAction.CastSkill);
+        await Assert.That(d2.SkillId).IsEqualTo(CombatDecisionTree.ArcheryEndlessArrowsSkillId);
+    }
 }

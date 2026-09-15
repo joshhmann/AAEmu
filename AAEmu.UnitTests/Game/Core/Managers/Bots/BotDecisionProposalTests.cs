@@ -50,6 +50,8 @@ public class BotDecisionProposalTests
         public ActorRequest Stop() => Unsupported();
         public ActorRequest Cast(uint skillId, uint targetObjId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest CastAt(uint skillId, Vector3 position, string? idempotencyKey = null) => Unsupported();
+        public ActorRequest AutoAttack(uint targetObjId, string? idempotencyKey = null) => Unsupported();
+        public ActorRequest StopAutoAttack(string? idempotencyKey = null) => Unsupported();
         public ActorRequest Interact(uint doodadObjId, uint skillId = 0, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Loot(uint lootOwnerObjId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0, string? idempotencyKey = null) => Unsupported();
@@ -65,6 +67,7 @@ public class BotDecisionProposalTests
         public ActorRequest TradeLockOk(string? idempotencyKey = null) => Unsupported();
         public ActorRequest Mount(uint mateObjId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null) => Unsupported();
+        public ActorRequest DismissMate(uint tlId = 0, string? idempotencyKey = null) => Unsupported();
         public ActorRequest BoardVehicle(uint vehicleObjId, AttachPointKind attachPoint = AttachPointKind.Driver, string? idempotencyKey = null) => Unsupported();
         public ActorRequest UnboardVehicle(uint vehicleObjId = 0, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Harvest(uint doodadObjId, string? idempotencyKey = null) => Unsupported();
@@ -88,6 +91,7 @@ public class BotDecisionProposalTests
         public ActorRequest TurnInAtDoodad(uint questId, uint doodadObjId, int selectedReward = -1, string? idempotencyKey = null) => Unsupported();
         public ActorRequest AutoTurnInQuest(uint questId, int selectedReward = -1, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Talk(uint npcObjId, string? idempotencyKey = null) => Unsupported();
+        public ActorRequest InteractNpc(uint npcObjId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest DiscoverSelfQuests(string? idempotencyKey = null) => Unsupported();
         public ActorRequest PlayCinema(uint cinemaId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest Buy(uint merchantNpcObjId, uint itemTemplateId, int count, string? idempotencyKey = null) => Unsupported();

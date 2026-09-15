@@ -36,13 +36,39 @@ public sealed record NeedsFarmModuleOptions
     /// <summary>Bag template counted as lumber (0 = lumber dimension ignored — treated as satisfied).</summary>
     public uint LumberItemTemplateId { get; init; }
 
-    /// <summary>Reads the deployment gate from the environment (default OFF).</summary>
+    /// <summary>Reads the deployment gate from the environment or config (default OFF).</summary>
     public static NeedsFarmModuleOptions FromEnvironment()
     {
         var env = Environment.GetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED");
-        return new NeedsFarmModuleOptions { Enabled = env is "1" or "true" or "True" };
+        var enabled = env is "1" or "true" or "True";
+        if (!enabled)
+        {
+            foreach (var fileName in new[] { "Config.Local.json", "Config.json" })
+            {
+                try
+                {
+                    if (File.Exists(fileName))
+                    {
+                        var text = File.ReadAllText(fileName);
+                        using var doc = System.Text.Json.JsonDocument.Parse(text);
+                        if (doc.RootElement.TryGetProperty("Bots", out var bots)
+                            && bots.TryGetProperty("EnableNeedsFarm", out var prop)
+                            && prop.GetBoolean())
+                        {
+                            enabled = true;
+                            break;
+                        }
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+        return new NeedsFarmModuleOptions { Enabled = enabled };
     }
 }
+
 
 /// <summary>
 /// Tier 0 autonomous public-farm driver, arbitration half: when the

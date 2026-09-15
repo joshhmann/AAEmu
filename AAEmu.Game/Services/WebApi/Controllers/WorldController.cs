@@ -1,4 +1,4 @@
-﻿using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Services.WebApi.Models;
 using NetCoreServer;
 
@@ -13,7 +13,7 @@ internal class WorldController : BaseController
     public HttpResponse GetCharacter(HttpRequest request)
     {
         var loggedCharacters = WorldManager.Instance.GetAllCharacters()
-            .Select(x => new CharacterModel(x.Id, x.Name, x.Level, x.Created, x.IsOnline));
+            .Select(x => new CharacterModel(x.Id, x.Name, x.Level, x.Created, x.IsOnline, x.Transform.World.Position.X, x.Transform.World.Position.Y, x.Transform.World.Position.Z));
         return OkJson(loggedCharacters);
     }
 }

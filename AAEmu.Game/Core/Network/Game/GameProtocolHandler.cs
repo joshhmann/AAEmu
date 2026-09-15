@@ -203,6 +203,10 @@ public class GameProtocolHandler : BaseProtocolHandler
                         packet!.Level = level;
                         packet.Connection = connection;
                         packet.Decode(stream2);
+                        if (connection.ActiveChar != null && AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.IsActive)
+                        {
+                            AAEmu.Game.Core.Managers.Bots.PlayerTraceService.Instance.RecordPacketIn(connection.ActiveChar, packet);
+                        }
                     }
                 }
                 else

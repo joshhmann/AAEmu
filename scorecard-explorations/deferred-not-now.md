@@ -56,10 +56,12 @@ requires its trigger to fire.
      at that durable path (machine-specific — never shared config).
 
 ## 6. H human acceptance
-- **Status:** NOT NOW — owner-only by definition.
-- **Reason:** Human acceptance can only be performed by the owner; it
-  cannot be scheduled, staffed, or executed as a lane.
+- **Status:** NOT NOW — owner-verdict only by definition.
+- **Reason:** Only Josh performs the human verdict; contributors may prepare and
+  support it. Its timing does not freeze bot/engineering lanes.
 - **Revisit trigger:** Owner performs acceptance. There is no proxy trigger.
+- Per-gate UNKNOWN vs recorded DEFERRED distinctions stand; this register does
+  not convert all H cells to DEFERRED.
 
 ## 7. Phase-2 clamp-beyond-verified + Mira 9632 follow-up
 - **Status:** NOT NOW — needs in-game proof.
@@ -108,3 +110,41 @@ requires its trigger to fire.
   prepared-statement race fix — then re-evaluate, never blindly upgrade.
 - **Reference:** `/tmp/driver-research-tail.md` (outside repo; not copied
   in).
+
+## 12. PlayerBot Farming Loop Wait Alternatives (Options 2 & 3)
+- **Status:** NOT NOW — Option 1 (leashed homestead leisure/micro-wander) implemented and active.
+- **Reason:** Option 1 resolved the immediate continental roaming/mob engagement while preserving organic bot presence around the crop. Options 2 and 3 are reserved for future bot personality / errand progression.
+- **Option 2 (Village Errands with Recall Timer):** Bots embark on nearby village tasks (merchant restock, well-gathering, village patrol) during long crop growth windows, with a scheduled recall timer to return when crops mature.
+- **Option 3 (Distinct Bot Personalities / Archetypes):** Differentiated bot archetypes configured via profile/weights — e.g. dedicated farmer archetype (spends entire day tending and loitering at the homestead) vs. adventurer/hybrid archetype (plants crops as a side activity and undertakes regional travels before returning).
+- **Revisit trigger:** Owner requests multi-role bot diversity or larger town activity loops beyond the farm perimeter.
+
+## 13. Autonomous Quest Multi-Objective Progression & Branching
+- **Status:** NOT NOW — basic quest accept and turn-in (M5.3) is verified and closed; multi-objective quest progression is parked.
+- **Reason:** Single-objective and delivery quests are proven. Multi-stage quests with sequential or branched objectives (e.g. kill N mobs -> collect drops -> trigger world doodad -> turn in) require a quest objective DAG resolver in `BotRoamStepExecutor` / `LevelingLoopScenario`.
+- **Revisit trigger:** Leveling progression moves into multi-objective quest zones (e.g. Arcum Iris / Solzreed quest chains beyond initial intro) or owner completes trace `quest_multi_objective_progression`.
+
+## 14. Out-of-Combat Food & Potion Resource Recovery Loop
+- **Status:** NOT NOW — passive health and mana regeneration is active; automated consumable usage is parked.
+- **Reason:** Bots currently replenish health and mana through natural regen between roaming cycles. Active food/soup and potion consumption requires inventory stock monitoring and item cooldown checks in `GameplayActor` and `CombatDecisionTree`.
+- **Revisit trigger:** High-density mob grinding causes excessive bot downtime or player initiates sustain-heavy leveling tests, or trace `combat_food_potion_recovery` is collected.
+
+## 15. Combat Knockback / Whirlwind Reactive Spacing & Ranged Weapon Swapping
+- **Status:** NOT NOW — range-gated melee combos and continuous auto-attacks are active.
+- **Reason:** Bots currently handle distance-based skill selection at pull time. Dynamic reactive spacing (detecting when an enemy mob's whirlwind or knockback launches the bot into the air or separates it >4m, and switching to bow/ranged skills while gap closers are on cooldown) is an enhancement.
+- **Revisit trigger:** Mobs with whirlwind/knockback abilities cause observable combat stalls, or trace `combat_knockback_ranged_fallback` is captured.
+
+## 16. Mount Summon, Waypoint Riding & Dismount Loop
+- **Status:** NOT NOW — on-foot navigation, roaming, and sprint are active.
+- **Reason:** Mount item casting (`Skill 10602`) and riding mechanics exist in engine, but autonomous bot pathfinding while mounted (handling companion unit mounting, speed adjustments, and auto-dismounting at waypoints) is deprioritized until long-distance regional travel is required.
+- **Revisit trigger:** Bot travel distances between waypoints exceed 100m, making on-foot travel a primary bottleneck, or trace `travel_mount_and_ride` is captured.
+
+## 17. Multi-Bot Party Coordination & Assist Targeting
+- **Status:** NOT NOW — solo bot roaming and combat decision trees are complete.
+- **Reason:** Multi-bot party formations (following party leader, target assisting via `CSChangeTargetPacket`, and chaining complementary crowd-control / combo skills such as Tank Stun -> Rogue Backstab) require inter-bot message passing.
+- **Revisit trigger:** Group dungeon content (e.g. Sharpwind Mines / Palace Cellar) or party testing lane is initiated, or trace `bot_party_combat_assist` is captured.
+
+## 18. PlayerBot Roster Manifest Generation & 120-Class Diversity
+- **Status:** NOT NOW — individual bot spawning (`/bot add`, `/bot here`) and persistence (`/bot restore`) are closed.
+- **Reason:** Automated batch population generation with randomized visual presets, racial factions, and class archetypes across all 10 ArcheAge ability trees (120 classes) is reserved for population scaling.
+- **Revisit trigger:** Population scale benchmarks requiring 50+ diverse bots across starter zones, or owner requests automated world population fill.
+

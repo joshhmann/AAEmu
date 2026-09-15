@@ -1,4 +1,4 @@
-﻿using AAEmu.Commons.Exceptions;
+using AAEmu.Commons.Exceptions;
 using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.DB;
 
@@ -154,10 +154,14 @@ public class IdManager
     {
         lock (_lock)
         {
+            if (_freeIds == null)
+                return;
+
             var objectId = (int)(usedObjectId - _firstId);
             if (objectId > -1)
             {
-                _freeIds.Clear(objectId);
+                if (objectId < _freeIds.Count)
+                    _freeIds.Clear(objectId);
                 if (_nextFreeId > objectId)
                     _nextFreeId = objectId;
                 Interlocked.Increment(ref _freeIdCount);

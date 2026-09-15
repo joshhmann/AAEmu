@@ -1,0 +1,1674 @@
+[
+  {
+    "id": "combat_basic_melee",
+    "title": "Basic Melee Combat & Auto-Attack",
+    "category": "Combat",
+    "priority": "High",
+    "scenario": "combat_basic_melee",
+    "status": "Complete",
+    "description": "Engage a solitary, low-level hostile NPC using standard melee weapon strikes and auto-attacks.",
+    "target_packets": [
+      "CSChangeTargetPacket",
+      "CSStartSkillPacket",
+      "SCCombatFirstHitPacket",
+      "SCSkillFiredPacket",
+      "SCUnitPointsPacket",
+      "SCUnitDeathPacket"
+    ],
+    "instructions": [
+      "Locate a solitary hostile mob (e.g. low-level wolf or bandit) in an open area.",
+      "Stand at ~15m range with weapon drawn.",
+      "Open chat and start trace: `/trace start combat_basic_melee`",
+      "Target the hostile unit by clicking or pressing Tab.",
+      "Approach into melee range and initiate basic attack / auto-attack.",
+      "Allow the attack sequence to land and observe damage numbers.",
+      "Defeat the enemy and wait 2 seconds for death animation and loot generation.",
+      "Stop trace: `/trace stop`",
+      "Click 'Run Coverage Analysis' to verify packet capture."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start combat_basic_melee`",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Acquire target lock on hostile mob",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Execute melee attack and record damage packet",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Wait for mob defeat / death state",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Execute `/trace stop`",
+        "done": true,
+        "required": true
+      }
+    ],
+    "notes": "Verified human trace in corpus (6,775 records, 49.7s). Captured CSChangeTargetPacket, CSStartSkillPacket, SCCombatFirstHitPacket, SCSkillFiredPacket, and SCUnitDeathPacket."
+  },
+  {
+    "id": "combat_basic_ranged",
+    "title": "Basic Ranged Combat & Arrow Skills",
+    "category": "Combat",
+    "priority": "High",
+    "scenario": "combat_basic_ranged",
+    "status": "Complete",
+    "description": "Engage hostile mob at range with bow / projectile skills.",
+    "target_packets": [
+      "CSChangeTargetPacket",
+      "CSStartSkillPacket",
+      "SCSkillFiredPacket",
+      "SCUnitDamagedPacket",
+      "SCCombatFirstHitPacket",
+      "SCUnitDeathPacket"
+    ],
+    "instructions": [
+      "Target hostile mob at range",
+      "Fire ranged skills via CSStartSkillPacket",
+      "Verify SCUnitDamagedPacket and SCUnitDeathPacket"
+    ],
+    "checklist": [
+      {
+        "id": "s1",
+        "text": "Execute /trace start combat_basic_ranged",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "s2",
+        "text": "Acquire target lock at range",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "s3",
+        "text": "Fire projectile attacks and confirm hit",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "s4",
+        "text": "Execute /trace stop",
+        "done": true,
+        "required": true
+      }
+    ],
+    "notes": "Verified human trace in corpus (5,302 records, 40.5s). Captured 20x CSStartSkillPacket, SCUnitDamagedPacket, SCUnitDeathPacket."
+  },
+  {
+    "id": "quest_accept_and_turnin",
+    "title": "Quest Dialogue, Objective & Turn-In",
+    "category": "Quests",
+    "priority": "High",
+    "scenario": "quest_accept_and_turnin",
+    "status": "Complete",
+    "description": "Interact with a quest-giving NPC, accept an introductory quest, fulfill the objective, and turn it in for rewards.",
+    "target_packets": [
+      "CSStartQuestContextPacket",
+      "SCQuestContextStartedPacket",
+      "SCQuestContextUpdatedPacket",
+      "CSCompleteQuestContextPacket",
+      "SCQuestContextCompletedPacket"
+    ],
+    "instructions": [
+      "Find an NPC with an available quest exclamation mark (!).",
+      "Start trace: `/trace start quest_accept_and_turnin`",
+      "Interact with the NPC (`F` key) to open dialogue window.",
+      "Select and accept the quest via the dialogue menu.",
+      "Navigate to the required objective location.",
+      "Complete the required action (kill mob, pick item, or interact with doodad).",
+      "Return to the quest NPC and turn in the quest (`?` mark).",
+      "Collect quest experience and item reward.",
+      "Stop trace: `/trace stop`"
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start quest_accept_and_turnin`",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Interact with NPC and accept quest",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Fulfill quest objective step",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Turn in quest and accept reward",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Execute `/trace stop`",
+        "done": true,
+        "required": true
+      }
+    ],
+    "notes": "Verified human trace in corpus (22,631 records, 137s). Captured full quest lifecycle: accept (CSStartQuestContextPacket), objective progression (12x SCQuestContextUpdatedPacket), and turn-in reward (CSCompleteQuestContextPacket)."
+  },
+  {
+    "id": "craft_single_item",
+    "title": "Workbench Crafting & Production",
+    "category": "Crafting",
+    "priority": "High",
+    "scenario": "craft_single_item",
+    "status": "Pending",
+    "description": "Approach an artisan workbench (e.g. carpentry or weaving), select a single recipe, and craft it using materials and labor.",
+    "target_packets": [
+      "CSCraftPacket",
+      "SCCraftStartedPacket",
+      "SCCraftEndedPacket"
+    ],
+    "instructions": [
+      "Ensure character has required raw materials and labor points.",
+      "Stand directly in front of an active crafting workstation.",
+      "Start trace: `/trace start craft_single_item`",
+      "Interact with the workbench to open the production interface.",
+      "Select an affordable single-craft recipe.",
+      "Click Craft / Produce and allow the progress bar to finish.",
+      "Verify product item appears in inventory and labor power is deducted.",
+      "Close workstation interface.",
+      "Stop trace: `/trace stop`"
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start craft_single_item`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Interact with crafting workstation",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Trigger craft action and await completion",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Confirm labor deduction & inventory receipt",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "use_bag_consumable",
+    "title": "Use Bag Consumable Item",
+    "category": "Inventory",
+    "priority": "Medium",
+    "scenario": "use_bag_consumable",
+    "status": "Complete",
+    "description": "Activate a consumable item (e.g. bread, health potion, or buff scroll) directly from the player bag.",
+    "target_packets": [
+      "CSStartSkillPacket",
+      "SCItemTaskSuccessPacket",
+      "SCSkillFiredPacket",
+      "SCUnitPointsPacket"
+    ],
+    "instructions": [
+      "Open inventory bag (`I` key) and locate a food or potion item.",
+      "Start trace: `/trace start use_bag_consumable`",
+      "Right-click the consumable item to activate it.",
+      "Observe health/mana point recovery or buff application.",
+      "Wait for the item cooldown timer to appear.",
+      "Stop trace: `/trace stop`"
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start use_bag_consumable`",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Right-click consumable item in bag",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Verify cooldown packet and stat recovery",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": true,
+        "required": true
+      }
+    ],
+    "notes": "Verified human trace in corpus (1,192 records, 8.4s). Confirms item use triggers CSStartSkillPacket with item skill ID."
+  },
+  {
+    "id": "trade_direct_player",
+    "title": "Direct Player-to-Player Trade",
+    "category": "Economy",
+    "priority": "Medium",
+    "scenario": "trade_direct_player",
+    "status": "Pending",
+    "description": "Initiate bilateral player trade, place an item or gold in the trade window, lock trade, and complete trade.",
+    "target_packets": [
+      "CSAskTradePacket",
+      "CSPutupTradeItemPacket",
+      "CSTradeLockPacket"
+    ],
+    "instructions": [
+      "Stand facing another player character.",
+      "Start trace: `/trace start trade_direct_player`",
+      "Target player, right-click frame and select Trade.",
+      "Wait for other player to accept trade invitation.",
+      "Drag an item or enter 1 silver into the trade window.",
+      "Click 'Lock Trade'.",
+      "When both players lock, click 'Trade / Accept'.",
+      "Verify trade window closes and item transfers.",
+      "Stop trace: `/trace stop`"
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start trade_direct_player`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Send trade request and open trade frame",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Place item or coin in trade slot",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Lock trade and confirm transaction",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "equipment_repair",
+    "title": "Equipment Repair at Blacksmith",
+    "category": "NPC Services",
+    "priority": "Medium",
+    "scenario": "equipment_repair",
+    "status": "Pending",
+    "description": "Approach a blacksmith or weapon merchant NPC, open the repair interface, and repair a damaged piece of gear.",
+    "target_packets": [
+      "CSRepairItemPacket",
+      "SCRepairItemResultPacket"
+    ],
+    "instructions": [
+      "Ensure at least one equipped item has slight durability loss.",
+      "Approach a Blacksmith NPC.",
+      "Start trace: `/trace start equipment_repair`",
+      "Talk to Blacksmith and select the Repair option (anvil icon).",
+      "Click 'Repair All' or click the specific item.",
+      "Confirm money deduction.",
+      "Stop trace: `/trace stop`"
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start equipment_repair`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Open NPC repair window",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Confirm repair and verify durability restoration",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "warehouse_banking",
+    "title": "Warehouse Deposit & Withdrawal",
+    "category": "NPC Services",
+    "priority": "Low",
+    "scenario": "warehouse_banking",
+    "status": "Complete",
+    "description": "Open personal bank storage at a Warehouse Manager NPC, deposit an item, and withdraw it back.",
+    "target_packets": [
+      "CSBankDepositPacket",
+      "CSBankWithdrawPacket"
+    ],
+    "instructions": [
+      "Locate a Warehouse Manager NPC in a town.",
+      "Start trace: `/trace start warehouse_banking`",
+      "Interact with NPC to open the Warehouse window.",
+      "Right-click an item in bag to deposit into warehouse slot.",
+      "Right-click the item in warehouse slot to withdraw back to bag.",
+      "Close warehouse window.",
+      "Stop trace: `/trace stop`"
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start warehouse_banking`",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Open Warehouse storage interface",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Deposit item into vault slot",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Withdraw item back into inventory",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Execute `/trace stop`",
+        "done": true,
+        "required": true
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "mail_send_receive",
+    "title": "Mailbox Send & Receive",
+    "category": "Economy",
+    "priority": "Low",
+    "scenario": "mail_send_receive",
+    "status": "Pending",
+    "description": "Interact with a world mailbox doodad, compose an in-game mail to an alt or friend, and collect returned mail.",
+    "target_packets": [
+      "CSMailSendPacket",
+      "CSMailReadPacket",
+      "SCGotMailPacket"
+    ],
+    "instructions": [
+      "Find a world Mailbox doodad (owl post).",
+      "Start trace: `/trace start mail_send_receive`",
+      "Interact with mailbox (`F` key).",
+      "Click Compose Mail, type recipient name and message body.",
+      "Attach 1 silver coin and click Send.",
+      "Close mailbox window.",
+      "Stop trace: `/trace stop`"
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start mail_send_receive`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Open mailbox interaction",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Compose and transmit mail",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": ""
+  },
+  {
+    "id": "two_potatoes_full_cycle",
+    "title": "Two Potatoes Full Cycle (Plant x2, Wait, Harvest x2)",
+    "category": "Farming",
+    "priority": "High",
+    "scenario": "two_potatoes_full_cycle",
+    "status": "Pending",
+    "description": "Architecture probe trace: approach soil, STOP, plant potato 1, sidestep, STOP, plant potato 2, wait on camera, harvest both. Establishes U1 stop/range/facing and U2 plant/harvest paths.",
+    "target_packets": [
+      "CSCreateDoodadPacket",
+      "CSStartSkillPacket",
+      "SCSkillStartedPacket",
+      "SCSkillFiredPacket",
+      "SCSkillEndedPacket"
+    ],
+    "target_events": [
+      "movement/move_stop",
+      "skill/cast_started",
+      "interaction/doodad_use",
+      "world/doodad_created",
+      "world/doodad_phase_changed",
+      "resource/labor_changed"
+    ],
+    "instructions": [
+      "Stand clear of the farm plot with 2+ potato seeds (item 15659) and labor available.",
+      "Execute `/trace start two_potatoes_full_cycle` in chat.",
+      "Approach the first soil spot, release all movement keys, and hold fully still for 2 seconds (no input).",
+      "Place potato seed 1. Execute `/mark planted_1` in chat.",
+      "Sidestep to an adjacent soil spot, release keys, hold fully still for 2 seconds.",
+      "Place potato seed 2. Execute `/mark planted_2` in chat.",
+      "Wait WITHOUT leaving the plot (captures growth phases and maturity duration).",
+      "Approach crop 1, stop fully, harvest it. Execute `/mark harvested_1` in chat.",
+      "Approach crop 2, stop fully, harvest it. Execute `/mark harvested_2` in chat.",
+      "Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start two_potatoes_full_cycle`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "2s full stop before plant 1 (no movement input)",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Plant 1 placed + marked planted_1",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Sidestep + 2s full stop before plant 2",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Plant 2 placed + marked planted_2",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step6",
+        "text": "On-camera maturity wait (no zone leave)",
+        "done": false,
+        "required": false
+      },
+      {
+        "id": "step7",
+        "text": "Harvest 1 + marked harvested_1 (4000ms cast observable)",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step8",
+        "text": "Harvest 2 + marked harvested_2",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step9",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Phase-0 flagship. U1: stop+range from move_stop/doodad_created geometry; facing TBD (no yaw-at-action hook yet). U2: plant=CSCreateDoodad sync, harvest=Skill.Use 13980/4000ms."
+  },
+  {
+    "id": "farm_growth_to_maturity",
+    "title": "Crop Growth to Maturity (World-Condition Wait)",
+    "category": "Farming",
+    "priority": "High",
+    "scenario": "farm_growth_to_maturity",
+    "status": "Pending",
+    "description": "Plant one potato and remain on camera until it matures, capturing growth phase transitions and maturity duration for world-condition defer evidence.",
+    "target_packets": [
+      "CSCreateDoodadPacket",
+      "SCDoodadPhaseChangedPacket"
+    ],
+    "target_events": [
+      "world/doodad_created",
+      "world/doodad_phase_changed"
+    ],
+    "instructions": [
+      "Stand at a farm plot with 1 potato seed and labor available.",
+      "Execute `/trace start farm_growth_to_maturity` in chat.",
+      "Stop fully, place the potato seed. Execute `/mark planted` in chat.",
+      "Remain within sight of the crop without interacting (AFK-watch, keep client active).",
+      "When the crop reaches mature phase, execute `/mark mature` in chat.",
+      "Stop trace: `/trace stop` (do NOT harvest \u2014 harvest belongs to two_potatoes_full_cycle)."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start farm_growth_to_maturity`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Plant placed + marked planted",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Growth phase transitions captured (4379>4456>4457)",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Maturity marked mature",
+        "done": false,
+        "required": false
+      },
+      {
+        "id": "step5",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Only trace source for maturity duration; gates world-condition DeferUntil. No growth phases captured in any prior trace."
+  },
+  {
+    "id": "npc_buy_single",
+    "title": "NPC Single Line-Item Purchase (Position-Disciplined)",
+    "category": "NPC Services",
+    "priority": "High",
+    "scenario": "npc_buy_single",
+    "status": "Pending",
+    "description": "Approach a merchant, STOP, open dialog, buy exactly one line item. Gives Buy range/settle evidence and pre-convergence baseline for the second validation family.",
+    "target_packets": [
+      "CSStartInteractionPacket",
+      "CSInteractNPCPacket",
+      "CSBuyItemsPacket"
+    ],
+    "target_events": [
+      "resource/money_changed"
+    ],
+    "instructions": [
+      "Bring sufficient coin for one cheap line item (e.g. chick). Note your distance to the merchant.",
+      "Execute `/trace start npc_buy_single` in chat.",
+      "Approach the merchant, release all keys, hold fully still for 2 seconds.",
+      "Open dialog (single CSStartInteractionPacket), then interact.",
+      "Buy exactly ONE line item, one unit. Execute `/mark bought` in chat.",
+      "Hold still 2 seconds, then execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start npc_buy_single`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "2s full stop before dialog",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Dialog open + interact packets",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Single line-item purchase + marked bought",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Second-family gate. Current actor Buy is non-atomic parallel logic; this trace is the convergence oracle (packet atomic rollback vs actor grant-then-charge)."
+  },
+  {
+    "id": "npc_sell_single",
+    "title": "NPC Single-Item Sale + Buyback Window",
+    "category": "NPC Services",
+    "priority": "Medium",
+    "scenario": "npc_sell_single",
+    "status": "Pending",
+    "description": "Sell one item to a merchant and observe the buyback-window traffic, complementing npc_buy_single for the sell path.",
+    "target_packets": [
+      "CSStartInteractionPacket",
+      "CSInteractNPCPacket",
+      "CSSellItemsPacket"
+    ],
+    "target_events": [
+      "resource/money_changed"
+    ],
+    "instructions": [
+      "Bring one low-value bag item to sell.",
+      "Execute `/trace start npc_sell_single` in chat.",
+      "Approach the merchant, hold fully still for 2 seconds.",
+      "Open dialog, then interact.",
+      "Sell exactly ONE item. Execute `/mark sold` in chat.",
+      "Observe the buyback window, hold still 2 seconds.",
+      "Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start npc_sell_single`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "2s full stop before dialog",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Single item sale + marked sold",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Pairs with npc_buy_single; prior sell trace showed SCSoldItemList buyback traffic worth capturing deliberately."
+  },
+  {
+    "id": "mount_horse_itemcast",
+    "title": "Horse Mount via Item Skill Cast",
+    "category": "Mates",
+    "priority": "Medium",
+    "scenario": "mount_horse_itemcast",
+    "status": "Pending",
+    "description": "Mount a horse via the item-skill cast path, capturing the instant-cast item skill and mount packet sequence.",
+    "target_packets": [
+      "CSStartSkillPacket",
+      "CSMountMatePacket"
+    ],
+    "target_events": [
+      "skill/instant_cast"
+    ],
+    "instructions": [
+      "Stand still with a mount item/skill available.",
+      "Execute `/trace start mount_horse_itemcast` in chat.",
+      "Activate the mount (item skill 10602 or equivalent).",
+      "Wait for mount state to settle (2 seconds, no input).",
+      "Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start mount_horse_itemcast`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Item-skill instant cast observed",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Mount packet + settled state",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Prior mount traces are packet-envelope-only (zero mount_mate semantic events); sets baseline for item-cast family."
+  },
+  {
+    "id": "observer_capture_plant",
+    "title": "Observer-Capture Plant (Two-Connection U3 Probe)",
+    "category": "Farming",
+    "priority": "Medium",
+    "scenario": "observer_capture_plant",
+    "status": "Pending",
+    "description": "U3 apparatus probe: second account stands 5m away while the planter plants. Requires two-connection observer capture support; run only after the trace service records observer streams.",
+    "target_packets": [
+      "SCSkillStartedPacket",
+      "SCSkillFiredPacket"
+    ],
+    "target_events": [
+      "world/doodad_created"
+    ],
+    "instructions": [
+      "REQUIRES observer-stream capture support in PlayerTraceService.",
+      "Park observer account ~5m from the farm plot, facing it.",
+      "Start trace on the OBSERVER account: `/trace start observer_capture_plant`",
+      "Planter account (untraced) plants one potato.",
+      "Hold 3 seconds, then `/trace stop` on the observer."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Observer parked 5m, facing plot",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Trace started on observer account",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Remote plant observed (skill/doodad packets on observer conn)",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "U3 work item, NOT a correctness gate. Expected to FAIL evaluation until observer-stream capture lands \u2014 that failure is the apparatus signal."
+  },
+  {
+    "id": "plant_single_potato",
+    "title": "Single Potato Plant (Stop-Disciplined)",
+    "category": "Farming",
+    "priority": "Medium",
+    "scenario": "plant_single_potato",
+    "status": "Pending",
+    "description": "Stop fully, plant one potato seed, observe placement. Standalone U1 range/stop gate for the plant half of Two-Potatoes.",
+    "target_packets": [
+      "CSCreateDoodadPacket"
+    ],
+    "target_events": [
+      "movement/move_stop",
+      "world/doodad_created"
+    ],
+    "instructions": [
+      "Stand clear of a farm plot with 1 potato seed (item 15659) and labor available.",
+      "Execute `/trace start plant_single_potato` in chat.",
+      "Approach the soil spot, release all keys, hold fully still for 2 seconds.",
+      "Place the potato seed. Execute `/mark planted` in chat.",
+      "Hold still 2 seconds, then execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start plant_single_potato`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "2s full stop before plant",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Plant placed + marked planted",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "No skill cast expected on plant path (CSCreateDoodad sync). Pairs with harvest_single_crop."
+  },
+  {
+    "id": "harvest_single_crop",
+    "title": "Single Mature Crop Harvest (Stop-Disciplined)",
+    "category": "Farming",
+    "priority": "High",
+    "scenario": "harvest_single_crop",
+    "status": "Pending",
+    "description": "Stop fully, harvest one mature potato crop through the real 4000ms skill-cast path. Core U2 harvest evidence.",
+    "target_packets": [
+      "CSStartSkillPacket",
+      "SCSkillStartedPacket",
+      "SCSkillFiredPacket",
+      "SCSkillEndedPacket"
+    ],
+    "target_events": [
+      "movement/move_stop",
+      "skill/cast_started",
+      "interaction/doodad_use",
+      "world/doodad_phase_changed",
+      "resource/labor_changed"
+    ],
+    "instructions": [
+      "Locate a MATURE potato crop (phase 4457).",
+      "Execute `/trace start harvest_single_crop` in chat.",
+      "Approach the crop, release all keys, hold fully still for 2 seconds.",
+      "Target the crop and harvest (skill 13980, ~4000ms cast). Execute `/mark harvested` in chat.",
+      "Hold still 2 seconds, then execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start harvest_single_crop`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "2s full stop before harvest",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "4000ms cast + phase advance + marked harvested",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Expect request>fire ~4060ms. Completion triple: SCSkillFired + doodad_use + phase change."
+  },
+  {
+    "id": "water_crop_skill",
+    "title": "Crop Watering Skill Cast",
+    "category": "Farming",
+    "priority": "Low",
+    "scenario": "water_crop_skill",
+    "status": "Pending",
+    "description": "Cast the water skill (13625, 1500ms) on a growing crop. Captures a short-cast farm skill for cast-timing comparison.",
+    "target_packets": [
+      "CSStartSkillPacket",
+      "SCSkillStartedPacket",
+      "SCSkillFiredPacket"
+    ],
+    "target_events": [
+      "skill/cast_started"
+    ],
+    "instructions": [
+      "Locate a growing (non-mature) crop.",
+      "Execute `/trace start water_crop_skill` in chat.",
+      "Stop fully, target the crop, cast the water skill.",
+      "Wait for the fired packet, hold 2 seconds.",
+      "Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start water_crop_skill`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "1500ms water cast observed",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Short-cast comparator for harvest 4000ms timing."
+  },
+  {
+    "id": "gather_wild_resource",
+    "title": "Wild Resource Gathering (Herb/Ore/Lumber)",
+    "category": "Farming",
+    "priority": "Medium",
+    "scenario": "gather_wild_resource",
+    "status": "Pending",
+    "description": "Gather one wild resource node (herb, ore, or lumber) with full stop discipline. Tests whether wild gather shares the farm skill-cast shape.",
+    "target_packets": [
+      "CSStartSkillPacket"
+    ],
+    "target_events": [
+      "movement/move_stop",
+      "skill/cast_started"
+    ],
+    "instructions": [
+      "Locate an ungathered wild resource node.",
+      "Execute `/trace start gather_wild_resource` in chat.",
+      "Approach, release keys, hold fully still for 2 seconds.",
+      "Gather the node with the appropriate tool skill. Execute `/mark gathered` in chat.",
+      "Hold still 2 seconds, then execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start gather_wild_resource`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "2s full stop before gather",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Gather cast + marked gathered",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "If gather turns out F-key (non-skill) driven, this task FAILs packet assertion by design \u2014 that failure IS the finding; report node type in notes."
+  },
+  {
+    "id": "loot_mob_corpse",
+    "title": "Mob Corpse Loot",
+    "category": "Combat",
+    "priority": "High",
+    "scenario": "loot_mob_corpse",
+    "status": "Pending",
+    "description": "Kill or find a lootable corpse, open the loot bag, and take an item. Covers the missing loot family.",
+    "target_packets": [
+      "CSLootOpenBagPacket",
+      "CSLootItemPacket"
+    ],
+    "target_events": [],
+    "instructions": [
+      "Locate a corpse with loot (kill a mob if needed, off-trace).",
+      "Execute `/trace start loot_mob_corpse` in chat.",
+      "Approach the corpse, hold still 2 seconds.",
+      "Open the loot bag and take one item. Execute `/mark looted` in chat.",
+      "Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start loot_mob_corpse`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Loot bag opened",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Item taken + marked looted",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "No distance gate expected in packet handler (verify: loot-at-range behavior decides actor loot discipline)."
+  },
+  {
+    "id": "npc_talk_dialogue",
+    "title": "NPC Dialogue Open (No Purchase)",
+    "category": "NPC Services",
+    "priority": "Medium",
+    "scenario": "npc_talk_dialogue",
+    "status": "Pending",
+    "description": "Open an NPC dialog and close it with no transaction. Isolates the dialog transport (StartInteraction/InteractNPC) from Buy/Sell semantics.",
+    "target_packets": [
+      "CSStartInteractionPacket",
+      "CSInteractNPCPacket"
+    ],
+    "target_events": [],
+    "instructions": [
+      "Approach any service NPC.",
+      "Execute `/trace start npc_talk_dialogue` in chat.",
+      "Hold still 2 seconds, open dialog, wait for the option list.",
+      "Close dialog with no transaction. Execute `/mark talked` in chat.",
+      "Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start npc_talk_dialogue`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Dialog opened, option list received",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Closed with no transaction + marked talked",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "No distance gate in CSStartInteractionPacket (TODO in handler) \u2014 do NOT invent talk-range discipline from this trace."
+  },
+  {
+    "id": "livestock_place_harvest",
+    "title": "Livestock Place & Harvest (Chick Coop)",
+    "category": "Farming",
+    "priority": "Medium",
+    "scenario": "livestock_place_harvest",
+    "status": "Pending",
+    "description": "Place a chick coop and harvest it (6500ms skill 13967). Animal-husbandry counterpart to crop farm evidence.",
+    "target_packets": [
+      "CSCreateDoodadPacket",
+      "CSStartSkillPacket",
+      "SCSkillStartedPacket",
+      "SCSkillFiredPacket"
+    ],
+    "target_events": [
+      "world/doodad_created",
+      "skill/cast_started",
+      "interaction/doodad_use",
+      "world/doodad_phase_changed",
+      "resource/labor_changed"
+    ],
+    "instructions": [
+      "Bring a chick item with coop space available.",
+      "Execute `/trace start livestock_place_harvest` in chat.",
+      "Stop fully, place the chick. Execute `/mark placed` in chat.",
+      "Harvest the coop (skill 13967, ~6500ms). Execute `/mark harvested` in chat.",
+      "Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start livestock_place_harvest`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Coop placed + marked placed",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "6500ms harvest + marked harvested",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Prior traces show phase chain 5794>5801>8434 with labor -10; re-capture deliberately."
+  },
+  {
+    "id": "trade_pack_pickup",
+    "title": "Trade Pack Pickup (RecoverItem Path)",
+    "category": "Economy",
+    "priority": "Medium",
+    "scenario": "trade_pack_pickup",
+    "status": "Pending",
+    "description": "Pick up a world trade/material pack via the RecoverItem path. First hauler-loop evidence.",
+    "target_packets": [
+      "CSLootOpenBagPacket"
+    ],
+    "target_events": [],
+    "instructions": [
+      "Locate a placed trade/material pack.",
+      "Execute `/trace start trade_pack_pickup` in chat.",
+      "Approach, hold still 2 seconds, pick up the pack. Execute `/mark picked` in chat.",
+      "Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start trade_pack_pickup`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Pack picked + marked picked",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Handler comment confirms RecoverItem pickup shares the loot-bag path; delivery/turn-in is a separate future task."
+  },
+  {
+    "id": "auction_search_and_post",
+    "title": "Auction Search & Single Listing",
+    "category": "Economy",
+    "priority": "Medium",
+    "scenario": "auction_search_and_post",
+    "status": "Pending",
+    "description": "Search the auction house and post one single-item listing. Covers the missing auction family transport.",
+    "target_packets": [
+      "CSAuctionSearchPacket",
+      "CSAuctionPostPacket"
+    ],
+    "target_events": [],
+    "instructions": [
+      "Bring one sellable item plus listing fee to an Auction House.",
+      "Execute `/trace start auction_search_and_post` in chat.",
+      "Search for the item's category. Execute `/mark searched` in chat.",
+      "Post ONE single-item listing. Execute `/mark posted` in chat.",
+      "Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start auction_search_and_post`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Search executed + marked searched",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Listing posted + marked posted",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Cancel/buyout flows are separate future tasks."
+  },
+  {
+    "id": "pet_summon_dismiss",
+    "title": "Pet Summon & Dismiss (Item Skill)",
+    "category": "Mates",
+    "priority": "Low",
+    "scenario": "pet_summon_dismiss",
+    "status": "Pending",
+    "description": "Summon a pet via item skill 10602 instant cast, then dismiss it. Completes the mount/pet item-cast pair.",
+    "target_packets": [
+      "CSStartSkillPacket"
+    ],
+    "target_events": [
+      "skill/instant_cast"
+    ],
+    "instructions": [
+      "Have a pet summon item ready, standing still.",
+      "Execute `/trace start pet_summon_dismiss` in chat.",
+      "Summon the pet, wait 2 seconds. Execute `/mark summoned` in chat.",
+      "Dismiss the pet, wait 2 seconds. Execute `/trace stop` in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute `/trace start pet_summon_dismiss`",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Summon + marked summoned",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Dismiss observed",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute `/trace stop`",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Prior traces show no spawn/despawn world events \u2014 capture confirms whether that gap persists."
+  },
+  {
+    "id": "combat_food_potion_recovery",
+    "title": "Out-of-Combat Food & Potion Resource Recovery",
+    "category": "Combat",
+    "priority": "Medium",
+    "scenario": "combat_food_potion_recovery",
+    "status": "Pending",
+    "description": "Engage hostile mobs until Health or Mana falls below 50%, disengage/defeat enemy, and consume food (bread/soup) or potion items to recover resources while out of combat.",
+    "target_packets": [
+      "CSUseItemPacket",
+      "CSStartSkillPacket",
+      "SCItemTaskSuccessPacket",
+      "SCUnitPointsPacket",
+      "SCSkillFiredPacket"
+    ],
+    "instructions": [
+      "Engage hostile mobs until character Health or Mana drops below 50%.",
+      "Defeat or disengage from enemy to drop combat state.",
+      "Start trace: /trace start combat_food_potion_recovery in chat.",
+      "Open inventory bag ('I' key) and right-click food or health/mana potion.",
+      "Observe resource bar regeneration tick and buff application.",
+      "Wait 5 seconds for healing effect or stat tick.",
+      "Stop trace: /trace stop in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute /trace start combat_food_potion_recovery out of combat with HP/MP < 50%",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Right-click food consumable or potion from inventory",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Observe health/mana restoration points tick",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute /trace stop",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Ground truth trace for PlayerBot sustain loop. Empirically verifies item-to-skill spell triggering and out-of-combat regeneration curve."
+  },
+  {
+    "id": "combat_knockback_ranged_fallback",
+    "title": "Combat Whirlwind / Knockback & Ranged Attack Switch",
+    "category": "Combat",
+    "priority": "Medium",
+    "scenario": "combat_knockback_ranged_fallback",
+    "status": "Pending",
+    "description": "Engage an enemy mob featuring crowd control or whirlwind/knockback skills. When knocked into the air or separated beyond melee range (>4m), switch to ranged attacks while gap closers are on cooldown.",
+    "target_packets": [
+      "CSChangeTargetPacket",
+      "CSStartSkillPacket",
+      "SCSkillFiredPacket",
+      "SCUnitDamagedPacket",
+      "CSMoveUnitPacket"
+    ],
+    "instructions": [
+      "Locate a hostile mob known to cast whirlwind or knockback abilities.",
+      "Start trace: /trace start combat_knockback_ranged_fallback in chat.",
+      "Engage mob in melee combat and trigger its special whirlwind/knockback skill.",
+      "When thrown into air or pushed >4m away, fire ranged projectile skills (e.g. Endless Arrows, Shoot, or Charged Bolt).",
+      "Re-engage with gap closer (Charge/Overwhelm) when off cooldown or mob closes distance.",
+      "Defeat mob and stop trace: /trace stop."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute /trace start combat_knockback_ranged_fallback",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Engage mob in melee and receive whirlwind / knockback displacement",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Fire ranged weapon skill from >4m distance",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Re-engage or finish mob in melee",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Execute /trace stop",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Captures distance separation handling and transition from melee to ranged projectile fire when airborne or displaced."
+  },
+  {
+    "id": "travel_mount_and_ride",
+    "title": "Mount Summon, Ride to Waypoint & Dismount Loop",
+    "category": "Mates",
+    "priority": "High",
+    "scenario": "travel_mount_and_ride",
+    "status": "Pending",
+    "description": "Summon mount companion from bag or skill bar (Skill 10602 Summon Horse), mount up, travel along road to target destination, and dismount upon arrival.",
+    "target_packets": [
+      "CSStartSkillPacket",
+      "SCSkillFiredPacket",
+      "CSMountMatePacket",
+      "CSMoveUnitPacket",
+      "CSLeaveUnitPacket"
+    ],
+    "instructions": [
+      "Identify a destination or quest hub 100m+ away along a road.",
+      "Start trace: /trace start travel_mount_and_ride in chat.",
+      "Summon mount companion using whistle or summon skill (10602).",
+      "Board mount using interaction key ('F').",
+      "Ride along road towards waypoint.",
+      "Dismount upon reaching destination.",
+      "Stop trace: /trace stop in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute /trace start travel_mount_and_ride",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Cast mount summon skill",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Mount companion unit",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Ride towards waypoint",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Dismount and execute /trace stop",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Establishes canonical mounted travel sequence, velocity changes, and mount dismount protocol for bot travel routines."
+  },
+  {
+    "id": "quest_multi_objective_progression",
+    "title": "Autonomous Quest Multi-Objective Progression",
+    "category": "Quests",
+    "priority": "High",
+    "scenario": "quest_multi_objective_progression",
+    "status": "Pending",
+    "description": "Accept a quest with multi-stage criteria (e.g. eliminate hostile mob and collect drop or interact with world doodad), executing sequential objective resolution.",
+    "target_packets": [
+      "CSStartQuestContextPacket",
+      "SCQuestContextStartedPacket",
+      "SCQuestContextUpdatedPacket",
+      "CSStartInteractionPacket",
+      "CSCompleteQuestContextPacket",
+      "SCQuestContextCompletedPacket"
+    ],
+    "instructions": [
+      "Find an NPC offering a quest with multiple sequential objectives.",
+      "Start trace: /trace start quest_multi_objective_progression in chat.",
+      "Accept quest via dialogue.",
+      "Fulfill objective 1 (kill required mobs or collect dropped items).",
+      "Fulfill objective 2 (interact with quest doodad, flag, or chest).",
+      "Return to quest giver and turn in completed quest.",
+      "Collect rewards and stop trace: /trace stop in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute /trace start quest_multi_objective_progression",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Accept multi-objective quest",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Fulfill combat objective stage",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Fulfill interaction or collection objective stage",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Turn in quest and execute /trace stop",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Expands quest automation beyond single-step tasks into multi-objective state progression."
+  },
+  {
+    "id": "bot_party_combat_assist",
+    "title": "Multi-Bot Party Combat Assist & Combo Weaving",
+    "category": "PlayerBots",
+    "priority": "Medium",
+    "scenario": "bot_party_combat_assist",
+    "status": "Pending",
+    "description": "Coordinate multiple bots or player+bot in a party: assist primary target, maintain combat formation, and chain synergistic combos (e.g. Tank Stun -> Rogue Backstab -> Mage Nuke).",
+    "target_packets": [
+      "CSChangeTargetPacket",
+      "CSStartSkillPacket",
+      "SCCombatFirstHitPacket",
+      "SCSkillFiredPacket",
+      "SCUnitPointsPacket"
+    ],
+    "instructions": [
+      "Form a party with another player or PlayerBot (/party invite).",
+      "Start trace: /trace start bot_party_combat_assist in chat.",
+      "Party leader engages hostile target.",
+      "Follower/party member acquires leader's target ('T' assist) and closes in.",
+      "Party members execute complementary combo attacks.",
+      "Defeat target mob.",
+      "Stop trace: /trace stop in chat."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Execute /trace start bot_party_combat_assist in a party",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Acquire target via party assist",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Execute coordinated skill combo",
+        "done": false,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Defeat target and execute /trace stop",
+        "done": false,
+        "required": true
+      }
+    ],
+    "notes": "Captures party combat assist flow and cross-character target acquisition for cooperative PlayerBot groups."
+  },
+  {
+    "id": "bot_reboot_persistence_validation",
+    "title": "PlayerBot Server Reboot & Position Persistence",
+    "category": "PlayerBots",
+    "priority": "High",
+    "scenario": "bot_reboot_persistence_validation",
+    "status": "Complete",
+    "description": "Verify bot state preservation across server reboot: spawn/command bot, record position and inventory, restart server, execute /bot restore, and verify coordinate and equipment integrity.",
+    "target_packets": [
+      "CSMoveUnitPacket",
+      "SCUnitMoveToPacket"
+    ],
+    "instructions": [
+      "Spawn a bot at custom coordinates using /bot add or /bot here.",
+      "Inspect bot position and equipped gear.",
+      "Restart the game server.",
+      "Run /bot restore to awaken dormant bots.",
+      "Confirm bot appears at exact pre-restart coordinates with equipment intact."
+    ],
+    "checklist": [
+      {
+        "id": "step1",
+        "text": "Create / spawn bot in world",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step2",
+        "text": "Verify initial world position and gear",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step3",
+        "text": "Restart server",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step4",
+        "text": "Execute /bot restore",
+        "done": true,
+        "required": true
+      },
+      {
+        "id": "step5",
+        "text": "Verify coordinate retention and equipment persistence",
+        "done": true,
+        "required": true
+      }
+    ],
+    "notes": "Verified by unit tests and PB-006 closure. Fixes roll/yaw SQL swap, equipment save directly to DB, and coordinate zero-wipe."
+  }
+]

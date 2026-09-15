@@ -294,6 +294,7 @@ public static class Program
                 //   Schedules(100) — C1 phase behavior when EnableSchedules is on
                 //   ConflictJoin(75) — war-horn join in active-conflict zones
                 //   FishingContest(60) — M9.5 scheduled contest window (default OFF)
+                //   QuestBootstrap(58) — copper-bootstrap quest driver (default OFF)
                 //   NeedsFarm(55) — Tier 0 public-farm driver (default OFF)
                 //   PresenceRoam(50) — baseline presence roam (schedules off)
                 //   Idle(0) — terminal fallback (clear route, dormant)
@@ -306,10 +307,14 @@ public static class Program
                         sp.GetRequiredService<IBotScheduleBehavior>(),
                         authoritativeScheduleService: sp.GetRequiredService<BotScheduleService>()));
                 services.AddSingleton(_ => FishingContestModuleOptions.FromEnvironment());
+                services.AddSingleton(_ => QuestBootstrapModuleOptions.FromEnvironment());
                 services.AddSingleton(_ => NeedsFarmModuleOptions.FromEnvironment());
+                services.AddSingleton<IBotActivityModule, OutOfCombatRecoveryModule>();
+                services.AddSingleton<OutOfCombatRecoveryModule>();
                 services.AddSingleton<IBotActivityModule, PresenceRoamActivityModule>();
                 services.AddSingleton<IBotActivityModule, ConflictJoinActivityModule>();
                 services.AddSingleton<IBotActivityModule, FishingContestActivityModule>();
+                services.AddSingleton<IBotActivityModule, QuestBootstrapActivityModule>();
                 services.AddSingleton<IBotActivityModule, NeedsFarmActivityModule>();
                 services.AddSingleton<IBotActivityModule, IdleActivityModule>();
                 services.AddSingleton<BotGoalArbiter>();
@@ -338,6 +343,11 @@ public static class Program
                 // calls Start(), so an unwired deployment stays inert.
                 services.AddSingleton<PlayerBotScheduler>();
                 services.AddSingleton<IPlayerBotScheduler>(sp => sp.GetRequiredService<PlayerBotScheduler>());
+
+                // Continental road network service: loads digitized junctions
+                // and edges across Nuia and Haranya for spatial search & A* routing.
+                services.AddSingleton<RoadNetworkService>();
+                services.AddSingleton<IRoadNetworkService>(sp => sp.GetRequiredService<RoadNetworkService>());
 
                 // Fidelity authority: the ONLY bot fidelity assigner. Wired
                 // for the presence demo. G2-A3: options come from env/config
@@ -384,6 +394,7 @@ public static class Program
                 services.AddSingleton<SaveManager>();
                 services.AddSingleton<ISaveManager>(sp => sp.GetRequiredService<SaveManager>());
 
+                services.AddSingleton<IShipyardFrameStore, MySqlShipyardFrameStore>();
                 services.AddSingleton<ShipyardManager>();
                 services.AddSingleton<IShipyardManager>(sp => sp.GetRequiredService<ShipyardManager>());
 

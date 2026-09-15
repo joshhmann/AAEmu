@@ -448,6 +448,24 @@ CREATE TABLE IF NOT EXISTS `quests` (
   PRIMARY KEY (`id`,`owner`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Currently open quests';
 
+CREATE TABLE IF NOT EXISTS `shipyards` (
+  `id` int unsigned NOT NULL COMMENT 'Placed frame Id (ShipyardData.Id)',
+  `template_id` int unsigned NOT NULL COMMENT 'shipyards.id in compact.sqlite3',
+  `owner_id` int unsigned NOT NULL COMMENT 'Owning character DB Id (ShipyardData.Type2)',
+  `owner_name` varchar(128) NOT NULL DEFAULT '' COMMENT 'Owning character name (denormalized for display)',
+  `faction_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'Owning faction (ShipyardData.Type3)',
+  `step` int NOT NULL DEFAULT '0' COMMENT 'Client-visible build step (ShipyardData.Step; 1000 = launch ceremony in flight)',
+  `actions` int NOT NULL DEFAULT '0' COMMENT 'Client-visible build actions (ShipyardData.Actions)',
+  `hp` int NOT NULL DEFAULT '0' COMMENT 'Live frame Hp (decay damage accumulator)',
+  `x` float DEFAULT NULL,
+  `y` float DEFAULT NULL,
+  `z` float DEFAULT NULL,
+  `yaw` float DEFAULT NULL COMMENT 'Facing (ShipyardData.zRot)',
+  `zone_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'Zone key at placement',
+  `spawned` datetime DEFAULT NULL COMMENT 'Placement time; drives the 3-day decay clock',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Placed half-built ship frames';
+
 
 CREATE TABLE IF NOT EXISTS `skills` (
   `id` int unsigned NOT NULL,

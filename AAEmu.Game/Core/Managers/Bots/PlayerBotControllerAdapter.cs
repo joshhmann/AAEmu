@@ -73,6 +73,12 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest CastAt(uint skillId, System.Numerics.Vector3 position, string? idempotencyKey = null)
         => Actor.CastAt(skillId, position, idempotencyKey);
 
+    public ActorRequest AutoAttack(uint targetObjId, string? idempotencyKey = null)
+        => Actor.AutoAttack(targetObjId, idempotencyKey);
+
+    public ActorRequest StopAutoAttack(string? idempotencyKey = null)
+        => Actor.StopAutoAttack(idempotencyKey);
+
     public ActorRequest Interact(uint doodadObjId, uint skillId = 0, string? idempotencyKey = null)
         => Actor.Interact(doodadObjId, skillId, idempotencyKey);
 
@@ -117,6 +123,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
 
     public ActorRequest Dismount(uint mateObjId = 0, string? idempotencyKey = null)
         => Actor.Dismount(mateObjId, idempotencyKey);
+
+    public ActorRequest DismissMate(uint tlId = 0, string? idempotencyKey = null)
+        => Actor.DismissMate(tlId, idempotencyKey);
 
     public ActorRequest Craft(uint craftId, uint doodadObjId, TimeSpan? timeout = null, string? idempotencyKey = null)
         => Actor.Craft(craftId, doodadObjId, timeout, idempotencyKey);
@@ -182,6 +191,9 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
 
     public ActorRequest Talk(uint npcObjId, string? idempotencyKey = null)
         => Actor.Talk(npcObjId, idempotencyKey);
+
+    public ActorRequest InteractNpc(uint npcObjId, string? idempotencyKey = null)
+        => Actor.InteractNpc(npcObjId, idempotencyKey);
 
     public ActorRequest DiscoverSelfQuests(string? idempotencyKey = null)
         => Actor.DiscoverSelfQuests(idempotencyKey);
