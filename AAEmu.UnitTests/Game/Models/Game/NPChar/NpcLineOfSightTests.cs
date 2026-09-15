@@ -105,6 +105,8 @@ public class NpcLineOfSightTests
         typeof(ModelManager).GetField("_models", BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(modelManager, new Dictionary<string, Dictionary<uint, Model>> { ["test"] = new Dictionary<uint, Model> { [1] = new ActorModel { Radius = 2f } } });
         typeof(Singleton<ModelManager>).GetField("s_instance", BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(null, modelManager);
 
+        FormulaManager.Instance.Load(); // idempotent; real formulas from canonical data (Npc.MaxHp via GetUnitFormula)
+
         _template = SeedWorldManager();
     }
 

@@ -1,6 +1,7 @@
 ﻿using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Items.Templates;
@@ -406,6 +407,13 @@ public abstract class Behavior
                         needHelp = false;
                         break;
                 }
+
+                // Canonical pack membership (npc_aggro_links): a helper sharing ANY
+                // aggro_link_id with the pulled NPC joins even when the legacy
+                // heuristic above refuses. Additive only — every gate above
+                // (AcceptAggroLink, help_dist, sight check, special rules) still refuses.
+                if (!needHelp)
+                    needHelp = NpcGameData.Instance.SharesAggroLink(npc.TemplateId, Ai.Owner.TemplateId);
             }
 
             if (!needHelp)

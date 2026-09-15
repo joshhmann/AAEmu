@@ -8,12 +8,15 @@ using AAEmu.Game.Utils.DB;
 
 using Microsoft.Data.Sqlite;
 
+using NLog;
+
 namespace AAEmu.Game.GameData;
 
 [GameData]
 // ReSharper disable once ClassNeverInstantiated.Global
 public class NpcGameData : Singleton<NpcGameData>, IGameDataLoader
 {
+    private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
     /// <summary>
     /// List of skill for NpcTemplateIds
     /// </summary>
@@ -34,7 +37,12 @@ public class NpcGameData : Singleton<NpcGameData>, IGameDataLoader
     /// List of SpawnerTemplateIds grouped by NpcTempalteId
     /// </summary>
     private Dictionary<uint, List<uint>> NpcMemberAndSpawnerTemplateIds { get; } = [];
-
+    /// <summary>
+    /// Canonical pack ids (npc_aggro_links.aggro_link_id) grouped by NpcTemplateId.
+    /// Consulted by the AI help path: a helper sharing ANY link with the pulled
+    /// NPC joins the hate list even when the legacy heuristic refuses.
+    /// </summary>
+    private Dictionary<uint, HashSet<uint>> AggroLinkIdsByNpc { get; } = [];
     /// <summary>
     /// Loads static Npc related data
     /// </summary>
@@ -46,6 +54,7 @@ public class NpcGameData : Singleton<NpcGameData>, IGameDataLoader
         NpcSpawnerTemplateNpcs.Clear();
         NpcSpawnerTemplates.Clear();
         NpcMemberAndSpawnerTemplateIds.Clear();
+        AggroLinkIdsByNpc.Clear();
 
         using (var command = connection.CreateCommand())
         {
@@ -149,6 +158,45 @@ public class NpcGameData : Singleton<NpcGameData>, IGameDataLoader
                 NpcSpawnerTemplates[nsn.NpcSpawnerTemplateId].Npcs.Add(nsn);
             }
         }
+
+        LoadAggroLinks(connection);
+    }
+
+    /// <summary>
+    /// Loads the canonical pack mapping (npc_aggro_links). A missing table
+    /// (trimmed private-server DB) or zero rows keeps the lookup empty and logs
+    /// once — callers then fall back to the legacy distance/faction heuristic.
+    /// </summary>
+    private void LoadAggroLinks(SqliteConnection connection)
+    {
+        AggroLinkIdsByNpc.Clear();
+        try
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT npc_id, aggro_link_id FROM npc_aggro_links";
+                command.Prepare();
+                using var sqliteReader = command.ExecuteReader();
+                using var reader = new SQLiteWrapperReader(sqliteReader);
+                while (reader.Read())
+                {
+                    var npcId = reader.GetUInt32("npc_id");
+                    var linkId = reader.GetUInt32("aggro_link_id");
+                    if (!AggroLinkIdsByNpc.TryGetValue(npcId, out var links))
+                        AggroLinkIdsByNpc.Add(npcId, links = []);
+                    links.Add(linkId);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "[NpcGameData] failed to load npc_aggro_links, pack help disabled");
+            AggroLinkIdsByNpc.Clear();
+            return;
+        }
+
+        if (AggroLinkIdsByNpc.Count == 0)
+            Logger.Warn("[NpcGameData] npc_aggro_links is empty, pack help disabled");
     }
 
     /// <summary>
@@ -195,6 +243,24 @@ public class NpcGameData : Singleton<NpcGameData>, IGameDataLoader
                 value.Add(npcSpawnerNpc.NpcSpawnerTemplateId);
             }
         }
+    }
+
+    /// <summary>
+    /// Canonical pack membership (npc_aggro_links): true when both NPC templates
+    /// share ANY aggro_link_id. Templates with no pack rows (or an unloaded table)
+    /// return false, preserving the legacy heuristic for unpacked NPCs.
+    /// </summary>
+    public bool SharesAggroLink(uint npcIdA, uint npcIdB)
+    {
+        if (!AggroLinkIdsByNpc.TryGetValue(npcIdA, out var linksA) ||
+            !AggroLinkIdsByNpc.TryGetValue(npcIdB, out var linksB))
+            return false;
+        if (linksA.Count > linksB.Count)
+            (linksA, linksB) = (linksB, linksA);
+        foreach (var linkId in linksA)
+            if (linksB.Contains(linkId))
+                return true;
+        return false;
     }
 
     /// <summary>
