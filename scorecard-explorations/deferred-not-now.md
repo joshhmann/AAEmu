@@ -134,9 +134,9 @@ requires its trigger to fire.
 - **Revisit trigger:** Mobs with whirlwind/knockback abilities cause observable combat stalls, or trace `combat_knockback_ranged_fallback` is captured.
 
 ## 16. Mount Summon, Waypoint Riding & Dismount Loop
-- **Status:** NOT NOW — on-foot navigation, roaming, and sprint are active.
-- **Reason:** Mount item casting (`Skill 10602`) and riding mechanics exist in engine, but autonomous bot pathfinding while mounted (handling companion unit mounting, speed adjustments, and auto-dismounting at waypoints) is deprioritized until long-distance regional travel is required.
-- **Revisit trigger:** Bot travel distances between waypoints exceed 100m, making on-foot travel a primary bottleneck, or trace `travel_mount_and_ride` is captured.
+- **Status:** LANDED 2026-09-03 — see PB-MOUNT (`playerbot-blockers.md`): `BotMountManager` (`EnsureMounted`/`EnsureDismounted`, `MountedTravelSpeed = 10.5f`) wired into `LevelingLoopScenario.TryTransitionToNextZone`; `BotMountManagerTests` 4/4 green. Entry retained as history.
+- **Reason (historical):** Mount item casting (`Skill 10602`) and riding mechanics exist in engine, but autonomous bot pathfinding while mounted was deprioritized until long-distance regional travel was required.
+- **Revisit trigger:** FIRED — long-distance arterial travel arrived (inter-zone highway transit), which is what landed PB-MOUNT. No further trigger outstanding.
 
 ## 17. Multi-Bot Party Coordination & Assist Targeting
 - **Status:** NOT NOW — solo bot roaming and combat decision trees are complete.

@@ -35,6 +35,7 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 - Layer: BOT-SIDE (`BotRoamStepExecutor.cs`, `NeedsDecisionScenario.cs`)
 - Status: OPEN
 - Evidence: Live test failure with Josh/Muse on .165 test stack; source audit in `PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md`.
+- **2026-09-15 note (read-only audit; status stays OPEN):** partial mitigations landed since the original report — (a) merchant-approach routing (`BotRoamStepExecutor.cs:1264-1273`: a perceived seed merchant beyond `MaxShopRange` is approached via `ArmFarmRoute` with phase `Traveling`, not frozen on); (b) `WaitingMaturity` patrol-fallthrough guards (`BotRoamStepExecutor.cs:932-934, 971-974`: ambient-roam branches refuse while `NeedsFarmPhase == WaitingMaturity`); (c) leashed `StepFarmLeisure` micro-wander (`BotRoamStepExecutor.cs:1426-1433`, called at :1218/:1236) keeps the bot active at the plot while waiting. The 150 m soil discovery cap remains by design; the original 3 m/150 m/fallthrough failure modes stay OPEN pending live proof.
 
 
 ### PB-005 · NPC spawn Z is effectively unclamped — systemic ungrounded NPCs (floating / buried)
