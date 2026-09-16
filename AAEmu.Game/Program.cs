@@ -349,6 +349,10 @@ public static class Program
                 services.AddSingleton<RoadNetworkService>();
                 services.AddSingleton<IRoadNetworkService>(sp => sp.GetRequiredService<RoadNetworkService>());
 
+                // Secret wild farm & illegal tree farm POI registry for autonomous bot farming & scouting.
+                services.AddSingleton<WildFarmPoiRegistry>();
+                services.AddSingleton<IWildFarmPoiRegistry>(sp => sp.GetRequiredService<WildFarmPoiRegistry>());
+
                 // Fidelity authority: the ONLY bot fidelity assigner. Wired
                 // for the presence demo. G2-A3: options come from env/config
                 // ("Bots"."EnableProximityFidelity" / AAEMU_BOT_PROXIMITY_*);

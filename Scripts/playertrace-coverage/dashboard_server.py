@@ -2142,6 +2142,18 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"error": "No map_atlas_data.json found"}).encode("utf-8"))
             return
 
+        if path == "/api/map/nav-telemetry":
+            heatmap_path = os.path.join(self.repo_root, "playertrace-coverage", "bot_nav_heatmaps.json")
+            if os.path.exists(heatmap_path):
+                with open(heatmap_path, "r", encoding="utf-8") as f:
+                    content = json.load(f)
+                self._set_headers(200, "application/json")
+                self.wfile.write(json.dumps(content).encode("utf-8"))
+            else:
+                self._set_headers(404, "application/json")
+                self.wfile.write(json.dumps({"error": "No nav telemetry heatmap found"}).encode("utf-8"))
+            return
+
         if path == "/api/map/live":
             # Live bridge target: local loopback by default; point at the
             # tester (e.g. AAEMU_GAME_API_BASE=http://192.168.0.165:1280)
@@ -2180,7 +2192,7 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
                     if resp.status == 200:
                         server_online = True
                         bot_resp = json.loads(resp.read().decode("utf-8"))
-                        bot_data = bot_resp.get("Data") or bot_resp.get("data") or []
+                        bot_data = bot_resp.get("Bots") or bot_resp.get("Data") or bot_resp.get("data") or []
                         for b in bot_data:
                             state = b.get("State") or b.get("state") or "Active"
                             if state != "Dormant":

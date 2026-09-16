@@ -5366,6 +5366,60 @@
       "lat": -18.317222,
       "lng": -3.895833,
       "what": "sunken-ship wreck pin; blog notes respawn 5PM-6PM GMT; 2016 post describing 2013-2014 sextant system"
+    },
+    {
+      "id": "wild-farm-solzreed-plateau",
+      "type": "illegal_tree_farm",
+      "label": "Solzreed Secret High Plateau (Illegal Tree Farm)",
+      "x": 14210.5,
+      "y": 14680.2,
+      "z": 142.5,
+      "what": "High mountain ledge above road loop; secluded forest canopy ideal for secret cedar/pine groves."
+    },
+    {
+      "id": "wild-farm-solzreed-cove",
+      "type": "illegal_tree_farm",
+      "label": "Solzreed Hidden Coastal Hollow (Illegal Tree Farm)",
+      "x": 14650.0,
+      "y": 14720.0,
+      "z": 95.0,
+      "what": "Depressed coastal valley shielded from road line-of-sight; popular spot for wild aspen/yew trees."
+    },
+    {
+      "id": "wild-farm-solzreed-waterfall",
+      "type": "illegal_tree_farm",
+      "label": "Solzreed Western Falls Clearing (Illegal Tree Farm)",
+      "x": 13890.0,
+      "y": 14350.0,
+      "z": 118.0,
+      "what": "Hidden glen tucked behind granite boulders near the western riverbed; damp soil, fast growth."
+    },
+    {
+      "id": "wild-farm-arcum-canyon",
+      "type": "illegal_tree_farm",
+      "label": "Arcum Iris Canyon Crevice (Illegal Tree Farm)",
+      "x": 21450.0,
+      "y": 7120.0,
+      "z": 245.0,
+      "what": "Concealed canyon pocket between sand dunes and mountain wall; great for arid-climate wild saplings."
+    },
+    {
+      "id": "wild-farm-gweonid-terrace",
+      "type": "illegal_tree_farm",
+      "label": "Gweonid High Lake Terrace (Illegal Tree Farm)",
+      "x": 15200.0,
+      "y": 13100.0,
+      "z": 210.0,
+      "what": "Elevated mountain terrace above Lake Aster; lush temperate biome, high lightning risk for thunderstruck."
+    },
+    {
+      "id": "wild-farm-tigerspine-ridge",
+      "type": "illegal_tree_farm",
+      "label": "Tigerspine Hidden Quarry Ridge (Illegal Tree Farm)",
+      "x": 22300.0,
+      "y": 8400.0,
+      "z": 185.0,
+      "what": "Rocky shelf overlooking the cobalt quarry; tucked behind jagged crags where patrols rarely look."
     }
   ]
 }

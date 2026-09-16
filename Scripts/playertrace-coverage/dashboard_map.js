@@ -11,6 +11,8 @@ let selectedDraftIndex = -1;
 let mapDrag = null;
 const mapImages = new Map();
 const mapHubs = new Map();
+const mapPois = new Map();
+let navHeatmapData = null;
 const draftStorageKey = 'aaemu.world0.route-draft.v1';
 const mapEl = id => document.getElementById(id);
 const finiteMapNumber = n => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1e7;
@@ -36,6 +38,7 @@ async function loadWorldMap() {
     const manifest = mapAtlasData.map_manifest;
     if (!manifest?.maps?.length) throw Error(manifest?.error || 'Client maps have not been prepared.');
     for (const hub of mapAtlasData.junctions || []) mapHubs.set(hub.id, hub);
+    for (const poi of mapAtlasData.pois || []) mapPois.set(poi.id, poi);
     const picker = mapEl('mapPicker');
     picker.replaceChildren();
     for (const kind of ['world', 'continent', 'zone']) {
@@ -126,12 +129,31 @@ function mapPointer(event) {
     return { x: event.clientX-rect.left, y: event.clientY-rect.top };
 }
 
-function nearestMapHub(point) {
-    if (!mapEl('layerRoads').checked) return null;
-    let nearest = null, distance = 10 / mapView.scale;
-    for (const hub of mapHubs.values()) {
-        const d = Math.hypot(hub.x-point.x, hub.y-point.y);
-        if (d < distance) { distance = d; nearest = hub; }
+async function toggleHeatmapLayer() {
+    if (mapEl('layerHeatmap').checked && !navHeatmapData) {
+        try {
+            const resp = await fetch('/api/map/nav-telemetry');
+            if (resp.ok) navHeatmapData = await resp.json();
+        } catch (e) {
+            console.warn('Failed to load nav telemetry:', e);
+        }
+    }
+    redrawMap();
+}
+
+function nearestMapTarget(point) {
+    let nearest = null, distance = 12 / mapView.scale;
+    if (mapEl('layerPois')?.checked) {
+        for (const poi of mapPois.values()) {
+            const d = Math.hypot(poi.x - point.x, poi.y - point.y);
+            if (d < distance) { distance = d; nearest = { ...poi, isPoi: true }; }
+        }
+    }
+    if (!nearest && mapEl('layerRoads')?.checked) {
+        for (const hub of mapHubs.values()) {
+            const d = Math.hypot(hub.x - point.x, hub.y - point.y);
+            if (d < distance) { distance = d; nearest = hub; }
+        }
     }
     return nearest;
 }
@@ -166,10 +188,13 @@ function setupMapEvents() {
         canvas.releasePointerCapture(event.pointerId);
         const p = mapPointer(event), size = canvasSize();
         if (drag.moved || p.x < 0 || p.y < 0 || p.x > size.width || p.y > size.height) return;
-        const wp = screenToWorld(p.x,p.y);
-        const hub = mapEl('snapHubs').checked ? nearestMapHub(wp) : null;
-        const point = hub ? {x:hub.x,y:hub.y,z:hub.z,source:'reference-hub',label:hub.id}
-            : {x:mapRound(wp.x),y:mapRound(wp.y),z:null,source:'map-click'};
+        const target = (mapEl('snapHubs').checked || mapEl('layerPois')?.checked) ? nearestMapTarget(wp) : null;
+        const point = target ? {
+            x: target.x, y: target.y, z: target.z,
+            source: target.isPoi ? target.type : 'reference-hub',
+            label: target.label || target.id,
+            desc: target.what || ''
+        } : {x:mapRound(wp.x),y:mapRound(wp.y),z:null,source:'map-click'};
         if (mapMode === 'draft') addDraftPoint(point);
         else selectMapPoint(point);
     });
@@ -237,6 +262,52 @@ function redrawMap() {
             ctx.fillStyle='#ffdf77'; ctx.strokeStyle='#52330e'; ctx.lineWidth=1.5; ctx.fill(); ctx.stroke();
         }
     }
+    if (mapEl('layerPois')?.checked) {
+        for (const poi of mapPois.values()) {
+            const s = worldToScreen(poi.x, poi.y);
+            if (!inView(s)) continue;
+            ctx.beginPath();
+            if (poi.type === 'illegal_tree_farm') {
+                // Emerald diamond for illegal tree farm
+                const size = 6;
+                ctx.moveTo(s.x, s.y - size);
+                ctx.lineTo(s.x + size, s.y);
+                ctx.lineTo(s.x, s.y + size);
+                ctx.lineTo(s.x - size, s.y);
+                ctx.closePath();
+                ctx.fillStyle = '#10b981'; ctx.strokeStyle = '#064e3b'; ctx.lineWidth = 1.8;
+                ctx.fill(); ctx.stroke();
+                if (mapView.scale > 0.05) {
+                    ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#6ee7b7';
+                    ctx.fillText('🌲 ' + (poi.label || 'Wild Farm'), s.x, s.y - 8);
+                }
+            } else {
+                ctx.arc(s.x, s.y, 4.5, 0, 2 * Math.PI);
+                ctx.fillStyle = '#f59e0b'; ctx.strokeStyle = '#78350f'; ctx.lineWidth = 1.5;
+                ctx.fill(); ctx.stroke();
+            }
+        }
+    }
+    if (mapEl('layerHeatmap')?.checked && navHeatmapData) {
+        // Render desire corridors (orange)
+        for (const c of navHeatmapData.corridors || []) {
+            const s = worldToScreen(c.x, c.y);
+            if (!inView(s)) continue;
+            ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = `rgba(249, 115, 22, ${Math.min(0.85, Math.max(0.2, c.intensity * 2))})`;
+            ctx.fill();
+        }
+        // Render stall & obstacle hotspots (pulsing red)
+        for (const h of navHeatmapData.hotspots || []) {
+            const s = worldToScreen(h.x, h.y);
+            if (!inView(s)) continue;
+            ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, 2 * Math.PI);
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.4)'; ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2;
+            ctx.fill(); ctx.stroke();
+            ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+            ctx.fillText(h.events, s.x, s.y + 3);
+        }
+    }
     if (draftRoutePoints.length) {
         ctx.beginPath();
         draftRoutePoints.forEach((p,i) => { const s=worldToScreen(p.x,p.y); if (i) ctx.lineTo(s.x,s.y); else ctx.moveTo(s.x,s.y); });
@@ -278,7 +349,15 @@ function selectMapPoint(point) {
     selectedTarget = {...point};
     for (const axis of ['x','y','z']) mapEl('inspect'+axis.toUpperCase()).value = point[axis] ?? '';
     mapEl('inspectName').textContent = point.label || 'World coordinate';
-    mapEl('inspectSub').textContent = point.source === 'reference-hub' ? 'Reference hub XYZ; candidate, not movement-validated.' : 'World 0 · Z must come from measurement, not map artwork.';
+    if (point.source === 'illegal_tree_farm') {
+        mapEl('inspectSub').textContent = '🌲 ' + (point.desc || 'Secret Wild Tree Farm · Secluded wilderness ideal for illegal saplings & thunderstruck tree hunts.');
+    } else if (point.source === 'shipwreck') {
+        mapEl('inspectSub').textContent = '⚓ ' + (point.desc || 'Sunken Shipwreck POI.');
+    } else if (point.source === 'reference-hub') {
+        mapEl('inspectSub').textContent = 'Reference hub XYZ; candidate, not movement-validated.';
+    } else {
+        mapEl('inspectSub').textContent = 'World 0 · Z must come from measurement, not map artwork.';
+    }
     redrawMap();
 }
 

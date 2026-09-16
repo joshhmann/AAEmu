@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Drawing;
 using System.Numerics;
 
@@ -239,8 +241,8 @@ public class BotPartyFollowSubCommand : SubCommandBase
 
     public override void Execute(ICharacter character, string triggerArgument, IDictionary<string, ParameterValue> parameters, IMessageOutput messageOutput)
     {
-        var botId = GetOptionalParameterValue<string>(parameters, "botId", null);
-        var args = botId != null ? new[] { botId } : Array.Empty<string>();
+        var botId = GetOptionalParameterValue<string>(parameters, "botId", string.Empty);
+        var args = !string.IsNullOrWhiteSpace(botId) ? new[] { botId } : Array.Empty<string>();
         _parent.ExecuteFollow(character, args, messageOutput);
     }
 }
@@ -260,8 +262,8 @@ public class BotPartyStaySubCommand : SubCommandBase
 
     public override void Execute(ICharacter character, string triggerArgument, IDictionary<string, ParameterValue> parameters, IMessageOutput messageOutput)
     {
-        var botId = GetOptionalParameterValue<string>(parameters, "botId", null);
-        var args = botId != null ? new[] { botId } : Array.Empty<string>();
+        var botId = GetOptionalParameterValue<string>(parameters, "botId", string.Empty);
+        var args = !string.IsNullOrWhiteSpace(botId) ? new[] { botId } : Array.Empty<string>();
         _parent.ExecuteStay(character, args, messageOutput);
     }
 }

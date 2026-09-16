@@ -35,6 +35,7 @@ public class BotCmd : SubCommandBase, ICommand, ICommandV2
         Register(new BotLabSubCommand(), "lab");
         Register(new BotRestoreSubCommand(), "restore");
         Register(new BotPartySubCommand(), "party");
+        Register(new BotWildSubCommand(), "wild", "farm");
     }
 
     public void OnLoad()
