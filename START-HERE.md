@@ -112,6 +112,7 @@ flowchart TD
 * **Where Unfinished Work Lives:**
   * [`playertrace-coverage/dashboard_tasks.json`](file:///root/aaemu-dev/playertrace-coverage/dashboard_tasks.json) — Live catalog of 31 tasks; check tasks with `"status": "Pending"`.
   * Web Dashboard: Run `python3 Scripts/playertrace-coverage/dashboard_server.py --port 8085` and browse to `http://<ip>:8085`.
+  * Roadmap & Scorecard tab maintenance contract (mandatory whenever roadmap/scorecard records change): [`Scripts/playertrace-coverage/DASHBOARD_MAINTENANCE.md`](file:///root/aaemu-dev/Scripts/playertrace-coverage/DASHBOARD_MAINTENANCE.md)
 * **Tools & In-Game Actions:**
   * In-Game: `/trace start <scenario>` → execute action → `/trace stop`
   * Trace Evaluator: `python3 Scripts/playertrace-coverage/task_evaluator.py --task-id <id>`
