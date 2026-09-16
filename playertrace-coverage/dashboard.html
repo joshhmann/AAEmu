@@ -807,7 +807,7 @@
     <div class="top-nav">
         <div class="top-nav-inner">
             <button class="nav-tab-btn active" id="tabBtn-tasks" onclick="switchMainTab('tasks')">📋 Trace Tasks <span class="tab-badge" id="tasksTabBadge">31</span></button>
-            <button class="nav-tab-btn" id="tabBtn-milestones" onclick="switchMainTab('milestones')">🎯 Roadmap & Scorecard (M1–M10) <span class="tab-badge">75%</span></button>
+            <button class="nav-tab-btn" id="tabBtn-milestones" onclick="switchMainTab('milestones')">🎯 Roadmap & Scorecard (M0–M10) <span class="tab-badge">75%</span></button>
             <button class="nav-tab-btn" id="tabBtn-lanes" onclick="switchMainTab('lanes')">🧭 Domain Lanes & Router</button>
             <button class="nav-tab-btn" id="tabBtn-coverage" onclick="switchMainTab('coverage')">📊 Coverage & Telemetry</button>
             <button class="nav-tab-btn" id="tabBtn-map" onclick="switchMainTab('map')">🗺️ World Map & Atlas <span class="tab-badge" style="background:rgba(16,185,129,0.2);color:#34d399;">136 Hubs</span></button>
@@ -867,36 +867,51 @@
             <div class="task-list" id="taskList"></div>
         </div>
 
-        <!-- ==================== TAB 2: MILESTONES & SCORECARD ==================== -->
+        <!-- ==================== TAB 2: ROADMAP & SCORECARD ==================== -->
         <div class="tab-pane" id="tabPane-milestones">
-            <div class="summary-banner">
-                <div class="banner-stat">
-                    <h3>75% Complete</h3>
-                    <p>Overall Roadmap Progress (M1–M10)</p>
+            <!-- (1) TARGET BANNER: 1.2 = 1.2.4.13 = r208022 -->
+            <div class="info-card" style="margin-bottom: 20px; border-left: 4px solid var(--green);">
+                <div class="info-card-header">
+                    <div class="info-card-title">Target — ArcheAge 1.2 = 1.2.4.13 = r208022</div>
+                    <span class="status-badge status-closed">Pinned</span>
                 </div>
-                <div class="banner-stat">
-                    <h3>6 Closed</h3>
-                    <p>M1, M2, M3a/b, M4, M5, M6</p>
+                <div class="task-desc">Every <code>*Offsets.cs</code> header (<code>client_12_r208022</code>), <code>Docs/wiki/Client.md</code> ("1.2 (r208022)", names file <code>ArcheAge 1.2.4.13 (r208022)</code> at <code>Docs/wiki/Client.md:18</code>), and the server pak md5 pin the same 1.2 line. r208088 is a different, newer compact-data revision cited only in retired drift notes — opcodes stay pinned to r208022.</div>
+                <div class="meta-row"><span>Client build</span><span class="meta-val">r208022 (1.2.4.13 is the marketing label for the same 1.2 line)</span></div>
+                <div class="meta-row"><span>Canonical DB</span><span class="meta-val">AAEmu.Game/Data/compact.sqlite3 · md5 78b3bdbf038db3b927056106efdf91af · 679 tables</span></div>
+                <div class="meta-row"><span>BUG-005 ruling (opcode-vs-DB parity / r208088 drift)</span><span class="meta-val" style="color: var(--yellow)">UNRULED — confirm r208088 is dead history or re-open the drift</span></div>
+                <div class="meta-row"><span>Tab freshness</span><span class="meta-val">Built 2026-09-15 · audit HEAD e93e3df2d · no doc maps md5 to revision today</span></div>
+            </div>
+            <!-- Evidence-letter scope legend (every letter scoped inline below) -->
+            <div class="info-card" style="margin-bottom: 20px;">
+                <div class="info-card-header">
+                    <div class="info-card-title">Evidence letters — scoped</div>
                 </div>
-                <div class="banner-stat">
-                    <h3>2 Active</h3>
-                    <p>M7 Adventurer, M8 Living World</p>
-                </div>
-                <div class="banner-stat">
-                    <h3>2 Queued</h3>
-                    <p>M9 Dominion Siege, M10 High Seas</p>
-                </div>
+                <div class="task-desc"><strong>ledger-A</strong> = automated gate/soak evidence (test or soak PASS) · <strong>ladder-A</strong> = autonomous bot/actor evidence (proxy function, NEVER human feel) · <strong>G</strong> = society/scale-ladder evidence (G2-A5/A3 population legs) · <strong>H</strong> = Josh-only human-feel verdict (every mechanic H is U until Josh runs it) · <strong>R</strong> = restart-persistence · <strong>S</strong> = soak · <strong>L</strong> = load · <strong>W/C</strong> = wired/canonical. Data living outside the repo renders as <span style="background:rgba(248,81,73,0.2);color:#f85149;border:1px solid rgba(248,81,73,0.4);padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;">OUT-OF-REPO</span>, never as verified.</div>
             </div>
             <div class="info-card vision-card" style="margin-bottom: 20px; border-left: 4px solid var(--purple);">
                 <div class="info-card-header">
                     <div class="info-card-title">Vision — a living world that plays itself, verified by humans</div>
                 </div>
-                <div class="task-desc">AAEmu bots must grind, farm, trade, sail, and siege through <strong>real engine paths</strong> (never parallel gameplay systems — Lane B composes around ordinary Character records per AGENTS.md rules #9/#10), while human traces supply the ground-truth packet telemetry that proves each slice. Scorecard per milestone: <strong>A</strong> = automated evidence (gate/soak PASS), <strong>H</strong> = Josh-only human-feel verdict; a milestone is not done until both are recorded.</div>
-                <div class="meta-row"><span>Exit bar (every milestone)</span><span class="meta-val">Gate green + soak green + A evidence linked + H verdict (or explicit H=UNKNOWN)</span></div>
-                <div class="meta-row"><span>Current frontier</span><span class="meta-val">M7 party play → M8 convoys/auction → M9 siege → M10 naval</span></div>
+                <div class="task-desc">AAEmu bots must grind, farm, trade, sail, and siege through <strong>real engine paths</strong> (never parallel gameplay systems — Lane B composes around ordinary Character records per AGENTS.md rules #9/#10), while human traces supply the ground-truth packet telemetry that proves each slice. Scorecard per milestone: <strong>ledger-A</strong> = automated evidence (gate/soak PASS), <strong>H</strong> = Josh-only human-feel verdict; a milestone is not done until both are recorded.</div>
+                <div class="meta-row"><span>Exit bar (every milestone)</span><span class="meta-val">Gate green + soak green + ledger-A evidence linked + H verdict (or explicit H=UNKNOWN)</span></div>
+                <div class="meta-row"><span>Current frontier</span><span class="meta-val">M7 party play &rarr; M8 convoys/auction &rarr; M9 siege &rarr; M10 naval</span></div>
             </div>
 
+            <!-- (2) PER-MILESTONE ROWS M0-M10 -->
+            <div class="section-header" style="font-size:14px;color:#fff;margin:20px 0 4px 0;">Per-milestone rows M0–M10 — claimed state · evidence (repo path) · freshness (SHA/date)</div>
             <div class="milestone-grid">
+                <!-- M0 -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-title">M0 · Foundation</div>
+                        <span class="status-badge status-closed">Closed (100%)</span>
+                    </div>
+                    <div class="task-desc">DI host, topological ManagerOrchestrator boot, Login Kestrel TCP, reflection-discovered GameData loaders. The single H=COMPLETE on the books (foundation, not gameplay).</div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · H=COMPLETE (foundation only)</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
+                </div>
+
                 <!-- M1 -->
                 <div class="info-card">
                     <div class="info-card-header">
@@ -904,9 +919,9 @@
                         <span class="status-badge status-closed">Closed (100%)</span>
                     </div>
                     <div class="task-desc">Solzreed starter line, early game quest progression, and engine defect chain BUG-007 through BUG-013.</div>
-                    <div class="meta-row"><span>Automated Evidence</span><span class="meta-val">A=2 (Live engine release 94f498fc)</span></div>
-                    <div class="meta-row"><span>Human Feel (H)</span><span class="meta-val" style="color: var(--yellow)">H=UNKNOWN (Pending Josh verdict)</span></div>
-                    <div class="meta-row"><span>Key Assets</span><span class="meta-val">Solzreed golden route, Quest 250</span></div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · ledger-A=2 · H=UNKNOWN (Josh verdict open)</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · scorecard-explorations/generated/leveling-loop-2026-08-25.md</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
 
                 <!-- M2 -->
@@ -915,10 +930,10 @@
                         <div class="info-card-title">M2 / G1 · 100% Census Quest Coverage</div>
                         <span class="status-badge status-closed">Closed (100%)</span>
                     </div>
-                    <div class="task-desc">Every live context PASS or registered-drop or doc-SKIP across 4,579 quests with zero unexplained failures.</div>
-                    <div class="meta-row"><span>Automated Evidence</span><span class="meta-val">A=2 (G1 Gate Passed 2026-08-10)</span></div>
-                    <div class="meta-row"><span>Total Census Quests</span><span class="meta-val">4,573 PASS / 14 doc-SKIP / 0 FAIL</span></div>
-                    <div class="meta-row"><span>Human Feel (H)</span><span class="meta-val" style="color: var(--yellow)">H=UNKNOWN (Two-player baseline)</span></div>
+                    <div class="task-desc">Every live context PASS or registered-drop or doc-SKIP with zero unexplained failures. G1 denominator stated three ways (4579 vs 4587 vs 4573+6) — see weakest links.</div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · ledger-A=2 (G1 Gate 2026-08-10) · H=UNKNOWN</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">SCORECARD.md · ROADMAP.md</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
 
                 <!-- M3 -->
@@ -928,9 +943,9 @@
                         <span class="status-badge status-closed">Closed (100%)</span>
                     </div>
                     <div class="task-desc">House placement, multi-step construction, decoration limits (9/9 tables wired), and crash-safe MySQL property persistence.</div>
-                    <div class="meta-row"><span>Crash Hardness</span><span class="meta-val">kill -9 asserted mid-save (p95 1301ms)</span></div>
-                    <div class="meta-row"><span>Tables Wired</span><span class="meta-val">9/9 core housing tables wired (100%)</span></div>
-                    <div class="meta-row"><span>Human Feel (H)</span><span class="meta-val" style="color: var(--yellow)">H=UNKNOWN (Homestead feel)</span></div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · kill -9 asserted mid-save (p95 1301ms) · H=UNKNOWN</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
 
                 <!-- M4 -->
@@ -939,10 +954,10 @@
                         <div class="info-card-title">M4 · Trade, Crafting & Transport Integrity</div>
                         <span class="status-badge status-closed">Closed (100%)</span>
                     </div>
-                    <div class="task-desc">Harvest crops, craft trade packs, load cargo onto vehicle, drive 3-leg trade routes, and sell to gold traders.</div>
-                    <div class="meta-row"><span>Deployment</span><span class="meta-val">Live deployed on CT 133 (.165)</span></div>
-                    <div class="meta-row"><span>Automated Evidence</span><span class="meta-val">M4ExitIntegratedSessionTests PASS</span></div>
-                    <div class="meta-row"><span>Human Feel (H)</span><span class="meta-val" style="color: var(--yellow)">H=UNKNOWN (Economic replay)</span></div>
+                    <div class="task-desc">Harvest crops, craft trade packs, load cargo onto vehicle, drive 3-leg trade routes, and sell to gold traders. Deployed-cell acknowledged stale — see weakest links.</div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · M4ExitIntegratedSessionTests PASS · H=UNKNOWN</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
 
                 <!-- M5 -->
@@ -952,9 +967,9 @@
                         <span class="status-badge status-closed">Closed (100%)</span>
                     </div>
                     <div class="task-desc">Seam decoupling bots from network: Move, Stop, Target, Cast, Observe, Interact, Loot, UseItem, Mount/Dismount, Equip.</div>
-                    <div class="meta-row"><span>Core Actions</span><span class="meta-val">100% wired through real engine paths</span></div>
-                    <div class="meta-row"><span>Fast Gate</span><span class="meta-val">3,214 passed / 0 failed</span></div>
-                    <div class="meta-row"><span>Rei Gate Verdict</span><span class="meta-val">ACCEPT (Zero engine-file drift)</span></div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · fast gate 3,214/0 · zero engine-file drift</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · scorecard-explorations/generated/m5.3-core-surface-exit.md</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
 
                 <!-- M6 -->
@@ -963,10 +978,10 @@
                         <div class="info-card-title">M6 · Deterministic PlayerBot Framework</div>
                         <span class="status-badge status-closed">Closed (100%)</span>
                     </div>
-                    <div class="task-desc">Durable bots across server reboots, coordinate preservation, roll/yaw SQL fix, /bot restore, and 10-bot 6-hour green soak.</div>
-                    <div class="meta-row"><span>Reboot Persistence</span><span class="meta-val">PB-006 CLOSED (Full state retention)</span></div>
-                    <div class="meta-row"><span>Commands</span><span class="meta-val">/bot add, /bot restore, /bot here</span></div>
-                    <div class="meta-row"><span>Living World Scale</span><span class="meta-val">1,000-citizen soak queued</span></div>
+                    <div class="task-desc">Durable bots across server reboots, coordinate preservation, roll/yaw SQL fix, /bot restore, and 10-bot 6-hour green soak. PB-006 count lacks SHA — see weakest links.</div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · PB-006 CLOSED · H=UNKNOWN</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
 
                 <!-- M7 -->
@@ -975,11 +990,11 @@
                         <div class="info-card-title">M7 · Adventurer & Party Bots</div>
                         <span class="status-badge status-active">Active (85%)</span>
                     </div>
-                    <div class="task-desc">Autonomous mob grinding, combat rotations, sustain retreats, corpse looting, equip upgrades, and party formation.</div>
-                    <div class="meta-row"><span>Solo Adventurer</span><span class="meta-val">100% Complete (Quest 250→330 loop)</span></div>
-                    <div class="meta-row"><span>Combat Trees</span><span class="meta-val">Battlerage, Shadowplay, Archery, Sorcery, Defense</span></div>
-                    <div class="meta-row"><span>Next Slice</span><span class="meta-val">Party follow-leader & assist targeting</span></div>
-                    <div class="meta-row"><span>Exit Criteria</span><span class="meta-val">Party assist targeting + follow-leader soak green + H party-play verdict</span></div>
+                    <div class="task-desc">Autonomous mob grinding, combat rotations, sustain retreats, corpse looting, equip upgrades, and party formation. Solo 100% (Quest 250&rarr;330 loop).</div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">ACTIVE · next: party follow-leader & assist targeting</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · scorecard-explorations/generated/m7-adventurer-spike.md</span></div>
+                    <div class="meta-row"><span>Exit criteria</span><span class="meta-val">Party assist + follow-leader soak green + H party-play verdict</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
 
                 <!-- M8 -->
@@ -988,11 +1003,11 @@
                         <div class="info-card-title">M8 · Living World & Economy</div>
                         <span class="status-badge status-active">Active (40%)</span>
                     </div>
-                    <div class="task-desc">Autonomous bot farming, specialty crafting, cross-zone cart convoys, merchant restock, and auction house trading.</div>
-                    <div class="meta-row"><span>Working Core</span><span class="meta-val">Farming loop, direct merchant trading</span></div>
-                    <div class="meta-row"><span>Next Slice</span><span class="meta-val">Trade pack convoys & auction bots</span></div>
-                    <div class="meta-row"><span>Revisit Trigger</span><span class="meta-val">M7 Party spike completion</span></div>
-                    <div class="meta-row"><span>Exit Criteria</span><span class="meta-val">Convoy run + auction trade loop + economy soak green + H market verdict</span></div>
+                    <div class="task-desc">Autonomous bot farming, specialty crafting, cross-zone cart convoys, merchant restock, and auction house trading. Runtime leg QUALIFIED (accepted transient + INVALID-by-design); full M8 unclaimed; no ledger row (table stops at M7).</div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">ACTIVE · runtime leg QUALIFIED · full M8 UNCLAIMED</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · soak-artifacts/smoke-rb/20260912-014234</span></div>
+                    <div class="meta-row"><span>Exit criteria</span><span class="meta-val">Convoy run + auction trade loop + economy soak green + H market verdict</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
 
                 <!-- M9 -->
@@ -1001,11 +1016,11 @@
                         <div class="info-card-title">M9 · Dominion & Castle Sieges</div>
                         <span class="status-badge status-queued">Queued (25%)</span>
                     </div>
-                    <div class="task-desc">Auroria territory claims, castle building, siege battle timers, tank/trebuchet war machines, and wall destruction.</div>
-                    <div class="meta-row"><span>Working Core</span><span class="meta-val">DominionManager + 3 siege tables wired</span></div>
-                    <div class="meta-row"><span>Missing Slice</span><span class="meta-val">Full siege warfare combat & destructibility</span></div>
-                    <div class="meta-row"><span>Target Zones</span><span class="meta-val">Nuimari, Heedmar, Marcala, Calmlands</span></div>
-                    <div class="meta-row"><span>Exit Criteria</span><span class="meta-val">Timed siege battle + wall destruction + H siege verdict</span></div>
+                    <div class="task-desc">Auroria territory claims, castle building, siege battle timers, tank/trebuchet war machines, and wall destruction. M8.5 likewise unclaimed. Dominion runtime report is out-of-repo.</div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">UNCLAIMED · DominionManager + 3 siege tables wired</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · Dominion runtime: OUT-OF-REPO</span></div>
+                    <div class="meta-row"><span>Exit criteria</span><span class="meta-val">Timed siege battle + wall destruction + H siege verdict (+ M9 substrate approval, Josh)</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
 
                 <!-- M10 -->
@@ -1015,11 +1030,108 @@
                         <span class="status-badge status-queued">Queued (20%)</span>
                     </div>
                     <div class="task-desc">Naval trade runs to Freedich Island, ship cannon combat, ocean boarding, sinking physics, and the Kraken world boss.</div>
-                    <div class="meta-row"><span>Working Core</span><span class="meta-val">VehicleMovementModel, cargo snapping</span></div>
-                    <div class="meta-row"><span>Missing Slice</span><span class="meta-val">Ship cannon ballistics, ocean trade runs</span></div>
-                    <div class="meta-row"><span>Target Zones</span><span class="meta-val">Arcadian Sea, Castaway Strait, Freedich</span></div>
-                    <div class="meta-row"><span>Exit Criteria</span><span class="meta-val">Freedich run + cannon sinking + H naval verdict</span></div>
+                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">UNCLAIMED · VehicleMovementModel, cargo snapping</span></div>
+                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
+                    <div class="meta-row"><span>Exit criteria</span><span class="meta-val">Freedich run + cannon sinking + H naval verdict</span></div>
+                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
                 </div>
+            </div>
+
+            <!-- (3) WEAKEST LINKS -->
+            <div class="section-header" style="font-size:14px;color:#fff;margin:20px 0 4px 0;">Weakest links — audit §2 (first-class rows, not footnotes)</div>
+            <div class="milestone-grid">
+                <div class="info-card" style="border-left: 4px solid var(--green);">
+                    <div class="info-card-header"><div class="info-card-title">Understated rows corrected 2026-09-15</div><span class="status-badge status-closed">Fixed</span></div>
+                    <div class="task-desc">AGGRO-PACK-01 → W/A=1 (<code>NpcGameData.cs:177</code> + <code>Behavior.cs:411</code> + tests), RESPAWN-LADDER-01 → W/A=1 (<code>ResurrectionGameData.cs:52</code> + <code>CharacterCombat.cs</code> + tests), deferred mount-riding → LANDED (PB-MOUNT 09-03). H stays U on all three.</div>
+                </div>
+                <div class="info-card" style="border-left: 4px solid var(--red);">
+                    <div class="info-card-header"><div class="info-card-title">Newest runtime evidence lives out of repo</div><span class="status-badge status-active">OUT-OF-REPO</span></div>
+                    <div class="task-desc">A5 tier-3, C5 re-soak, 09-13 live-E2E six, Q6, Mail S3, Dominion reports live in <code>/root/aaemu-e2e*</code> lane dirs on dirty trees at old HEADs — the tab cannot link them as verified. Only <code>soak-artifacts/smoke-rb/20260912-014234</code> is in-repo. Rule going forward: tab-cited reports must live under <code>scorecard-explorations/generated/</code>.</div>
+                </div>
+                <div class="info-card" style="border-left: 4px solid var(--yellow);">
+                    <div class="info-card-header"><div class="info-card-title">Gateless PB-006 count, no SHA</div><span class="status-badge status-active">Freshness</span></div>
+                    <div class="task-desc">PB-006 3211/0/1 count cited without a gate SHA — re-run under a pinned SHA or downgrade to proxy. No ledger rows exist for M8/M9/M10/A3/A4/A5/Q-lanes; post-M7 evidence lives only in prose docs.</div>
+                </div>
+                <div class="info-card" style="border-left: 4px solid var(--yellow);">
+                    <div class="info-card-header"><div class="info-card-title">Navigate counts 5/8/9 unreconciled</div><span class="status-badge status-active">Reconcile</span></div>
+                    <div class="task-desc">Navigate evidence counts 5 vs 8 vs 9 across sources — pick one pinned count with SHA/date or list all three as distinct legs (ledger-A vs ladder-A scoped).</div>
+                </div>
+                <div class="info-card" style="border-left: 4px solid var(--yellow);">
+                    <div class="info-card-header"><div class="info-card-title">COMBAT-01 vs REPAIR-01 grading split</div><span class="status-badge status-active">Needs ruling</span></div>
+                    <div class="task-desc">COMBAT-01 W=1 vs REPAIR-01 W=2 grading split needs a ruling before either row can anchor a milestone exit.</div>
+                </div>
+                <div class="info-card" style="border-left: 4px solid var(--yellow);">
+                    <div class="info-card-header"><div class="info-card-title">Frozen upstream snapshot + minor staleness</div><span class="status-badge status-active">Refresh</span></div>
+                    <div class="task-desc">Upstream tracker frozen 2026-08-03. Also: M8 QUALIFIED has no ledger row (table stops at M7); A5 stamp mismatch; mirage-duel report unregistered; M4 deployed-cell acknowledged stale; G1 denominator three ways (4579/4587/4573+6); auction-fix SHA pending-vs-cited. 33 census rows all-U (the 1.2 long tail); R/S columns blank outside M3b/M4/AUCTION/DOMINION; newest A-grades rest on single-machine unversioned reports.</div>
+                </div>
+            </div>
+
+            <!-- (4) CODE-BUG WORKLIST -->
+            <div class="section-header" style="font-size:14px;color:#fff;margin:20px 0 4px 0;">Code-bug worklist — audit §1 (list as work, not claims)</div>
+            <div class="milestone-grid">
+                <div class="info-card" style="border-left: 4px solid var(--red);">
+                    <div class="info-card-header"><div class="info-card-title">CrimeManager registered twice</div><span class="status-badge status-active">Open</span></div>
+                    <div class="task-desc">Double DI registration in <code>AAEmu.Game/Program.cs:167-168</code> and <code>:448-449</code> — dedupe to one registration.</div>
+                </div>
+                <div class="info-card" style="border-left: 4px solid var(--red);">
+                    <div class="info-card-header"><div class="info-card-title">/doodad command collision</div><span class="status-badge status-active">Open</span></div>
+                    <div class="task-desc"><code>CrimeCmd.cs:13</code> and <code>DoodadCmd.cs:12</code> both claim <code>["doodad"]</code> — crime subcommands unreachable if DoodadCmd wins registration. Rename one verb.</div>
+                </div>
+                <div class="info-card" style="border-left: 4px solid var(--yellow);">
+                    <div class="info-card-header"><div class="info-card-title">Possibly-dead managers need verification</div><span class="status-badge status-active">Verify first</span></div>
+                    <div class="task-desc"><code>SlaveManager, MateManager, GimmickManager, AiGeodataManager, TransferManager, SpawnManager, PhysicsManager, SphereQuestManager</code> have no DI registration and live <code>.Instance</code> callsites appear only in comments — verification pass required before calling them dead (bots use mounts/slaves through other paths).</div>
+                </div>
+                <div class="info-card" style="border-left: 4px solid var(--yellow);">
+                    <div class="info-card-header"><div class="info-card-title">Opcode slots: 0x9f + inferred mail opcode</div><span class="status-badge status-active">Verify</span></div>
+                    <div class="task-desc"><code>CSOffsets.cs</code>: <code>0x9f</code> claimed unknown AND assigned (<code>CSTakeAttachmentSequentially</code>); <code>CSReturnMailPacket=0x0a2</code> strongly inferred, not client-verified. ~20 opcode slots have neither class nor registration; 13 parked at <code>0xfff</code> by design.</div>
+                </div>
+                <div class="info-card" style="border-left: 4px solid var(--yellow);">
+                    <div class="info-card-header"><div class="info-card-title">Stray 0-byte DB placeholder at repo root</div><span class="status-badge status-queued">Cleanup</span></div>
+                    <div class="task-desc">Repo-root <code>compact.sqlite3</code> is a 0-byte placeholder (2026-09-03, ignored, untracked) from a wrong-path tool connect — delete on next cleanup pass; real DB <code>AAEmu.Game/Data/compact.sqlite3</code> untouched.</div>
+                </div>
+            </div>
+
+            <!-- (5) H-GATE INTAKE — visually separated from A/R/L evidence -->
+            <div class="info-card" style="margin: 20px 0; border: 2px dashed var(--purple);">
+                <div class="info-card-header">
+                    <div class="info-card-title">H-gate intake — Josh-owned, separate from ledger-A / ladder-A / R / L evidence</div>
+                    <span class="status-badge status-queued">Human only</span>
+                </div>
+                <div class="task-desc">Nothing here counts as A/R/L evidence and nothing here closes a milestone by itself. H means an ACTUAL PLAYER completing the curated scenario — never a bot or scripted actor (bot evidence is ladder-A proxy, recorded under ledger-A functional with an explicit proxy label). H stays U (UNKNOWN) until Josh runs it.</div>
+                <div class="meta-row"><span>H gates #1–#4 (+ #5 feel)</span><span class="meta-val">Josh-only acceptance verdicts, open</span></div>
+                <div class="meta-row"><span>W4-1 – W4-4 (deploy currency)</span><span class="meta-val">Open — Field-Guide worksheets</span></div>
+                <div class="meta-row"><span>PB-005 tour</span><span class="meta-val">Open — Josh tour required</span></div>
+                <div class="meta-row"><span>Q7 rulings</span><span class="meta-val">Blocked — Josh rulings required (Q8 likewise blocked)</span></div>
+                <div class="meta-row"><span>M9 substrate approval</span><span class="meta-val">Open — Josh approval gates M9 start</span></div>
+                <div class="meta-row"><span>Per-mestone H verdicts (M1–M10)</span><span class="meta-val">All U except M0 foundation COMPLETE — not gameplay</span></div>
+            </div>
+
+            <!-- (6) DOC-FIX QUEUE -->
+            <div class="section-header" style="font-size:14px;color:#fff;margin:20px 0 4px 0;">Doc-fix queue — audit §4 (P0 first, file:line pointers)</div>
+            <div class="milestone-grid">
+                <div class="info-card" style="border-left: 4px solid var(--red);">
+                    <div class="info-card-header"><div class="info-card-title">P0: CONTRIBUTING hides the NEVER-push rule</div><span class="status-badge status-active">P0</span></div>
+                    <div class="task-desc"><code>CONTRIBUTING.md</code> instructs fork-and-PR with zero mention of the permanent NEVER-push-to-upstream rule — following it violates the top-line rule.</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-header"><div class="info-card-title">Clone URLs point at upstream, not the fork</div><span class="status-badge status-queued">Queued</span></div>
+                    <div class="task-desc">Installation (×2), Docker guide, Dependencies clone <code>AAEmu/AAEmu</code> instead of the fork.</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-header"><div class="info-card-title">4 dangling internal refs</div><span class="status-badge status-queued">Queued</span></div>
+                    <div class="task-desc"><code>Docs/networking.md</code> (real: <code>AAEmu.Login/Docs/networking.md</code>) · <code>tools/quest-graph</code> + <code>tools/gamedata-graph</code> (absent) · root <code>scorecard-explorations/*</code> links (content lives in a worktree) · <code>Docs/JOSH-QAT-WAVE4.md</code> case/path.</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-header"><div class="info-card-title">Stale currency + census conflicts</div><span class="status-badge status-queued">Queued</span></div>
+                    <div class="task-desc">~26 wiki pages stamped 2026-08-05 (incl. skill-blessed setup pages) · census 153/153 vs 86/97 vs 88/97 · <code>Docs/wiki/Project-Status.md</code> presents 08-05 snapshot as current · <code>AAEmu.Login/README.md</code> boot-failing config (no <code>GameServers</code>) · Track-B sample omits SecretKey/internal ports &rarr; guaranteed Maintenance.</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-header"><div class="info-card-title">Port tables + repetition + absolute links</div><span class="status-badge status-queued">Queued</span></div>
+                    <div class="task-desc">Four overlapping port tables, none canonical (recommend <code>REFERENCE.md</code> as home) · FAQ omits 1234 · Aspire omits 1234/1280/15133 · config-precedence and GameServers-not-MySQL worded 5–7× · help pages ×4 overlap · absolute <code>file:///root/aaemu-dev</code> links (START-HERE, World page) are dev-box-only.</div>
+                </div>
+            </div>
+            <div class="info-card" style="margin-top: 20px;">
+                <div class="task-desc">In-repo evidence rule going forward: reports cited by this tab must live under <code>scorecard-explorations/generated/</code>. 09-05 M3a H-vs-proxy correction on record — H discipline held.</div>
             </div>
         </div>
 
@@ -1195,8 +1307,6 @@
                             <label><input type="checkbox" id="layerArt" checked onchange="redrawMap()"> Client art</label>
                             <label><input type="checkbox" id="layerRoads" checked onchange="redrawMap()"> Reference hubs</label>
                             <label title="Straight candidate connections, not recorded road geometry"><input type="checkbox" id="layerLinks" onchange="redrawMap()"> Candidate links</label>
-                            <label title="Secret wild tree farms and hidden wilderness POIs"><input type="checkbox" id="layerPois" checked onchange="redrawMap()"> 🌲 Wild Farms & POIs</label>
-                            <label title="Bot trajectory heatmap and stall hotspots from telemetry"><input type="checkbox" id="layerHeatmap" onchange="toggleHeatmapLayer()"> 🔥 Bot Heatmap</label>
                             <label title="Map image extents, not physical zone borders"><input type="checkbox" id="layerZones" onchange="redrawMap()"> Map extents</label>
                             <label><input type="checkbox" id="layerGrid" onchange="redrawMap()"> Meter grid</label>
                         </div>
