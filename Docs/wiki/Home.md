@@ -50,6 +50,8 @@ Open source server software for ArcheAge written in `.NET`.
 ### Project Reference
 
 - [Components](Components)
+- [Bot Control Gateway](Bot-Control-Gateway)
+- [PlayerBot GOAP Planning Architecture](PlayerBot-GOAP-Planning-Architecture)
 - [Code Terminology](Code-Terminology)
 - [Developer Notes](Developer-Notes)
 - [World, Continents, Races & Mirage Isle](World-Continents-Races-and-Mirage-Isle)

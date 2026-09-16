@@ -362,7 +362,8 @@ LOCK NOW (review-usable; a violating PR amends the invariant first, through a pr
 | Task chain | DEFER (locked) | no | local phases + rule | framework, one user | two-family duplication |
 | InteractionSession | DEFER | no | presentation-only at most | server session | dialog-gated state observed |
 | Failure enum expansion | DEFER | no | 7 values + routing concepts | 13-value enum | Buy proves routing need |
-| Utility / GOAP / LOD | DEFER (locked) | no | data-ranks / DesiredAction-only / constraints | planning on unproven execution | L1 clean + contention / soak data |
+| GOAP Planner | ACTIVE (Phase 1) | yes | `BotWorldState` bitmask + `GoapPlanner` A* search emitting DesiredActions only (see `Docs/wiki/PlayerBot-GOAP-Planning-Architecture.md`) | state-mutation bypass / parallel engine | Revisit triggered 2026-09-15: L1 clean (>800km soak) + multi-activity contention |
+| Utility AI / LOD | DEFER (locked) | no | data-ranks / constraints | selector engine / fake LOD | soak numbers + human-proximity data |
 
 ## 29. Migration roadmap
 
