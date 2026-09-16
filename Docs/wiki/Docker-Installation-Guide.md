@@ -21,7 +21,7 @@ If you want the preferred contributor startup flow, use
 
 ## Initial install
 
-1. Clone `https://github.com/AAEmu/AAEmu`.
+1. Clone `https://github.com/joshhmann/AAEmu`.
 1. Change directory to `Scripts`.
 1. Run:
    - Windows: `docker-install-local.ps1`

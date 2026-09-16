@@ -5,7 +5,7 @@
 - Prerequisites: A configured local environment if building from source
 
 While there are occasional prebuilt downloads, it is strongly recommended to
-compile your own server from the latest `develop` branch.
+compile your own server from the fork's latest `develop` branch (`joshhmann/AAEmu`).
 
 See the getting started section on [Home](Home).
 
@@ -14,7 +14,7 @@ MySQL setup and configuration files.
 
 ## ArcheAge 1.2
 
-- [Release](https://github.com/AAEmu/AAEmu/releases)
+- [Release](https://github.com/joshhmann/AAEmu/releases)
 
 ## Related
 

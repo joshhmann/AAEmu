@@ -1,7 +1,7 @@
 # Installation & Setup
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on August 5, 2026
+- Last verified against: `develop` on 2026-09-15 (spot-checked ports/commands/paths against code + skill; no fresh gameplay verification)
 - Prerequisites: `.NET 10 SDK`, required AAEmu dependencies/downloads, and
   MySQL for manual track
 
@@ -18,7 +18,7 @@ Use this path if you want the fastest contributor onboarding.
 
 1. Install `.NET 10 SDK`.
 1. Install an OCI-compliant runtime (Docker Desktop or Podman).
-1. Clone [AAEmu](https://github.com/AAEmu/AAEmu) (`develop` branch recommended).
+1. Clone [AAEmu](https://github.com/joshhmann/AAEmu) (`develop` branch recommended).
 1. Download required files from [Dependencies and Downloads](Dependencies-and-Downloads):
    - `compact.sqlite3`
    - ArcheAge 1.2 client
@@ -54,7 +54,7 @@ Use this path if you do not want to use Aspire.
 
 1. Install MySQL 8.x.
 1. Install `.NET 10 SDK`.
-1. Clone [AAEmu](https://github.com/AAEmu/AAEmu) (`develop` branch recommended).
+1. Clone [AAEmu](https://github.com/joshhmann/AAEmu) (`develop` branch recommended).
 1. Download required files from [Dependencies and Downloads](Dependencies-and-Downloads):
    - `compact.sqlite3`
    - ArcheAge 1.2 client
@@ -83,6 +83,11 @@ Example:
 
 ```json
 {
+  "SecretKey": "test",
+  "InternalNetwork": {
+    "Host": "*",
+    "Port": 1234
+  },
   "Connections": {
     "MySQLProvider": {
       "Host": "127.0.0.1",
@@ -103,6 +108,11 @@ Example:
   ]
 }
 ```
+
+`SecretKey` must be identical on login and game; login `InternalNetwork`
+port must match game `LoginNetwork` port (default `1234`). A mismatch (or a
+`1234` conflict) leaves the game unregistered and the client list shows
+`Maintenance`.
 
 ### Game server configuration (manual)
 

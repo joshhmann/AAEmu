@@ -1,10 +1,10 @@
 # Client Downloads
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on August 5, 2026
+- Last verified against: `develop` on 2026-09-15 (spot-checked ports/commands/paths against code + skill; no fresh gameplay verification)
 - Prerequisites: Internet access and enough disk space for client files
 
-Our current `develop` branch requires client version 1.2 (revision `208022`).
+The fork's current `develop` branch (`joshhmann/AAEmu`) requires client version 1.2 (revision `208022`).
 Download links are listed below.
 
 Besides connecting to the server, the client data is also needed for server

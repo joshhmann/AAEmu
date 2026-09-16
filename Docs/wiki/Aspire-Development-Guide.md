@@ -1,7 +1,7 @@
 # Aspire Development Guide
 
 - Audience: Contributors
-- Last verified against: `develop` on August 5, 2026
+- Last verified against: `develop` on 2026-09-15 (spot-checked ports/commands/paths against code + skill; no fresh gameplay verification)
 - Prerequisites: `.NET 10 SDK`, OCI runtime, and required downloaded
   dependencies
 
@@ -78,7 +78,7 @@ In Aspire, monitor readiness from dashboard state and resource logs.
 - OCI runtime not running: start Docker Desktop or Podman first.
 - `compact.sqlite3` missing: place it in `AAEmu.Game/Data`.
 - Invalid `game_pak` path: set it in `Config.Local.json` and re-run.
-- Port conflict on `1237`, `1239`, or `1250`: free the port or adjust local setup.
+- Port conflict on `1237`, `1239`, or `1250` (also `1234` login internal, `1280` game Web API, `15133` Aspire dashboard): free the port or adjust local setup. Canonical port table: [setup reference](../../.agents/skills/aaemu-setup/REFERENCE.md).
 - Missing server list in client: verify login `GameServers` config values, not
   MySQL `game_servers`.
 

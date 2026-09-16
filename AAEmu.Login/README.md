@@ -2,7 +2,7 @@
 
 ### Configuration
 
-To configure the login you have you can just use a **configuration file** or combine it with **user secrets (preferred)** to hide credentials from files in the repository.
+To configure the login you can just use a **configuration file**, optionally combined with **user secrets** to hide credentials from files in the repository.
 
 The configuration structure is as follows:
 
@@ -18,6 +18,15 @@ The configuration structure is as follows:
     "Port": 1237,
     "NumConnections": 10
 },
+"GameServers": [      <-- Required: at least one entry, or login fails validation at boot
+    {
+        "Id": 1,
+        "Name": "AAEmu.Game",
+        "Host": "127.0.0.1",
+        "Port": 1239,
+        "Hidden": false
+    }
+],
 "Connections": {
     "MySQLProvider": {
         "Host": "%db_host%",         <-- localhost or any specific
@@ -52,7 +61,7 @@ For example, the `Config.Local.json` file could look like this:
 }
 ```
 
-### Combining with User Secrets (preferred)
+### Combining with User Secrets
 
 This is the preferred option as it won't expose your database credentials in the configuration file.
 

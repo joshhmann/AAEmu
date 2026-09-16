@@ -3,7 +3,7 @@
 - Audience: Players, testers, contributors
 - Last verified against: `develop` on 2026-08-05 (canonical `compact.sqlite3` r208022, zones 9/124/125; M1-5 scenario-harness census)
 - Scope: M1 golden-route document — the curated opening progression for a new Nuian character in Solzreed, plus intentionally excluded quests
-- Sources: `scorecard-explorations/solzreed-zone-report.md` (97 quests, kind-31 chains, gates), `scorecard-explorations/runnability.md` (88/97 T1 pass), `tools/quest-graph/README.md`
+- Sources: `../../scorecard-explorations/solzreed-zone-report.md` (97 quests, kind-31 chains, gates), `../../scorecard-explorations/runnability.md` (88/97 T1 pass), `tools/quest-graph/README.md`
 
 Solzreed is the LOCKED golden zone (ROADMAP.md — locked-shape, Josh 2026-08-03). This page is the
 curated route: which quests a fresh Nuian character follows, in what order, what each
@@ -205,6 +205,6 @@ route. They remain playable targets for later milestones or Lane B.
 - [Server](Server)
 - [Developer Notes](Developer-Notes)
 - [Code Terminology](Code-Terminology)
-- Zone data: `scorecard-explorations/solzreed-zone-report.md`
-- Harness census: `scorecard-explorations/runnability.md`
-- Quest engine deep-dive: `scorecard-explorations/quests.md`
+- Zone data: `../../scorecard-explorations/solzreed-zone-report.md`
+- Harness census: `../../scorecard-explorations/runnability.md`
+- Quest engine deep-dive: `../../scorecard-explorations/quests.md`

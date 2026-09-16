@@ -26,7 +26,7 @@ Current records: fork `develop`
 [PLAYERBOT-FRAMEWORK](https://github.com/joshhmann/AAEmu/blob/develop/PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md) ·
 [TARGET-ARCHITECTURE-V1](https://github.com/joshhmann/AAEmu/blob/develop/PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md).
 
-## Historical snapshot — 2026-08-05 (superseded table and narrative below; current direction is above)
+## HISTORICAL snapshot — 2026-08-05 (do not use as current; current direction is above)
 ### Milestones (historical)
 
 | # | Milestone | State |
@@ -66,9 +66,14 @@ Progress to date:
   Full gate: 1129/1129 (2026-08-04).
 - Scenario harness (M1-5b): engine-level full-lifecycle quest driver
   (START→PROGRESS→READY→REWARD→PERSIST) in AAEmu.UnitTests.
-- Runnability census (runnability.md, 2026-08-05): Solzreed golden zone
-  86/97 PASS, 11 FAIL, 0 SKIP; fix-family set 21 PASS / 8 FAIL / 6 SKIP
-  (orphaned contexts).
+- Runnability census, date-scoped (do not mix these numbers — different runs):
+  - `Quest-Runnability-Census.md` (generated 2026-08-05 03:20Z): T1 Solzreed
+    97/97 PASS; all tiers 153/153 driven (33 SKIP not driven).
+  - `Quest-Test-Harness.md` (2026-08-05): Solzreed golden zone 86/97 PASS,
+    11 FAIL, 0 SKIP; fix-family set 21 PASS / 8 FAIL / 6 SKIP.
+  - `Golden-Route-Solzreed.md` Sources line (2026-08-05): 88/97 T1 pass.
+  - The three T1 figures (97 vs 86 vs 88) come from different harness runs on
+    the same date and are unresolved — recorded here as-is, not reconciled.
 - Solzreed locked as the golden zone (zones 9/124/125, 97 quest contexts);
   curated Nuian opening chain documented — see Golden-Route-Solzreed.
 - Known M1 blockers from the census (11 T1 FAILs, classes per

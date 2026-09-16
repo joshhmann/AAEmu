@@ -1,3 +1,5 @@
+> **🚫 THE RULE (Josh, permanent):** **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.** Upstream is intake-only — fetch it into a dedicated `sync/upstream-YYYY-MM-DD` branch, verify, and merge into the fork. `origin` is the fork `joshhmann/AAEmu` and is the only normal push target. Full workflow: `WORKFLOW.md`.
+
 ## Contributing
 
 If you want to contribute to a project and make it better, your help is very welcome. Contributing is also a great way to learn more about social coding on Github, new technologies and and their ecosystems and how to make constructive, helpful bug reports, feature requests and the noblest of all contributions: a good, clean pull request.

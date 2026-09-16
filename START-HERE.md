@@ -68,7 +68,7 @@ flowchart TD
 * **Prerequisite Reading:**
   * Architecture: [`Docs/wiki/Components.md`](file:///root/aaemu-dev/Docs/wiki/Components.md)
   * Conventions: [`Docs/wiki/Development-Conventions.md`](file:///root/aaemu-dev/Docs/wiki/Development-Conventions.md)
-  * Network/Offsets: `Docs/networking.md`, [`AAEmu.Game/Core/Packets/CSOffsets.cs`](file:///root/aaemu-dev/AAEmu.Game/Core/Packets/CSOffsets.cs), [`SCOffsets.cs`](file:///root/aaemu-dev/AAEmu.Game/Core/Packets/SCOffsets.cs)
+  * Network/Offsets: [`AAEmu.Login/Docs/networking.md`](AAEmu.Login/Docs/networking.md), [`AAEmu.Game/Core/Packets/CSOffsets.cs`](file:///root/aaemu-dev/AAEmu.Game/Core/Packets/CSOffsets.cs), [`SCOffsets.cs`](file:///root/aaemu-dev/AAEmu.Game/Core/Packets/SCOffsets.cs)
 * **Where Unfinished Work Lives:**
   * [`scorecard-explorations/zero-wired-domains.md`](file:///root/aaemu-dev/scorecard-explorations/zero-wired-domains.md) — Unimplemented client packets and unwired opcodes.
   * [`scorecard-explorations/partial-domains.md`](file:///root/aaemu-dev/scorecard-explorations/partial-domains.md) — Half-built mechanics and missing formulas.

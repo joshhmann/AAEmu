@@ -1,7 +1,7 @@
 # Dependencies and Downloads
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on August 5, 2026
+- Last verified against: `develop` on 2026-09-15 (spot-checked ports/commands/paths against code + skill; no fresh gameplay verification)
 - Prerequisites: None
 
 Use this page as the single source of truth for required downloads before setup.
@@ -10,7 +10,7 @@ Use this page as the single source of truth for required downloads before setup.
 
 ### AAEmu source code
 
-- Repository: [AAEmu](https://github.com/AAEmu/AAEmu)
+- Repository: [AAEmu](https://github.com/joshhmann/AAEmu)
 - Recommended branch: `develop`
 
 ### .NET SDK

@@ -26,7 +26,7 @@ gameplay blockers.
 
 The full per-quest route table, gates, and intentionally excluded quests live
 on [Golden Route — Solzreed](Golden-Route-Solzreed); per-quest harness
-verdicts are in `scorecard-explorations/runnability.md`.
+verdicts are in `../../scorecard-explorations/runnability.md`.
 
 ## Planned topics
 

@@ -77,9 +77,12 @@ see [Dependencies and Downloads](Dependencies-and-Downloads).
 Common defaults:
 
 - `1237`: login public
+- `1234`: login internal (game-server registration; pairs with game `LoginNetwork`)
 - `1239`: game public
 - `1250`: game stream
 - `1280`: optional game Web API
+
+`Maintenance` on the server list usually means the game never registered: port `1234` conflict, mismatched `LoginNetwork`, or `SecretKey` mismatch. Canonical port table: [setup reference](../../.agents/skills/aaemu-setup/REFERENCE.md).
 
 ### What should `GameServers` host be for local use
 
