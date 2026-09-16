@@ -149,12 +149,13 @@ public static class CSOffsets
     public const ushort CSReadMailPacket = 0x09c;
     public const ushort CSTakeAttachmentItemPacket = 0x09d;
     public const ushort CSTakeAttachmentMoneyPacket = 0x09e;
-    // 0x9f unk packet
+    // 0x9f: mail attachment batch-take (assigned, see GameNetwork registration)
     public const ushort CSTakeAttachmentSequentially = 0x09f;
     public const ushort CSPayChargeMoneyPacket = 0x0a0;
     public const ushort CSDeleteMailPacket = 0x0a1;
     public const ushort CSReportSpamPacket = 0x0a3;
-    // STRONGLY_INFERRED as 0x0a2 (not present in client offset dumps). Evidence chain:
+    // INFERRED as 0x0a2 — NOT VERIFIED against a live-client capture
+    // (not present in client offset dumps). Evidence chain:
     // the mailbox UI calls X2Mail:ReturnMailById verbatim (decompiled 1.2 game_pak
     // x2ui/mailbox/mail/read_mail.lua:991-1009), and slot arithmetic over the contiguous
     // C2S mail block pins the gap: Send=0x098, List=0x09a/b, Read=0x09c, TakeItem=0x09d,

@@ -166,14 +166,14 @@ public class GameNetwork : Singleton<GameNetwork>
         RegisterPacket(CSOffsets.CSReadMailPacket, 1, typeof(CSReadMailPacket));
         RegisterPacket(CSOffsets.CSTakeAttachmentItemPacket, 1, typeof(CSTakeAttachmentItemPacket));
         RegisterPacket(CSOffsets.CSTakeAttachmentMoneyPacket, 1, typeof(CSTakeAttachmentMoneyPacket));
-        // 0x9f unk packet
+        // 0x9f: mail attachment batch-take (CSTakeAttachmentSequentially)
         RegisterPacket(CSOffsets.CSTakeAttachmentSequentially, 1, typeof(CSTakeAttachmentSequentially));
         RegisterPacket(CSOffsets.CSPayChargeMoneyPacket, 1, typeof(CSPayChargeMoneyPacket));
         RegisterPacket(CSOffsets.CSDeleteMailPacket, 1, typeof(CSDeleteMailPacket));
         RegisterPacket(CSOffsets.CSReportSpamPacket, 1, typeof(CSReportSpamPacket));
-        // 0x0a2 — STRONGLY_INFERRED via slot arithmetic over the contiguous mail block
-        // (Delete=0x0a1 occupies 0x0a1; client UI calls X2Mail:ReturnMailById). Do NOT
-        // move this to 0x0a1: that would shadow CSDeleteMailPacket.
+        // 0x0a2 — INFERRED, NOT VERIFIED against a live-client capture (slot arithmetic
+        // over the contiguous mail block; Delete=0x0a1 occupies 0x0a1; client UI calls
+        // X2Mail:ReturnMailById). Do NOT move this to 0x0a1: that would shadow CSDeleteMailPacket.
         RegisterPacket(CSOffsets.CSReturnMailPacket, 1, typeof(CSReturnMailPacket));
         RegisterPacket(CSOffsets.CSRemoveMatePacket, 1, typeof(CSRemoveMatePacket));
         RegisterPacket(CSOffsets.CSChangeMateTargetPacket, 1, typeof(CSChangeMateTargetPacket));

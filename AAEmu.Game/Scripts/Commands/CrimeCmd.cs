@@ -10,7 +10,7 @@ namespace AAEmu.Game.Scripts.Commands;
 
 public class CrimeCmd : SubCommandBase, ICommand
 {
-    public string[] CommandNames { get; set; } = ["doodad"];
+    public string[] CommandNames { get; set; } = ["crime"];
 
     public CrimeCmd()
     {
@@ -29,7 +29,7 @@ public class CrimeCmd : SubCommandBase, ICommand
 
     public void OnLoad()
     {
-        CommandManager.Instance.Register("crime", this);
+        CommandManager.Instance.Register(CommandNames, this);
     }
 
     public CrimeCmd(Dictionary<ICommandV2, string[]> subcommands) : base(subcommands)

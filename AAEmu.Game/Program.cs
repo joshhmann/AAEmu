@@ -445,9 +445,6 @@ public static class Program
                 services.AddSingleton<TrialManager>();
                 services.AddSingleton<ITrialManager>(sp => sp.GetRequiredService<TrialManager>());
 
-                services.AddSingleton<CrimeManager>();
-                services.AddSingleton<ICrimeManager>(sp => sp.GetRequiredService<CrimeManager>());
-
                 // -- Singleton<T>-based managers (AAEmu.Game.Core.Managers.World) --
                 services.AddSingleton<AreaTriggerManager>();
                 services.AddSingleton<IAreaTriggerManager>(sp => sp.GetRequiredService<AreaTriggerManager>());
