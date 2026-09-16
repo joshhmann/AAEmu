@@ -62,7 +62,7 @@ public class GoapActionBase : IGoapAction
 
     public virtual BotWorldState ApplyEffects(in BotWorldState currentState) => currentState.Apply(Effects);
 
-    public virtual ActorRequest? CreateActorRequest(PlayerBotRuntime bot) => null;
+    public virtual ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null) => null;
 
     public override string ToString() => $"Action[{Name}, Cost={BaseCost:F1}]";
 }

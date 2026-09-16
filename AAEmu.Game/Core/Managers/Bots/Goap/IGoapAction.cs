@@ -41,5 +41,5 @@ public interface IGoapAction
     /// Translates this planned action into a concrete, validated request for the server's
     /// IGameplayActor execution boundary (optional/null if simulated or compound).
     /// </summary>
-    ActorRequest? CreateActorRequest(PlayerBotRuntime bot);
+    ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null);
 }
