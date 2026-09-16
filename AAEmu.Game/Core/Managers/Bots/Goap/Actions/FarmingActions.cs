@@ -16,7 +16,6 @@ public sealed class TravelToSeedMerchantAction : GoapActionBase
     public TravelToSeedMerchantAction(Vector3? merchantPos = null, float baseCost = 2.0f)
         : base("TravelToSeedMerchant", baseCost)
     {
-        // Default to Solzreed nursery / seed merchant coordinates if not specified
         _defaultMerchantPos = merchantPos ?? new Vector3(14485.0f, 14411.0f, 112.5f);
         WithEffect(BotWorldState.NearSeedMerchant);
     }
@@ -28,7 +27,6 @@ public sealed class TravelToSeedMerchantAction : GoapActionBase
 
         var botPos = bot.Character.Transform.World.Position;
         var distance = Vector3.Distance(botPos, _defaultMerchantPos);
-        // Cost scales mildly with distance (1.0 base + 1.0 per 500m)
         return BaseCost + (distance / 500f);
     }
 
@@ -36,6 +34,25 @@ public sealed class TravelToSeedMerchantAction : GoapActionBase
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
         return effectiveActor.NavigateTo(_defaultMerchantPos, speed: 5.0f);
+    }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        // Verified by real spatial proximity
+        if (observedState.Has(BotWorldState.NearSeedMerchant))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        if (activeRequest != null && activeRequest.State == ActorLifecycleState.Completed && !observedState.Has(BotWorldState.NearSeedMerchant))
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
     }
 }
 
@@ -66,8 +83,26 @@ public sealed class BuySaplingsAction : GoapActionBase
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        // In real execution, targetObjId is the nearby merchant NPC objId
         return effectiveActor.Buy(0, SaplingTemplateId, SaplingCount);
+    }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        // Crucial Invariant: Succeeded ONLY when inventory genuinely contains saplings
+        if (observedState.Has(BotWorldState.HasTreeSaplings))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        if (activeRequest != null && activeRequest.State == ActorLifecycleState.Completed && !observedState.Has(BotWorldState.HasTreeSaplings))
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
     }
 }
 
@@ -108,6 +143,28 @@ public sealed class HikeToWildFarmAction : GoapActionBase
 
         return effectiveActor.NavigateTo(destination, speed: 4.5f);
     }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        // Scenario D: Invalidate if target POI became invalid during transit
+        if (context.Memory.TargetWildFarmPoiInvalidated)
+            return GoapActionStatus.Invalidated;
+
+        if (observedState.Has(BotWorldState.AtWildFarm))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        if (activeRequest != null && activeRequest.State == ActorLifecycleState.Completed && !observedState.Has(BotWorldState.AtWildFarm))
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
+    }
 }
 
 /// <summary>
@@ -139,6 +196,29 @@ public sealed class PlantWildSaplingAction : GoapActionBase
         var pos = bot.Character.Transform.World.Position;
         return effectiveActor.Plant(SaplingTemplateId, pos);
     }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (observedState.Has(BotWorldState.SecretGrovePlanted) || context.Memory.HasActiveGroves)
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        if (activeRequest != null && activeRequest.State == ActorLifecycleState.Completed)
+        {
+            if (observedState.Has(BotWorldState.SecretGrovePlanted) || context.Memory.HasActiveGroves)
+                return GoapActionStatus.Succeeded;
+
+            return GoapActionStatus.Failed;
+        }
+
+        return GoapActionStatus.Running;
+    }
 }
 
 /// <summary>
@@ -164,7 +244,21 @@ public sealed class ChopMatureTreeAction : GoapActionBase
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        // In real execution, doodadObjId is the nearby tree doodad
         return effectiveActor.Harvest(0);
+    }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (observedState.Has(BotWorldState.BagFull))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
     }
 }

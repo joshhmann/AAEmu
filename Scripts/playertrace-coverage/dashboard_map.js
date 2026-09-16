@@ -13,6 +13,14 @@ const mapImages = new Map();
 const mapHubs = new Map();
 const mapPois = new Map();
 let navHeatmapData = null;
+let liveRadarActive = false;
+let liveRadarTimer = null;
+let liveEntities = [];
+let liveRadarInFlight = false;
+let serverRoutes = [];
+let activeVerifiedRoute = null;
+let activeWaypointIndex = -1;
+let activeRouteFilter = 'all';
 const draftStorageKey = 'aaemu.world0.route-draft.v1';
 const mapEl = id => document.getElementById(id);
 const finiteMapNumber = n => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1e7;
@@ -55,6 +63,8 @@ async function loadWorldMap() {
     resizeMapCanvas();
     chooseMap('world');
     restoreDraft();
+    loadServerRoutes();
+    setMapMode('routes');
 }
 
 function chooseMap(key) {
@@ -141,9 +151,102 @@ async function toggleHeatmapLayer() {
     redrawMap();
 }
 
+async function pollLiveRadar() {
+    if (!liveRadarActive || liveRadarInFlight) return;
+    liveRadarInFlight = true;
+    const btn = mapEl('liveRadarBtn');
+    try {
+        const resp = await fetch('/api/map/live');
+        if (!resp.ok) throw Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        liveEntities = data.entities || [];
+        if (data.server_online) {
+            const botCount = liveEntities.filter(e => e.type === 'bot').length;
+            const playerCount = liveEntities.filter(e => e.type === 'player').length;
+            if (btn) {
+                btn.textContent = `🟢 Live Radar: On (${liveEntities.length})`;
+                btn.title = `Live Radar Active: ${playerCount} player(s), ${botCount} bot(s) tracked. Click to turn off.`;
+                btn.style.borderColor = '#238636';
+                btn.style.color = '#3fb950';
+            }
+            mapNotice(`Live Radar: Tracking ${liveEntities.length} in-world entities (${playerCount} players, ${botCount} bots).`);
+        } else {
+            if (btn) {
+                btn.textContent = '🟡 Live Radar: Offline';
+                btn.title = 'Game WebApi (:1280) not responding. Click to turn off.';
+                btn.style.borderColor = '#d29922';
+                btn.style.color = '#e3b341';
+            }
+            mapNotice('Live Radar: Game WebApi (:1280) is not responding.');
+        }
+        redrawMap();
+    } catch (e) {
+        if (btn) {
+            btn.textContent = '🔴 Live Radar: Error';
+            btn.title = 'Failed to poll live entities: ' + e.message;
+            btn.style.borderColor = '#da3633';
+            btn.style.color = '#f85149';
+        }
+        mapNotice('Live Radar connection error: ' + e.message);
+    } finally {
+        liveRadarInFlight = false;
+    }
+}
+
+function toggleLiveRadar() {
+    liveRadarActive = !liveRadarActive;
+    const btn = mapEl('liveRadarBtn');
+    if (liveRadarActive) {
+        if (btn) {
+            btn.textContent = '🟡 Live Radar: Connecting…';
+            btn.style.borderColor = '#d29922';
+            btn.style.color = '#e3b341';
+            btn.classList.add('active');
+        }
+        mapNotice('Connecting live radar to Game WebApi…');
+        pollLiveRadar();
+        if (liveRadarTimer) clearInterval(liveRadarTimer);
+        liveRadarTimer = setInterval(pollLiveRadar, 2000);
+    } else {
+        if (liveRadarTimer) {
+            clearInterval(liveRadarTimer);
+            liveRadarTimer = null;
+        }
+        liveEntities = [];
+        if (btn) {
+            btn.textContent = '📡 Live Radar: Off';
+            btn.title = 'Toggle live player & bot radar polling against Game WebApi';
+            btn.style.borderColor = '#388bfd';
+            btn.style.color = '#58a6ff';
+            btn.classList.remove('active');
+        }
+        mapNotice('Live Radar disabled.');
+        redrawMap();
+    }
+}
+
 function nearestMapTarget(point) {
-    let nearest = null, distance = 12 / mapView.scale;
-    if (mapEl('layerPois')?.checked) {
+    let nearest = null, distance = 14 / mapView.scale;
+    if (liveRadarActive && liveEntities.length) {
+        for (const ent of liveEntities) {
+            const d = Math.hypot(ent.x - point.x, ent.y - point.y);
+            if (d < distance) {
+                distance = d;
+                nearest = {
+                    x: ent.x,
+                    y: ent.y,
+                    z: ent.z,
+                    label: (ent.type === 'bot' ? '🤖 ' : '👤 ') + ent.name,
+                    what: ent.type === 'bot'
+                        ? `PlayerBot · State: ${ent.state || 'Active'} · Live XYZ: ${ent.x.toFixed(2)}, ${ent.y.toFixed(2)}, ${ent.z.toFixed(2)}`
+                        : `Online Player · Level ${ent.level || 1} · State: ${ent.state || 'In World'} · Live XYZ: ${ent.x.toFixed(2)}, ${ent.y.toFixed(2)}, ${ent.z.toFixed(2)}`,
+                    source: 'live_entity',
+                    isLive: true
+                };
+            }
+        }
+    }
+    if (!nearest && mapEl('layerPois')?.checked) {
         for (const poi of mapPois.values()) {
             const d = Math.hypot(poi.x - point.x, poi.y - point.y);
             if (d < distance) { distance = d; nearest = { ...poi, isPoi: true }; }
@@ -188,10 +291,11 @@ function setupMapEvents() {
         canvas.releasePointerCapture(event.pointerId);
         const p = mapPointer(event), size = canvasSize();
         if (drag.moved || p.x < 0 || p.y < 0 || p.x > size.width || p.y > size.height) return;
-        const target = (mapEl('snapHubs').checked || mapEl('layerPois')?.checked) ? nearestMapTarget(wp) : null;
+        const wp = screenToWorld(p.x, p.y);
+        const target = (mapEl('snapHubs').checked || mapEl('layerPois')?.checked || liveRadarActive) ? nearestMapTarget(wp) : null;
         const point = target ? {
             x: target.x, y: target.y, z: target.z,
-            source: target.isPoi ? target.type : 'reference-hub',
+            source: target.isLive ? 'live_entity' : (target.isPoi ? target.type : 'reference-hub'),
             label: target.label || target.id,
             desc: target.what || ''
         } : {x:mapRound(wp.x),y:mapRound(wp.y),z:null,source:'map-click'};
@@ -308,6 +412,155 @@ function redrawMap() {
             ctx.fillText(h.events, s.x, s.y + 3);
         }
     }
+    if (liveRadarActive && liveEntities.length) {
+        for (const ent of liveEntities) {
+            const s = worldToScreen(ent.x, ent.y);
+            if (!inView(s)) continue;
+
+            const isPlayer = ent.type === 'player';
+            const mainColor = isPlayer ? '#38bdf8' : '#34d399';
+            const ringColor = isPlayer ? 'rgba(56, 189, 248, 0.35)' : 'rgba(52, 211, 153, 0.35)';
+            const borderCol = isPlayer ? '#0369a1' : '#065f46';
+
+            // Radar pulse ring
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 9, 0, 2 * Math.PI);
+            ctx.fillStyle = ringColor;
+            ctx.fill();
+
+            // Inner entity pin
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 4.5, 0, 2 * Math.PI);
+            ctx.fillStyle = mainColor;
+            ctx.strokeStyle = borderCol;
+            ctx.lineWidth = 1.5;
+            ctx.fill();
+            ctx.stroke();
+
+            // Name / state tag
+            if (mapView.scale > 0.015 || liveEntities.length <= 35) {
+                const label = (isPlayer ? '👤 ' : '🤖 ') + ent.name + (isPlayer ? ` (Lv.${ent.level || 1})` : ` [${ent.state || 'Bot'}]`);
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                const textWidth = ctx.measureText(label).width;
+
+                ctx.fillStyle = 'rgba(10, 15, 26, 0.85)';
+                ctx.fillRect(s.x - textWidth / 2 - 4, s.y - 19, textWidth + 8, 13);
+                ctx.strokeStyle = mainColor;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(s.x - textWidth / 2 - 4, s.y - 19, textWidth + 8, 13);
+
+                ctx.fillStyle = isPlayer ? '#7dd3fc' : '#a7f3d0';
+                ctx.fillText(label, s.x, s.y - 9);
+            }
+        }
+    }
+
+    // Overlay all routes across the world if enabled
+    if (mapEl('layerAllRoutes')?.checked && serverRoutes.length) {
+        for (const r of serverRoutes) {
+            if (activeVerifiedRoute && activeVerifiedRoute.RouteName === r.name) continue;
+            if (r.start && r.end && r.start.x != null && r.end.x != null) {
+                const s1 = worldToScreen(r.start.x, r.start.y);
+                const s2 = worldToScreen(r.end.x, r.end.y);
+                const col = r.continent === 'Haranya' ? 'rgba(245, 158, 11, 0.45)' : (r.continent === 'Nuia' ? 'rgba(56, 189, 248, 0.45)' : 'rgba(168, 85, 247, 0.45)');
+                ctx.strokeStyle = col;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 4]);
+                ctx.beginPath();
+                ctx.moveTo(s1.x, s1.y);
+                ctx.lineTo(s2.x, s2.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+    }
+
+    // Render active verified route
+    if (activeVerifiedRoute && activeVerifiedRoute.Actions) {
+        const wps = activeVerifiedRoute.Actions.filter(a => a.ActionType === 'Waypoint');
+        if (wps.length) {
+            // Path line
+            ctx.beginPath();
+            wps.forEach((p, i) => {
+                const s = worldToScreen(p.X, p.Y);
+                if (i === 0) ctx.moveTo(s.x, s.y);
+                else ctx.lineTo(s.x, s.y);
+            });
+            ctx.strokeStyle = 'rgba(2, 44, 67, 0.85)';
+            ctx.lineWidth = 7;
+            ctx.stroke();
+            
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            // Waypoint nodes
+            wps.forEach((p, i) => {
+                const s = worldToScreen(p.X, p.Y);
+                if (!inView(s)) return;
+                
+                const isSelected = i === activeWaypointIndex;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, isSelected ? 8 : (wps.length > 150 && mapView.scale < 0.02 ? 2.5 : 4), 0, 2 * Math.PI);
+                ctx.fillStyle = isSelected ? '#ffea00' : '#00b4d8';
+                ctx.fill();
+                ctx.strokeStyle = isSelected ? '#ff0055' : '#03045e';
+                ctx.lineWidth = isSelected ? 2.5 : 1.2;
+                ctx.stroke();
+
+                if (isSelected) {
+                    // Reticle ring
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, 14, 0, 2 * Math.PI);
+                    ctx.strokeStyle = '#ffea00';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+
+                    // Elevation badge
+                    const zText = `Z: ${p.Z != null ? p.Z.toFixed(1) : '?'}m`;
+                    ctx.font = 'bold 10px monospace';
+                    ctx.textAlign = 'center';
+                    const tw = ctx.measureText(zText).width;
+                    ctx.fillStyle = 'rgba(10, 15, 26, 0.9)';
+                    ctx.fillRect(s.x - tw/2 - 4, s.y - 24, tw + 8, 14);
+                    ctx.strokeStyle = '#ffea00';
+                    ctx.strokeRect(s.x - tw/2 - 4, s.y - 24, tw + 8, 14);
+                    ctx.fillStyle = '#ffea00';
+                    ctx.fillText(zText, s.x, s.y - 13);
+                }
+            });
+
+            // Start badge (green)
+            const startPt = worldToScreen(wps[0].X, wps[0].Y);
+            if (inView(startPt)) {
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'rgba(6, 78, 59, 0.9)';
+                ctx.fillRect(startPt.x - 28, startPt.y - 28, 56, 16);
+                ctx.strokeStyle = '#10b981';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(startPt.x - 28, startPt.y - 28, 56, 16);
+                ctx.fillStyle = '#a7f3d0';
+                ctx.fillText('🏁 Start', startPt.x, startPt.y - 16);
+            }
+
+            // End badge (red)
+            const endPt = worldToScreen(wps[wps.length - 1].X, wps[wps.length - 1].Y);
+            if (inView(endPt)) {
+                ctx.font = 'bold 11px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'rgba(127, 29, 29, 0.9)';
+                ctx.fillRect(endPt.x - 26, endPt.y - 28, 52, 16);
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(endPt.x - 26, endPt.y - 28, 52, 16);
+                ctx.fillStyle = '#fca5a5';
+                ctx.fillText('🎯 End', endPt.x, endPt.y - 16);
+            }
+        }
+    }
+
     if (draftRoutePoints.length) {
         ctx.beginPath();
         draftRoutePoints.forEach((p,i) => { const s=worldToScreen(p.x,p.y); if (i) ctx.lineTo(s.x,s.y); else ctx.moveTo(s.x,s.y); });
@@ -349,7 +602,9 @@ function selectMapPoint(point) {
     selectedTarget = {...point};
     for (const axis of ['x','y','z']) mapEl('inspect'+axis.toUpperCase()).value = point[axis] ?? '';
     mapEl('inspectName').textContent = point.label || 'World coordinate';
-    if (point.source === 'illegal_tree_farm') {
+    if (point.source === 'live_entity') {
+        mapEl('inspectSub').textContent = point.desc || 'Live in-world entity tracked via Game WebApi (:1280).';
+    } else if (point.source === 'illegal_tree_farm') {
         mapEl('inspectSub').textContent = '🌲 ' + (point.desc || 'Secret Wild Tree Farm · Secluded wilderness ideal for illegal saplings & thunderstruck tree hunts.');
     } else if (point.source === 'shipwreck') {
         mapEl('inspectSub').textContent = '⚓ ' + (point.desc || 'Sunken Shipwreck POI.');
@@ -405,13 +660,17 @@ function copyMoveCommand() {
 }
 
 function setMapMode(mode) {
-    mapMode=mode;
-    mapEl('mapModeInspectBtn').classList.toggle('active',mode==='inspect');
-    mapEl('mapModeDraftBtn').classList.toggle('active',mode==='draft');
-    mapEl('sidebarInspectPanel').style.display=mode==='inspect' ? 'block':'none';
-    mapEl('sidebarDraftPanel').style.display=mode==='draft' ? 'block':'none';
-    mapEl('sidebarHeaderTitle').textContent=mode==='inspect' ? 'Map inspector':'Route builder';
-    mapNotice(mode==='draft' ? 'Click to add. Dragging never creates a waypoint. Amber points need Z.' : '');
+    mapMode = mode;
+    mapEl('mapModeRoutesBtn')?.classList.toggle('active', mode === 'routes');
+    mapEl('mapModeInspectBtn')?.classList.toggle('active', mode === 'inspect');
+    mapEl('mapModeDraftBtn')?.classList.toggle('active', mode === 'draft');
+    if (mapEl('sidebarRoutesPanel')) mapEl('sidebarRoutesPanel').style.display = mode === 'routes' ? 'block' : 'none';
+    if (mapEl('sidebarInspectPanel')) mapEl('sidebarInspectPanel').style.display = mode === 'inspect' ? 'block' : 'none';
+    if (mapEl('sidebarDraftPanel')) mapEl('sidebarDraftPanel').style.display = mode === 'draft' ? 'block' : 'none';
+    if (mapEl('sidebarHeaderTitle')) {
+        mapEl('sidebarHeaderTitle').textContent = mode === 'routes' ? 'Routes catalog' : (mode === 'inspect' ? 'Map inspector' : 'Route builder');
+    }
+    mapNotice(mode === 'draft' ? 'Click to add. Dragging never creates a waypoint. Amber points need Z.' : (mode === 'routes' ? 'Select a route to verify waypoints and elevations on map.' : ''));
     redrawMap();
 }
 
@@ -443,8 +702,82 @@ function restoreDraft() {
     } catch { mapNotice('Saved draft could not be restored; it has not been overwritten.'); }
 }
 
+function estimateAtlasElevation(x, y) {
+    let bestDist = Infinity;
+    let bestZ = null;
+
+    // 1. Check road edges (segments between hubs)
+    if (mapAtlasData?.edges && mapAtlasData?.junctions) {
+        for (const edge of mapAtlasData.edges) {
+            const a = mapHubs.get(edge.from);
+            const b = mapHubs.get(edge.to);
+            if (!a || !b || a.z == null || b.z == null) continue;
+
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            const lenSq = dx * dx + dy * dy;
+            if (lenSq < 0.0001) continue;
+
+            let t = ((x - a.x) * dx + (y - a.y) * dy) / lenSq;
+            t = Math.max(0, Math.min(1, t));
+
+            const projX = a.x + t * dx;
+            const projY = a.y + t * dy;
+            const dist = Math.hypot(x - projX, y - projY);
+
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestZ = a.z + t * (b.z - a.z);
+            }
+        }
+    }
+
+    // 2. Nearest reference hub fallback
+    if (mapHubs.size) {
+        for (const hub of mapHubs.values()) {
+            if (hub.z == null) continue;
+            const dist = Math.hypot(x - hub.x, y - hub.y);
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestZ = hub.z;
+            }
+        }
+    }
+
+    return bestZ != null ? Math.round(bestZ * 100) / 100 : null;
+}
+
+function autoResolveRouteHeights() {
+    if (!draftRoutePoints.length) {
+        mapNotice('No waypoints in draft to resolve.');
+        return;
+    }
+    let resolvedCount = 0;
+    for (const p of draftRoutePoints) {
+        if (p.z === null) {
+            const est = estimateAtlasElevation(p.x, p.y);
+            if (est !== null) {
+                p.z = est;
+                p.source = 'auto-elevation';
+                resolvedCount++;
+            }
+        }
+    }
+    updateDraftSidebar();
+    saveDraft();
+    redrawMap();
+    mapNotice(`Auto-resolved Z elevations for ${resolvedCount} waypoint(s) from continental road atlas!`);
+}
+
 function addDraftPoint(p) {
     if (draftRoutePoints.length>=5000) { mapNotice('Maximum 5,000 waypoints per draft.'); return; }
+    if (p.z === null) {
+        const est = estimateAtlasElevation(p.x, p.y);
+        if (est !== null) {
+            p.z = est;
+            p.source = 'auto-elevation';
+        }
+    }
     draftRoutePoints.push(p); selectedDraftIndex=draftRoutePoints.length-1;
     updateDraftSidebar(); saveDraft(); redrawMap();
 }
@@ -461,9 +794,9 @@ function updateDraftSummary() {
     let reason='';
     try { routeName(); } catch(error) { reason=error.message; }
     if (!reason && draftRoutePoints.length<2) reason='Add at least two points.';
-    if (!reason && unknown) reason=`${unknown} waypoint(s) need measured Z. Draft saving is still available.`;
     mapEl('exportMapperBtn').disabled=!!reason;
-    mapEl('draftValidation').textContent=reason || 'XYZ complete. Walkability and height still require in-game verification.';
+    if (mapEl('uploadServerBtn')) mapEl('uploadServerBtn').disabled=!!reason;
+    mapEl('draftValidation').textContent=reason || (unknown ? `${unknown} waypoint(s) auto-filled on export.` : 'XYZ complete! Ready to export game route.');
     mapEl('mapperPlayHint').textContent='/mapper play <bot_name> '+mapEl('routeName').value;
 }
 
@@ -519,7 +852,15 @@ function downloadDraft() {
 
 function buildMapperRoute() {
     const name=routeName();
-    if (draftRoutePoints.length<2 || draftRoutePoints.some(p=>!validDraftPoint(p) || p.z===null)) throw Error('At least two finite XYZ waypoints are required.');
+    if (draftRoutePoints.length<2 || draftRoutePoints.some(p=>!validDraftPoint(p))) throw Error('At least two finite waypoints are required.');
+    // Auto-fill any remaining null Z from atlas topology
+    for (const p of draftRoutePoints) {
+        if (p.z === null) {
+            p.z = estimateAtlasElevation(p.x, p.y) ?? 0;
+            p.source = 'auto-elevation';
+        }
+    }
+    updateDraftSidebar();
     let distance=0;
     for (let i=1;i<draftRoutePoints.length;i++) {
         const a=draftRoutePoints[i-1],b=draftRoutePoints[i];distance+=Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z);
@@ -533,6 +874,44 @@ function buildMapperRoute() {
 function exportMapperRoute() {
     try { const route=buildMapperRoute();downloadMapJson(route,route.RouteName+'.json');mapNotice('Downloaded MapperRouteData. Install in Game Data/Routes; replay is not automatically started.'); }
     catch(error) { mapNotice(error.message); }
+}
+
+async function uploadRouteToServer() {
+    try {
+        const route = buildMapperRoute();
+        const btn = mapEl('uploadServerBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '⏳ Uploading...';
+        }
+        mapNotice(`Uploading '${route.RouteName}' to server...`);
+        const resp = await fetch('/api/map/upload-route', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(route)
+        });
+        if (!resp.ok) {
+            const err = await resp.json().catch(()=>({error: 'Upload failed'}));
+            throw Error(err.error || `Upload failed HTTP ${resp.status}`);
+        }
+        const res = await resp.json();
+        if (!res.ok) throw Error(res.error || 'Server rejected route');
+
+        let msg = `✅ Route '${res.routeName}' uploaded! (${res.waypointCount} waypoints, ${Math.round(res.totalDistance)}m).`;
+        if (res.remoteDeployed) {
+            msg += ` Deployed to Game server on 192.168.0.165.`;
+        }
+        mapNotice(msg);
+        mapEl('mapperPlayHint').textContent = `/mapper play <bot_name> ${res.routeName}`;
+    } catch(error) {
+        mapNotice('❌ Upload failed: ' + error.message);
+    } finally {
+        const btn = mapEl('uploadServerBtn');
+        if (btn) {
+            btn.textContent = '🚀 Upload to Server';
+            updateDraftSummary();
+        }
+    }
 }
 
 function applyImportedRoute(data) {
@@ -558,3 +937,297 @@ async function importRoute(input) {
     } catch(error) { mapNotice(error.message); }
     finally {input.value='';}
 }
+
+/* =========================================================================
+   ROUTES & ATLAS CATALOG / VERIFICATION DECK
+   ========================================================================= */
+
+async function loadServerRoutes() {
+    try {
+        const resp = await fetch('/api/map/routes');
+        if (!resp.ok) throw new Error('Could not load routes (' + resp.status + ')');
+        const data = await resp.json();
+        serverRoutes = data.routes || [];
+        
+        // Update filter counters
+        const countAll = serverRoutes.length;
+        const countNuia = serverRoutes.filter(r => r.continent === 'Nuia').length;
+        const countHaranya = serverRoutes.filter(r => r.continent === 'Haranya').length;
+        const countInst = serverRoutes.filter(r => r.continent === 'Instance').length;
+
+        if (mapEl('countFilterAll')) mapEl('countFilterAll').textContent = countAll;
+        if (mapEl('countFilterNuia')) mapEl('countFilterNuia').textContent = countNuia;
+        if (mapEl('countFilterHaranya')) mapEl('countFilterHaranya').textContent = countHaranya;
+        if (mapEl('countFilterInstance')) mapEl('countFilterInstance').textContent = countInst;
+
+        filterRoutes(activeRouteFilter || 'all');
+    } catch (err) {
+        console.warn('loadServerRoutes failed:', err);
+        if (mapEl('routesListContainer')) {
+            mapEl('routesListContainer').innerHTML = `<div style="padding:12px;text-align:center;color:#f85149;font-size:12px;">Failed to load routes: ${err.message}</div>`;
+        }
+    }
+}
+
+function filterRoutes(filter) {
+    activeRouteFilter = filter;
+    ['All', 'Nuia', 'Haranya', 'Instance'].forEach(f => {
+        const btn = mapEl('routeFilter' + f);
+        if (btn) btn.classList.toggle('active', filter.toLowerCase() === f.toLowerCase());
+    });
+
+    const query = (mapEl('routeSearchInput')?.value || '').trim().toLowerCase();
+    const container = mapEl('routesListContainer');
+    if (!container) return;
+
+    const filtered = serverRoutes.filter(r => {
+        if (filter !== 'all' && r.continent.toLowerCase() !== filter.toLowerCase()) return false;
+        if (query && !r.name.toLowerCase().includes(query) && !r.filename.toLowerCase().includes(query) && !(r.zone_hint||'').toLowerCase().includes(query)) return false;
+        return true;
+    });
+
+    if (!filtered.length) {
+        container.innerHTML = `<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;">No matching routes found.</div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(r => {
+        const isActive = activeVerifiedRoute && activeVerifiedRoute.RouteName === r.name;
+        const badgeClass = r.continent === 'Nuia' ? 'route-badge-nuia' : (r.continent === 'Haranya' ? 'route-badge-haranya' : 'route-badge-inst');
+        const distFmt = r.total_distance >= 1000 ? `${(r.total_distance / 1000).toFixed(2)} km` : `${Math.round(r.total_distance)} m`;
+        return `
+            <div class="route-card ${isActive ? 'active' : ''}" onclick="selectServerRoute('${r.name}')">
+                <div class="route-card-title">
+                    <span>${r.name}</span>
+                    <span class="route-badge ${badgeClass}">${r.continent}</span>
+                </div>
+                <div class="route-card-sub">
+                    <span>${distFmt} · ${r.waypoint_count} wps</span>
+                    <span style="color:#58a6ff;">${r.zone_hint || (r.start.label ? r.start.label.split(':')[0] : 'World 0')}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function selectServerRoute(name) {
+    try {
+        mapNotice(`Loading route ${name}...`);
+        const resp = await fetch('/api/map/route/' + encodeURIComponent(name));
+        if (!resp.ok) throw new Error(`Could not load route ${name}`);
+        const data = await resp.json();
+        
+        activeVerifiedRoute = data;
+        activeVerifiedRoute.RouteName = data.RouteName || name;
+        activeWaypointIndex = 0;
+
+        // Populate selected route deck
+        const summary = serverRoutes.find(r => r.name === name) || {};
+        mapEl('deckRouteName').textContent = activeVerifiedRoute.RouteName;
+        const dist = activeVerifiedRoute.TotalDistance || summary.total_distance || 0;
+        const distFmt = dist >= 1000 ? `${(dist / 1000).toFixed(2)} km` : `${Math.round(dist)} m`;
+        const wps = (activeVerifiedRoute.Actions || []).filter(a => a.ActionType === 'Waypoint');
+        mapEl('deckRouteSubtitle').textContent = `${summary.continent || 'World 0'} · ${summary.zone_hint || 'Road'} · ${wps.length} waypoints`;
+        mapEl('deckDist').textContent = distFmt;
+        mapEl('deckWps').textContent = wps.length;
+        mapEl('deckAuthor').textContent = activeVerifiedRoute.Author || summary.author || 'AAEmu';
+        
+        if (summary.min_z != null && summary.max_z != null) {
+            mapEl('deckElevRange').textContent = `${summary.min_z.toFixed(1)}m ~ ${summary.max_z.toFixed(1)}m (Δ${(summary.max_z - summary.min_z).toFixed(1)}m)`;
+        } else {
+            mapEl('deckElevRange').textContent = '-';
+        }
+
+        mapEl('selectedRouteDeck').style.display = 'block';
+
+        updateWaypointDeckDisplay();
+        filterRoutes(activeRouteFilter);
+        fitSelectedRoute();
+        mapNotice(`Route ${name} loaded. Step through waypoints to verify.`);
+    } catch (err) {
+        mapNotice(`Failed to load route: ${err.message}`);
+    }
+}
+
+function updateWaypointDeckDisplay() {
+    if (!activeVerifiedRoute) return;
+    const wps = (activeVerifiedRoute.Actions || []).filter(a => a.ActionType === 'Waypoint');
+    if (!wps.length) return;
+    
+    if (activeWaypointIndex < 0) activeWaypointIndex = 0;
+    if (activeWaypointIndex >= wps.length) activeWaypointIndex = wps.length - 1;
+
+    const wp = wps[activeWaypointIndex];
+    mapEl('deckWpCounter').textContent = `Point ${activeWaypointIndex + 1} / ${wps.length}`;
+    const yawDeg = wp.Yaw != null ? (wp.Yaw * 180 / Math.PI).toFixed(0) + '°' : '-';
+    mapEl('deckWpDetails').textContent = `X: ${wp.X.toFixed(2)} · Y: ${wp.Y.toFixed(2)} · Z: ${wp.Z != null ? wp.Z.toFixed(2) : 'null'} · Yaw: ${yawDeg}${wp.Label ? ' [' + wp.Label + ']' : ''}`;
+    
+    redrawMap();
+}
+
+function stepRouteWaypoint(delta) {
+    if (!activeVerifiedRoute) return;
+    const wps = (activeVerifiedRoute.Actions || []).filter(a => a.ActionType === 'Waypoint');
+    if (!wps.length) return;
+
+    activeWaypointIndex = Math.max(0, Math.min(wps.length - 1, activeWaypointIndex + delta));
+    const wp = wps[activeWaypointIndex];
+    mapView.x = wp.X;
+    mapView.y = wp.Y;
+    updateWaypointDeckDisplay();
+}
+
+function fitSelectedRoute() {
+    if (!activeVerifiedRoute) return;
+    const wps = (activeVerifiedRoute.Actions || []).filter(a => a.ActionType === 'Waypoint');
+    if (!wps.length) return;
+
+    const xs = wps.map(p => p.X), ys = wps.map(p => p.Y);
+    fitMapBounds({
+        min_x: Math.min(...xs),
+        max_x: Math.max(...xs),
+        min_y: Math.min(...ys),
+        max_y: Math.max(...ys)
+    });
+}
+
+function clearSelectedRoute() {
+    activeVerifiedRoute = null;
+    activeWaypointIndex = -1;
+    mapEl('selectedRouteDeck').style.display = 'none';
+    filterRoutes(activeRouteFilter);
+    redrawMap();
+}
+
+function loadActiveRouteIntoDraft() {
+    if (!activeVerifiedRoute) return;
+    const wps = (activeVerifiedRoute.Actions || []).filter(a => a.ActionType === 'Waypoint');
+    draftRoutePoints = wps.map(p => ({
+        x: p.X,
+        y: p.Y,
+        z: p.Z,
+        source: 'imported-route'
+    }));
+    mapEl('routeName').value = activeVerifiedRoute.RouteName + '_custom';
+    setMapMode('draft');
+    updateDraftSidebar();
+    fitDraftRoute();
+    mapNotice(`Route loaded into builder with ${draftRoutePoints.length} points.`);
+}
+
+async function deployActiveRouteToServer() {
+    if (!activeVerifiedRoute) return;
+    try {
+        mapNotice(`Deploying ${activeVerifiedRoute.RouteName} to Game server...`);
+        const resp = await fetch('/api/map/upload-route', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(activeVerifiedRoute)
+        });
+        const result = await resp.json();
+        if (result.ok) {
+            showToast(`✅ Deployed ${result.routeName} to server!`);
+            mapNotice(`✅ Route ${result.routeName} deployed (${result.waypointCount} waypoints). Remote sync: ${result.remoteDeployed ? 'OK' : 'local only'}`);
+        } else {
+            throw new Error(result.error || 'Deploy failed');
+        }
+    } catch (err) {
+        showToast(`❌ Error: ${err.message}`);
+        mapNotice(`Failed to deploy route: ${err.message}`);
+    }
+}
+
+function copyActiveRouteCommand() {
+    if (!activeVerifiedRoute) return;
+    const name = activeVerifiedRoute.RouteName;
+    copyMapText(`/mapper play <bot_name> ${name}`);
+    showToast(`Command copied: /mapper play <bot> ${name}`);
+}
+
+/* =========================================================================
+   CANDIDATE ROUTE GENERATOR
+   ========================================================================= */
+
+function openCandidateModal() {
+    mapEl('candidateModal').style.display = 'flex';
+    populateCandidateJunctionDropdowns();
+}
+
+function closeCandidateModal() {
+    mapEl('candidateModal').style.display = 'none';
+    mapEl('candStatusMsg').textContent = '';
+}
+
+function populateCandidateJunctionDropdowns() {
+    const filter = mapEl('candZoneFilter').value;
+    const startSelect = mapEl('candStartJunction');
+    const endSelect = mapEl('candEndJunction');
+    startSelect.replaceChildren();
+    endSelect.replaceChildren();
+
+    const junctions = Array.from(mapHubs.values()).filter(j => {
+        if (filter === 'Haranya') {
+            return j.x >= 17000;
+        } else if (filter === 'Nuia') {
+            return j.x < 17000;
+        }
+        return true;
+    }).sort((a, b) => a.label.localeCompare(b.label));
+
+    for (const j of junctions) {
+        startSelect.append(new Option(j.label, j.id));
+        endSelect.append(new Option(j.label, j.id));
+    }
+
+    if (endSelect.options.length > 1) {
+        endSelect.selectedIndex = 1;
+    }
+}
+
+async function submitGenerateCandidateRoute() {
+    const startId = mapEl('candStartJunction').value;
+    const endId = mapEl('candEndJunction').value;
+    let name = mapEl('candRouteName').value.trim();
+    const step = parseFloat(mapEl('candStepMeters').value) || 25.0;
+    const statusMsg = mapEl('candStatusMsg');
+
+    if (!name) {
+        const sJ = mapHubs.get(startId), eJ = mapHubs.get(endId);
+        const sZ = sJ ? sJ.label.split(' J')[0].toLowerCase().replace(/\s+/g, '_') : 'start';
+        const eZ = eJ ? eJ.label.split(' J')[0].toLowerCase().replace(/\s+/g, '_') : 'end';
+        name = `highway_${sZ}_to_${eZ}`;
+    }
+
+    statusMsg.style.color = '#58a6ff';
+    statusMsg.textContent = '⏳ Pathfinding and generating route waypoints...';
+    mapEl('btnSubmitCandidate').disabled = true;
+
+    try {
+        const resp = await fetch('/api/map/generate-candidate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                start_id: startId,
+                end_id: endId,
+                name: name,
+                step_meters: step
+            })
+        });
+        const res = await resp.json();
+        if (!res.ok) throw new Error(res.error || 'Pathfinding failed');
+
+        statusMsg.style.color = '#34d399';
+        statusMsg.textContent = `✅ Generated ${res.routeName} (${res.totalDistance}m, ${res.waypointCount} points)!`;
+        
+        await loadServerRoutes();
+        closeCandidateModal();
+        selectServerRoute(res.routeName);
+        showToast(`✅ Candidate route ${res.routeName} generated!`);
+    } catch (err) {
+        statusMsg.style.color = '#f85149';
+        statusMsg.textContent = `❌ ${err.message}`;
+    } finally {
+        mapEl('btnSubmitCandidate').disabled = false;
+    }
+}
+

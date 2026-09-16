@@ -42,4 +42,15 @@ public interface IGoapAction
     /// IGameplayActor execution boundary (optional/null if simulated or compound).
     /// </summary>
     ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null);
+
+    /// <summary>
+    /// Evaluates the real-time execution status of this action based on observed world state,
+    /// active actor request status, and bot context.
+    /// Crucial Invariant: Succeeded must only be returned when the observed world state confirms the intended effects.
+    /// </summary>
+    GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context);
 }

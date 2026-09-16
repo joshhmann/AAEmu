@@ -36,6 +36,24 @@ public sealed class ConsumeFoodAction : GoapActionBase
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
         return effectiveActor.UseItem(FoodTemplateId);
     }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (observedState.Has(BotWorldState.InCombat))
+            return GoapActionStatus.Invalidated;
+
+        if (!observedState.Has(BotWorldState.LowHealth) && !observedState.Has(BotWorldState.LowMana))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
+    }
 }
 
 /// <summary>
@@ -63,6 +81,21 @@ public sealed class SitRestAction : GoapActionBase
         bot.Character.Stance = UnitStance.Sit;
         return null;
     }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (observedState.Has(BotWorldState.InCombat))
+            return GoapActionStatus.Invalidated;
+
+        if (observedState.Has(BotWorldState.IsSitting) && observedState.Has(BotWorldState.Recovered))
+            return GoapActionStatus.Succeeded;
+
+        return GoapActionStatus.Running;
+    }
 }
 
 /// <summary>
@@ -86,6 +119,18 @@ public sealed class StandUpAction : GoapActionBase
         bot.Character.Stance = UnitStance.Stand;
         return null;
     }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (!observedState.Has(BotWorldState.IsSitting))
+            return GoapActionStatus.Succeeded;
+
+        return GoapActionStatus.Running;
+    }
 }
 
 /// <summary>
@@ -107,5 +152,20 @@ public sealed class DrinkPotionAction : GoapActionBase
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
         return effectiveActor.UseItem(PotionTemplateId);
+    }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (!observedState.Has(BotWorldState.LowHealth))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
     }
 }

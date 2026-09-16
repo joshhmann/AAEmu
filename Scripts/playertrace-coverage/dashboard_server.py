@@ -17,7 +17,10 @@ Usage:
 import argparse
 from dataclasses import asdict
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import glob
+import heapq
 import json
+import math
 import os
 import subprocess
 import sys
@@ -1105,7 +1108,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="top-nav">
         <div class="top-nav-inner">
             <button class="nav-tab-btn active" id="tabBtn-tasks" onclick="switchMainTab('tasks')">📋 Trace Tasks <span class="tab-badge" id="tasksTabBadge">31</span></button>
-            <button class="nav-tab-btn" id="tabBtn-milestones" onclick="switchMainTab('milestones')">🎯 Roadmap & Scorecard (M0–M10) <span class="tab-badge">75%</span></button>
+            <button class="nav-tab-btn" id="tabBtn-milestones" onclick="switchMainTab('milestones')">🎯 Roadmap & Scorecard <span class="tab-badge">Outcomes</span></button>
             <button class="nav-tab-btn" id="tabBtn-lanes" onclick="switchMainTab('lanes')">🧭 Domain Lanes & Router</button>
             <button class="nav-tab-btn" id="tabBtn-coverage" onclick="switchMainTab('coverage')">📊 Coverage & Telemetry</button>
             <button class="nav-tab-btn" id="tabBtn-map" onclick="switchMainTab('map')">🗺️ World Map & Atlas <span class="tab-badge" style="background:rgba(16,185,129,0.2);color:#34d399;">136 Hubs</span></button>
@@ -1167,270 +1170,127 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
         <!-- ==================== TAB 2: ROADMAP & SCORECARD ==================== -->
         <div class="tab-pane" id="tabPane-milestones">
-            <!-- (1) TARGET BANNER: 1.2 = 1.2.4.13 = r208022 -->
-            <div class="info-card" style="margin-bottom: 20px; border-left: 4px solid var(--green);">
+            <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header">
-                    <div class="info-card-title">Target — ArcheAge 1.2 = 1.2.4.13 = r208022</div>
-                    <span class="status-badge status-closed">Pinned</span>
+                <div class="info-card-title">One dependable game. A living world built on it.</div>
                 </div>
-                <div class="task-desc">Every <code>*Offsets.cs</code> header (<code>client_12_r208022</code>), <code>Docs/wiki/Client.md</code> ("1.2 (r208022)", names file <code>ArcheAge 1.2.4.13 (r208022)</code> at <code>Docs/wiki/Client.md:18</code>), and the server pak md5 pin the same 1.2 line. r208088 is a different, newer compact-data revision cited only in retired drift notes — opcodes stay pinned to r208022.</div>
-                <div class="meta-row"><span>Client build</span><span class="meta-val">r208022 (1.2.4.13 is the marketing label for the same 1.2 line)</span></div>
-                <div class="meta-row"><span>Canonical DB</span><span class="meta-val">AAEmu.Game/Data/compact.sqlite3 · md5 78b3bdbf038db3b927056106efdf91af · 679 tables</span></div>
-                <div class="meta-row"><span>BUG-005 ruling (opcode-vs-DB parity / r208088 drift)</span><span class="meta-val" style="color: var(--yellow)">UNRULED — confirm r208088 is dead history or re-open the drift</span></div>
-                <div class="meta-row"><span>Tab freshness</span><span class="meta-val">Built 2026-09-15 · audit HEAD e93e3df2d · no doc maps md5 to revision today</span></div>
-            </div>
-            <!-- Evidence-letter scope legend (every letter scoped inline below) -->
-            <div class="info-card" style="margin-bottom: 20px;">
+                <p class="task-desc">Target: ArcheAge 1.2.4.13 / r208022. Human playability and autonomous residents are separate commitments sharing ordinary gameplay. No overall completion percentage is claimed.</p>
+                <div class="meta-row">
+                <span>Planning freshness</span>
+                <span class="meta-val">2026-09-15 · source d0d58e5848829b7a85da3847d03da00a90cb7c68 + dirty GOAP WIP</span>
+                </div>
+                <p class="task-desc">Documentation reconciliation only: no fresh engine, live, or human verdict. Sources: VISION.md, PROJECT-CONTROL.md#delivery-contract, ROADMAP.md#current-delivery-direction, SCORECARD.md and STATUS.md. This is a planning snapshot, not live acceptance telemetry.</p>
+                </div>
+            <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header">
-                    <div class="info-card-title">Evidence letters — scoped</div>
+                <div class="info-card-title">Broad view — three delivery lanes</div>
                 </div>
-                <div class="task-desc"><strong>ledger-A</strong> = automated gate/soak evidence (test or soak PASS) · <strong>ladder-A</strong> = autonomous bot/actor evidence (proxy function, NEVER human feel) · <strong>G</strong> = society/scale-ladder evidence (G2-A5/A3 population legs) · <strong>H</strong> = Josh-only human-feel verdict (every mechanic H is U until Josh runs it) · <strong>R</strong> = restart-persistence · <strong>S</strong> = soak · <strong>L</strong> = load · <strong>W/C</strong> = wired/canonical. Data living outside the repo renders as <span style="background:rgba(248,81,73,0.2);color:#f85149;border:1px solid rgba(248,81,73,0.4);padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;">OUT-OF-REPO</span>, never as verified.</div>
-            </div>
-            <div class="info-card vision-card" style="margin-bottom: 20px; border-left: 4px solid var(--purple);">
+                <div class="meta-row">
+                <span>Human-playable 1.2.4</span>
+                <span class="meta-val">Safe operations → everyday play → progression corridors → livelihood → group/world content</span>
+                </div>
+                <div class="meta-row">
+                <span>PlayerBot parity and autonomy</span>
+                <span class="meta-val">Shared actions → seeded loop → self-acquisition → recovery/repetition → cooperation</span>
+                </div>
+                <div class="meta-row">
+                <span>Population and society</span>
+                <span class="meta-val">Reliable residents → real producer/consumer dependence → mixed village → emergent systems</span>
+                </div>
+                <p class="task-desc">These lanes can advance together. A slice proves one outcome, not its whole parent milestone.</p>
+                </div>
+            <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header">
-                    <div class="info-card-title">Vision — a living world that plays itself, verified by humans</div>
+                <div class="info-card-title">Zoom in — next slices and weakest links</div>
                 </div>
-                <div class="task-desc">AAEmu bots must grind, farm, trade, sail, and siege through <strong>real engine paths</strong> (never parallel gameplay systems — Lane B composes around ordinary Character records per AGENTS.md rules #9/#10), while human traces supply the ground-truth packet telemetry that proves each slice. Scorecard per milestone: <strong>ledger-A</strong> = automated evidence (gate/soak PASS), <strong>H</strong> = Josh-only human-feel verdict; a milestone is not done until both are recorded.</div>
-                <div class="meta-row"><span>Exit bar (every milestone)</span><span class="meta-val">Gate green + soak green + ledger-A evidence linked + H verdict (or explicit H=UNKNOWN)</span></div>
-                <div class="meta-row"><span>Current frontier</span><span class="meta-val">M7 party play &rarr; M8 convoys/auction &rarr; M9 siege &rarr; M10 naval</span></div>
-            </div>
-
-            <!-- (2) PER-MILESTONE ROWS M0-M10 -->
-            <div class="section-header" style="font-size:14px;color:#fff;margin:20px 0 4px 0;">Per-milestone rows M0–M10 — claimed state · evidence (repo path) · freshness (SHA/date)</div>
-            <div class="milestone-grid">
-                <!-- M0 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M0 · Foundation</div>
-                        <span class="status-badge status-closed">Closed (100%)</span>
-                    </div>
-                    <div class="task-desc">DI host, topological ManagerOrchestrator boot, Login Kestrel TCP, reflection-discovered GameData loaders. The single H=COMPLETE on the books (foundation, not gameplay).</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · H=COMPLETE (foundation only)</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
+                <p class="task-desc">Expand a slice for acceptance and dependencies. Full briefs: ROADMAP.md#near-term-slice-queue. Assign an implementer and independent verifier before dispatch.</p>
+                <details style="padding:10px 0">
+                <summary>1. Schema delivery safety — ready to scope</summary>
+                <p class="task-desc">Core operations: ship or explicitly mount migration files. Prove isolated fresh/existing DB startup, exactly-once application and restart persistence. Backup and table verification precede separately authorized deployment.</p>
+                </details>
+                <details style="padding:10px 0">
+                <summary>2. Human corridor baseline — ready for a bounded test packet</summary>
+                <p class="task-desc">M1/M2: name start, route, level range, ordinary actions and destination. Record each step pass/fail/unknown; dispatch the first blocker. Solzreed is a starting scope, not all-zone completion. Josh owns the human verdict.</p>
+                </details>
+                <details style="padding:10px 0">
+                <summary>3. Harvest parity and Cast legality — separate bounded fixes</summary>
+                <p class="task-desc">M5: reproduce Q-harvest-seam and Q-gcd-shape against current source. Prove authoritative range/timing, interruption, labor/output and refusal. Packet imitation is not parity. Split independent fixes.</p>
+                </details>
+                <details style="padding:10px 0">
+                <summary>4. Seeded two-harvest loop → unseeded livelihood</summary>
+                <p class="task-desc">M7/M8 farming: first prove travel, interaction, completion and recovery with disclosed fixtures. Then acquire inputs, find a legal site, grow/harvest and repeat without intervention, conserving money/labor/items. Depends on parity and merchant/plant correctness.</p>
+                </details>
+                <details style="padding:10px 0">
+                <summary>5. GOAP correctness → observation/targets → runtime integration</summary>
+                <p class="task-desc">M6/M7: retain committed foundations and review dirty WIP. Prove resource-aware search identity, then authoritative observations and a real eligible target, then one chain through the existing scheduler/request lifecycle. Planned effects are not success. Measure before adding caches.</p>
+                </details>
+                <details style="padding:10px 0">
+                <summary>6. Real producer–consumer village — dependent</summary>
+                <p class="task-desc">M8: one resident consumes goods another actually produced. Shortages change behavior; inventory/currency reconcile; repeat/restart retain obligations. Requires a reliable livelihood. Mixed-client experience has a separate human gate.</p>
+                </details>
                 </div>
-
-                <!-- M1 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M1 · Solzreed Golden Route & Core Defects</div>
-                        <span class="status-badge status-closed">Closed (100%)</span>
-                    </div>
-                    <div class="task-desc">Solzreed starter line, early game quest progression, and engine defect chain BUG-007 through BUG-013.</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · ledger-A=2 · H=UNKNOWN (Josh verdict open)</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · scorecard-explorations/generated/leveling-loop-2026-08-25.md</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-
-                <!-- M2 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M2 / G1 · 100% Census Quest Coverage</div>
-                        <span class="status-badge status-closed">Closed (100%)</span>
-                    </div>
-                    <div class="task-desc">Every live context PASS or registered-drop or doc-SKIP with zero unexplained failures. G1 denominator stated three ways (4579 vs 4587 vs 4573+6) — see weakest links.</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · ledger-A=2 (G1 Gate 2026-08-10) · H=UNKNOWN</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">SCORECARD.md · ROADMAP.md</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-
-                <!-- M3 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M3a/b · Homestead Shell & Persistence</div>
-                        <span class="status-badge status-closed">Closed (100%)</span>
-                    </div>
-                    <div class="task-desc">House placement, multi-step construction, decoration limits (9/9 tables wired), and crash-safe MySQL property persistence.</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · kill -9 asserted mid-save (p95 1301ms) · H=UNKNOWN</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-
-                <!-- M4 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M4 · Trade, Crafting & Transport Integrity</div>
-                        <span class="status-badge status-closed">Closed (100%)</span>
-                    </div>
-                    <div class="task-desc">Harvest crops, craft trade packs, load cargo onto vehicle, drive 3-leg trade routes, and sell to gold traders. Deployed-cell acknowledged stale — see weakest links.</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · M4ExitIntegratedSessionTests PASS · H=UNKNOWN</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-
-                <!-- M5 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M5 · Gameplay Actor Contract Surface</div>
-                        <span class="status-badge status-closed">Closed (100%)</span>
-                    </div>
-                    <div class="task-desc">Seam decoupling bots from network: Move, Stop, Target, Cast, Observe, Interact, Loot, UseItem, Mount/Dismount, Equip.</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · fast gate 3,214/0 · zero engine-file drift</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · scorecard-explorations/generated/m5.3-core-surface-exit.md</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-
-                <!-- M6 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M6 · Deterministic PlayerBot Framework</div>
-                        <span class="status-badge status-closed">Closed (100%)</span>
-                    </div>
-                    <div class="task-desc">Durable bots across server reboots, coordinate preservation, roll/yaw SQL fix, /bot restore, and 10-bot 6-hour green soak. PB-006 count lacks SHA — see weakest links.</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">CLOSED · PB-006 CLOSED · H=UNKNOWN</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-
-                <!-- M7 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M7 · Adventurer & Party Bots</div>
-                        <span class="status-badge status-active">Active (85%)</span>
-                    </div>
-                    <div class="task-desc">Autonomous mob grinding, combat rotations, sustain retreats, corpse looting, equip upgrades, and party formation. Solo 100% (Quest 250&rarr;330 loop).</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">ACTIVE · next: party follow-leader & assist targeting</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · scorecard-explorations/generated/m7-adventurer-spike.md</span></div>
-                    <div class="meta-row"><span>Exit criteria</span><span class="meta-val">Party assist + follow-leader soak green + H party-play verdict</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-
-                <!-- M8 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M8 · Living World & Economy</div>
-                        <span class="status-badge status-active">Active (40%)</span>
-                    </div>
-                    <div class="task-desc">Autonomous bot farming, specialty crafting, cross-zone cart convoys, merchant restock, and auction house trading. Runtime leg QUALIFIED (accepted transient + INVALID-by-design); full M8 unclaimed; no ledger row (table stops at M7).</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">ACTIVE · runtime leg QUALIFIED · full M8 UNCLAIMED</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · soak-artifacts/smoke-rb/20260912-014234</span></div>
-                    <div class="meta-row"><span>Exit criteria</span><span class="meta-val">Convoy run + auction trade loop + economy soak green + H market verdict</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-
-                <!-- M9 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M9 · Dominion & Castle Sieges</div>
-                        <span class="status-badge status-queued">Queued (25%)</span>
-                    </div>
-                    <div class="task-desc">Auroria territory claims, castle building, siege battle timers, tank/trebuchet war machines, and wall destruction. M8.5 likewise unclaimed. Dominion runtime report is out-of-repo.</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">UNCLAIMED · DominionManager + 3 siege tables wired</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · Dominion runtime: OUT-OF-REPO</span></div>
-                    <div class="meta-row"><span>Exit criteria</span><span class="meta-val">Timed siege battle + wall destruction + H siege verdict (+ M9 substrate approval, Josh)</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-
-                <!-- M10 -->
-                <div class="info-card">
-                    <div class="info-card-header">
-                        <div class="info-card-title">M10 · High Seas & Naval Warfare</div>
-                        <span class="status-badge status-queued">Queued (20%)</span>
-                    </div>
-                    <div class="task-desc">Naval trade runs to Freedich Island, ship cannon combat, ocean boarding, sinking physics, and the Kraken world boss.</div>
-                    <div class="meta-row"><span>Claimed state</span><span class="meta-val">UNCLAIMED · VehicleMovementModel, cargo snapping</span></div>
-                    <div class="meta-row"><span>Evidence (repo path)</span><span class="meta-val">ROADMAP.md · SCORECARD.md</span></div>
-                    <div class="meta-row"><span>Exit criteria</span><span class="meta-val">Freedich run + cannon sinking + H naval verdict</span></div>
-                    <div class="meta-row"><span>Freshness</span><span class="meta-val">2026-09-15 · HEAD e81a18161</span></div>
-                </div>
-            </div>
-
-            <!-- (3) WEAKEST LINKS -->
-            <div class="section-header" style="font-size:14px;color:#fff;margin:20px 0 4px 0;">Weakest links — audit §2 (first-class rows, not footnotes)</div>
-            <div class="milestone-grid">
-                <div class="info-card" style="border-left: 4px solid var(--green);">
-                    <div class="info-card-header"><div class="info-card-title">Understated rows corrected 2026-09-15</div><span class="status-badge status-closed">Fixed</span></div>
-                    <div class="task-desc">AGGRO-PACK-01 → W/A=1 (<code>NpcGameData.cs:177</code> + <code>Behavior.cs:411</code> + tests), RESPAWN-LADDER-01 → W/A=1 (<code>ResurrectionGameData.cs:52</code> + <code>CharacterCombat.cs</code> + tests), deferred mount-riding → LANDED (PB-MOUNT 09-03). H stays U on all three.</div>
-                </div>
-                <div class="info-card" style="border-left: 4px solid var(--red);">
-                    <div class="info-card-header"><div class="info-card-title">Newest runtime evidence lives out of repo</div><span class="status-badge status-active">OUT-OF-REPO</span></div>
-                    <div class="task-desc">A5 tier-3, C5 re-soak, 09-13 live-E2E six, Q6, Mail S3, Dominion reports live in <code>/root/aaemu-e2e*</code> lane dirs on dirty trees at old HEADs — the tab cannot link them as verified. Only <code>soak-artifacts/smoke-rb/20260912-014234</code> is in-repo. Rule going forward: tab-cited reports must live under <code>scorecard-explorations/generated/</code>.</div>
-                </div>
-                <div class="info-card" style="border-left: 4px solid var(--yellow);">
-                    <div class="info-card-header"><div class="info-card-title">Gateless PB-006 count, no SHA</div><span class="status-badge status-active">Freshness</span></div>
-                    <div class="task-desc">PB-006 3211/0/1 count cited without a gate SHA — re-run under a pinned SHA or downgrade to proxy. No ledger rows exist for M8/M9/M10/A3/A4/A5/Q-lanes; post-M7 evidence lives only in prose docs.</div>
-                </div>
-                <div class="info-card" style="border-left: 4px solid var(--yellow);">
-                    <div class="info-card-header"><div class="info-card-title">Navigate counts 5/8/9 unreconciled</div><span class="status-badge status-active">Reconcile</span></div>
-                    <div class="task-desc">Navigate evidence counts 5 vs 8 vs 9 across sources — pick one pinned count with SHA/date or list all three as distinct legs (ledger-A vs ladder-A scoped).</div>
-                </div>
-                <div class="info-card" style="border-left: 4px solid var(--yellow);">
-                    <div class="info-card-header"><div class="info-card-title">COMBAT-01 vs REPAIR-01 grading split</div><span class="status-badge status-active">Needs ruling</span></div>
-                    <div class="task-desc">COMBAT-01 W=1 vs REPAIR-01 W=2 grading split needs a ruling before either row can anchor a milestone exit.</div>
-                </div>
-                <div class="info-card" style="border-left: 4px solid var(--yellow);">
-                    <div class="info-card-header"><div class="info-card-title">Frozen upstream snapshot + minor staleness</div><span class="status-badge status-active">Refresh</span></div>
-                    <div class="task-desc">Upstream tracker frozen 2026-08-03. Also: M8 QUALIFIED has no ledger row (table stops at M7); A5 stamp mismatch; mirage-duel report unregistered; M4 deployed-cell acknowledged stale; G1 denominator three ways (4579/4587/4573+6); auction-fix SHA pending-vs-cited. 33 census rows all-U (the 1.2 long tail); R/S columns blank outside M3b/M4/AUCTION/DOMINION; newest A-grades rest on single-machine unversioned reports.</div>
-                </div>
-            </div>
-
-            <!-- (4) CODE-BUG WORKLIST -->
-            <div class="section-header" style="font-size:14px;color:#fff;margin:20px 0 4px 0;">Code-bug worklist — audit §1 (list as work, not claims)</div>
-            <div class="milestone-grid">
-                <div class="info-card" style="border-left: 4px solid var(--red);">
-                    <div class="info-card-header"><div class="info-card-title">CrimeManager registered twice</div><span class="status-badge status-active">Open</span></div>
-                    <div class="task-desc">Double DI registration in <code>AAEmu.Game/Program.cs:167-168</code> and <code>:448-449</code> — dedupe to one registration.</div>
-                </div>
-                <div class="info-card" style="border-left: 4px solid var(--red);">
-                    <div class="info-card-header"><div class="info-card-title">/doodad command collision</div><span class="status-badge status-active">Open</span></div>
-                    <div class="task-desc"><code>CrimeCmd.cs:13</code> and <code>DoodadCmd.cs:12</code> both claim <code>["doodad"]</code> — crime subcommands unreachable if DoodadCmd wins registration. Rename one verb.</div>
-                </div>
-                <div class="info-card" style="border-left: 4px solid var(--yellow);">
-                    <div class="info-card-header"><div class="info-card-title">Possibly-dead managers need verification</div><span class="status-badge status-active">Verify first</span></div>
-                    <div class="task-desc"><code>SlaveManager, MateManager, GimmickManager, AiGeodataManager, TransferManager, SpawnManager, PhysicsManager, SphereQuestManager</code> have no DI registration and live <code>.Instance</code> callsites appear only in comments — verification pass required before calling them dead (bots use mounts/slaves through other paths).</div>
-                </div>
-                <div class="info-card" style="border-left: 4px solid var(--yellow);">
-                    <div class="info-card-header"><div class="info-card-title">Opcode slots: 0x9f + inferred mail opcode</div><span class="status-badge status-active">Verify</span></div>
-                    <div class="task-desc"><code>CSOffsets.cs</code>: <code>0x9f</code> claimed unknown AND assigned (<code>CSTakeAttachmentSequentially</code>); <code>CSReturnMailPacket=0x0a2</code> strongly inferred, not client-verified. ~20 opcode slots have neither class nor registration; 13 parked at <code>0xfff</code> by design.</div>
-                </div>
-                <div class="info-card" style="border-left: 4px solid var(--yellow);">
-                    <div class="info-card-header"><div class="info-card-title">Stray 0-byte DB placeholder at repo root</div><span class="status-badge status-queued">Cleanup</span></div>
-                    <div class="task-desc">Repo-root <code>compact.sqlite3</code> is a 0-byte placeholder (2026-09-03, ignored, untracked) from a wrong-path tool connect — delete on next cleanup pass; real DB <code>AAEmu.Game/Data/compact.sqlite3</code> untouched.</div>
-                </div>
-            </div>
-
-            <!-- (5) H-GATE INTAKE — visually separated from A/R/L evidence -->
-            <div class="info-card" style="margin: 20px 0; border: 2px dashed var(--purple);">
+            <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header">
-                    <div class="info-card-title">H-gate intake — Josh-owned, separate from ledger-A / ladder-A / R / L evidence</div>
-                    <span class="status-badge status-queued">Human only</span>
+                <div class="info-card-title">Milestone horizon — scoped evidence, not percentages</div>
                 </div>
-                <div class="task-desc">Nothing here counts as A/R/L evidence and nothing here closes a milestone by itself. H means an ACTUAL PLAYER completing the curated scenario — never a bot or scripted actor (bot evidence is ladder-A proxy, recorded under ledger-A functional with an explicit proxy label). H stays U (UNKNOWN) until Josh runs it.</div>
-                <div class="meta-row"><span>H gates #1–#4 (+ #5 feel)</span><span class="meta-val">Josh-only acceptance verdicts, open</span></div>
-                <div class="meta-row"><span>W4-1 – W4-4 (deploy currency)</span><span class="meta-val">Open — Field-Guide worksheets</span></div>
-                <div class="meta-row"><span>PB-005 tour</span><span class="meta-val">Open — Josh tour required</span></div>
-                <div class="meta-row"><span>Q7 rulings</span><span class="meta-val">Blocked — Josh rulings required (Q8 likewise blocked)</span></div>
-                <div class="meta-row"><span>M9 substrate approval</span><span class="meta-val">Open — Josh approval gates M9 start</span></div>
-                <div class="meta-row"><span>Per-mestone H verdicts (M1–M10)</span><span class="meta-val">All U except M0 foundation COMPLETE — not gameplay</span></div>
-            </div>
-
-            <!-- (6) DOC-FIX QUEUE -->
-            <div class="section-header" style="font-size:14px;color:#fff;margin:20px 0 4px 0;">Doc-fix queue — audit §4 (P0 first, file:line pointers)</div>
-            <div class="milestone-grid">
-                <div class="info-card" style="border-left: 4px solid var(--red);">
-                    <div class="info-card-header"><div class="info-card-title">P0: CONTRIBUTING hides the NEVER-push rule</div><span class="status-badge status-active">P0</span></div>
-                    <div class="task-desc"><code>CONTRIBUTING.md</code> instructs fork-and-PR with zero mention of the permanent NEVER-push-to-upstream rule — following it violates the top-line rule.</div>
+                <div class="meta-row">
+                <span>M0 — Foundation</span>
+                <span class="meta-val">Historical foundation retained; operational safety continues</span>
                 </div>
-                <div class="info-card">
-                    <div class="info-card-header"><div class="info-card-title">Clone URLs point at upstream, not the fork</div><span class="status-badge status-queued">Queued</span></div>
-                    <div class="task-desc">Installation (×2), Docker guide, Dependencies clone <code>AAEmu/AAEmu</code> instead of the fork.</div>
+                <div class="meta-row">
+                <span>M1/M2 — Progression / golden path</span>
+                <span class="meta-val">Scoped automated/rig evidence; human journeys and broad coverage separate</span>
                 </div>
-                <div class="info-card">
-                    <div class="info-card-header"><div class="info-card-title">4 dangling internal refs</div><span class="status-badge status-queued">Queued</span></div>
-                    <div class="task-desc"><code>Docs/networking.md</code> (real: <code>AAEmu.Login/Docs/networking.md</code>) · <code>tools/quest-graph</code> + <code>tools/gamedata-graph</code> (absent) · root <code>scorecard-explorations/*</code> links (content lives in a worktree) · <code>Docs/JOSH-QAT-WAVE4.md</code> case/path.</div>
+                <div class="meta-row">
+                <span>M3 / M3a — Property / farming</span>
+                <span class="meta-val">Scoped implementation/persistence retained; verify the named ordinary loop</span>
                 </div>
-                <div class="info-card">
-                    <div class="info-card-header"><div class="info-card-title">Stale currency + census conflicts</div><span class="status-badge status-queued">Queued</span></div>
-                    <div class="task-desc">~26 wiki pages stamped 2026-08-05 (incl. skill-blessed setup pages) · census 153/153 vs 86/97 vs 88/97 · <code>Docs/wiki/Project-Status.md</code> presents 08-05 snapshot as current · <code>AAEmu.Login/README.md</code> boot-failing config (no <code>GameServers</code>) · Track-B sample omits SecretKey/internal ports &rarr; guaranteed Maintenance.</div>
+                <div class="meta-row">
+                <span>M4 — Trade/craft/transport</span>
+                <span class="meta-val">Chain evidence is not autonomous acquisition or full human-route closure</span>
                 </div>
-                <div class="info-card">
-                    <div class="info-card-header"><div class="info-card-title">Port tables + repetition + absolute links</div><span class="status-badge status-queued">Queued</span></div>
-                    <div class="task-desc">Four overlapping port tables, none canonical (recommend <code>REFERENCE.md</code> as home) · FAQ omits 1234 · Aspire omits 1234/1280/15133 · config-precedence and GameServers-not-MySQL worded 5–7× · help pages ×4 overlap · absolute <code>file:///root/aaemu-dev</code> links (START-HERE, World page) are dev-box-only.</div>
+                <div class="meta-row">
+                <span>M5 — Gameplay Actor</span>
+                <span class="meta-val">Surface achievements retained; semantic parity questions remain</span>
                 </div>
-            </div>
-            <div class="info-card" style="margin-top: 20px;">
-                <div class="task-desc">In-repo evidence rule going forward: reports cited by this tab must live under <code>scorecard-explorations/generated/</code>. 09-05 M3a H-vs-proxy correction on record — H discipline held.</div>
-            </div>
+                <div class="meta-row">
+                <span>M6 — PlayerBot framework</span>
+                <span class="meta-val">Lifecycle evidence retained; A5 alone does not close full M6</span>
+                </div>
+                <div class="meta-row">
+                <span>M7 — Adventurer/party</span>
+                <span class="meta-val">Bounded loop evidence; broader autonomy/cooperation remains open</span>
+                </div>
+                <div class="meta-row">
+                <span>M8 — Living Village</span>
+                <span class="meta-val">09-08 QUALIFIED runtime exit; not general autonomous village or human acceptance</span>
+                </div>
+                <div class="meta-row">
+                <span>M8.5 / M9 / M9.5 / M10</span>
+                <span class="meta-val">Social/guide · Emergent world systems · Activities · Territory/siege</span>
+                </div>
+                <p class="task-desc">A5 historical shape: 1,000 registered / 50 embodied, not 1,000 autonomous full-simulation residents. M8 C5 recorded 24/24 cycles and four kill-9 restarts; accepted 1112 ms transient, DB-volume INVALID, human acceptance UNKNOWN. Original dated artifacts remain authoritative.</p>
+                </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Scorecard discipline</div>
+                </div>
+                <p class="task-desc">Mechanic dimensions: Canonical (C), Wired (W), Human (H), Automated (A), Restart (R), Soak (S), per SCORECARD.md. Separately name evidence layers: contract/fake mapping, deterministic rig, live authenticated scenario, human/client. Never reuse bare letters across vocabularies.</p>
+                <p class="task-desc">Delivery states: Ready; In progress; Implementation complete / verification pending; Verified at a named layer. Deployment and human acceptance are separately recorded. Unknown does not mean broken. Wiring/test counts are not completion percentages.</p>
+                <p class="task-desc">Missing external artifacts remain OUT-OF-REPO, not freshly verified. No evidence grades changed in this reconciliation.</p>
+                </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Human acceptance — Josh-owned, separate from automation</div>
+                </div>
+                <p class="task-desc">Prepare one reproducible ordinary-client corridor with short expected-result checks. Record the actual build, scenario and verdict. Traces, bots and tests expose defects but cannot award human feel. An open human gate does not freeze unrelated safe engineering.</p>
+                </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Agent handoff</div>
+                </div>
+                <p class="task-desc">Parent/outcome · SHA + dirty baseline · scope/non-goals · initial state/seed disclosure · acceptance/evidence layer · dependencies · owner/verifier · stop/next action. One active slice per worker. No second gameplay path or scheduler. No implied push or deployment authority.</p>
+                </div>
         </div>
 
         <!-- ==================== TAB 3: DOMAIN LANES ==================== -->
@@ -1612,6 +1472,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             <button class="map-btn active" id="mapModeInspectBtn" onclick="setMapMode('inspect')">Inspect</button>
                             <button class="map-btn" id="mapModeDraftBtn" onclick="setMapMode('draft')">Draw route</button>
                             <label title="Use a hub's full XYZ when clicked within 10 screen pixels"><input type="checkbox" id="snapHubs"> Snap to hubs</label>
+                            <button class="map-btn" id="liveRadarBtn" onclick="toggleLiveRadar()" title="Toggle live player & bot radar polling against Game WebApi" style="border-color:#388bfd;color:#58a6ff;font-weight:600;">📡 Live Radar: Off</button>
                         </div>
                     </div>
                     <div class="map-canvas-wrap" id="mapCanvasWrap">
@@ -1654,10 +1515,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             <div class="map-actions">
                                 <button class="btn" onclick="undoDraftPoint()">Undo point</button>
                                 <button class="btn btn-danger" onclick="clearDraftRoute()">Clear</button>
+                                <button class="btn" id="autoFillHeightsBtn" onclick="autoResolveRouteHeights()" style="border-color:#10b981;color:#34d399;" title="Automatically resolve Z elevation for all waypoints from atlas road topology">⚡ Auto-Fill Heights</button>
                                 <button class="btn" onclick="downloadDraft()">Save draft</button>
                                 <button class="btn" onclick="document.getElementById('routeImport').click()">Open route / draft</button>
                                 <input type="file" id="routeImport" accept=".json,application/json" hidden onchange="importRoute(this)">
                                 <button class="btn btn-primary" id="exportMapperBtn" onclick="exportMapperRoute()" disabled>Export game route</button>
+                                <button class="btn" id="uploadServerBtn" onclick="uploadRouteToServer()" style="border-color:#388bfd;background:rgba(56,189,248,0.15);color:#38bdf8;font-weight:600;" disabled title="Upload route directly to Game server Data/Routes for instant /mapper play">🚀 Upload to Server</button>
                             </div>
                             <div class="map-note" id="draftValidation">Add at least two points.</div>
                             <div id="draftPoints"></div>
@@ -2273,8 +2136,26 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
             api_base = os.environ.get("AAEMU_GAME_API_BASE", "http://127.0.0.1:1280").rstrip("/")
             entities = []
             server_online = False
+            bot_map = {}
 
-            # 1. Query logged characters from AAEmu Game WebApi
+            # 1. Query bots from BotControl API (if available)
+            try:
+                token = os.environ.get("AAEMU_BOT_CTRL_TOKEN", "aaemu-tester-token")
+                req = urlreq.Request(api_base + "/api/bots", headers={"User-Agent": "AAEmu-Dashboard", "X-Auth-Token": token})
+                with urlreq.urlopen(req, timeout=0.8) as resp:
+                    if resp.status == 200:
+                        server_online = True
+                        bot_resp = json.loads(resp.read().decode("utf-8"))
+                        bot_data = bot_resp.get("Bots") or bot_resp.get("Data") or bot_resp.get("data") or []
+                        for b in bot_data:
+                            name = b.get("Name") or b.get("name")
+                            if name:
+                                bot_map[name] = b
+            except Exception:
+                pass
+
+            # 2. Query logged characters from AAEmu Game WebApi
+            seen_names = set()
             try:
                 req = urlreq.Request(api_base + "/api/world/logged-characters", headers={"User-Agent": "AAEmu-Dashboard"})
                 with urlreq.urlopen(req, timeout=0.8) as resp:
@@ -2283,45 +2164,74 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
                         chars = json.loads(resp.read().decode("utf-8"))
                         for c in chars:
                             if c.get("IsOnline", False) or c.get("isOnline", False):
-                                entities.append({
-                                    "id": f"player_{c.get('Id') or c.get('id')}",
-                                    "name": c.get("Name") or c.get("name"),
-                                    "type": "player",
-                                    "x": float(c.get("X") or c.get("x") or 0),
-                                    "y": float(c.get("Y") or c.get("y") or 0),
-                                    "z": float(c.get("Z") or c.get("z") or 0),
-                                    "level": c.get("Level") or c.get("level") or 1,
-                                    "state": "In World"
-                                })
-            except Exception:
-                pass
+                                name = c.get("Name") or c.get("name") or "Unknown"
+                                char_id = c.get("Id") or c.get("id") or 0
+                                is_bot = (name in bot_map) or name.startswith("Citizen") or "bot" in name.lower()
+                                b_info = bot_map.get(name, {})
+                                state = b_info.get("State") or b_info.get("state") or ("Active" if is_bot else "In World")
 
-            # 2. Query bots from BotControl API
-            try:
-                token = os.environ.get("AAEMU_BOT_CTRL_TOKEN", "")
-                req = urlreq.Request(api_base + "/api/bots", headers={"User-Agent": "AAEmu-Dashboard", "X-Auth-Token": token})
-                with urlreq.urlopen(req, timeout=0.8) as resp:
-                    if resp.status == 200:
-                        server_online = True
-                        bot_resp = json.loads(resp.read().decode("utf-8"))
-                        bot_data = bot_resp.get("Bots") or bot_resp.get("Data") or bot_resp.get("data") or []
-                        for b in bot_data:
-                            state = b.get("State") or b.get("state") or "Active"
-                            if state != "Dormant":
+                                x = float(c.get("X") if c.get("X") is not None else (c.get("x") or 0))
+                                y = float(c.get("Y") if c.get("Y") is not None else (c.get("y") or 0))
+                                z = float(c.get("Z") if c.get("Z") is not None else (c.get("z") or 0))
+
+                                seen_names.add(name)
                                 entities.append({
-                                    "id": f"bot_{b.get('CharacterId') or b.get('characterId')}",
-                                    "name": b.get("Name") or b.get("name"),
-                                    "type": "bot",
-                                    "x": float(b.get("X") or b.get("x") or 0),
-                                    "y": float(b.get("Y") or b.get("y") or 0),
-                                    "z": float(b.get("Z") or b.get("z") or 0),
+                                    "id": f"{'bot' if is_bot else 'player'}_{char_id}",
+                                    "name": name,
+                                    "type": "bot" if is_bot else "player",
+                                    "x": x,
+                                    "y": y,
+                                    "z": z,
+                                    "level": c.get("Level") or c.get("level") or 1,
                                     "state": state
                                 })
             except Exception:
                 pass
 
+            # 3. Add any active bots not reported in logged-characters
+            for name, b in bot_map.items():
+                if name not in seen_names:
+                    state = b.get("State") or b.get("state") or "Active"
+                    if state != "Dormant":
+                        bx = float(b.get("X") if b.get("X") is not None else (b.get("x") or 0))
+                        by = float(b.get("Y") if b.get("Y") is not None else (b.get("y") or 0))
+                        bz = float(b.get("Z") if b.get("Z") is not None else (b.get("z") or 0))
+                        if bx != 0 or by != 0:
+                            entities.append({
+                                "id": f"bot_{b.get('CharacterId') or b.get('characterId') or name}",
+                                "name": name,
+                                "type": "bot",
+                                "x": bx,
+                                "y": by,
+                                "z": bz,
+                                "level": 1,
+                                "state": state
+                            })
+
             self._set_headers(200, "application/json")
             self.wfile.write(json.dumps({"ok": True, "server_online": server_online, "entities": entities}).encode("utf-8"))
+            return
+
+        if path == "/api/map/routes":
+            routes = self._get_routes_summary()
+            self._set_headers(200, "application/json")
+            self.wfile.write(json.dumps({"ok": True, "routes": routes}).encode("utf-8"))
+            return
+
+        if path.startswith("/api/map/route/"):
+            rname = path[len("/api/map/route/"):].strip()
+            if not rname.endswith(".json"):
+                rname += ".json"
+            safe_name = os.path.basename(rname)
+            rpath = os.path.join(self.repo_root, "AAEmu.Game", "Data", "Routes", safe_name)
+            if os.path.exists(rpath):
+                with open(rpath, "r", encoding="utf-8") as f:
+                    content = f.read()
+                self._set_headers(200, "application/json")
+                self.wfile.write(content.encode("utf-8"))
+            else:
+                self._set_headers(404, "application/json")
+                self.wfile.write(json.dumps({"error": f"Route {safe_name} not found"}).encode("utf-8"))
             return
 
         if path == "/api/tasks":
@@ -2412,8 +2322,224 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"ok": False, "error": str(ex)}).encode("utf-8"))
             return
 
+        if path == "/api/map/upload-route":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            try:
+                data = json.loads(body)
+                route_name = data.get("RouteName") or data.get("name") or data.get("routeName") or "unnamed_route"
+                route_name = "".join(c for c in route_name if c.isalnum() or c in ("-", "_")).strip()
+                if not route_name:
+                    route_name = "unnamed_route"
+
+                # Ensure RouteName is explicitly set
+                data["RouteName"] = route_name
+
+                # Save locally to AAEmu.Game/Data/Routes/{route_name}.json
+                routes_dir = os.path.join(self.repo_root, "AAEmu.Game", "Data", "Routes")
+                os.makedirs(routes_dir, exist_ok=True)
+                local_file = os.path.join(routes_dir, f"{route_name}.json")
+                with open(local_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2)
+
+                # Deploy to Game server (.165) via SSH into .server_files/AAEmu.Game/Data/Routes/
+                remote_deployed = False
+                remote_err = None
+                try:
+                    payload = json.dumps(data, indent=2)
+                    res = subprocess.run(
+                        [
+                            "ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", "root@192.168.0.165",
+                            f"mkdir -p /root/AAEmu/.server_files/AAEmu.Game/Data/Routes && cat > /root/AAEmu/.server_files/AAEmu.Game/Data/Routes/{route_name}.json"
+                        ],
+                        input=payload,
+                        text=True,
+                        capture_output=True,
+                        timeout=6
+                    )
+                    if res.returncode == 0:
+                        remote_deployed = True
+                    else:
+                        remote_err = res.stderr.strip()
+                except Exception as ssh_ex:
+                    remote_err = str(ssh_ex)
+
+                waypoint_count = len(data.get("Actions") or data.get("points") or data.get("waypoints") or [])
+                total_distance = data.get("TotalDistance") or data.get("totalDistance") or data.get("distance") or 0
+
+                self._set_headers(200, "application/json")
+                self.wfile.write(json.dumps({
+                    "ok": True,
+                    "routeName": route_name,
+                    "localPath": local_file,
+                    "remoteDeployed": remote_deployed,
+                    "remoteError": remote_err,
+                    "waypointCount": waypoint_count,
+                    "totalDistance": total_distance
+                }).encode("utf-8"))
+            except Exception as ex:
+                self._set_headers(500, "application/json")
+                self.wfile.write(json.dumps({"ok": False, "error": str(ex)}).encode("utf-8"))
+            return
+
+        if path == "/api/map/generate-candidate":
+            content_length = int(self.headers.get("Content-Length", 0))
+            body = self.rfile.read(content_length)
+            try:
+                req = json.loads(body)
+                start_id = req.get("start_id")
+                end_id = req.get("end_id")
+                name = req.get("name") or f"candidate_{start_id[-4:]}_to_{end_id[-4:]}"
+                name = "".join(c for c in name if c.isalnum() or c in ("-", "_")).strip()
+                step_meters = float(req.get("step_meters", 25.0))
+
+                sys.path.insert(0, os.path.join(self.repo_root, "Scripts", "playertrace-coverage"))
+                import generate_candidate_routes
+                junctions, edges = generate_candidate_routes.load_atlas()
+                adj = generate_candidate_routes.build_graph(junctions, edges)
+
+                route = generate_candidate_routes.generate_candidate_route(name, start_id, end_id, junctions, adj, step_meters)
+                if not route:
+                    self._set_headers(400, "application/json")
+                    self.wfile.write(json.dumps({"ok": False, "error": f"No connected road path found between {start_id} and {end_id}."}).encode("utf-8"))
+                    return
+
+                # Save locally
+                routes_dir = os.path.join(self.repo_root, "AAEmu.Game", "Data", "Routes")
+                os.makedirs(routes_dir, exist_ok=True)
+                out_path = os.path.join(routes_dir, f"{name}.json")
+                with open(out_path, "w", encoding="utf-8") as f:
+                    json.dump(route, f, indent=2)
+
+                # Deploy to .165 remote server
+                remote_deployed = False
+                try:
+                    payload = json.dumps(route, indent=2)
+                    res = subprocess.run(
+                        [
+                            "ssh", "-o", "ConnectTimeout=3", "-o", "BatchMode=yes", "root@192.168.0.165",
+                            f"mkdir -p /root/AAEmu/.server_files/AAEmu.Game/Data/Routes && cat > /root/AAEmu/.server_files/AAEmu.Game/Data/Routes/{name}.json"
+                        ],
+                        input=payload,
+                        text=True,
+                        capture_output=True,
+                        timeout=6
+                    )
+                    if res.returncode == 0:
+                        remote_deployed = True
+                except Exception:
+                    pass
+
+                self._set_headers(200, "application/json")
+                self.wfile.write(json.dumps({
+                    "ok": True,
+                    "routeName": name,
+                    "localPath": out_path,
+                    "remoteDeployed": remote_deployed,
+                    "waypointCount": route.get("WaypointCount", 0),
+                    "totalDistance": route.get("TotalDistance", 0),
+                    "route": route
+                }).encode("utf-8"))
+            except Exception as ex:
+                self._set_headers(500, "application/json")
+                self.wfile.write(json.dumps({"ok": False, "error": str(ex)}).encode("utf-8"))
+            return
+
         self._set_headers(404, "text/plain")
         self.wfile.write(b"Not Found")
+
+    def _get_routes_summary(self):
+        routes_dir = os.path.join(self.repo_root, "AAEmu.Game", "Data", "Routes")
+        routes = []
+        if not os.path.exists(routes_dir):
+            return routes
+
+        zones = []
+        atlas_path = os.path.join(self.repo_root, "playertrace-coverage", "map_atlas_data.json")
+        if os.path.exists(atlas_path):
+            try:
+                with open(atlas_path, "r", encoding="utf-8") as f:
+                    atlas = json.load(f)
+                    zones = atlas.get("zones", [])
+            except Exception:
+                pass
+
+        for fpath in sorted(glob.glob(os.path.join(routes_dir, "*.json"))):
+            fname = os.path.basename(fpath)
+            rname = os.path.splitext(fname)[0]
+            try:
+                with open(fpath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                actions = data.get("Actions") or []
+                wps = [a for a in actions if a.get("ActionType") == "Waypoint"]
+                total_dist = data.get("TotalDistance")
+                if total_dist is None:
+                    dist = 0.0
+                    for i in range(len(wps) - 1):
+                        p1, p2 = wps[i], wps[i+1]
+                        dist += math.hypot(p2.get("X",0) - p1.get("X",0), p2.get("Y",0) - p1.get("Y",0))
+                    total_dist = round(dist, 2)
+
+                first_wp = wps[0] if wps else {}
+                last_wp = wps[-1] if wps else {}
+
+                xs = [p.get("X", 0) for p in wps]
+                ys = [p.get("Y", 0) for p in wps]
+                zs = [p.get("Z") for p in wps if p.get("Z") is not None]
+
+                min_x = min(xs) if xs else 0
+                max_x = max(xs) if xs else 0
+                min_y = min(ys) if ys else 0
+                max_y = max(ys) if ys else 0
+                min_z = min(zs) if zs else None
+                max_z = max(zs) if zs else None
+
+                mid_x = (min_x + max_x) / 2
+                mid_y = (min_y + max_y) / 2
+
+                nuia_keywords = ["solzreed", "dewstone", "lilyut", "gweonid", "marianople", "two_crowns", "cinderstone", "halcyona", "hellswamp", "sanddeep", "white_arden"]
+                haranya_keywords = ["arcum_iris", "tigerspine", "falcorth", "mahadevi", "solis", "villanelle", "silent_forest", "ynystere", "hasla", "perinoor", "rokhala"]
+
+                route_str = (rname + " " + (data.get("RouteName") or "")).lower()
+                if mid_x < 2000 and mid_y < 2000:
+                    continent = "Instance"
+                elif any(k in route_str for k in nuia_keywords):
+                    continent = "Nuia"
+                elif any(k in route_str for k in haranya_keywords):
+                    continent = "Haranya"
+                elif mid_x >= 17000:
+                    continent = "Haranya"
+                else:
+                    continent = "Nuia"
+
+                zone_hint = ""
+                for z in zones:
+                    zx = z.get("x", 0)
+                    zy = z.get("y", 0)
+                    zw = z.get("w", 0)
+                    zh = z.get("h", 0)
+                    if (zx - zw/2 <= mid_x <= zx + zw/2) and (zy - zh/2 <= mid_y <= zy + zh/2):
+                        zone_hint = z.get("display_name") or z.get("name")
+                        break
+
+                routes.append({
+                    "name": data.get("RouteName") or rname,
+                    "filename": fname,
+                    "author": data.get("Author") or "RedlineTool",
+                    "total_distance": round(float(total_dist), 2),
+                    "waypoint_count": len(wps),
+                    "continent": continent,
+                    "zone_hint": zone_hint,
+                    "start": {"x": first_wp.get("X"), "y": first_wp.get("Y"), "z": first_wp.get("Z"), "label": first_wp.get("Label")},
+                    "end": {"x": last_wp.get("X"), "y": last_wp.get("Y"), "z": last_wp.get("Z"), "label": last_wp.get("Label")},
+                    "min_z": min_z,
+                    "max_z": max_z,
+                    "bounds": {"min_x": min_x, "max_x": max_x, "min_y": min_y, "max_y": max_y}
+                })
+            except Exception:
+                continue
+
+        return routes
 
     def _load_map_manifest(self):
         path = os.path.join(self.repo_root, ".client_files", "dashboard-map", "manifest.json")

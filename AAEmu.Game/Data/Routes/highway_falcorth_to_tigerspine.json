@@ -1,0 +1,1297 @@
+{
+  "TotalDistance": 3950.07,
+  "WaypointCount": 160,
+  "ActionCount": 0,
+  "Actions": [
+    {
+      "ActionType": "Waypoint",
+      "X": 24150.85,
+      "Y": 9655.45,
+      "Z": 538.81,
+      "Yaw": 3.2264,
+      "Label": "Falcorth Plains J1: joins Graymist + Firran Spawn side path"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24148.73,
+      "Y": 9630.56,
+      "Z": 539.5025,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24146.62,
+      "Y": 9605.67,
+      "Z": 540.195,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24144.5,
+      "Y": 9580.78,
+      "Z": 540.8875,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24142.38,
+      "Y": 9555.89,
+      "Z": 541.58,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24140.26,
+      "Y": 9531.0,
+      "Z": 542.2725,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24138.15,
+      "Y": 9506.11,
+      "Z": 542.965,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24136.03,
+      "Y": 9481.23,
+      "Z": 543.6575,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24133.91,
+      "Y": 9456.34,
+      "Z": 544.35,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24131.8,
+      "Y": 9431.45,
+      "Z": 545.0425,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24129.68,
+      "Y": 9406.56,
+      "Z": 545.735,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24127.56,
+      "Y": 9381.67,
+      "Z": 546.4275,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24125.45,
+      "Y": 9356.78,
+      "Z": 547.12,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24123.33,
+      "Y": 9331.89,
+      "Z": 547.8125,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24121.21,
+      "Y": 9307.0,
+      "Z": 548.505,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24119.09,
+      "Y": 9282.11,
+      "Z": 549.1975,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24116.98,
+      "Y": 9257.22,
+      "Z": 549.89,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24114.86,
+      "Y": 9232.33,
+      "Z": 550.5825,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24112.74,
+      "Y": 9207.44,
+      "Z": 551.275,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24110.63,
+      "Y": 9182.55,
+      "Z": 551.9675,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24108.51,
+      "Y": 9157.67,
+      "Z": 552.66,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24106.39,
+      "Y": 9132.78,
+      "Z": 553.3525,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24104.28,
+      "Y": 9107.89,
+      "Z": 554.045,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24102.16,
+      "Y": 9083.0,
+      "Z": 554.7375,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24100.04,
+      "Y": 9058.11,
+      "Z": 555.43,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24097.92,
+      "Y": 9033.22,
+      "Z": 556.1225,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24095.81,
+      "Y": 9008.33,
+      "Z": 556.815,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24093.69,
+      "Y": 8983.44,
+      "Z": 557.5075,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24091.57,
+      "Y": 8958.55,
+      "Z": 558.2,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24089.46,
+      "Y": 8933.66,
+      "Z": 558.8925,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24087.34,
+      "Y": 8908.77,
+      "Z": 559.585,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24085.22,
+      "Y": 8883.88,
+      "Z": 560.2775,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24083.11,
+      "Y": 8858.99,
+      "Z": 560.97,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24080.99,
+      "Y": 8834.1,
+      "Z": 561.6625,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24078.87,
+      "Y": 8809.22,
+      "Z": 562.355,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24076.75,
+      "Y": 8784.33,
+      "Z": 563.0475,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24074.64,
+      "Y": 8759.44,
+      "Z": 563.74,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24072.52,
+      "Y": 8734.55,
+      "Z": 564.4325,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24070.4,
+      "Y": 8709.66,
+      "Z": 565.125,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24068.29,
+      "Y": 8684.77,
+      "Z": 565.8175,
+      "Yaw": 3.2264,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24066.17,
+      "Y": 8659.88,
+      "Z": 566.51,
+      "Yaw": 4.9023,
+      "Label": "Falcorth Plains J19: joins Graymist camp pathing + Graymist"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24042.32,
+      "Y": 8664.47,
+      "Z": 566.64,
+      "Yaw": 4.9023,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24018.47,
+      "Y": 8669.05,
+      "Z": 566.77,
+      "Yaw": 5.8443,
+      "Label": "Falcorth Plains J18: joins Graymist camp pathing + Oxion Clan to Graymist"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 24008.13,
+      "Y": 8691.09,
+      "Z": 567.3974,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23997.78,
+      "Y": 8713.13,
+      "Z": 568.0248,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23987.44,
+      "Y": 8735.17,
+      "Z": 568.6522,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23977.09,
+      "Y": 8757.21,
+      "Z": 569.2796,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23966.75,
+      "Y": 8779.25,
+      "Z": 569.907,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23956.4,
+      "Y": 8801.28,
+      "Z": 570.5343,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23946.06,
+      "Y": 8823.32,
+      "Z": 571.1617,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23935.72,
+      "Y": 8845.36,
+      "Z": 571.7891,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23925.37,
+      "Y": 8867.4,
+      "Z": 572.4165,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23915.03,
+      "Y": 8889.44,
+      "Z": 573.0439,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23904.68,
+      "Y": 8911.48,
+      "Z": 573.6713,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23894.34,
+      "Y": 8933.52,
+      "Z": 574.2987,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23883.99,
+      "Y": 8955.56,
+      "Z": 574.9261,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23873.65,
+      "Y": 8977.6,
+      "Z": 575.5535,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23863.3,
+      "Y": 8999.64,
+      "Z": 576.1809,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23852.96,
+      "Y": 9021.68,
+      "Z": 576.8083,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23842.62,
+      "Y": 9043.72,
+      "Z": 577.4357,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23832.27,
+      "Y": 9065.75,
+      "Z": 578.063,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23821.93,
+      "Y": 9087.79,
+      "Z": 578.6904,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23811.58,
+      "Y": 9109.83,
+      "Z": 579.3178,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23801.24,
+      "Y": 9131.87,
+      "Z": 579.9452,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23790.89,
+      "Y": 9153.91,
+      "Z": 580.5726,
+      "Yaw": 5.8443,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23780.55,
+      "Y": 9175.95,
+      "Z": 581.2,
+      "Yaw": 4.5397,
+      "Label": "Falcorth Plains J5: joins Cloudgrain to Oxion Clan + Oxion Clan - Camp pathing + Oxion Clan to Halfmoon + Oxion Clan to Graymist"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23756.46,
+      "Y": 9171.75,
+      "Z": 584.3955,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23732.37,
+      "Y": 9167.54,
+      "Z": 587.5909,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23708.29,
+      "Y": 9163.34,
+      "Z": 590.7864,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23684.2,
+      "Y": 9159.14,
+      "Z": 593.9818,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23660.11,
+      "Y": 9154.94,
+      "Z": 597.1773,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23636.02,
+      "Y": 9150.73,
+      "Z": 600.3727,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23611.93,
+      "Y": 9146.53,
+      "Z": 603.5682,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23587.84,
+      "Y": 9142.33,
+      "Z": 606.7636,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23563.76,
+      "Y": 9138.13,
+      "Z": 609.9591,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23539.67,
+      "Y": 9133.92,
+      "Z": 613.1545,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23515.58,
+      "Y": 9129.72,
+      "Z": 616.35,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23491.49,
+      "Y": 9125.52,
+      "Z": 619.5455,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23467.4,
+      "Y": 9121.31,
+      "Z": 622.7409,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23443.32,
+      "Y": 9117.11,
+      "Z": 625.9364,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23419.23,
+      "Y": 9112.91,
+      "Z": 629.1318,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23395.14,
+      "Y": 9108.71,
+      "Z": 632.3273,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23371.05,
+      "Y": 9104.5,
+      "Z": 635.5227,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23346.96,
+      "Y": 9100.3,
+      "Z": 638.7182,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23322.87,
+      "Y": 9096.1,
+      "Z": 641.9136,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23298.79,
+      "Y": 9091.9,
+      "Z": 645.1091,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23274.7,
+      "Y": 9087.69,
+      "Z": 648.3045,
+      "Yaw": 4.5397,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23250.61,
+      "Y": 9083.49,
+      "Z": 651.5,
+      "Yaw": 4.1399,
+      "Label": "Falcorth Plains J6: joins Cloudgrain to Oxion Clan + Cloudgrain camp + Cloudgrain + Tigerspine Mountatins to Falcorth Plains + Halfmoon to Cloudgrain"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23229.8,
+      "Y": 9070.08,
+      "Z": 648.065,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23209.0,
+      "Y": 9056.67,
+      "Z": 644.63,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23188.19,
+      "Y": 9043.26,
+      "Z": 641.195,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23167.39,
+      "Y": 9029.85,
+      "Z": 637.76,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23146.58,
+      "Y": 9016.44,
+      "Z": 634.325,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23125.77,
+      "Y": 9003.03,
+      "Z": 630.89,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23104.97,
+      "Y": 8989.62,
+      "Z": 627.455,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23084.16,
+      "Y": 8976.21,
+      "Z": 624.02,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23063.36,
+      "Y": 8962.81,
+      "Z": 620.585,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23042.55,
+      "Y": 8949.4,
+      "Z": 617.15,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23021.74,
+      "Y": 8935.99,
+      "Z": 613.715,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 23000.94,
+      "Y": 8922.58,
+      "Z": 610.28,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22980.13,
+      "Y": 8909.17,
+      "Z": 606.845,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22959.33,
+      "Y": 8895.76,
+      "Z": 603.41,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22938.52,
+      "Y": 8882.35,
+      "Z": 599.975,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22917.71,
+      "Y": 8868.94,
+      "Z": 596.54,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22896.91,
+      "Y": 8855.53,
+      "Z": 593.105,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22876.1,
+      "Y": 8842.12,
+      "Z": 589.67,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22855.3,
+      "Y": 8828.71,
+      "Z": 586.235,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22834.49,
+      "Y": 8815.3,
+      "Z": 582.8,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22813.68,
+      "Y": 8801.89,
+      "Z": 579.365,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22792.88,
+      "Y": 8788.48,
+      "Z": 575.93,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22772.07,
+      "Y": 8775.07,
+      "Z": 572.495,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22751.27,
+      "Y": 8761.66,
+      "Z": 569.06,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22730.46,
+      "Y": 8748.25,
+      "Z": 565.625,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22709.65,
+      "Y": 8734.84,
+      "Z": 562.19,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22688.85,
+      "Y": 8721.43,
+      "Z": 558.755,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22668.04,
+      "Y": 8708.03,
+      "Z": 555.32,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22647.24,
+      "Y": 8694.62,
+      "Z": 551.885,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22626.43,
+      "Y": 8681.21,
+      "Z": 548.45,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22605.62,
+      "Y": 8667.8,
+      "Z": 545.015,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22584.82,
+      "Y": 8654.39,
+      "Z": 541.58,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22564.01,
+      "Y": 8640.98,
+      "Z": 538.145,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22543.21,
+      "Y": 8627.57,
+      "Z": 534.71,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22522.4,
+      "Y": 8614.16,
+      "Z": 531.275,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22501.6,
+      "Y": 8600.75,
+      "Z": 527.84,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22480.79,
+      "Y": 8587.34,
+      "Z": 524.405,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22459.98,
+      "Y": 8573.93,
+      "Z": 520.97,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22439.18,
+      "Y": 8560.52,
+      "Z": 517.535,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22418.37,
+      "Y": 8547.11,
+      "Z": 514.1,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22397.57,
+      "Y": 8533.7,
+      "Z": 510.665,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22376.76,
+      "Y": 8520.29,
+      "Z": 507.23,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22355.95,
+      "Y": 8506.88,
+      "Z": 503.795,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22335.15,
+      "Y": 8493.47,
+      "Z": 500.36,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22314.34,
+      "Y": 8480.07,
+      "Z": 496.925,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22293.54,
+      "Y": 8466.66,
+      "Z": 493.49,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22272.73,
+      "Y": 8453.25,
+      "Z": 490.055,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22251.92,
+      "Y": 8439.84,
+      "Z": 486.62,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22231.12,
+      "Y": 8426.43,
+      "Z": 483.185,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22210.31,
+      "Y": 8413.02,
+      "Z": 479.75,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22189.51,
+      "Y": 8399.61,
+      "Z": 476.315,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22168.7,
+      "Y": 8386.2,
+      "Z": 472.88,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22147.89,
+      "Y": 8372.79,
+      "Z": 469.445,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22127.09,
+      "Y": 8359.38,
+      "Z": 466.01,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22106.28,
+      "Y": 8345.97,
+      "Z": 462.575,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22085.48,
+      "Y": 8332.56,
+      "Z": 459.14,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22064.67,
+      "Y": 8319.15,
+      "Z": 455.705,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22043.86,
+      "Y": 8305.74,
+      "Z": 452.27,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22023.06,
+      "Y": 8292.33,
+      "Z": 448.835,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22002.25,
+      "Y": 8278.92,
+      "Z": 445.4,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21981.45,
+      "Y": 8265.51,
+      "Z": 441.965,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21960.64,
+      "Y": 8252.1,
+      "Z": 438.53,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21939.83,
+      "Y": 8238.69,
+      "Z": 435.095,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21919.03,
+      "Y": 8225.29,
+      "Z": 431.66,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21898.22,
+      "Y": 8211.88,
+      "Z": 428.225,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21877.42,
+      "Y": 8198.47,
+      "Z": 424.79,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21856.61,
+      "Y": 8185.06,
+      "Z": 421.355,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21835.8,
+      "Y": 8171.65,
+      "Z": 417.92,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21815.0,
+      "Y": 8158.24,
+      "Z": 414.485,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21794.19,
+      "Y": 8144.83,
+      "Z": 411.05,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21773.39,
+      "Y": 8131.42,
+      "Z": 407.615,
+      "Yaw": 4.1399,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21752.58,
+      "Y": 8118.01,
+      "Z": 404.18,
+      "Yaw": 4.14,
+      "Label": "Tigerspine Mountains J1: joins Arcum Iris to Tigerspine Mountains + Tigerspine Mountatins to Falcorth Plains + Anviton + Anvilton"
+    }
+  ],
+  "RouteName": "highway_falcorth_to_tigerspine",
+  "Author": "CandidateAtlasGenerator",
+  "JunctionPath": [
+    "rb-junction-falcorth-J1",
+    "rb-junction-falcorth-J19",
+    "rb-junction-falcorth-J18",
+    "rb-junction-falcorth-J5",
+    "rb-junction-falcorth-J6",
+    "rb-junction-tigerspine-J1"
+  ]
+}

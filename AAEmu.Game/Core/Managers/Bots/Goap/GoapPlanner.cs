@@ -5,12 +5,24 @@ using System.Numerics;
 namespace AAEmu.Game.Core.Managers.Bots.Goap;
 
 /// <summary>
+/// Planner interface finding lowest-cost action sequence from start state to goal state.
+/// </summary>
+public interface IGoapPlanner
+{
+    GoapPlanResult Plan(
+        PlayerBotRuntime? bot,
+        in BotWorldState startState,
+        GoapGoal goal,
+        IReadOnlyList<IGoapAction> actions);
+}
+
+/// <summary>
 /// High-performance A* search planner for Goal-Oriented Action Planning (GOAP).
 /// Finds the minimal-cost sequence of actions from a start state to a goal state.
 /// Guaranteed real-time performance through compact bitwise states, admissible heuristics,
 /// and iteration budgets.
 /// </summary>
-public sealed class GoapPlanner
+public sealed class GoapPlanner : IGoapPlanner
 {
     public const int DefaultMaxExpansions = 500;
     private readonly int _maxExpansions;

@@ -1,0 +1,415 @@
+{
+  "TotalDistance": 1191.29,
+  "WaypointCount": 50,
+  "ActionCount": 0,
+  "Actions": [
+    {
+      "ActionType": "Waypoint",
+      "X": 21752.58,
+      "Y": 8118.01,
+      "Z": 404.18,
+      "Yaw": 2.5833,
+      "Label": "Tigerspine Mountains J1: joins Arcum Iris to Tigerspine Mountains + Tigerspine Mountatins to Falcorth Plains + Anviton + Anvilton"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21763.18,
+      "Y": 8101.05,
+      "Z": 403.865,
+      "Yaw": 2.5833,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21773.77,
+      "Y": 8084.08,
+      "Z": 403.55,
+      "Yaw": 6.0437,
+      "Label": "Tigerspine Mountains J10: joins Anvilton to Tiger's Eye + Arcum Iris to Tigerspine Mountains + Tigerspine Mountatins to Falcorth Plains + Anvilton"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21767.92,
+      "Y": 8108.04,
+      "Z": 407.3767,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21762.07,
+      "Y": 8132.0,
+      "Z": 411.2033,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21756.22,
+      "Y": 8155.96,
+      "Z": 415.03,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21750.37,
+      "Y": 8179.93,
+      "Z": 418.8567,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21744.51,
+      "Y": 8203.89,
+      "Z": 422.6833,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21738.66,
+      "Y": 8227.85,
+      "Z": 426.51,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21732.81,
+      "Y": 8251.81,
+      "Z": 430.3367,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21726.96,
+      "Y": 8275.77,
+      "Z": 434.1633,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21721.11,
+      "Y": 8299.73,
+      "Z": 437.99,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21715.26,
+      "Y": 8323.69,
+      "Z": 441.8167,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21709.41,
+      "Y": 8347.65,
+      "Z": 445.6433,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21703.56,
+      "Y": 8371.61,
+      "Z": 449.47,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21697.7,
+      "Y": 8395.58,
+      "Z": 453.2967,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21691.85,
+      "Y": 8419.54,
+      "Z": 457.1233,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21686.0,
+      "Y": 8443.5,
+      "Z": 460.95,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21680.15,
+      "Y": 8467.46,
+      "Z": 464.7767,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21674.3,
+      "Y": 8491.42,
+      "Z": 468.6033,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21668.45,
+      "Y": 8515.38,
+      "Z": 472.43,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21662.6,
+      "Y": 8539.34,
+      "Z": 476.2567,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21656.74,
+      "Y": 8563.31,
+      "Z": 480.0833,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21650.89,
+      "Y": 8587.27,
+      "Z": 483.91,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21645.04,
+      "Y": 8611.23,
+      "Z": 487.7367,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21639.19,
+      "Y": 8635.19,
+      "Z": 491.5633,
+      "Yaw": 6.0437,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21633.34,
+      "Y": 8659.15,
+      "Z": 495.39,
+      "Yaw": 5.0761,
+      "Label": "Tigerspine Mountains J5: joins Anvilton to Tiger's Eye + Tiger's Eye + Tigerseye to City of towers"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21611.07,
+      "Y": 8667.63,
+      "Z": 492.4783,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21588.79,
+      "Y": 8676.11,
+      "Z": 489.5665,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21566.52,
+      "Y": 8684.58,
+      "Z": 486.6548,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21544.24,
+      "Y": 8693.06,
+      "Z": 483.743,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21521.97,
+      "Y": 8701.54,
+      "Z": 480.8313,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21499.7,
+      "Y": 8710.02,
+      "Z": 477.9196,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21477.42,
+      "Y": 8718.49,
+      "Z": 475.0078,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21455.15,
+      "Y": 8726.97,
+      "Z": 472.0961,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21432.87,
+      "Y": 8735.45,
+      "Z": 469.1843,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21410.6,
+      "Y": 8743.93,
+      "Z": 466.2726,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21388.33,
+      "Y": 8752.41,
+      "Z": 463.3609,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21366.05,
+      "Y": 8760.88,
+      "Z": 460.4491,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21343.78,
+      "Y": 8769.36,
+      "Z": 457.5374,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21321.51,
+      "Y": 8777.84,
+      "Z": 454.6257,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21299.23,
+      "Y": 8786.32,
+      "Z": 451.7139,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21276.96,
+      "Y": 8794.8,
+      "Z": 448.8022,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21254.68,
+      "Y": 8803.27,
+      "Z": 445.8904,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21232.41,
+      "Y": 8811.75,
+      "Z": 442.9787,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21210.14,
+      "Y": 8820.23,
+      "Z": 440.067,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21187.86,
+      "Y": 8828.71,
+      "Z": 437.1552,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21165.59,
+      "Y": 8837.18,
+      "Z": 434.2435,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21143.31,
+      "Y": 8845.66,
+      "Z": 431.3317,
+      "Yaw": 5.0761,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21121.04,
+      "Y": 8854.14,
+      "Z": 428.42,
+      "Yaw": 5.0762,
+      "Label": "Tigerspine Mountains J16: joins North Devi River + Tigerseye to City of towers"
+    }
+  ],
+  "RouteName": "highway_tigerspine_to_city_of_towers",
+  "Author": "CandidateAtlasGenerator",
+  "JunctionPath": [
+    "rb-junction-tigerspine-J1",
+    "rb-junction-tigerspine-J10",
+    "rb-junction-tigerspine-J5",
+    "rb-junction-tigerspine-J16"
+  ]
+}

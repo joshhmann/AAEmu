@@ -1,0 +1,286 @@
+{
+  "TotalDistance": 789.84,
+  "WaypointCount": 34,
+  "ActionCount": 0,
+  "Actions": [
+    {
+      "ActionType": "Waypoint",
+      "X": 22313.68,
+      "Y": 6993.74,
+      "Z": 276.95,
+      "Yaw": 5.4094,
+      "Label": "Arcum Iris J14: joins Widesleeves camp + Road to sunbite wilds"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22298.0,
+      "Y": 7006.87,
+      "Z": 277.128,
+      "Yaw": 5.4094,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22282.32,
+      "Y": 7019.99,
+      "Z": 277.306,
+      "Yaw": 5.4094,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22266.65,
+      "Y": 7033.12,
+      "Z": 277.484,
+      "Yaw": 5.4094,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22250.97,
+      "Y": 7046.24,
+      "Z": 277.662,
+      "Yaw": 5.4094,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22235.29,
+      "Y": 7059.37,
+      "Z": 277.84,
+      "Yaw": 5.1098,
+      "Label": "Arcum Iris J12: joins Arcum Iris + Widesleeves camp"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22212.69,
+      "Y": 7068.86,
+      "Z": 276.3596,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22190.09,
+      "Y": 7078.35,
+      "Z": 274.8793,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22167.48,
+      "Y": 7087.83,
+      "Z": 273.3989,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22144.88,
+      "Y": 7097.32,
+      "Z": 271.9186,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22122.28,
+      "Y": 7106.81,
+      "Z": 270.4382,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22099.68,
+      "Y": 7116.3,
+      "Z": 268.9579,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22077.08,
+      "Y": 7125.79,
+      "Z": 267.4775,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22054.48,
+      "Y": 7135.28,
+      "Z": 265.9971,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22031.87,
+      "Y": 7144.76,
+      "Z": 264.5168,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 22009.27,
+      "Y": 7154.25,
+      "Z": 263.0364,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21986.67,
+      "Y": 7163.74,
+      "Z": 261.5561,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21964.07,
+      "Y": 7173.23,
+      "Z": 260.0757,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21941.47,
+      "Y": 7182.72,
+      "Z": 258.5954,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21918.86,
+      "Y": 7192.2,
+      "Z": 257.115,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21896.26,
+      "Y": 7201.69,
+      "Z": 255.6346,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21873.66,
+      "Y": 7211.18,
+      "Z": 254.1543,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21851.06,
+      "Y": 7220.67,
+      "Z": 252.6739,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21828.46,
+      "Y": 7230.16,
+      "Z": 251.1936,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21805.86,
+      "Y": 7239.65,
+      "Z": 249.7132,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21783.25,
+      "Y": 7249.13,
+      "Z": 248.2329,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21760.65,
+      "Y": 7258.62,
+      "Z": 246.7525,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21738.05,
+      "Y": 7268.11,
+      "Z": 245.2721,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21715.45,
+      "Y": 7277.6,
+      "Z": 243.7918,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21692.85,
+      "Y": 7287.09,
+      "Z": 242.3114,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21670.25,
+      "Y": 7296.58,
+      "Z": 240.8311,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21647.64,
+      "Y": 7306.06,
+      "Z": 239.3507,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21625.04,
+      "Y": 7315.55,
+      "Z": 237.8704,
+      "Yaw": 5.1098,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 21602.44,
+      "Y": 7325.04,
+      "Z": 236.39,
+      "Yaw": 5.1099,
+      "Label": "Arcum Iris J1: joins Serpent's Pass + Arcum Iris"
+    }
+  ],
+  "RouteName": "highway_arcum_iris_thoroughfare",
+  "Author": "CandidateAtlasGenerator",
+  "JunctionPath": [
+    "rb-junction-arcum-iris-J14",
+    "rb-junction-arcum-iris-J12",
+    "rb-junction-arcum-iris-J1"
+  ]
+}

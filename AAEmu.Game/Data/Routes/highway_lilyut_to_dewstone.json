@@ -1,0 +1,366 @@
+{
+  "TotalDistance": 1063.39,
+  "WaypointCount": 44,
+  "ActionCount": 0,
+  "Actions": [
+    {
+      "ActionType": "Waypoint",
+      "X": 12612.86,
+      "Y": 15522.81,
+      "Z": 160.29,
+      "Yaw": 3.215,
+      "Label": "Lilyut Hills J22: joins Rockmar Barrow to Windshade + Windshade + Windshade to Old Pine + Windshade to Riverspan"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12611.14,
+      "Y": 15499.46,
+      "Z": 159.51,
+      "Yaw": 3.215,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12609.42,
+      "Y": 15476.12,
+      "Z": 158.73,
+      "Yaw": 3.215,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12607.71,
+      "Y": 15452.77,
+      "Z": 157.95,
+      "Yaw": 3.215,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12605.99,
+      "Y": 15429.43,
+      "Z": 157.17,
+      "Yaw": 3.215,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12604.27,
+      "Y": 15406.08,
+      "Z": 156.39,
+      "Yaw": 2.781,
+      "Label": "Lilyut Hills J27: joins Windshade + Solzreed to Lilyut + Windshade to Roysters Camp + Windshade to Children of Ipnya Encampment"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12613.05,
+      "Y": 15382.78,
+      "Z": 155.9247,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12621.84,
+      "Y": 15359.49,
+      "Z": 155.4595,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12630.62,
+      "Y": 15336.19,
+      "Z": 154.9942,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12639.4,
+      "Y": 15312.89,
+      "Z": 154.5289,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12648.19,
+      "Y": 15289.6,
+      "Z": 154.0637,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12656.97,
+      "Y": 15266.3,
+      "Z": 153.5984,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12665.76,
+      "Y": 15243.0,
+      "Z": 153.1332,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12674.54,
+      "Y": 15219.71,
+      "Z": 152.6679,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12683.32,
+      "Y": 15196.41,
+      "Z": 152.2026,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12692.11,
+      "Y": 15173.11,
+      "Z": 151.7374,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12700.89,
+      "Y": 15149.81,
+      "Z": 151.2721,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12709.67,
+      "Y": 15126.52,
+      "Z": 150.8068,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12718.46,
+      "Y": 15103.22,
+      "Z": 150.3416,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12727.24,
+      "Y": 15079.92,
+      "Z": 149.8763,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12736.03,
+      "Y": 15056.63,
+      "Z": 149.4111,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12744.81,
+      "Y": 15033.33,
+      "Z": 148.9458,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12753.59,
+      "Y": 15010.03,
+      "Z": 148.4805,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12762.38,
+      "Y": 14986.74,
+      "Z": 148.0153,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12771.16,
+      "Y": 14963.44,
+      "Z": 147.55,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12779.94,
+      "Y": 14940.14,
+      "Z": 147.0847,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12788.73,
+      "Y": 14916.85,
+      "Z": 146.6195,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12797.51,
+      "Y": 14893.55,
+      "Z": 146.1542,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12806.29,
+      "Y": 14870.25,
+      "Z": 145.6889,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12815.08,
+      "Y": 14846.96,
+      "Z": 145.2237,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12823.86,
+      "Y": 14823.66,
+      "Z": 144.7584,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12832.65,
+      "Y": 14800.36,
+      "Z": 144.2932,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12841.43,
+      "Y": 14777.07,
+      "Z": 143.8279,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12850.21,
+      "Y": 14753.77,
+      "Z": 143.3626,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12859.0,
+      "Y": 14730.47,
+      "Z": 142.8974,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12867.78,
+      "Y": 14707.17,
+      "Z": 142.4321,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12876.56,
+      "Y": 14683.88,
+      "Z": 141.9668,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12885.35,
+      "Y": 14660.58,
+      "Z": 141.5016,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12894.13,
+      "Y": 14637.28,
+      "Z": 141.0363,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12902.92,
+      "Y": 14613.99,
+      "Z": 140.5711,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12911.7,
+      "Y": 14590.69,
+      "Z": 140.1058,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12920.48,
+      "Y": 14567.39,
+      "Z": 139.6405,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12929.27,
+      "Y": 14544.1,
+      "Z": 139.1753,
+      "Yaw": 2.781,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 12938.05,
+      "Y": 14520.8,
+      "Z": 138.71,
+      "Yaw": 2.7812,
+      "Label": "Dewstone Plains J1: joins Royster's Camp public farm + Royster's Camp to Sandcloud + Windshade to Roysters Camp"
+    }
+  ],
+  "RouteName": "highway_lilyut_to_dewstone",
+  "Author": "CandidateAtlasGenerator",
+  "JunctionPath": [
+    "rb-junction-lilyut-J22",
+    "rb-junction-lilyut-J27",
+    "rb-junction-dewstone-J1"
+  ]
+}

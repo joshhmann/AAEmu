@@ -64,5 +64,23 @@ public class GoapActionBase : IGoapAction
 
     public virtual ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null) => null;
 
+    public virtual GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        // 1. Observed world state genuinely satisfies the effects -> SUCCESS
+        if (observedState.Satisfies(Effects))
+            return GoapActionStatus.Succeeded;
+
+        // 2. Actor request reached failure/rejected terminal state -> FAILED
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        // 3. Otherwise still in-flight or waiting for world propagation
+        return GoapActionStatus.Running;
+    }
+
     public override string ToString() => $"Action[{Name}, Cost={BaseCost:F1}]";
 }

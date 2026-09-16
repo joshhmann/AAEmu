@@ -1,0 +1,704 @@
+{
+  "TotalDistance": 2095.23,
+  "WaypointCount": 86,
+  "ActionCount": 0,
+  "Actions": [
+    {
+      "ActionType": "Waypoint",
+      "X": 15194.34,
+      "Y": 13584.7,
+      "Z": 103.69,
+      "Yaw": 4.6059,
+      "Label": "Solzreed Peninsula J5: joins Crescent Throne + Crescent Throne to moonswept bay"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 15170.02,
+      "Y": 13582.1,
+      "Z": 103.4629,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 15145.71,
+      "Y": 13579.5,
+      "Z": 103.2357,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 15121.4,
+      "Y": 13576.9,
+      "Z": 103.0086,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 15097.08,
+      "Y": 13574.31,
+      "Z": 102.7814,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 15072.76,
+      "Y": 13571.71,
+      "Z": 102.5543,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 15048.45,
+      "Y": 13569.11,
+      "Z": 102.3271,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 15024.14,
+      "Y": 13566.51,
+      "Z": 102.1,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14999.82,
+      "Y": 13563.91,
+      "Z": 101.8729,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14975.51,
+      "Y": 13561.31,
+      "Z": 101.6457,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14951.19,
+      "Y": 13558.71,
+      "Z": 101.4186,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14926.88,
+      "Y": 13556.12,
+      "Z": 101.1914,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14902.56,
+      "Y": 13553.52,
+      "Z": 100.9643,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14878.25,
+      "Y": 13550.92,
+      "Z": 100.7371,
+      "Yaw": 4.6059,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14853.93,
+      "Y": 13548.32,
+      "Z": 100.51,
+      "Yaw": 5.9129,
+      "Label": "Solzreed Peninsula J6: joins Moonswept bay + Crescent Throne to moonswept bay"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14844.96,
+      "Y": 13571.42,
+      "Z": 101.0174,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14835.99,
+      "Y": 13594.53,
+      "Z": 101.5247,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14827.02,
+      "Y": 13617.63,
+      "Z": 102.0321,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14818.05,
+      "Y": 13640.74,
+      "Z": 102.5394,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14809.08,
+      "Y": 13663.84,
+      "Z": 103.0468,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14800.11,
+      "Y": 13686.94,
+      "Z": 103.5541,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14791.14,
+      "Y": 13710.05,
+      "Z": 104.0615,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14782.17,
+      "Y": 13733.15,
+      "Z": 104.5688,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14773.2,
+      "Y": 13756.25,
+      "Z": 105.0762,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14764.23,
+      "Y": 13779.36,
+      "Z": 105.5835,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14755.26,
+      "Y": 13802.46,
+      "Z": 106.0909,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14746.29,
+      "Y": 13825.57,
+      "Z": 106.5982,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14737.32,
+      "Y": 13848.67,
+      "Z": 107.1056,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14728.35,
+      "Y": 13871.77,
+      "Z": 107.6129,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14719.38,
+      "Y": 13894.88,
+      "Z": 108.1203,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14710.41,
+      "Y": 13917.98,
+      "Z": 108.6276,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14701.44,
+      "Y": 13941.08,
+      "Z": 109.135,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14692.48,
+      "Y": 13964.19,
+      "Z": 109.6424,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14683.51,
+      "Y": 13987.29,
+      "Z": 110.1497,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14674.54,
+      "Y": 14010.4,
+      "Z": 110.6571,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14665.57,
+      "Y": 14033.5,
+      "Z": 111.1644,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14656.6,
+      "Y": 14056.6,
+      "Z": 111.6718,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14647.63,
+      "Y": 14079.71,
+      "Z": 112.1791,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14638.66,
+      "Y": 14102.81,
+      "Z": 112.6865,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14629.69,
+      "Y": 14125.92,
+      "Z": 113.1938,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14620.72,
+      "Y": 14149.02,
+      "Z": 113.7012,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14611.75,
+      "Y": 14172.12,
+      "Z": 114.2085,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14602.78,
+      "Y": 14195.23,
+      "Z": 114.7159,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14593.81,
+      "Y": 14218.33,
+      "Z": 115.2232,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14584.84,
+      "Y": 14241.43,
+      "Z": 115.7306,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14575.87,
+      "Y": 14264.54,
+      "Z": 116.2379,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14566.9,
+      "Y": 14287.64,
+      "Z": 116.7453,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14557.93,
+      "Y": 14310.75,
+      "Z": 117.2526,
+      "Yaw": 5.9129,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14548.96,
+      "Y": 14333.85,
+      "Z": 117.76,
+      "Yaw": 5.3779,
+      "Label": "Solzreed Peninsula J1: joins Moonswept bay + Farmland path"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14533.44,
+      "Y": 14346.03,
+      "Z": 115.25,
+      "Yaw": 5.3779,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14517.93,
+      "Y": 14358.21,
+      "Z": 112.74,
+      "Yaw": 4.9737,
+      "Label": "Solzreed Peninsula J22: joins Farmland path + Farmland to Lacton"
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14493.91,
+      "Y": 14364.63,
+      "Z": 112.6454,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14469.89,
+      "Y": 14371.06,
+      "Z": 112.5509,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14445.87,
+      "Y": 14377.48,
+      "Z": 112.4563,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14421.85,
+      "Y": 14383.9,
+      "Z": 112.3617,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14397.83,
+      "Y": 14390.32,
+      "Z": 112.2671,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14373.8,
+      "Y": 14396.75,
+      "Z": 112.1726,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14349.78,
+      "Y": 14403.17,
+      "Z": 112.078,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14325.76,
+      "Y": 14409.59,
+      "Z": 111.9834,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14301.74,
+      "Y": 14416.02,
+      "Z": 111.8889,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14277.72,
+      "Y": 14422.44,
+      "Z": 111.7943,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14253.7,
+      "Y": 14428.86,
+      "Z": 111.6997,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14229.68,
+      "Y": 14435.28,
+      "Z": 111.6051,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14205.66,
+      "Y": 14441.71,
+      "Z": 111.5106,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14181.64,
+      "Y": 14448.13,
+      "Z": 111.416,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14157.62,
+      "Y": 14454.55,
+      "Z": 111.3214,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14133.6,
+      "Y": 14460.98,
+      "Z": 111.2269,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14109.58,
+      "Y": 14467.4,
+      "Z": 111.1323,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14085.55,
+      "Y": 14473.82,
+      "Z": 111.0377,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14061.53,
+      "Y": 14480.24,
+      "Z": 110.9431,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14037.51,
+      "Y": 14486.67,
+      "Z": 110.8486,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 14013.49,
+      "Y": 14493.09,
+      "Z": 110.754,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13989.47,
+      "Y": 14499.51,
+      "Z": 110.6594,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13965.45,
+      "Y": 14505.94,
+      "Z": 110.5649,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13941.43,
+      "Y": 14512.36,
+      "Z": 110.4703,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13917.41,
+      "Y": 14518.78,
+      "Z": 110.3757,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13893.39,
+      "Y": 14525.2,
+      "Z": 110.2811,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13869.37,
+      "Y": 14531.63,
+      "Z": 110.1866,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13845.35,
+      "Y": 14538.05,
+      "Z": 110.092,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13821.33,
+      "Y": 14544.47,
+      "Z": 109.9974,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13797.3,
+      "Y": 14550.9,
+      "Z": 109.9029,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13773.28,
+      "Y": 14557.32,
+      "Z": 109.8083,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13749.26,
+      "Y": 14563.74,
+      "Z": 109.7137,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13725.24,
+      "Y": 14570.16,
+      "Z": 109.6191,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13701.22,
+      "Y": 14576.59,
+      "Z": 109.5246,
+      "Yaw": 4.9737,
+      "Label": null
+    },
+    {
+      "ActionType": "Waypoint",
+      "X": 13677.2,
+      "Y": 14583.01,
+      "Z": 109.43,
+      "Yaw": 4.9736,
+      "Label": "Solzreed Peninsula J14: joins Lacton Paths + Solzreed to Lilyut + Lacton to Blackreath Keep + Farmland to Lacton"
+    }
+  ],
+  "RouteName": "highway_solzreed_crescent_to_wardton",
+  "Author": "CandidateAtlasGenerator",
+  "JunctionPath": [
+    "rb-junction-solzreed-J5",
+    "rb-junction-solzreed-J6",
+    "rb-junction-solzreed-J1",
+    "rb-junction-solzreed-J22",
+    "rb-junction-solzreed-J14"
+  ]
+}

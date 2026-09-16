@@ -19,8 +19,22 @@ public sealed class AcquireHostileTargetAction : GoapActionBase
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        // In real execution, target is resolved from BotSurveySenses
         return effectiveActor.SetTarget(0);
+    }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (observedState.Has(BotWorldState.HasActiveTarget))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
     }
 }
 
@@ -33,7 +47,6 @@ public sealed class ApproachTargetAction : GoapActionBase
         : base("ApproachTargetInRange", baseCost)
     {
         WithPrecondition(BotWorldState.HasActiveTarget);
-
         WithEffect(BotWorldState.TargetInRange);
     }
 
@@ -42,6 +55,25 @@ public sealed class ApproachTargetAction : GoapActionBase
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
         var target = bot.Character.CurrentTarget;
         return target != null ? effectiveActor.MoveToUnit(target.ObjId) : null;
+    }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        // If target was lost or died while approaching, invalidate action
+        if (!observedState.Has(BotWorldState.HasActiveTarget) || observedState.Has(BotWorldState.TargetDead))
+            return GoapActionStatus.Invalidated;
+
+        if (observedState.Has(BotWorldState.TargetInRange))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
     }
 }
 
@@ -71,6 +103,25 @@ public sealed class ExecuteCombatComboAction : GoapActionBase
         var target = bot.Character.CurrentTarget;
         return target != null ? effectiveActor.Cast(SkillId, target.ObjId) : null;
     }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        // Crucial Invariant: TargetDead must be observed on the target unit!
+        if (observedState.Has(BotWorldState.TargetDead))
+            return GoapActionStatus.Succeeded;
+
+        if (!observedState.Has(BotWorldState.HasActiveTarget))
+            return GoapActionStatus.Invalidated;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
+    }
 }
 
 /// <summary>
@@ -95,5 +146,20 @@ public sealed class LootCorpseAction : GoapActionBase
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
         var target = bot.Character.CurrentTarget;
         return target != null ? effectiveActor.Loot(target.ObjId) : null;
+    }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (observedState.Has(BotWorldState.HasLooted) || !observedState.Has(BotWorldState.HasCorpseToLoot))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        return GoapActionStatus.Running;
     }
 }
