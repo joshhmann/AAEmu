@@ -3,6 +3,8 @@
 using System.Numerics;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Models.Game.Char;
 
 namespace AAEmu.Game.Core.Managers.Bots.Goap.Actions;
 
@@ -65,17 +67,59 @@ public sealed class TravelToHousingZoneAction : GoapActionBase
         WithEffect(BotWorldState.NearHousingZone);
     }
 
+    public static Vector3 ResolveNearestHousingZone(AAEmu.Game.Models.Game.Char.Character character, Vector3 fallback)
+    {
+        var world = character.ParentWorld as AAEmu.Game.Models.Game.World.WorldInstance;
+        if (world?.Template?.HousingZones != null && world.Template.HousingZones.Count > 0)
+        {
+            var botPos = character.Transform.World.Position;
+            Vector3 nearest = fallback;
+            float bestDistSq = float.MaxValue;
+            foreach (var zoneList in world.Template.HousingZones.Values)
+            {
+                foreach (var area in zoneList)
+                {
+                    if (area.Points == null || area.Points.Count == 0)
+                        continue;
+
+                    var cx = area.Points.Average(p => p.X);
+                    var cy = area.Points.Average(p => p.Y);
+                    var distSq = (cx - botPos.X) * (cx - botPos.X) + (cy - botPos.Y) * (cy - botPos.Y);
+                    if (distSq < bestDistSq)
+                    {
+                        bestDistSq = distSq;
+                        float gz = botPos.Z;
+                        try
+                        {
+                            var zk = WorldManager.Instance.GetZoneId(world.Template, cx, cy);
+                            gz = WorldManager.Instance.GetHeight(zk, cx, cy, botPos.Z);
+                        }
+                        catch
+                        {
+                            gz = botPos.Z;
+                        }
+                        nearest = new Vector3(cx, cy, gz);
+                    }
+                }
+            }
+            return nearest;
+        }
+        return fallback;
+    }
+
     public override float CalculateCost(PlayerBotRuntime? bot, in BotWorldState currentState)
     {
         if (bot == null) return BaseCost;
         var botPos = bot.Character.Transform?.World?.Position ?? Vector3.Zero;
-        return BaseCost + (Vector3.Distance(botPos, _defaultHousingZonePos) / 500f);
+        var targetPos = ResolveNearestHousingZone(bot.Character, _defaultHousingZonePos);
+        return BaseCost + (Vector3.Distance(botPos, targetPos) / 500f);
     }
 
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        return effectiveActor.NavigateTo(_defaultHousingZonePos, speed: 5.4f);
+        var targetPos = ResolveNearestHousingZone(bot.Character, _defaultHousingZonePos);
+        return effectiveActor.NavigateTo(targetPos, speed: 5.4f);
     }
 
     public override GoapActionStatus EvaluateStatus(
@@ -123,7 +167,7 @@ public sealed class SurveyAndPlacePlotAction : GoapActionBase
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        var targetPos = _defaultPlotPos;
+        var targetPos = TravelToHousingZoneAction.ResolveNearestHousingZone(bot.Character, _defaultPlotPos);
         return effectiveActor.BuildHouse(
             AcquireScarecrowAction.ScarecrowDesignId,
             AcquireScarecrowAction.ScarecrowDesignTemplateId,

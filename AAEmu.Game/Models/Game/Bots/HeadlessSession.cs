@@ -8,6 +8,7 @@ using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Char.Templates;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
@@ -284,6 +285,13 @@ public class HeadlessSession
         // skill rows + action-bar spell slots. SaveDirectlyToDatabase below
         // persists the skills/actabilities rows exactly like a human create.
         CharacterManager.Instance.ApplyPlayerProgression(character);
+
+        // Starter Homestead Kit: Straw Hat Scarecrow Garden design (15596) + 10x Tax Certificates (8000001)
+        if (character.Inventory?.Bag != null)
+        {
+            character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.ScarecrowDesignTemplateId, 1, 1);
+            character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.TaxCertificateTemplateId, 10, 1);
+        }
 
         if (!character.SaveDirectlyToDatabase())
         {

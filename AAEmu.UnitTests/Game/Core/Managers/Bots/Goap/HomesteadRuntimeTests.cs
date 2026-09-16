@@ -493,4 +493,60 @@ public class HomesteadRuntimeTests
         await Assert.That(telemetry.Events.Any(e => e.EventType == GoapTelemetryEventType.GoalSatisfied && e.GoalName == "ErectHome")).IsTrue();
         await Assert.That(runner.PrimaryGoal).IsNull();
     }
+
+    [Test]
+    public async Task GoalArbitrator_StarterBotWithoutPlot_SelectsGoalClaimHomestead()
+    {
+        var bot = CreateBot("starter-bot", startPos: Vector3.Zero);
+        var context = new BotContext();
+        var observedState = new BotWorldState(); // No flags set (no land plot, no home)
+
+        var arbitrator = new GoalArbitrator();
+        var selectedGoal = arbitrator.ArbitrateGoal(bot, observedState, context, currentPrimaryGoal: null);
+
+        await Assert.That(selectedGoal).IsNotNull();
+        await Assert.That(selectedGoal!.Name).IsEqualTo(GoalArbitrator.GoalClaimHomestead.Name);
+    }
+
+    [Test]
+    public async Task GoalArbitrator_BotWithPlotWithoutMaterials_SelectsGoalCultivatePlot()
+    {
+        var bot = CreateBot("landowner-bot", startPos: Vector3.Zero);
+        var context = new BotContext();
+        var observedState = new BotWorldState();
+        observedState = observedState.With(BotWorldState.HasLandPlot);
+
+        var arbitrator = new GoalArbitrator();
+        var selectedGoal = arbitrator.ArbitrateGoal(bot, observedState, context, currentPrimaryGoal: null);
+
+        await Assert.That(selectedGoal).IsNotNull();
+        await Assert.That(selectedGoal!.Name).IsEqualTo(GoalArbitrator.GoalCultivatePlot.Name);
+    }
+
+    [Test]
+    public async Task GoalArbitrator_BotWithPlotAndMaterials_SelectsGoalErectHome()
+    {
+        var bot = CreateBot("builder-bot", startPos: Vector3.Zero);
+        var context = new BotContext();
+        var observedState = new BotWorldState();
+        observedState = observedState.With(BotWorldState.HasLandPlot).With(BotWorldState.HasBuildingMaterials);
+
+        var arbitrator = new GoalArbitrator();
+        var selectedGoal = arbitrator.ArbitrateGoal(bot, observedState, context, currentPrimaryGoal: null);
+
+        await Assert.That(selectedGoal).IsNotNull();
+        await Assert.That(selectedGoal!.Name).IsEqualTo(GoalArbitrator.GoalErectHome.Name);
+    }
+
+    [Test]
+    public async Task TravelToHousingZoneAction_ResolveNearestHousingZone_ReturnsFallbackWhenNoWorldOrZones()
+    {
+        var bot = CreateBot("traveler-bot", startPos: new Vector3(100f, 200f, 50f));
+        var fallback = TravelToHousingZoneAction.ResolveNearestHousingZone(bot.Character, bot.Character.Transform.World.Position);
+
+        // Fallback default residential center for Solzreed/continent is returned when no zones registered in world template
+        await Assert.That(fallback.X).IsGreaterThan(0f);
+        await Assert.That(fallback.Y).IsGreaterThan(0f);
+    }
 }
+

@@ -252,6 +252,13 @@ public enum NeedsFarmLoopPhase
         public bool QuestLegActive { get; set; }
 
         /// <summary>
+        /// Homestead progression flag: set when the homestead leg ran work this wake.
+        /// Consumed by the hunt/butcher/route gates so homestead work preempts
+        /// wildlife but never party handling or PvP.
+        /// </summary>
+        public bool HomesteadLegActive { get; set; }
+
+        /// <summary>
         /// Tier 0 needs-work flag: set when the needs leg ran work this wake.
         /// Consumed by the hunt/butcher/route gates so needs work preempts
         /// wildlife but never party handling or PvP.
@@ -647,10 +654,21 @@ public enum NeedsFarmLoopPhase
             state.QuestLegActive = StepQuestLeg(bot, actor, state);
         }
 
+        // 0c. Homestead progression leg: while the arbiter holds a homestead.*
+        // activity, run one GOAP plan step per wake against the bot's actor.
+        state.HomesteadLegActive = false;
+        if (!handledByParty && !pvpEngaged
+            && ActiveActivityProvider?.Invoke(bot.CharacterId) is string homeActivity
+            && homeActivity.StartsWith("homestead.", StringComparison.Ordinal)
+            && actor.ActiveRequest is not { IsTerminal: false })
+        {
+            state.HomesteadLegActive = StepHomesteadLeg(bot, actor, state);
+        }
+
         // 1. Opportunistic wildlife hunt loop (skipped while fighting players,
-        // or while a work leg landed, or while actively farming — needs/quest preempt hunt acquisition/engagement).
+        // or while a work leg landed, or while actively farming — needs/quest/homestead preempt hunt acquisition/engagement).
         var isFarmingActive = state.NeedsFarmPhase != NeedsFarmLoopPhase.Idle;
-        if (!handledByParty && !pvpEngaged && !state.NeedsLegActive && !state.QuestLegActive && !isFarmingActive && EnableWildlifeHunt)
+        if (!handledByParty && !pvpEngaged && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeHunt)
         {
             if (state.TargetNpcObjId != 0)
             {
@@ -826,8 +844,8 @@ public enum NeedsFarmLoopPhase
         // world doodads already standing on a butcherable phase, approaches
         // ActorRequest. Logging only on the terminal outcome (slice 1/3
         // idiom) — zero success-path change. Skipped while a work leg landed
-        // or while actively farming (needs/quest preempt butcher acquisition/engagement).
-        if (!handledByParty && !state.NeedsLegActive && !state.QuestLegActive && !isFarmingActive && EnableWildlifeButcher)
+        // or while actively farming (needs/quest/homestead preempt butcher acquisition/engagement).
+        if (!handledByParty && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeButcher)
         {
             if (state.TargetButcherDoodadObjId != 0)
             {
@@ -929,7 +947,7 @@ public enum NeedsFarmLoopPhase
             }
         }
         // 2. Issue the next leg when idle, not in party, not hunting, not butchering, not work-legged, not waiting for crop, and a route is active.
-        if (!handledByParty && !state.NeedsLegActive && !state.QuestLegActive
+        if (!handledByParty && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
         {
@@ -968,7 +986,7 @@ public enum NeedsFarmLoopPhase
         }
         // 3b. Route advance on arrival: when the pending Move leg reached a terminal state
         // (deferred while a work leg landed — needs/quest preempt route advancement too).
-        if (!state.NeedsLegActive && !state.QuestLegActive
+        if (!state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0
             && state.TargetButcherDoodadObjId == 0
@@ -1157,6 +1175,28 @@ public enum NeedsFarmLoopPhase
                 bot.CharacterId, result.SelectedAction, result.Request!.Detail);
         }
         return landed;
+    }
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, AAEmu.Game.Core.Managers.Bots.Goap.IGoapPlanRunner> _homesteadRunners = [];
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, AAEmu.Game.Core.Managers.Bots.Goap.BotContext> _homesteadContexts = [];
+
+    /// <summary>
+    /// Homestead progression leg (branch 0c): autonomous GOAP planning and multi-tick
+    /// execution driving starter bots to acquire an 8x8 farm plot, harvest timber,
+    /// craft material packs, and construct their homestead.
+    /// </summary>
+    private bool StepHomesteadLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
+    {
+        var runner = _homesteadRunners.GetOrAdd(bot.CharacterId, _ => new AAEmu.Game.Core.Managers.Bots.Goap.GoapPlanRunner());
+        var context = _homesteadContexts.GetOrAdd(bot.CharacterId, _ => new AAEmu.Game.Core.Managers.Bots.Goap.BotContext());
+
+        if (!context.Memory.KnownHousingZonePos.HasValue)
+        {
+            var fallback = new Vector3(20450.0f, 10820.0f, 130.0f);
+            context.Memory.KnownHousingZonePos = AAEmu.Game.Core.Managers.Bots.Goap.Actions.TravelToHousingZoneAction.ResolveNearestHousingZone(bot.Character, fallback);
+        }
+
+        return runner.Tick(bot, actor, context);
     }
 
     /// Tier 0 needs-farm leg (branch 0b): legible per-wake re-evaluation, not

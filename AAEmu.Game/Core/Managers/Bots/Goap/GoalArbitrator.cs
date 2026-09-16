@@ -95,9 +95,12 @@ public sealed class GoalArbitrator : IGoalArbitrator
             return GoalCultivatePlot;
         }
 
-        // Case 2: Bot has scarecrow design or starter intent to claim a plot
+        // Case 2: Starter intent — claim a small farm plot
         if (!observedState.Has(BotWorldState.HasLandPlot) &&
-            (observedState.Has(BotWorldState.HasScarecrowDesign) || context.Memory.HasScarecrowDesignOverride == true || context.Memory.HasTaxCertificatesOverride == true))
+            (observedState.Has(BotWorldState.HasScarecrowDesign) ||
+             context.Memory.HasScarecrowDesignOverride == true ||
+             context.Memory.HasTaxCertificatesOverride == true ||
+             context.Memory.GetActionFailures("SurveyAndPlacePlot") <= context.MaxActionRetries))
         {
             return GoalClaimHomestead;
         }

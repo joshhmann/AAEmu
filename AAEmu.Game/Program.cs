@@ -314,6 +314,7 @@ public static class Program
                 services.AddSingleton<IBotActivityModule, PresenceRoamActivityModule>();
                 services.AddSingleton<IBotActivityModule, ConflictJoinActivityModule>();
                 services.AddSingleton<IBotActivityModule, FishingContestActivityModule>();
+                services.AddSingleton<IBotActivityModule, HomesteadActivityModule>();
                 services.AddSingleton<IBotActivityModule, QuestBootstrapActivityModule>();
                 services.AddSingleton<IBotActivityModule, NeedsFarmActivityModule>();
                 services.AddSingleton<IBotActivityModule, IdleActivityModule>();
