@@ -42,13 +42,29 @@ public sealed class BotMemory
     public uint LastTargetObjId { get; set; }
     public bool HasLootedCurrentTarget { get; set; }
 
+    public Vector3? KnownHousingZonePos { get; set; }
+    public Vector3? KnownWorkbenchPos { get; set; }
+    public uint? OwnedHouseId { get; set; }
+    public Vector3? OwnedHousePos { get; set; }
+
     /// <summary>Explicit overrides for tests / simulated inventory layers.</summary>
     public bool? HasFoodOverride { get; set; }
     public bool? HasSaplingsOverride { get; set; }
+    public bool? HasScarecrowDesignOverride { get; set; }
+    public bool? HasTaxCertificatesOverride { get; set; }
+    public bool? HasLandPlotOverride { get; set; }
+    public bool? HasTimberOverride { get; set; }
+    public bool? HasBuildingMaterialsOverride { get; set; }
+    public bool? HomeConstructedOverride { get; set; }
 
     public void RecordGrove(WildGroveRecord grove)
     {
         _groves.Add(grove);
+    }
+
+    public void AddGrove(uint doodadId, Vector3 position, DateTime plantedAtUtc, TimeSpan? maturationDuration = null, uint saplingTemplateId = 0)
+    {
+        _groves.Add(new WildGroveRecord(position, doodadId, plantedAtUtc, maturationDuration ?? TimeSpan.Zero, saplingTemplateId));
     }
 
     public void MarkGroveHarvested(uint doodadId)

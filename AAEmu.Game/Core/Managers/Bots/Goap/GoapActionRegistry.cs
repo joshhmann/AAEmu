@@ -12,7 +12,8 @@ public enum GoapDomain
     Survival = 1 << 0,
     WildFarming = 1 << 1,
     Combat = 1 << 2,
-    All = Survival | WildFarming | Combat
+    Homestead = 1 << 3,
+    All = Survival | WildFarming | Combat | Homestead
 }
 
 /// <summary>
@@ -24,6 +25,7 @@ public sealed class GoapActionRegistry : Singleton<GoapActionRegistry>
     private readonly List<IGoapAction> _survivalActions = [];
     private readonly List<IGoapAction> _wildFarmingActions = [];
     private readonly List<IGoapAction> _combatActions = [];
+    private readonly List<IGoapAction> _homesteadActions = [];
     private readonly List<IGoapAction> _allActions = [];
 
     public GoapActionRegistry()
@@ -51,6 +53,17 @@ public sealed class GoapActionRegistry : Singleton<GoapActionRegistry>
         Register(GoapDomain.Combat, new ApproachTargetAction());
         Register(GoapDomain.Combat, new ExecuteCombatComboAction());
         Register(GoapDomain.Combat, new LootCorpseAction());
+
+        // Homestead & Housing Progression
+        Register(GoapDomain.Homestead, new AcquireScarecrowAction());
+        Register(GoapDomain.Homestead, new TravelToHousingZoneAction());
+        Register(GoapDomain.Homestead, new SurveyAndPlacePlotAction());
+        Register(GoapDomain.Homestead, new TravelToHomeSiteAction());
+        Register(GoapDomain.Homestead, new PlantOnPlotAction());
+        Register(GoapDomain.Homestead, new HarvestTimberAction());
+        Register(GoapDomain.Homestead, new TravelToWorkbenchAction());
+        Register(GoapDomain.Homestead, new CraftMaterialPackAction());
+        Register(GoapDomain.Homestead, new ConstructHomeAction());
     }
 
     public void Register(GoapDomain domain, IGoapAction action)
@@ -67,6 +80,9 @@ public sealed class GoapActionRegistry : Singleton<GoapActionRegistry>
 
         if ((domain & GoapDomain.Combat) != 0)
             _combatActions.Add(action);
+
+        if ((domain & GoapDomain.Homestead) != 0)
+            _homesteadActions.Add(action);
     }
 
     public IReadOnlyList<IGoapAction> GetActions(GoapDomain domain = GoapDomain.All)
@@ -85,12 +101,16 @@ public sealed class GoapActionRegistry : Singleton<GoapActionRegistry>
         if ((domain & GoapDomain.Combat) != 0)
             result.AddRange(_combatActions);
 
+        if ((domain & GoapDomain.Homestead) != 0)
+            result.AddRange(_homesteadActions);
+
         return result;
     }
 
     public IReadOnlyList<IGoapAction> SurvivalActions => _survivalActions;
     public IReadOnlyList<IGoapAction> WildFarmingActions => _wildFarmingActions;
     public IReadOnlyList<IGoapAction> CombatActions => _combatActions;
+    public IReadOnlyList<IGoapAction> HomesteadActions => _homesteadActions;
     public IReadOnlyList<IGoapAction> AllActions => _allActions;
     public IReadOnlyList<IGoapAction> GetAllActions() => _allActions;
 }

@@ -41,6 +41,15 @@ public readonly struct BotWorldState : IEquatable<BotWorldState>
     public const ulong AtTradePost            = 1UL << 24;
     public const ulong HasTradePack           = 1UL << 25;
     public const ulong TradePackSold          = 1UL << 26;
+    public const ulong HasScarecrowDesign     = 1UL << 27;
+    public const ulong HasTaxCertificates     = 1UL << 28;
+    public const ulong NearHousingZone         = 1UL << 29;
+    public const ulong HasLandPlot             = 1UL << 30;
+    public const ulong HasTimber               = 1UL << 31;
+    public const ulong HasBuildingMaterials    = 1UL << 32;
+    public const ulong NearWorkbench           = 1UL << 33;
+    public const ulong NearHomeSite            = 1UL << 34;
+    public const ulong HomeConstructed         = 1UL << 35;
 
     /// <summary>Active boolean flags mask.</summary>
     public ulong Flags { get; init; }

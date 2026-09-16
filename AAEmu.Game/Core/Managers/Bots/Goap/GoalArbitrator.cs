@@ -31,6 +31,16 @@ public sealed class GoalArbitrator : IGoalArbitrator
     public static readonly GoapGoal GoalHunt = new GoapGoal("Hunt", 40f)
         .WithCondition(BotWorldState.HasLooted);
 
+    public static readonly GoapGoal GoalClaimHomestead = new GoapGoal("ClaimHomestead", 58f)
+        .WithCondition(BotWorldState.HasLandPlot);
+
+    public static readonly GoapGoal GoalCultivatePlot = new GoapGoal("CultivatePlot", 48f)
+        .WithCondition(BotWorldState.SecretGrovePlanted)
+        .WithCondition(BotWorldState.HasTimber);
+
+    public static readonly GoapGoal GoalErectHome = new GoapGoal("ErectHome", 46f)
+        .WithCondition(BotWorldState.HomeConstructed);
+
     public static readonly GoapGoal GoalRoam = new GoapGoal("Roam", 10f)
         .WithCondition(BotWorldState.NearContinentalRoad);
 
@@ -73,7 +83,26 @@ public sealed class GoalArbitrator : IGoalArbitrator
             return GoalHarvestWildFarm;
         }
 
-        // B) Plant wild farm
+        // B) Homestead Progression
+        // Case 1: Bot owns a plot but hasn't constructed the house
+        if (observedState.Has(BotWorldState.HasLandPlot) && !observedState.Has(BotWorldState.HomeConstructed))
+        {
+            if (observedState.Has(BotWorldState.HasBuildingMaterials) || observedState.Has(BotWorldState.HasTimber))
+            {
+                return GoalErectHome;
+            }
+
+            return GoalCultivatePlot;
+        }
+
+        // Case 2: Bot has scarecrow design or starter intent to claim a plot
+        if (!observedState.Has(BotWorldState.HasLandPlot) &&
+            (observedState.Has(BotWorldState.HasScarecrowDesign) || context.Memory.HasScarecrowDesignOverride == true || context.Memory.HasTaxCertificatesOverride == true))
+        {
+            return GoalClaimHomestead;
+        }
+
+        // C) Plant wild farm
         if (observedState.Labor >= 10 && (observedState.Gold >= 50 || observedState.Has(BotWorldState.HasTreeSaplings))
             && !context.Memory.TargetWildFarmPoiInvalidated
             && (observedState.Has(BotWorldState.HasTreeSaplings) || context.Memory.GetActionFailures("BuyTreeSaplings") <= context.MaxActionRetries))
@@ -81,7 +110,7 @@ public sealed class GoalArbitrator : IGoalArbitrator
             return GoalPlantWildFarm;
         }
 
-        // C) Hunting if hostile target sighted
+        // D) Hunting if hostile target sighted
         if (observedState.Has(BotWorldState.HasActiveTarget))
         {
             return GoalHunt;
@@ -122,6 +151,21 @@ public sealed class GoalArbitrator : IGoalArbitrator
         if (goal.Name == "HarvestWildFarm")
         {
             return context.Memory.HasActiveGroves && observedState.Labor >= 15;
+        }
+
+        if (goal.Name == "ClaimHomestead")
+        {
+            return context.Memory.GetActionFailures("SurveyAndPlacePlot") <= context.MaxActionRetries;
+        }
+
+        if (goal.Name == "CultivatePlot")
+        {
+            return observedState.Has(BotWorldState.HasLandPlot) || context.Memory.HasLandPlotOverride == true;
+        }
+
+        if (goal.Name == "ErectHome")
+        {
+            return observedState.Has(BotWorldState.HasLandPlot) || context.Memory.HasLandPlotOverride == true;
         }
 
         if (goal.Name == "Recover")

@@ -1,6 +1,8 @@
 #nullable enable
 
 using System.Numerics;
+using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Units;
 
@@ -79,6 +81,59 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
             var distFarm = Vector3.Distance(botPos, context.Memory.TargetWildFarmPos.Value);
             if (distFarm <= 15.0f)
                 flags |= BotWorldState.AtWildFarm;
+        }
+
+        // 3b. Homestead & Land ownership projection
+        bool hasScarecrowDesign = context.Memory.HasScarecrowDesignOverride ??
+            (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i != null && (i.TemplateId == 15596 || i.TemplateId == 15566)) ?? false);
+        if (hasScarecrowDesign)
+            flags |= BotWorldState.HasScarecrowDesign;
+
+        bool hasTaxCert = context.Memory.HasTaxCertificatesOverride ??
+            (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i != null && i.TemplateId == 8000001) ?? false);
+        if (hasTaxCert)
+            flags |= BotWorldState.HasTaxCertificates;
+
+        bool hasLandPlot = context.Memory.HasLandPlotOverride ??
+            (context.Memory.OwnedHouseId.HasValue || (HousingManager.PeekInstance != null && HousingManager.PeekInstance.GetAllHouses().Any(h => h.OwnerId == ch.Id)));
+        if (hasLandPlot)
+            flags |= BotWorldState.HasLandPlot;
+
+        bool hasTimber = context.Memory.HasTimberOverride ??
+            (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i != null && (i.TemplateId == 14 || i.TemplateId == 15 || i.Template?.CategoryId == (int)ItemCategory.Lumber)) ?? false);
+        if (hasTimber)
+            flags |= BotWorldState.HasTimber;
+
+        bool hasBuildingMaterials = context.Memory.HasBuildingMaterialsOverride ??
+            ((ch.Equipment?.GetItemBySlot((byte)EquipmentItemSlotType.Backpack) != null) ||
+             (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i?.Template != null && (i.Template.CategoryId == (int)ItemCategory.Trade_Pack || i.Template.CategoryId == (int)ItemCategory.Body_Pack)) ?? false));
+        if (hasBuildingMaterials)
+            flags |= BotWorldState.HasBuildingMaterials;
+
+        bool homeConstructed = context.Memory.HomeConstructedOverride ??
+            (HousingManager.PeekInstance != null && HousingManager.PeekInstance.GetAllHouses().Any(h => h.OwnerId == ch.Id && h.CurrentStep == -1 && h.Template != null && h.Template.MainModelId > 0));
+        if (homeConstructed)
+            flags |= BotWorldState.HomeConstructed;
+
+        if (context.Memory.KnownHousingZonePos.HasValue)
+        {
+            var distZone = Vector3.Distance(botPos, context.Memory.KnownHousingZonePos.Value);
+            if (distZone <= 25.0f)
+                flags |= BotWorldState.NearHousingZone;
+        }
+
+        if (context.Memory.OwnedHousePos.HasValue)
+        {
+            var distHome = Vector3.Distance(botPos, context.Memory.OwnedHousePos.Value);
+            if (distHome <= 10.0f)
+                flags |= BotWorldState.NearHomeSite;
+        }
+
+        if (context.Memory.KnownWorkbenchPos.HasValue)
+        {
+            var distWorkbench = Vector3.Distance(botPos, context.Memory.KnownWorkbenchPos.Value);
+            if (distWorkbench <= 15.0f)
+                flags |= BotWorldState.NearWorkbench;
         }
 
         // 4. Target & Threat perception
