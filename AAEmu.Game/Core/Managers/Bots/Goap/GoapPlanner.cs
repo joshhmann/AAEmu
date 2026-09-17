@@ -65,11 +65,11 @@ public sealed class GoapPlanner : IGoapPlanner
         }
 
         var openSet = new PriorityQueue<PlanNode, float>();
-        var bestCostToState = new Dictionary<ulong, float>();
+        var stateDominance = new Dictionary<ulong, List<DominanceEntry>>();
 
         var startNode = new PlanNode(null, null, startState, 0f, CalculateHeuristic(startState, goal.DesiredState, minActionCost));
         openSet.Enqueue(startNode, startNode.FCost);
-        bestCostToState[startState.Flags] = 0f;
+        stateDominance[startState.Flags] = [new DominanceEntry(0f, startState.Labor, startState.Gold)];
 
         var nodesExpanded = 0;
 
@@ -108,11 +108,30 @@ public sealed class GoapPlanner : IGoapPlanner
                 var stepCost = Math.Max(0.01f, action.CalculateCost(bot, current.State));
                 var tentativeGCost = current.GCost + stepCost;
 
-                // Prune if we've already reached this state configuration with lower or equal cost
-                if (bestCostToState.TryGetValue(nextState.Flags, out var recordedCost) && tentativeGCost >= recordedCost)
+                // Pareto dominance pruning:
+                // If an existing entry at the same flags has <= cost AND >= labor AND >= gold, nextState is dominated.
+                if (!stateDominance.TryGetValue(nextState.Flags, out var entries))
+                {
+                    entries = new List<DominanceEntry>(2);
+                    stateDominance[nextState.Flags] = entries;
+                }
+
+                var dominated = false;
+                for (var j = 0; j < entries.Count; j++)
+                {
+                    if (entries[j].Dominates(tentativeGCost, nextState.Labor, nextState.Gold))
+                    {
+                        dominated = true;
+                        break;
+                    }
+                }
+
+                if (dominated)
                     continue;
 
-                bestCostToState[nextState.Flags] = tentativeGCost;
+                // Remove any existing entries that the new state strictly dominates
+                entries.RemoveAll(e => tentativeGCost <= e.GCost && nextState.Labor >= e.Labor && nextState.Gold >= e.Gold);
+                entries.Add(new DominanceEntry(tentativeGCost, nextState.Labor, nextState.Gold));
 
                 var hCost = CalculateHeuristic(nextState, goal.DesiredState, minActionCost);
                 var neighborNode = new PlanNode(current, action, nextState, tentativeGCost, hCost);
@@ -175,6 +194,25 @@ public sealed class GoapPlanner : IGoapPlanner
             State = state;
             GCost = gCost;
             HCost = hCost;
+        }
+    }
+
+    private readonly struct DominanceEntry
+    {
+        public readonly float GCost;
+        public readonly ushort Labor;
+        public readonly uint Gold;
+
+        public DominanceEntry(float gCost, ushort labor, uint gold)
+        {
+            GCost = gCost;
+            Labor = labor;
+            Gold = gold;
+        }
+
+        public bool Dominates(float otherGCost, ushort otherLabor, uint otherGold)
+        {
+            return GCost <= otherGCost && Labor >= otherLabor && Gold >= otherGold;
         }
     }
 }

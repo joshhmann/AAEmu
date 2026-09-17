@@ -16,7 +16,9 @@ public sealed class AcquireScarecrowAction : GoapActionBase
 {
     public const uint ScarecrowDesignTemplateId = 15596; // 도면: 밀짚모자 허수아비 텃밭 (Straw Hat Scarecrow Garden)
     public const uint ScarecrowDesignId = 267;
-    public const uint TaxCertificateTemplateId = 8000001;
+    public const uint TaxCertificateBoundTemplateId = 31892; // 귀속된 건축물 세금 증지 (Bound Tax Certificate)
+    public const uint TaxCertificateTradeableTemplateId = 31891; // 건축물 세금 증지 (Tradeable Tax Certificate)
+    public const uint TaxCertificateTemplateId = TaxCertificateBoundTemplateId;
 
     public AcquireScarecrowAction(float baseCost = 2.0f)
         : base("AcquireScarecrow", baseCost)
@@ -426,6 +428,126 @@ public sealed class ConstructHomeAction : GoapActionBase
             return GoapActionStatus.Failed;
 
         if (context.Memory.HomeConstructedOverride == true)
+            return GoapActionStatus.Succeeded;
+
+        return GoapActionStatus.Running;
+    }
+}
+
+/// <summary>
+/// Completes the single construction step for an 8x8 Small Scarecrow Garden (Housing 267)
+/// using Skill 18553 (consumes 10 LP, 0 material packs).
+/// </summary>
+public sealed class ConstructPlotAction : GoapActionBase
+{
+    public const uint ScarecrowBuildSkillId = 18553;
+    public const ushort RequiredLabor = 10;
+
+    public ConstructPlotAction(float baseCost = 1.5f)
+        : base("ConstructPlot", baseCost)
+    {
+        WithPrecondition(BotWorldState.HasLandPlot);
+        WithPrecondition(BotWorldState.NearHomeSite);
+        WithEffect(BotWorldState.PlotConstructed);
+    }
+
+    public override bool CheckPreconditions(in BotWorldState currentState)
+    {
+        if (!base.CheckPreconditions(currentState))
+            return false;
+        return currentState.Labor >= RequiredLabor;
+    }
+
+    public override BotWorldState ApplyEffects(in BotWorldState currentState)
+    {
+        var next = base.ApplyEffects(currentState);
+        var remainingLabor = currentState.Labor >= RequiredLabor ? (ushort)(currentState.Labor - RequiredLabor) : (ushort)0;
+        return next.WithLabor(remainingLabor);
+    }
+
+    public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
+    {
+        var effectiveActor = actor ?? new GameplayActor(bot.Character);
+        var house = HousingManager.PeekInstance?.GetAllHouses().FirstOrDefault(h => h.OwnerId == bot.Character.Id && h.CurrentStep != -1);
+        if (house != null)
+            return effectiveActor.Interact(house.ObjId, ScarecrowBuildSkillId);
+        return effectiveActor.Interact(ScarecrowBuildSkillId);
+    }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (observedState.Has(BotWorldState.PlotConstructed))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        if (context.Memory.HomeConstructedOverride == true)
+            return GoapActionStatus.Succeeded;
+
+        return GoapActionStatus.Running;
+    }
+}
+
+/// <summary>
+/// Crafts Bound Tax Certificates (Item 31892) via Craft 76 at any Building Management Plaque (Doodad 2392).
+/// Consumes 200 LP via Skill 16767 to produce 5 Bound Tax Certificates.
+/// </summary>
+public sealed class CraftTaxCertificatesAction : GoapActionBase
+{
+    public const uint TaxCraftId = 76;
+    public const uint TaxCraftSkillId = 16767;
+    public const uint BuildingPlaqueDoodadTemplateId = 2392;
+    public const ushort RequiredLabor = 200;
+
+    public CraftTaxCertificatesAction(float baseCost = 2.0f)
+        : base("CraftTaxCertificates", baseCost)
+    {
+        WithPrecondition(BotWorldState.HasLandPlot);
+        WithPrecondition(BotWorldState.NearHomeSite);
+        WithEffect(BotWorldState.HasTaxCertificates);
+    }
+
+    public override bool CheckPreconditions(in BotWorldState currentState)
+    {
+        if (!base.CheckPreconditions(currentState))
+            return false;
+        return currentState.Labor >= RequiredLabor;
+    }
+
+    public override BotWorldState ApplyEffects(in BotWorldState currentState)
+    {
+        var next = base.ApplyEffects(currentState);
+        var remainingLabor = currentState.Labor >= RequiredLabor ? (ushort)(currentState.Labor - RequiredLabor) : (ushort)0;
+        return next.WithLabor(remainingLabor);
+    }
+
+    public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
+    {
+        var effectiveActor = actor ?? new GameplayActor(bot.Character);
+        var plaqueObjId = bot.Character.ParentWorld?.GetAllDoodads()
+            .FirstOrDefault(d => d.TemplateId == BuildingPlaqueDoodadTemplateId)?.ObjId
+            ?? BuildingPlaqueDoodadTemplateId;
+        return effectiveActor.Craft(TaxCraftId, doodadObjId: plaqueObjId);
+    }
+
+    public override GoapActionStatus EvaluateStatus(
+        PlayerBotRuntime bot,
+        in BotWorldState observedState,
+        ActorRequest? activeRequest,
+        BotContext context)
+    {
+        if (observedState.Has(BotWorldState.HasTaxCertificates))
+            return GoapActionStatus.Succeeded;
+
+        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+            return GoapActionStatus.Failed;
+
+        if (context.Memory.HasTaxCertificatesOverride == true)
             return GoapActionStatus.Succeeded;
 
         return GoapActionStatus.Running;

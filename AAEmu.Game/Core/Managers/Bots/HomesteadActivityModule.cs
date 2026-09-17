@@ -20,7 +20,11 @@ public sealed class HomesteadActivityModule : IBotActivityModule
 
     private readonly Func<ServerPressure> _pressureProbe;
 
-    public bool Enabled { get; set; } = true;
+    /// <summary>
+    /// Opt-in fixture flag. Default is false (P1 corrective queue: ordinary starter bots
+    /// must progress legitimately; unfinished homestead automation requires explicit opt-in).
+    /// </summary>
+    public bool Enabled { get; set; } = false;
 
     public HomesteadActivityModule(Func<ServerPressure>? pressureProbe = null)
     {
@@ -33,7 +37,7 @@ public sealed class HomesteadActivityModule : IBotActivityModule
         ArgumentNullException.ThrowIfNull(context);
 
         if (!Enabled)
-            return BotActivityDecision.Deny("homestead progression disabled");
+            return BotActivityDecision.Deny("homestead progression disabled (opt-in fixture)");
 
         var character = context.Bot.Character;
         if (character.IsDead)

@@ -1,6 +1,10 @@
 using NLog;
 using NLog.Config;
 using NLog.Targets;
+using System.Reflection;
+using AAEmu.Commons.Utils;
+using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Skills;
@@ -62,9 +66,8 @@ public class SilentCatchLoggingTests
         // constructed (DI singleton, no parameterless ctor) — accessing it
         // throws, which is the exact "manager not loaded" failure the audit
         // flagged: bots used to ship gearless with zero log evidence.
-        var source = new CharacterManagerEquipmentSource();
-
-        var plan = source.GetAbilityEquipment((byte)AbilityType.Fight);
+        var plan = WithMissingCharacterManager(() =>
+            new CharacterManagerEquipmentSource().GetAbilityEquipment((byte)AbilityType.Fight));
 
         // Graceful degradation must be preserved (empty plan, no throw).
         await Assert.That(plan.Items).IsNotNull();
@@ -80,9 +83,8 @@ public class SilentCatchLoggingTests
     [Test]
     public async Task EquipmentSource_ManagerUnavailable_BodyItems_LogsDistinctErrorLine_WithRaceGenderContext()
     {
-        var source = new CharacterManagerEquipmentSource();
-
-        var body = source.GetBodyItems(Race.Nuian, Gender.Male);
+        var body = WithMissingCharacterManager(() =>
+            new CharacterManagerEquipmentSource().GetBodyItems(Race.Nuian, Gender.Male));
 
         await Assert.That(body).IsNotNull();
 
@@ -121,5 +123,28 @@ public class SilentCatchLoggingTests
             maxPolls: 3, pollDelay: TimeSpan.Zero);
 
         await Assert.That(Target.Logs.Any(l => l.Contains("must not be called"))).IsFalse();
+    }
+
+    /// <summary>
+    /// The asserted behavior is the unavailable-manager branch. Full-suite
+    /// order may have already installed the process-wide CharacterManager;
+    /// temporarily clear it and restore the exact prior instance so this
+    /// test neither depends on nor leaks global state.
+    /// </summary>
+    private static T WithMissingCharacterManager<T>(Func<T> action)
+    {
+        var field = typeof(Singleton<CharacterManager>).GetField("s_instance",
+            BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new InvalidOperationException("CharacterManager singleton field was not found");
+        var prior = field.GetValue(null);
+        field.SetValue(null, null);
+        try
+        {
+            return action();
+        }
+        finally
+        {
+            field.SetValue(null, prior);
+        }
     }
 }

@@ -178,6 +178,13 @@ public static class GameplayActorTestRig
                 s_seeded = true;
             }
 
+            // Other fixture suites may replace ItemManager after this rig's
+            // one-time bootstrap. Reapply the additive trade surface and id
+            // source on every entry so an actor created later does not inherit
+            // an empty template registry or an id source returning zero.
+            EnsureIncrementingItemIds();
+            SeedTradeSurface();
+
             // M5.3 Move rework (t_3cac48d4): every walk leg rides the
             // client-authored movement model (VehicleMovementModel), whose
             // FinalizeTransform runs delta-movement analysis through
@@ -2474,15 +2481,15 @@ public static class GameplayActorTestRig
         {
             var features = new FeaturesManager(Mock.Of<IExperienceManager>().Object);
             features.Initialize();
-            // Gold tax path for the M5.2 surface — the engine's own
-            // documented toggle (FeaturesManager.cs: "Use gold instead of
-            // tax certificates to pay house tax"). The Build pre-flight and
-            // the engine branch read the same bit, so the tests exercise
-            // the money branch end to end.
-            global::AAEmu.Game.Models.Game.Features.Feature taxItem = global::AAEmu.Game.Models.Game.Features.Feature.taxItem;
-            FeaturesManager.Fsets.Set(taxItem, false);
             SeedSingleton(typeof(Singleton<FeaturesManager>), features);
         }
+        // Gold tax path for the M5.2 surface — the engine's own
+        // documented toggle (FeaturesManager.cs: "Use gold instead of
+        // tax certificates to pay house tax"). The Build pre-flight and
+        // the engine branch read the same bit, so the tests exercise
+        // the money branch end to end.
+        global::AAEmu.Game.Models.Game.Features.Feature taxItem = global::AAEmu.Game.Models.Game.Features.Feature.taxItem;
+        FeaturesManager.Fsets.Set(taxItem, false);
         if (!SingletonSeeded(typeof(Singleton<HousingManager>)))
         {
             var manager = new HousingManager(
@@ -2758,12 +2765,13 @@ public static class GameplayActorTestRig
     /// a cast (M4 exit-session rig precedent). Call AFTER the actor has
     /// started the craft (CharacterCraft.Craft accepted the step).
     /// </summary>
-    public static void CompleteCraftStep(GameplayActor actor, uint benchObjId)
+    public static void CompleteCraftStep(GameplayActor actor, uint benchObjId, uint? skillId = null)
     {
         var bench = actor.Character.ParentWorld?.GetDoodad(benchObjId);
         var effect = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart };
+        var effectiveSkill = skillId ?? actor.Character.Craft?.CurrentCraft?.SkillId ?? CraftTestSkillId;
         effect.Apply(actor.Character, null, bench, null,
-            new CastSkill(CraftTestSkillId, 0), new EffectSource(), null, DateTime.UtcNow);
+            new CastSkill(effectiveSkill, 0), new EffectSource(), null, DateTime.UtcNow);
     }
 
     // ------------------------------------------------------------------ quest discovery (PB-002)

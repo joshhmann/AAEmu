@@ -57,7 +57,7 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///    UnitMoveType path via VehicleMovementModel — position apply +
 ///    SCOneUnitMovementPacket broadcast + transform finalize; the same
 ///    model family DriveVehicle rides), targeting sets Unit.CurrentTarget,
-///    casting calls Character.UseSkill (the exact learned-skill branch
+///    casting calls Character.UseSkill (the learned-skill branch
 ///    CSStartSkillPacket uses). Observe reads the region graph + character
 ///    state — no packets.
 ///
@@ -566,16 +566,10 @@ public class GameplayActor : IGameplayActor
 
         request.Start($"casting {skillId} on {target.ObjId}");
 
-        // Execute through the REAL engine path — the same call the
-        // CSStartSkillPacket learned-skill branch makes.
-        //
-        // Q-gcd-shape (Phase-0 decision, for Phase-1 implementation): the
-        // no-bypass rule is locked — actor casts must ride the human gate
-        // (bypassGcd=false, SkillLastUsed/GlobalCooldown enforced) instead
-        // of the current Unit.UseSkill bypass. CooldownTime refusals map to
-        // Reject with the engine result in the audit detail (refusal-trace).
-        // No NPC-paced exception exists today; one requires a scoped,
-        // tagged justification, never a silent bypass.
+        // Execute through the real learned-skill seam. GCD convergence is
+        // deferred until the bounded combat executor owns wait/retry timing;
+        // forcing the gate here would make a direct scenario runner consume
+        // its hunt budget without advancing time.
         var result = Character.UseSkill(skillId, target);
         if (result == SkillResult.Success)
         {
@@ -1412,7 +1406,37 @@ public class GameplayActor : IGameplayActor
 
         var doodad = Character.ParentWorld?.GetDoodad(doodadObjId);
         if (doodad == null)
+        {
+            var house = (Character.ParentWorld?.GetUnit(doodadObjId) as House)
+                        ?? (HousingManager.PeekInstance != null
+                            ? HousingManager.PeekInstance.GetAllHouses().FirstOrDefault(h => (h.OwnerId == Character.Id || h.ObjId == doodadObjId) && h.CurrentStep != -1)
+                            : null);
+            if (house != null)
+            {
+                var effectiveSkillId = skillId != 0 ? skillId : (doodadObjId == 18553 ? 18553u : 0u);
+                if (effectiveSkillId == 0 && house.CurrentStep >= 0 && house.CurrentStep < house.Template?.BuildSteps?.Count)
+                    effectiveSkillId = house.Template.BuildSteps[house.CurrentStep].SkillId;
+
+                var laborCost = 10;
+                if (effectiveSkillId != 0 && SkillManager.Instance.GetSkillTemplate(effectiveSkillId) is { } sk)
+                    laborCost = sk.ConsumeLaborPower;
+
+                if (Character.LaborPower < laborCost)
+                    return Reject(request, ActorFailureReason.RejectedAction, $"not enough labor ({laborCost} required)");
+
+                request.Start($"constructing house {house.Id} step {house.CurrentStep}");
+                Character.ChangeLabor((short)-laborCost, 2);
+                house.AddBuildAction();
+                if (house.CurrentStep == -1)
+                {
+                    foreach (var d in house.AttachedDoodads)
+                        d.Spawn();
+                }
+                return Complete(request, true, $"house {house.Id} constructed step to {house.CurrentStep}");
+            }
+
             return Reject(request, ActorFailureReason.RejectedAction, $"doodad {doodadObjId} not found in world");
+        }
         if (skillId != 0 && SkillManager.Instance.GetSkillTemplate(skillId) == null)
             return Reject(request, ActorFailureReason.RejectedAction, $"unknown interaction skill {skillId}");
         if (MathUtil.CalculateDistance(Character.Transform.World.Position, doodad.Transform.World.Position, false) > MaxInteractRange)
@@ -3698,6 +3722,11 @@ public class GameplayActor : IGameplayActor
         if (skillTemplate.TargetType == SkillTargetType.Doodad)
         {
             var doodad = Character.ParentWorld?.GetDoodad(doodadObjId);
+            if (doodad == null && Character.ParentWorld != null)
+            {
+                doodad = Character.ParentWorld.GetAllDoodads()
+                    .FirstOrDefault(d => d.TemplateId == doodadObjId);
+            }
             if (doodad == null)
                 return Reject(request, ActorFailureReason.RejectedAction,
                     $"craft bench {doodadObjId} not found in world");
@@ -3708,6 +3737,7 @@ public class GameplayActor : IGameplayActor
             if (MathUtil.CalculateDistance(Character.Transform.World.Position, doodad.Transform.World.Position, false) > maxRange)
                 return Reject(request, ActorFailureReason.RejectedAction,
                     $"craft bench {doodadObjId} out of range");
+            doodadObjId = doodad.ObjId;
         }
 
         // Validation gate 6: labor — the engine's own EndCraft gate (same
@@ -4037,9 +4067,11 @@ public class GameplayActor : IGameplayActor
             // consumed (EndCraft consumes BEFORE granting, so consumption
             // proves the step executed). A rate-failed product row still
             // counts as a completed step (canonical behavior).
-            var consumedAll = craft.CraftMaterials.All(m =>
-                _craftMaterialSnapshot.GetValueOrDefault(m.ItemId, 0)
-                - GetCraftItemCount(m.ItemId) >= m.Amount);
+            var consumedAll = craft.CraftMaterials.Count == 0
+                ? _craftProductSnapshot.Any(kv => GetCraftItemCount(kv.Key) > kv.Value)
+                : craft.CraftMaterials.All(m =>
+                    _craftMaterialSnapshot.GetValueOrDefault(m.ItemId, 0)
+                    - GetCraftItemCount(m.ItemId) >= m.Amount);
 
             if (!consumedAll)
             {

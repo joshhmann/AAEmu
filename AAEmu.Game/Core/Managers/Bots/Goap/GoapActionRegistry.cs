@@ -64,6 +64,8 @@ public sealed class GoapActionRegistry : Singleton<GoapActionRegistry>
         Register(GoapDomain.Homestead, new TravelToWorkbenchAction());
         Register(GoapDomain.Homestead, new CraftMaterialPackAction());
         Register(GoapDomain.Homestead, new ConstructHomeAction());
+        Register(GoapDomain.Homestead, new ConstructPlotAction());
+        Register(GoapDomain.Homestead, new CraftTaxCertificatesAction());
     }
 
     public void Register(GoapDomain domain, IGoapAction action)

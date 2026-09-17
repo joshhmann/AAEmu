@@ -50,6 +50,7 @@ public readonly struct BotWorldState : IEquatable<BotWorldState>
     public const ulong NearWorkbench           = 1UL << 33;
     public const ulong NearHomeSite            = 1UL << 34;
     public const ulong HomeConstructed         = 1UL << 35;
+    public const ulong PlotConstructed         = 1UL << 36;
 
     /// <summary>Active boolean flags mask.</summary>
     public ulong Flags { get; init; }

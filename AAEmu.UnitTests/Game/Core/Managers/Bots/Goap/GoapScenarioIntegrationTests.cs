@@ -121,7 +121,13 @@ public class GoapScenarioIntegrationTests
         public ActorRequest CastAt(uint skillId, Vector3 position, string? idempotencyKey = null) => Unsupported();
         public ActorRequest AutoAttack(uint targetObjId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest StopAutoAttack(string? idempotencyKey = null) => Unsupported();
-        public ActorRequest Interact(uint doodadObjId, uint skillId = 0, string? idempotencyKey = null) => Unsupported();
+        public ActorRequest Interact(uint doodadObjId, uint skillId = 0, string? idempotencyKey = null)
+        {
+            var req = new ActorRequest(ActorActionType.Interact, doodadObjId, null, skillId, null, null, idempotencyKey);
+            req.Accept("Accepted interact");
+            req.Start("Interacting");
+            return Track(req);
+        }
         public ActorRequest Equip(uint itemTemplateId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest PartyInvite(uint targetCharacterObjId, string? idempotencyKey = null) => Unsupported();
         public ActorRequest PartyAccept(string? idempotencyKey = null) => Unsupported();

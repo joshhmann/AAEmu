@@ -143,7 +143,8 @@ public class HeadlessSession
     /// When null, the race-appropriate canonical default is used.
     /// </param>
     public static HeadlessSession Provision(string username, string name, Race race = Race.Nuian,
-        Gender gender = Gender.Male, byte level = 1, BotAppearance? appearance = null)
+        Gender gender = Gender.Male, byte level = 1, BotAppearance? appearance = null,
+        bool provisionHomesteadKit = false)
     {
         name = name.NormalizeName();
 
@@ -286,11 +287,13 @@ public class HeadlessSession
         // persists the skills/actabilities rows exactly like a human create.
         CharacterManager.Instance.ApplyPlayerProgression(character);
 
-        // Starter Homestead Kit: Straw Hat Scarecrow Garden design (15596) + 10x Tax Certificates (8000001)
-        if (character.Inventory?.Bag != null)
+        // Starter Homestead Kit: Straw Hat Scarecrow Garden design (15596) + 10x Bound Tax Certificates (31892)
+        // Opt-in demonstration fixture only; ordinary citizens earn this via the Blue Salt quest line.
+        if (provisionHomesteadKit && character.Inventory?.Bag != null)
         {
             character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.ScarecrowDesignTemplateId, 1, 1);
             character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.TaxCertificateTemplateId, 10, 1);
+            Logger.Info("Provisioning: granted opt-in starter homestead kit to bot '{Name}' (id {Id})", name, characterId);
         }
 
         if (!character.SaveDirectlyToDatabase())

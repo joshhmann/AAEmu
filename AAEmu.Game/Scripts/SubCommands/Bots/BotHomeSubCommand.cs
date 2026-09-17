@@ -250,7 +250,7 @@ public class BotHomeSubCommand : SubCommandBase
             ch.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AcquireScarecrowAction.ScarecrowDesignTemplateId, 1, 1);
             ch.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AcquireScarecrowAction.TaxCertificateTemplateId, 10, 1);
             SendColorMessage(messageOutput, Color.LawnGreen,
-                $"[Bot Homestead] Granted Straw Hat Scarecrow Garden design (15596) and 10x Tax Certificates (8000001) to '{ch.Name}'.");
+                $"[Bot Homestead] Granted Straw Hat Scarecrow Garden design (15596) and 10x Bound Tax Certificates ({AcquireScarecrowAction.TaxCertificateTemplateId}) to '{ch.Name}'.");
         }
         else
         {

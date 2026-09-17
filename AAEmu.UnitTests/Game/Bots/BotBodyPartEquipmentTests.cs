@@ -52,6 +52,17 @@ namespace AAEmu.UnitTests.Game.Bots;
 [ParallelLimiter<BodyPartSequentialParallelLimit>] // t_f3700374 pattern: within-class tests share the ItemManager container registry (fail-before id 900001 vs equip tests same id) — must not run in parallel
 public class BotBodyPartEquipmentTests
 {
+    private static object? _priorItemManager;
+
+    [Before(Test)]
+    public void InstallFixtureItemManager()
+    {
+        var field = typeof(Singleton<ItemManager>).GetField("s_instance",
+            BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new InvalidOperationException("ItemManager singleton field was not found");
+        _priorItemManager = field.GetValue(null);
+        field.SetValue(null, BuildFixtureItemManager());
+    }
     // ------------------------------------------------------------------ fail-before evidence
 
     [Test]
@@ -357,11 +368,15 @@ public class BotBodyPartEquipmentTests
         }
         foreach (var key in toRemove)
             containers.Remove(key);
+
+        var field = typeof(Singleton<ItemManager>).GetField("s_instance",
+            BindingFlags.NonPublic | BindingFlags.Static);
+        field?.SetValue(null, _priorItemManager);
+        _priorItemManager = null;
     }
 
     private static void SeedFixtureSingletons()
     {
-        SetSingletonIfMissing(typeof(Singleton<ItemManager>), BuildFixtureItemManager());
         // Initialize(false): no-op when already initialized (full-suite
         // safety — t_6bad0654 forceReset pitfall).
         ContainerIdManager.Instance.Initialize(false);

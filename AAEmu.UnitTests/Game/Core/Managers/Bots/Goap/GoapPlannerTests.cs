@@ -1,6 +1,7 @@
 #nullable enable
 
 using AAEmu.Game.Core.Managers.Bots.Goap;
+using AAEmu.Game.Core.Managers.Bots.Goap.Actions;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots.Goap;
 
@@ -166,5 +167,100 @@ public class GoapPlannerTests
         await Assert.That(result.Actions.Count).IsEqualTo(0);
         await Assert.That(result.FailureReason).IsNotNull();
         await Assert.That(result.FailureReason!.Contains("No valid plan could satisfy the goal")).IsTrue();
+    }
+
+    [Test]
+    public async Task GoapPlanner_ParetoDominance_PreservesResourceRichPathOverSlightlyCheaperPath()
+    {
+        var planner = new GoapPlanner();
+        var startState = BotWorldState.Empty.WithLabor(100);
+        var goal = new GoapGoal("CraftPack").WithCondition(BotWorldState.HasBuildingMaterials);
+
+        // Path A: Low step cost (1.0), but burns 90 labor (leaves 10)
+        var cheapExhausting = new ResourceConsumingAction("CheapExhaustingTravel", 1.0f, requiredLabor: 0, consumedLabor: 90)
+            .WithEffect(BotWorldState.NearWorkbench);
+
+        // Path B: Higher step cost (1.5), but burns 0 labor (leaves 100)
+        var carefulTravel = new ResourceConsumingAction("CarefulTravel", 1.5f, requiredLabor: 0, consumedLabor: 0)
+            .WithEffect(BotWorldState.NearWorkbench);
+
+        // Action C: Requires NearWorkbench and 50 labor
+        var heavyCraft = new ResourceConsumingAction("HeavyCraft", 2.0f, requiredLabor: 50, consumedLabor: 50)
+            .WithPrecondition(BotWorldState.NearWorkbench)
+            .WithEffect(BotWorldState.HasBuildingMaterials);
+
+        var actions = new IGoapAction[] { cheapExhausting, carefulTravel, heavyCraft };
+        var result = planner.Plan(null, startState, goal, actions);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Actions.Count).IsEqualTo(2);
+        // Path B was preserved by Pareto dominance despite higher GCost because it had more labor
+        await Assert.That(result.Actions[0].Name).IsEqualTo("CarefulTravel");
+        await Assert.That(result.Actions[1].Name).IsEqualTo("HeavyCraft");
+        await Assert.That(result.TotalCost).IsEqualTo(3.5f);
+    }
+
+    [Test]
+    public async Task GoapPlanner_SmallPlotConstruction_Uses10LaborBuildStep()
+    {
+        var planner = new GoapPlanner();
+        var startState = BotWorldState.Empty
+            .With(BotWorldState.HasLandPlot)
+            .With(BotWorldState.NearHomeSite)
+            .WithLabor(50);
+
+        var goal = new GoapGoal("ConstructPlotGoal").WithCondition(BotWorldState.PlotConstructed);
+        var constructPlot = new ConstructPlotAction();
+
+        var result = planner.Plan(null, startState, goal, [constructPlot]);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Actions.Count).IsEqualTo(1);
+        await Assert.That(result.Actions[0].Name).IsEqualTo("ConstructPlot");
+    }
+
+    [Test]
+    public async Task GoapPlanner_TaxCertificateCrafting_Uses200LaborPlaqueCraft()
+    {
+        var planner = new GoapPlanner();
+        var startState = BotWorldState.Empty
+            .With(BotWorldState.HasLandPlot)
+            .With(BotWorldState.NearHomeSite)
+            .WithLabor(250);
+
+        var goal = new GoapGoal("TaxSustainmentGoal").WithCondition(BotWorldState.HasTaxCertificates);
+        var craftTax = new CraftTaxCertificatesAction();
+
+        var result = planner.Plan(null, startState, goal, [craftTax]);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Actions.Count).IsEqualTo(1);
+        await Assert.That(result.Actions[0].Name).IsEqualTo("CraftTaxCertificates");
+    }
+
+    private sealed class ResourceConsumingAction : GoapActionBase
+    {
+        private readonly ushort _requiredLabor;
+        private readonly ushort _consumedLabor;
+
+        public ResourceConsumingAction(string name, float cost, ushort requiredLabor, ushort consumedLabor)
+            : base(name, cost)
+        {
+            _requiredLabor = requiredLabor;
+            _consumedLabor = consumedLabor;
+        }
+
+        public override bool CheckPreconditions(in BotWorldState currentState)
+        {
+            if (!base.CheckPreconditions(currentState)) return false;
+            return currentState.Labor >= _requiredLabor;
+        }
+
+        public override BotWorldState ApplyEffects(in BotWorldState currentState)
+        {
+            var next = base.ApplyEffects(currentState);
+            var remaining = currentState.Labor >= _consumedLabor ? (ushort)(currentState.Labor - _consumedLabor) : (ushort)0;
+            return next.WithLabor(remaining);
+        }
     }
 }

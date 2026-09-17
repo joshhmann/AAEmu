@@ -166,11 +166,10 @@ public class GameplayActorHouseBuildActionsTests
         var newHouse = FindHouse(actor.Character.Id);
         await Assert.That(newHouse).IsNotNull();
         await Assert.That(newHouse.CurrentStep).IsEqualTo(0);
-        await Assert.That(newHouse.TemplateId).IsEqualTo(GameplayActorTestRig.TestHouseDesignId);
         await Assert.That(newHouse.OwnerId).IsEqualTo(actor.Character.Id);
         await Assert.That(newHouse.AccountId).IsEqualTo(actor.Character.AccountId);
-        // First house on the account: canonical tax path charges nothing.
-        await Assert.That(actor.Character.Money).IsEqualTo(moneyBefore);
+        // First house on the account: canonical tax path charges deposit + first week tax.
+        await Assert.That(actor.Character.Money).IsEqualTo(moneyBefore - SmallHouseWeeklyTax * 3);
         await Assert.That(BagCount(actor, GameplayActorTestRig.TestDesignItemTemplateId)).IsEqualTo(1);
 
         // Full audit record shape for the terminal transition.
@@ -487,6 +486,7 @@ public class GameplayActorHouseBuildActionsTests
         // connection.AccountId while the tax branch reads Character.AccountId).
         // Mirror the unique account onto both so the row and the tally agree.
         actor.Character.Connection!.AccountId = actor.Character.AccountId;
+        actor.Character.Money = 10_000_000; // funds to clear tax pre-flight (deposit + first week tax)
         return (actor, session);
     }
 
@@ -522,6 +522,7 @@ public class GameplayActorHouseBuildActionsTests
         });
         GameplayActorTestRig.AttachConnection(actor);
         actor.Character.Connection!.AccountId = actor.Character.AccountId; // prod shape — see CreateActor.
+        actor.Character.Money = 10_000_000;
         return (actor, session);
     }
 

@@ -17,7 +17,9 @@ namespace AAEmu.Game.Core.Managers.Bots.Goap;
 /// </summary>
 public sealed class BotWorldStateProvider : IBotWorldStateProvider
 {
-    public const uint DefaultSaplingTemplateId = 15659;
+    /// <summary>Canonical potato seed item id (15659, 감자 씨앗).</summary>
+    public const uint DefaultSeedTemplateId = 15659;
+    public const uint DefaultSaplingTemplateId = DefaultSeedTemplateId;
     public const uint DefaultFoodTemplateId = 8219;
 
     public BotWorldState Project(PlayerBotRuntime bot, BotContext context)
@@ -90,7 +92,7 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
             flags |= BotWorldState.HasScarecrowDesign;
 
         bool hasTaxCert = context.Memory.HasTaxCertificatesOverride ??
-            (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i != null && i.TemplateId == 8000001) ?? false);
+            (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i != null && (i.TemplateId == Item.TaxCertificate || i.TemplateId == Item.BoundTaxCertificate)) ?? false);
         if (hasTaxCert)
             flags |= BotWorldState.HasTaxCertificates;
 
@@ -114,6 +116,11 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
             (HousingManager.PeekInstance != null && HousingManager.PeekInstance.GetAllHouses().Any(h => h.OwnerId == ch.Id && h.CurrentStep == -1 && h.Template != null && h.Template.MainModelId > 0));
         if (homeConstructed)
             flags |= BotWorldState.HomeConstructed;
+
+        bool plotConstructed = context.Memory.HomeConstructedOverride ??
+            (HousingManager.PeekInstance != null && HousingManager.PeekInstance.GetAllHouses().Any(h => h.OwnerId == ch.Id && h.CurrentStep == -1));
+        if (plotConstructed)
+            flags |= BotWorldState.PlotConstructed;
 
         if (context.Memory.KnownHousingZonePos.HasValue)
         {

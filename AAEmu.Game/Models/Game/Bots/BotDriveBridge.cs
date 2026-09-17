@@ -539,7 +539,10 @@ public sealed class BotDriveBridge
         // Record: Record early-returns while disabled. The first metrics poll
         // arms sampling (sticky, test-lane only), so subsequent per-cycle
         // snapshots carry real percentiles + body/ship/force counts.
-        object physics = null;
+        // Keep the metrics schema stable before a world/physics loop exists.
+        // A missing world is an unavailable telemetry source, not a null
+        // schema member for callers to special-case.
+        object physics = new { available = false };
         try
         {
             // A5 soak physics is the default (main) world's physics thread.

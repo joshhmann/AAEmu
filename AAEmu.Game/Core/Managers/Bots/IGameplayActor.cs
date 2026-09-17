@@ -114,7 +114,7 @@ public interface IGameplayActor
 
     /// <summary>
     /// Casts a skill through the real engine path (Character.UseSkill —
-    /// the same call CSStartSkillPacket's learned-skill branch makes).
+    /// the learned-skill branch CSStartSkillPacket uses).
     /// Validates: skill template exists, character knows the skill, target
     /// resolves. Engine refusal maps to Rejected(RejectedAction).
     /// </summary>

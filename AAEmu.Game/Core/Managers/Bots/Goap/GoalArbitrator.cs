@@ -83,7 +83,17 @@ public sealed class GoalArbitrator : IGoalArbitrator
             return GoalHarvestWildFarm;
         }
 
-        // B) Homestead Progression
+        // B) Plant wild farm (Priority 60)
+        if (context.Memory.TargetWildFarmPos.HasValue
+            && observedState.Labor >= 10
+            && (observedState.Gold >= 50 || observedState.Has(BotWorldState.HasTreeSaplings))
+            && !context.Memory.TargetWildFarmPoiInvalidated
+            && (observedState.Has(BotWorldState.HasTreeSaplings) || context.Memory.GetActionFailures("BuyTreeSaplings") <= context.MaxActionRetries))
+        {
+            return GoalPlantWildFarm;
+        }
+
+        // C) Homestead Progression
         // Case 1: Bot owns a plot but hasn't constructed the house
         if (observedState.Has(BotWorldState.HasLandPlot) && !observedState.Has(BotWorldState.HomeConstructed))
         {
@@ -95,22 +105,11 @@ public sealed class GoalArbitrator : IGoalArbitrator
             return GoalCultivatePlot;
         }
 
-        // Case 2: Starter intent — claim a small farm plot
+        // Case 2: Starter intent — claim a small farm plot (Priority 58)
         if (!observedState.Has(BotWorldState.HasLandPlot) &&
-            (observedState.Has(BotWorldState.HasScarecrowDesign) ||
-             context.Memory.HasScarecrowDesignOverride == true ||
-             context.Memory.HasTaxCertificatesOverride == true ||
-             context.Memory.GetActionFailures("SurveyAndPlacePlot") <= context.MaxActionRetries))
+            context.Memory.GetActionFailures("SurveyAndPlacePlot") <= context.MaxActionRetries)
         {
             return GoalClaimHomestead;
-        }
-
-        // C) Plant wild farm
-        if (observedState.Labor >= 10 && (observedState.Gold >= 50 || observedState.Has(BotWorldState.HasTreeSaplings))
-            && !context.Memory.TargetWildFarmPoiInvalidated
-            && (observedState.Has(BotWorldState.HasTreeSaplings) || context.Memory.GetActionFailures("BuyTreeSaplings") <= context.MaxActionRetries))
-        {
-            return GoalPlantWildFarm;
         }
 
         // D) Hunting if hostile target sighted
