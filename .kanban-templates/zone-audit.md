@@ -6,6 +6,22 @@
 Use this for geographically scoped content. Use `explorer.md` for a global
 mechanic such as trials, prison, PvP, auction, combat, or housing behavior.
 
+Use the common [discovery-to-delivery contract](implementation.md) as the parent
+scope brief. This file supplies zone-specific inventory, not a separate workflow.
+Inspect existing archaeology, code/tests and human/bot corpus before requesting new
+captures. Record evidence provenance, missing facts, shared-mechanic dependencies
+and an ordered slice queue. A required human pass not performed remains UNKNOWN;
+do not fabricate a verdict or freeze unrelated engineering.
+
+## Expansion delta (required for the next zone)
+
+- Previously proved shared mechanics/artifacts reused, with scope and revision:
+- New/different objectives, targets, factions, services, terrain or transitions:
+- Changed source/data/config since prior proof and required regression checks:
+- Named local route and coverage denominator; what remains unsupported/unknown:
+- Global defects linked to their single owning task (no per-zone duplicate fixes):
+- Missing corpus evidence and the smallest capture/reproduction task:
+
 ## Identity and scope
 
 - **Canonical key:** main-world zone-group ID + localized name + all member

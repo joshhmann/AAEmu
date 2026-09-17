@@ -1,5 +1,11 @@
 # PlayerBot progression audit — Level 1 to sustainable farm (2026-09-12)
 
+> **Historical audit / route correction 2026-09-16:** preserve the original evidence
+> scope below. Current quest prerequisites, certificate funding, tax-source finding
+> and item corrections are in the
+> [farm addendum](fresh-bot-to-farm-audit-2026-09-12.md#2026-09-16--owned-small-plot-route-canonical-correction-and-gap-map).
+> The first exit is owned small plot + harvest/replant, not fully sustainable economy.
+
 Owner-directed audit, no milestone rewrite. Core principle: **a PlayerBot is a
 player** — not a scripted role, not a fake end-state. The Living Village must be
 the emergent result of many independently progressing bots, not something

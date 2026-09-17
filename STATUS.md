@@ -1,6 +1,120 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-15 · Solzreed surveyor pilot deployed to tester .165 (live bridge verified)
+Updated: 2026-09-16 · reusable discovery-to-delivery process across zones/features/mechanics
+
+
+## 2026-09-16 — PlayerBot execution and dashboard realignment
+
+- **Corrected:** a direct `GameplayActor.Cast` GCD enforcement was reverted during closeout. Full-suite scenario runners do not advance time between casts, so the normal gate exhausted their hunt budgets. GCD parity remains deferred until a bounded combat executor owns wait/retry timing and deterministic time evidence; no new gameplay service, planner, executor framework, or packet imitation was added.
+- **Evidence boundary:** the earlier focused 14/14 result was superseded by the full-suite finding and is not retained as action-parity evidence. The restored actor seam remains adapter-level evidence only; no combat loop, autonomous progression, live/client, restart, or H claim changes.
+- **Control/evidence:** PROJECT-CONTROL, ROADMAP, SCORECARD, and the capability matrix now state one strategic GOAP owner; bounded combat/navigation/interaction execution; ActorRequest lifecycle ownership; GameplayActor adapter ownership; fixture-only controller/override paths; and explicitly unresolved packet-owned purchase, planting, housing, and merchant semantics. Harvest remains a separate asynchronous-completion seam.
+- **Dashboard:** Human Trace Tasks and Bot Capability are separate evidence lanes. The atlas defaults to observation; draw/export/upload controls remain available only as clearly marked non-authoritative developer fixtures. `bash Scripts/playertrace-coverage/regen_static_dashboard.sh`, Python `-Werror` syntax check, and the coverage mapper's **8/8** tests passed. Static rendering and route quarantine are updated together in `dashboard_server.py` and `dashboard.html`.
+- **Not proved:** the dashboard does not turn trace completion into autonomy, fixture routes do not establish navigation, and packet-owned semantics are not newly available. No full gate, live stack, client/H run, commit, push, deployment, or independent review is claimed.
+
+
+## 2026-09-16 — Universal workflow clarified beyond the farm example
+
+- User clarified that the same process must govern subsequent zones, features and
+  mechanics. The shared template now explicitly separates a parent scope brief from
+  bounded implementation cards, routes archaeology/code/tests/Graphify/corpus evidence,
+  handles contradictions and missing captures, and defines next-variant reuse/delta checks.
+- Zone-audit and explorer templates now reference the same process. Agents inventory
+  existing evidence before requesting new traces; corpus capture validity, gameplay
+  correctness and H remain distinct. Shared defects have one owning task.
+- Documentation/process changes only: no new canonical investigation, gameplay change,
+  test-evidence promotion, live action or external task dispatch. Farm remains the
+  current application, not the universal definition of scope. No automated enforcement
+  checker was implemented; compliance is required by agent instructions and review.
+- Local validation at the unchanged source baseline plus these dirty docs/UI edits:
+  126 added Markdown links/anchors checked, scoped whitespace check and Python
+  syntax check passed; static dashboard regenerated. Read-only Chromium loopback
+  smoke verified the expanded workflow and all five tabs with zero page errors;
+  screenshot inspected and temporary server stopped. No gameplay/full gate run.
+
+## 2026-09-16 — Starter-to-owned-plot scope and common implementation template
+
+- User target narrowed to one ordinary starting character → owned usable small plot
+  → first actual crop harvest and replant. Planning corridor Nuian/Solzreed; general
+  house/pack construction, all-race rollout and new merchant stock are outside this exit.
+- [ROADMAP](ROADMAP.md#first-owned-small-plot-journey) now orders route discovery,
+  item identity/tax correctness, real leveling and prerequisite quests, small-plot
+  claim/completion, farming, and integrated restart proof. Tax renewal is a follow-up
+  before self-sustaining ownership is claimed. P1 corrective tasks remain open.
+- Read-only archaeology at `63f6567e7a198775ffe885a3345db70ff5a50777` + existing dirty
+  tree verifies 4415→4479→4417→4424→4439→4438 and the initial level-10 condition;
+  4438 rewards design 15596, lumber 8337 and 25×31892. 8000001 is APEX, not tax.
+  These are data/code results, not live behavior. The first-property tax early return
+  is a new source finding to reproduce; no fix or runtime charge proof claimed.
+- Provenance, exact queries, limitations and correction of the old gold-wall premise:
+  [farm dossier](scorecard-explorations/mechanics/fresh-bot-to-farm-audit-2026-09-12.md#2026-09-16--owned-small-plot-route-canonical-correction-and-gap-map).
+- Every implementation now uses the shared
+  [implementation contract](.kanban-templates/implementation.md), filled once in its
+  existing card/dossier. Scope, canonical truth, missing legs, real acceptance and
+  truthful handoff are mandatory; feature/fix workflow gates remain applicable.
+- This wave changes planning/docs and dashboard presentation only. Engine code,
+  world data, tax rules, inventories, live state and evidence grades are untouched.
+  No full gates, gameplay test, live/client/H run, commit, push or deployment claimed.
+- Local docs/UI checks: static dashboard regeneration, Python `-Werror` syntax check
+  with temporary pycache, scoped `git diff --check`, and 116 added Markdown
+  links/anchors passed. Chromium on loopback port 18091 showed the route and all
+  five tabs with zero page errors; screenshots inspected, non-GET/HEAD requests
+  blocked, temporary server stopped. This is UI smoke, not a gameplay gate or Rei signoff.
+
+## 2026-09-16 — Corrective tasks and evidence-honesty enforcement
+
+- Josh requested high-priority follow-up to the alignment review. Seven OPEN,
+  unassigned task briefs are in [ROADMAP](ROADMAP.md#high-priority-corrective-queue--2026-09-16):
+  synthetic evidence/evaluator correction; opt-in fixtures and unfinished activity;
+  resource-correct planner; authoritative observations; one real action; one real
+  loop; delivery-record reconciliation. They precede new homestead/GOAP breadth.
+- The ten-bot inference report is **synthetic orchestration, not verified gameplay**.
+  Fake actor/manual completion and world-state overrides cannot close an ordinary
+  gameplay loop. Report/evaluator repair is queued, not implemented by this docs wave.
+- Source baseline `63f6567e7a198775ffe885a3345db70ff5a50777` plus existing dirty
+  code/tests/docs/generated files. The three new feature commits represent source
+  delivery, not a fresh live or human exit. No deployment claim is added here.
+- AGENTS/PROJECT-CONTROL and templates now require explicit implemented/verified/not
+  proved, fixture disclosures, source/test provenance, reviewer and deployment state.
+  Josh additionally requested explicit disclosure of missing loop requirements:
+  every claimed loop now needs a leg-by-leg completeness checklist and next task
+  for each gap. Required missing/unproved legs mean **LOOP INCOMPLETE**.
+  No gameplay code, live database, inventory or activity configuration changed here;
+  engineering corrections remain OPEN. Historical grades and H boundaries retained.
+- Review provenance: read-only archaeology `list_sources`, then `search_files`
+  (`root=game-source`, `glob=HomesteadActions.cs`, pattern covering Override/Craft/Build/House/1001,
+  limit 18, truncated); source `/root/aaemu-dev/AAEmu.Game`, catalog version `fork develop`,
+  search version null, textual/code evidence corroborated by direct source reads.
+  Canonical DB MD5 `78b3bdbf038db3b927056106efdf91af` unchanged at review.
+  [Archaeology acceptance boundary](scorecard-explorations/mechanics/archaeology-mcp-acceptance.md).
+
+## 2026-09-15 — Delivery direction and agent contract reconciled
+
+- Planning baseline: `d0d58e5848829b7a85da3847d03da00a90cb7c68`, with pre-existing
+  modified/untracked GOAP runtime/tests and generated artifacts. Those changes are
+  not claimed as committed, verified, or deployed by this documentation wave.
+- Two product commitments: dependable human-playable 1.2.4 journeys and persistent
+  residents sharing the same rules. Three delivery lanes distinguish human
+  playability, bot parity/autonomy, and population/society without renumbering milestones.
+- Current dispatch is [ROADMAP's slice queue](ROADMAP.md#near-term-slice-queue):
+  schema delivery safety and a human corridor baseline; shared Harvest/Cast parity;
+  seeded execution → unseeded livelihood; bounded GOAP correctness/integration;
+  then real producer–consumer dependence. Independent safe work may proceed in parallel.
+- [PROJECT-CONTROL](PROJECT-CONTROL.md#delivery-contract) now specifies outcome,
+  baseline, scope, preconditions, acceptance, dependencies, ownership, and stop/handoff
+  for every slice. Older proposed queues and blanket GOAP deferral are superseded;
+  historical acceptance evidence and locked architecture invariants are preserved.
+- No engine behavior, configuration, database, deployment, or evidence grade changed.
+  No fresh Tier 1/2/3, live/client, or H result is claimed. Documentation/dashboard
+  checks are distinct from engine gates; independent review remains pending.
+- The deployment entry below is the prior recorded result, not a fresh live check.
+- Local documentation/UI validation on Linux at the source checkpoint above:
+  `bash Scripts/playertrace-coverage/regen_static_dashboard.sh` regenerated the static
+  mirror; `PYTHONPYCACHEPREFIX=/tmp/aaemu-direction-pycache python3 -Werror -m py_compile
+  Scripts/playertrace-coverage/dashboard_server.py` passed. Added Markdown links/anchors
+  checked: 76, no failures; scoped `git diff --check` passed. Read-only Chromium review
+  on loopback port 18089 confirmed the roadmap, expanded slice, and all four other tabs
+  visible with zero page errors; no POST requests allowed. This is UI smoke evidence,
+  not gameplay, live backend correctness, unit-suite, or independent Rei verification.
 
 ## 2026-09-15 — Solzreed surveyor pilot DEPLOYED to tester .165 (`a97de994e`)
 

@@ -1,5 +1,13 @@
 # EXPLORER TEMPLATE — deep-dive / recon (feeds the scorecard)
 
+Use the [common discovery-to-delivery contract](implementation.md) for scope,
+source/corpus inventory, contradiction handling, gap mapping and ordered follow-up
+slices. Exploration completes knowledge scope, not gameplay implementation. This
+template adds research-specific fields; fill common fields once in the dossier.
+Use read-only archaeology catalog/query/trace tools first for canonical facts;
+remote SQLite access is not the default or a prerequisite when the canonical local
+MCP is available. Preserve source identity, query bounds and evidence layer.
+
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
 > **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.** Upstream is
 > intake-only; everything stays on joshhmann/AAEmu. This rule applies to
@@ -47,9 +55,11 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 ## Canonical 1.2 grounding (NEVER invent mechanics)
 
-- **The 1.2 data is the source of truth.** If code and data disagree, the DATA wins (we fix the code).
-- Live sqlite (the canonical 1.2 surface, 679 tables):
-  `ssh root@192.168.0.165` + python3 sqlite3 on `/root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3`
+- Use the read-only archaeology MCP for canonical 1.2 data: catalog first, then
+  bounded schema/query/domain traces with source identity, hash, inputs and bounds.
+  Canonical rows define reference facts, not every runtime rule. Reconcile conflicts
+  with actual source and appropriately scoped client/server evidence; do not silently
+  replace canonical behavior or declare live correctness from static rows.
 - Canonical resource table: SCORECARD.md → "Canonical resources" (fandom wiki, Ten Ton Hammer 1.2-era guides, AAEmu GitHub issues, aa-classic reference behavior).
 - If you cannot verify a claim, mark it **UNVERIFIED** — do not guess.
 
@@ -64,9 +74,12 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 ## Evidence requirements (every claim must be checkable)
 
 - **Code claims:** file:line (e.g. `QuestManager.cs:234-265`)
-- **Data claims:** table name + query + row counts, from the LIVE sqlite on the aaemu box
+- **Data claims:** archaeology source_id/path/version + DB hash, exact query/tool inputs,
+  row counts/bounds/truncation, confidence and static-data evidence label
 - **Upstream claims:** issue number + what the issue actually says
-- **No invented mechanics.** 1.2 data wins over guesses. Unverifiable → `UNVERIFIED`.
+- **Corpus claims:** original trace/spec/producer/build identity, relevant raw events,
+  input provenance and evaluator revision; capture validity is not gameplay closure
+- **No invented mechanics.** Resolve source disagreements explicitly. Unverifiable → `UNVERIFIED`.
 
 ## Report format (`scorecard-explorations/<domain>.md`)
 

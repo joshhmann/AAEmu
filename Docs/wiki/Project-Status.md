@@ -7,7 +7,36 @@
 Status of the fork's milestone plan (joshhmann/AAEmu). The canonical plan
 lives in the repo: ROADMAP.md; this page is the short public status.
 
-## Current direction (2026-09-14)
+## First bot product journey (2026-09-16)
+
+One ordinary starter earns, owns and farms a small scarecrow plot. This is not a
+house/construction-pack or ten-bot village exit. The
+[current route and dependencies](../../ROADMAP.md#first-owned-small-plot-journey)
+include canonical prerequisite quests and level-10 eligibility; mapped data is not
+proof of live execution. All implementation follows the
+[common contract](../../.kanban-templates/implementation.md). Required gaps must be explicit.
+
+## High-priority correction (2026-09-16)
+
+The [corrective queue](../../ROADMAP.md#high-priority-corrective-queue--2026-09-16)
+precedes additional homestead/GOAP breadth. The new ten-bot homestead report is
+synthetic orchestration evidence, not proof of actual gameplay. Agents must state
+every missing/unproved required loop leg and its next task; a synthetic pass cannot
+close a real loop. Seven corrective briefs are OPEN, not implemented by this docs
+update. Existing independently verified mechanics and human evidence retain their scope.
+
+## Current delivery direction (2026-09-15)
+
+The fork now plans explicitly for two outcomes: dependable human-playable 1.2.4
+journeys and persistent PlayerBots using those same rules. Execution has three
+lanes: human playability, bot parity/autonomy, and population/society. The current
+[roadmap queue](../../ROADMAP.md#near-term-slice-queue) starts with operational
+safety, a bounded human corridor, shared action parity, then seeded execution →
+unseeded livelihood → real producer/consumer interaction. See the
+[agent slice contract](../../PROJECT-CONTROL.md#delivery-contract).
+This is a planning update, not fresh gameplay verification or a grade promotion.
+
+## Recorded milestone horizon (2026-09-14)
 
 Development is at M8 — Living Village, transitioning toward M9 — Emergent world
 systems. M8 has a qualified engineering/runtime exit (24/24 ledger cycles, 4/4 kill-9

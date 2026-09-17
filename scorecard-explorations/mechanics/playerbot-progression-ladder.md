@@ -1,5 +1,12 @@
 # PlayerBot progression ladder — P → B → L → A → N → G → T (2026-09-13)
 
+> **Route correction 2026-09-16:** grading definitions below remain unchanged.
+> The historical farm-route shorthand is superseded by the
+> [canonical farm addendum](fresh-bot-to-farm-audit-2026-09-12.md#2026-09-16--owned-small-plot-route-canonical-correction-and-gap-map):
+> level-10 eligibility, six prerequisite quests, certificate rewards, and a small
+> plot's own completion. Do not infer direct level-7 access or a required gold grind.
+> Current dispatch: [owned-small-plot journey](../../ROADMAP.md#first-owned-small-plot-journey).
+
 Canonical, concise grading frame for PlayerBot work. Planning + docs only: no engine/behavior
 change, no test change, no milestone rewrite. Living Village keeps its name; new coordination
 language uses GUILD, not village. Auroria/territory is a separate future domain (T only).

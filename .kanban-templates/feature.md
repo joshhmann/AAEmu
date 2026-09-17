@@ -1,5 +1,34 @@
 # FEATURE TEMPLATE — Track 2 / our-lane feature (strict workflow, fork-only)
 
+## Evidence and loop-completeness handoff (2026-09-16)
+
+- Implemented:
+- Verified scenario and evidence layer (synthetic / deterministic rig / live / human):
+- Seeded setup, mocks, manual state changes or other bypasses:
+- Not proved:
+- Required loop legs and missing/partial/blocked/unknown dependencies:
+- Smallest next task for each missing requirement (N/A only with a reason):
+- Exact SHA + dirty state, command/environment, artifact/input provenance:
+- Independent review and deployment state (unknown/not run if absent):
+
+If any required leg is unproved, headline **LOOP INCOMPLETE**. A synthetic pass
+cannot establish an actual gameplay loop; an evaluator cannot upgrade its input's
+evidence layer. Follow [AGENTS.md](../AGENTS.md#evidence-honesty-and-anti-overclaim-gate-2026-09-16)
+and the [priority queue](../ROADMAP.md#high-priority-corrective-queue--2026-09-16).
+
+Use [implementation.md](implementation.md) as the common filled contract for this
+feature. Complete it once in the card; the workflow below supplies feature-specific gates.
+
+## Current slice contract (2026-09-15)
+
+Use [PROJECT-CONTROL](../PROJECT-CONTROL.md#delivery-contract) and the
+[current queue](../ROADMAP.md#near-term-slice-queue), not historical board order.
+Fill: parent/outcome; SHA + dirty baseline; scope/non-goals; initial state and seed
+disclosure; acceptance + evidence layer; dependencies; implementer/verifier;
+stop/handoff. One reviewable outcome per card, not one class or entire subsystem.
+Report implementation, verification, deployment, and human acceptance separately.
+Existing workflow gates still apply; no signoff or deployment permission is implied.
+
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
 > **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.** Upstream is
 > intake-only; everything stays on joshhmann/AAEmu. This rule applies to
@@ -46,9 +75,11 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 
 ## Canonical 1.2 grounding (NEVER invent mechanics)
 
-- **The 1.2 data is the source of truth.** If code and data disagree, the DATA wins (we fix the code).
-- Live sqlite (the canonical 1.2 surface, 679 tables):
-  `ssh root@192.168.0.165` + python3 sqlite3 on `/root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3`
+- Use the read-only archaeology MCP for canonical 1.2 data: catalog first, then
+  bounded schema/query/domain traces with source identity, hash, inputs and bounds.
+  Canonical rows define reference facts, not every runtime rule. Reconcile conflicts
+  with actual source and appropriately scoped client/server evidence; do not silently
+  replace canonical behavior or declare live correctness from static rows.
 - Canonical resource table: SCORECARD.md → "Canonical resources" (fandom wiki, Ten Ton Hammer 1.2-era guides, AAEmu GitHub issues, aa-classic reference behavior).
 - A Track 2 feature adds what the 1.2 data already defines — never invents parallel mechanics.
 
@@ -80,7 +111,8 @@ Collaboration context: `sister-council` skill (how we convene), `affinity-system
 - compiler-check: `dotnet run --configuration Release --no-build --project AAEmu.Game/AAEmu.Game.csproj compiler-check`
 - tests (full): `./scripts/gate.sh`
 - tests (filtered): `./scripts/gate.sh <ClassName>   # MTP treenode-filter: /*/*/<ClassName>/*`
-- live sqlite queries (for data understanding): ssh root@192.168.0.165 + python3 sqlite3 on /root/AAEmu/.server_files/AAEmu.Game/Data/compact.sqlite3
+- canonical queries: read-only archaeology MCP catalog/schema/query/domain helpers;
+  corpus workflow and evidence inventory in `implementation.md`
 
 ## Verify (ALL must pass before handoff to Rei)
 

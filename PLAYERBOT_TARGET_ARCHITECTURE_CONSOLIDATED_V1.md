@@ -1,5 +1,12 @@
 # PlayerBot Target Architecture — Consolidated v1 Candidate
 
+> **Current-use note (2026-09-15):** Retain the architecture invariants below.
+> Dated authorization/Phase 0 and GOAP-deferral language is historical, not today's
+> dispatch queue. The committed planner foundation is retained; bounded integration
+> follows [PROJECT-CONTROL](PROJECT-CONTROL.md#bot-decision-architecture) and the
+> [current slices](ROADMAP.md#near-term-slice-queue). This is not an autonomy exit,
+> a waiver of action parity, or permission to deploy.
+
 > RESEARCH / DESIGN ONLY. No AAEmu code modified, built, tested, or committed for this draft.
 > Merges: `playerbot-target-architecture-proposal.md` (Muse proposal) + `playerbot-target-architecture-independent-review.md`
 > (independent review, "Astra"). Basis only — no new prior-art survey, no new architecture invented here.

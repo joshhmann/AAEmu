@@ -563,6 +563,92 @@ Before planning or editing any non-trivial task, read the entire relevant curren
 Establish the hierarchy before implementation: **milestone/umbrella → capability track or gate → current slice → evidence boundary → next action**. Do not describe a slice as a completed track or milestone. Use repository documentation indexes/maps and graph/document-relationship tooling, including Graphify when available, to find related docs and avoid missing cross-references; graph output supplements, never replaces, reading authoritative documents. When scope or evidence changes, update the authoritative status, scorecard, and roadmap records in the same wave. Handoff docs are execution notes, not the project source of truth. Preserve historical evidence and distinguish rig/proxy, live, and human evidence.
 
 
+### Outcome-first dispatch contract (2026-09-15)
+
+Use [PROJECT-CONTROL.md — Delivery contract](PROJECT-CONTROL.md#delivery-contract)
+and [ROADMAP.md — Current delivery direction](ROADMAP.md#current-delivery-direction)
+before selecting work. Every non-trivial implementation card names its parent,
+observable outcome, source/dirty baseline, scope/non-goals, initial state,
+acceptance/evidence layer, dependencies, owner/verifier, and stopping point.
+Size by one reviewable outcome, not classes, agent turns, or whole subsystems.
+
+Human playability and bot autonomy are separate product commitments sharing normal
+gameplay. Seeded replay is not self-acquisition; predicted planner effects are not
+observed success. Preserve one scheduler/action lifecycle. Existing WIP must be
+reviewed before replacement. Implementation complete, verified, deployed, and H
+accepted are separate states; no parent milestone closes by implication.
+
+Documentation/control work does not itself authorize gameplay changes, external
+dispatch, commits, pushes, or deployments. Record actual checks and pending independent
+review; never invent signoff. Keep the rendered dashboard consistent in the same wave.
+
+### Repeatable discovery-to-delivery process (all domains)
+
+For every new zone, feature, mechanic or player journey, use
+[.kanban-templates/implementation.md](.kanban-templates/implementation.md) at two
+scales: a parent scope/evidence/gap brief and bounded implementation cards referencing
+it. The process is **scope → discover → reconcile → slice → implement/verify → expand**.
+
+Inventory authoritative docs, archaeology, actual source/tests, Graphify relationships
+and the relevant human/bot trace corpus. Tools supplement one another; none alone
+proves a whole feature. Record source identity/revision, inputs, bounds, layer and
+confidence; distinguish missing implementation from missing evidence. Unresolved
+facts become targeted research/capture tasks, not guessed gameplay or fake success.
+
+For the next zone/variant, identify proved shared behavior to reuse and the local
+delta to verify. Do not duplicate global defects or inherit a zone-complete claim.
+State coverage denominator and unsupported variants. Scale research to the next safe
+slice; unrelated sources may be N/A with a reason. Farm is one application, not the
+project-wide scope. A trace-capture pass is not automatic behavior or H acceptance.
+
+### Evidence honesty and anti-overclaim gate (2026-09-16)
+
+Every implementation must fill the shared
+[implementation contract](.kanban-templates/implementation.md) in its existing card
+or dossier, with the relevant feature/fix gates. It binds outcome → canonical facts
+→ required legs/gaps → bounded implementation → layer-specific proof → honest handoff.
+Do not treat another agent's blueprint as canonical evidence. Validate prerequisite
+chains, item identities, runtime targets and feature flags before design; do not
+add merchant stock or bypass prerequisites without an explicit product decision.
+
+Mandatory for agents, test writers, evaluators, dashboards, commit messages and
+handoffs. Current corrective work takes precedence over additional homestead/GOAP
+breadth: [ROADMAP corrective queue](ROADMAP.md#high-priority-corrective-queue--2026-09-16).
+
+- Synthetic tests are valuable **contract/orchestration evidence**, never proof of
+  a real gameplay loop. Fake actors, mocked services, manual request completion,
+  position/state overrides and injected rewards/events must be disclosed explicitly.
+- Fixture seeding must be separated from the acceptance run. A seeded real-service
+  run proves only that seeded scope; it does not prove acquisition or self-sufficiency.
+- A live-loop claim requires real ordinary services, authoritative postconditions,
+  applicable conservation/recovery/persistence checks, and no in-run GM/DB/state repair.
+  A test name containing "integration", "E2E", "deployment" or "10 bots" is not evidence
+  of its execution environment. Ten fake actors remain synthetic evidence.
+- Never convert success-sounding log text, predicted effects or heuristic inference
+  into verified world outcomes. Evaluators must preserve input evidence provenance;
+  an evaluator cannot upgrade the evidence layer of its input. Missing provenance is
+  UNKNOWN, not assumed live. Check actual failure/result and state consequences.
+- Every loop report includes a **loop completeness checklist**: initial state and
+  prerequisite acquisition → discovery/target binding → legal travel/reach → ordinary
+  action/timing → observed consequence/conservation → recovery → repeat → persistence
+  where required. Include client presentation/H separately. For each required leg,
+  state implemented/verified, partial, missing, blocked, or unknown; cite evidence or
+  the next task. "Unknown" is not "missing code". N/A requires a scope-specific reason.
+  Explicitly name every missing dependency needed for the claimed loop. If any required
+  leg is unproved, report **LOOP INCOMPLETE — missing/unproved: ...**, even if unit tests
+  pass. Never silently narrow the loop after testing; identify seeded subloop versus
+  full acquisition-to-repeat loop. Do not invent requirements irrelevant to its scope.
+- Every result states: **implemented; verified layer and exact scenario; not proved;
+  seeded/bypassed steps; SHA + dirty state; command/environment; artifact path;
+  independent review; deployment state.** Use "not run/unknown" when appropriate.
+  Human/client acceptance remains separate and requires the actual named human run.
+- No production-default fixture grants or unfinished activity enablement to make a
+  demonstration pass. Require explicit opt-in and label the deviation. Do not remove
+  existing player/bot inventory or alter live databases as a corrective shortcut.
+- Reviewers must reject unsupported completion claims even when all unit tests pass.
+  Correct misleading report generators as well as output; preserve historical artifacts
+  with an explicit correction. Do not fabricate review signoff or broaden a slice.
+
 ### Authoritative sources (in order)
 
 1. **Neighboring code** in the same folder, namespace, and subsystem — this is the primary style guide.

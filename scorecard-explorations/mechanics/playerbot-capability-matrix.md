@@ -24,6 +24,26 @@ Operator command (requires Docker, read-only `/root/hl-cp-test` assets, and
 
 ## Current position (2026-09-12)
 
+### Execution ownership and evidence boundary — 2026-09-16
+
+- **Decision:** GOAP is the sole strategic goal/plan/replan authority. Existing
+  arbiters and `BotRoam` branches are transitional goal sources/scheduler adapters.
+  Combat rotation, navigation/arrival, and interaction completion are bounded
+  executor responsibilities, not separate strategic owners.
+- **Action:** `ActorRequest` owns request lifecycle, idempotency, timeout, and audit;
+  `GameplayActor` remains the thin invoker; Character/core managers own effects and
+  persistence. Direct controller inventory/quest events and world-state overrides are
+  fixture/control-plane only.
+- **Evidence:** Human traces are parity inputs only. Journeys require independent
+  Perceive → Decide → Act → Verify → Recover evidence, with seed/bypass disclosure.
+  The dashboard has separate Human Trace and Bot Capability lanes; fixture routes are
+  explicitly non-authoritative atlas tools.
+- **GCD convergence deferred:** an attempted direct-actor GCD enforcement made the
+  no-time-advance scenario runners exhaust their hunt budgets. Until a bounded combat
+  executor owns wait/retry timing, `GameplayActor.Cast` stays on its existing learned-skill
+  seam. This is not action-parity evidence; harvest and packet-owned
+  purchase/plant/housing/merchant semantics remain separate unresolved seams.
+
 - Recorded village/day-cycle and scripted command success does not establish an
   autonomous fresh-character-to-home loop. The tiered audit
   ([fresh-bot-to-farm](fresh-bot-to-farm-audit-2026-09-12.md)) maps public-farm

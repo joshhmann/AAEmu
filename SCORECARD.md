@@ -1,5 +1,100 @@
 # ArcheAge Slums — Data-Wiring and Evidence Scorecard (enriched)
 
+## Coverage across zones and mechanics
+
+Every scope brief declares its supported variants/coverage denominator. The next
+zone or mechanic records shared proofs reused, changed conditions, local evidence
+and remaining unknowns under the
+[common contract](.kanban-templates/implementation.md). One zone passing does not
+close another, and a global mechanic fix is not copied into each zone as a new fix.
+Corpus coverage gaps are discovery leads, not proof of missing gameplay. Preserve
+the existing evidence dimensions; no aggregate completion percentage is introduced.
+
+## Current journey scope — starting character to owned small plot
+
+The first bot product exit is [one ordinary starter → owned small plot → first
+harvest/replant](ROADMAP.md#first-owned-small-plot-journey), not a house-building or
+ten-bot village exit. **LOOP INCOMPLETE**: data requirements are now identified, not
+executed end-to-end. No mechanic or autonomy grade is promoted.
+
+Canonical correction: the six-quest route to 4438 starts with a level-10 requirement,
+despite quest display levels of 7. Rewards include 25×31892 certificates; 8000001 is
+APEX. A separate source finding requires first-property tax verification. Evidence,
+query inputs, bounds and outstanding route gaps are in the
+[existing farm dossier](scorecard-explorations/mechanics/fresh-bot-to-farm-audit-2026-09-12.md#2026-09-16--owned-small-plot-route-canonical-correction-and-gap-map).
+Keep ordinary acquisition, seeded subloop, full journey, tax sustainment and H separate.
+
+## Evidence correction notice — 2026-09-16
+
+The new ten-bot homestead inference report's "10/10 bots fully verified" wording is
+not accepted as real gameplay evidence. Its source rig uses a fake actor, manual
+position/request completion and ownership/material/construction overrides. Classify
+it as synthetic orchestration only; actual homestead-loop closure is **UNPROVED**.
+This does not invalidate older separately evidenced housing/persistence mechanics.
+No C/W/H/A/R/S grades are promoted by the report or this correction.
+
+Correct the generator and reports, isolate fixture provisioning, then prove real
+actions and a single live loop under the
+[high-priority corrective queue](ROADMAP.md#high-priority-corrective-queue--2026-09-16).
+Textual inference and planned effects never establish resource conservation or live
+outcomes. H remains separate. See AGENTS.md's mandatory evidence-honesty gate.
+
+## PlayerBot execution realignment — 2026-09-16
+
+This scorecard now treats human traces as parity evidence, not a journey script or
+autonomy verdict. A trace can corroborate a player-facing packet/action shape; it
+cannot establish a bot's perception, legal goal choice, target discovery, route,
+completion, recovery, or repeat. Those bot capability legs are recorded separately
+with their core seam, observed postcondition, fixture disclosure, and next proof.
+
+GOAP owns strategic decisions and replanning. Bounded combat, navigation, and
+interaction executors own execution within a request. `ActorRequest` owns lifecycle
+and audit; `GameplayActor` adapts into ordinary `Character`/manager paths. Existing
+population embodiment, scheduler, dormancy, and persistence evidence is retained.
+Packet-owned purchase, planting, housing, and merchant semantics remain unresolved;
+they have no autonomous-parity claim. Learned-skill GCD convergence is deferred: a direct
+actor call cannot enforce the normal gate until a bounded combat executor owns wait/retry
+timing. This leaves no loop or autonomy grade change.
+
+## Current reading guide — 2026-09-15
+
+Read broad outcomes in [VISION](VISION.md), dispatch in
+[ROADMAP](ROADMAP.md#current-delivery-direction), and execute through the
+[slice contract](PROJECT-CONTROL.md#delivery-contract). This scorecard measures
+evidence, not effort or overall project percent complete. Existing grades below
+are retained; this planning revision runs no gameplay tests and promotes none.
+
+Use two complementary views without combining them into one score:
+
+| View | Record for every claimed outcome |
+|---|---|
+| Human-playable journey | Start/region/level range, ordinary actions, destination, persistence, known deviations, actual human verdict. Begin with a bounded corridor; expand coverage deliberately. |
+| Bot capability | Perception, choice, ordinary action, verified consequence; disclosed seed/setup, autonomous acquisition, recovery/repetition, and cooperation boundary. Use the existing progression ladder's definitions, not new letter aliases. |
+
+Each slice additionally carries **delivery state** (Ready / In progress /
+Implementation complete–verification pending / Verified at named layer / Deployed /
+Human accepted), owner, dependency, evidence date/SHA, and next action in its card.
+These are not replacements for **C/W/H/A/R/S** mechanic grades. A passing contract
+test, deterministic rig, live authenticated scenario, and human playthrough are
+different evidence layers. Unknown means unproved, not necessarily broken.
+
+Current rollup boundaries:
+
+- M1/M2 and later mechanics retain scoped automated/rig/live evidence; full human
+  journey acceptance and broad content coverage must be assessed separately.
+- M5 action surface completion does not waive Harvest/Cast semantic-parity questions.
+- M6 lifecycle and A5 scale evidence do not close broad M7 autonomy.
+- M8's 09-08 qualified runtime result is retained; a genuinely self-sustaining
+  producer–consumer village and mixed human experience are not inferred from it.
+- Committed GOAP foundation and uncommitted runtime work are implementation inventory,
+  not production integration, loop closure, or a human verdict.
+
+For a milestone, report unmet **required** dimensions and the next acceptance slice;
+do not average away missing H, persistence, or autonomy. Test counts and table counts
+are discovery/verification data, not a completion denominator.
+
+## Historical data-wiring inventory
+
 Layers: (1) canonical 1.2 data surface (679 sqlite tables), (2) code wiring,
 (3) upstream issue tracker (AAEmu/AAEmu open issues, 2026-08-03).
 

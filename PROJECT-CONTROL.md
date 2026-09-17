@@ -11,17 +11,124 @@ wiki status page. For human-facing wiki navigation, start at
 - **Target:** ArcheAge 1.2 client and reference data `compact.sqlite3` r208022
   (read-only)
 **Documentation HEAD (2026-09-12 reconciliation):** `c7351b242e4088e0db5ef7926659a948312cb2fb`.
-Current direction is M8 — Living Village, transitioning toward M9 — Emergent world systems;
+That checkpoint is historical. Current delivery direction is the 2026-09-15
+[outcome-first queue](ROADMAP.md#current-delivery-direction), with M8 → M9 as the horizon;
 M8 has a qualified engineering/runtime exit, not human acceptance. Older source/test
 checkpoints and per-slice counts below remain historical unless re-run; they are not
 restamped as fresh results here. Current evidence narrative: [`STATUS.md`](STATUS.md);
 current direction and requirements: [`ROADMAP.md`](ROADMAP.md).
 
+## Delivery contract
+
+Current operating direction — 2026-09-15. This section governs new dispatch;
+dated evidence and locked milestone exit requirements below remain intact.
+
+**Plan broadly; execute by observable outcome.** The hierarchy is product commitment
+→ player journey → existing milestone/capability → bounded slice → evidence.
+"Finish combat", "finish GOAP", and "make the village alive" are initiatives, not
+executable cards. Conversely, one card per class or method hides integration risk.
+A slice should carry one meaningful behavior across the layers it actually needs.
+
+### Repeatable scope-to-delivery process
+
+The [shared contract](.kanban-templates/implementation.md) applies to every zone,
+feature, mechanic and service, not only the farm journey. Create a parent scope brief
+with supported variants, evidence inventory (archaeology, code/tests, graph and
+human/bot corpus), contradictions, missing requirements and ordered slices. Child
+cards reference that brief and prove one outcome. Unknown facts receive bounded
+research/capture tasks; they are not bypassed in implementation.
+
+Each expansion records shared evidence reused, local differences and required
+revalidation. Global defects have one owner and are linked from affected zones.
+Closure names the supported scope and evidence layer; the next zone never inherits
+a completion claim automatically. Reuse evidence while its dependencies hold;
+avoid repeating whole-domain research for every child card.
+
+### First concrete product journey
+
+Current bot delivery target: [one ordinary starter → one owned small farm plot →
+first harvest and repeat](ROADMAP.md#first-owned-small-plot-journey), not a house,
+construction-pack economy or ten-bot village. GOAP is the intended choice mechanism;
+a deterministic reference scenario proves the same ordinary actions without faking
+their results. Follow the
+[common implementation template](.kanban-templates/implementation.md) for all domains.
+Canonical eligibility and existing service gaps determine the next slice, not a
+speculative goal chain. Data/code verification is not loop completion.
+
+### Required slice brief
+
+Before coding, record these fields in the existing card/dossier, not a new parallel plan:
+
+| Field | Required answer |
+|---|---|
+| Parent and outcome | Existing milestone/track, player journey, and one observable change. |
+| Baseline | Exact source SHA + relevant dirty state; what is proved, suspected, or unknown. |
+| Scope | In-scope paths, explicit non-goals, ordinary gameplay path reused. |
+| Preconditions | Named starting state; fixture seeding versus naturally acquired resources. |
+| Acceptance | Happy path, applicable refusal/interruption/recovery, persistent consequence; commands/scenarios and evidence layer. |
+| Dependencies | Concrete blocking behavior or prerequisite artifact, not a vague milestone dependency. |
+| Ownership | One implementer, independent verifier, tracker; deployment coordinator only when needed. |
+| Stop and handoff | Exit evidence, remaining limitations, exact next slice; no autonomous scope expansion. |
+
+**Ready** means the outcome and verification are bounded and dependencies available.
+**In progress**, **implementation complete / verification pending**, **verified at a
+named layer**, **deployed**, and **human accepted** are distinct states. A blocked
+slice names the blocker and smallest unblock action. Do not label a card Done when
+its required verification is still pending, or promote its parent automatically.
+
+For bot cards, additionally record perception → choice → ordinary action → observed
+postcondition. A planned effect is not proof of success. Use the existing action
+lifecycle and scheduler; preserve intent if needed, never resurrect a terminal request.
+Seeded replay proves execution under those preconditions, not autonomous acquisition.
+
+### Evidence claim boundary
+
+The [2026-09-16 corrective queue](ROADMAP.md#high-priority-corrective-queue--2026-09-16)
+is high priority and supersedes new homestead/GOAP breadth. See
+[AGENTS.md](AGENTS.md#evidence-honesty-and-anti-overclaim-gate-2026-09-16) for enforcement.
+
+Every handoff states implemented / verified layer / not proved / fixture or bypass
+steps / exact source and dirty state / command and environment / artifacts /
+independent review / deployment state. A synthetic successful sequence is a legitimate
+result only when labeled synthetic; no evaluator, dashboard or prose can promote it
+to actual gameplay. Reviewers check provenance and actual state consequences, not
+just green counts. Missing live evidence stays UNKNOWN. Existing achievements stand
+within their original scope.
+
+For a complete-loop claim, attach a leg-by-leg checklist: starting means/acquisition,
+discovery, legal reach, ordinary action, verified consequence/conservation, recovery,
+repeat, and applicable persistence; client/H evidence stays separate. Each leg has
+evidence status and a concrete missing dependency/next task. Mark non-applicable legs
+with a reason. Do not confuse unknown verification with absent implementation.
+If any required leg is missing or unproved, the headline is **LOOP INCOMPLETE**, with
+the specific gaps listed. Seeded subloop success does not close the complete livelihood.
+
+### Priority, ownership, and cadence
+
+- Josh owns product tradeoffs, declared supported journeys, and named human verdicts.
+  Prepare short runnable human packets; do not ask Josh to diagnose every code failure.
+- Tai implements; Rei independently verifies; Nei reconciles records; Mai coordinates
+  blockers and authorized deployment. Role names do not imply signoff already occurred.
+- Dispatch one active implementation slice per worker. Parallel work requires disjoint
+  ownership and safe test resources; never run competing resets on the same E2E database.
+- Prioritize loss/duplication/exploit/crash/deploy safety, then blocked progression,
+  rule/conservation correctness, breadth, and polish. A client interaction blocker is
+  functional correctness, not optional polish.
+- At dispatch, check the newest source and evidence. At handoff, report actual versus
+  expected outcome, changed claims, open risk, and next action. At each completed delivery
+  wave, reconcile STATUS/ROADMAP/SCORECARD and the dashboard together where affected.
+- Review broad journey coverage weekly or after a meaningful exit: what can a human now
+  do, what can a bot now do without intervention, what still fails, and what is next?
+  Preserve successful foundations; reduce repeated repair and uncertainty, not just backlog size.
+
+Keep a small Ready queue; split later work only when its dependency is understood.
+The queue is not permission to commit, push, deploy, or mutate external services.
+
 ## Authoritative records
 
 | Record | Use |
 |---|---|
-| [`VISION.md`](VISION.md) | Product doctrine: living world first, M8 → M9 direction, independent acceptance lanes (not test verdicts) |
+| [`VISION.md`](VISION.md) | Human playability + living-world commitments, delivery lanes, independent acceptance (not test verdicts) |
 | [`LIVING-WORLD.md`](LIVING-WORLD.md) | Living-world philosophy and architecture reference (not test verdicts) |
 | [`STATUS.md`](STATUS.md) | Current fork checkpoint, milestone narrative, open human gates, and recent reconciliations |
 | [`ROADMAP.md`](ROADMAP.md) | Locked milestone requirements, deferred validation gates, and next-wave objectives |
@@ -129,17 +236,39 @@ lifecycle and legality; use utility/goal scoring to choose among currently
 legal objectives (such as hunger, HP, full bag, or travel only where ordinary
 services expose those signals). 
 
-**GOAP Rollout Policy:** Do not implement a full A* GOAP planner prematurely
-while underlying subsystem loops remain unclosed or fragile (`L < 2`). A planner
-cannot plan actions that do not reliably execute. Instead:
-1. Subsystem loops (Farming, Combat, Questing, Trade Packs) must first achieve
-   reliable, deterministic execution (`L = 2`) with self-recovering travel and
-   interaction legs.
-2. Loops must be structured "GOAP-ready" using explicit preconditions and effects
-   (`BotProposalPrecondition`), without requiring planner graph search.
-3. A simple priority/utility arbiter routes macro-desires today.
-4. Full GOAP dynamic chaining is deferred until multiple core gameplay loops
-   achieve verified `L = 2` closure.
+**GOAP rollout policy (reconciled 2026-09-15):** Preserve the committed planner
+foundation; its presence is not proof of production integration or autonomy.
+Runtime work in the dirty tree is work in progress, not a shipped failure or exit.
+Integrate one verified action chain at a time. First prove resource-aware search
+identity, truthful observations, concrete target binding, and the existing single
+action lifecycle. Then compare a bounded planner-driven loop with the deterministic
+baseline. Expand only after observed execution and recovery pass. Do not build a
+second scheduler, parallel gameplay rules, or speculative caches to compensate for
+unclosed actions. This supersedes the blanket "GOAP deferred" wording, not parity
+requirements or the existing architecture invariants.
+
+### PlayerBot ownership checkpoint — 2026-09-16
+
+One strategic decision authority does not imply one monolithic executor. GOAP owns
+goal selection, plan selection, replanning, and abandonment. Bounded executors own
+their internal work: combat owns rotation/range inside a kill request; navigation
+owns route/arrival inside a move request; interaction owns cast/interaction completion.
+`ActorRequest` owns lifecycle, timeout, idempotency, and audit; `GameplayActor` is the
+thin adapter to ordinary `Character` and manager seams; AAEmu core owns every gameplay
+effect and persistent state change.
+
+`BotGoalArbiter`, activity modules, and imperative `BotRoam` branches are transitional
+goal sources/scheduler adapters, not additional strategic owners. `CombatDecisionTree`,
+`BotPath`, and actor polling are executor policy/implementation, not independent
+activities. World-state overrides and direct `PlayerBotController` event/inventory calls
+are fixture/control-plane only and cannot support an autonomous claim. Retain ordinary
+Character embodiment, scheduler, dormancy, and population controls.
+
+Packet-owned purchase, planting, housing, and merchant semantics remain an explicit
+unresolved seam. Do not extract a new service or imitate their packet handlers as part
+of this program: mark them unavailable to autonomous claims until a separately approved
+seam strategy exists. Learned-skill GCD convergence is deferred until a bounded combat
+executor owns wait/retry timing; harvest remains a separate asynchronous-completion design task.
 
 Personality supplies weights or tie-breakers, not alternate gameplay rules.
 This architecture must not create parallel inventory, quest, combat, or other

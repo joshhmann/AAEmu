@@ -1,15 +1,38 @@
 # START HERE — Agent Onboarding & Domain Lane Dispatcher
 
-Last refreshed: 2026-09-15 · branch of record: `develop` (`joshhmann/AAEmu`) · HEAD: `2ef3d2fbb`
+Last refreshed: 2026-09-15 · branch of record: `develop` (`joshhmann/AAEmu`) · planning baseline: `d0d58e5848829b7a85da3847d03da00a90cb7c68` (not a fresh gate)
 
 This document is the **single authoritative router** for agents and developers entering this repository. It tells you what to read, what to ignore, which domain lane to enter, and where active backlogs and verification gates live.
 
 ---
 
+## Universal workflow — every zone, feature and mechanic
+
+Use the [discovery-to-delivery contract](.kanban-templates/implementation.md):
+**scope → inventory archaeology/code/tests/corpus → reconcile gaps → order slices →
+implement/verify → reconcile and expand**. Parent briefs define coverage and missing
+dependencies; child cards prove bounded outcomes. For each next zone/variant, reuse
+proved shared mechanics and verify the local differences. Farm is the current
+application, not the limit of this process.
+
+## Immediate dispatch priority — 2026-09-16
+
+First product journey: [ordinary starter → owned small plot → harvest/replant](ROADMAP.md#first-owned-small-plot-journey).
+Use the [shared implementation template](.kanban-templates/implementation.md) for
+every implementation; fill it once in the existing card/dossier. The canonical route
+requires prerequisite quests and level-10 eligibility, not a direct level-7 shortcut.
+
+Read the [high-priority corrective queue](ROADMAP.md#high-priority-corrective-queue--2026-09-16)
+before expanding homestead/GOAP work. Synthetic tests prove their simulated scope,
+not real gameplay loops. The [mandatory reporting gate](AGENTS.md#evidence-honesty-and-anti-overclaim-gate-2026-09-16)
+requires explicit fixture/bypass disclosure, evidence layer and what remains unproved.
+Core reliability and independent human-playability work may continue.
+
 ## 1. What This Repo Is
 
 Open-source **ArcheAge 1.2** (`r208022`) server emulator in .NET 10 (`AAEmu.Login`, `AAEmu.Game`, shared `AAEmu.Commons`). 
 * **Product Doctrine:** *The living world is the feature; PlayerBots are just the mechanism that gives it life.*
+* **Current dispatch:** [outcome-first slice queue](ROADMAP.md#near-term-slice-queue), not the oldest open board item. One observable outcome per slice; no automatic milestone promotion.
 * **Milestone Horizon:** M8 (Living Village) → M9 (Emergent world systems) → M10 (Territory & siege).
 * **Topology:**
 ```text
@@ -34,14 +57,15 @@ Upstream AAEmu/AAEmu: intake-only. NEVER push a branch or open a PR there.
 
 ## 3. The Gateway: Universal Onboarding (Read by ALL Agents)
 
-Every agent, regardless of task or subagent role, must review these 4 foundational documents first:
+Every agent must read these current records before selecting a slice. Historical boards supplement them; they do not set current dispatch:
 
 | Order | Document | Purpose |
 | :---: | :--- | :--- |
-| **1** | [`START-HERE.md`](file:///root/aaemu-dev/START-HERE.md) | **This router:** Architecture, non-negotiables, and domain lane selection. |
-| **2** | [`AGENTS.md`](file:///root/aaemu-dev/AGENTS.md) | **Core rules:** Workflows, coding conventions, packet offset maps, and gate policies. |
-| **3** | [`STATUS.md`](file:///root/aaemu-dev/STATUS.md) | **Live pulse:** Current checkpoint, active human gates, and today's changes. |
-| **4** | [`ROADMAP.md`](file:///root/aaemu-dev/ROADMAP.md) & [`progression-board.md`](file:///root/aaemu-dev/scorecard-explorations/progression-board.md) | **Macro progress:** M1–M10 status and overall milestone deliverables. |
+| **1** | [`START-HERE.md`](START-HERE.md) | **This router:** Architecture, non-negotiables, and domain lane selection. |
+| **2** | [`AGENTS.md`](AGENTS.md) | **Core rules:** Workflows, coding conventions, packet offset maps, and gate policies. |
+| **3** | [`STATUS.md`](STATUS.md) | **Live pulse:** Current checkpoint, active human gates, and today's changes. |
+| **4** | [`VISION.md`](VISION.md) & [`PROJECT-CONTROL.md`](PROJECT-CONTROL.md#delivery-contract) | **Outcome and operating contract:** human playability, living world, ownership and bounded slices. |
+| **5** | [`SCORECARD.md`](SCORECARD.md) & [`ROADMAP.md`](ROADMAP.md#current-delivery-direction) | **Evidence and dispatch:** proven boundaries, current queue, dependencies and exits. |
 
 ---
 
@@ -66,12 +90,12 @@ flowchart TD
 ### Lane A: Core AAEmu Engine & Mechanics
 * **Agent Role:** Core server engineer working on packets, combat math, NPC behaviors, doodad scripts, quests, housing, trade packs, netcode, or MySQL schemas.
 * **Prerequisite Reading:**
-  * Architecture: [`Docs/wiki/Components.md`](file:///root/aaemu-dev/Docs/wiki/Components.md)
-  * Conventions: [`Docs/wiki/Development-Conventions.md`](file:///root/aaemu-dev/Docs/wiki/Development-Conventions.md)
-  * Network/Offsets: [`AAEmu.Login/Docs/networking.md`](AAEmu.Login/Docs/networking.md), [`AAEmu.Game/Core/Packets/CSOffsets.cs`](file:///root/aaemu-dev/AAEmu.Game/Core/Packets/CSOffsets.cs), [`SCOffsets.cs`](file:///root/aaemu-dev/AAEmu.Game/Core/Packets/SCOffsets.cs)
+  * Architecture: [`Docs/wiki/Components.md`](Docs/wiki/Components.md)
+  * Conventions: [`Docs/wiki/Development-Conventions.md`](Docs/wiki/Development-Conventions.md)
+  * Network/Offsets: [`AAEmu.Login/Docs/networking.md`](AAEmu.Login/Docs/networking.md), [`AAEmu.Game/Core/Packets/C2G/CSOffsets.cs`](AAEmu.Game/Core/Packets/C2G/CSOffsets.cs), [`SCOffsets.cs`](AAEmu.Game/Core/Packets/G2C/SCOffsets.cs)
 * **Where Unfinished Work Lives:**
-  * [`scorecard-explorations/zero-wired-domains.md`](file:///root/aaemu-dev/scorecard-explorations/zero-wired-domains.md) — Unimplemented client packets and unwired opcodes.
-  * [`scorecard-explorations/partial-domains.md`](file:///root/aaemu-dev/scorecard-explorations/partial-domains.md) — Half-built mechanics and missing formulas.
+  * [`scorecard-explorations/zero-wired-domains.md`](scorecard-explorations/zero-wired-domains.md) — Unimplemented client packets and unwired opcodes.
+  * [`scorecard-explorations/partial-domains.md`](scorecard-explorations/partial-domains.md) — Half-built mechanics and missing formulas.
 * **Code Scope:**
   * Inbound/Outbound Packets: `AAEmu.Game/Core/Packets/{C2G,G2C}/`
   * Managers: `AAEmu.Game/Core/Managers/` (must register in `Program.cs`)
@@ -86,14 +110,14 @@ flowchart TD
 ### Lane B: Living World & PlayerBots
 * **Agent Role:** AI & simulation engineer working on autonomous bot decision trees, combat rotations, leveling loop, dormancy/restoration, scheduling, bot GM commands, and town presence.
 * **Prerequisite Reading:**
-  * Master Architecture: [`PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md`](file:///root/aaemu-dev/PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md)
-  * Framework: [`PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md`](file:///root/aaemu-dev/PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md)
-  * Vision: [`LIVING-WORLD.md`](file:///root/aaemu-dev/LIVING-WORLD.md)
+  * Master Architecture: [`PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md`](PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md)
+  * Framework: [`PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md`](PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md)
+  * Vision: [`LIVING-WORLD.md`](LIVING-WORLD.md)
   * **Rule #9 & #10:** PlayerBots compose around normal `Character` records and standard gameplay services. NEVER create parallel character, inventory, or quest implementations!
 * **Where Unfinished Work Lives:**
-  * [`scorecard-explorations/playerbot-blockers.md`](file:///root/aaemu-dev/scorecard-explorations/playerbot-blockers.md) — Active and historical architectural blockers (PB-001 through PB-006).
-  * [`scorecard-explorations/deferred-not-now.md`](file:///root/aaemu-dev/scorecard-explorations/deferred-not-now.md) — Explicit backlog of parked features (Sections 12–18: Village errands, multi-objective quests, food/potion consumption, knockback recovery, mount riding, party assists, roster generation).
-  * [`scorecard-explorations/mechanics/playerbot-capability-matrix.md`](file:///root/aaemu-dev/scorecard-explorations/mechanics/playerbot-capability-matrix.md) — Full/Partial/Missing capability matrix.
+  * [`scorecard-explorations/playerbot-blockers.md`](scorecard-explorations/playerbot-blockers.md) — Active and historical architectural blockers (PB-001 through PB-006).
+  * [`scorecard-explorations/deferred-not-now.md`](scorecard-explorations/deferred-not-now.md) — Explicit backlog of parked features (Sections 12–18: Village errands, multi-objective quests, food/potion consumption, knockback recovery, mount riding, party assists, roster generation).
+  * [`scorecard-explorations/mechanics/playerbot-capability-matrix.md`](scorecard-explorations/mechanics/playerbot-capability-matrix.md) — Full/Partial/Missing capability matrix.
 * **Code Scope:**
   * Bot Brain & Loop: `AAEmu.Game/Core/Managers/Bots/` (`CombatDecisionTree`, `GameplayActor`, `DormantBotRegistry`, `LevelingLoopScenario`)
   * GM Commands: `AAEmu.Game/Scripts/Commands/BotCmd.cs`, `AAEmu.Game/Scripts/SubCommands/Bots/`
@@ -107,12 +131,12 @@ flowchart TD
 ### Lane C: Human Action Traces & Task Dashboard
 * **Agent Role:** Tooling & telemetry engineer creating task specifications, capturing empirical ground truth, running trace coverage analysis, and maintaining the web dashboard on port 8085.
 * **Prerequisite Reading:**
-  * Specification & Evaluation Standard: [`Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md`](file:///root/aaemu-dev/Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md)
-  * Tooling Architecture: [`Scripts/playertrace-coverage/README.md`](file:///root/aaemu-dev/Scripts/playertrace-coverage/README.md)
+  * Specification & Evaluation Standard: [`Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md`](Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md)
+  * Tooling Architecture: [`Scripts/playertrace-coverage/README.md`](Scripts/playertrace-coverage/README.md)
 * **Where Unfinished Work Lives:**
-  * [`playertrace-coverage/dashboard_tasks.json`](file:///root/aaemu-dev/playertrace-coverage/dashboard_tasks.json) — Live catalog of 31 tasks; check tasks with `"status": "Pending"`.
+  * [`playertrace-coverage/dashboard_tasks.json`](playertrace-coverage/dashboard_tasks.json) — Live catalog of 31 tasks; check tasks with `"status": "Pending"`.
   * Web Dashboard: Run `python3 Scripts/playertrace-coverage/dashboard_server.py --port 8085` and browse to `http://<ip>:8085`.
-  * Roadmap & Scorecard tab maintenance contract (mandatory whenever roadmap/scorecard records change): [`Scripts/playertrace-coverage/DASHBOARD_MAINTENANCE.md`](file:///root/aaemu-dev/Scripts/playertrace-coverage/DASHBOARD_MAINTENANCE.md)
+  * Roadmap & Scorecard tab maintenance contract (mandatory whenever roadmap/scorecard records change): [`Scripts/playertrace-coverage/DASHBOARD_MAINTENANCE.md`](Scripts/playertrace-coverage/DASHBOARD_MAINTENANCE.md)
 * **Tools & In-Game Actions:**
   * In-Game: `/trace start <scenario>` → execute action → `/trace stop`
   * Trace Evaluator: `python3 Scripts/playertrace-coverage/task_evaluator.py --task-id <id>`
@@ -125,9 +149,9 @@ flowchart TD
 ### Lane D: Reference Archaeology (Archaeology MCP)
 * **Agent Role:** Reverse engineer or data analyst querying canonical ArcheAge 1.2 reference data (`compact.sqlite3`, 679 tables, md5 `78b3bdbf038db3b927056106efdf91af`) to corroborate formulas, item stats, NPC spawn templates, and client facts before writing code.
 * **Prerequisite Reading:**
-  * MCP Server README: [`AAEmu.ArchaeologyMcp/README.md`](file:///root/aaemu-dev/AAEmu.ArchaeologyMcp/README.md)
-  * Data Source Inventory: [`scorecard-explorations/mechanics/archaeology-data-source-inventory.md`](file:///root/aaemu-dev/scorecard-explorations/mechanics/archaeology-data-source-inventory.md)
-  * Acceptance Dossier: [`scorecard-explorations/mechanics/archaeology-mcp-acceptance.md`](file:///root/aaemu-dev/scorecard-explorations/mechanics/archaeology-mcp-acceptance.md)
+  * MCP Server README: [`AAEmu.ArchaeologyMcp/README.md`](AAEmu.ArchaeologyMcp/README.md)
+  * Data Source Inventory: [`scorecard-explorations/mechanics/archaeology-data-source-inventory.md`](scorecard-explorations/mechanics/archaeology-data-source-inventory.md)
+  * Acceptance Dossier: [`scorecard-explorations/mechanics/archaeology-mcp-acceptance.md`](scorecard-explorations/mechanics/archaeology-mcp-acceptance.md)
 * **Workflow:**
   1. Catalog first: `list_sources` / `list_tables` / `describe_table`
   2. Corroborate facts: `query_sql` / `lookup_row`
@@ -140,11 +164,11 @@ flowchart TD
 ### Lane E: Devops, Testing & Deployment
 * **Agent Role:** Systems engineer configuring developer environments, running .NET Aspire or host MySQL, running heavy integration/soak gates, and staging deployments to the `.165` test server.
 * **Prerequisite Reading:**
-  * Guided Setup: [`.agents/skills/aaemu-setup/SKILL.md`](file:///root/aaemu-dev/.agents/skills/aaemu-setup/SKILL.md)
-  * Aspire Guide: [`Docs/wiki/Aspire-Development-Guide.md`](file:///root/aaemu-dev/Docs/wiki/Aspire-Development-Guide.md)
-  * Deployment Playbook: [`WORKFLOW.md`](file:///root/aaemu-dev/WORKFLOW.md)
-  * Human Gate Field Guide: [`Docs/wiki/Human-Gate-Field-Guide.md`](file:///root/aaemu-dev/Docs/wiki/Human-Gate-Field-Guide.md)
-  * Soak Test Manual: [`Docs/wiki/Soak-Runs.md`](file:///root/aaemu-dev/Docs/wiki/Soak-Runs.md)
+  * Guided Setup: [`.agents/skills/aaemu-setup/SKILL.md`](.agents/skills/aaemu-setup/SKILL.md)
+  * Aspire Guide: [`Docs/wiki/Aspire-Development-Guide.md`](Docs/wiki/Aspire-Development-Guide.md)
+  * Deployment Playbook: [`WORKFLOW.md`](WORKFLOW.md)
+  * Human Gate Field Guide: [`Docs/wiki/Human-Gate-Field-Guide.md`](Docs/wiki/Human-Gate-Field-Guide.md)
+  * Soak Test Manual: [`Docs/wiki/Soak-Runs.md`](Docs/wiki/Soak-Runs.md)
 * **Verification Gates:**
   * Fast Gate: `./scripts/gate.sh` (~1 min)
   * Targeted E2E: `dotnet test AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --treenode-filter "..."`
@@ -156,16 +180,16 @@ flowchart TD
 
 | Category | File | Description |
 | :--- | :--- | :--- |
-| **Rules & Workflow** | [`AGENTS.md`](file:///root/aaemu-dev/AGENTS.md) | Universal agent rules, coding style, git boundaries. |
-| **Rules & Workflow** | [`WORKFLOW.md`](file:///root/aaemu-dev/WORKFLOW.md) | Branching, commits, deployment, rollback recipes. |
-| **Roadmap & Progress** | [`ROADMAP.md`](file:///root/aaemu-dev/ROADMAP.md) | M1 through M10 macro requirements and exit criteria. |
-| **Roadmap & Progress** | [`ROADMAP_SCORECARD_SUMMARY.md`](file:///root/aaemu-dev/ROADMAP.md) | see ROADMAP.md / SCORECARD.md for milestone completion state. |
-| **Roadmap & Progress** | [`scorecard-explorations/progression-board.md`](file:///root/aaemu-dev/scorecard-explorations/progression-board.md) | Master board tracking status of all sub-lanes and open gates. |
-| **Backlog & Future Tasks**| [`scorecard-explorations/deferred-not-now.md`](file:///root/aaemu-dev/scorecard-explorations/deferred-not-now.md) | Parked features & revisit triggers (Sections 1–18). |
-| **Backlog & Future Tasks**| [`playertrace-coverage/dashboard_tasks.json`](file:///root/aaemu-dev/playertrace-coverage/dashboard_tasks.json) | 31 concrete in-game tasks with checklists and packet specs. |
-| **Gaps & Defects** | [`scorecard-explorations/playerbot-blockers.md`](file:///root/aaemu-dev/scorecard-explorations/playerbot-blockers.md) | Architectural blockers (PB-001 through PB-006). |
-| **Gaps & Defects** | [`scorecard-explorations/zero-wired-domains.md`](file:///root/aaemu-dev/scorecard-explorations/zero-wired-domains.md) | Catalog of unimplemented wire packets and missing systems. |
-| **Gaps & Defects** | [`scorecard-explorations/partial-domains.md`](file:///root/aaemu-dev/scorecard-explorations/partial-domains.md) | Mechanics with incomplete logic or missing persistence. |
-| **Vision & Concepts** | [`LIVING-WORLD.md`](file:///root/aaemu-dev/LIVING-WORLD.md) | Blueprint for living bot societies, trade, and economy. |
-| **Vision & Concepts** | [`PROJECT-CONTROL.md`](file:///root/aaemu-dev/PROJECT-CONTROL.md) / [`VISION.md`](file:///root/aaemu-dev/VISION.md) | Target user experience, core pillars, and project scope. |
-| **World & Reference** | [`Docs/wiki/World-Continents-Races-and-Mirage-Isle.md`](file:///root/aaemu-dev/Docs/wiki/World-Continents-Races-and-Mirage-Isle.md) | World zones, races, NPC distributions, islands & Mirage Isle architecture. |
+| **Rules & Workflow** | [`AGENTS.md`](AGENTS.md) | Universal agent rules, coding style, git boundaries. |
+| **Rules & Workflow** | [`WORKFLOW.md`](WORKFLOW.md) | Branching, commits, deployment, rollback recipes. |
+| **Roadmap & Progress** | [`ROADMAP.md`](ROADMAP.md) | M1 through M10 macro requirements and exit criteria. |
+| **Roadmap & Progress** | [`ROADMAP_SCORECARD_SUMMARY.md`](ROADMAP.md) | see ROADMAP.md / SCORECARD.md for milestone completion state. |
+| **Roadmap & Progress** | [`scorecard-explorations/progression-board.md`](scorecard-explorations/progression-board.md) | Historical execution board; current dispatch is ROADMAP.md. |
+| **Backlog & Future Tasks**| [`scorecard-explorations/deferred-not-now.md`](scorecard-explorations/deferred-not-now.md) | Parked features & revisit triggers (Sections 1–18). |
+| **Backlog & Future Tasks**| [`playertrace-coverage/dashboard_tasks.json`](playertrace-coverage/dashboard_tasks.json) | 31 concrete in-game tasks with checklists and packet specs. |
+| **Gaps & Defects** | [`scorecard-explorations/playerbot-blockers.md`](scorecard-explorations/playerbot-blockers.md) | Architectural blockers (PB-001 through PB-006). |
+| **Gaps & Defects** | [`scorecard-explorations/zero-wired-domains.md`](scorecard-explorations/zero-wired-domains.md) | Catalog of unimplemented wire packets and missing systems. |
+| **Gaps & Defects** | [`scorecard-explorations/partial-domains.md`](scorecard-explorations/partial-domains.md) | Mechanics with incomplete logic or missing persistence. |
+| **Vision & Concepts** | [`LIVING-WORLD.md`](LIVING-WORLD.md) | Blueprint for living bot societies, trade, and economy. |
+| **Vision & Concepts** | [`PROJECT-CONTROL.md`](PROJECT-CONTROL.md) / [`VISION.md`](VISION.md) | Target user experience, core pillars, and project scope. |
+| **World & Reference** | [`Docs/wiki/World-Continents-Races-and-Mirage-Isle.md`](Docs/wiki/World-Continents-Races-and-Mirage-Isle.md) | World zones, races, NPC distributions, islands & Mirage Isle architecture. |

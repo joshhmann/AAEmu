@@ -111,6 +111,25 @@ Verdict: PASS
 ```
 
 ```
+# Scenario: m1m2-min-slice
+Verdict: PASS
+- rig note: mount segment: horse item used; engine did not materialize an owned active mate headless (no mate to mount — summon path is client-visual; unlock proven by quest 4295)
+- stage OBS:BEFORE: 1 events, advance=Completed, step=251, status=completed
+- stage ACCEPT: 1 events, advance=Completed, step=251, status=quest 251 accepted (Npc/3512)
+- stage ADVANCE: 1 events, advance=Completed, step=251, status=quest 251 advanced (step Ready, status Ready)
+- stage TURNIN: 1 events, advance=Completed, step=251, status=quest 251 completed by turn-in
+- stage OBS:M1: 1 events, advance=Completed, step=251, status=completed
+- stage MOUNT:ITEM: 1 events, advance=Completed, step=8159, status=item 8159 used (skill 10602)
+- stage OBS:M2: 1 events, advance=Completed, step=251, status=completed
+- criterion [m1-quest-251-completed]: PASS quest 251 completed (flag set, not active; observation confirms)
+- criterion [m2-mount-segment]: FAIL M2 mount segment: NO REAL MOUNT — engine did not materialize an owned active mate headless (declared limitation; item use Completed, summon path is client-visual)
+- criterion [bot-observation-deltas]: PASS obs: pos <0, 0, 0> → <0, 0, 0> → <0, 0, 0>; quests 0 → 0 → 0; observeRecords=3
+- criterion [lifecycle-trace-complete]: PASS records=7 completed=7 incompleteCompleted=0 rejectedWithRunning=0
+- actor requests: 7
+
+```
+
+```
 # Scenario: m1m2-replay
 Verdict: PASS
 - rig note: quest 252: use item 7738 provisioned (census fired synthetic ItemUse)
@@ -212,25 +231,6 @@ Verdict: PASS
 - criterion [lifecycle-trace-complete]: PASS records=55 completed=55 incompleteCompleted=0 rejectedWithRunning=0
 - criterion [m2-mount-segment]: FAIL M2 mount segment: NO REAL MOUNT — engine did not materialize an owned active mate headless (declared limitation; item use Completed, summon path is client-visual)
 - actor requests: 56
-
-```
-
-```
-# Scenario: m1m2-min-slice
-Verdict: PASS
-- rig note: mount segment: horse item used; engine did not materialize an owned active mate headless (no mate to mount — summon path is client-visual; unlock proven by quest 4295)
-- stage OBS:BEFORE: 1 events, advance=Completed, step=251, status=completed
-- stage ACCEPT: 1 events, advance=Completed, step=251, status=quest 251 accepted (Npc/3512)
-- stage ADVANCE: 1 events, advance=Completed, step=251, status=quest 251 advanced (step Ready, status Ready)
-- stage TURNIN: 1 events, advance=Completed, step=251, status=quest 251 completed by turn-in
-- stage OBS:M1: 1 events, advance=Completed, step=251, status=completed
-- stage MOUNT:ITEM: 1 events, advance=Completed, step=8159, status=item 8159 used (skill 10602)
-- stage OBS:M2: 1 events, advance=Completed, step=251, status=completed
-- criterion [m1-quest-251-completed]: PASS quest 251 completed (flag set, not active; observation confirms)
-- criterion [m2-mount-segment]: FAIL M2 mount segment: NO REAL MOUNT — engine did not materialize an owned active mate headless (declared limitation; item use Completed, summon path is client-visual)
-- criterion [bot-observation-deltas]: PASS obs: pos <0, 0, 0> → <0, 0, 0> → <0, 0, 0>; quests 0 → 0 → 0; observeRecords=3
-- criterion [lifecycle-trace-complete]: PASS records=7 completed=7 incompleteCompleted=0 rejectedWithRunning=0
-- actor requests: 7
 
 ```
 

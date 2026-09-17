@@ -33,8 +33,29 @@ Target features (our lane):
 
 ## Development and acceptance
 
-Development is at M8 — Living Village, transitioning toward M9 — Emergent world systems.
-M8 has a qualified engineering/runtime exit, not human acceptance. The outstanding formal
+### Product commitments (current direction, 2026-09-15)
+
+1. **A dependable human-playable ArcheAge 1.2.4 experience.** A player can enter,
+   progress, recover, build a livelihood, cooperate, and return to durable state
+   through ordinary gameplay, without GM repair. Declare supported journeys and
+   known deviations; do not promise full fidelity from a table-wiring percentage.
+2. **A persistent living world using those same rules.** Residents acquire their
+   prerequisites, choose legal work, recover from failure, and repeat it. Their
+   actual production and consumption matter to other residents and human players.
+   Scripted presence, seeded demonstrations, and ledger activity alone are not this exit.
+
+Keep three delivery lanes visible: **human playability**, **PlayerBot parity and
+autonomy**, and **population/society**. These are planning views, not replacements
+for the existing domain lanes, milestone IDs, or evidence dimensions. Bots need not
+wait for every human feature: improve one shared playable loop, teach bots to close
+it, then expand. Human-only defects retain product priority even without a bot consumer.
+
+M8 → M9 remains the long-term horizon, not a command to skip unfinished shared loops.
+The dispatch order is the [current delivery queue](ROADMAP.md#current-delivery-direction).
+The [slice contract](PROJECT-CONTROL.md#delivery-contract) governs agent work.
+
+Historically, M8 — Living Village has a qualified engineering/runtime exit,
+not human acceptance. The outstanding formal
 M1–M7 human acceptance backlog does not globally block PlayerBot progression testing or
 later milestone development. Humans and bots exercise the same gameplay systems in parallel;
 acceptance remains scoped to the evidence actually obtained.

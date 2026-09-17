@@ -1,4 +1,12 @@
 # AAEmu PlayerBot Progression, Architecture & Testing Framework
+
+> **Historical audit, not current dispatch (2026-09-15 reconciliation).** Keep
+> dated findings below as their original evidence scope. Current grades live in
+> SCORECARD.md; current sequence and GOAP policy live in
+> [ROADMAP](ROADMAP.md#current-delivery-direction) and
+> [PROJECT-CONTROL](PROJECT-CONTROL.md#bot-decision-architecture). Reproduce a finding
+> against current source before fixing it; do not treat every old diagnosis as open.
+
 ## Comprehensive Feature-by-Feature Loop Audit, Orchestrator Dashboard, and H-Gate Diagnosis
 
 - **Date:** 2026-09-13

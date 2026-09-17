@@ -16,7 +16,272 @@
 > that made 2014 ArcheAge memorable. If every decision on this project
 > passes that test, the architecture stays right.
 
-## Post-M7 readiness — roadmap zoom-out: prioritized post-M7 work and M8 horizon (2026-09-05, docs-only)
+## Current delivery direction
+
+**2026-09-15 planning reconciliation.** This is the current dispatch view, superseding
+older proposed queue order below, not historical evidence or locked milestone exits.
+Source checkpoint: `d0d58e5848829b7a85da3847d03da00a90cb7c68` plus existing uncommitted
+GOAP/runtime work. No engineering, live, or human grade is promoted by this plan.
+Product commitments: [VISION](VISION.md#product-commitments-current-direction-2026-09-15).
+Agent operating rules: [delivery contract](PROJECT-CONTROL.md#delivery-contract).
+
+### Repeatable expansion protocol
+
+All future zones, features and mechanics use the
+[shared discovery-to-delivery contract](.kanban-templates/implementation.md), not a
+fresh ad-hoc blueprint. Parent scope brief → evidence inventory → requirement/gap
+map → dependency-ordered slices → real acceptance → updated coverage and next delta.
+Archaeology, source/tests, Graphify and relevant human/bot corpus are complementary;
+record contradictions and missing evidence as targeted tasks. Carry forward only
+applicable proved shared behavior; explicitly verify each zone/feature's differences.
+Use existing mechanic/zone ledgers and stable IDs, not a second milestone system.
+
+### First owned small plot journey
+
+**Current product target, clarified by Josh 2026-09-16:** one ordinary new bot
+progresses from its starting zone to a genuinely owned, usable small scarecrow plot,
+plants a crop, receives its harvest and starts the next cycle without intervention.
+Planning corridor: **one Nuian/Solzreed character**, not all races/regions at once.
+Existing milestone parents: M1/M2 progression → M3a/M3b ownership/persistence →
+M5 shared actions → M7 autonomous journey; not a new milestone number.
+
+Canonical review: [fresh-bot-to-farm dossier](scorecard-explorations/mechanics/fresh-bot-to-farm-audit-2026-09-12.md#2026-09-16--owned-small-plot-route-canonical-correction-and-gap-map).
+The actual requirement chain is **level 10 eligibility → 4415 → 4479 → 4417 → 4424
+→ 4439 → 4438**, not "level 7 → directly accept 4438". Quest 4438 supplies design
+15596, lumber 8337 and 25 bound certificates 31892. Item 8000001 is APEX, not tax.
+These are data/code findings, not a verified gameplay route.
+
+**Boundary:** complete the small plot's own required build step, not a separate house.
+No construction-pack economy, timber plantation, multi-bot village, extra merchant
+stock, new tax currency or blanket GoalLevelUp implementation belongs in this exit.
+Initial ownership + first harvest/replant is the first exit; one real tax renewal is
+a subsequent sustainment slice before any "self-sustaining farmer" claim.
+
+| Order / bounded slice | Required result | Status / dependencies |
+|---|---|---|
+| Pin route and prerequisites | Resolve normal L1→10 progression, spawn, real recruiter/quest objects, objective families, funds/labor and legal plot candidate in the selected corridor. Attach the shared implementation contract and gap map. | OPEN; canonical chain identified, exact playable route/availability still unproved. First dispatch alongside P1 evidence/fixture repairs. |
+| Correct canonical bot item identity | Remove the assumption that 8000001 is tax or 15659 a tree sapling; use engine/canonical identities in selected actions/perception/tests. Preserve existing saves. | P1 OPEN; pairs with fixture isolation, not GM inventory cleanup. |
+| Prove first-property tax correctness | Reproduce zero-house-account early return in CalculateBuildingTaxInfo; ensure ordinary placement charges correct deposit/first period under actual tax mode without free placement, double charge or material loss. | P1 OPEN; source finding, live reproduction pending. Required before ownership acceptance. |
+| Progress from L1 to chain eligibility | Bot completes selected normal quests/actions and reaches the actual level requirement; missing objective types become named child fixes. | OPEN; no granted XP/levels or forced quest completion. Reuse quest driver; do not assume a GoalLevelUp exists. |
+| Complete prerequisite chain and earn design | Prove each of the six quest legs through actual gather/interaction/item-use/report actions; inventory contains the legitimate quest rewards exactly once. | OPEN; one failing quest/objective per repair slice. Real actors, not injected credit. |
+| Reach, claim and finish the small plot | Resolve legal space and actual design instance, pay applicable tax, complete housing 267's own build step through ordinary skills, verify owner and planting permissions. | OPEN; requires earned design, tax fix/proof and connection-mediated BuildHouse support. No direct OwnedHouseId assignment. |
+| First owned-plot crop cycle | Acquire potato seed legitimately, plant inside owned plot, wait for real growth, harvest into actual bag, begin next cycle; verify labor/items and one selected interruption/recovery. | OPEN; requires shared interaction parity, real target binding and authoritative observations. |
+| Integrated ordinary journey + restart | Fresh start to owned-plot harvest/replant without in-run repairs; restart retains owner, plot and relevant inventory/crop state without duplication. H recorded separately. | BLOCKED on preceding real-service proofs. No ten-bot claim. |
+| Sustainment follow-up | Resolve actual eligible crafting sign/access, earn labor and craft/pay one renewal using canonical certificates; prove resource balance. | DEFERRED until first journey exit; no vendor-stock shortcut. |
+
+GOAP/policy selects actions; ordinary services execute and observed state verifies.
+A deterministic reference scenario specifies a reproducible route, not a second
+gameplay implementation or fake success path. Verify subloops in isolation, then
+prove the same chain integrated. Functional reference success and adaptive GOAP
+autonomy must have separate verdicts. Seeded subloops never close ordinary acquisition.
+
+All implementation uses [.kanban-templates/implementation.md](.kanban-templates/implementation.md).
+Each card names its missing dependencies and next task. **LOOP INCOMPLETE** until all
+required legs have the stated evidence. The corrective queue below still applies;
+its generic homestead action/loop tasks are now constrained to this small-plot scope.
+
+### High-priority corrective queue — 2026-09-16
+
+Josh requested these corrections after the alignment review. This queue takes
+precedence over new homestead/GOAP breadth; operational safety and independent
+human-playability fixes continue. Existing milestone IDs and historical evidence
+remain unchanged. These are repository task briefs, not externally dispatched cards.
+All are **OPEN / unassigned**; suggested routing is Tai implementation, Rei independent
+verification, Nei records, Mai separately authorized deployment. Recheck current
+source before starting; baseline `63f6567e7a198775ffe885a3345db70ff5a50777` + dirty tree.
+
+#### P1 — Bounded combat executor prerequisite: learned-skill GCD
+
+- **Parent/outcome:** M5 action parity. A bounded combat executor, not GOAP or the thin
+  actor adapter, owns timing and retry around the existing learned-skill GCD gate.
+- **Current state:** deferred after a direct `GameplayActor.Cast` enforcement caused
+  no-time-advance scenario runners to exhaust their hunt budgets. The prior actor seam is
+  restored; no partial GCD-parity claim remains.
+- **Scope when authorized:** establish bounded wait/retry and deterministic time evidence,
+  then route one supported skill through the existing `Skill.Use` gate. No packet
+  imitation, new gameplay service, harvest/purchase/planting change, or GOAP micro-action.
+- **Acceptance:** a cast completes or reaches an authoritative terminal refusal without
+  consuming retry budget while time is stationary; repeated requests do not duplicate an
+  effect; the client packet path remains covered. This is B-level action parity only.
+- **Dependencies/exit:** requires the bounded executor and clock/test strategy. Packet-owned
+  semantics remain unresolved; harvest's asynchronous completion remains separate.
+
+#### P1 — Correct synthetic evidence and evaluator verdicts
+
+- **Parent/outcome:** M6/M7 evidence integrity. Readers and tools can distinguish
+  synthetic orchestration from actual gameplay without inspecting test source.
+- **Scope:** `HomesteadTenBotScenarioRigTests`, its evidence writer,
+  `Scripts/playertrace-coverage/infer_homestead_traces.py`, and both homestead inference
+  reports. Retain useful tests and original provenance; annotate superseded claims.
+- **Acceptance:** label fake actor, manual position changes, state overrides, seeded
+  items, and manual completion in both machine/human reports. Record source SHA,
+  dirty state, input artifact/hash and evidence layer. Missing provenance stays
+  UNKNOWN. Separate "synthetic scenario passed" from "gameplay loop proved".
+  Text matching is heuristic discovery, not resource conservation or verified intent.
+  Regression tests must reject failed/cancelled requests, duplicate events, reordered
+  or interleaved actors, and success-sounding text with no authoritative postcondition
+  as gameplay proof. A fully synthetic successful trace must never earn a live verdict.
+- **Dependencies/exit:** ready for bounded implementation; close only after evaluator
+  tests and regenerated reports agree. No gameplay or milestone promotion.
+
+#### P1 — Isolate demonstration provisioning and unfinished homestead activation
+
+- **Parent/outcome:** M5/M6 parity. Ordinary bot creation does not silently grant
+  homestead resources or activate unfinished behavior.
+- **Scope:** `HeadlessSession`, `HomesteadActivityModule`, registration/config and
+  `/bot home` fixture controls. Preserve existing persisted characters/items.
+- **Acceptance:** normal provisioning follows normal progression without the added
+  GM kit; demonstration kit/unfinished activity require explicit opt-in and a visible
+  fixture label. Default eligibility refuses unfinished homestead work. Test ordinary
+  creation, opt-in setup, repeated setup without unintended duplicate grants, and
+  preservation of existing saves. No live inventory cleanup or database mutation.
+- **Dependencies/exit:** ready; configuration remains local-safe. User-visible enablement
+  needs verified prerequisites and a separate deployment decision, not a unit pass.
+
+#### P1 — Make planner state identity resource-correct
+
+- **Parent/outcome:** M6 planner correctness. Plans preserve meaningful gold/labor
+  differences and cannot lose a necessary affordable path by flags-only pruning.
+- **Scope:** `GoapPlanner`, state identity, focused tests; no new domains or cache expansion.
+- **Acceptance:** fail-before/pass-after cases with identical flags but different
+  resources, resource-only transitions, competing paths, and unaffordable actions.
+  Review existing cache keys if used. Prove heuristic assumptions or remove optimality
+  claims; record measured latency/allocation separately from expansion-count bounds.
+- **Dependencies/exit:** ready; deterministic search proof only, not live autonomy.
+
+#### P1 — Make planning observations reflect authoritative state
+
+- **Parent/outcome:** M5/M6 perception. A selected action receives truthful legality
+  and resource signals, not convenient flags.
+- **Scope:** `BotWorldStateProvider` and test seams. Separate maturity from bag fullness;
+  use actual hostility/range rules; distinguish required building materials from an
+  arbitrary backpack. Keep fake overrides out of production acceptance paths.
+- **Acceptance:** focused negative/positive cases for friendly NPCs, merchant reach,
+  mature crop with non-full bag, wrong pack, and stale ownership. Ground relevant values
+  through archaeology; do not replace one guessed constant with another.
+- **Dependencies/exit:** ready to scope; split independent observations into child
+  slices if needed. No broad perception-complete claim from a single action's cases.
+
+#### P1 — Bind and prove one real homestead action
+
+- **Parent/outcome:** M5 action parity / M7 livelihood. One selected action operates
+  on an actual eligible world object using the ordinary gameplay service.
+- **Scope:** choose one Harvest/Craft/Construct action before coding; resolve object
+  IDs and canonical recipe/material requirements. No fixed runtime target IDs such
+  as `Interact(2001)`, `Interact(101)`, or workbench `0` as stand-ins for discovery.
+- **Acceptance:** real target selection and observed world/inventory consequence;
+  wrong target, missing materials, out-of-range, disappearing target, interruption,
+  and retry cannot falsely succeed or duplicate effects. Run an isolated live-server
+  scenario after focused tests. Existing Harvest/Cast parity blockers remain dependencies.
+- **Dependencies/exit:** brief/reproduction ready; live closure depends on the selected
+  action's parity and observation fixes. Other actions remain open follow-up slices.
+
+#### P1 — Prove one real bot loop before claiming ten
+
+- **Parent/outcome:** M7/M8 livelihood. A single bot completes a named bounded loop
+  through ordinary services with no in-run fixture repair.
+- **Scope:** choose exact loop/start state after preceding action proofs. First run may
+  be seeded, explicitly labeled; unseeded acquisition is a separate follow-up proof.
+- **Acceptance:** isolated live server, actual Character/inventory/world state, resolved
+  targets, observed completion, repeat plus one named recovery, and restart proof where
+  durable state is claimed. No manual Transform changes, state overrides, request
+  completion, injected events or GM/DB grants during the run. Reconcile quantities,
+  money/labor and ownership; capture exact revision, commands and artifact locations.
+  Retain failures as failures. Human/client feel remains UNKNOWN until Josh runs it.
+- **Dependencies/exit:** blocked on real action chain, resource-correct planning and
+  truthful observations. Ten-bot/region expansion follows single-bot proof; it is not
+  a substitute for it. A passed seeded run does not close unseeded livelihood.
+
+#### P1 — Reconcile delivery records and enforce truthful handoff
+
+- **Parent/outcome:** project control. Each new delivery has an auditable claim boundary.
+- **Scope:** commits `c273c6da7`, `91aa560b5`, `63f6567e7`, affected records/dashboard
+  and pending work. Do not bundle unrelated dirty edits or rewrite historical results.
+- **Acceptance:** inventory what is committed versus WIP; attach the actual tests,
+  commands, source/artifact provenance and independent review state. State implemented,
+  verified layer, deployed/unknown, and not proved separately. Missing evidence stays
+  UNKNOWN. Dashboard mirrors the records; no "fully verified" or milestone closure
+  inferred from fake-actor traces. Preserve existing H grades and qualified exits.
+- **Dependencies/exit:** ready to inventory; reconcile again after corrective slices.
+  Commit/push/deploy require their own authorization and gates.
+
+#### Required loop-completeness inventory
+
+The reconciliation task must publish this checklist for the selected homestead loop
+before anyone calls it complete. This is the current review boundary, not a new live run:
+
+| Required leg | Current gap / evidence boundary | Next corrective work |
+|---|---|---|
+| Acquire starting means | GM starter kit is seeding, not acquisition proof. Ordinary acquisition unproved. | Isolate fixtures; specify/prove acquisition separately. |
+| Discover eligible targets | Fixed runtime IDs/zero workbench target still occur; concrete binding incomplete. | Bind one real action, then subsequent actions individually. |
+| Travel and reach | Synthetic rig sets positions; that run proves no route or legal reach. Existing navigation evidence is not discarded. | Isolated actual-target travel/reach scenario. |
+| Select affordable/legal actions | Flags-only search and inaccurate observation predicates remain review findings. | Planner identity and perception tasks. |
+| Plant/grow/harvest/craft/construct | Rig supplies intermediate and terminal states; each claimed ordinary action still needs scoped real proof. | Shared parity + real action chain; investigate blockers rather than filling flags. |
+| Conserve resources and ownership | Text-derived counts are not inventory/currency/labor/ownership reconciliation. | Authoritative before/after observations and negative/retry tests. |
+| Recover and repeat | Ten synthetic actors do not demonstrate a self-recovering repeated livelihood. | Single live loop with named interruption/recovery and repeat. |
+| Retain durable state | No fresh homestead GOAP restart proof established by the new report. Existing housing persistence evidence retains its original scope. | Targeted restart proof for the new loop's claimed durable state. |
+| Human/client experience | No new human verdict established. | Josh-owned named client scenario; do not infer from automation. |
+
+The implementing agent must refine unknowns against current source, document any
+additional required missing system/data/service, and link the smallest unblock task.
+A seeded test may omit acquisition only with an explicit seeded-subloop label.
+
+**Hold:** do not add homestead domains, population claims, or default rollout while
+their prerequisites above are open. Preserve scaffolding and synthetic tests. This
+is a targeted dependency hold, not a freeze on safe core work or all PlayerBot work.
+
+### Broad view: three delivery lanes
+
+| Lane | Outcome and expansion order | Exit boundary |
+|---|---|---|
+| Human-playable 1.2.4 | Reliable operations → everyday movement/combat/loot/equip/death/recovery → progression corridors → property/farming/crafting/trade → party/Expedition/Indun/ships/PvP/justice → wider world and endgame fidelity. | Named ordinary-client journeys, durable consequences, known deviations, human verdicts. No GM repair. |
+| PlayerBot parity and autonomy | Shared action semantics → seeded closed loop → self-acquired livelihood → choice/recovery/repetition → cooperation. | Perceive/decide/act/verify on ordinary Characters; distinguish seeded execution from autonomous acquisition. |
+| Population and society | Reliable resident loop → real producer/consumer dependency → mixed village → broader M9 interactions → M10 territory/siege. | Actual resources change hands and constrain behavior; persistence, load, and coexistence at the claimed population. |
+
+These are not sequential whole-project gates. A shared playable slice may advance all
+three lanes; human-only blockers still matter. Preserve M8's qualified runtime exit
+and A5's historical scale result, but do not equate them with an autonomous village.
+M8.5 social/guide, M9 emergent systems, M9.5 activities, and M10 territory/siege retain
+their existing definitions. Full 1.2.4 fidelity remains a coverage program, not a percentage.
+
+### Near-term slice queue
+
+Labels below are descriptive anchors, not new milestone or kanban IDs. "Ready to
+scope" authorizes a bounded brief/reproduction, not an unsupported assumption that
+implementation can begin. Map each brief to its existing mechanic/blocker row.
+Tai owns implementation, Rei verification, Nei tracking; Mai coordinates authorized
+deployment; Josh supplies named H verdicts. Assign a specific worker before dispatch.
+
+| Slice / parent | Observable acceptance | Readiness and next dependency |
+|---|---|---|
+| **Schema delivery safety** — core operations / persistence | Built game image contains or explicitly mounts updates; isolated fresh + existing DB startup applies the intended migration once; restart retains the object; production table check and backup required before any later deploy. | Ready to scope from the 09-15 missing-shipyards incident. No production deploy in this plan. |
+| **Human corridor baseline** — M1/M2 + zone ledger | Define one named start/route/level range and reset state; ordinary client reaches a stated progression destination, with loot/equip/ability/death/recovery and relog checks where applicable. Record pass/fail/unknown per step; turn first blocking defect into its own slice. | Ready for scoped packet and current-build rehearsal. Existing Solzreed evidence is a starting point, not all-zone closure. Josh owns H; engineering need not wait to reproduce failures. |
+| **Harvest semantic parity** — M5 actor / farming | Human and bot use the same authoritative interaction semantics: range, cast duration, interruption, labor, output, and refusal; interrupted/repeated requests cannot duplicate output or charge incorrectly. | Ready to scope against Q-harvest-seam; reconcile current source and golden traces first. Do not declare parity from packet imitation alone. |
+| **Cast legality and lifecycle** — M5 / combat | One supported skill respects authoritative legality, timing, cancellation, and terminal completion on both paths, including the named GCD case. | Ready to reproduce Q-gcd-shape; separate from Harvest unless they demonstrably share one narrow fix. |
+| **Seeded two-harvest loop** — farming / M7 readiness | With disclosed inventory/site setup, travel → interact → await real completion → second interaction; blocked target and interruption terminate/recover without manual repair. Trace ordinary state changes. | Depends on interaction parity and travel/wait preconditions. Proves seeded execution only. |
+| **Unseeded livelihood** — M7 / M8 farming | From bounded ordinary starting means, locate merchant, acquire inputs, find legal site, plant/grow/harvest, recover from one named failure, and repeat with conserved money/labor/items. | Depends on seeded execution and verified merchant/plant semantics. No fixture grants during acceptance. |
+| **Planner state correctness** — M6 / GOAP | Tests distinguish states with different spendable resources; search cannot choose an unaffordable plan or discard a necessary resource state. Document cost/heuristic assumptions and measured search bounds. | Ready to scope against committed foundation + dirty WIP. No blanket optimality or allocation-free claim. |
+| **Planner observation and target binding** — M5/M6 | One action binds an actual eligible object; perception reflects authoritative range, hostility, resources, and availability; stale/disappearing targets refuse or replan. | Narrow to one supported action; depends on its ordinary actor contract. Separate observation and binding cards if independently verifiable. |
+| **Planner runtime integration** — M6/M7 | One planner-driven loop uses the existing scheduler/request lifecycle, verifies real effects, survives cancellation/restart as specified, and matches the deterministic baseline without second-path gameplay. | Depends on state correctness, observation/binding, and reliable action chain. Existing untracked runtime files require review, not replacement by default. |
+| **Real producer–consumer village** — M8 | A consumer requires goods actually produced by another resident; interruption or shortage changes behavior; ledger reconciles inventory/currency; repeat and restart preserve obligations. | After one self-sustaining livelihood. Start at a small declared cohort; mixed-client observation remains a separate H gate. |
+
+### Expansion and stop rules
+
+- After the first human corridor, choose the next corridor from observed blockers and
+  uncovered starts/regions/level bands. Record the coverage denominator explicitly;
+  a sparse zone ledger is an inventory gap, not proof all unlisted zones are broken.
+- After a reliable livelihood, add one distinct need or dependency, then the next.
+  Crime/justice, convoy/piracy, rumor, identity, social guides, activities, and siege
+  remain real goals; expand where their shared mechanic and resident prerequisites hold.
+- Reuse existing lifecycle, persistence, diagnostics, navigation, and scale work.
+  Re-run scale acceptance when changed load shape warrants it; 1,000 registered / 50
+  embodied does not mean 1,000 autonomous full-simulation residents.
+- Stop a slice at its named acceptance boundary. New independent outcomes become
+  follow-up cards. Record blockers instead of widening a planner or adding a bypass.
+- Gate code changes under AGENTS.md; collect scenario evidence separately. Completed
+  tests, deployed code, human acceptance, and autonomous closure are different claims.
+
+## Post-M7 readiness — roadmap zoom-out: prioritized post-M7 work and M8 horizon (2026-09-05, historical dispatch view)
 
 - Provenance (2026-09-08): develop `301944000` (since `0f2ff824f`: 5.0 ports, DI-deadlock fix, SHAPE/A5 CLOSED, C4/Crafter/C5 slices, travel-leg, Hasla overlay, whitelist, soak assembly, telemetry, re-soak to QUALIFIED M8 exit)
   - docs-only HEAD; no code/test/config/data edits, no builds/gates/deploys

@@ -1,5 +1,31 @@
 # .kanban-templates — AAEmu fork task templates (onboarding-grade)
 
+## Evidence and loop-completeness handoff (2026-09-16)
+
+- Implemented:
+- Verified scenario and evidence layer (synthetic / deterministic rig / live / human):
+- Seeded setup, mocks, manual state changes or other bypasses:
+- Not proved:
+- Required loop legs and missing/partial/blocked/unknown dependencies:
+- Smallest next task for each missing requirement (N/A only with a reason):
+- Exact SHA + dirty state, command/environment, artifact/input provenance:
+- Independent review and deployment state (unknown/not run if absent):
+
+If any required leg is unproved, headline **LOOP INCOMPLETE**. A synthetic pass
+cannot establish an actual gameplay loop; an evaluator cannot upgrade its input's
+evidence layer. Follow [AGENTS.md](../AGENTS.md#evidence-honesty-and-anti-overclaim-gate-2026-09-16)
+and the [priority queue](../ROADMAP.md#high-priority-corrective-queue--2026-09-16).
+
+## Current slice contract (2026-09-15)
+
+Use [PROJECT-CONTROL](../PROJECT-CONTROL.md#delivery-contract) and the
+[current queue](../ROADMAP.md#near-term-slice-queue), not historical board order.
+Fill: parent/outcome; SHA + dirty baseline; scope/non-goals; initial state and seed
+disclosure; acceptance + evidence layer; dependencies; implementer/verifier;
+stop/handoff. One reviewable outcome per card, not one class or entire subsystem.
+Report implementation, verification, deployment, and human acceptance separately.
+Existing workflow gates still apply; no signoff or deployment permission is implied.
+
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo, and
 > it is repeated at the top of every template on purpose):** **NEVER push a
 > branch or open a PR to upstream AAEmu/AAEmu.** Upstream is intake-only;
@@ -20,19 +46,15 @@
 
 > ✂️ **CARD SIZING (Josh, locked 2026-08-04 — break steps down):** one card =
 > one independently reviewable outcome with one primary risk and a bounded
-> verification plan. Do not size work in agent turns. Defect chain template:
-> 1) test rig + fail-before → 2) implementation + pass-after → 3) census +
-> docs + push, each parent-gated on the previous. Every card ends pushed or
-> as a deliverable file with an explicit path — never end holding un-pushed
-> commits. If a step exceeds ~2/3 budget: push what exists, split the rest
-> into a child card. If discovery reveals a second subsystem, schema migration,
-> or independent failure mode, split it into a child card before implementation
-> expands. **HARD LAW (2026-08-04, iteration exhaustion = design
-> failure): deliverable must fit in ONE sentence (no "and then / also /
-> plus" — split FIRST, in the SAME batch as the parent); total card ≤ ~60
-> turns; TWO timeouts ⇒ mandatory split on the third retry; worker at ~100
-> turns ⇒ STOP, push what works, comment what's left. Violating this is a
-> card-design bug, not a worker problem.**
+> verification plan. Do not size work in agent turns. **2026-09-15 operational
+> clarification:** reproduction, implementation, regression proof, and records
+> normally belong to the same outcome slice. Split a large investigation or an
+> independently useful prerequisite when it has its own acceptance boundary.
+> A cross-layer change is not automatically too large; a second independent
+> outcome or primary risk is the signal to split. Repeated timeouts trigger a
+> scope/blocker review, not an automatic push of incomplete work. Hand off exact
+> files, evidence, remaining work, and review state. Push/deploy only when authorized
+> and applicable gates hold. This replaces the former 60/100-turn sizing heuristics.
 
 ## What this is
 
@@ -41,10 +63,23 @@ for this repo starts from one of these files. New workers/explorers: read this
 README, then the template's **Get up to speed** section — first 10 minutes of
 any task is orientation, not guessing.
 
+## Common implementation contract
+
+Every new zone, feature, mechanic or journey uses
+[implementation.md](implementation.md) as the shared **discovery-to-delivery process**:
+scope → inventory archaeology/code/tests/corpus → reconcile gaps → order slices →
+implement/verify → reconcile and expand. Use a parent scope brief, then link it from
+bounded feature/fix cards. Fill once in the existing card/dossier; do not duplicate
+it across documents. Next-zone work reuses proved shared mechanics and verifies the
+local delta. Pure plumbing/UI uses an observable outcome with justified N/A loop fields.
+The first filled product application is the
+[owned-small-plot journey](../ROADMAP.md#first-owned-small-plot-journey).
+
 ## Pick your template
 
 | Task type | Template | Output lands in |
 |-----------|----------|-----------------|
+| Every implementation | `implementation.md` + relevant feature/fix workflow | Existing card/dossier: outcome, gaps, acceptance, honest handoff |
 | Bug fix (Track 1, upstream-shaped) | `fix.md` | branch + tests → Rei gate → scorecard + `bugs/NNN` |
 | Feature (Track 2, our lane) | `feature.md` | branch + tests → Rei gate → scorecard |
 | Deep-dive / recon (knowledge, no code) | `explorer.md` | `scorecard-explorations/<domain>.md` |

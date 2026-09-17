@@ -1,5 +1,34 @@
 # FIX TEMPLATE — Track 1 canonical fix (strict workflow, lane gate: NO upstream PR)
 
+## Evidence and loop-completeness handoff (2026-09-16)
+
+- Implemented:
+- Verified scenario and evidence layer (synthetic / deterministic rig / live / human):
+- Seeded setup, mocks, manual state changes or other bypasses:
+- Not proved:
+- Required loop legs and missing/partial/blocked/unknown dependencies:
+- Smallest next task for each missing requirement (N/A only with a reason):
+- Exact SHA + dirty state, command/environment, artifact/input provenance:
+- Independent review and deployment state (unknown/not run if absent):
+
+If any required leg is unproved, headline **LOOP INCOMPLETE**. A synthetic pass
+cannot establish an actual gameplay loop; an evaluator cannot upgrade its input's
+evidence layer. Follow [AGENTS.md](../AGENTS.md#evidence-honesty-and-anti-overclaim-gate-2026-09-16)
+and the [priority queue](../ROADMAP.md#high-priority-corrective-queue--2026-09-16).
+
+Use [implementation.md](implementation.md) as the common filled contract for this
+fix. Complete it once in the card; the workflow below supplies fix-specific gates.
+
+## Current slice contract (2026-09-15)
+
+Use [PROJECT-CONTROL](../PROJECT-CONTROL.md#delivery-contract) and the
+[current queue](../ROADMAP.md#near-term-slice-queue), not historical board order.
+Fill: parent/outcome; SHA + dirty baseline; scope/non-goals; initial state and seed
+disclosure; acceptance + evidence layer; dependencies; implementer/verifier;
+stop/handoff. One reviewable outcome per card, not one class or entire subsystem.
+Report implementation, verification, deployment, and human acceptance separately.
+Existing workflow gates still apply; no signoff or deployment permission is implied.
+
 > 🚫 **THE RULE (Josh, permanent — sits ABOVE every other rule in this repo):**
 > **NEVER push a branch or open a PR to upstream AAEmu/AAEmu.** Upstream is
 > intake-only; everything stays on joshhmann/AAEmu. This rule applies to
