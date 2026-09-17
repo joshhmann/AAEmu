@@ -31,7 +31,7 @@
   - Cash-shop / APEX (`8000001`) usage (strictly forbidden; canonical items are `31892` bound and `31891` tradeable).
   - GM-granted levels, items, or free housing overrides in production.
 - **Full journey or explicitly named subloop:** Full journey with verified subloops (1: Starter Questing L1→10, 2: Windshade Chain 4415→4438, 3: Survey & Place 8×8, 4: Build Step, 5: Crop Cycle, 6: Tax Crafting & Renewal).
-- **Current status:** Phase 1 Real-Service Integration Rig complete. `FirstOwnedSmallPlotRealServiceJourneyTests` verified 1/1 green against native server services (`HousingManager`, `CharacterQuests`, `GameplayActor`, and `CraftEffect`). Layer `H` explicitly `UNKNOWN`.
+- **Current status:** The named journeys are deterministic integration fixtures, not real-service or autonomous-progression proof. Their construction completion explicitly applies the existing `CraftEffect` after `GameplayActor` enters the ordinary `Character.UseSkill` seam; `CraftEffect` remains the owner of labor, construction progress, packets, and attached Doodads. `H` explicitly remains `UNKNOWN`.
 
 ---
 
