@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl default
 
 WORKDIR app
 COPY --from=builder /app/publish ./
+COPY ./SQL/updates ./SQL/updates
 
 EXPOSE 1239 1250
 ENTRYPOINT ["dotnet", "AAEmu.Game.dll"]

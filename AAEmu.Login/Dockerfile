@@ -21,6 +21,7 @@ RUN apk add --no-cache openssl mysql-client
 WORKDIR app
 
 COPY --from=builder /app/publish ./
+COPY ./SQL/updates ./SQL/updates
 
 EXPOSE 1234 1237
 ENTRYPOINT ["dotnet", "AAEmu.Login.dll"]
