@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Numerics;
 
 using AAEmu.Commons.Utils;
@@ -1029,8 +1029,12 @@ public class HousingManager(
         hostileTaxRate = 0; // NOTE: When castles are added, this needs to be updated depending on ruling guild's settings
         oneWeekTaxCount = 0;
 
+        if (newHouseTemplate?.Taxation == null)
+            return false;
+
         var userHouses = new Dictionary<uint, House>();
-        if (GetByAccountId(userHouses, accountId) <= 0)
+        GetByAccountId(userHouses, accountId);
+        if (!buildingNewHouse && userHouses.Count <= 0)
             return false;
 
         // Count the houses on this account

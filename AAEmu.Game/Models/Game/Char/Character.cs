@@ -1651,12 +1651,12 @@ public partial class Character : Unit, ICharacter
         var actabilityChange = 0;
         byte actabilityStep = 0;
         var expMultiplier = 1f;
-        if (actabilityId > 0)
+        if (actabilityId > 0 && Actability?.Actabilities.TryGetValue((uint)actabilityId, out var actAbility) == true)
         {
             // Get multiplier before adding points
-            expMultiplier = Actability.Actabilities[(uint)actabilityId].GetExpMultiplier();
+            expMultiplier = actAbility.GetExpMultiplier();
             actabilityChange = (int)(Math.Abs(change) * AppConfiguration.Instance.World.ActabilityRate);
-            actabilityStep = Actability.Actabilities[(uint)actabilityId].Step;
+            actabilityStep = actAbility.Step;
             actabilityChange = Actability.AddPoint((uint)actabilityId, actabilityChange);
         }
 
@@ -1870,7 +1870,9 @@ public partial class Character : Unit, ICharacter
         if (newZone != null)
             SendMessage(ChatType.System, $"You have entered a closed zone ({newZone.ZoneKey} - {newZone.Name})!\nPlease leave immediately!", Color.Red);
 
-        var characterAccessLevel = CharacterManager.Instance.GetEffectiveAccessLevel(this);
+        var characterAccessLevel = CharacterManager.PeekInstance != null
+            ? CharacterManager.PeekInstance.GetEffectiveAccessLevel(this)
+            : AccessLevel;
         if (characterAccessLevel < 100)
         {
             // Do forbidden zone code handling

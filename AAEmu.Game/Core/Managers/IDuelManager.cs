@@ -13,6 +13,10 @@ public interface IDuelManager : IInitializable
     void DuelStart(uint id);
     void DuelCancel(uint challengerId, ErrorMessageType errorMessage);
     void DuelStop(uint id, DuelDetType det, uint loseId = 0);
+    /// <summary>
+    /// Ends a participant's duel when they leave the world (disconnect/relog).
+    /// </summary>
+    void OnParticipantDisconnect(Character character);
     bool DuelResultСheck(uint id);
     DuelDistance DuelDistanceСheck(uint id);
 }

@@ -61,9 +61,12 @@ public class DuelManager : Singleton<DuelManager>, IDuelManager
     {
         ArgumentNullException.ThrowIfNull(challenged);
         // приходит ID того, кто вызвал на дуэль
+        // Hoisted out of the try so the catch can tell a half-started duel
+        // (row found, setup threw) from a genuine unknown id.
+        Duel duel = null;
         try
         {
-            var duel = _duels[challengerId];
+            duel = _duels[challengerId];
 
             if (duel.DuelStarted == false)
             {
@@ -97,8 +100,47 @@ public class DuelManager : Singleton<DuelManager>, IDuelManager
         }
         catch (Exception e)
         {
-            // id is missing in the database
-            Logger.Warn($"DuelAccepted: Id = {challengerId} not found in duels[], error code: {e}");
+            if (duel == null)
+            {
+                // id is missing in the database
+                Logger.Warn($"DuelAccepted: Id = {challengerId} not found in duels[], error code: {e}");
+                return;
+            }
+
+            // The row was found but flag-spawn / faction / task setup threw
+            // part-way: roll the half-started duel back instead of stranding
+            // both sides IsInDuel with an orphan row a retry can never clear
+            // (DuelStarted already flipped, so a second accept just logs
+            // "already started").
+            if (duel.DuelStartTask != null)
+            {
+                _ = duel.DuelStartTask.Cancel();
+                duel.DuelStartTask = null;
+            }
+            if (duel.DuelFlag != null)
+            {
+                try
+                {
+                    duel.DuelFlag.Delete();
+                }
+                catch (Exception flagEx)
+                {
+                    Logger.Warn($"DuelAccepted: rollback flag delete failed for challengerId={challengerId}, error code: {flagEx}");
+                }
+                duel.DuelFlag = null;
+            }
+            if (duel.Challenger != null)
+            {
+                duel.Challenger.IsInDuel = false;
+                RestoreFaction(duel.Challenger);
+            }
+            if (duel.Challenged != null)
+            {
+                duel.Challenged.IsInDuel = false;
+                RestoreFaction(duel.Challenged);
+            }
+            DuelRemove(duel);
+            Logger.Error($"DuelAccepted: setup failed for challengerId={challengerId}, rolled back; error: {e}");
         }
     }
 
@@ -182,6 +224,40 @@ public class DuelManager : Singleton<DuelManager>, IDuelManager
             Logger.Warn($"DuelCancel: Id={challengerId} not found in duels[], error code: {e}");
         }
     }
+    /// <summary>
+    /// Ends a participant's duel when they leave the world (disconnect/relog).
+    /// Routed from the character lifecycle seam so a mid-duel disconnect clears
+    /// duel state deterministically for BOTH sides: end packets, faction restore
+    /// via <see cref="RestoreFaction"/>, IsInDuel reset, no orphan row, and no
+    /// post-stop monitor residue (DuelCleanUp cancels the monitors). Safe to
+    /// call for characters that are not dueling (no-op besides a defensive
+    /// IsInDuel reset).
+    /// </summary>
+    public void OnParticipantDisconnect(Character character)
+    {
+        if (character == null)
+            return;
+        try
+        {
+            if (!_duels.TryGetValue(character.Id, out var duel) || duel == null)
+            {
+                character.IsInDuel = false;
+                return;
+            }
+            var challengerId = duel.Challenger?.Id ?? character.Id;
+            DuelStop(challengerId, DuelDetType.Draw);
+            // DuelStop swallows its own failures: never leave the flags set.
+            if (duel.Challenger != null)
+                duel.Challenger.IsInDuel = false;
+            if (duel.Challenged != null)
+                duel.Challenged.IsInDuel = false;
+        }
+        catch (Exception e)
+        {
+            Logger.Warn($"OnParticipantDisconnect: Id={character.Id} error code: {e}");
+            character.IsInDuel = false;
+        }
+    }
 
     private void DuelCleanUp(uint id)
     {
@@ -202,6 +278,21 @@ public class DuelManager : Singleton<DuelManager>, IDuelManager
             {
                 _ = duel.DuelEndTimerTask.Cancel();
                 duel.DuelEndTimerTask = null;
+            }
+            // The start path schedules result + distance monitors that outlive
+            // DuelCleanUp otherwise: after the row is removed their next tick
+            // throws KeyNotFound (observed live 18:38:52, one-shot). Cancel
+            // them here, null-guarded like the existing cancels.
+            if (duel.DuelResultСheckTask != null)
+            {
+                _ = duel.DuelResultСheckTask.Cancel();
+                duel.DuelResultСheckTask = null;
+            }
+
+            if (duel.DuelDistanceСheckTask != null)
+            {
+                _ = duel.DuelDistanceСheckTask.Cancel();
+                duel.DuelDistanceСheckTask = null;
             }
 
             DuelRemove(duel);

@@ -122,6 +122,12 @@ public class CharacterLifecycleService : Singleton<CharacterLifecycleService>, I
 
         Logger.Trace($"Deactivating {character.Name} (id {character.Id}, reason {reason})");
 
+        // A mid-duel disconnect/relog must end the duel for BOTH sides
+        // deterministically (end packets, faction restore, IsInDuel reset, no
+        // orphan row). Runs before Delete() so the surviving opponent still
+        // gets the end packets. No-op for characters that are not dueling.
+        DuelManager.Instance.OnParticipantDisconnect(character);
+
         // Remove Radars
         RadarManager.Instance.UnRegister(character);
 

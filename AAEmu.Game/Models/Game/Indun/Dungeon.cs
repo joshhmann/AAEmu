@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Numerics;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.World;
@@ -180,6 +181,13 @@ public class Dungeon
     {
         Logger.Info($"[Dungeon] Adding player {character.Name} to dungeon {_zoneInstanceId.InstanceId}, {_zoneInstanceId.ZoneId}");
 
+        // The character arrives still registered in its previous world: drop it
+        // there FIRST so it is never dual-registered (stale PvP positions and
+        // visibility ghosts linger otherwise). RemoveObject/AddObject shapes mirror.
+        var previousWorld = character.ParentWorld;
+        if (previousWorld != null && !ReferenceEquals(previousWorld, World))
+            previousWorld.RemoveObject(character);
+
         lock (_lock)
         {
             if (!World.HasCharacter(character.Id))
@@ -316,13 +324,19 @@ public class Dungeon
             character.DisabledSetPosition = true;
             //character.MainWorldPosition = character.Transform.CloneDetached(character); // сохраним координаты для возврата в основной мир
             character.Transform.ApplyWorldSpawnPosition(World.Template.SpawnPosition, World.Id);
+            // Template spawn Z can hang over water/void (mirage /teleport entry
+            // sits at Z156) — snap to terrain so players land instead of
+            // dropping mid-air into fall damage. Mirrors the DuelManager
+            // duel-flag snap; keeps the template Z when geodata is unavailable.
+            var entryZ = SnapEntryHeightToTerrain(World.Template, character.Transform.World.Position, World.Template.SpawnPosition.Z);
+            character.Transform.Local.SetHeight(entryZ);
             character.SendPacket(
                 new SCLoadInstancePacket(
                     World.Id,
                     _zoneInstanceId.ZoneId,
                     World.Template.SpawnPosition.X,
                     World.Template.SpawnPosition.Y,
-                    World.Template.SpawnPosition.Z,
+                    entryZ,
                 World.Template.SpawnPosition.Roll.DegToRad(),
                 World.Template.SpawnPosition.Pitch.DegToRad(),
                 World.Template.SpawnPosition.Yaw.DegToRad()));
@@ -335,6 +349,42 @@ public class Dungeon
             Logger.Info($"World #{World.Id}, not have default spawn position.");
             character.SendErrorMessage(ErrorMessageType.NoServerInstanceResource);
         }
+    }
+    /// <summary>
+    /// Snaps a dungeon-entry Z to terrain, floored by the template water surface:
+    /// returns max(positive groundZ, OceanLevel) so over-water spawns (mirage
+    /// /teleport entry) land ON the water instead of falling from a mid-air
+    /// template Z or spawning on a deep seabed. The ground half mirrors the
+    /// DuelManager duel-flag snap. Never throws: a missing template (no GeoData
+    /// or OceanLevel either) keeps <paramref name="fallbackZ"/> — residual: a
+    /// null-template entry keeps a possibly mid-air Z. Note: OceanLevel defaults
+    /// to 100 even on dry worlds, so a dry floor below sea level floats to the
+    /// surface; only system instances (mirage/library) route through here.
+    /// </summary>
+    internal static float SnapEntryHeightToTerrain(WorldTemplate template, Vector3 position, float fallbackZ)
+    {
+        try
+        {
+            // No geodata at all (headless tests): nothing is known, keep Z.
+            var geo = template?.GeoData;
+            if (geo == null)
+                return fallbackZ;
+            var groundZ = geo.GetHeight(position);
+            var waterZ = template.OceanLevel;
+            var usableGround = float.IsFinite(groundZ) && groundZ > 0f;
+            var hasWater = float.IsFinite(waterZ) && waterZ > 0f;
+            // Usable ground: float shallow floors to the surface. No usable
+            // sample with a known water level: the spawn is over water/void,
+            // so land on the surface instead of a mid-air template Z.
+            if (usableGround)
+                return hasWater ? MathF.Max(groundZ, waterZ) : groundZ;
+            return hasWater ? waterZ : fallbackZ;
+        }
+        catch
+        {
+            // Unloaded geodata — keep the template Z.
+        }
+        return fallbackZ;
     }
 
     /// <summary>

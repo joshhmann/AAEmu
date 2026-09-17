@@ -1,4 +1,4 @@
-﻿using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Crafts;
@@ -19,7 +19,7 @@ public class CharacterCraft(Character owner)
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
     private int Count { get; set; }
-    private Craft CurrentCraft { get; set; }
+    public Craft CurrentCraft { get; private set; }
     /// <summary>
     /// Crafter doodad Id
     /// </summary>
