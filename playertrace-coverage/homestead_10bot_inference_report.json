@@ -1,0 +1,505 @@
+{
+  "timestamp": "2026-09-16T13:05:00Z",
+  "source_trace": "scorecard-explorations/generated/m7-homestead-10bot-spike.jsonl",
+  "total_bots_evaluated": 10,
+  "overall_verdict": "PASS",
+  "metrics": {
+    "passed_bots": 10,
+    "total_plots_claimed": 10,
+    "total_homes_constructed": 10,
+    "total_lumber_packs_crafted": 10,
+    "total_transit_distance_meters": 5632.3
+  },
+  "bots": [
+    {
+      "bot_index": 1,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          14149.5,
+          14992.0,
+          133.4
+        ],
+        "transit_to_zone_dist_m": 576.8,
+        "plot_id": 9000
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Nuian",
+      "inferred_starting_zone": "Solzreed Peninsula (Nuia)"
+    },
+    {
+      "bot_index": 2,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          14200.0,
+          14950.0,
+          130.0
+        ],
+        "transit_to_zone_dist_m": 528.6,
+        "plot_id": 9001
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Nuian",
+      "inferred_starting_zone": "Solzreed Peninsula (Nuia)"
+    },
+    {
+      "bot_index": 3,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          14100.0,
+          15050.0,
+          135.0
+        ],
+        "transit_to_zone_dist_m": 679.8,
+        "plot_id": 9002
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Nuian",
+      "inferred_starting_zone": "Solzreed Peninsula (Nuia)"
+    },
+    {
+      "bot_index": 4,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          16500.0,
+          13500.0,
+          180.0
+        ],
+        "transit_to_zone_dist_m": 424.3,
+        "plot_id": 9003
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Elf",
+      "inferred_starting_zone": "Gweonid Forest (Nuia)"
+    },
+    {
+      "bot_index": 5,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          16550.0,
+          13450.0,
+          182.0
+        ],
+        "transit_to_zone_dist_m": 367.8,
+        "plot_id": 9004
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Elf",
+      "inferred_starting_zone": "Gweonid Forest (Nuia)"
+    },
+    {
+      "bot_index": 6,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          21602.4,
+          7325.0,
+          120.0
+        ],
+        "transit_to_zone_dist_m": 345.2,
+        "plot_id": 9005
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Harani (Hariharan)",
+      "inferred_starting_zone": "Arcum Iris (Haranya)"
+    },
+    {
+      "bot_index": 7,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          21650.0,
+          7350.0,
+          122.0
+        ],
+        "transit_to_zone_dist_m": 295.3,
+        "plot_id": 9006
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Harani (Hariharan)",
+      "inferred_starting_zone": "Arcum Iris (Haranya)"
+    },
+    {
+      "bot_index": 8,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          21580.0,
+          7280.0,
+          119.0
+        ],
+        "transit_to_zone_dist_m": 392.0,
+        "plot_id": 9007
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Harani (Hariharan)",
+      "inferred_starting_zone": "Arcum Iris (Haranya)"
+    },
+    {
+      "bot_index": 9,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          23500.0,
+          8500.0,
+          250.0
+        ],
+        "transit_to_zone_dist_m": 424.3,
+        "plot_id": 9008
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Firran (Ferre)",
+      "inferred_starting_zone": "Falcon Plateau (Haranya)"
+    },
+    {
+      "bot_index": 10,
+      "record_count": 10,
+      "inferred_goals": [
+        {
+          "goal": "GoalClaimHomestead",
+          "confidence": 1.0,
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+        },
+        {
+          "goal": "GoalErectHome",
+          "confidence": 1.0,
+          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+        }
+      ],
+      "milestones_detected": [
+        "BORN_IN_WORLD",
+        "STARTER_KIT_VERIFIED",
+        "HOUSING_ZONE_REACHED",
+        "PLOT_CLAIMED",
+        "CROPS_CULTIVATED",
+        "TIMBER_HARVESTED",
+        "WORKBENCH_REACHED",
+        "MATERIAL_PACK_CRAFTED",
+        "PACK_DELIVERED_TO_SITE",
+        "HOMESTEAD_CONSTRUCTED"
+      ],
+      "resource_ledger": {
+        "scarecrow_designs": 1,
+        "tax_certificates": 10,
+        "saplings_planted": 1,
+        "timber_harvested": 1,
+        "packs_crafted": 1,
+        "homes_constructed": 1
+      },
+      "locations": {
+        "start": [
+          23550.0,
+          8550.0,
+          252.0
+        ],
+        "transit_to_zone_dist_m": 416.2,
+        "plot_id": 9009
+      },
+      "confidence_score": 1.0,
+      "verdict": "PASS",
+      "inferred_race": "Firran (Ferre)",
+      "inferred_starting_zone": "Falcon Plateau (Haranya)"
+    }
+  ]
+}

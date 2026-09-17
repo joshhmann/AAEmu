@@ -64,7 +64,7 @@ async function loadWorldMap() {
     chooseMap('world');
     restoreDraft();
     loadServerRoutes();
-    setMapMode('routes');
+    setMapMode('inspect');
 }
 
 function chooseMap(key) {
@@ -866,13 +866,13 @@ function buildMapperRoute() {
         const a=draftRoutePoints[i-1],b=draftRoutePoints[i];distance+=Math.hypot(b.x-a.x,b.y-a.y,b.z-a.z);
     }
     // Exact MapperRouteData contract consumed by DevMapperService.GetRoute.
-    return {RouteName:name,Author:'Dashboard route author',CreatedAt:new Date().toISOString(),TotalDistance:distance,
+    return {RouteName:name,Author:'Dashboard fixture route (non-authoritative)',FixtureOnly:true,CreatedAt:new Date().toISOString(),TotalDistance:distance,
         WaypointCount:draftRoutePoints.length,ActionCount:0,
         Actions:draftRoutePoints.map((p,i)=>({ActionType:'Waypoint',X:p.x,Y:p.y,Z:p.z,Yaw:0,Label:p.label || `Waypoint ${i+1}`}))};
 }
 
 function exportMapperRoute() {
-    try { const route=buildMapperRoute();downloadMapJson(route,route.RouteName+'.json');mapNotice('Downloaded MapperRouteData. Install in Game Data/Routes; replay is not automatically started.'); }
+    try { const route=buildMapperRoute();downloadMapJson(route,route.RouteName+'.json');mapNotice('Downloaded non-authoritative fixture route. Replay is not automatically started and does not prove navigation.'); }
     catch(error) { mapNotice(error.message); }
 }
 
@@ -884,7 +884,7 @@ async function uploadRouteToServer() {
             btn.disabled = true;
             btn.textContent = '⏳ Uploading...';
         }
-        mapNotice(`Uploading '${route.RouteName}' to server...`);
+        mapNotice(`Uploading non-authoritative fixture '${route.RouteName}' to server...`);
         const resp = await fetch('/api/map/upload-route', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -897,7 +897,7 @@ async function uploadRouteToServer() {
         const res = await resp.json();
         if (!res.ok) throw Error(res.error || 'Server rejected route');
 
-        let msg = `✅ Route '${res.routeName}' uploaded! (${res.waypointCount} waypoints, ${Math.round(res.totalDistance)}m).`;
+        let msg = `✅ Non-authoritative fixture route '${res.routeName}' uploaded! (${res.waypointCount} waypoints, ${Math.round(res.totalDistance)}m).`;
         if (res.remoteDeployed) {
             msg += ` Deployed to Game server on 192.168.0.165.`;
         }
@@ -908,7 +908,7 @@ async function uploadRouteToServer() {
     } finally {
         const btn = mapEl('uploadServerBtn');
         if (btn) {
-            btn.textContent = '🚀 Upload to Server';
+            btn.textContent = '🚀 Upload fixture';
             updateDraftSummary();
         }
     }

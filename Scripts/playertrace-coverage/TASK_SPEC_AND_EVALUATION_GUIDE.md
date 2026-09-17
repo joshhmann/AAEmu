@@ -99,6 +99,14 @@ When a trace is completed (`traces/player-actions/<scenario>__<char>__<ts>.jsonl
 
 ## 4. Evaluation Verdicts
 
+**Scope of these verdicts:** PASS/CAVEAT/FAIL describe the named trace-capture
+contract. They do not automatically establish correct gameplay, complete loops or
+human acceptance. Use the [discovery-to-delivery contract](../../.kanban-templates/implementation.md)
+to join raw corpus evidence with canonical requirements, actual source paths and
+authoritative state consequences. Preserve producer/build/scenario provenance;
+synthetic input remains synthetic after evaluation. When evidence is missing,
+specify the smallest capture question rather than assuming the feature is absent.
+
 - **`PASS`**: All mandatory target packets present, lifecycle boundaries clean, zero malformed records, zero fatal server refusals.
 - **`CAVEAT`**: All mandatory target packets present, but anomalies detected (missing stop lifecycle, high refusal count, or non-fatal server errors).
 - **`FAIL`**: Missing one or more mandatory target packets, empty trace file, or completely unparsed payload.

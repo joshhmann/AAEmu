@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-09-15T16:58:34.751545+00:00",
+  "generated_at": "2026-09-16T13:05:42.047698+00:00",
   "git": {
     "branch": "develop",
-    "commit": "e93e3df2d8b4e39d66cd496565622a720296e07d"
+    "commit": "63f6567e7a198775ffe885a3345db70ff5a50777"
   },
   "corpus_summary": {
     "total_files": 14,

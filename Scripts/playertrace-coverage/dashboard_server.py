@@ -1108,6 +1108,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <div class="top-nav">
         <div class="top-nav-inner">
             <button class="nav-tab-btn active" id="tabBtn-tasks" onclick="switchMainTab('tasks')">📋 Trace Tasks <span class="tab-badge" id="tasksTabBadge">31</span></button>
+            <button class="nav-tab-btn" id="tabBtn-capabilities" onclick="switchMainTab('capabilities')">🤖 Bot Capability <span class="tab-badge">Evidence</span></button>
             <button class="nav-tab-btn" id="tabBtn-milestones" onclick="switchMainTab('milestones')">🎯 Roadmap & Scorecard <span class="tab-badge">Outcomes</span></button>
             <button class="nav-tab-btn" id="tabBtn-lanes" onclick="switchMainTab('lanes')">🧭 Domain Lanes & Router</button>
             <button class="nav-tab-btn" id="tabBtn-coverage" onclick="switchMainTab('coverage')">📊 Coverage & Telemetry</button>
@@ -1168,6 +1169,38 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="task-list" id="taskList"></div>
         </div>
 
+        <!-- ==================== TAB 2: BOT CAPABILITY ==================== -->
+        <div class="tab-pane" id="tabPane-capabilities">
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header"><div class="info-card-title">Bot capability evidence</div></div>
+                <p class="task-desc">This lane reports PlayerBot capability separately from Human Trace Tasks. A captured player trace corroborates an ordinary action shape; it does not prove bot perception, strategic choice, travel, completion, recovery, or autonomous progression.</p>
+                <div class="meta-row"><span>Authoritative records</span><span class="meta-val">SCORECARD.md · ROADMAP.md · playerbot-progression-ladder.md</span></div>
+                <div class="meta-row"><span>Current progression claim</span><span class="meta-val">PB-002 broad autonomous progression: OPEN</span></div>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header"><div class="info-card-title">Evidence ladder — never averaged</div></div>
+                <p class="task-desc"><strong>P</strong> is an ordinary player engine path. <strong>B</strong> is one PlayerBot action through that path. <strong>L</strong> is a bounded loop with stated preconditions. <strong>A</strong> requires perception → legal choice → ordinary execution → observed postcondition → resume without fixtures or intervention. <strong>N</strong>, <strong>G</strong>, and <strong>T</strong> add coexistence, society, and territory only after their prerequisites are proved.</p>
+                <p class="task-desc">Synthetic contracts and real-service rigs remain visible as their own evidence layers. Human/client feel remains H=UNKNOWN until a human completes the named scenario.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header"><div class="info-card-title">Capability lanes</div></div>
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr><th style="text-align:left;padding:8px">Lane</th><th style="text-align:left;padding:8px">Current evidence boundary</th><th style="text-align:left;padding:8px">Next proof</th></tr></thead>
+                    <tbody>
+                        <tr><td style="padding:8px">Perceive</td><td style="padding:8px">Core-backed observations exist alongside fixture/proxy facts.</td><td style="padding:8px">Authoritative target eligibility, reach, ownership, and inventory observations.</td></tr>
+                        <tr><td style="padding:8px">Decide</td><td style="padding:8px">GOAP may choose strategic goals; current branches remain transitional adapters.</td><td style="padding:8px">One legal goal selected from observed candidates.</td></tr>
+                        <tr><td style="padding:8px">Execute</td><td style="padding:8px">ActorRequest and GameplayActor dispatch bounded actions through core seams.</td><td style="padding:8px">Bounded combat, navigation, and interaction execution with observed outcomes.</td></tr>
+                        <tr><td style="padding:8px">Verify / recover</td><td style="padding:8px">Action and rig assertions exist; broad loop recovery is unproved.</td><td style="padding:8px">Authoritative postcondition, refusal, recovery, repeat, and restart evidence.</td></tr>
+                        <tr><td style="padding:8px">Scale</td><td style="padding:8px">Embodiment, dormancy, and scheduler evidence are retained.</td><td style="padding:8px">Coexistence after a single-bot autonomous capability is proved.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="info-card">
+                <div class="info-card-header"><div class="info-card-title">Ownership checkpoint</div></div>
+                <p class="task-desc">GOAP owns strategic decision and replanning. Bounded combat, navigation, and interaction executors own their internal state. ActorRequest owns lifecycle and audit. GameplayActor is the adapter. Character and existing managers own gameplay effects. Packet-owned purchase, planting, housing, and merchant semantics remain unresolved and unavailable to autonomous claims.</p>
+            </div>
+        </div>
+
         <!-- ==================== TAB 2: ROADMAP & SCORECARD ==================== -->
         <div class="tab-pane" id="tabPane-milestones">
             <div class="info-card" style="margin-bottom:20px">
@@ -1177,9 +1210,51 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <p class="task-desc">Target: ArcheAge 1.2.4.13 / r208022. Human playability and autonomous residents are separate commitments sharing ordinary gameplay. No overall completion percentage is claimed.</p>
                 <div class="meta-row">
                 <span>Planning freshness</span>
-                <span class="meta-val">2026-09-15 · source d0d58e5848829b7a85da3847d03da00a90cb7c68 + dirty GOAP WIP</span>
+                <span class="meta-val">2026-09-16 · source 63f6567e7a198775ffe885a3345db70ff5a50777 + dirty tree · small-plot journey INCOMPLETE</span>
                 </div>
                 <p class="task-desc">Documentation reconciliation only: no fresh engine, live, or human verdict. Sources: VISION.md, PROJECT-CONTROL.md#delivery-contract, ROADMAP.md#current-delivery-direction, SCORECARD.md and STATUS.md. This is a planning snapshot, not live acceptance telemetry.</p>
+                </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Every zone and feature — one repeatable delivery process</div>
+                </div>
+                <p class="task-desc">Scope → discover → reconcile → slice → implement/verify → expand. Use .kanban-templates/implementation.md for a parent scope brief and bounded child tasks. Farm is the current example, not the whole process.</p>
+                <details id="deliveryWorkflow" style="padding:10px 0">
+                    <summary>Evidence inputs and next-zone expansion</summary>
+                    <p class="task-desc">Inventory existing archaeology, source/tests, Graphify relationships and human/bot corpus. Record provenance, contradictions and missing facts; create focused capture/research tasks. Corpus coverage and packet similarity are discovery aids, not full gameplay proof.</p>
+                    <p class="task-desc">For the next zone/mechanic, name shared proofs reused, local differences and required rechecks. Link global defects to one owning task. Declare supported coverage and remaining unknowns. Do not inherit a completion claim from another zone or duplicate all prior research.</p>
+                </details>
+                </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">First exit — ordinary starter → owned small plot → harvest/replant</div>
+                </div>
+                <p class="task-desc">One Nuian/Solzreed bot, ordinary progression and no in-run grants or repair. Earn the design, claim and complete the small plot, grow and harvest a real crop, replant, then prove restart ownership/state. This is not a house-building or ten-bot village exit. Tax renewal is the next sustainment slice.</p>
+                <details id="farmRoute" style="padding:10px 0">
+                    <summary>Canonical route and missing prerequisites</summary>
+                    <p class="task-desc">Level-10 eligibility → 4415 → 4479 → 4417 → 4424 → 4439 → 4438. Quest 4438 supplies design 15596, lumber 8337 and 25 bound certificates 31892. These are verified data rows, not a live-loop pass. Item 8000001 is APEX, not tax; correct bot identities. Reproduce first-property tax calculation before claiming the expected certificate charge.</p>
+                    <p class="task-desc">Still unproved: ordinary leveling route, actual quest targets and credit, plot reach/connection-mediated placement/completion, crop cycle and integrated recovery/restart. No certificate vendor addition is authorized. Use ROADMAP.md#first-owned-small-plot-journey and .kanban-templates/implementation.md.</p>
+                </details>
+                </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">P1 corrective queue — before additional homestead/GOAP breadth</div>
+                </div>
+                <p class="task-desc">Seven corrective briefs plus journey-specific item/tax tasks remain OPEN / unassigned. Source: ROADMAP.md. Core reliability and independent human-playability work continue. No code fix or deployment is claimed by this planning update.</p>
+                <ol>
+                    <li>Correct synthetic report provenance and evaluator verdicts.</li>
+                    <li>Isolate starter-kit fixtures and unfinished activity behind explicit opt-in.</li>
+                    <li>Make planner state identity resource-correct.</li>
+                    <li>Make observations authoritative: hostility, reach, inventory and ownership.</li>
+                    <li>Resolve and prove one real target/action through ordinary services.</li>
+                    <li>Prove one real loop with recovery/repeat before claiming ten bots.</li>
+                    <li>Reconcile source delivery, verification, review and deployment records.</li>
+                </ol>
+                <details id="loopCompleteness" style="padding:10px 0">
+                    <summary>LOOP INCOMPLETE — what is still missing or unproved?</summary>
+                    <p class="task-desc">The ten-bot report proves synthetic orchestration only. Ordinary acquisition, concrete target binding, actual travel/reach, action-chain consequences, resource conservation, recovery/repeat and this loop's restart behavior are incomplete or unproved. Existing separately verified mechanics retain their original scope. No new human verdict exists.</p>
+                    <p class="task-desc">Every loop report must inventory each required leg, its evidence, missing dependency and next task. Distinguish missing code from unknown verification. Disclose fake actors, manual completion/state changes and seeded setup. Text inference cannot upgrade synthetic evidence to live proof. N/A needs a reason.</p>
+                </details>
                 </div>
             <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header">
@@ -1443,7 +1518,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- ==================== WORLD MAP & ROUTE AUTHORING ==================== -->
+        <!-- ==================== WORLD OBSERVATION & FIXTURE ATLAS ==================== -->
         <div class="tab-pane" id="tabPane-map">
             <div class="map-container-layout">
                 <div class="map-canvas-card">
@@ -1470,7 +1545,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         </div>
                         <div class="map-toolbar-group">
                             <button class="map-btn active" id="mapModeInspectBtn" onclick="setMapMode('inspect')">Inspect</button>
-                            <button class="map-btn" id="mapModeDraftBtn" onclick="setMapMode('draft')">Draw route</button>
+                            <button class="map-btn" id="mapModeDraftBtn" onclick="setMapMode('draft')">Developer fixture route</button>
                             <label title="Use a hub's full XYZ when clicked within 10 screen pixels"><input type="checkbox" id="snapHubs"> Snap to hubs</label>
                             <button class="map-btn" id="liveRadarBtn" onclick="toggleLiveRadar()" title="Toggle live player & bot radar polling against Game WebApi" style="border-color:#388bfd;color:#58a6ff;font-weight:600;">📡 Live Radar: Off</button>
                         </div>
@@ -1507,7 +1582,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             <p class="map-note">No height is inferred from map art. Enter the measured Z from <code>/position</code> (clear your target first), or snap to a reference hub. <code>/move X Y Z</code> teleports a GM; it does not test walkability.</p>
                         </div>
                         <div id="sidebarDraftPanel" style="display:none">
-                            <label for="routeName">Route name</label>
+                            <strong>Developer Fixture Routes — non-authoritative</strong>
+                            <p class="map-note">Routes here support trace capture, reproducible fixtures, and manual mapper experiments. They never select an autonomous bot route, prove navigation, or satisfy a progression leg.</p>
+                            <label for="routeName">Fixture route name</label>
                             <input class="form-control" id="routeName" value="my_route" maxlength="80" oninput="saveDraft()" pattern="[A-Za-z0-9_-]+" aria-label="Route name">
                             <p class="map-note">Click to place waypoints; drag to pan. Edit XYZ below. Pink lines are your planned route, not a pathfinding result.</p>
                             <strong id="draftCount">0 waypoints</strong>
@@ -1519,15 +1596,15 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                                 <button class="btn" onclick="downloadDraft()">Save draft</button>
                                 <button class="btn" onclick="document.getElementById('routeImport').click()">Open route / draft</button>
                                 <input type="file" id="routeImport" accept=".json,application/json" hidden onchange="importRoute(this)">
-                                <button class="btn btn-primary" id="exportMapperBtn" onclick="exportMapperRoute()" disabled>Export game route</button>
-                                <button class="btn" id="uploadServerBtn" onclick="uploadRouteToServer()" style="border-color:#388bfd;background:rgba(56,189,248,0.15);color:#38bdf8;font-weight:600;" disabled title="Upload route directly to Game server Data/Routes for instant /mapper play">🚀 Upload to Server</button>
+                                <button class="btn btn-primary" id="exportMapperBtn" onclick="exportMapperRoute()" disabled>Export fixture route</button>
+                                <button class="btn" id="uploadServerBtn" onclick="uploadRouteToServer()" style="border-color:#388bfd;background:rgba(56,189,248,0.15);color:#38bdf8;font-weight:600;" disabled title="Upload a non-authoritative fixture route to Game server Data/Routes for manual /mapper play">🚀 Upload fixture</button>
                             </div>
                             <div class="map-note" id="draftValidation">Add at least two points.</div>
                             <div id="draftPoints"></div>
-                            <details style="margin-top:12px"><summary>Use this route in-game</summary>
+                            <details style="margin-top:12px"><summary>Manual fixture use only</summary>
                                 <p class="map-note">Fill every Z before exporting. Put the downloaded JSON in the running Game server's <code>Data/Routes/</code>. The bot must already be in <strong>main_world (world 0)</strong>, near the first point.</p>
                                 <code id="mapperPlayHint">/mapper play &lt;bot_name&gt; my_route</code>
-                                <p class="map-note">Replay uses ordinary <code>NavigateTo</code>; each leg has a 15-second timeout. Place close waypoints, especially on bends. Obstacles, bridges, caves, and Z still need an in-game check.</p>
+                                <p class="map-note">Replay uses ordinary <code>NavigateTo</code>; each leg has a 15-second timeout. This is a controlled fixture, not planner authority or travel evidence. Obstacles, bridges, caves, and Z still need an in-game check.</p>
                                 <p class="map-note">For measured routes: <code>/mapper walk name</code>, walk the route, then <code>/mapper stop</code>. Open its waypoint-only JSON here to compare it to the map. Files containing interactions are refused rather than silently stripped.</p>
                             </details>
                         </div>
