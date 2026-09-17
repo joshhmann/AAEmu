@@ -2770,8 +2770,10 @@ public static class GameplayActorTestRig
         var bench = actor.Character.ParentWorld?.GetDoodad(benchObjId);
         var effect = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart };
         var effectiveSkill = skillId ?? actor.Character.Craft?.CurrentCraft?.SkillId ?? CraftTestSkillId;
+        var skillTemplate = SkillManager.Instance.GetSkillTemplate(effectiveSkill);
+        var skill = skillTemplate != null ? new Skill(skillTemplate) : null;
         effect.Apply(actor.Character, null, bench, null,
-            new CastSkill(effectiveSkill, 0), new EffectSource(), null, DateTime.UtcNow);
+            new CastSkill(effectiveSkill, 0), skill != null ? new EffectSource(skill) : new EffectSource(), null, DateTime.UtcNow);
     }
 
     // ------------------------------------------------------------------ quest discovery (PB-002)

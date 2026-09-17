@@ -487,6 +487,7 @@ public class GameplayActorHouseBuildActionsTests
         // Mirror the unique account onto both so the row and the tally agree.
         actor.Character.Connection!.AccountId = actor.Character.AccountId;
         actor.Character.Money = 10_000_000; // funds to clear tax pre-flight (deposit + first week tax)
+        actor.Character.Inventory.Bag.Items.Clear();
         return (actor, session);
     }
 

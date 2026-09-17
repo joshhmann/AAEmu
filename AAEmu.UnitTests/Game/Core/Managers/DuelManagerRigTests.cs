@@ -6,6 +6,7 @@ using AAEmu.Game.Models.Game.Duels;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Models.Tasks.Duels;
 using AAEmu.Commons.Utils;
+using AAEmu.Game.Models.Game.Char;
 using AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 namespace AAEmu.UnitTests.Game.Core.Managers;
@@ -178,9 +179,23 @@ public class DuelManagerRigTests
         // Register both characters in the rig WorldManager so
         // DuelRequest's GetCharacterById resolves the target.
         foreach (var c in new[] { challenger.Character, challenged.Character })
+        {
+            WorldManager.Instance.TryRemoveCharacter(c.ObjId);
             WorldManager.Instance.TryAddCharacter(c);
+            _registeredCharacters.Add(c);
+        }
 
         return (challenger, challenged);
+    }
+
+    private static readonly List<Character> _registeredCharacters = [];
+
+    [After(Test)]
+    public void CleanupCharacters()
+    {
+        foreach (var c in _registeredCharacters)
+            WorldManager.Instance.TryRemoveCharacter(c.ObjId);
+        _registeredCharacters.Clear();
     }
 
     private static void ResetDuelManager()

@@ -504,6 +504,8 @@ public class FirstOwnedSmallPlotFullE2eJourneyTests
         });
         GameplayActorTestRig.AttachConnection(actor);
         actor.Character.Connection!.AccountId = actor.Character.AccountId;
+        actor.Character.Inventory.Bag.Items.Clear();
+        actor.Character.Inventory.Bag.UpdateFreeSlotCount();
         return (actor, session);
     }
 

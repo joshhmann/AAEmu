@@ -1,4 +1,4 @@
-﻿using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Packets;
 using AAEmu.Game.Core.Packets.G2C;
@@ -57,7 +57,8 @@ public class CraftEffect : EffectTemplate
                         if (shipStep != null && usedSkill != shipStep.SkillId)
                         {
                             Logger.Warn("{0} tried to build a ship using the wrong skill, {1} instead of {2}", caster.Name, usedSkill, shipStep.SkillId);
-                            source.Skill.Cancelled = true;
+                            if (source?.Skill != null)
+                                source.Skill.Cancelled = true;
                         }
                         else
                         {
@@ -96,18 +97,18 @@ public class CraftEffect : EffectTemplate
                             else
                                 character.BroadcastPacket(new SCShipyardStatePacket(shipyard.ShipyardData), true);
                             ShipyardManager.Instance.PersistShipyard(shipyard);
-                            if (!character.Craft.EndCraft())
+                            if (!character.Craft.EndCraft() && source?.Skill != null)
                                 source.Skill.Cancelled = true;
                         }
                     }
                     else
                     {
-                        if (!character.Craft.EndCraft())
+                        if (!character.Craft.EndCraft() && source?.Skill != null)
                             source.Skill.Cancelled = true;
                     }
                     break;
                 case WorldInteractionGroup.Collect:
-                    if (!character.Craft.EndCraft())
+                    if (!character.Craft.EndCraft() && source?.Skill != null)
                         source.Skill.Cancelled = true;
                     break;
                 case WorldInteractionGroup.Building when target is House house:
