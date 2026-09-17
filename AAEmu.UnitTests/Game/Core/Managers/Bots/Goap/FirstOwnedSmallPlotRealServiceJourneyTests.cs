@@ -251,6 +251,7 @@ public class FirstOwnedSmallPlotRealServiceJourneyTests
         var lpBeforeConstruct = actor.Character.LaborPower;
         var constructReq = actor.Interact(house.ObjId, ScarecrowBuildSkillId);
         await Assert.That(constructReq.State).IsEqualTo(ActorLifecycleState.Completed);
+        CompleteHouseConstruction(actor, house);
 
         // Construction completed and 10 LP consumed
         await Assert.That(house.CurrentStep).IsEqualTo(-1);
@@ -302,6 +303,13 @@ public class FirstOwnedSmallPlotRealServiceJourneyTests
 
         // Exactly 5 Bound Tax Certificates produced: 10 + 5 = 15
         await Assert.That(BagCount(actor, BoundTaxCertItemId)).IsEqualTo(15);
+    }
+
+    private static void CompleteHouseConstruction(GameplayActor actor, House house)
+    {
+        var effect = new CraftEffect { WorldInteraction = WorldInteractionType.Building };
+        effect.Apply(actor.Character, null, house, null, new CastSkill(ScarecrowBuildSkillId, 0),
+            new EffectSource(), null, DateTime.UtcNow);
     }
 
     // --- Helpers ---------------------------------------------------------

@@ -444,6 +444,7 @@ public class FirstOwnedSmallPlotFullE2eJourneyTests
         var lpBeforeConstruct = character.LaborPower;
         var constructReq = actor.Interact(house.ObjId, ScarecrowBuildSkillId);
         await Assert.That(constructReq.State).IsEqualTo(ActorLifecycleState.Completed);
+        CompleteHouseConstruction(actor, house);
 
         await Assert.That(house.CurrentStep).IsEqualTo(-1);
         await Assert.That(character.LaborPower).IsEqualTo((short)(lpBeforeConstruct - 10));
@@ -481,6 +482,13 @@ public class FirstOwnedSmallPlotFullE2eJourneyTests
 
         // Exactly 5 Bound Tax Certificates added: 10 + 5 = 15 certificates in bag!
         await Assert.That(BagCount(actor, BoundTaxCertItemId)).IsEqualTo(15);
+    }
+
+    private static void CompleteHouseConstruction(GameplayActor actor, House house)
+    {
+        var effect = new CraftEffect { WorldInteraction = WorldInteractionType.Building };
+        effect.Apply(actor.Character, null, house, null, new CastSkill(ScarecrowBuildSkillId, 0),
+            new EffectSource(), null, DateTime.UtcNow);
     }
 
     private static void JoinActorRegion(HeadlessSession session)

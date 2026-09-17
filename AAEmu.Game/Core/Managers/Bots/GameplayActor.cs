@@ -1407,31 +1407,28 @@ public class GameplayActor : IGameplayActor
         var doodad = Character.ParentWorld?.GetDoodad(doodadObjId);
         if (doodad == null)
         {
-            var house = (Character.ParentWorld?.GetUnit(doodadObjId) as House)
-                        ?? (HousingManager.PeekInstance != null
-                            ? HousingManager.PeekInstance.GetAllHouses().FirstOrDefault(h => (h.OwnerId == Character.Id || h.ObjId == doodadObjId) && h.CurrentStep != -1)
-                            : null);
+            // A house is a Unit, rather than a Doodad. Keep the actor at the
+            // world edge: resolve only the requested in-world target, then
+            // enter the ordinary skill path. CraftEffect owns labor, build
+            // progression, packets, and attached-Doodad spawning.
+            var house = Character.ParentWorld?.GetUnit(doodadObjId) as House;
             if (house != null)
             {
-                var effectiveSkillId = skillId != 0 ? skillId : (doodadObjId == 18553 ? 18553u : 0u);
+                if (MathUtil.CalculateDistance(Character.Transform.World.Position, house.Transform.World.Position, false) > MaxInteractRange)
+                    return Reject(request, ActorFailureReason.RejectedAction, $"house {doodadObjId} out of interaction range");
+
+                var effectiveSkillId = skillId;
                 if (effectiveSkillId == 0 && house.CurrentStep >= 0 && house.CurrentStep < house.Template?.BuildSteps?.Count)
                     effectiveSkillId = house.Template.BuildSteps[house.CurrentStep].SkillId;
 
-                var laborCost = 10;
-                if (effectiveSkillId != 0 && SkillManager.Instance.GetSkillTemplate(effectiveSkillId) is { } sk)
-                    laborCost = sk.ConsumeLaborPower;
-
-                if (Character.LaborPower < laborCost)
-                    return Reject(request, ActorFailureReason.RejectedAction, $"not enough labor ({laborCost} required)");
+                if (effectiveSkillId == 0 || SkillManager.Instance.GetSkillTemplate(effectiveSkillId) == null)
+                    return Reject(request, ActorFailureReason.RejectedAction, $"house {doodadObjId} has no available construction skill");
 
                 request.Start($"constructing house {house.Id} step {house.CurrentStep}");
-                Character.ChangeLabor((short)-laborCost, 2);
-                house.AddBuildAction();
-                if (house.CurrentStep == -1)
-                {
-                    foreach (var d in house.AttachedDoodads)
-                        d.Spawn();
-                }
+                var result = Character.UseSkill(effectiveSkillId, house);
+                if (result != SkillResult.Success)
+                    return Reject(request, ActorFailureReason.RejectedAction,
+                        $"house construction skill {effectiveSkillId} refused ({result})");
                 return Complete(request, true, $"house {house.Id} constructed step to {house.CurrentStep}");
             }
 

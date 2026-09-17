@@ -2477,6 +2477,13 @@ public static class GameplayActorTestRig
     public static void SeedHouseBuildSurface()
     {
         Seed();
+        var interactionGroups = (Dictionary<uint, WorldInteractionGroup>?)GetField(WorldManager.Instance, "_worldInteractionGroups");
+        if (interactionGroups == null)
+        {
+            interactionGroups = [];
+            SetField(WorldManager.Instance, "_worldInteractionGroups", interactionGroups);
+        }
+        interactionGroups[(uint)WorldInteractionType.Building] = WorldInteractionGroup.Building;
         if (!SingletonSeeded(typeof(Singleton<FeaturesManager>)))
         {
             var features = new FeaturesManager(Mock.Of<IExperienceManager>().Object);
