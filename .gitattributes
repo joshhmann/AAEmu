@@ -1,3 +1,6 @@
 * text=auto
 
 *.cs text eol=lf
+
+# Generated dashboard data is checked in with stable Unix newlines.
+playertrace-coverage/*.csv text eol=lf

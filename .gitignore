@@ -27,3 +27,7 @@ graphify-out/
 scorecard-explorations/generated/
 soak-artifacts/
 traces/bot-trajectories/
+
+# Local linked worktrees and Python bytecode
+.worktrees/
+Scripts/playertrace-coverage/__pycache__/
