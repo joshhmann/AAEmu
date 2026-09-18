@@ -1,11 +1,20 @@
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Reflection;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.Bots.Goap.Actions;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Containers;
+using AAEmu.Game.Models.Game.Items.Templates;
+using AAEmu.Game.Models.Game.Taxations;
+using AAEmu.UnitTests.Game.Core.Managers.Bots;
+
+using Microsoft.Data.Sqlite;
 
 namespace AAEmu.UnitTests.Game.Bots;
 
@@ -63,6 +72,96 @@ public class HeadlessSessionProvisioningTests
         // Character names ride the same NameManager rules as humans; an empty
         // name can never produce a characters row.
         Assert.Throws<ArgumentException>(() => HeadlessSession.Provision("bot_managed_hermetic_0002", ""));
+    }
+
+    // ---------------------------------------------------------------- step-3 isolation (closeout)
+
+    [Test]
+    public async Task DefaultCreate_GrantsNoHomesteadDesignOrCerts()
+    {
+        // Ordinary (non-opt-in) provisioning must not silently grant homestead
+        // resources. Production Provision is DB-gated (see
+        // Provision_WithoutMySql_FailsLoudly), so the observable default path
+        // is the DB-free Create fixture.
+        SeedFixtureSingletons();
+        var session = HeadlessSession.Create(4200002u, "NoKitBot", 1);
+
+        var bag = session.Character.Inventory?.Bag;
+        await Assert.That(bag is not null).IsEqualTo(true);
+        var snapshot = bag!.GetItemsSnapshot();
+        await Assert.That(snapshot.Any(i => i != null &&
+            (i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId ||
+             i.TemplateId == AcquireScarecrowAction.ScarecrowDesignId))).IsEqualTo(false);
+        await Assert.That(snapshot.Any(i => i != null &&
+            i.TemplateId == AcquireScarecrowAction.TaxCertificateTemplateId)).IsEqualTo(false);
+    }
+
+    [Test]
+    public async Task KitGrant_OnEmptyBag_GrantsExactlyOneDesignAndTheCanonicalCertCount()
+    {
+        // The explicit opt-in path grants exactly the starter kit — no more, and
+        // no fewer than the claim it enables costs: the certificate count must
+        // cover one week + deposit of housing 267's canonical tax (50,000 copper
+        // per week → 15 certificates at the engine's 10,000-copper denomination).
+        SeedFixtureSingletons();
+        using var canonical = LoadCanonicalHousingTaxData();
+        var session = HeadlessSession.Create(4200003u, "KitBot", 1);
+
+        HeadlessSession.GrantStarterHomesteadKit(session.Character);
+
+        var bag = session.Character.Inventory?.Bag;
+        await Assert.That(bag is not null).IsEqualTo(true);
+        var snapshot = bag!.GetItemsSnapshot();
+        var designs = snapshot
+            .Where(i => i != null && (i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId ||
+                                      i.TemplateId == AcquireScarecrowAction.ScarecrowDesignId))
+            .Sum(i => i.Count);
+        var certs = snapshot
+            .Where(i => i != null && i.TemplateId == AcquireScarecrowAction.TaxCertificateTemplateId)
+            .Sum(i => i.Count);
+        await Assert.That(designs).IsEqualTo(1);
+        await Assert.That(certs).IsEqualTo(AcquireScarecrowAction.RequiredFirstPlacementTaxCertificates());
+        await Assert.That(certs).IsEqualTo(15);
+    }
+
+    [Test]
+    public async Task KitGrant_RepeatedSetup_GrantsNoDuplicates()
+    {
+        // Repeated setup is idempotent: the deficit grant adds nothing twice.
+        SeedFixtureSingletons();
+        using var canonical = LoadCanonicalHousingTaxData();
+        var session = HeadlessSession.Create(4200004u, "KitTwiceBot", 1);
+
+        HeadlessSession.GrantStarterHomesteadKit(session.Character);
+        HeadlessSession.GrantStarterHomesteadKit(session.Character);
+
+        var bag = session.Character.Inventory?.Bag;
+        await Assert.That(bag is not null).IsEqualTo(true);
+        var snapshot = bag!.GetItemsSnapshot();
+        var designs = snapshot
+            .Where(i => i != null && (i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId ||
+                                      i.TemplateId == AcquireScarecrowAction.ScarecrowDesignId))
+            .Sum(i => i.Count);
+        var certs = snapshot
+            .Where(i => i != null && i.TemplateId == AcquireScarecrowAction.TaxCertificateTemplateId)
+            .Sum(i => i.Count);
+        await Assert.That(designs).IsEqualTo(1);
+        await Assert.That(certs).IsEqualTo(AcquireScarecrowAction.RequiredFirstPlacementTaxCertificates());
+        await Assert.That(certs).IsEqualTo(15);
+    }
+
+    [Test]
+    public async Task HomesteadModule_ByDefault_RefusesActivation()
+    {
+        // Default eligibility refuses unfinished homestead work: a fresh module
+        // denies before touching the bot (CanActivate checks Enabled first).
+        SeedFixtureSingletons();
+        var session = HeadlessSession.Create(4200005u, "DefaultEligibilityBot", 1);
+        var bot = new PlayerBotRuntime(session.Character, "step3-tests");
+
+        var decision = new HomesteadActivityModule().CanActivate(new BotActivityContext { Bot = bot, GameHour = 12f });
+
+        await Assert.That(decision.CanActivate).IsEqualTo(false);
     }
 
     // ---------------------------------------------------------------- adopt decision (t_db5b2be7)
@@ -144,6 +243,70 @@ public class HeadlessSessionProvisioningTests
         return nameManager;
     }
 
+    // ------------------------------------------------- canonical kit sizing
+
+    /// <summary>
+    /// Loads the canonical housing templates + taxations (compact.sqlite3, the same
+    /// join the engine performs at boot) so the kit's certificate requirement is
+    /// derived from real data instead of a literal. Restores the singleton on dispose.
+    /// </summary>
+    private static IDisposable LoadCanonicalHousingTaxData()
+    {
+        var field = typeof(Singleton<AAEmu.Game.GameData.HousingGameData>)
+            .GetField("s_instance", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var previous = field.GetValue(null);
+
+        var gameData = new AAEmu.Game.GameData.HousingGameData();
+        using (var connection = new SqliteConnection($"Data Source={CanonicalDbPath};Mode=ReadOnly"))
+        {
+            connection.Open();
+            gameData.Load(connection);
+            if (!GameplayActorTestRig.SingletonSeeded(typeof(Singleton<TaxationsManager>)))
+            {
+                var taxations = new TaxationsManager { taxations = new Dictionary<uint, Taxation>() };
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "SELECT id, tax FROM taxations";
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    taxations.taxations[Convert.ToUInt32(reader.GetValue(0))] = new Taxation
+                    {
+                        Id = Convert.ToUInt32(reader.GetValue(0)),
+                        Tax = Convert.ToUInt32(reader.GetValue(1))
+                    };
+                }
+                GameplayActorTestRig.SeedSingleton(typeof(Singleton<TaxationsManager>), taxations);
+            }
+        }
+        gameData.PostLoad();
+        field.SetValue(null, gameData);
+
+        return new RestoreSingleton(() => field.SetValue(null, previous));
+    }
+
+    private sealed class RestoreSingleton(Action restore) : IDisposable
+    {
+        public void Dispose() => restore();
+    }
+
+    private static string CanonicalDbPath
+    {
+        get
+        {
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            foreach (var candidate in new[]
+                     {
+                         Path.Combine(baseDir, "..", "..", "..", "..", "AAEmu.Game", "Data", "compact.sqlite3"),
+                         Path.Combine(Directory.GetCurrentDirectory(), "AAEmu.Game", "Data", "compact.sqlite3")
+                     })
+            {
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+            throw new FileNotFoundException("compact.sqlite3 not found in any expected test layout");
+        }
+    }
+
     // ---------------------------------------------------------------- singleton seeding
 
     /// <summary>
@@ -156,10 +319,13 @@ public class HeadlessSessionProvisioningTests
     /// scenario rig replacing QuestManager afterwards then NREs later pilot
     /// probes. Seeding is per-singleton, never replaces an established
     /// singleton, and never touches the pilot flag.
-    /// </summary>
     private static void SeedFixtureSingletons()
     {
         SetSingletonIfMissing(typeof(Singleton<ItemManager>), BuildFixtureItemManager());
+        // Inventory.OnAcquiredItem fires QuestManager.DoItemsAcquiredEvents —
+        // seed a data-free manager (M3a convention) so the hook is a no-op.
+        SetSingletonIfMissing(typeof(Singleton<QuestManager>),
+            new QuestManager(Mock.Of<ITaskManager>().Object, Mock.Of<IZoneManager>().Object));
         // Fail-closed on missing MySQL (logged, empty used ids), then serves
         // incrementing ids from its range — same call the pilot rig makes.
         ContainerIdManager.Instance.Initialize(true);
@@ -167,9 +333,10 @@ public class HeadlessSessionProvisioningTests
 
     private static ItemManager BuildFixtureItemManager()
     {
+        var itemIdManager = Mock.Of<IItemIdManager>();
         var itemManager = new ItemManager(
             Mock.Of<ISkillManager>().Object,
-            Mock.Of<IItemIdManager>().Object,
+            itemIdManager.Object,
             Mock.Of<IContainerIdManager>().Object,
             Mock.Of<ILocalizationManager>().Object,
             Mock.Of<ITaskManager>().Object,
@@ -184,6 +351,38 @@ public class HeadlessSessionProvisioningTests
         var existing = containerField?.GetValue(itemManager) as ConcurrentDictionary<ulong, ItemContainer>;
         if (existing == null)
             containerField?.SetValue(itemManager, new ConcurrentDictionary<ulong, ItemContainer>());
+
+        // GetNewId locks _removedItems, and Create registers in _allItems —
+        // both initialized only by Load. Seed empty registries.
+        var removedField = typeof(ItemManager).GetField("_removedItems",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        if (removedField?.GetValue(itemManager) == null)
+            removedField?.SetValue(itemManager, new List<ulong>());
+        var allItemsField = typeof(ItemManager).GetField("_allItems",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        if (allItemsField?.GetValue(itemManager) == null)
+            allItemsField?.SetValue(itemManager, new ConcurrentDictionary<ulong, Item>());
+
+        // Item creation takes runtime ids from the id manager (stub default 0
+        // would mint degenerate id-0 items) — serve incrementing fixture ids.
+        uint nextItemId = 9_000_001;
+        itemIdManager.GetNextId().Returns(() => nextItemId++);
+
+        // The kit grant resolves templates by id (ItemManager.GetTemplate over
+        // _templates, never Loaded in a rig). Seed exactly the two starter-kit
+        // templates so AcquireDefaultItem exercises its real stacking path.
+        var templatesField = typeof(ItemManager).GetField("_templates",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+        var templates = templatesField?.GetValue(itemManager) as Dictionary<uint, ItemTemplate>;
+        if (templates == null)
+        {
+            templates = new Dictionary<uint, ItemTemplate>();
+            templatesField?.SetValue(itemManager, templates);
+        }
+        templates.TryAdd(AcquireScarecrowAction.ScarecrowDesignTemplateId,
+            new ItemTemplate { Id = AcquireScarecrowAction.ScarecrowDesignTemplateId, MaxCount = 1 });
+        templates.TryAdd(AcquireScarecrowAction.TaxCertificateTemplateId,
+            new ItemTemplate { Id = AcquireScarecrowAction.TaxCertificateTemplateId, MaxCount = 100 });
 
         return itemManager;
     }

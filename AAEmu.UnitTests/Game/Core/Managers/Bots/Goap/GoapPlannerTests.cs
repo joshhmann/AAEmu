@@ -76,7 +76,7 @@ public class GoapPlannerTests
     }
 
     [Test]
-    public async Task GoapPlanner_MultiStepWildFarmingChain_PlansOptimalSequence()
+    public async Task GoapPlanner_MultiStepWildFarmingChain_PlansLowestCostFoundSequence()
     {
         var planner = new GoapPlanner();
         var startState = BotWorldState.Empty;
@@ -236,6 +236,240 @@ public class GoapPlannerTests
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Actions.Count).IsEqualTo(1);
         await Assert.That(result.Actions[0].Name).IsEqualTo("CraftTaxCertificates");
+    }
+
+    [Test]
+    public async Task GoapPlanner_IdenticalFlagsDifferentLabor_UnreachableForPoorBotReachableForRichBot()
+    {
+        var planner = new GoapPlanner();
+
+        // Same flags, same action library; only labor differs. Pins that the planner honors
+        // a labor-gated precondition from the start state instead of planning it regardless.
+        ulong flags = BotWorldState.HasLandPlot | BotWorldState.NearHomeSite;
+        var goal = new GoapGoal("ConstructPlotGoal").WithCondition(BotWorldState.PlotConstructed);
+        var actions = new IGoapAction[] { new ConstructPlotAction() };
+
+        var richStart = new BotWorldState(flags, ulong.MaxValue, labor: 50, gold: 0);
+        var poorStart = new BotWorldState(flags, ulong.MaxValue, labor: 5, gold: 0);
+
+        var richResult = planner.Plan(null, richStart, goal, actions);
+        var poorResult = planner.Plan(null, poorStart, goal, actions);
+
+        // If state identity were flags-only these two bot states would be the same node
+        // and one result would leak into the other.
+        await Assert.That(richResult.Success).IsTrue();
+        await Assert.That(richResult.Actions[0].Name).IsEqualTo("ConstructPlot");
+        await Assert.That(richResult.TotalCost).IsEqualTo(1.5f);
+
+        await Assert.That(poorResult.Success).IsFalse();
+        await Assert.That(poorResult.Actions.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task GoapPlanner_IdenticalFlagsDifferentGold_WithinSearch_PreservesGoldRichPath()
+    {
+        var planner = new GoapPlanner();
+
+        // Two routes reach the SAME flags (NearWorkbench) with different remaining gold.
+        // The flag-only-cheap route arrives first and spends everything; the goal step at
+        // NearWorkbench needs gold. Flags-only dominance would prune the gold-rich route
+        // and destroy the only affordable path.
+        var startState = BotWorldState.Empty
+            .With(BotWorldState.HasLandPlot)
+            .With(BotWorldState.NearHomeSite)
+            .WithGold(500);
+
+        var goal = new GoapGoal("SustainPlot").WithCondition(BotWorldState.HasTaxCertificates);
+
+        var greedyRoute = new GoapActionBase("GreedyRoute", 1.0f)
+            .WithPrecondition(BotWorldState.HasLandPlot)
+            .WithGoldCost(500)
+            .WithEffect(BotWorldState.NearWorkbench);
+
+        var thriftyRoute = new GoapActionBase("ThriftyRoute", 3.0f)
+            .WithPrecondition(BotWorldState.HasLandPlot)
+            .WithGoldCost(0)
+            .WithEffect(BotWorldState.NearWorkbench);
+
+        var buyCertificate = new GoapActionBase("BuyTaxCertificate", 2.0f)
+            .WithPrecondition(BotWorldState.NearWorkbench)
+            .WithGoldPrecondition(100)
+            .WithGoldCost(100)
+            .WithEffect(BotWorldState.HasTaxCertificates);
+
+        var actions = new IGoapAction[] { greedyRoute, thriftyRoute, buyCertificate };
+
+        var result = planner.Plan(null, startState, goal, actions);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Actions.Count).IsEqualTo(2);
+        await Assert.That(result.Actions[0].Name).IsEqualTo("ThriftyRoute");
+        await Assert.That(result.Actions[1].Name).IsEqualTo("BuyTaxCertificate");
+        await Assert.That(result.TotalCost).IsEqualTo(5.0f);
+    }
+
+    [Test]
+    public async Task GoapPlanner_IdenticalFlagsDifferentGold_UnreachableForPoorBotReachableForRichBot()
+    {
+        var planner = new GoapPlanner();
+
+        ulong flags = BotWorldState.Empty.Flags;
+        var goal = new GoapGoal("BuySeeds").WithCondition(BotWorldState.HasTreeSaplings);
+        var buySeedlings = new GoapActionBase("BuySaplings", 1.0f)
+            .WithPrecondition(BotWorldState.NearSeedMerchant)
+            .WithGoldPrecondition(300)
+            .WithGoldCost(300)
+            .WithEffect(BotWorldState.HasTreeSaplings);
+        var actions = new IGoapAction[] { buySeedlings };
+
+        var richStart = BotWorldState.Empty.With(BotWorldState.NearSeedMerchant).WithGold(500);
+        var poorStart = BotWorldState.Empty.With(BotWorldState.NearSeedMerchant).WithGold(100);
+
+        var richResult = planner.Plan(null, richStart, goal, actions);
+        var poorResult = planner.Plan(null, poorStart, goal, actions);
+
+        await Assert.That(richResult.Success).IsTrue();
+        await Assert.That(richResult.TotalCost).IsEqualTo(1.0f);
+
+        await Assert.That(poorResult.Success).IsFalse();
+        await Assert.That(poorResult.FailureReason).IsNotNull();
+    }
+
+    [Test]
+    public async Task GoapPlanner_ResourceOnlyTransition_MidPlanLaborConsumptionFlipsFeasibility()
+    {
+        var planner = new GoapPlanner();
+
+        // Flags are identical across both cases AND identical throughout the search:
+        // the only thing separating a plan from a failure is labor consumed by an earlier step.
+        var goal = new GoapGoal("BuildPlotGoal").WithCondition(BotWorldState.PlotConstructed);
+
+        // Solo route to NearWorkbench, burning 40 labor on the way.
+        var preparatoryStep = new ResourceConsumingAction("PrepareSite", 1.0f, requiredLabor: 0, consumedLabor: 40)
+            .WithPrecondition(BotWorldState.HasLandPlot)
+            .WithPrecondition(BotWorldState.NearHomeSite)
+            .WithEffect(BotWorldState.NearWorkbench);
+
+        // Needs 10 labor *after* PrepareSite has spent its 40.
+        var buildPlot = new ResourceConsumingAction("BuildPlot", 1.5f, requiredLabor: 10, consumedLabor: 10)
+            .WithPrecondition(BotWorldState.NearWorkbench)
+            .WithEffect(BotWorldState.PlotConstructed);
+
+        var actions = new IGoapAction[] { preparatoryStep, buildPlot };
+
+        // 50 labor: PrepareSite burns 40, leaving exactly the 10 the second step needs.
+        var affordable = BotWorldState.Empty
+            .With(BotWorldState.HasLandPlot)
+            .With(BotWorldState.NearHomeSite)
+            .WithLabor(50);
+
+        // 49 labor: identical flags, but only 9 left after the same first step -> plan does not exist.
+        var unaffordable = BotWorldState.Empty
+            .With(BotWorldState.HasLandPlot)
+            .With(BotWorldState.NearHomeSite)
+            .WithLabor(49);
+
+        var affordableResult = planner.Plan(null, affordable, goal, actions);
+        var unaffordableResult = planner.Plan(null, unaffordable, goal, actions);
+
+        await Assert.That(affordableResult.Success).IsTrue();
+        await Assert.That(affordableResult.Actions.Count).IsEqualTo(2);
+        await Assert.That(affordableResult.Actions[0].Name).IsEqualTo("PrepareSite");
+        await Assert.That(affordableResult.Actions[1].Name).IsEqualTo("BuildPlot");
+
+        await Assert.That(unaffordableResult.Success).IsFalse();
+        await Assert.That(unaffordableResult.Actions.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task GoapPlanner_UnaffordableActionPrecondition_FailsInsteadOfSilentlyDropping()
+    {
+        var planner = new GoapPlanner();
+        var goal = new GoapGoal("CraftCertificates").WithCondition(BotWorldState.HasTaxCertificates);
+        var craftTax = new CraftTaxCertificatesAction();
+
+        var state = new BotWorldState(BotWorldState.HasLandPlot | BotWorldState.NearHomeSite, ulong.MaxValue, labor: 199, gold: 0);
+
+        var result = planner.Plan(null, state, goal, [craftTax]);
+
+        // 199 < 200 required: the action is not applicable, the goal is unsatisfiable,
+        // and the planner says so rather than returning a plan it cannot execute.
+        await Assert.That(craftTax.CheckPreconditions(state)).IsFalse();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Actions.Count).IsEqualTo(0);
+        await Assert.That(result.FailureReason).IsNotNull();
+
+        var affordable = new BotWorldState(BotWorldState.HasLandPlot | BotWorldState.NearHomeSite, ulong.MaxValue, labor: 200, gold: 0);
+        var affordableResult = planner.Plan(null, affordable, goal, [craftTax]);
+        await Assert.That(affordableResult.Success).IsTrue();
+        await Assert.That(affordableResult.Actions[0].Name).IsEqualTo("CraftTaxCertificates");
+    }
+
+    [Test]
+    public async Task GoapPlanner_CompetingPaths_DifferentResourcesSelectDifferentAffordableRoute()
+    {
+        var planner = new GoapPlanner();
+
+        // Two routes to the same goal: labor-bought vs gold-bought. Same flags start.
+        ulong flags = BotWorldState.HasLandPlot | BotWorldState.NearHomeSite;
+        var goal = new GoapGoal("SustainPlot").WithCondition(BotWorldState.HasTaxCertificates);
+
+        var laborRoute = new CraftTaxCertificatesAction();
+        var goldRoute = new GoapActionBase("BuyTaxCertificate", 5.0f)
+            .WithPrecondition(BotWorldState.HasLandPlot)
+            .WithPrecondition(BotWorldState.NearHomeSite)
+            .WithGoldPrecondition(1000)
+            .WithGoldCost(1000)
+            .WithEffect(BotWorldState.HasTaxCertificates);
+
+        var actions = new IGoapAction[] { laborRoute, goldRoute };
+
+        var laborRich = new BotWorldState(flags, ulong.MaxValue, labor: 200, gold: 0);
+        var goldRich = new BotWorldState(flags, ulong.MaxValue, labor: 0, gold: 1000);
+
+        var laborResult = planner.Plan(null, laborRich, goal, actions);
+        var goldResult = planner.Plan(null, goldRich, goal, actions);
+
+        await Assert.That(laborResult.Success).IsTrue();
+        await Assert.That(laborResult.Actions[0].Name).IsEqualTo("CraftTaxCertificates");
+
+        await Assert.That(goldResult.Success).IsTrue();
+        await Assert.That(goldResult.Actions[0].Name).IsEqualTo("BuyTaxCertificate");
+    }
+
+    [Test]
+    public async Task GoapPlanner_ExpansionBound_AndLatencyAllocation_ReportedSeparately()
+    {
+        // The full cross-domain registry needs a wider budget than DefaultMaxExpansions
+        // (see GoapPlanner_FullProgressionFromStarterToErectHome_ChainsAcrossDomains).
+        var planner = new GoapPlanner(maxExpansions: 5000);
+        var startState = BotWorldState.Empty.WithGold(100);
+        var goal = GoalArbitrator.GoalErectHome;
+        var actions = GoapActionRegistry.Instance.GetAllActions();
+
+        // Warm the path/JIT before measuring.
+        var warm = planner.Plan(null, startState, goal, actions);
+        await Assert.That(warm.Success).IsTrue();
+
+        const int iterations = 100;
+        var beforeBytes = GC.GetAllocatedBytesForCurrentThread();
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        GoapPlanResult last = warm;
+        for (var i = 0; i < iterations; i++)
+            last = planner.Plan(null, startState, goal, actions);
+        sw.Stop();
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - beforeBytes;
+
+        await Assert.That(last.Success).IsTrue();
+
+        // Expansion count is the deterministic search bound; measured latency and
+        // allocation are recorded, not asserted — no budget is claimed for them here.
+        await Assert.That(last.NodesExpanded).IsGreaterThan(0);
+        await Assert.That(last.NodesExpanded).IsLessThanOrEqualTo(5000);
+
+        Console.WriteLine($"[step4] plan(iterations={iterations}) nodesExpanded={last.NodesExpanded} " +
+                          $"totalMs={sw.Elapsed.TotalMilliseconds:F2} perPlanUs={sw.Elapsed.TotalMilliseconds * 1000 / iterations:F1} " +
+                          $"allocatedBytes={allocated} perPlanBytes={allocated / iterations}");
     }
 
     private sealed class ResourceConsumingAction : GoapActionBase

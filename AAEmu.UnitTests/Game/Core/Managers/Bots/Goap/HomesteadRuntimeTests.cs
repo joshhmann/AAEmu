@@ -384,6 +384,7 @@ public class HomesteadRuntimeTests
         var actor = new TestHomesteadRecordingActor(bot.Character);
         var telemetry = new InMemoryGoapTelemetrySink();
         var context = new BotContext();
+        context.Memory.EnableFixtureOverrides();
         context.Memory.KnownHousingZonePos = housingZone;
 
         var runner = new GoapPlanRunner(telemetrySink: telemetry);
@@ -441,6 +442,7 @@ public class HomesteadRuntimeTests
         var actor = new TestHomesteadRecordingActor(bot.Character);
         var telemetry = new InMemoryGoapTelemetrySink();
         var context = new BotContext();
+        context.Memory.EnableFixtureOverrides();
         context.Memory.OwnedHouseId = 7001;
         context.Memory.OwnedHousePos = homePos;
         context.Memory.KnownWorkbenchPos = workbenchPos;
@@ -495,11 +497,27 @@ public class HomesteadRuntimeTests
     }
 
     [Test]
-    public async Task GoalArbitrator_StarterBotWithoutPlot_SelectsGoalClaimHomestead()
+    public async Task GoalArbitrator_StarterBotWithoutPlotOrDesign_DefersClaim()
     {
+        // Step-3 isolation: no plot, no design, no test override — the claim is
+        // deferred (null) instead of arbitrated without completable inputs.
         var bot = CreateBot("starter-bot", startPos: Vector3.Zero);
         var context = new BotContext();
-        var observedState = new BotWorldState(); // No flags set (no land plot, no home)
+        var observedState = new BotWorldState(); // No flags set (no land plot, no home, no design)
+
+        var arbitrator = new GoalArbitrator();
+        var selectedGoal = arbitrator.ArbitrateGoal(bot, observedState, context, currentPrimaryGoal: null);
+
+        await Assert.That(selectedGoal).IsNull();
+    }
+
+    [Test]
+    public async Task GoalArbitrator_StarterBotWithDesign_SelectsGoalClaimHomestead()
+    {
+        // Ordinary progression earned the design — the claim arbitrates.
+        var bot = CreateBot("design-bot", startPos: Vector3.Zero);
+        var context = new BotContext();
+        var observedState = new BotWorldState().With(BotWorldState.HasScarecrowDesign);
 
         var arbitrator = new GoalArbitrator();
         var selectedGoal = arbitrator.ArbitrateGoal(bot, observedState, context, currentPrimaryGoal: null);

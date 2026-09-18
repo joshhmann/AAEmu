@@ -1,13 +1,19 @@
 #nullable enable
 
 using System.Numerics;
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Bots.Goap;
 using AAEmu.Game.Core.Managers.Bots.Goap.Actions;
 using HeadlessSession = AAEmu.Game.Models.Game.Bots.HeadlessSession;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Faction;
+using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.UnitTests.Game.Core.Managers.Bots;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots.Goap;
@@ -135,10 +141,10 @@ public class GoapRuntimeTests
         ulong state = BotWorldState.Empty.Flags;
         string goal = "PlantWildFarm";
 
-        cache.StoreTemplate(state, goal, actions);
+        cache.StoreTemplate(state, labor: 100, gold: 500, goal, actions);
 
         await Assert.That(cache.TemplateCount).IsEqualTo(1);
-        bool hit = cache.TryGetTemplate(state, goal, out var cachedNames);
+        bool hit = cache.TryGetTemplate(state, labor: 100, gold: 500, goal, out var cachedNames);
 
         await Assert.That(hit).IsTrue();
         await Assert.That(cachedNames.Count).IsEqualTo(4);
@@ -147,4 +153,172 @@ public class GoapRuntimeTests
         await Assert.That(cachedNames[2]).IsEqualTo("HikeToSecretPlateau");
         await Assert.That(cachedNames[3]).IsEqualTo("PlantSecretGrove");
     }
+
+    [Test]
+    public async Task PlanTemplateCache_SameFlagsDifferentResources_DoesNotShareTemplate()
+    {
+        var cache = new PlanTemplateCache();
+        var actions = new List<IGoapAction> { new AcquireScarecrowAction(), new SurveyAndPlacePlotAction() };
+
+        ulong flags = BotWorldState.Empty.With(BotWorldState.HasScarecrowDesign).Flags;
+        const string goal = "ClaimHomestead";
+
+        // Flags (and therefore every flag-gated precondition) are identical; only resources differ.
+        cache.StoreTemplate(flags, labor: 250, gold: 5000, goal, actions);
+
+        await Assert.That(cache.TryGetTemplate(flags, labor: 10, gold: 0, goal, out _)).IsFalse();
+        await Assert.That(cache.TryGetTemplate(flags, labor: 250, gold: 0, goal, out _)).IsFalse();
+        await Assert.That(cache.TryGetTemplate(flags, labor: 10, gold: 5000, goal, out _)).IsFalse();
+        await Assert.That(cache.TryGetTemplate(flags, labor: 250, gold: 5000, goal, out var same)).IsTrue();
+        await Assert.That(same.Count).IsEqualTo(2);
+        await Assert.That(cache.TemplateCount).IsEqualTo(1);
+    }
+
+    // ---------------------------------------------------------------- step-5 observations
+
+    [Test]
+    public async Task BagFull_FreshBot_False()
+    {
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("empty-bag-bot");
+        var context = new BotContext();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.BagFull)).IsFalse();
+    }
+
+    [Test]
+    public async Task BagFull_ZeroFreeSlots_True()
+    {
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("full-bag-bot");
+        bot.Character.Inventory.Bag.ContainerSize = 0; // no free slots -> full
+        var context = new BotContext();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.BagFull)).IsTrue();
+    }
+
+    [Test]
+    public async Task BagFull_MatureGrove_DivergesFromFullness()
+    {
+        // A mature grove is a harvest opportunity, not a full bag: the grove
+        // flag sets while BagFull stays clear on a non-full bag.
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("grove-bot");
+        var context = new BotContext();
+        context.Memory.AddGrove(1, new Vector3(0f, 0f, 0f), DateTime.UtcNow.AddMinutes(-30));
+        await Assert.That(context.Memory.HasMatureGroves(context.GetUtcNow())).IsTrue();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.SecretGrovePlanted)).IsTrue();
+        await Assert.That(state.Has(BotWorldState.BagFull)).IsFalse();
+    }
+
+    [Test]
+    public async Task Hostile_MonsterFactionNpc_True()
+    {
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("hunter-bot");
+        var npc = new Npc { Faction = new SystemFaction { Id = (FactionsEnum)115 } };
+        npc.Hp = 500;
+        bot.Character.CurrentTarget = npc;
+        var context = new BotContext();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.HasActiveTarget)).IsTrue();
+        await Assert.That(state.Has(BotWorldState.TargetIsHostile)).IsTrue();
+    }
+
+    [Test]
+    public async Task Hostile_PlayerTarget_NotHostile()
+    {
+        // Non-NPC targets short-circuit: a fellow player is never "hostile".
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("witness-bot");
+        var friend = NewBot("friend-bot");
+        bot.Character.CurrentTarget = friend.Character;
+        var context = new BotContext();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.HasActiveTarget)).IsTrue();
+        await Assert.That(state.Has(BotWorldState.TargetIsHostile)).IsFalse();
+    }
+
+    [Test]
+    public async Task Materials_EmptyBag_False()
+    {
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("no-mats-bot");
+        var context = new BotContext();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.HasBuildingMaterials)).IsFalse();
+    }
+
+    [Test]
+    public async Task Materials_PackCategoryItem_True()
+    {
+        // NewBot seeds the rig surface first; the trade template is additive.
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("pack-bot");
+        GameplayActorTestRig.SeedTradeItemTemplate(777001u, price: 0, refund: 0, sellable: false);
+        ItemManager.Instance.GetTemplate(777001u).CategoryId = (int)ItemCategory.Trade_Pack;
+        var granted = bot.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, 777001u, 1, 1);
+        await Assert.That(granted).IsTrue();
+        var context = new BotContext();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.HasBuildingMaterials)).IsTrue();
+    }
+
+    [Test]
+    public async Task Override_DesignIgnoredByDefault()
+    {
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("no-gate-bot");
+        var context = new BotContext();
+        context.Memory.HasScarecrowDesignOverride = true; // stored, but gate closed
+        await Assert.That(context.Memory.FixtureOverridesEnabled).IsFalse();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.HasScarecrowDesign)).IsFalse();
+    }
+
+    [Test]
+    public async Task Override_DesignHonoredWhenGateOpen()
+    {
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("gate-bot");
+        var context = new BotContext();
+        context.Memory.EnableFixtureOverrides();
+        context.Memory.HasScarecrowDesignOverride = true;
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.HasScarecrowDesign)).IsTrue();
+    }
+
+    [Test]
+    public async Task LandPlot_StaleMemoryIdWithoutLiveHouse_False()
+    {
+        // A memory house id with no live house is stale — not a plot.
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("stale-plot-bot");
+        var context = new BotContext();
+        context.Memory.OwnedHouseId = 9999;
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.HasLandPlot)).IsFalse();
+    }
+
 }
