@@ -44,6 +44,17 @@ public class CombatExecutorTests
     private const uint ShortCooldownSkillId = 90013;
 
     /// <summary>
+    /// E7's second gate-shape skill. MUST NOT alias any other id this class
+    /// seeds: <see cref="SeedTemplateOnly"/> is missing-only AND process-wide,
+    /// so an aliased id silently inherits whichever cooldown shape was seeded
+    /// first — E7 previously used <c>CooldownSkillId + 1</c> (90013), the same
+    /// template as <see cref="ShortCooldownSkillId"/>, and when E7 ran first
+    /// E4's 700 ms expiry expectation was served a 3000 ms template (observed
+    /// as an order-dependent "Waiting" instead of "Completed").
+    /// </summary>
+    private const uint ClientBranchSkillId = 90014;
+
+    /// <summary>
     /// E1 (client-branch parity + revert stands): the executor's engine call
     /// arms the learned-skill GCD state (GlobalCooldown + SkillLastUsed),
     /// which is only reachable with <c>bypassGcd: false</c> — the same gate
@@ -342,7 +353,7 @@ public class CombatExecutorTests
     {
         var (actor, _) = GameplayActorTestRig.CreateActor("combat-exec-clientpath");
         var executorSkillId = SeedSkill(actor, CooldownSkillId, defaultGcd: false, cooldownTime: 3000);
-        var clientSkillId = SeedSkill(actor, CooldownSkillId + 1, defaultGcd: false, cooldownTime: 3000);
+        var clientSkillId = SeedSkill(actor, ClientBranchSkillId, defaultGcd: false, cooldownTime: 3000);
         var executor = new CombatExecutor();
 
         // 1. Executor completes a cast, consuming the engine cooldown.

@@ -105,23 +105,33 @@ public class HeadlessSessionProvisioningTests
         // per week → 15 certificates at the engine's 10,000-copper denomination).
         SeedFixtureSingletons();
         using var canonical = LoadCanonicalHousingTaxData();
-        var session = HeadlessSession.Create(4200003u, "KitBot", 1);
+        // Kit templates live only for this test: seed into the live manager and
+        // remove afterwards so no other suite ever observes them (run-order isolation).
+        var seededTemplates = SeedKitTemplates(ItemManager.Instance);
+        try
+        {
+            var session = HeadlessSession.Create(4200003u, "KitBot", 1);
 
-        HeadlessSession.GrantStarterHomesteadKit(session.Character);
+            HeadlessSession.GrantStarterHomesteadKit(session.Character);
 
-        var bag = session.Character.Inventory?.Bag;
-        await Assert.That(bag is not null).IsEqualTo(true);
-        var snapshot = bag!.GetItemsSnapshot();
-        var designs = snapshot
-            .Where(i => i != null && (i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId ||
-                                      i.TemplateId == AcquireScarecrowAction.ScarecrowDesignId))
-            .Sum(i => i.Count);
-        var certs = snapshot
-            .Where(i => i != null && i.TemplateId == AcquireScarecrowAction.TaxCertificateTemplateId)
-            .Sum(i => i.Count);
-        await Assert.That(designs).IsEqualTo(1);
-        await Assert.That(certs).IsEqualTo(AcquireScarecrowAction.RequiredFirstPlacementTaxCertificates());
-        await Assert.That(certs).IsEqualTo(15);
+            var bag = session.Character.Inventory?.Bag;
+            await Assert.That(bag is not null).IsEqualTo(true);
+            var snapshot = bag!.GetItemsSnapshot();
+            var designs = snapshot
+                .Where(i => i != null && (i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId ||
+                                          i.TemplateId == AcquireScarecrowAction.ScarecrowDesignId))
+                .Sum(i => i.Count);
+            var certs = snapshot
+                .Where(i => i != null && i.TemplateId == AcquireScarecrowAction.TaxCertificateTemplateId)
+                .Sum(i => i.Count);
+            await Assert.That(designs).IsEqualTo(1);
+            await Assert.That(certs).IsEqualTo(AcquireScarecrowAction.RequiredFirstPlacementTaxCertificates());
+            await Assert.That(certs).IsEqualTo(15);
+        }
+        finally
+        {
+            RemoveKitTemplates(ItemManager.Instance, seededTemplates);
+        }
     }
 
     [Test]
@@ -130,24 +140,32 @@ public class HeadlessSessionProvisioningTests
         // Repeated setup is idempotent: the deficit grant adds nothing twice.
         SeedFixtureSingletons();
         using var canonical = LoadCanonicalHousingTaxData();
-        var session = HeadlessSession.Create(4200004u, "KitTwiceBot", 1);
+        var seededTemplates = SeedKitTemplates(ItemManager.Instance);
+        try
+        {
+            var session = HeadlessSession.Create(4200004u, "KitTwiceBot", 1);
 
-        HeadlessSession.GrantStarterHomesteadKit(session.Character);
-        HeadlessSession.GrantStarterHomesteadKit(session.Character);
+            HeadlessSession.GrantStarterHomesteadKit(session.Character);
+            HeadlessSession.GrantStarterHomesteadKit(session.Character);
 
-        var bag = session.Character.Inventory?.Bag;
-        await Assert.That(bag is not null).IsEqualTo(true);
-        var snapshot = bag!.GetItemsSnapshot();
-        var designs = snapshot
-            .Where(i => i != null && (i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId ||
-                                      i.TemplateId == AcquireScarecrowAction.ScarecrowDesignId))
-            .Sum(i => i.Count);
-        var certs = snapshot
-            .Where(i => i != null && i.TemplateId == AcquireScarecrowAction.TaxCertificateTemplateId)
-            .Sum(i => i.Count);
-        await Assert.That(designs).IsEqualTo(1);
-        await Assert.That(certs).IsEqualTo(AcquireScarecrowAction.RequiredFirstPlacementTaxCertificates());
-        await Assert.That(certs).IsEqualTo(15);
+            var bag = session.Character.Inventory?.Bag;
+            await Assert.That(bag is not null).IsEqualTo(true);
+            var snapshot = bag!.GetItemsSnapshot();
+            var designs = snapshot
+                .Where(i => i != null && (i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId ||
+                                          i.TemplateId == AcquireScarecrowAction.ScarecrowDesignId))
+                .Sum(i => i.Count);
+            var certs = snapshot
+                .Where(i => i != null && i.TemplateId == AcquireScarecrowAction.TaxCertificateTemplateId)
+                .Sum(i => i.Count);
+            await Assert.That(designs).IsEqualTo(1);
+            await Assert.That(certs).IsEqualTo(AcquireScarecrowAction.RequiredFirstPlacementTaxCertificates());
+            await Assert.That(certs).IsEqualTo(15);
+        }
+        finally
+        {
+            RemoveKitTemplates(ItemManager.Instance, seededTemplates);
+        }
     }
 
     [Test]
@@ -326,9 +344,12 @@ public class HeadlessSessionProvisioningTests
         // seed a data-free manager (M3a convention) so the hook is a no-op.
         SetSingletonIfMissing(typeof(Singleton<QuestManager>),
             new QuestManager(Mock.Of<ITaskManager>().Object, Mock.Of<IZoneManager>().Object));
-        // Fail-closed on missing MySQL (logged, empty used ids), then serves
-        // incrementing ids from its range — same call the pilot rig makes.
-        ContainerIdManager.Instance.Initialize(true);
+        // Initialize WITHOUT force-reset: Initialize(true) rewinds the container-ID
+        // sequence, so a later test's fresh bag reuses an earlier test's ContainerId
+        // and GetOrAdd hands back the old (possibly kit-filled) container — cross-test
+        // bag sharing that breaks run-order independence. First-init-wins keeps every
+        // container id in this process unique, matching the missing-only discipline above.
+        ContainerIdManager.Instance.Initialize(false);
     }
 
     private static ItemManager BuildFixtureItemManager()
@@ -368,9 +389,18 @@ public class HeadlessSessionProvisioningTests
         uint nextItemId = 9_000_001;
         itemIdManager.GetNextId().Returns(() => nextItemId++);
 
+        return itemManager;
+    }
+
+    /// <summary>Seeds the two starter-kit templates into the given (live) manager.
+    /// Returns the ids this call added, so the caller can remove exactly those
+    /// afterwards — pre-existing entries are never touched.</summary>
+    private static List<uint> SeedKitTemplates(ItemManager itemManager)
+    {
         // The kit grant resolves templates by id (ItemManager.GetTemplate over
         // _templates, never Loaded in a rig). Seed exactly the two starter-kit
         // templates so AcquireDefaultItem exercises its real stacking path.
+        var added = new List<uint>();
         var templatesField = typeof(ItemManager).GetField("_templates",
             BindingFlags.NonPublic | BindingFlags.Instance);
         var templates = templatesField?.GetValue(itemManager) as Dictionary<uint, ItemTemplate>;
@@ -379,12 +409,23 @@ public class HeadlessSessionProvisioningTests
             templates = new Dictionary<uint, ItemTemplate>();
             templatesField?.SetValue(itemManager, templates);
         }
-        templates.TryAdd(AcquireScarecrowAction.ScarecrowDesignTemplateId,
-            new ItemTemplate { Id = AcquireScarecrowAction.ScarecrowDesignTemplateId, MaxCount = 1 });
-        templates.TryAdd(AcquireScarecrowAction.TaxCertificateTemplateId,
-            new ItemTemplate { Id = AcquireScarecrowAction.TaxCertificateTemplateId, MaxCount = 100 });
+        if (templates.TryAdd(AcquireScarecrowAction.ScarecrowDesignTemplateId,
+            new ItemTemplate { Id = AcquireScarecrowAction.ScarecrowDesignTemplateId, MaxCount = 1 }))
+            added.Add(AcquireScarecrowAction.ScarecrowDesignTemplateId);
+        if (templates.TryAdd(AcquireScarecrowAction.TaxCertificateTemplateId,
+            new ItemTemplate { Id = AcquireScarecrowAction.TaxCertificateTemplateId, MaxCount = 100 }))
+            added.Add(AcquireScarecrowAction.TaxCertificateTemplateId);
+        return added;
+    }
 
-        return itemManager;
+    private static void RemoveKitTemplates(ItemManager itemManager, List<uint> addedTemplateIds)
+    {
+        if (addedTemplateIds.Count == 0)
+            return;
+        var templates = typeof(ItemManager).GetField("_templates",
+            BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(itemManager) as Dictionary<uint, ItemTemplate>;
+        foreach (var id in addedTemplateIds)
+            templates?.Remove(id);
     }
 
     private static void SetSingletonIfMissing(Type singletonBase, object instance)

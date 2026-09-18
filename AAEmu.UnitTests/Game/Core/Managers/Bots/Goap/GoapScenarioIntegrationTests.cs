@@ -201,6 +201,16 @@ public class GoapScenarioIntegrationTests
         var actor = new TestRecordingActor(bot.Character);
         var telemetry = new InMemoryGoapTelemetrySink();
         var context = new BotContext();
+        // Fixture-gate opt-in: the bag overrides set below describe a SIMULATED
+        // inventory (rig world, no merchant trade), and BotMemory only surfaces
+        // them once the fixture layer is explicitly opened. Without it the
+        // projection reads the real (empty) bag: the resource-correct plan keeps
+        // its BuyTreeSaplings step (correct — the bot genuinely has no saplings),
+        // the completed purchase never observes its effect, and Step 3's stale
+        // expectation of index 2 fails with index 1. The plan shape asserted
+        // below is the affordable-path plan for a bot that DOES hold saplings,
+        // which is the premise this scenario documents.
+        context.Memory.EnableFixtureOverrides();
         context.Memory.KnownSeedMerchantPos = merchantPos;
         context.Memory.TargetWildFarmPos = farmPos;
 
@@ -281,6 +291,10 @@ public class GoapScenarioIntegrationTests
         var actor = new TestRecordingActor(bot.Character);
         var telemetry = new InMemoryGoapTelemetrySink();
         var context = new BotContext();
+        // Fixture-gate opt-in (see ScenarioA): the "already has saplings" premise
+        // is rig simulation. Gate closed, the bot legitimately has none and the
+        // affordable-path plan opens with BuyTreeSaplings instead of the hike.
+        context.Memory.EnableFixtureOverrides();
         context.Memory.KnownSeedMerchantPos = merchantPos;
         context.Memory.TargetWildFarmPos = farmPos;
         context.Memory.HasSaplingsOverride = true; // Already has saplings, hiking to farm
@@ -399,6 +413,9 @@ public class GoapScenarioIntegrationTests
         var actor = new TestRecordingActor(bot.Character);
         var telemetry = new InMemoryGoapTelemetrySink();
         var context = new BotContext();
+        // Fixture-gate opt-in (see ScenarioA): "bot already has saplings" is rig
+        // simulation, not observation.
+        context.Memory.EnableFixtureOverrides();
         context.Memory.KnownSeedMerchantPos = merchantPos;
         context.Memory.TargetWildFarmPos = farmPos;
         context.Memory.HasSaplingsOverride = true; // Bot already has saplings

@@ -381,8 +381,10 @@ public class HomesteadTenBotScenarioRigTests
             var actor = new TraceRecordingActor(character);
             var telemetry = new InMemoryGoapTelemetrySink();
             var context = new BotContext();
+            // Fixture-gate opt-in: every override below is labeled rig simulation,
+            // never production observation (step-5 contract).
+            context.Memory.EnableFixtureOverrides();
             var milestones = new List<string>();
-
             // Canonical spatial memory known to the bot from exploration / cartography
             context.Memory.KnownHousingZonePos = spec.HousingZoneCenter;
             context.Memory.KnownWorkbenchPos = spec.WorkbenchPosition;
