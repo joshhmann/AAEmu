@@ -289,12 +289,8 @@ public class HeadlessSession
 
         // Starter Homestead Kit: Straw Hat Scarecrow Garden design (15596) + 10x Bound Tax Certificates (31892)
         // Opt-in demonstration fixture only; ordinary citizens earn this via the Blue Salt quest line.
-        if (provisionHomesteadKit && character.Inventory?.Bag != null)
-        {
-            character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.ScarecrowDesignTemplateId, 1, 1);
-            character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.TaxCertificateTemplateId, 10, 1);
-            Logger.Info("Provisioning: granted opt-in starter homestead kit to bot '{Name}' (id {Id})", name, characterId);
-        }
+        if (provisionHomesteadKit)
+            GrantStarterHomesteadKit(character);
 
         if (!character.SaveDirectlyToDatabase())
         {
@@ -315,6 +311,55 @@ public class HeadlessSession
             throw new InvalidOperationException("Provisioning failed: activated bot character has no parent WorldInstance");
 
         return new HeadlessSession(character, world) { ProvisionedAccount = account };
+    }
+
+    /// <summary>
+    /// Step-3 isolation: explicit opt-in starter kit grant (design 15596 + the
+    /// bound tax certificates a FIRST placement of housing 267 actually costs).
+    /// Deficit-based, so repeated setup is idempotent and never duplicates
+    /// design or certificates.
+    ///
+    /// The certificate count is DERIVED, never a literal: the design item the
+    /// claim consumes plus
+    /// <see cref="AcquireScarecrowAction.RequiredFirstPlacementTaxCertificates"/>
+    /// (canonical housing 267 taxation 50,000 copper → one week + deposit →
+    /// 15 certificates at the engine's own 10,000-copper certificate value).
+    /// A kit sized below that requirement enables a claim that the engine's
+    /// tax gate then refuses, i.e. a fixture that cannot fund its own proof.
+    /// </summary>
+    internal static void GrantStarterHomesteadKit(Character character)
+    {
+        var bag = character.Inventory?.Bag;
+        if (bag == null)
+            return;
+        var requiredCerts = AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction
+            .RequiredFirstPlacementTaxCertificates();
+        if (requiredCerts <= 0)
+        {
+            Logger.Warn("Provisioning: starter homestead kit requested before canonical housing data " +
+                        "(housing 267 taxation) was loaded — granting the design only, no certificates");
+        }
+
+        var designs = 0;
+        var certs = 0;
+        foreach (var item in bag.GetItemsSnapshot())
+        {
+            if (item == null)
+                continue;
+            if (item.TemplateId == AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.ScarecrowDesignTemplateId ||
+                item.TemplateId == AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.ScarecrowDesignId)
+                designs += item.Count;
+            else if (item.TemplateId == AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.TaxCertificateTemplateId)
+                certs += item.Count;
+        }
+        var designDeficit = Math.Max(0, 1 - designs);
+        var certDeficit = Math.Max(0, requiredCerts - certs);
+        if (designDeficit > 0)
+            bag.AcquireDefaultItem(ItemTaskType.Gm, AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.ScarecrowDesignTemplateId, designDeficit, 1);
+        if (certDeficit > 0)
+            bag.AcquireDefaultItem(ItemTaskType.Gm, AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.TaxCertificateTemplateId, certDeficit, 1);
+        Logger.Info("Provisioning: granted opt-in starter homestead kit deficit (design +{Designs}, certs +{Certs} of {Required} required)",
+            designDeficit, certDeficit, requiredCerts);
     }
 
     /// <summary>

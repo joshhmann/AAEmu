@@ -290,6 +290,8 @@ public sealed class BotDriveBridge
                 return HandleFarmOp(root);
             case "housing":
                 return HandleHousingOp(root);
+            case "homestead":
+                return HandleHomesteadOp(root);
             default:
                 return Err($"unknown cmd '{cmd}'");
         }
@@ -3594,6 +3596,328 @@ public sealed class BotDriveBridge
         public object GetAttribute(string name) => _attributes.GetValueOrDefault(name)!;
         public void ClearAttribute(string name) => _attributes.Remove(name);
         public void Close() { }
+    }
+
+    /// <summary>
+    /// Step-7 claim/place-plot seam (E2E-ONLY, additive). Drives the ONE bound
+    /// homestead action — <see cref="AAEmu.Game.Core.Managers.Bots.Goap.Actions.SurveyAndPlacePlotAction"/>
+    /// → <c>GameplayActor.BuildHouse(housing 267, design item 15596, resolved zone
+    /// position)</c> → <c>HousingManager.Build</c> — on a persistent headless bot,
+    /// with the design sourced ONLY from the explicit kit opt-in.
+    ///
+    /// This seam performs NO fixture repair: it never grants items, never sets
+    /// money, never writes a house row. `kit` is the labeled opt-in grant the
+    /// step-3 contract defines; every other op is a drive of the real action.
+    ///
+    /// Ops:
+    ///   kit     — explicit opt-in starter kit (design + the canonical certificate
+    ///             count). The only grant in this seam, and it is labeled.
+    ///   claim   — dispatch the real action's request; report the actor lifecycle
+    ///             state + engine postconditions (house row, design/cert counts).
+    ///   claimRetry — re-dispatch with the SAME idempotency key (duplicate guard).
+    ///   observe — the observation layer's projection for the claim flags.
+    ///   zone    — the position the action resolves (no fixed stand-in).
+    /// </summary>
+    private string HandleHomesteadOp(JsonElement root)
+    {
+        var rawBot = root.TryGetProperty("bot", out var b) ? b.GetString() : null;
+        // A networked (real login flow) bot is the stronger live shape; the
+        // headless persistent session is accepted too (same rule as the farm seam).
+        if (!TryResolvePersistentBot(rawBot, out var character, out var err)
+            && !TryResolveNetworkedBot(rawBot, out character, out err))
+            return Err(err);
+
+        var op = root.GetProperty("op").GetString();
+        var actor = new AAEmu.Game.Core.Managers.Bots.GameplayActor(character!);
+        var action = new AAEmu.Game.Core.Managers.Bots.Goap.Actions.SurveyAndPlacePlotAction();
+        var key = root.TryGetProperty("key", out var keyEl) ? keyEl.GetString() : "step7-claim-1";
+
+        switch (op)
+        {
+            case "kit":
+            {
+                var before = BagCount(character!, AcquireScarecrowActionConstants.DesignItem);
+                var certsBefore = BagCount(character!, AcquireScarecrowActionConstants.CertItem);
+                HeadlessSession.GrantStarterHomesteadKit(character!);
+                return Ok(new
+                {
+                    name = character!.Name,
+                    id = character.Id,
+                    designsBefore = before,
+                    certsBefore,
+                    designs = BagCount(character, AcquireScarecrowActionConstants.DesignItem),
+                    certs = BagCount(character, AcquireScarecrowActionConstants.CertItem),
+                    requiredCerts = AcquireScarecrowActionConstants.RequiredCerts()
+                });
+            }
+            case "zone":
+            {
+                var fallback = new System.Numerics.Vector3(20455.0f, 10825.0f, 130.0f);
+                var template = AAEmu.Game.GameData.HousingGameData.Instance
+                    .GetTemplate(AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.ScarecrowDesignId);
+                var ownsHouses = HousingManager.Instance.GetAllHouses().Any(h => h.OwnerId == character!.Id);
+                var pos = AAEmu.Game.Core.Managers.Bots.Goap.Actions.TravelToHousingZoneAction
+                        .ResolvePlacementPosition(character!, template?.CategoryId ?? 0, ownsHouses, fallback)
+                    ?? AAEmu.Game.Core.Managers.Bots.Goap.Actions.TravelToHousingZoneAction
+                        .ResolveNearestHousingZone(character!, fallback);
+                var zoneKey = WorldManager.Instance.GetZoneId(character!.ParentWorld.Template, pos.X, pos.Y);
+                return Ok(new { x = pos.X, y = pos.Y, z = pos.Z, zoneKey, fallbackUsed = pos == fallback });
+            }
+            case "claim":
+            case "claimRetry":
+            {
+                var designBefore = BagCount(character!, AcquireScarecrowActionConstants.DesignItem);
+                var certsBefore = BagCount(character!, AcquireScarecrowActionConstants.CertItem);
+                var moneyBefore = character!.Money;
+                var housesBefore = HousingManager.Instance.GetAllHouses().Select(h => h.Id).ToHashSet();
+
+                // The ACTION builds the request — the seam never constructs it.
+                var request = action.CreateActorRequest(new PlayerBotRuntime(character, "step7-e2e"), actor);
+
+                var newHouses = HousingManager.Instance.GetAllHouses()
+                    .Where(h => !housesBefore.Contains(h.Id)).ToList();
+                return Ok(new
+                {
+                    name = character.Name,
+                    id = character.Id,
+                    key,
+                    state = request!.State.ToString(),
+                    failure = request.Failure?.ToString(),
+                    detail = request.Detail,
+                    targetId = request.TargetId,
+                    action = request.Action.ToString(),
+                    position = (object)((AAEmu.Game.Core.Managers.Bots.HouseBuildParams)request.Payload!).Position,
+                    designBefore,
+                    designs = BagCount(character, AcquireScarecrowActionConstants.DesignItem),
+                    certsBefore,
+                    certs = BagCount(character, AcquireScarecrowActionConstants.CertItem),
+                    moneyBefore,
+                    money = character.Money,
+                    newHouses = newHouses.Select(h => new
+                    {
+                        houseId = h.Id,
+                        template = h.TemplateId,
+                        owner = h.OwnerId,
+                        currentStep = h.CurrentStep,
+                        x = h.Transform.World.Position.X,
+                        y = h.Transform.World.Position.Y,
+                        z = h.Transform.World.Position.Z
+                    }).ToArray(),
+                    ownedHouses = HousingManager.Instance.GetAllHouses().Count(h => h.OwnerId == character.Id)
+                });
+            }
+            case "observe":
+            {
+                var context = new AAEmu.Game.Core.Managers.Bots.Goap.BotContext();
+                var state = new AAEmu.Game.Core.Managers.Bots.Goap.BotWorldStateProvider()
+                    .Project(new PlayerBotRuntime(character!, "step8-e2e"), context);
+                var ownHouses = HousingManager.Instance.GetAllHouses()
+                    .Where(h => h.OwnerId == character!.Id).ToList();
+                var frame = AAEmu.Game.Core.Managers.Bots.Goap.Actions.ConstructPlotAction
+                    .ResolveOwnedUnfinishedFrame(character.Id);
+                return Ok(new
+                {
+                    name = character!.Name,
+                    id = character.Id,
+                    hasScarecrowDesign = state.Has(AAEmu.Game.Core.Managers.Bots.Goap.BotWorldState.HasScarecrowDesign),
+                    hasTaxCertificates = state.Has(AAEmu.Game.Core.Managers.Bots.Goap.BotWorldState.HasTaxCertificates),
+                    hasLandPlot = state.Has(AAEmu.Game.Core.Managers.Bots.Goap.BotWorldState.HasLandPlot),
+                    plotConstructed = state.Has(AAEmu.Game.Core.Managers.Bots.Goap.BotWorldState.PlotConstructed),
+                    labor = state.Labor,
+                    gold = state.Gold,
+                    observedHouses = ownHouses.Count,
+                    // The live frame the construct action targets (the same scan
+                    // ConstructPlotAction performs) plus flat distance, so the
+                    // reach leg is measurable instead of assumed.
+                    frameHouseId = frame?.Id ?? 0u,
+                    frameObjId = frame?.ObjId ?? 0u,
+                    frameDistance = frame != null
+                        ? AAEmu.Game.Utils.MathUtil.CalculateDistance(
+                            character.Transform.World.Position, frame.Transform.World.Position, false)
+                        : -1f,
+                    frameX = frame?.Transform.World.Position.X ?? 0f,
+                    frameY = frame?.Transform.World.Position.Y ?? 0f,
+                    frameZ = frame?.Transform.World.Position.Z ?? 0f,
+                    // The engine's own cast range for the construction skill, so the
+                    // reach leg is judged against the gate that actually refuses.
+                    buildSkillRange = frame != null
+                        ? (AAEmu.Game.Core.Managers.SkillManager.Instance
+                            .GetSkillTemplate(AAEmu.Game.Core.Managers.Bots.Goap.Actions.ConstructPlotAction.ScarecrowBuildSkillId)
+                            ?.MaxRange ?? 0)
+                        : 0,
+                    currentStep = ownHouses.Count > 0 ? ownHouses[0].CurrentStep : int.MinValue,
+                    // The Live house object (id/ObjId/step). Distinct from the
+                    // unfinished-FRAME resolver above: a constructed plot has
+                    // CurrentStep == -1, so it is correctly no longer a frame.
+                    ownedHouseObjId = ownHouses.Count > 0 ? ownHouses[0].ObjId : 0u,
+                    ownedHouseDbId = ownHouses.Count > 0 ? ownHouses[0].Id : 0u,
+                    ownedHouseStep = ownHouses.Count > 0 ? ownHouses[0].CurrentStep : int.MinValue
+                });
+            }
+            case "positions":
+            {
+                // The engine-legal placement areas for this design, nearest-first.
+                //
+                // IMPORTANT: the claim action does not build at the bot's exact
+                // coordinate — SurveyAndPlacePlotAction resolves the CENTROID of the
+                // nearest area whose canonical rules accept the design's category.
+                // So two distinct plots require two distinct legal areas, and this
+                // op reports exactly that (area identity + centroid + distance), all
+                // from the engine's own rule data (housing_area rule + land zone).
+                // Bounded: classification only, one height sample per reported area.
+                const int MaxAreas = 6;
+                var categoryId = AAEmu.Game.GameData.HousingGameData.Instance
+                    .GetTemplate(AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.ScarecrowDesignId)
+                    ?.CategoryId ?? 0;
+                var ownsHousesNow = HousingManager.Instance.GetAllHouses().Any(h => h.OwnerId == character!.Id);
+                var world = character.ParentWorld as AAEmu.Game.Models.Game.World.WorldInstance;
+                var zones = world?.Template?.HousingZones;
+                var botPos = character.Transform.World.Position;
+                var legal = new List<(uint ZoneId, uint AreaId, float X, float Y, float Distance)>();
+                if (zones != null)
+                {
+                    foreach (var (zoneId, areaList) in zones)
+                    {
+                        var zone = AAEmu.Game.Core.Managers.World.ZoneManager.Instance.GetZoneById(zoneId);
+                        var landZone = AAEmu.Game.GameData.HousingGameData.Instance.GetLandZoneByZoneName(zone?.Name);
+                        if (landZone == null || !landZone.AllowedCategories.Contains(categoryId))
+                            continue;
+                        if (landZone.IsHouselessOnly && ownsHousesNow)
+                            continue;
+                        foreach (var area in areaList)
+                        {
+                            if (area?.Points == null || area.Points.Count < 3)
+                                continue;
+                            var rule = AAEmu.Game.GameData.HousingGameData.Instance.GetAreaRuleByShapeName(area.Name);
+                            if (rule == null || !rule.AllowedCategories.Contains(categoryId))
+                                continue;
+                            if (rule.HouselessOnly && ownsHousesNow)
+                                continue;
+                            var cx = area.Points.Average(p => p.X);
+                            var cy = area.Points.Average(p => p.Y);
+                            if (!AAEmu.Game.Models.Game.World.Point.IsInside(area.Points, area.Points.Count, new System.Numerics.Vector3(cx, cy, 0)))
+                                continue;
+                            var dx = cx - botPos.X;
+                            var dy = cy - botPos.Y;
+                            legal.Add((zoneId, area.Id, cx, cy, MathF.Sqrt((dx * dx) + (dy * dy))));
+                        }
+                    }
+                }
+                var areas = new List<object>();
+                foreach (var entry in legal.OrderBy(l => l.Distance).Take(MaxAreas))
+                {
+                    float gz = botPos.Z;
+                    try
+                    {
+                        var zk = AAEmu.Game.Core.Managers.World.WorldManager.Instance.GetZoneId(world!.Template, entry.X, entry.Y);
+                        gz = AAEmu.Game.Core.Managers.World.WorldManager.Instance.GetHeight(zk, entry.X, entry.Y, botPos.Z);
+                    }
+                    catch
+                    {
+                    }
+                    areas.Add(new { areaId = entry.AreaId, zoneId = entry.ZoneId, x = entry.X, y = entry.Y, z = gz, distance = entry.Distance });
+                }
+                return Ok(new { count = areas.Count, legalAreas = legal.Count, areas = areas.ToArray() });
+            }
+            case "move":
+            {
+                // SETUP-ONLY positioning (the same shape and label as the
+                // needs-farm `farm place` op): relocates the bot ONCE, before
+                // the loop's action legs, to a placement position the engine's
+                // own rule data accepts. It is NOT a traversal proof and it is
+                // NOT usable for the reach leg — the loop asserts the frame was
+                // already within MaxInteractRange when the action dispatched.
+                // No gameplay state is mutated: no items, no money, no labor,
+                // no house rows. Region bookkeeping is synced.
+                var mx = GetFloat(root, "x", 0f);
+                var my = GetFloat(root, "y", 0f);
+                var mz = GetFloat(root, "z", 0f);
+                if (mx == 0f && my == 0f)
+                    return Err("homestead move requires 'x' and 'y'");
+                var from = character!.Transform.World.Position;
+                TeleportWithRegionSync(character!, new System.Numerics.Vector3(mx, my, mz), character.Transform.ZoneId);
+                character.MarkDirty();
+                var to = character.Transform.World.Position;
+                return Ok(new
+                {
+                    fromX = from.X, fromY = from.Y, fromZ = from.Z,
+                    x = to.X, y = to.Y, z = to.Z,
+                    zoneId = character.Transform.ZoneId,
+                    movedFlat = MathF.Sqrt((to.X - from.X) * (to.X - from.X) + (to.Y - from.Y) * (to.Y - from.Y))
+                });
+            }
+            case "construct":
+            case "constructRetry":
+            {
+                var designBefore = BagCount(character!, AcquireScarecrowActionConstants.DesignItem);
+                var laborBefore = character!.LaborPower;
+                var moneyBefore = character.Money;
+                var frame = AAEmu.Game.Core.Managers.Bots.Goap.Actions.ConstructPlotAction
+                    .ResolveOwnedUnfinishedFrame(character.Id);
+                var stepBefore = frame != null ? frame.CurrentStep : int.MinValue;
+
+                // The ACTION builds the request — the seam never constructs it.
+                var constructAction = new AAEmu.Game.Core.Managers.Bots.Goap.Actions.ConstructPlotAction();
+                var request = constructAction.CreateActorRequest(new PlayerBotRuntime(character, "step8-e2e"), actor);
+
+                var frameAfter = AAEmu.Game.Core.Managers.Bots.Goap.Actions.ConstructPlotAction
+                    .ResolveOwnedUnfinishedFrame(character.Id);
+                return Ok(new
+                {
+                    name = character.Name,
+                    id = character.Id,
+                    key,
+                    dispatched = request != null,
+                    state = request?.State.ToString() ?? "NoRequest",
+                    failure = request?.Failure?.ToString(),
+                    detail = request?.Detail ?? "no unfinished frame resolved — action dispatched no request",
+                    targetObjId = request?.TargetId ?? 0u,
+                    skillId = request?.SkillId ?? 0u,
+                    stepBefore,
+                    stepAfter = frameAfter != null ? frameAfter.CurrentStep : int.MinValue,
+                    laborBefore,
+                    labor = character.LaborPower,
+                    moneyBefore,
+                    money = character.Money,
+                    designBefore,
+                    designs = BagCount(character, AcquireScarecrowActionConstants.DesignItem),
+                    ownedHouses = HousingManager.Instance.GetAllHouses().Count(h => h.OwnerId == character.Id)
+                });
+            }
+            default:
+                return Err($"unknown homestead op '{op}'");
+        }
+    }
+
+    private static int BagCount(Character character, uint templateId)
+        => character.Inventory?.GetItemsCount(templateId) ?? 0;
+
+    /// <summary>
+    /// One candidate placement spot on a canonical housing area, keeping the only
+    /// fields the caller reads (area identity, world position, distance from the
+    /// bot). Spots are de-duplicated so a ring offset landing on the centroid does
+    /// not appear twice.
+    /// </summary>
+    private static void AddSpot(
+        List<(uint AreaId, uint ZoneId, float X, float Y, float Z, float Distance)> spots,
+        AAEmu.Game.Models.Game.World.Zones.Area area, uint zoneId,
+        float x, float y, float z, System.Numerics.Vector3 botPos)
+    {
+        var dx = x - botPos.X;
+        var dy = y - botPos.Y;
+        var distance = MathF.Sqrt((dx * dx) + (dy * dy));
+        if (spots.Any(s => MathF.Abs(s.X - x) < 0.01f && MathF.Abs(s.Y - y) < 0.01f))
+            return;
+        spots.Add((area.Id, zoneId, x, y, z, distance));
+    }
+
+    /// <summary>Canonical identities the claim seam reports on (no magic numbers inline).</summary>
+    private static class AcquireScarecrowActionConstants
+    {
+        public const uint DesignItem = AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.ScarecrowDesignTemplateId;
+        public const uint CertItem = AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.TaxCertificateTemplateId;
+        public static int RequiredCerts()
+            => AAEmu.Game.Core.Managers.Bots.Goap.Actions.AcquireScarecrowAction.RequiredFirstPlacementTaxCertificates();
     }
 
     /// <summary>

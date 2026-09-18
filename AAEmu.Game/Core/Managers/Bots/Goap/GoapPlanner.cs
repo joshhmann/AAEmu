@@ -5,7 +5,7 @@ using System.Numerics;
 namespace AAEmu.Game.Core.Managers.Bots.Goap;
 
 /// <summary>
-/// Planner interface finding lowest-cost action sequence from start state to goal state.
+/// Planner interface finding a lowest-cost-found action sequence from start state to goal state.
 /// </summary>
 public interface IGoapPlanner
 {
@@ -17,10 +17,12 @@ public interface IGoapPlanner
 }
 
 /// <summary>
-/// High-performance A* search planner for Goal-Oriented Action Planning (GOAP).
-/// Finds the minimal-cost sequence of actions from a start state to a goal state.
-/// Guaranteed real-time performance through compact bitwise states, admissible heuristics,
-/// and iteration budgets.
+/// A* search planner for Goal-Oriented Action Planning (GOAP).
+/// Returns the lowest-cost sequence found within the expansion budget; it does NOT
+/// claim proven optimality. Optimality would require an admissible heuristic against
+/// the dynamic per-step costs charged by <see cref="IGoapAction.CalculateCost"/> and a
+/// proof that Pareto dominance pruning is cost-sound — neither is established here.
+/// Real-time behavior is bounded by the expansion budget, not guaranteed by the heuristic.
 /// </summary>
 public sealed class GoapPlanner : IGoapPlanner
 {
@@ -33,7 +35,8 @@ public sealed class GoapPlanner : IGoapPlanner
     }
 
     /// <summary>
-    /// Searches for the lowest-cost action plan from <paramref name="startState"/> to satisfy <paramref name="goal"/>.
+    /// Searches for the lowest-cost-found action plan from <paramref name="startState"/> to satisfy <paramref name="goal"/>.
+    /// Optimality is not claimed: the search returns the best plan found before the expansion budget is exhausted.
     /// </summary>
     /// <param name="bot">Optional bot runtime context for dynamic cost evaluations.</param>
     /// <param name="startState">Current bot world state.</param>
@@ -110,6 +113,8 @@ public sealed class GoapPlanner : IGoapPlanner
 
                 // Pareto dominance pruning:
                 // If an existing entry at the same flags has <= cost AND >= labor AND >= gold, nextState is dominated.
+                // This bounds the explored frontier; its cost-soundness is not proven here, so plans remain
+                // "lowest-cost found within budget" rather than optimal.
                 if (!stateDominance.TryGetValue(nextState.Flags, out var entries))
                 {
                     entries = new List<DominanceEntry>(2);
@@ -143,8 +148,11 @@ public sealed class GoapPlanner : IGoapPlanner
     }
 
     /// <summary>
-    /// Admissible heuristic: computes Hamming distance of unsatisfied bit flags multiplied by min action cost,
-    /// plus normalized labor/gold deficit penalty.
+    /// Cost-ordered heuristic: Hamming distance of unsatisfied bit flags multiplied by min action cost,
+    /// plus normalized labor/gold deficit penalties.
+    /// NOT proven admissible — min action cost is taken over static <see cref="IGoapAction.BaseCost"/>
+    /// while steps are charged their dynamic cost, and the deficit weights are arbitrary. It orders the
+    /// frontier; it does not license an optimality claim.
     /// </summary>
     private static float CalculateHeuristic(in BotWorldState state, in BotWorldState desiredState, float minActionCost)
     {

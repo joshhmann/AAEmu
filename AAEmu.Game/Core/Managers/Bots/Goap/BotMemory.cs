@@ -47,15 +47,94 @@ public sealed class BotMemory
     public uint? OwnedHouseId { get; set; }
     public Vector3? OwnedHousePos { get; set; }
 
-    /// <summary>Explicit overrides for tests / simulated inventory layers.</summary>
-    public bool? HasFoodOverride { get; set; }
-    public bool? HasSaplingsOverride { get; set; }
-    public bool? HasScarecrowDesignOverride { get; set; }
-    public bool? HasTaxCertificatesOverride { get; set; }
-    public bool? HasLandPlotOverride { get; set; }
-    public bool? HasTimberOverride { get; set; }
-    public bool? HasBuildingMaterialsOverride { get; set; }
-    public bool? HomeConstructedOverride { get; set; }
+    // ---------------------------------------------------------------------
+    // Simulated-inventory override layer (fixture gate)
+    //
+    // These properties describe a *pretend* bag/plot state, never engine state.
+    // Production never writes them and must never read them: a plan/action that
+    // accepted an override would report a success the world never observed.
+    // They therefore read as null until a caller explicitly opts in via
+    // EnableFixtureOverrides() — test rigs, scenario harnesses and the
+    // HomesteadTenBot/SyntheticJourney fixtures. Every setter still stores the
+    // value (so rigs can seed before enabling), but consumers only see it once
+    // the gate is open.
+    // ---------------------------------------------------------------------
+
+    private bool _fixtureOverridesEnabled;
+    private bool? _hasFoodOverride;
+    private bool? _hasSaplingsOverride;
+    private bool? _hasScarecrowDesignOverride;
+    private bool? _hasTaxCertificatesOverride;
+    private bool? _hasLandPlotOverride;
+    private bool? _hasTimberOverride;
+    private bool? _hasBuildingMaterialsOverride;
+    private bool? _homeConstructedOverride;
+
+    /// <summary>True once the fixture override layer has been explicitly enabled.</summary>
+    public bool FixtureOverridesEnabled => _fixtureOverridesEnabled;
+
+    /// <summary>
+    /// Opens the simulated-inventory override layer. Call only from test rigs,
+    /// scenario fixtures and harnesses — never from production provisioning,
+    /// the step executor's context factory, or a GM command path.
+    /// </summary>
+    public void EnableFixtureOverrides() => _fixtureOverridesEnabled = true;
+
+    /// <summary>Simulated "bag holds edible food" — null unless fixtures are enabled.</summary>
+    public bool? HasFoodOverride
+    {
+        get => _fixtureOverridesEnabled ? _hasFoodOverride : null;
+        set => _hasFoodOverride = value;
+    }
+
+    /// <summary>Simulated "bag holds saplings" — null unless fixtures are enabled.</summary>
+    public bool? HasSaplingsOverride
+    {
+        get => _fixtureOverridesEnabled ? _hasSaplingsOverride : null;
+        set => _hasSaplingsOverride = value;
+    }
+
+    /// <summary>Simulated "bag holds the scarecrow design" — null unless fixtures are enabled.</summary>
+    public bool? HasScarecrowDesignOverride
+    {
+        get => _fixtureOverridesEnabled ? _hasScarecrowDesignOverride : null;
+        set => _hasScarecrowDesignOverride = value;
+    }
+
+    /// <summary>Simulated "bag holds tax certificates" — null unless fixtures are enabled.</summary>
+    public bool? HasTaxCertificatesOverride
+    {
+        get => _fixtureOverridesEnabled ? _hasTaxCertificatesOverride : null;
+        set => _hasTaxCertificatesOverride = value;
+    }
+
+    /// <summary>Simulated "owns a plot" — null unless fixtures are enabled.</summary>
+    public bool? HasLandPlotOverride
+    {
+        get => _fixtureOverridesEnabled ? _hasLandPlotOverride : null;
+        set => _hasLandPlotOverride = value;
+    }
+
+    /// <summary>Simulated "bag holds timber" — null unless fixtures are enabled.</summary>
+    public bool? HasTimberOverride
+    {
+        get => _fixtureOverridesEnabled ? _hasTimberOverride : null;
+        set => _hasTimberOverride = value;
+    }
+
+    /// <summary>Simulated "holds building materials" — null unless fixtures are enabled.</summary>
+    public bool? HasBuildingMaterialsOverride
+    {
+        get => _fixtureOverridesEnabled ? _hasBuildingMaterialsOverride : null;
+        set => _hasBuildingMaterialsOverride = value;
+    }
+
+    /// <summary>Simulated "home construction finished" — null unless fixtures are enabled.</summary>
+    public bool? HomeConstructedOverride
+    {
+        get => _fixtureOverridesEnabled ? _homeConstructedOverride : null;
+        set => _homeConstructedOverride = value;
+    }
 
     public void RecordGrove(WildGroveRecord grove)
     {

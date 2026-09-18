@@ -5,7 +5,7 @@ using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Char;
-
+using NLog;
 namespace AAEmu.Game.Core.Managers.Bots.Goap.Actions;
 
 /// <summary>
@@ -20,12 +20,41 @@ public sealed class AcquireScarecrowAction : GoapActionBase
     public const uint TaxCertificateTradeableTemplateId = 31891; // 건축물 세금 증지 (Tradeable Tax Certificate)
     public const uint TaxCertificateTemplateId = TaxCertificateBoundTemplateId;
 
+    /// <summary>
+    /// Copper value of one tax certificate, canonical: the engine converts a copper tax
+    /// bill into a certificate count with <c>Math.Ceiling(due / 10000f)</c>
+    /// (HousingManager.cs:718 Build, MailManager.cs:551 tax mail). Same divisor, shared so
+    /// the two cannot drift.
+    /// </summary>
+    public const int TaxCertificateCopperValue = 10_000;
+
+    /// <summary>
+    /// Bound tax certificates a FIRST placement of <see cref="ScarecrowDesignId"/> (housing
+    /// 267) requires under the engine's own tax branch. Canonical inputs:
+    /// compact.sqlite3 <c>housings</c> row 267 → taxation_id 8, heavy_tax 't';
+    /// <c>taxations</c> row 8 → tax 50,000 copper ("소형 텃밭 (8m x 8m)");
+    /// HousingManager.CalculateBuildingTaxInfo (HousingManager.cs:1024-1070): new building =
+    /// one week tax (heavy multiplier is 1.0 below 3 heavy houses) + deposit (base × 2,
+    /// HousingManager.cs:526) = 150,000 copper → 15 certificates.
+    /// </summary>
+    public static int RequiredFirstPlacementTaxCertificates()
+    {
+        var template = AAEmu.Game.GameData.HousingGameData.Instance.GetTemplate(ScarecrowDesignId);
+        var weekly = (int)(template?.Taxation?.Tax ?? 0);
+        if (weekly <= 0)
+            return 0;
+        var due = weekly /* one week */ + weekly * 2 /* deposit */;
+        return (int)Math.Ceiling(due / (float)TaxCertificateCopperValue);
+    }
+
     public AcquireScarecrowAction(float baseCost = 2.0f)
         : base("AcquireScarecrow", baseCost)
     {
         WithEffect(BotWorldState.HasScarecrowDesign);
         WithEffect(BotWorldState.HasTaxCertificates);
     }
+
+    private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
@@ -46,11 +75,19 @@ public sealed class AcquireScarecrowAction : GoapActionBase
         if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
             return GoapActionStatus.Failed;
 
-        // Context override for test harness / quest simulation
-        if (context.Memory.HasScarecrowDesignOverride == true && context.Memory.HasTaxCertificatesOverride == true)
-            return GoapActionStatus.Succeeded;
+        // Step-3 isolation: an in-flight acquisition request still waits for its
+        // terminal state — but with no design/certs there is nothing to wait for.
+        // Fail loudly instead of Running forever.
+        // NOTE: the fixture override layer is intentionally NOT consulted here.
+        // Simulated bag state is projected by BotWorldStateProvider (which honours
+        // those overrides under the fixture gate) into observedState above; an
+        // action that re-read the override itself would report success for a
+        // pretend bag even on a production run where the gate is closed.
+        if (activeRequest != null && !activeRequest.IsTerminal)
+            return GoapActionStatus.Running;
 
-        return GoapActionStatus.Running;
+        Logger.Warn("AcquireScarecrow: no scarecrow design/certs observed — acquire via ordinary progression or /bot home kit opt-in");
+        return GoapActionStatus.Failed;
     }
 }
 
@@ -107,6 +144,85 @@ public sealed class TravelToHousingZoneAction : GoapActionBase
             return nearest;
         }
         return fallback;
+    }
+
+    /// <summary>
+    /// Resolves a placement position whose canonical housing-area rule ACCEPTS the
+    /// design's house category. The nearest-area-centroid resolver above answers
+    /// "where do I travel to", not "where may I legally build": housing areas differ
+    /// per area (housing_areas.comments → housing_area.xml shape → the area's
+    /// housing_group rule), so a 16-category plot placed on the nearest area's
+    /// centroid is refused by the engine's polygon gate when that area allows only
+    /// 1/10/17/18 (verified live: w_solzreed_3 moang areas).
+    ///
+    /// Selection uses the engine's own rule data (HousingGameData.GetAreaRuleByShapeName
+    /// + the zone-level land-zone categories) and requires the centroid to actually be
+    /// inside the shape (Point.IsInside) — no hardcoded coordinates, no stand-in id.
+    /// Returns null when no area on this world accepts the design.
+    /// </summary>
+    public static Vector3? ResolvePlacementPosition(
+        AAEmu.Game.Models.Game.Char.Character character,
+        uint houseCategoryId,
+        bool characterOwnsHouses,
+        Vector3 fallback)
+    {
+        var world = character.ParentWorld as AAEmu.Game.Models.Game.World.WorldInstance;
+        var zones = world?.Template?.HousingZones;
+        if (zones == null || zones.Count == 0)
+            return null;
+
+        var botPos = character.Transform.World.Position;
+        Vector3? best = null;
+        var bestDistSq = float.MaxValue;
+
+        foreach (var (zoneId, areaList) in zones)
+        {
+            foreach (var area in areaList)
+            {
+                if (area?.Points == null || area.Points.Count < 3)
+                    continue;
+
+                var rule = AAEmu.Game.GameData.HousingGameData.Instance.GetAreaRuleByShapeName(area.Name);
+                if (rule == null || !rule.AllowedCategories.Contains(houseCategoryId))
+                    continue;
+                if (rule.HouselessOnly && characterOwnsHouses)
+                    continue;
+
+                var cx = area.Points.Average(p => p.X);
+                var cy = area.Points.Average(p => p.Y);
+                if (!AAEmu.Game.Models.Game.World.Point.IsInside(area.Points, area.Points.Count, new Vector3(cx, cy, 0)))
+                    continue;
+
+                // Zone-level rules are layered on the polygon rules by the engine.
+                var zone = AAEmu.Game.Core.Managers.World.ZoneManager.Instance.GetZoneById(zoneId);
+                var landZone = AAEmu.Game.GameData.HousingGameData.Instance.GetLandZoneByZoneName(zone?.Name);
+                if (landZone == null || !landZone.AllowedCategories.Contains(houseCategoryId))
+                    continue;
+                if (landZone.IsHouselessOnly && characterOwnsHouses)
+                    continue;
+
+                var distSq = (cx - botPos.X) * (cx - botPos.X) + (cy - botPos.Y) * (cy - botPos.Y);
+                if (distSq >= bestDistSq)
+                    continue;
+
+                float gz = botPos.Z;
+                try
+                {
+                    var zk = AAEmu.Game.Core.Managers.World.WorldManager.Instance.GetZoneId(world.Template, cx, cy);
+                    gz = AAEmu.Game.Core.Managers.World.WorldManager.Instance.GetHeight(zk, cx, cy, botPos.Z);
+                }
+                catch
+                {
+                    // No height data for this world — the engine's terrain band is
+                    // skipped for the same reason, so the bot's own Z is the best known.
+                }
+
+                bestDistSq = distSq;
+                best = new Vector3(cx, cy, gz);
+            }
+        }
+
+        return best ?? (zones.Count > 0 ? fallback : null);
     }
 
     public override float CalculateCost(PlayerBotRuntime? bot, in BotWorldState currentState)
@@ -169,7 +285,14 @@ public sealed class SurveyAndPlacePlotAction : GoapActionBase
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        var targetPos = TravelToHousingZoneAction.ResolveNearestHousingZone(bot.Character, _defaultPlotPos);
+        var template = AAEmu.Game.GameData.HousingGameData.Instance.GetTemplate(AcquireScarecrowAction.ScarecrowDesignId);
+        var ownsHouses = AAEmu.Game.Core.Managers.HousingManager.PeekInstance != null
+            && AAEmu.Game.Core.Managers.HousingManager.PeekInstance.GetAllHouses().Any(h => h.OwnerId == bot.Character.Id);
+        // A LEGAL spot (an area whose canonical rule accepts this design's category),
+        // not merely the nearest housing zone — see ResolvePlacementPosition.
+        var targetPos = TravelToHousingZoneAction.ResolvePlacementPosition(
+                bot.Character, template?.CategoryId ?? 0, ownsHouses, _defaultPlotPos)
+            ?? TravelToHousingZoneAction.ResolveNearestHousingZone(bot.Character, _defaultPlotPos);
         return effectiveActor.BuildHouse(
             AcquireScarecrowAction.ScarecrowDesignId,
             AcquireScarecrowAction.ScarecrowDesignTemplateId,
@@ -189,9 +312,9 @@ public sealed class SurveyAndPlacePlotAction : GoapActionBase
         if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
             return GoapActionStatus.Failed;
 
-        if (context.Memory.HasLandPlotOverride == true || context.Memory.OwnedHouseId.HasValue)
-            return GoapActionStatus.Succeeded;
-
+        // Ownership is read from the live projection only: Memory.OwnedHouseId is a
+        // fixture/rig field no production code writes, so treating it as evidence
+        // would let a bot claim a plot it never placed.
         return GoapActionStatus.Running;
     }
 }
@@ -310,9 +433,8 @@ public sealed class HarvestTimberAction : GoapActionBase
         if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
             return GoapActionStatus.Failed;
 
-        if (context.Memory.HasTimberOverride == true)
-            return GoapActionStatus.Succeeded;
-
+        // Timber evidence is the live projection (bag contents), never the fixture
+        // override read directly.
         return GoapActionStatus.Running;
     }
 }
@@ -388,9 +510,7 @@ public sealed class CraftMaterialPackAction : GoapActionBase
         if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
             return GoapActionStatus.Failed;
 
-        if (context.Memory.HasBuildingMaterialsOverride == true)
-            return GoapActionStatus.Succeeded;
-
+        // Material evidence is the live projection, never the fixture override.
         return GoapActionStatus.Running;
     }
 }
@@ -427,9 +547,8 @@ public sealed class ConstructHomeAction : GoapActionBase
         if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
             return GoapActionStatus.Failed;
 
-        if (context.Memory.HomeConstructedOverride == true)
-            return GoapActionStatus.Succeeded;
-
+        // Construction evidence is the live projection (HousingManager house state),
+        // never the fixture override.
         return GoapActionStatus.Running;
     }
 }
@@ -468,11 +587,25 @@ public sealed class ConstructPlotAction : GoapActionBase
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        var house = HousingManager.PeekInstance?.GetAllHouses().FirstOrDefault(h => h.OwnerId == bot.Character.Id && h.CurrentStep != -1);
-        if (house != null)
-            return effectiveActor.Interact(house.ObjId, ScarecrowBuildSkillId);
-        return effectiveActor.Interact(ScarecrowBuildSkillId);
+        // The target is the RESOLVED house frame, never a stand-in: a bare
+        // Interact(skillId) would dispatch construction at an object id that is
+        // a skill, and any engine-side resolution of it would be an accident.
+        // No owned unfinished frame -> no request at all, and EvaluateStatus
+        // reports the failure (see below) instead of a fabricated success.
+        var house = ResolveOwnedUnfinishedFrame(bot.Character.Id);
+        if (house == null)
+            return null;
+        return effectiveActor.Interact(house.ObjId, ScarecrowBuildSkillId);
     }
+
+    /// <summary>
+    /// The live housing scan for this bot's own frame still under construction
+    /// (<c>CurrentStep != -1</c>). Null means there is nothing legal to construct —
+    /// a missing frame is a FAILED action, never a stand-in target.
+    /// </summary>
+    public static Models.Game.Housing.House? ResolveOwnedUnfinishedFrame(uint characterId)
+        => HousingManager.PeekInstance?.GetAllHouses()
+            .FirstOrDefault(h => h.OwnerId == characterId && h.CurrentStep != -1);
 
     public override GoapActionStatus EvaluateStatus(
         PlayerBotRuntime bot,
@@ -486,9 +619,7 @@ public sealed class ConstructPlotAction : GoapActionBase
         if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
             return GoapActionStatus.Failed;
 
-        if (context.Memory.HomeConstructedOverride == true)
-            return GoapActionStatus.Succeeded;
-
+        // Plot-construction evidence is the live projection, never the fixture override.
         return GoapActionStatus.Running;
     }
 }
@@ -547,9 +678,7 @@ public sealed class CraftTaxCertificatesAction : GoapActionBase
         if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
             return GoapActionStatus.Failed;
 
-        if (context.Memory.HasTaxCertificatesOverride == true)
-            return GoapActionStatus.Succeeded;
-
+        // Certificate evidence is the live projection, never the fixture override.
         return GoapActionStatus.Running;
     }
 }

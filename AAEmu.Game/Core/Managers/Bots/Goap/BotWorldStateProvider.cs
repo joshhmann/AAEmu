@@ -2,9 +2,9 @@
 
 using System.Numerics;
 using AAEmu.Game.Models.Game.Items;
-using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.Game.Char;
 
 namespace AAEmu.Game.Core.Managers.Bots.Goap;
 
@@ -22,6 +22,41 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
     public const uint DefaultSaplingTemplateId = DefaultSeedTemplateId;
     public const uint DefaultFoodTemplateId = 8219;
 
+    /// <summary>
+    /// Straw Hat Scarecrow Garden design (15596) — the single design whose
+    /// item_housings row maps to housing 267, the plot this bot claims/builds.
+    /// Shares the action layer's constant so the two cannot drift.
+    /// </summary>
+    public const uint AcquireScarecrowDesignTemplateId = Actions.AcquireScarecrowAction.ScarecrowDesignTemplateId;
+
+    /// <summary>
+    /// Flat distance at which the character is considered inside its target's
+    /// engagement band. Uses the engine-side melee reach
+    /// (<see cref="CombatDecisionTree.DefaultMeleeMax"/>) rather than a local guess.
+    /// </summary>
+    public const float TargetEngagementRange = CombatDecisionTree.DefaultMeleeMax;
+
+    /// <summary>
+    /// Free inventory slots, or null when bag fullness cannot be established
+    /// (no inventory, no bag, or an unlimited container).
+    /// </summary>
+    private static int? ReadBagFreeSlots(Character ch)
+    {
+        try
+        {
+            var bag = ch.Inventory?.Bag;
+            if (bag == null)
+                return null;
+            // ContainerSize < 0 is the engine's "unlimited" container: fullness is
+            // not a meaningful question, so the caller must not read it as full.
+            return bag.ContainerSize < 0 ? null : bag.FreeSlotCount;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public BotWorldState Project(PlayerBotRuntime bot, BotContext context)
     {
         ArgumentNullException.ThrowIfNull(bot);
@@ -29,6 +64,9 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
 
         var ch = bot.Character;
         ulong flags = BotWorldState.None;
+        // Flags whose truth the live read cannot establish are cleared from the mask,
+        // so Satisfies()/planner goals treat them as unspecified instead of false.
+        ulong mask = ulong.MaxValue;
 
         int maxHp = 1000;
         int maxMp = 500;
@@ -65,8 +103,16 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
         if (context.Memory.HasActiveGroves)
             flags |= BotWorldState.SecretGrovePlanted;
 
-        if (context.Memory.HasMatureGroves(context.GetUtcNow()))
+        // Bag fullness is REAL bag capacity (ItemContainer.FreeSlotCount), never grove
+        // maturity: a mature grove is a harvest *opportunity*, not a full bag.
+        // An indeterminable bag (absent inventory/container, or an unlimited -1
+        // container size) reports false AND is left out of the mask so no consumer
+        // can read a fabricated "full".
+        var bagFreeSlots = ReadBagFreeSlots(ch);
+        if (bagFreeSlots is 0)
             flags |= BotWorldState.BagFull;
+        else if (bagFreeSlots is null)
+            mask &= ~BotWorldState.BagFull;
 
         // 3. Spatial & POI Proximity
         var botPos = ch.Transform?.World?.Position ?? Vector3.Zero;
@@ -86,8 +132,13 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
         }
 
         // 3b. Homestead & Land ownership projection
+        // Straw Hat Scarecrow Garden design only. Grounded in compact.sqlite3
+        // item_housings: design template 15596 -> housing 267 ("밀짚모자 허수아비 텃밭"),
+        // the house AcquireScarecrowAction/SurveyAndPlacePlotAction build. Template
+        // 15566 is a DIFFERENT design (-> housing 89, 호박머리 허수아비 텃밭) and must
+        // not satisfy this flag: the bot would claim design-267 ownership without it.
         bool hasScarecrowDesign = context.Memory.HasScarecrowDesignOverride ??
-            (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i != null && (i.TemplateId == 15596 || i.TemplateId == 15566)) ?? false);
+            (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i != null && i.TemplateId == AcquireScarecrowDesignTemplateId) ?? false);
         if (hasScarecrowDesign)
             flags |= BotWorldState.HasScarecrowDesign;
 
@@ -96,8 +147,10 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
         if (hasTaxCert)
             flags |= BotWorldState.HasTaxCertificates;
 
+        // Stale memory ids are not plots: ownership counts only when the live
+        // housing scan confirms a house for this bot (fixtures use the override gate).
         bool hasLandPlot = context.Memory.HasLandPlotOverride ??
-            (context.Memory.OwnedHouseId.HasValue || (HousingManager.PeekInstance != null && HousingManager.PeekInstance.GetAllHouses().Any(h => h.OwnerId == ch.Id)));
+            (HousingManager.PeekInstance != null && HousingManager.PeekInstance.GetAllHouses().Any(h => h.OwnerId == ch.Id));
         if (hasLandPlot)
             flags |= BotWorldState.HasLandPlot;
 
@@ -106,9 +159,10 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
         if (hasTimber)
             flags |= BotWorldState.HasTimber;
 
+        // Building materials are the crafted pack items the construction seam consumes —
+        // never a backpack/glider merely worn in the back slot.
         bool hasBuildingMaterials = context.Memory.HasBuildingMaterialsOverride ??
-            ((ch.Equipment?.GetItemBySlot((byte)EquipmentItemSlotType.Backpack) != null) ||
-             (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i?.Template != null && (i.Template.CategoryId == (int)ItemCategory.Trade_Pack || i.Template.CategoryId == (int)ItemCategory.Body_Pack)) ?? false));
+            (ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i?.Template != null && (i.Template.CategoryId == (int)ItemCategory.Trade_Pack || i.Template.CategoryId == (int)ItemCategory.Body_Pack)) ?? false);
         if (hasBuildingMaterials)
             flags |= BotWorldState.HasBuildingMaterials;
 
@@ -149,13 +203,13 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
         {
             flags |= BotWorldState.HasActiveTarget;
 
-            if (target is Npc)
+            if (target is Npc && CombatDecisionTree.IsHostileTarget(ch, target))
                 flags |= BotWorldState.TargetIsHostile;
 
             if (target.Transform?.World != null)
             {
                 var distTarget = Vector3.Distance(botPos, target.Transform.World.Position);
-                if (distTarget <= 6.0f)
+                if (distTarget <= TargetEngagementRange)
                     flags |= BotWorldState.TargetInRange;
             }
 
@@ -174,6 +228,6 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
         ushort labor = (ushort)Math.Clamp(ch.LaborPower, 0, ushort.MaxValue);
         uint gold = (uint)Math.Clamp(ch.Money, 0, uint.MaxValue);
 
-        return new BotWorldState(flags, mask: ulong.MaxValue, labor: labor, gold: gold);
+        return new BotWorldState(flags, mask: mask, labor: labor, gold: gold);
     }
 }

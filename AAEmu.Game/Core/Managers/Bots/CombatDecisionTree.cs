@@ -1,6 +1,8 @@
 using System.Numerics;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Items.Templates;
+using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
@@ -55,6 +57,49 @@ public static class CombatDecisionTree
 
     public const float DefaultMeleeMin = 1.0f;
     public const float DefaultMeleeMax = 3.5f;
+
+    /// <summary>Faction id of ordinary open-world monster wildlife (compact.sqlite3 factions).</summary>
+    public const uint MonsterWildlifeFactionId = 115;
+
+    /// <summary>
+    /// Canonical hostility test for bot target acquisition and perception.
+    /// An NPC is hostile when it belongs to monster wildlife (faction 115) or
+    /// carries no faction at all (bare fixture NPCs read attackable); otherwise
+    /// the engine's own rule decides — <see cref="BaseUnit.CanAttack"/> (faction
+    /// relation, safe-zone and zone-conflict rules) plus an explicit Hostile
+    /// relation. Merchants, quest givers and other friendly NPCs are not hostile.
+    /// Safe against a missing FactionManager singleton in test/headless runs.
+    /// </summary>
+    public static bool IsHostileTarget(Character bot, BaseUnit target)
+    {
+        ArgumentNullException.ThrowIfNull(bot);
+        ArgumentNullException.ThrowIfNull(target);
+
+        // Hp lives on Unit, not BaseUnit: only a damageable unit can be dead.
+        if (target is Unit unit && unit.Hp <= 0)
+            return false;
+
+        if (target is Npc npc)
+        {
+            if ((int?)npc.Faction?.Id == (int)MonsterWildlifeFactionId)
+                return true;
+
+            if (npc.Faction == null)
+                return true;
+        }
+
+        try
+        {
+            if (!bot.CanAttack(target))
+                return false;
+
+            return bot.GetRelationStateTo(target) == RelationState.Hostile;
+        }
+        catch
+        {
+            return true;
+        }
+    }
 
     public const float DefaultRangedMin = 12.0f;
     public const float DefaultRangedMax = 22.0f;

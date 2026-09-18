@@ -106,9 +106,15 @@ public sealed class GoalArbitrator : IGoalArbitrator
         }
 
         // Case 2: Starter intent — claim a small farm plot (Priority 58)
+        // Isolation: without the design the bot cannot complete a claim without the
+        // GM kit — defer instead of arbitrating it. Only the observed projection is
+        // consulted (fixture overrides surface there under the gate); the arbitrator
+        // never reads Memory's override fields directly.
         if (!observedState.Has(BotWorldState.HasLandPlot) &&
             context.Memory.GetActionFailures("SurveyAndPlacePlot") <= context.MaxActionRetries)
         {
+            if (!observedState.Has(BotWorldState.HasScarecrowDesign))
+                return null;
             return GoalClaimHomestead;
         }
 
@@ -162,12 +168,12 @@ public sealed class GoalArbitrator : IGoalArbitrator
 
         if (goal.Name == "CultivatePlot")
         {
-            return observedState.Has(BotWorldState.HasLandPlot) || context.Memory.HasLandPlotOverride == true;
+            return observedState.Has(BotWorldState.HasLandPlot);
         }
 
         if (goal.Name == "ErectHome")
         {
-            return observedState.Has(BotWorldState.HasLandPlot) || context.Memory.HasLandPlotOverride == true;
+            return observedState.Has(BotWorldState.HasLandPlot);
         }
 
         if (goal.Name == "Recover")

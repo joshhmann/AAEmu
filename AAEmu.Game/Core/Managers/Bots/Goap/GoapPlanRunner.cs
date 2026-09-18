@@ -306,7 +306,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
         if (ActivePlan == null || !ActivePlan.Success)
         {
             // Attempt template cache resolution
-            if (_templateCache != null && _templateCache.TryGetTemplate(observedState.Flags, ActiveGoal.Name, out var cachedActionNames))
+            if (_templateCache != null && _templateCache.TryGetTemplate(observedState.Flags, observedState.Labor, observedState.Gold, ActiveGoal.Name, out var cachedActionNames))
             {
                 // Template hit!
                 EmitTelemetry(GoapTelemetryEventType.PlanTemplateHit, ActiveGoal.Name, null,
@@ -341,7 +341,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
 
             if (_templateCache != null)
             {
-                _templateCache.StoreTemplate(observedState.Flags, ActiveGoal.Name, ActivePlan.Actions);
+                _templateCache.StoreTemplate(observedState.Flags, observedState.Labor, observedState.Gold, ActiveGoal.Name, ActivePlan.Actions);
             }
         }
 

@@ -40,7 +40,7 @@ public class BotHomeSubCommand : SubCommandBase
         {
             SendColorMessage(messageOutput, Color.Yellow, "Usage: /bot home <status|run|claim|build|kit> [options]");
             SendColorMessage(messageOutput, Color.White, "  status [botName]       - shows land ownership, materials, and construction progress");
-            SendColorMessage(messageOutput, Color.White, "  run <botName>          - starts autonomous homestead loop (claim -> harvest -> build)");
+            SendColorMessage(messageOutput, Color.White, "  run <botName>          - places homestead orders (requires prior kit opt-in; grants nothing itself)");
             SendColorMessage(messageOutput, Color.White, "  claim <botName>        - orders bot to survey and place an 8x8 scarecrow garden plot");
             SendColorMessage(messageOutput, Color.White, "  build <botName>        - orders bot to craft packs and construct home");
             SendColorMessage(messageOutput, Color.White, "  kit <botName>          - gives starter scarecrow garden design and 10x tax certificates");
@@ -162,21 +162,13 @@ public class BotHomeSubCommand : SubCommandBase
             return;
         }
 
-        // Ensure starter kit is present if bot does not have plot or design
+        // Step-3 isolation: run grants nothing. The starter kit is an explicit
+        // opt-in via `/bot home kit` (or HeadlessSession provisioning) — never
+        // a silent side effect of ordering progression.
         var ch = bot.Character;
-        var hasScarecrowDesign = ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i != null && (i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId || i.TemplateId == AcquireScarecrowAction.ScarecrowDesignId)) ?? false;
-        if (!hasScarecrowDesign && ch.Inventory?.Bag != null)
-        {
-            ch.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AcquireScarecrowAction.ScarecrowDesignTemplateId, 1, 1);
-            ch.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AcquireScarecrowAction.TaxCertificateTemplateId, 10, 1);
-            SendColorMessage(messageOutput, Color.Yellow, $"[Bot Homestead] Seeded starter Straw Hat Scarecrow Garden design and 10x Tax Certificates to '{ch.Name}'.");
-        }
-
-        var housing = HousingManager.PeekInstance;
-        var hasPlot = housing?.GetAllHouses().Any(h => h.OwnerId == ch.Id) ?? false;
 
         SendColorMessage(messageOutput, Color.LawnGreen,
-            $"[Bot Homestead] Autonomous homestead progression activated for '{ch.Name}'. Target: {(hasPlot ? "Erect Home" : "Claim 8x8 Scarecrow Garden Plot")}.");
+            $"[Bot Homestead] Homestead orders placed for '{ch.Name}'. Activation requires explicit opt-in: run `/bot home kit` first (module default disabled).");
     }
 
     private void ExecuteClaim(string[] args, IMessageOutput messageOutput)
@@ -195,14 +187,14 @@ public class BotHomeSubCommand : SubCommandBase
         }
 
         var ch = bot.Character;
-        if (ch.Inventory?.Bag != null)
+        // Step-3 isolation: claim grants nothing. Only `kit` + HeadlessSession
+        // opt-in may grant — without the design on record, direct there and stop.
+        var hasDesign = ch.Inventory?.Bag?.GetItemsSnapshot().Any(i => i != null && i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId) ?? false;
+        if (!hasDesign)
         {
-            var hasDesign = ch.Inventory.Bag.GetItemsSnapshot().Any(i => i != null && i.TemplateId == AcquireScarecrowAction.ScarecrowDesignTemplateId);
-            if (!hasDesign)
-            {
-                ch.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AcquireScarecrowAction.ScarecrowDesignTemplateId, 1, 1);
-                ch.Inventory.Bag.AcquireDefaultItem(ItemTaskType.Gm, AcquireScarecrowAction.TaxCertificateTemplateId, 10, 1);
-            }
+            SendColorMessage(messageOutput, Color.Yellow,
+                $"[Bot Homestead] Bot '{ch.Name}' has no scarecrow design on record. Activation requires explicit opt-in: run `/bot home kit` first (module default disabled).");
+            return;
         }
 
         SendColorMessage(messageOutput, Color.LawnGreen,
