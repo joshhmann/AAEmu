@@ -39,6 +39,29 @@ actions and a single live loop under the
 Textual inference and planned effects never establish resource conservation or live
 outcomes. H remains separate. See AGENTS.md's mandatory evidence-honesty gate.
 
+### Generator correction — 2026-09-17 (step-2 closeout of the item above)
+
+`infer_homestead_traces.py` had a detector defect: it tested non-existent capitalized
+`Payload`/`Target` fields, so the rig trace's real lowercase `detail` marker was never
+seen and the generator emitted `LIVE SERVER / NETWORK TRACE` plus a bare
+`PASS (10/10 bots fully verified)` over unit-rig input. Corrected: the detector now
+scans every string field of every record; a synthetic input reports
+`SYNTHETIC ORCHESTRATION CONTRACT (Unit Rig)`, a trace that declares no layer reports
+`UNKNOWN` (never assumed live), and a fully synthetic success can never earn a live
+verdict. The report timestamp now derives from the input artifact instead of a frozen
+constant, and both reports carry provenance (input path + sha256, input mtime, producing
+command, evaluator revision + sha256, source HEAD + dirty state, evidence layer,
+`is_synthetic`), with `UNKNOWN` for anything unobtainable. Milestones are credited only
+on an authoritative completion (`result: "Completed"` plus a terminal `Completed (…)`
+state change); failed/cancelled requests, duplicate ids, reordered/interleaved actors and
+success-sounding text without a postcondition are reported as run-integrity violations.
+`playertrace-coverage/homestead_10bot_inference_report.{md,json}` are regenerated from
+`scorecard-explorations/generated/m7-homestead-10bot-spike.jsonl` (sha256
+`399c949a318a50cc5136ee51c0706c437ef86b0e8c8f0bc562079826a725fea6`). Regression suite:
+`Scripts/playertrace-coverage/test_infer_homestead_traces.py`. The ten-bot scale claim
+remains UNSUPPORTED (all 100 records carry `actor_id: 0`). No grade, milestone, live or
+H claim is promoted; the historic `PASS` wording stays withdrawn.
+
 ## PlayerBot execution realignment — 2026-09-16
 
 This scorecard now treats human traces as parity evidence, not a journey script or
@@ -55,6 +78,22 @@ Packet-owned purchase, planting, housing, and merchant semantics remain unresolv
 they have no autonomous-parity claim. Learned-skill GCD convergence is deferred: a direct
 actor call cannot enforce the normal gate until a bounded combat executor owns wait/retry
 timing. This leaves no loop or autonomy grade change.
+
+## Wave One closeout control — 2026-09-17
+
+The eight-item corrective queue is now a cheapest-proof-to-deepest-dependency acceptance
+program in [ROADMAP](ROADMAP.md#wave-one-closeout-program--2026-09-17). Every item remains
+non-DONE until its original acceptance criteria are met. Its final gate is one real bot
+loop without fixture repair; until that gate is green, new GOAP actions, combat behavior,
+route content, homestead breadth, and multi-bot scenarios are frozen. Existing partial
+work remains evidence or scaffolding and does not alter any scorecard grade.
+
+**Exit note — 2026-09-18 (VERIFIED by independent second-session re-run):** the one named
+claim→construct loop ran at L per the step-8 dossier + live report (107/107 unit, 1/1 step-7 E2E,
+1/1 step-8 loop, b1housing lane @ `533bfcae5`) — VERIFIED by independent second-session re-run
+2026-09-18 (fresh bots, restart + conservation confirmed). No grade is promoted: the loop verdict covers the named scope only;
+plant/harvest/tax/travel/ordinary-acquisition stay open, H stays UNKNOWN, and all other breadth
+stays frozen. Existing grades below are otherwise unchanged.
 
 ## Current reading guide — 2026-09-15
 

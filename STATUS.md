@@ -1,9 +1,37 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
-Updated: 2026-09-16 · reusable discovery-to-delivery process across zones/features/mechanics
+Updated: 2026-09-18 · Wave One exit VERIFIED by independent second-session re-run (step-7 E2E 1/1, step-8 loop 1/1, fresh bots, restart + conservation confirmed); plant/harvest/tax/travel/H open
 
+## 2026-09-18 — Wave One exit (VERIFIED by independent second-session re-run)
+
+- **Loop run at L, independently verified:** one named bot loop, no in-run fixture repair — kit opt-in + disclosed setup
+  positioning before the loop only; claim-place-plot (`Completed`, house 13, design 1→0, certs 15→0)
+  → observe `hasLandPlot` → recovery (same-key retry refused, world unchanged; no-frame bot dispatches
+  nothing) → construct-plot (`Completed`, frame ObjId 44137, step 0→-1) → conservation (LP delta 10,
+  gold 0→0) → repeat second pass (house 14) → restart (PID kill + reboot gate, both rows byte-equal)
+  → post-restart live re-read (house 13 as ObjId 256). Evidence:
+  `scorecard-explorations/mechanics/step8-bot-loop-dossier-2026-09-17.md` +
+  `/root/aaemu-e2e-b1housing/logs/step8-bot-loop-report.json`.
+- **Counts (VERIFIED by independent second-session re-run 2026-09-18):** unit **107/107** (CombatExecutor 9, ClaimPlacePlot 12, GoapPlanner 17, GoapRuntime 18,
+  Provisioning 12, HomesteadRuntime 12, M53 13, HouseBuild 14); step-7 E2E **1/1 in 1m26s**; step-8 loop **1/1 in 2m51s**
+  (fresh bots Step8LoopA4e6e6d/B64e26e, restart + conservation confirmed, report `step8-bot-loop-report.json`).
+  Lane `/root/aaemu-e2e-b1housing`
+  (DB 56306, login 7337, game 7339, bridge 7360, `aaemu_b1housing`) at source revision
+  `533bfcae5becc0264946dbdd1ecde3141595b8b3`. `git diff --check` clean.
+- **Carried over (PARTIAL / NOT PROVED / UNKNOWN):** ordinary acquisition (kit is a labeled grant);
+  travel/reach by ordinary movement (disclosed setup, not traversed; 25 m vs 10 m reach-gate asymmetry
+  recorded open); plant/grow/harvest/craft legs out of scope; ten-bot/population claims unsupported;
+  H UNKNOWN (Josh-owned). Freeze lifted for the proved claim→construct scope only; all other breadth
+  stays frozen. No grade promotion beyond the loop verdict; no deployment claim.
 
 ## 2026-09-16 — PlayerBot execution and dashboard realignment
+
+- **Wave One closeout program (2026-09-17):** the eight corrective acceptance items are
+  sequenced from delivery-record reconciliation through one real ordinary-service action
+  to the final exit: a real bot loop with no fixture repair, recovery/repeat, and applicable
+  restart proof. All items remain non-DONE. New GOAP actions, combat behavior, route content,
+  homestead breadth, and multi-bot scenarios are frozen until that final gate is green.
+  [Authoritative sequence and original acceptance criteria](ROADMAP.md#wave-one-closeout-program--2026-09-17).
 
 - **Wave One architecture correction (2026-09-17):** `GameplayActor.Interact` now resolves only the requested in-world `House` and invokes `Character.UseSkill`; it no longer charges labor, advances build steps, or spawns attached Doodads itself. `CraftEffect` remains the single construction owner for those effects. The two first-owned-small-plot journeys explicitly apply `CraftEffect` only as deterministic fixture completion, so they remain synthetic seam evidence rather than live progression proof. Source revision: `92c14bbacd9d6d7cf4c5278e87196ac660384f9e`.
 - **Verification:** correction tree fast gate passed: Release build and ScriptCompiler succeeded; unit suite `3344 passed, 0 failed, 1 skipped` (`Provision_Activate_Persist_Deactivate_RoundTrip`, requires `AAEMU_LIVE_RIG=1` and `AAEMU_E2E_DB_PASSWORD`); BotControl stdio smoke passed (44 tools); archaeology gate smoke passed (24 tools, 679 tables, read-only). Focused construction journeys passed `1/1` each and `GameplayActorHouseBuildActionsTests` passed `14/14`. The required archaeology cycle was also run; its builds carried only the existing `NU1903` SQLitePCLRaw advisory warning.
@@ -65,10 +93,11 @@ Updated: 2026-09-16 · reusable discovery-to-delivery process across zones/featu
 
 ## 2026-09-16 — Corrective tasks and evidence-honesty enforcement
 
-- Josh requested high-priority follow-up to the alignment review. Seven OPEN,
-  unassigned task briefs are in [ROADMAP](ROADMAP.md#high-priority-corrective-queue--2026-09-16):
+- Josh requested high-priority follow-up to the alignment review. Eight OPEN,
+  unassigned task briefs are in [ROADMAP](ROADMAP.md#wave-one-closeout-program--2026-09-17):
   synthetic evidence/evaluator correction; opt-in fixtures and unfinished activity;
-  resource-correct planner; authoritative observations; one real action; one real
+  resource-correct planner; authoritative observations; bounded combat-executor GCD
+  timing/retry proof; one real action; one real
   loop; delivery-record reconciliation. They precede new homestead/GOAP breadth.
 - The ten-bot inference report is **synthetic orchestration, not verified gameplay**.
   Fake actor/manual completion and world-state overrides cannot close an ordinary
@@ -76,6 +105,21 @@ Updated: 2026-09-16 · reusable discovery-to-delivery process across zones/featu
 - Source baseline `63f6567e7a198775ffe885a3345db70ff5a50777` plus existing dirty
   code/tests/docs/generated files. The three new feature commits represent source
   delivery, not a fresh live or human exit. No deployment claim is added here.
+- **Baseline drift (step-1 D1, 2026-09-17):** current `develop` HEAD is
+  `533bfcae5becc0264946dbdd1ecde3141595b8b3`. Nine commits landed after the pinned
+  `63f6567e7` baseline and are unsourced WIP / committed-without-record until step 1
+  reconciles them: `a49d24472` hygiene, `b4526515b` core, `901296119` GOAP/homestead/role-combat,
+  `e7d6c13d4` deploy packaging, `4a7e97db1` governance docs, `cac214ff0` telemetry lanes,
+  `df25a3a80` test isolation, `92c14bbac` construction-seam behavior change, `533bfcae5`
+  evidence docs. History is not rewritten; claims resting on `63f6567e7` stay pinned to it.
+- **Reader hazard (step-1 D13):** only repo-root `ROADMAP.md` / `SCORECARD.md` /
+  `STATUS.md` / `EVIDENCE-LEDGER.md` are authoritative. Near-identical copies under
+  `.worktrees/*/` are git-ignored (`.gitignore:32`) duplicates at stale revisions —
+  never cite them.
+- **Prior reconciliation debt (step-1 D14):** items in `AUDIT-REPO-2026-09-15.md:33`
+  (out-of-repo live-E2E reports, M8 QUALIFIED ledger gap, A5 stamp mismatch, gateless
+  PB-006 count, Navigate 5/8/9 counts, COMBAT-01/REPAIR-01 W-split, M4 stale deploy cell)
+  remain named UNKNOWNs folded into step 1, not silently absorbed.
 - AGENTS/PROJECT-CONTROL and templates now require explicit implemented/verified/not
   proved, fixture disclosures, source/test provenance, reviewer and deployment state.
   Josh additionally requested explicit disclosure of missing loop requirements:

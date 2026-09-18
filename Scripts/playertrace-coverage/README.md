@@ -34,7 +34,9 @@ Scripts/playertrace-coverage/
 ├── trace_parser.py                    # High-throughput, fault-tolerant JSONL stream reader
 ├── task_evaluator.py                  # Automated task evaluation & packet assertion engine
 ├── dashboard_server.py                # Interactive web dashboard HTTP server (:8085)
+├── infer_homestead_traces.py          # Homestead trace evaluator (evidence-honesty gated)
 ├── test_coverage_mapper.py            # Unit test suite (python3 -m unittest)
+├── test_infer_homestead_traces.py     # Evaluator regression suite (synthetic/live verdicts)
 ├── TASK_SPEC_AND_EVALUATION_GUIDE.md  # Standard schema & evaluation protocol documentation
 └── README.md                          # This documentation
 ```
@@ -132,6 +134,43 @@ The tool generates the following outputs in the target `--out` directory:
 | `sequence-patterns.csv` | CSV | Common 2-gram and 3-gram action skeletons. |
 | `scenario-similarity.csv` | CSV | Pairwise scenario Jaccard similarity and transition overlap. |
 | `cooccurrence.csv` | CSV | Pairwise event co-occurrence across scenarios with joint support indices. |
+
+---
+
+## Homestead Trace Inference (evidence-honesty gated)
+
+Infer bot goal/milestone chains from an `ActorAuditRecord` JSONL trace into a machine
+(`homestead_10bot_inference_report.json`) and human (`homestead_10bot_inference_report.md`)
+report:
+
+```bash
+python3 Scripts/playertrace-coverage/infer_homestead_traces.py \
+    scorecard-explorations/generated/m7-homestead-10bot-spike.jsonl \
+    --out-dir playertrace-coverage
+```
+
+Evidence rules enforced by the evaluator (AGENTS.md evidence-honesty gate):
+
+- **The evaluator cannot upgrade its input's evidence layer.** A trace carrying an
+  explicit `[SYNTHETIC` marker in *any* string field is reported as a synthetic
+  orchestration contract. A trace that declares no layer is reported `UNKNOWN` — never
+  assumed live. A fully synthetic successful trace can never earn a live verdict.
+- **Milestone detection is heuristic text matching**, not resource conservation or
+  verified intent. It is labelled as such in both outputs.
+- **Only authoritative completions count**: `result: "Completed"` plus a terminal
+  `Completed (…)` entry in `state_changes`. Failed/cancelled requests, duplicate
+  `trace_id`s, reordered/interleaved actor records and success-sounding detail text
+  without a postcondition are reported as run-integrity violations that block a clean
+  verdict; a de-duplicated milestone log prevents repeated events from inflating counts.
+- **Provenance is recorded**: input path + sha256, input mtime (also the report
+  timestamp), producing command, evaluator git revision + sha256, source HEAD + dirty
+  state, evidence layer and `is_synthetic`. Anything unobtainable is `UNKNOWN`.
+- The report separates **Synthetic Verdict** from **Live Verdict** and states
+  **Gameplay Loop Proof: UNPROVED/UNKNOWN**; the Honesty Notice is gated on
+  `is_synthetic`.
+
+Regression suite: `python3 -m unittest discover -s Scripts/playertrace-coverage -p "test_*.py"`
+(`test_infer_homestead_traces.py`).
 
 ---
 

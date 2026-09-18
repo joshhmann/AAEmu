@@ -270,6 +270,13 @@ of this program: mark them unavailable to autonomous claims until a separately a
 seam strategy exists. Learned-skill GCD convergence is deferred until a bounded combat
 executor owns wait/retry timing; harvest remains a separate asynchronous-completion design task.
 
+**Wave One closeout control (2026-09-17):** execute the eight acceptance items in
+[ROADMAP's cheapest-proof-to-deepest-dependency order](ROADMAP.md#wave-one-closeout-program--2026-09-17).
+No partial item is DONE until its original acceptance criteria are met. The final exit is
+one real bot loop without fixture repair. Until it is green, freeze new GOAP actions,
+combat behavior, route content, homestead breadth, and multi-bot scenarios. Preserve
+existing partial work as evidence or scaffolding only.
+
 Personality supplies weights or tie-breakers, not alternate gameplay rules.
 This architecture must not create parallel inventory, quest, combat, or other
 gameplay implementations.

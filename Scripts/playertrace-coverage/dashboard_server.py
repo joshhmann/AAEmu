@@ -1210,9 +1210,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <p class="task-desc">Target: ArcheAge 1.2.4.13 / r208022. Human playability and autonomous residents are separate commitments sharing ordinary gameplay. No overall completion percentage is claimed.</p>
                 <div class="meta-row">
                 <span>Planning freshness</span>
-                <span class="meta-val">2026-09-16 · source 63f6567e7a198775ffe885a3345db70ff5a50777 + dirty tree · small-plot journey INCOMPLETE</span>
+                <span class="meta-val">2026-09-18 · source 533bfcae5becc0264946dbdd1ecde3141595b8b3 + dirty tree · claim/construct loop VERIFIED by independent re-run (step-7 1/1, step-8 1/1, fresh bots); plant/harvest/tax/travel/H open</span>
                 </div>
-                <p class="task-desc">Documentation reconciliation only: no fresh engine, live, or human verdict. Sources: VISION.md, PROJECT-CONTROL.md#delivery-contract, ROADMAP.md#current-delivery-direction, SCORECARD.md and STATUS.md. This is a planning snapshot, not live acceptance telemetry.</p>
+                <p class="task-desc">Wave One exit VERIFIED by independent second-session re-run 2026-09-18: the named claim→construct loop ran at L per the step-8 dossier + b1housing report; all other lanes remain planning snapshots, not live acceptance telemetry. No human (H) verdict exists. Sources: VISION.md, PROJECT-CONTROL.md#delivery-contract, ROADMAP.md#current-delivery-direction, SCORECARD.md and STATUS.md.</p>
                 </div>
             <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header">
@@ -1240,20 +1240,21 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 <div class="info-card-header">
                 <div class="info-card-title">P1 corrective queue — before additional homestead/GOAP breadth</div>
                 </div>
-                <p class="task-desc">Seven corrective briefs plus journey-specific item/tax tasks remain OPEN / unassigned. Source: ROADMAP.md. Core reliability and independent human-playability work continue. No code fix or deployment is claimed by this planning update.</p>
+                <p class="task-desc">Wave One closeout: all eight items DONE at their acceptance criteria, VERIFIED by independent second-session re-run 2026-09-18. Evidence: step-8 dossier + live b1housing report (107/107 unit, 1/1 step-7 E2E, 1/1 step-8 loop).</p>
                 <ol>
-                    <li>Correct synthetic report provenance and evaluator verdicts.</li>
-                    <li>Isolate starter-kit fixtures and unfinished activity behind explicit opt-in.</li>
-                    <li>Make planner state identity resource-correct.</li>
-                    <li>Make observations authoritative: hostility, reach, inventory and ownership.</li>
-                    <li>Resolve and prove one real target/action through ordinary services.</li>
-                    <li>Prove one real loop with recovery/repeat before claiming ten bots.</li>
-                    <li>Reconcile source delivery, verification, review and deployment records.</li>
+                    <li>DONE — delivery records reconciled.</li>
+                    <li>DONE — synthetic report provenance and evaluator verdicts corrected.</li>
+                    <li>DONE — starter-kit fixtures behind explicit opt-in.</li>
+                    <li>DONE — planner state identity resource-correct.</li>
+                    <li>DONE — authoritative observations: hostility, reach, inventory and ownership.</li>
+                    <li>DONE — bounded combat-executor GCD timing and retry proof.</li>
+                    <li>DONE — one real target/action through ordinary services (live lane).</li>
+                    <li><strong>Final exit VERIFIED:</strong> independent re-run 2026-09-18 — one real bot loop (claim→construct, recovery/repeat/restart, conservation) with no fixture repair, at L; fresh bots Step8LoopA4e6e6d/B64e26e.</li>
                 </ol>
+                <p class="task-desc"><strong>Freeze lifted for the verified loop scope only</strong> (claim/construct loop; independently re-run 2026-09-18). Plant/harvest/tax, ordinary acquisition/travel, multi-bot claims and H remain open/frozen; existing partial work outside the loop stays scaffolding or evidence only.</p>
                 <details id="loopCompleteness" style="padding:10px 0">
-                    <summary>LOOP INCOMPLETE — what is still missing or unproved?</summary>
-                    <p class="task-desc">The ten-bot report proves synthetic orchestration only. Ordinary acquisition, concrete target binding, actual travel/reach, action-chain consequences, resource conservation, recovery/repeat and this loop's restart behavior are incomplete or unproved. Existing separately verified mechanics retain their original scope. No new human verdict exists.</p>
-                    <p class="task-desc">Every loop report must inventory each required leg, its evidence, missing dependency and next task. Distinguish missing code from unknown verification. Disclose fake actors, manual completion/state changes and seeded setup. Text inference cannot upgrade synthetic evidence to live proof. N/A needs a reason.</p>
+                    <summary>LOOP VERIFIED (named scope) — what remains open?</summary>
+                <p class="task-desc">The named claim→construct loop is VERIFIED at L by independent re-run: recovery, repeat, restart byte-equality, conservation and post-restart live re-read. Still open: ordinary acquisition, ordinary travel/reach, plant/grow/harvest/craft legs, ten-bot claims. No new human verdict exists.</p>
                 </details>
                 </div>
             <div class="info-card" style="margin-bottom:20px">

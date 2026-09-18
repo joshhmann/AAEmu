@@ -1,10 +1,68 @@
 {
-  "timestamp": "2026-09-16T13:05:00Z",
+  "timestamp": "2026-09-17T14:42:16Z",
+  "timestamp_basis": "input artifact mtime (UTC)",
   "source_trace": "scorecard-explorations/generated/m7-homestead-10bot-spike.jsonl",
+  "evidence_layer": "SYNTHETIC ORCHESTRATION CONTRACT (Unit Rig)",
+  "evidence_scope": "synthetic scenario sequence only \u2014 NOT a gameplay-loop proof",
+  "is_synthetic": true,
+  "synthetic_markers": {
+    "[SYNTHETIC SEED]": 10
+  },
+  "declared_evidence_layer": "UNKNOWN",
+  "provenance": {
+    "input_path": "scorecard-explorations/generated/m7-homestead-10bot-spike.jsonl",
+    "input_sha256": "3c9827ad83d5bf48c03c20fa9e2fadd68c16e94b0e26e8db12aaf393b6e83b40",
+    "input_mtime_utc": "2026-09-17T14:42:16Z",
+    "producing_command": "python3 Scripts/playertrace-coverage/infer_homestead_traces.py scorecard-explorations/generated/m7-homestead-10bot-spike.jsonl --out-dir playertrace-coverage",
+    "evaluator_script": "infer_homestead_traces.py",
+    "evaluator_revision_git_sha": "cac214ff0f0d6a6230ce89dd1006f9126f58c569",
+    "evaluator_sha256": "a5812177b50ba144769e1ca6ea719ea2a3e1fc0d849359d666b2f4051b522357",
+    "source_head": "533bfcae5becc0264946dbdd1ecde3141595b8b3",
+    "source_dirty": true,
+    "source_dirty_files": [
+      " M PROJECT-CONTROL.md",
+      " M ROADMAP.md",
+      " M SCORECARD.md",
+      " M STATUS.md",
+      " M Scripts/playertrace-coverage/README.md",
+      " M Scripts/playertrace-coverage/dashboard_server.py",
+      " M Scripts/playertrace-coverage/infer_homestead_traces.py",
+      " M playertrace-coverage/dashboard.html",
+      " M playertrace-coverage/homestead_10bot_inference_report.json",
+      " M playertrace-coverage/homestead_10bot_inference_report.md",
+      "?? Scripts/playertrace-coverage/test_infer_homestead_traces.py"
+    ],
+    "provenance_status": "RECORDED",
+    "evidence_layer": "SYNTHETIC ORCHESTRATION CONTRACT (Unit Rig)",
+    "declared_evidence_layer": "UNKNOWN",
+    "is_synthetic": true,
+    "synthetic_markers": {
+      "[SYNTHETIC SEED]": 10
+    },
+    "trace_time_range_utc": {
+      "start": "2026-09-17T14:42:15Z",
+      "end": "2026-09-17T14:42:15Z"
+    }
+  },
+  "provenance_status": "RECORDED",
+  "overall_verdict": "SYNTHETIC PASS",
+  "synthetic_verdict": "SYNTHETIC PASS",
+  "live_verdict": "N/A \u2014 synthetic input can never earn a live verdict",
+  "gameplay_loop_proof": "UNPROVED (synthetic orchestration contract only)",
+  "run_integrity_violations": [],
+  "integrity_flagged_bots": 0,
+  "evaluation_method": "heuristic text matching over recorded audit fields; not resource conservation and not verified intent",
   "total_bots_evaluated": 10,
-  "overall_verdict": "PASS",
+  "distinct_actors_in_trace": [
+    0
+  ],
+  "multi_bot_scale_claim": "UNSUPPORTED \u2014 trace carries 1 distinct actor_id value(s); run grouping is by spawn events, not actor identity",
   "metrics": {
-    "passed_bots": 10,
+    "sequence_complete_bots": 10,
+    "synthetic_pass_bots": 10,
+    "live_pass_bots": 0,
+    "partial_progression_bots": 0,
+    "failed_bots": 0,
     "total_plots_claimed": 10,
     "total_homes_constructed": 10,
     "total_lumber_packs_crafted": 10,
@@ -18,12 +76,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -56,7 +114,17 @@
         "plot_id": 9000
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Nuian",
       "inferred_starting_zone": "Solzreed Peninsula (Nuia)"
     },
@@ -67,12 +135,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -105,7 +173,17 @@
         "plot_id": 9001
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Nuian",
       "inferred_starting_zone": "Solzreed Peninsula (Nuia)"
     },
@@ -116,12 +194,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -154,7 +232,17 @@
         "plot_id": 9002
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Nuian",
       "inferred_starting_zone": "Solzreed Peninsula (Nuia)"
     },
@@ -165,12 +253,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -203,7 +291,17 @@
         "plot_id": 9003
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Elf",
       "inferred_starting_zone": "Gweonid Forest (Nuia)"
     },
@@ -214,12 +312,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -252,7 +350,17 @@
         "plot_id": 9004
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Elf",
       "inferred_starting_zone": "Gweonid Forest (Nuia)"
     },
@@ -263,12 +371,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -301,7 +409,17 @@
         "plot_id": 9005
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Harani (Hariharan)",
       "inferred_starting_zone": "Arcum Iris (Haranya)"
     },
@@ -312,12 +430,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -350,7 +468,17 @@
         "plot_id": 9006
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Harani (Hariharan)",
       "inferred_starting_zone": "Arcum Iris (Haranya)"
     },
@@ -361,12 +489,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -399,7 +527,17 @@
         "plot_id": 9007
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Harani (Hariharan)",
       "inferred_starting_zone": "Arcum Iris (Haranya)"
     },
@@ -410,12 +548,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -448,7 +586,17 @@
         "plot_id": 9008
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Firran (Ferre)",
       "inferred_starting_zone": "Falcon Plateau (Haranya)"
     },
@@ -459,12 +607,12 @@
         {
           "goal": "GoalClaimHomestead",
           "confidence": 1.0,
-          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration"
+          "evidence": "Observed Scarecrow Garden design usage and land plot boundary registration (heuristic text match)"
         },
         {
           "goal": "GoalErectHome",
           "confidence": 1.0,
-          "evidence": "Observed lumber pack craft at workbench and application to home frame"
+          "evidence": "Observed lumber pack craft at workbench and application to home frame (heuristic text match)"
         }
       ],
       "milestones_detected": [
@@ -497,7 +645,17 @@
         "plot_id": 9009
       },
       "confidence_score": 1.0,
-      "verdict": "PASS",
+      "verdict": "SYNTHETIC PASS",
+      "actor_ids": [
+        0
+      ],
+      "integrity": {
+        "duplicate_trace_ids": [],
+        "non_terminal_results": {},
+        "timestamp_regressions": 0
+      },
+      "integrity_violations": [],
+      "distinct_actors_claim": "UNSUPPORTED \u2014 all records carry actor_id [0]",
       "inferred_race": "Firran (Ferre)",
       "inferred_starting_zone": "Falcon Plateau (Haranya)"
     }

@@ -86,9 +86,28 @@ Josh requested these corrections after the alignment review. This queue takes
 precedence over new homestead/GOAP breadth; operational safety and independent
 human-playability fixes continue. Existing milestone IDs and historical evidence
 remain unchanged. These are repository task briefs, not externally dispatched cards.
-All are **OPEN / unassigned**; suggested routing is Tai implementation, Rei independent
-verification, Nei records, Mai separately authorized deployment. Recheck current
-source before starting; baseline `63f6567e7a198775ffe885a3345db70ff5a50777` + dirty tree.
+
+#### Wave One closeout program — 2026-09-17
+
+Wave One is a constrained acceptance program, not a feature-development wave. Preserve
+the partial implementation already committed, but no item is **DONE** until its original
+acceptance paragraph below is met at its named evidence layer. Suggested routing remains
+Tai implementation, Rei independent verification, Nei records, and Mai separately
+authorized deployment. Recheck current source before starting; the original baseline was
+`63f6567e7a198775ffe885a3345db70ff5a50777` plus its dirty tree.
+
+| Order | Acceptance item | Why it is next | Current closeout state |
+|---:|---|---|---|
+| 1 | Reconcile delivery records and truthful handoff | Cheapest proof: establish the exact committed/WIP/evidence baseline before accepting further work. | DONE — step-1 records (`scorecard-explorations/mechanics/step1-delivery-records-2026-09-17.md`) |
+| 2 | Correct synthetic evidence and evaluator verdicts | Prevent a fixture or report from promoting later work incorrectly. | DONE — fixed evaluator + regenerated reports (`homestead_10bot_inference_report.{json,md}`, `test_infer_homestead_traces.py`) |
+| 3 | Isolate demonstration provisioning and unfinished homestead activation | Removes silent fixture preconditions before action evidence is evaluated. | DONE — silent grants removed, kit opt-in only (`HeadlessSessionProvisioningTests` 12/12) |
+| 4 | Make planner state identity resource-correct | Deterministic, bounded proof before integrating planning with execution. | DONE — resource-correct identity + cache-key proof (`GoapPlannerTests` 17/17) |
+| 5 | Make planning observations reflect authoritative state | Supplies truthful legality and resource inputs for one selected action. | DONE — authoritative observations + fixture gate (`GoapRuntimeTests` 18/18) |
+| 6 | Bounded combat executor prerequisite: learned-skill GCD | Establishes bounded timing/retry ownership without putting it in GOAP or the actor. | DONE — bounded GCD executor (`CombatExecutorTests` 9/9) |
+| 7 | Bind and prove one real homestead action | First ordinary-service, actual-target proof; select the action only after steps 1–6. | DONE — one real action on the live lane (`HomesteadClaimPlacePlotTests` 12/12, `HomesteadClaimPlacePlotE2eTests` 1/1, `step7-claim-place-plot-report.json`) |
+| 8 | Prove one real bot loop before claiming ten | **Final Wave One exit gate:** one named loop, no fixture repair, with recovery/repeat and applicable restart proof. | DONE — VERIFIED by independent second-session re-run 2026-09-18 (step-7 E2E 1/1 in 1m26s, step-8 loop 1/1 in 2m51s, fresh bots Step8LoopA4e6e6d/B64e26e, restart + conservation confirmed, report `step8-bot-loop-report.json`) |
+
+**Freeze LIFTED for the verified loop scope only (independent re-run 2026-09-18):** the claim→construct loop (BuildHouse 267/15596 → skill-18553 construct, with the dossier'd recovery/repeat/restart). Everything else from the original freeze stays frozen/open: further GOAP actions, combat behavior, route content, homestead breadth (plant/harvest/tax), multi-bot scenarios, ordinary acquisition, and H.
 
 #### P1 — Bounded combat executor prerequisite: learned-skill GCD
 
