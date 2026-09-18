@@ -1368,7 +1368,7 @@ public class GameplayActor : IGameplayActor
     /// character (level/race/chain …), and a completed non-repeatable quest
     /// stays hidden.
     /// </summary>
-    private bool IsDiscoverable(uint questId)
+    internal bool IsDiscoverable(uint questId)
     {
         var template = QuestManager.Instance.GetTemplate(questId);
         var quests = Character.Quests;

@@ -14,6 +14,9 @@ using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Quests;
+using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
@@ -250,6 +253,16 @@ public enum NeedsFarmLoopPhase
         /// one of the two legs fires — both flags stay readable for tests.
         /// </summary>
         public bool QuestLegActive { get; set; }
+
+        /// <summary>
+        /// Quest-travel observability: the world position the quest leg is
+        /// walking toward (null = none) and why. Memory-only like the rest of
+        /// the state (a restart re-resolves).
+        /// </summary>
+        public Vector3? QuestTravelTarget { get; set; }
+
+        /// <summary>Human-readable reason for the current quest-travel decision.</summary>
+        public string QuestTravelReason { get; set; } = "";
 
         /// <summary>
         /// Homestead progression flag: set when the homestead leg ran work this wake.
@@ -1152,9 +1165,21 @@ public enum NeedsFarmLoopPhase
     /// hunt/interact branches — this leg only advances the step machine and
     /// acquires new quests through the existing actor quest actions.
     ///
+    /// TRAVEL-TO-TARGET: the quest leg outranks PresenceRoam (58 &gt; 50), so the
+    /// arbiter never hands this bot to the roam module — without a route armed
+    /// here the bot would stand still forever and a reporter outside spawn
+    /// radius would never materialize. When the decision scenario has no legal
+    /// work (typically: the only active quest is Ready but its reporter is not
+    /// spawned yet), the leg arms an ordinary single-leg
+    /// <see cref="BotPath.PathTo"/> toward the pending target's spawner and
+    /// returns false, so the route layer's own MoveTo legs carry the bot (no
+    /// teleport, no Transform writes — the same discipline as the needs-farm
+    /// travel branch).
+    ///
     /// Returns true only when decision work actually landed (Completed) —
-    /// the 0b contract: reject/decide-fail wakes return false so the route
-    /// still walks and the scheduler keeps its cadence instead of spinning.
+    /// the 0b contract: reject/decide-fail/travel wakes return false so the
+    /// route still walks and the scheduler keeps its cadence instead of
+    /// spinning.
     /// </summary>
     private bool StepQuestLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
     {
@@ -1174,7 +1199,144 @@ public enum NeedsFarmLoopPhase
             Logger.Debug("Roam quest leg completed for bot {CharacterId}: {Action} ({Detail})",
                 bot.CharacterId, result.SelectedAction, result.Request!.Detail);
         }
+        else
+        {
+            // No legal work: if a quest is waiting on a target that is not
+            // spawned yet, walk toward its spawner so it CAN spawn.
+            ArmQuestTravel(bot, concreteActor, state);
+        }
         return landed;
+    }
+
+    /// <summary>
+    /// Arms a bounded Move leg toward the spawner of the target the bot's
+    /// active quests are currently waiting on (an unspawned report NPC), or —
+    /// while no quest is active — toward the nearest spawner offering a quest
+    /// in band. Returns true when a fresh route was armed. Purely a movement
+    /// decision: the engine still owns discovery/accept/turn-in at dispatch.
+    /// </summary>
+    private bool ArmQuestTravel(PlayerBotRuntime bot, GameplayActor actor, BotRoamState state)
+    {
+        // A live route is already walking — never re-arm (keeps progress).
+        if (state.Path is { IsFinished: false })
+            return false;
+
+        var character = bot.Character;
+        var target = ResolveQuestTravelTarget(actor);
+        if (target == null)
+        {
+            state.QuestTravelReason = "no walkable quest target (nothing ready-unspawned, nothing in-band to discover)";
+            return false;
+        }
+        state.QuestTravelTarget = target;
+        state.QuestTravelReason =
+            $"walking to quest target at ({target.Value.X:F0},{target.Value.Y:F0}) " +
+            $"from ({character.Transform.World.Position.X:F0},{character.Transform.World.Position.Y:F0})";
+
+        state.Path = BotPath.PathTo(target.Value);
+        state.PendingLeg = null;
+        Logger.Debug("Roam quest travel armed for bot {CharacterId}: walking toward pending quest target at ({X:F0},{Y:F0})",
+            bot.CharacterId, target.Value.X, target.Value.Y);
+        return true;
+    }
+
+    /// <summary>
+    /// The world position the quest leg should walk toward: the spawner of a
+    /// Ready quest's report NPC when that NPC is not spawned, otherwise the
+    /// spawner of an in-band quest offerer when nothing is active. Null when
+    /// there is nothing to walk to (the bot then idles rather than pacing).
+    /// </summary>
+    private static Vector3? ResolveQuestTravelTarget(GameplayActor actor)
+    {
+        var character = actor.Character;
+        var world = character.ParentWorld;
+        var quests = character.Quests;
+        if (world == null || quests == null)
+            return null;
+
+        // 1. A Ready quest whose reporter is missing — walk to the reporter's
+        //    spawner so the world's normal spawn path materializes it.
+        foreach (var (questId, quest) in quests.ActiveQuests.OrderBy(kv => kv.Key))
+        {
+            if (quest is not { Status: QuestStatus.Ready })
+                continue;
+            var template = QuestManager.Instance.GetTemplate(questId);
+            var reportNpc = template?.GetComponents(QuestComponentKind.Ready)
+                .SelectMany(c => c.ActTemplates)
+                .OfType<QuestActConReportNpc>()
+                .FirstOrDefault();
+            if (reportNpc == null)
+                continue; // doodad/auto turn-ins need no travel
+            if (world.GetNpcByTemplateId(reportNpc.NpcId) != null)
+                continue; // reporter already spawned — turn-in will land next wake
+            if (TrySpawnerPosition(world, reportNpc.NpcId) is { } reportPos)
+                return reportPos;
+        }
+
+        // 2. Nothing active: walk to the nearest offerer spawner whose offers
+        //    are actually worth walking to — in band and not already
+        //    completed (a spawner whose only offers are done would send the
+        //    bot on a pointless trek; observed live: it walked away from the
+        //    gated follow-up's offerer toward unrelated NPCs).
+        if (quests.ActiveQuests.Count == 0)
+        {
+            var here = character.Transform.World.Position;
+            var best = (Vector3?)null;
+            var bestDist = float.MaxValue;
+            foreach (var spawner in world.SpawnManager.GetAllSpawners().SelectMany(s => s.Value))
+            {
+                if (spawner.UnitId == 0)
+                    continue;
+                if (!OffersWalkableQuest(actor, spawner.UnitId))
+                    continue;
+                var p = spawner.Position;
+                var position = new Vector3(p.X, p.Y, p.Z);
+                var d = Vector3.Distance(here, position);
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = position;
+                }
+            }
+            return best;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// True when this NPC template offers at least one quest the bot could
+    /// still legally take AND that the decision policy would actually accept.
+    /// Legality rides the SAME <see cref="GameplayActor.IsDiscoverable"/> gate
+    /// discovery itself applies, and the band check mirrors the decision
+    /// scenario's default offer band — without it the bot walks to an offerer
+    /// whose only quests are out of band, discovery surfaces nothing, and the
+    /// loop paces between useless targets (observed live: 0 discovered at
+    /// Npc 7137 while the gated in-band offerer sat 85 m away).
+    /// </summary>
+    private static bool OffersWalkableQuest(GameplayActor actor, uint npcTemplateId)
+    {
+        var band = new QuestDecisionScenario.QuestOptions();
+        foreach (var questId in QuestManager.Instance.GetQuestsOfferedByNpc(npcTemplateId))
+        {
+            var template = QuestManager.Instance.GetTemplate(questId);
+            if (template == null || template.Level < band.BandMin || template.Level > band.BandMax)
+                continue;
+            if (actor.IsDiscoverable(questId))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>Spawner position for an NPC template, or null when unspawned/unknown.</summary>
+    private static Vector3? TrySpawnerPosition(WorldInstance world, uint npcTemplateId)
+    {
+        var spawner = world.SpawnManager.GetAllSpawners()
+            .SelectMany(s => s.Value)
+            .FirstOrDefault(s => s.UnitId == npcTemplateId);
+        return spawner == null
+            ? null
+            : new Vector3(spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
     }
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, AAEmu.Game.Core.Managers.Bots.Goap.IGoapPlanRunner> _homesteadRunners = [];

@@ -545,6 +545,19 @@ public static class E2eStack
         if (!string.IsNullOrEmpty(needsFarm))
             psi.Environment["AAEMU_NEEDS_FARM_ENABLED"] = needsFarm;
 
+        // Workstream E1: the quest-bootstrap module (AAEMU_QUEST_BOOTSTRAP_ENABLED)
+        // and the wildlife-hunt profile (AAEMU_PRESENCE_HUNT) are the same
+        // boot-time opt-ins the production perception/quest loop needs — the
+        // quest leg only arbitrates when the module is enabled, and hunt/butcher
+        // only engage when the presence profile allows it. Forward an explicit
+        // opt-in from the runner (never touch the shared default).
+        foreach (var flag in new[] { "AAEMU_QUEST_BOOTSTRAP_ENABLED", "AAEMU_PRESENCE_HUNT", "AAEMU_PRESENCE_HUNT_RADIUS" })
+        {
+            var value = Environment.GetEnvironmentVariable(flag);
+            if (!string.IsNullOrEmpty(value))
+                psi.Environment[flag] = value;
+        }
+
         var p = Process.Start(psi)!;
         p.OutputDataReceived += (_, e) => { if (e.Data != null) WriteLog(log, e.Data); };
         p.ErrorDataReceived += (_, e) => { if (e.Data != null) WriteLog(log, e.Data); };

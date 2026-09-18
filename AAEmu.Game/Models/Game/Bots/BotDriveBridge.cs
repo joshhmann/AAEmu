@@ -288,6 +288,8 @@ public sealed class BotDriveBridge
                 return HandleSeedDormant(root);
             case "farm":
                 return HandleFarmOp(root);
+            case "quest":
+                return HandleQuestOp(root);
             case "housing":
                 return HandleHousingOp(root);
             case "homestead":
@@ -4315,7 +4317,173 @@ public sealed class BotDriveBridge
         return null;
     }
 
+    /// <summary>
+    /// LIVE quest perception/loop driver for the Workstream E1 converted
+    /// scenario A1 (additive, E2E-only): enrolls the resolved bot in the live
+    /// registry (Spawn + Activate when not already Active), wakes the live
+    /// <c>PlayerBotScheduler</c>, waits for at least one scheduler step, then
+    /// reports the observable quest-loop state — the projection in
+    /// <see cref="BotQuestLoopObservation"/> (active quests + step/status +
+    /// objectives, completed count, arc flags) plus the executor's
+    /// per-wake quest-leg flag and the live audit trace filtered to quest
+    /// actions. No gameplay action is issued here: the scheduler wake owns
+    /// the whole decision (discover/accept/advance/turn-in) through the
+    /// production <c>QuestDecisionScenario</c> leg; this op only enrolls,
+    /// wakes, and observes.
+    ///
+    /// Subs:
+    ///   wake    — enroll + activate + wake + observe (default).
+    ///   observe — observe only, no enroll/activate/wake.
+    /// </summary>
+    private string HandleQuestOp(JsonElement root)
+    {
+        if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var b) ? b.GetString() : null, out var character, out var err)
+            && !TryResolveNetworkedBot(root.TryGetProperty("bot", out var b2) ? b2.GetString() : null, out character, out err))
+            return Err(err);
 
+        var sub = root.TryGetProperty("op2", out var subEl) ? subEl.GetString()
+            : root.TryGetProperty("sub", out var subEl2) ? subEl2.GetString() : "wake";
+        var arcIds = root.TryGetProperty("arc", out var arcEl) && arcEl.ValueKind == JsonValueKind.Array
+            ? arcEl.EnumerateArray().Select(e => e.GetUInt32()).ToList()
+            : [];
+
+        // SETUP-ONLY staging (disclosed, never traversal proof): move the bot
+        // to an explicit world position ONCE before the wake loop, so the
+        // curated arc's offerers/reporters fall inside the spawn + discover
+        // geometry. Region bookkeeping synced like the mailbox/farm ops.
+        if (string.Equals(sub, "place", StringComparison.OrdinalIgnoreCase))
+        {
+            var px = GetFloat(root, "x", 0f);
+            var py = GetFloat(root, "y", 0f);
+            var pz = GetFloat(root, "z", 0f);
+            if (px == 0f && py == 0f)
+                return Err("quest place requires 'x' and 'y'");
+            TeleportWithRegionSync(character!,
+                new System.Numerics.Vector3(px, py, pz),
+                character!.Transform.ZoneId);
+            character!.MarkDirty();
+            var pp = character.Transform.World.Position;
+            return Ok(new
+            {
+                name = character.Name,
+                id = character.Id,
+                x = pp.X, y = pp.Y, z = pp.Z,
+                zoneId = character.Transform.ZoneId,
+            });
+        }
+
+        var manager = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.IPlayerBotManager>();
+        var scheduler = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.IPlayerBotScheduler>();
+        var executor = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.BotRoamStepExecutor>();
+        if (manager == null || scheduler == null || executor == null)
+            return Err("quest: bot scheduler/registry unavailable in DI");
+
+        long before = scheduler.GetMetrics().TotalStepsRun;
+        var stepped = false;
+        if (string.Equals(sub, "wake", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!manager.TryGet(character!.Id, out var runtime) || runtime == null)
+            {
+                if (!manager.Spawn(character, "e2e-quest"))
+                    return Err($"quest: spawn refused for '{character.Name}'");
+                if (!manager.TryGet(character.Id, out runtime) || runtime == null)
+                    return Err($"quest: '{character.Name}' not registered after spawn");
+            }
+            if (runtime.State != Core.Managers.Bots.PlayerBotState.Active)
+            {
+                if (!manager.Activate(character.Id,
+                        new global::AAEmu.Game.Models.Game.Bots.BotContext { BotId = character.Id, Name = character.Name }, "e2e-quest"))
+                    return Err($"quest: activate refused for '{character.Name}'");
+            }
+            if (!scheduler.Wake(character.Id))
+                return Err($"quest: scheduler refused wake for '{character.Name}'");
+
+            var waitMs = GetInt(root, "waitMs", 15000);
+            var deadline = Environment.TickCount64 + Math.Clamp(waitMs, 1000, 120000);
+            while (Environment.TickCount64 < deadline)
+            {
+                if (scheduler.GetMetrics().TotalStepsRun > before)
+                {
+                    stepped = true;
+                    break;
+                }
+                Thread.Sleep(200);
+            }
+        }
+        else if (!string.Equals(sub, "observe", StringComparison.OrdinalIgnoreCase))
+        {
+            return Err($"quest: unknown sub '{sub}' (want 'wake' or 'observe')");
+        }
+
+        var after = scheduler.GetMetrics().TotalStepsRun;
+        var state = executor.GetBotState(character!.Id);
+        var snapshot = Core.Managers.Bots.BotQuestLoopObservation.Capture(
+            character, state?.QuestLegActive ?? false, arcIds);
+
+        // Quest-action audit rows from the EXECUTOR's live actor (a fresh
+        // GameplayActor carries an empty trace) — the same seam the needs op
+        // reads. Trace rows carry the real acting character id.
+        var trace = state?.Actor.AuditTrace ?? new GameplayActor(character).AuditTrace;
+        var questActions = new[]
+        {
+            Core.Managers.Bots.ActorActionType.AcceptQuest,
+            Core.Managers.Bots.ActorActionType.AdvanceQuest,
+            Core.Managers.Bots.ActorActionType.TurnInQuest,
+            Core.Managers.Bots.ActorActionType.TurnInDoodad,
+            Core.Managers.Bots.ActorActionType.AutoTurnIn,
+            Core.Managers.Bots.ActorActionType.DiscoverQuests,
+        };
+        var rows = trace.Where(r => questActions.Contains(r.Action)).ToList();
+        var last = rows.LastOrDefault();
+        var liveReq = state?.Actor.ActiveRequest;
+
+        return Ok(new
+        {
+            name = character.Name,
+            id = character.Id,
+            stepsBefore = before,
+            stepsAfter = after,
+            stepped,
+            level = snapshot.Level,
+            money = snapshot.Money,
+            x = snapshot.X, y = snapshot.Y, z = snapshot.Z,
+            zoneId = snapshot.ZoneId,
+            questLegActive = snapshot.QuestLegActive,
+            questTravelTargetX = state?.QuestTravelTarget?.X,
+            questTravelTargetY = state?.QuestTravelTarget?.Y,
+            questTravelReason = state?.QuestTravelReason ?? "",
+            activeQuests = snapshot.ActiveQuests.Select(q => new
+            {
+                questId = q.QuestId,
+                status = q.Status,
+                step = q.Step,
+                objectives = q.Objectives,
+            }).ToArray(),
+            activeCount = snapshot.ActiveQuests.Count,
+            readyQuestIds = Core.Managers.Bots.BotQuestLoopObservation.ReadyQuestIds(snapshot),
+            completedCount = snapshot.CompletedCount,
+            arcIds,
+            arcCompleted = snapshot.ArcCompleted,
+            arcComplete = Core.Managers.Bots.BotQuestLoopObservation.ArcComplete(snapshot),
+            questActionCount = rows.Count,
+            accepts = rows.Count(r => r.Action == Core.Managers.Bots.ActorActionType.AcceptQuest
+                && r.Result == Core.Managers.Bots.ActorLifecycleState.Completed),
+            turnIns = rows.Count(r => r.Action is Core.Managers.Bots.ActorActionType.TurnInQuest
+                or Core.Managers.Bots.ActorActionType.TurnInDoodad
+                or Core.Managers.Bots.ActorActionType.AutoTurnIn
+                && r.Result == Core.Managers.Bots.ActorLifecycleState.Completed),
+            advances = rows.Count(r => r.Action == Core.Managers.Bots.ActorActionType.AdvanceQuest
+                && r.Result == Core.Managers.Bots.ActorLifecycleState.Completed),
+            lastAction = last?.Action.ToString(),
+            lastResult = last?.Result.ToString(),
+            lastDetail = last?.Detail,
+            lastTargetId = last?.TargetId ?? 0u,
+            lastActorId = last?.ActorId ?? 0u,
+            liveAction = liveReq?.Action.ToString(),
+            liveState = liveReq?.State.ToString(),
+            liveDetail = liveReq?.Detail,
+        });
+    }
 
     #endregion
 

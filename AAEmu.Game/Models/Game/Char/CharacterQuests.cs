@@ -445,6 +445,29 @@ public class CharacterQuests(Character owner)
     }
 
     /// <summary>
+    /// Number of quests the character has ever completed (set bits across all
+    /// completed blocks). Read-only observability for the live quest-loop
+    /// snapshot (<see cref="Core.Managers.Bots.BotQuestLoopObservation"/>) —
+    /// the completed set itself stays private and packet-shaped.
+    /// </summary>
+    public int CompletedQuestCount
+    {
+        get
+        {
+            var count = 0;
+            foreach (var block in CompletedQuests.Values)
+            {
+                if (block?.Body == null)
+                    continue;
+                for (var i = 0; i < block.Body.Length; i++)
+                    if (block.Body[i])
+                        count++;
+            }
+            return count;
+        }
+    }
+
+    /// <summary>
     /// Sends the list of all active quests for the player (20 / packet)
     /// </summary>
     public void Send()

@@ -104,11 +104,18 @@ public static class QuestDecisionScenario
             var proposals = new List<BotDecisionProposal>();
             foreach (var questId in before.Order())
             {
-                proposals.Add(AdvanceProposal(actor, opts, questId));
+                // An already-Ready quest has no advance work: RunCurrentStep
+                // from Ready is a no-op that still reports Completed, which the
+                // leg counts as landed work — starving the route layer so the
+                // bot never walks to an out-of-range reporter (observed live:
+                // 60 "advances" on a Ready quest, 0 turn-ins, bot never moved).
+                // Turn-in is the only legal work for a Ready quest.
+                var active = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+                if (active is { Status: not QuestStatus.Ready and not QuestStatus.Completed })
+                    proposals.Add(AdvanceProposal(actor, opts, questId));
                 foreach (var turnIn in TurnInProposals(actor, opts, questId))
                     proposals.Add(turnIn);
             }
-
             // Discovery needs live NPC targets: nearest in-range NPCs only
             // (range itself stays the engine gate at dispatch).
             var discoverTargets = new List<uint>();
