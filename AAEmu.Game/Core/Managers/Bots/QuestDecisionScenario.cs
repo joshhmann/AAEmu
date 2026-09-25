@@ -89,6 +89,20 @@ public static class QuestDecisionScenario
         /// work. Fires only on a recognized lootable corpse (post-death wakes
         /// withdraw pursuit/combat, so this is when the proposal can win).</summary>
         public int ObjectiveLootPriority { get; init; } = 22;
+        /// <summary>
+        /// Optional loot-worth floor in copper: a corpse whose whole container is
+        /// worth strictly less than this is skipped, terminally. 0 (the default)
+        /// applies NO floor, so a container whose every entry is vendor junk is
+        /// the only worth-skip — the frozen G7c behaviour.
+        /// </summary>
+        public long MinContainerValueCopper { get; init; } = 0;
+        /// <summary>
+        /// The loot safe radius: a live hostile inside this distance of the actor
+        /// withholds the loot for that wake (it releases once the hostile leaves,
+        /// so the disposition stays undecided). Defaults to
+        /// <see cref="AAEmu.Game.Core.Managers.Bots.Loot.LootBrain.DefaultSafeRadiusM"/>.
+        /// </summary>
+        public float LootSafeRadiusM { get; init; } = AAEmu.Game.Core.Managers.Bots.Loot.LootBrain.DefaultSafeRadiusM;
         /// <summary>G8b return priority: below the G5 pursuit leg (24), G6
         /// combat (23), and G7c loot (22) so live objective work always wins
         /// while closing/fighting/looting, above advance (20) so the return

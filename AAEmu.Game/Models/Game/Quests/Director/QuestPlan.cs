@@ -52,7 +52,17 @@ public readonly record struct QuestLegContext(
     QuestDecisionScenario.QuestOptions Options,
     uint QuestId,
     QuestFixtureRow? Fixture,
-    QuestObjectiveTargetSelector.ObjectiveTargetFunnel? Funnel);
+    QuestObjectiveTargetSelector.ObjectiveTargetFunnel? Funnel)
+{
+    /// <summary>
+    /// The wake's OWN perception snapshot (the one <c>QuestDirector.Run</c>
+    /// captured before the plans were assembled), threaded to the legs so a leg
+    /// that needs a census reads the wake's rather than perceiving again — the
+    /// same discipline the objective funnel follows. Null only for a caller that
+    /// built a leg context by hand (a direct leg invocation).
+    /// </summary>
+    public BotObservedContext? Observation { get; init; }
+}
 
 /// <summary>
 /// A leg's proposal provider: emits the leg's proposal for this wake, or null

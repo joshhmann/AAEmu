@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Numerics;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots.Combat;
+using AAEmu.Game.Core.Managers.Bots.Loot;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
@@ -399,7 +400,12 @@ public static class QuestBehavior
                 // landed work — starving the route layer so the bot never walks
                 // to an out-of-range reporter: observed live, 60 "advances" on a
                 // Ready quest, 0 turn-ins, bot never moved).
-                var legContext = new QuestLegContext(actor, opts, questId, fixture, null);
+                var legContext = new QuestLegContext(actor, opts, questId, fixture, null)
+                {
+                    // The wake's own perception (captured once by QuestDirector.Run
+                    // before the plans were built) — never a second one.
+                    Observation = context
+                };
                 var wake = new QuestLegWake();
                 QuestObjectiveTargetSelector.ObjectiveTargetFunnel? planFunnel = null;
                 foreach (var leg in plan.Legs)
@@ -1222,17 +1228,23 @@ public static class QuestBehavior
     /// G7c loot proposal (the wired quest only): Loot for the G7b-recognized corpse
     /// at <c>ObjectiveLootPriority</c> (just below combat 23, so a live combat
     /// decision always wins while the target is alive; above advance so a
-    /// lootable corpse is taken before step-machine work). Reads ONLY the
-    /// quest-owned corpse memory (<c>LastCorpse</c>, same ObjId continuity the
-    /// G7b arms demand) plus the read-only container probe — never a world
-    /// scan. Withholds (null + named diag) when no corpse is recognized, the
-    /// recorded objId is gone (despawned) or live again (recycled), the unit
-    /// is not the fixture row's prey, the probe reads not-lootable (empty container or
-    /// out of loot range), the corpse already ran its Loot course (loot-once
-    /// memory — never re-dispatches for the same corpse, even if its container
-    /// refills), or the auto-attack loop that owns the kill has not yet torn
-    /// down (loot releases only post-teardown; see the loop-release seam).
-    /// Dispatches ONLY GameplayActor.Loot, once.
+    /// lootable corpse is taken before step-machine work).
+    ///
+    /// The gate ORDER is no longer this leg's own: <see cref="LootBrain"/> owns
+    /// the chain (survival veto → ownership → probe → loop release → loot-once →
+    /// safe radius → worth → space → emit) and <see cref="LootBrainPlanner"/>
+    /// owns every live read (the corpse resolve, the container probe, the engine's
+    /// tagging evidence, the wake census, the worth read, the bag slots). This leg
+    /// contributes only what the brain cannot know: the quest-owned corpse pin
+    /// (<c>LastCorpse</c>, the same-ObjId continuity the G7b arms demand), the
+    /// fixture row's prey template, the loot-once memory, and the emitted proposal.
+    ///
+    /// The <c>validate=</c> vocabulary every existing lane scanner keys on is
+    /// preserved verbatim through <see cref="LootBrain.ValidateToken"/> and the
+    /// brain's arms are named ADDITIVELY beside it (<c>:lootBrain=arm=…</c> — a
+    /// flat sibling key list, never a nested bracket block), so
+    /// no lane parser changes shape. Withholds (null + named diag) on every
+    /// non-emit arm; dispatches ONLY GameplayActor.Loot, once.
     /// </summary>
     internal static BotDecisionProposal? LootEmit(QuestLegContext context, ref string diag, ref int hpBefore)
     {
@@ -1242,63 +1254,80 @@ public static class QuestBehavior
         QuestCorpseRecord? rec;
         lock (PursuitSync)
             LastCorpse.TryGetValue(actor.ActorId, out rec);
-        if (rec == null || rec.QuestId != fixture.QuestId)
-        {
-            diag = "validate=no-corpse:target=-:container=-:lootable=-:verb=none";
-            return null;
-        }
+        QuestCorpseRecord? candidate = rec != null && rec.QuestId == fixture.QuestId ? rec : null;
+
         bool already;
         lock (PursuitSync)
-            already = LootedCorpses.Contains((actor.ActorId, rec.ObjId));
+            already = candidate != null && LootedCorpses.Contains((actor.ActorId, candidate.ObjId));
+
         var character = actor.Character;
-        var npc = character?.ParentWorld?.GetNpc(rec.ObjId);
-        if (npc == null || npc.Hp > 0
-            || npc.TemplateId != fixture.PreyTemplate)
+        var prepared = LootBrainPlanner.Prepare(
+            actor,
+            context.Observation,
+            new LootBrainPlanner.Request(
+                CorpseObjId: candidate?.ObjId ?? 0,
+                PreyTemplateId: fixture.PreyTemplate,
+                MinContainerValueCopper: opts.MinContainerValueCopper,
+                AlreadyLooted: already,
+                LoopLive: character?.IsAutoAttack == true,
+                SafeRadiusM: opts.LootSafeRadiusM,
+                NowUtc: DateTime.UtcNow));
+
+        var decision = prepared.Decision;
+        var validate = LootBrain.ValidateToken(decision.Reason);
+        // Flat, bracket-free key list (nested brackets would nest inside the
+        // DECIDE/loot brackets a lane parser scans, so the brain's own fragment
+        // joins them as siblings rather than a block).
+        var brainFrag = $":lootBrain={LootBrain.Describe(decision)}:{prepared.DescribeOwnership()}";
+        // The container tally the funnel scanners read is the probe's own
+        // reading; a corpse that never resolved reports an explicit "-" exactly
+        // as the pre-brain arm did.
+        var containerText = prepared.CorpseResolved ? prepared.Inputs.ContainerItemCount.ToString(CultureInfo.InvariantCulture) : "-";
+        var lootableText = prepared.CorpseResolved
+            ? (prepared.Inputs.ContainerLootable ? "true" : "false")
+            : "-";
+
+        if (!decision.IsEmit)
         {
-            var gone = npc == null ? "gone" : "recycled";
-            diag = $"validate={gone}:target={rec.ObjId}:container=-:lootable=-:verb=none";
+            // The banked skip is final, so it is recorded here — a terminal skip
+            // never lags an act the way a take would.
+            LootBrainPlanner.PublishSkip(prepared, DateTime.UtcNow);
+            diag = $"validate={validate}:target={ShowCorpse(prepared)}:container={containerText}" +
+                   $":lootable={lootableText}:verb=none{brainFrag}";
             return null;
         }
-        var probe = ProbeCorpse(character, npc);
-        if (already || !probe.Lootable)
-        {
-            var reason = already ? "already-looted" : "not-lootable";
-            diag = $"validate={reason}:target={rec.ObjId}:container={probe.ItemCount}:lootable={(probe.Lootable ? "true" : "false")}:verb=none";
-            return null;
-        }
-        // Loop-release seam: withhold the loot while the auto-attack loop is
-        // still live for this actor. The loop owns the corpse until it tears
-        // itself down (UseAutoAttackSkillTask stops on target null/dead, and
-        // teardown clears CurrentTarget + generates loot), so a Loot dispatched
-        // mid-loop would race the kill legs' own teardown — the G7c loot watch
-        // and the G7d per-cycle legs REQUIRE the post-death quest-owned Loot to
-        // land only after that teardown, which is why loot releases by
-        // construction rather than by a timer here.
-        if (character!.IsAutoAttack)
-        {
-            diag = $"validate=loop-live:target={rec.ObjId}:container={probe.ItemCount}:lootable=true:verb=none";
-            return null;
-        }
-        diag = $"validate=ok:target={rec.ObjId}:container={probe.ItemCount}:lootable=true:verb=Loot";
+
+        diag = $"validate={validate}:target={decision.CorpseObjId}:container={containerText}" +
+               $":lootable=true:verb=Loot{brainFrag}";
         return new BotDecisionProposal(
             goal: LootGoal,
             action: ActorActionType.Loot,
-            targetId: rec.ObjId,
+            targetId: decision.CorpseObjId,
             expectedPostcondition: new BotProposalPostcondition(
-                $"looted quest {fixture.QuestId} corpse {rec.ObjId}",
+                $"looted quest {fixture.QuestId} corpse {decision.CorpseObjId}",
                 _ => true),
-            idempotencyKey: $"quest:{actor.ActorId}:loot:{fixture.QuestId}:{rec.ObjId}",
+            idempotencyKey: $"quest:{actor.ActorId}:loot:{fixture.QuestId}:{decision.CorpseObjId}",
             timeout: TimeSpan.FromSeconds(30),
-            rationale: $"quest {fixture.QuestId} loot: dead {fixture.PreyTemplate} {rec.ObjId} container={probe.ItemCount} — Loot once",
+            rationale: $"quest {fixture.QuestId} loot: dead {fixture.PreyTemplate} {decision.CorpseObjId} container={prepared.Inputs.ContainerItemCount} — Loot once ({LootBrain.Describe(decision)})",
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectiveLootPriority,
-            tieBreakKey: $"loot:{fixture.QuestId}:{rec.ObjId:D10}",
+            tieBreakKey: $"loot:{fixture.QuestId}:{decision.CorpseObjId:D10}",
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
                     observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
             ]);
     }
+
+    /// <summary>
+    /// The corpse objId a withholding loot arm names: the pinned corpse when one
+    /// was recorded (so a lane can still join the record to its wake), otherwise
+    /// the explicit <c>-</c> the pre-brain arm printed for an absent record.
+    /// </summary>
+    private static string ShowCorpse(in LootBrainPlanner.Prepared prepared)
+        => prepared.Inputs.CorpseObjId != 0
+            ? prepared.Inputs.CorpseObjId.ToString(CultureInfo.InvariantCulture)
+            : "-";
     /// <summary>
     /// G8b return proposal (the wired quest only): Move/Stop/InteractNpc for the
     /// Ready-step reporter at <c>ObjectiveReturnPriority</c> (below
@@ -1776,6 +1805,10 @@ public static class QuestBehavior
                     LootedCorpses.Clear();
                 LootedCorpses.Add((gameplayActor.ActorId, proposal.TargetId));
             }
+            // The decision layer's own bank of the same fact: a take is recorded
+            // only for a Loot verb that actually ran its terminal course, so the
+            // ledger never claims a take the actor refused.
+            LootBrainPlanner.PublishTake(gameplayActor.ActorId, proposal.TargetId, DateTime.UtcNow);
         }
         return request;
     }
