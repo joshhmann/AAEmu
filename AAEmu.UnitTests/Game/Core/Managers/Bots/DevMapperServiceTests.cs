@@ -172,6 +172,9 @@ public class DevMapperServiceTests
         public IReadOnlyList<ActorAuditRecord> AuditTrace => [];
         public List<string> Executed { get; } = [];
         public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed) { }
+        public void SetPendingCycleId(string? cycleId) { }
+        public void SetPendingWakeSequence(long? wakeSequence) { }
+        public bool PreemptCurrent(string reason) => false;
 
         public ActorObservation Observe() => new() { ActorId = ActorId, CurrentTargetObjId = 0 };
         public ActorRequest SetTarget(uint targetObjId) => Unsupported();

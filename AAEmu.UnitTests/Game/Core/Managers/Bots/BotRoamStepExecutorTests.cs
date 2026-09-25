@@ -468,5 +468,183 @@ public class BotRoamStepExecutorTests
         await Assert.That(member.ActiveRequest).IsNotNull();
         await Assert.That(member.ActiveRequest!.Action).IsEqualTo(ActorActionType.Move);
     }
+
+    // G5 stale-route resume (movement-ownership §L): an actor-request
+    // interruption must invalidate route-level intent for QUEST_TRAVEL.
+    // A travel leg preempted by a foreign move (pursuit retrack shape) loses
+    // authorization — the route layer must neither reissue against the
+    // running preemptor (the 36 busy-rejects) nor resume after it completes.
+    [Test]
+    public async Task Step_QuestTravelRoute_ForeignPreempted_DoesNotReissueWhilePreemptorRunning()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("travel-supersede-1");
+
+        // Arm a quest-travel-shaped route: single-leg path owned QUEST_TRAVEL
+        // (the exact state ArmQuestTravel leaves behind).
+        executor.SetRoamRoute(runtime.Character, BotPath.PathTo(new Vector3(100, 0, 0)));
+        executor.GetBotState(runtime.CharacterId)!.PendingMoveOwner = "QUEST_TRAVEL";
+
+        // Wake 1: the route issues the travel leg.
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(actor.ActiveRequest).IsNotNull();
+        await Assert.That(actor.ActiveRequest!.Action).IsEqualTo(ActorActionType.Move);
+        // Foreign preemption with the pursuit-retrack shape: preempt the
+        // travel leg, then run a pursuit-owned leg.
+        actor.PreemptCurrent("quest pursuit retrack");
+        actor.SetPendingMoveOwner("PURSUIT_MOVE_TO_UNIT");
+        _ = actor.MoveTo(new Vector3(-100, 0, 0), 4.5f, TimeSpan.FromSeconds(30));
+        await Assert.That(actor.ActiveRequest is { IsTerminal: false }).IsTrue();
+
+        // Wakes while the pursuit runs: zero reissues (pre-fix: one
+        // Rejected(StateTransition) busy-reject per wake from the advance site).
+        for (var i = 0; i < 5; i++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(runtime, CancellationToken.None);
+        }
+
+        var moves = actor.AuditTrace.Where(r => r.Action == ActorActionType.Move).ToList();
+        // Audit records exist only for terminal legs: the interrupted travel
+        // leg. The running pursuit leg has no record yet — and, crucially,
+        // no busy-rejected reissue exists either.
+        await Assert.That(moves.Count).IsEqualTo(1);
+        await Assert.That(moves[0].Result).IsEqualTo(ActorLifecycleState.Interrupted);
+        await Assert.That(moves.Any(r => r.Result == ActorLifecycleState.Rejected)).IsFalse();
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull();
+    }
+
+    [Test]
+    public async Task Step_QuestTravelRoute_ForeignPreempted_DoesNotResumeAfterPreemptorCompletes()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("travel-supersede-2");
+
+        executor.SetRoamRoute(runtime.Character, BotPath.PathTo(new Vector3(100, 0, 0)));
+        executor.GetBotState(runtime.CharacterId)!.PendingMoveOwner = "QUEST_TRAVEL";
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(actor.ActiveRequest).IsNotNull();
+
+        actor.PreemptCurrent("quest pursuit retrack");
+        actor.SetPendingMoveOwner("PURSUIT_MOVE_TO_UNIT");
+        _ = actor.MoveTo(new Vector3(-100, 0, 0), 4.5f, TimeSpan.FromSeconds(30));
+
+        // One wake supersedes the orphaned route (lost authorization).
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull();
+
+        // The pursuit completes (arrival halt); the next wake must NOT resume
+        // the stale walk (pre-fix: a fresh QUEST_TRAVEL leg reissued here).
+        _ = actor.Stop();
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.ActiveRequest).IsNull();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move)).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Step_QuestTravelRoute_ArrivalCompletes_WithoutSupersede()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("travel-normal-1");
+
+        // Destination inside the arrival box: the leg completes on dispatch.
+        executor.SetRoamRoute(runtime.Character, BotPath.PathTo(new Vector3(0.2f, 0, 0)));
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        state.PendingMoveOwner = "QUEST_TRAVEL";
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        // Normal unsuperseded travel advances to finish — never dropped.
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId) is null
+            || executor.GetRoamRoute(runtime.CharacterId)!.IsFinished).IsTrue();
+        await Assert.That(state.QuestTravelReason.Contains("superseded")).IsFalse();
+        var moves = actor.AuditTrace.Where(r => r.Action == ActorActionType.Move).ToList();
+        await Assert.That(moves.Count).IsGreaterThanOrEqualTo(1);
+        await Assert.That(moves.All(r => r.Result == ActorLifecycleState.Completed)).IsTrue();
+    }
+
+    [Test]
+    public async Task Step_RoamRoute_AfterRouteOwnedStop_Resumes()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("roam-resume-1");
+        executor.SetRoamRoute(runtime.Character, new BotPath([new Vector3(100, 0, 0)], BotPath.LoopMode.Loop));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(actor.ActiveRequest is { IsTerminal: false }).IsTrue();
+
+        // Route-owned halt (the executor's own settle Stop shape).
+        _ = actor.Stop();
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        // Paused-current resumes: a fresh leg runs, the patrol stays armed.
+        // (Audit holds only the interrupted first leg — the resumed second
+        // leg is still running and has no record yet.)
+        await Assert.That(actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move }).IsTrue();
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId) is { IsFinished: false }).IsTrue();
+        var resumeMoves = actor.AuditTrace.Where(r => r.Action == ActorActionType.Move).ToList();
+        await Assert.That(resumeMoves.Count).IsEqualTo(1);
+        await Assert.That(resumeMoves[0].Result).IsEqualTo(ActorLifecycleState.Interrupted);
+    }
+
+
+    [Test]
+    public async Task IsForeignRouteInterruption_ClassifiesLegTermination()
+    {
+        var (_, actor, _, _) = CreateRig("travel-pred-1");
+
+        static ActorRequest TerminatedLeg(string detail)
+        {
+            var leg = new ActorRequest(ActorActionType.Move, 0, new Vector3(10, 0, 0), 0, TimeSpan.FromSeconds(30));
+            leg.Accept("test");
+            leg.Start("test");
+            leg.Interrupt(detail);
+            return leg;
+        }
+
+        BotRoamStepExecutor.BotRoamState StateWith(string? owner, BotPath? path, ActorRequest? leg)
+            => new() { Actor = actor, PendingMoveOwner = owner, Path = path, PendingLeg = leg };
+
+        var livePath = BotPath.PathTo(new Vector3(100, 0, 0));
+
+        // Foreign preemptions match (the two proven production reasons).
+        await Assert.That(BotRoamStepExecutor.IsForeignRouteInterruption(
+            StateWith("QUEST_TRAVEL", livePath, TerminatedLeg("quest pursuit retrack")))).IsTrue();
+        await Assert.That(BotRoamStepExecutor.IsForeignRouteInterruption(
+            StateWith("QUEST_TRAVEL", livePath, TerminatedLeg("interrupted by controller")))).IsTrue();
+
+        // The route layer's own arrival halt keeps authorization.
+        await Assert.That(BotRoamStepExecutor.IsForeignRouteInterruption(
+            StateWith("QUEST_TRAVEL", livePath, TerminatedLeg("stop requested")))).IsFalse();
+
+        // Non-travel owners never match, even when foreign-interrupted.
+        await Assert.That(BotRoamStepExecutor.IsForeignRouteInterruption(
+            StateWith("ROAM", livePath, TerminatedLeg("quest pursuit retrack")))).IsFalse();
+        await Assert.That(BotRoamStepExecutor.IsForeignRouteInterruption(
+            StateWith("OTHER:needs-farm-travel", livePath, TerminatedLeg("interrupted by controller")))).IsFalse();
+
+        // Non-interrupted legs never match (completed arrival, running leg).
+        var completed = new ActorRequest(ActorActionType.Move, 0, new Vector3(10, 0, 0), 0, TimeSpan.FromSeconds(30));
+        completed.Accept("test");
+        completed.Start("test");
+        completed.Complete("arrived");
+        await Assert.That(BotRoamStepExecutor.IsForeignRouteInterruption(
+            StateWith("QUEST_TRAVEL", livePath, completed))).IsFalse();
+        var running = new ActorRequest(ActorActionType.Move, 0, new Vector3(10, 0, 0), 0, TimeSpan.FromSeconds(30));
+        running.Accept("test");
+        running.Start("test");
+        await Assert.That(BotRoamStepExecutor.IsForeignRouteInterruption(
+            StateWith("QUEST_TRAVEL", livePath, running))).IsFalse();
+
+        // No live route, no match.
+        await Assert.That(BotRoamStepExecutor.IsForeignRouteInterruption(
+            StateWith("QUEST_TRAVEL", null, TerminatedLeg("quest pursuit retrack")))).IsFalse();
+    }
 }
 
