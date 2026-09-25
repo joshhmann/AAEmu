@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Numerics;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots.Combat;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
@@ -115,6 +116,43 @@ public static class QuestBehavior
     /// </summary>
     private static readonly Dictionary<uint, (uint TargetObjId, Vector3 TargetPos)> LastReturnIssue = new();
     private static readonly object PursuitSync = new();
+
+    /// <summary>
+    /// The survival-veto-clear precondition, shared by every objective leg that
+    /// must stand down while a survival condition owns the actor's wake.
+    ///
+    /// Reads ONLY the frozen observation plus the brain's own published fact —
+    /// no live world scan, no engine query, and nothing that would make the
+    /// selector's evaluation non-deterministic:
+    ///  - the published fact is the authority: while the combat brain is
+    ///    disengaging, the veto is set and the leg is withheld;
+    ///  - the observation's own vitals decide "the actor cannot act": at or below
+    ///    zero hp with a readable maximum is DOWN;
+    ///  - the low-hp arm is gated on evidence that a fight is on (a live
+    ///    commitment, or a selected target), because a low bar out of combat is a
+    ///    recovery concern, never this veto.
+    ///
+    /// Fail-closed in the other direction: an unreadable hp (zero maximum) never
+    /// fabricates a veto.
+    /// </summary>
+    private static BotProposalPrecondition SurvivalVetoClear(IGameplayActor actor)
+        => new("survival-veto-clear", observed => !IsSurvivalVetoed(actor.ActorId, observed));
+
+    /// <summary>True while the published fact, or the observation's own vitals, say a survival condition owns the wake.</summary>
+    internal static bool IsSurvivalVetoed(uint actorObjId, BotObservedContext observed)
+    {
+        if (CombatBrainEngagement.IsSurvivalVetoed(actorObjId))
+            return true;
+        if (observed.MaxHp <= 0)
+            return false; // unreadable vitals never fabricate a veto
+        if (observed.Hp <= 0)
+            return true;
+        var hpRatio = (float)observed.Hp / observed.MaxHp;
+        if (hpRatio > CombatBrain.FleeHpThreshold)
+            return false;
+        return observed.CurrentTargetObjId != 0
+            || CombatBrainEngagement.TryGet(actorObjId, out var engagement) && engagement.IncumbentObjId != 0;
+    }
     /// <summary>
     /// G7b corpse recognition (observe-only): the pinned prey corpse per actor.
     /// Populated ONLY from the pinned-target dead transition (the target-dead
@@ -940,6 +978,18 @@ public static class QuestBehavior
                     return null;
                 }
             }
+            // CombatBrain-engaged yield fact (mirrors hold-confirm): while the
+            // combat brain holds a live commitment for this actor, the stop leg
+            // is not the wake's work — the combat arm owns it. Unlike
+            // hold-confirm this needs no pose history: it is a single published
+            // fact the brain writes when it commits and clears when it ends, so
+            // it also covers the first settled wake after a commitment began
+            // without a prior pursuit Stop.
+            if (CombatBrainEngagement.ShouldYieldPursuit(actor.ActorId))
+            {
+                diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=combat-brain-engaged";
+                return null;
+            }
             diag = $"validate=ok:rangeM={M(dist)}:dispatch=stop:reason=in-range";
             return new BotDecisionProposal(
                 goal: PursuitGoal,
@@ -957,7 +1007,13 @@ public static class QuestBehavior
                 hardPreconditions:
                 [
                     new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                        observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+                        observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                    // Survival-veto precondition (the CombatBrain fact): while a
+                    // survival condition owns the actor's wake, the pursuit leg
+                    // does not dispatch — the retreat/recovery leg owns it. The
+                    // observed value is authoritative; the static read is the
+                    // per-actor fallback the selector's context cannot carry.
+                    SurvivalVetoClear(actor)
                 ]);
         }
         var liveMove = actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move };
@@ -1081,27 +1137,84 @@ public static class QuestBehavior
             diag = $"validate=out-of-range:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(dist)}:verb=none:hpBefore={npc.Hp}";
             return null;
         }
-        hpBefore = npc.Hp;
-        diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(dist)}:verb=AutoAttack:hpBefore={npc.Hp}";
+
+        // ---------------------------------------------------------- COMBAT BRAIN
+        // The brain owns WHAT the combat leg asks for this wake: the same
+        // commitment the frozen G6 rule establishes (the funnel's selection, never
+        // a second competition), now run through the decision chain — survival
+        // veto, disengage, crowd-control hold, heal threshold, band management,
+        // and the skill/sustain choice. The brain is pure; the live reads and the
+        // engagement publication are the planner's. `allowSkillCasts` is false
+        // while the engine's skill surface is not loaded (unit rigs), so no
+        // fabricated Cast is ever proposed.
+        var combatBrain = CombatBrainPlanner.Prepare(
+            actor, null, selected,
+            // The rotation arm is a SEPARATE gate (see
+            // QuestOptions.EnableCombatRotation): the frozen G6 lane dispatches
+            // the engine's auto-attack loop, and flipping the quest path onto
+            // skill casts is a behavior change with its own fixture, not a
+            // side effect of building the brain.
+            allowSkillCasts: opts.EnableCombatRotation && Core.Managers.SkillManager.Instance != null,
+            nowUtc: DateTime.UtcNow);
+        var brainDecision = CombatBrainPlanner.Decide(combatBrain);
+
+        if (brainDecision.Arm is CombatArm.SurvivalVeto or CombatArm.Disengage or CombatArm.CrowdControl)
+        {
+            diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
+                   $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}";
+            return null; // a survival/CC/retreat condition owns the wake
+        }
+
+        var brainVerb = brainDecision.Verb;
+        var action = brainVerb switch
+        {
+            CombatVerb.Cast => ActorActionType.Cast,
+            CombatVerb.UseItem => ActorActionType.UseItem,
+            CombatVerb.Move => ActorActionType.Move,
+            _ => ActorActionType.AutoAttack
+        };
+        if (brainVerb == CombatVerb.Hold)
+        {
+            diag = $"validate=already-live:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
+                   $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}";
+            return null;
+        }
+        var verbText = brainVerb == CombatVerb.Cast
+            ? $"Cast({brainDecision.SkillId})"
+            : brainVerb == CombatVerb.UseItem
+                ? $"UseItem({brainDecision.ItemTemplateId})"
+                : brainVerb == CombatVerb.Move ? "Move" : "AutoAttack";
+        if (brainVerb == CombatVerb.AutoAttack)
+            hpBefore = npc.Hp;
+        diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
+               $":distM={M(dist)}:verb={verbText}:hpBefore={npc.Hp}:brain={brainDecision.Describe()}";
         return new BotDecisionProposal(
             goal: CombatGoal,
-            action: ActorActionType.AutoAttack,
+            action: action,
             targetId: selected,
             expectedPostcondition: new BotProposalPostcondition(
-                $"auto-attack loop live on quest {fixture.QuestId} target {selected}",
+                $"combat {verbText} on quest {fixture.QuestId} target {selected}",
                 _ => true),
             idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:combat:{fixture.QuestId}:{selected}",
             timeout: TimeSpan.FromSeconds(30),
-            rationale: $"quest {fixture.QuestId} combat: live {fixture.PreyTemplate} {selected} at {M(dist)}m (inside {PursuitStopRadiusM:F1}m stop radius), hp {npc.Hp} — AutoAttack",
+            rationale: $"quest {fixture.QuestId} combat: live {fixture.PreyTemplate} {selected} at {M(dist)}m, hp {npc.Hp} — {verbText} ({brainDecision.Describe()})",
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectiveCombatPriority,
             tieBreakKey: $"combat:{fixture.QuestId}:{selected:D10}",
+            destination: brainDecision.Destination,
+            skillId: brainDecision.SkillId,
+            payload: new CombatDispatchParams(brainDecision),
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
                     observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
                 new BotProposalPrecondition("target-assigned",
-                    observed => observed.CurrentTargetObjId == selected)
+                    observed => observed.CurrentTargetObjId == selected),
+                // The combat arm yields the wake while a survival condition owns
+                // it (the same CombatBrain fact the pursuit leg reads), so the
+                // retreat/recovery leg is never fighting the auto-attack for the
+                // wake on a critical wake.
+                SurvivalVetoClear(actor)
             ]);
     }
 
@@ -1433,12 +1546,17 @@ public static class QuestBehavior
             ActorActionType.Move when proposal.Goal == ReturnGoal => DispatchReturnMove(gameplayActor, proposal),
             ActorActionType.Stop when proposal.Goal == ReturnGoal => DispatchReturnStop(gameplayActor, proposal),
             ActorActionType.InteractNpc when proposal.Goal == ReturnGoal => gameplayActor.InteractNpc(proposal.TargetId, proposal.IdempotencyKey),
-            // G6 combat: the quest-owned first combat action rides the live
-            // actor's AutoAttack verb only (no queue kind exists for it by
-            // design — dispatched like the roam hunt leg does). Goal-guarded
-            // so no other AutoAttack proposal can ever route here. No Cast,
-            // no rotation, no Loot, no credit — those are G7.
-            ActorActionType.AutoAttack when proposal.Goal == CombatGoal => gameplayActor.AutoAttack(proposal.TargetId, proposal.IdempotencyKey),
+            // G6 combat: the quest-owned combat action rides the live actor's
+            // AutoAttack verb (no queue kind exists for it by design — dispatched
+            // like the roam hunt leg does), and the CombatBrain increment adds the
+            // brain's OWN verbs alongside it: the heal consumable (UseItem, self
+            // targeted), a skill cast (Cast on the committed objId), and the
+            // spacing/retreat move (Move, destination staged by the brain).
+            // Goal-guarded so no other proposal can route here.
+            ActorActionType.AutoAttack when proposal.Goal == CombatGoal => DispatchCombatAutoAttack(gameplayActor, proposal),
+            ActorActionType.Cast when proposal.Goal == CombatGoal => DispatchCombatCast(gameplayActor, proposal),
+            ActorActionType.UseItem when proposal.Goal == CombatGoal => DispatchCombatHeal(gameplayActor, proposal),
+            ActorActionType.Move when proposal.Goal == CombatGoal => DispatchCombatMove(gameplayActor, proposal),
             // G7c loot: the quest-owned corpse take rides the live actor's
             // Loot verb only (the exact CSLootOpenBagPacket lootAll call).
             // Goal-guarded so no other Loot proposal can ever route here.
@@ -1553,6 +1671,91 @@ public static class QuestBehavior
         }
         return request;
     }
+    /// <summary>
+    /// G6/CombatBrain spacing dispatch: the brain's own Move verb (close in,
+    /// back off, retreat). This arm composes the ordered public-verb teardown
+    /// itself — a live auto-attack loop stops FIRST (it would keep re-aggroing
+    /// the mob the bot is walking away from, and would keep firing through a
+    /// spacing move), then a live Move leg is preempted so this leg never
+    /// busy-rejects against our own movement — and then issues the destination
+    /// leg, tagged so the telemetry names WHICH spacing leg owns the movement.
+    /// Never touches _move state or queue kinds — public actor verbs only.
+    /// </summary>
+    private static ActorRequest DispatchCombatMove(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        // Ordered teardown, the same public-verb shape the pursuit dispatch uses:
+        // a live auto-attack loop would keep re-aggroing the mob we are walking
+        // away from (and would keep firing through a spacing move), so it stops
+        // FIRST; then a live Move leg is preempted so this leg never
+        // busy-rejects against our own movement.
+        if (gameplayActor.Character?.IsAutoAttack == true)
+            gameplayActor.StopAutoAttack($"{proposal.IdempotencyKey}:stop-attack");
+        if (gameplayActor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+            gameplayActor.PreemptCurrent("combat spacing retrack");
+        if (gameplayActor is GameplayActor concrete)
+            concrete.SetPendingMoveOwner("COMBAT_MOVE_TO");
+        var destination = proposal.Destination
+            ?? gameplayActor.Character?.Transform.World.Position
+            ?? Vector3.Zero;
+        var request = gameplayActor.MoveTo(destination, PursuitSpeedMps, PursuitLegTimeout, proposal.IdempotencyKey);
+        PublishCombatEngagement(gameplayActor, proposal);
+        return request;
+    }
+
+    /// <summary>
+    /// G6/CombatBrain AutoAttack dispatch: start (or re-affirm) the engine's
+    /// continuous attack loop on the committed target, then publish the
+    /// engagement so the wake's facts (engaged / yield) reflect a verb that
+    /// actually landed.
+    /// </summary>
+    private static ActorRequest DispatchCombatAutoAttack(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        var request = gameplayActor.AutoAttack(proposal.TargetId, proposal.IdempotencyKey);
+        PublishCombatEngagement(gameplayActor, proposal);
+        return request;
+    }
+
+    /// <summary>
+    /// G6/CombatBrain heal dispatch: the self-targeted consumable use named by the
+    /// brain's own decision (the item template travels on the payload).
+    /// </summary>
+    private static ActorRequest DispatchCombatHeal(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        var itemTemplateId = proposal.Payload is CombatDispatchParams p ? p.Decision.ItemTemplateId : 0u;
+        var request = gameplayActor.UseItem(itemTemplateId, gameplayActor.ActorId, proposal.IdempotencyKey);
+        PublishCombatEngagement(gameplayActor, proposal);
+        return request;
+    }
+
+    /// <summary>
+    /// Publishes the dispatched decision's engagement transition — the ONLY place
+    /// the combat facts (engaged / disengaging / survival veto) are written, so a
+    /// wake where the combat proposal lost selection never publishes an
+    /// engagement it did not act on.
+    /// </summary>
+    private static void PublishCombatEngagement(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        if (proposal.Payload is not CombatDispatchParams parameters)
+            return;
+        CombatBrainPlanner.PublishDispatched(gameplayActor, parameters.Decision, DateTime.UtcNow);
+    }
+    /// <summary>
+    /// G6/CombatBrain cast dispatch: one audited cast through the engine's own
+    /// skill path. A LANDED cast records the skill on the engagement so the next
+    /// wake's rotation continues the combo chain (the engine's own
+    /// <c>lastSkillUsed</c> discipline, carried per engagement). A refused cast
+    /// records nothing, so the chain never continues from a skill that never
+    /// fired.
+    /// </summary>
+    private static ActorRequest DispatchCombatCast(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        var request = gameplayActor.Cast(proposal.SkillId, proposal.TargetId, proposal.IdempotencyKey);
+        PublishCombatEngagement(gameplayActor, proposal);
+        if (request.State == ActorLifecycleState.Completed)
+            CombatBrainPlanner.PublishSkillUsed(gameplayActor.ActorId, proposal.SkillId, DateTime.UtcNow);
+        return request;
+    }
+
     /// <summary>
     /// G7c loot dispatch: the quest-owned corpse take through the live actor's
     /// canonical <c>Loot</c> verb (the exact CSLootOpenBagPacket lootAll call)

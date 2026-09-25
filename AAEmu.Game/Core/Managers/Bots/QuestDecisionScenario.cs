@@ -69,6 +69,20 @@ public static class QuestDecisionScenario
         /// pursuit Stop leg yields via hold-confirm withdrawal once settled,
         /// which is when this proposal can win a wake.</summary>
         public int ObjectiveCombatPriority { get; init; } = 23;
+        /// <summary>
+        /// CombatBrain rotation policy (default OFF = the FROZEN G6 contract).
+        ///
+        /// The G6 freeze record is explicit: the quest combat leg dispatches
+        /// <c>AutoAttack</c> only and "any widening (rotation, kill, loot, credit,
+        /// turn-in) is a new gate with its own fixture, not a G6 follow-on". The
+        /// CombatBrain increment builds the rotation/heal/spacing arms and proves
+        /// them on the pure decision surface, but it does not flip the quest lane:
+        /// with this false the leg keeps dispatching the engine's auto-attack loop
+        /// exactly as G6 froze it, and the brain's other arms still run (they are
+        /// inert on a healthy in-band melee bot with no consumable). A future gate
+        /// turns rotation on with its own lane evidence.
+        /// </summary>
+        public bool EnableCombatRotation { get; init; } = false;
         /// <summary>G7c loot priority: just below the G6 combat leg (23) so a
         /// live combat decision always wins while the target is alive, above
         /// advance (20) so a lootable corpse is taken before step-machine
