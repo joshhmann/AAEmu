@@ -72,6 +72,28 @@ class TestTraceParser(unittest.TestCase):
         self.assertEqual(infer_scenario_from_path("simple_scenario.jsonl"), "simple_scenario")
 
 
+class TestPacketInventory(unittest.TestCase):
+    def test_direct_packet_inheritance_without_packet_suffix(self):
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as root:
+            folder = Path(root) / "AAEmu.Game/Core/Packets/C2G"
+            folder.mkdir(parents=True)
+            (folder / "CSOffsets.cs").write_text(
+                "public static class CSOffsets { public const ushort CSExecuteCraft = 0x123; }")
+            (folder / "CSExecuteCraft.cs").write_text(
+                "public class CSExecuteCraft() : GamePacket(CSOffsets.CSExecuteCraft, 1) {}")
+            (folder / "CSPlainAction.cs").write_text(
+                "public class CSPlainAction : GamePacket { }")
+            (folder / "CSHelper.cs").write_text(
+                "public class CSHelper { public void Build() { var x = new GamePacket(); } }")
+            inventory = PacketInventory(root)
+            self.assertIsNotNone(inventory.get("CSExecuteCraft"))
+            self.assertEqual("0x123", inventory.get("CSExecuteCraft").opcode)
+            self.assertEqual("C2S", inventory.get("CSExecuteCraft").direction)
+            self.assertIsNotNone(inventory.get("CSPlainAction"))
+            self.assertIsNone(inventory.get("CSHelper"))
+
+
 class MockInventory(PacketInventory):
     """Mock inventory with predefined packet metadata for unit testing."""
     def __init__(self):

@@ -178,9 +178,8 @@
     "status": "Pending",
     "description": "Approach an artisan workbench (e.g. carpentry or weaving), select a single recipe, and craft it using materials and labor.",
     "target_packets": [
-      "CSCraftPacket",
-      "SCCraftStartedPacket",
-      "SCCraftEndedPacket"
+      "CSExecuteCraft",
+      "SCItemTaskSuccessPacket"
     ],
     "instructions": [
       "Ensure character has required raw materials and labor points.",
@@ -225,7 +224,7 @@
         "required": true
       }
     ],
-    "notes": ""
+    "notes": "Discovery triage 2026-09-23: WHAT: one workbench craft. KNOWN: CSExecuteCraft is registered and calls Character.Craft.Craft; the static packet inventory currently omits its non-Packet-suffixed class name. NEXT: fix that inventory blind spot and ground the completion/resource assertions in the crafting path before requesting a capture. DONE WHEN: the specification names the real request and verifies product/material/labor consequences. No new human capture requested yet.\nUpdate: scanner now recognizes CSExecuteCraft (0x0F8). Request plus item-task response are capture assertions only. NEXT: select the actual recipe and verify material/product/labor deltas; do not infer successful crafting from an unrelated inventory update."
   },
   {
     "id": "use_bag_consumable",
@@ -284,18 +283,20 @@
     "priority": "Medium",
     "scenario": "trade_direct_player",
     "status": "Pending",
-    "description": "Initiate bilateral player trade, place an item or gold in the trade window, lock trade, and complete trade.",
+    "description": "Initiate bilateral player trade from the traced character, offer one item, lock and confirm, then verify the same item reaches the recipient.",
     "target_packets": [
-      "CSAskTradePacket",
+      "CSCanStartTradePacket",
       "CSPutupTradeItemPacket",
-      "CSTradeLockPacket"
+      "CSTradeLockPacket",
+      "CSTradeOkPacket",
+      "SCTradeMadePacket"
     ],
     "instructions": [
       "Stand facing another player character.",
       "Start trace: `/trace start trade_direct_player`",
       "Target player, right-click frame and select Trade.",
       "Wait for other player to accept trade invitation.",
-      "Drag an item or enter 1 silver into the trade window.",
+      "Drag one item into the trade window; this capture covers the item-transfer variant.",
       "Click 'Lock Trade'.",
       "When both players lock, click 'Trade / Accept'.",
       "Verify trade window closes and item transfers.",
@@ -333,7 +334,7 @@
         "required": true
       }
     ],
-    "notes": ""
+    "notes": "Discovery triage 2026-09-23: WHAT: bilateral item trade. KNOWN: CSStartTradePacket calls TradeManager.StartTrade; current CSAskTradePacket assertion is unresolved. NEXT: map request/accept/putup/lock/confirm across both participants; make the item-versus-money choice explicit. DONE WHEN: each required signal belongs to the named participant and transfer conservation is specified. No new human capture requested yet.\nUpdate: initiator-side request is CSCanStartTradePacket; recipient acceptance uses CSStartTradePacket. Initiator trace requires its own offer/lock/confirm and SCTradeMadePacket. NEXT: link a bot trade requirement before capturing; record both characters’ before/after item counts. Gold-only trading remains a separate variant."
   },
   {
     "id": "equipment_repair",
@@ -344,15 +345,14 @@
     "status": "Pending",
     "description": "Approach a blacksmith or weapon merchant NPC, open the repair interface, and repair a damaged piece of gear.",
     "target_packets": [
-      "CSRepairItemPacket",
-      "SCRepairItemResultPacket"
+      "CSRepairSingleEquipmentPacket"
     ],
     "instructions": [
       "Ensure at least one equipped item has slight durability loss.",
       "Approach a Blacksmith NPC.",
       "Start trace: `/trace start equipment_repair`",
       "Talk to Blacksmith and select the Repair option (anvil icon).",
-      "Click 'Repair All' or click the specific item.",
+      "Click the specific damaged equipped item to repair it (not Repair All).",
       "Confirm money deduction.",
       "Stop trace: `/trace stop`"
     ],
@@ -382,7 +382,7 @@
         "required": true
       }
     ],
-    "notes": ""
+    "notes": "Discovery triage 2026-09-23: WHAT: repair one damaged equipped item. KNOWN: CSRepairSingleEquipmentPacket calls Character.DoRepair. NEXT: capture only if the bot repair work needs a client sequence not already evidenced. DONE WHEN: the request is captured and before/after durability plus money are recorded. Packet presence alone does not prove repair; Repair All is a separate variant."
   },
   {
     "id": "warehouse_banking",
@@ -393,8 +393,8 @@
     "status": "Complete",
     "description": "Open personal bank storage at a Warehouse Manager NPC, deposit an item, and withdraw it back.",
     "target_packets": [
-      "CSBankDepositPacket",
-      "CSBankWithdrawPacket"
+      "CSSwapItemsPacket",
+      "SCItemTaskSuccessPacket"
     ],
     "instructions": [
       "Locate a Warehouse Manager NPC in a town.",
@@ -437,7 +437,7 @@
         "required": true
       }
     ],
-    "notes": ""
+    "notes": "Discovery triage 2026-09-23: WHAT: bag-to-bank-to-bag item conservation. KNOWN: catalog says Complete; no matching local capture, and CSBankDepositPacket/CSBankWithdrawPacket are unresolved. CSSwapItemsPacket passes slot types and item IDs to SplitOrMoveItem. NEXT: locate the original banking evidence, then verify Bank slot semantics and both transfer directions before replacing assertions. DONE WHEN: the existing receipt is linked or a specific missing leg is named. Do not recapture solely because the local file is absent.\nUpdate: transfer packet names corrected; SlotType.Inventory=2 and Bank=3. Capture assertions do not establish both directions or conservation. NEXT remains locating the Complete receipt, then verifying the same item moves 2→3→2 without duplication/loss.\nEvidence located: /root/aaemu-e2e/logs/m8-economy-cycle-report.json and m8-economy-cycle-reconcile.md report bank money 120 retained across restart. The stages contain DepositMoney but no DepositItem/WithdrawItem: this does NOT close the task’s item round-trip. Producer SHA is absent from the inspected report. NEXT: locate item-specific evidence; do not substitute money conservation.\nObservation review 2026-09-23: Observation map: ActorObservation has BagItemCounts and BankItemCounts plus Money/BankMoney. These are template-count snapshots, not item-instance fidelity. Existing saved snapshots can check count conservation; instance/durability requirements need richer state. Queued Observe is not a passive sampler during world-owned actions."
   },
   {
     "id": "mail_send_receive",
@@ -448,18 +448,19 @@
     "status": "Pending",
     "description": "Interact with a world mailbox doodad, compose an in-game mail to an alt or friend, and collect returned mail.",
     "target_packets": [
-      "CSMailSendPacket",
-      "CSMailReadPacket",
-      "SCGotMailPacket"
+      "CSSendMailPacket",
+      "CSReadMailPacket",
+      "CSTakeAttachmentSequentially",
+      "SCAttachmentTakenPacket"
     ],
     "instructions": [
-      "Find a world Mailbox doodad (owl post).",
-      "Start trace: `/trace start mail_send_receive`",
-      "Interact with mailbox (`F` key).",
-      "Click Compose Mail, type recipient name and message body.",
-      "Attach 1 silver coin and click Send.",
-      "Close mailbox window.",
-      "Stop trace: `/trace stop`"
+      "Use two named characters. Record both balances; identify the 1-silver attachment and expected sending fee.",
+      "Sender: approach a mailbox and start /trace start mail_send_receive_sender.",
+      "Compose mail to the named receiver, attach 1 silver, and send. Record the mail identity and sender balance after sending.",
+      "Sender: stop /trace stop. Wait for ordinary delivery; do not shorten server mail delay for this capture.",
+      "Receiver: start /trace start mail_send_receive_receiver before opening the delivered mail.",
+      "Read that same mail and collect its attachment; record receiver balance before and after collection.",
+      "Receiver: stop /trace stop. Link both files and the mail identity; reconcile attachment amount and sender fee separately."
     ],
     "checklist": [
       {
@@ -487,7 +488,8 @@
         "required": true
       }
     ],
-    "notes": ""
+    "notes": "Discovery triage 2026-09-23: WHAT: mail send plus receipt/collection. KNOWN: actual handlers are CSSendMailPacket and CSReadMailPacket; current steps stop after sending, so they cannot prove receiving. NEXT: define sender and receiver capture windows and attachment collection postconditions; reuse the recorded Mail S3 restart evidence within its scope. DONE WHEN: every claimed leg has an actor, signal and consequence. No new human capture requested yet.\nCurrent scope: multi_actor review. Sender and receiver captures remain separate and require mail-identity correlation; do not pool packet presence into a pass. Existing Mail S3 source/dossier already documents send→restart→read/take/delete at commit 31045d033 (historical, not rerun). NEXT: locate the original run artifact and decide which client-specific question remains; no generic mail recapture is requested.",
+    "evaluation_kind": "multi_actor"
   },
   {
     "id": "two_potatoes_full_cycle",
@@ -604,7 +606,7 @@
       "Stop fully, place the potato seed. Execute `/mark planted` in chat.",
       "Remain within sight of the crop without interacting (AFK-watch, keep client active).",
       "When the crop reaches mature phase, execute `/mark mature` in chat.",
-      "Stop trace: `/trace stop` (do NOT harvest \u2014 harvest belongs to two_potatoes_full_cycle)."
+      "Stop trace: `/trace stop` (do NOT harvest — harvest belongs to two_potatoes_full_cycle)."
     ],
     "checklist": [
       {
@@ -849,7 +851,7 @@
         "required": true
       }
     ],
-    "notes": "U3 work item, NOT a correctness gate. Expected to FAIL evaluation until observer-stream capture lands \u2014 that failure is the apparatus signal."
+    "notes": "U3 work item, NOT a correctness gate. Expected to FAIL evaluation until observer-stream capture lands — that failure is the apparatus signal."
   },
   {
     "id": "plant_single_potato",
@@ -1050,7 +1052,7 @@
         "required": true
       }
     ],
-    "notes": "If gather turns out F-key (non-skill) driven, this task FAILs packet assertion by design \u2014 that failure IS the finding; report node type in notes."
+    "notes": "If gather turns out F-key (non-skill) driven, this task FAILs packet assertion by design — that failure IS the finding; report node type in notes."
   },
   {
     "id": "loot_mob_corpse",
@@ -1146,7 +1148,7 @@
         "required": true
       }
     ],
-    "notes": "No distance gate in CSStartInteractionPacket (TODO in handler) \u2014 do NOT invent talk-range discipline from this trace."
+    "notes": "No distance gate in CSStartInteractionPacket (TODO in handler) — do NOT invent talk-range discipline from this trace.\n\nDiscovery triage 2026-09-23: WHAT: open NPC interaction dialogue. NEXT: inspect existing talk_npc capture first; confirm interaction target and dialogue response. DONE WHEN: that bounded client interaction is referenced. It does not prove quest talk credit or bot decision-making.\nReuse review 2026-09-23: Reviewed talk_npc__Dingus__20260914_072715.jsonl: SCNpcInteractionSkillListPacket is present, but its payload is not recorded. Reuse this as dialogue wire-sequence reference. NEXT: correlate target NPC and actor InteractNpc outcome only if needed by the blocked bot capability; this is not quest-credit proof."
   },
   {
     "id": "livestock_place_harvest",
@@ -1338,7 +1340,7 @@
         "required": true
       }
     ],
-    "notes": "Prior traces show no spawn/despawn world events \u2014 capture confirms whether that gap persists."
+    "notes": "Prior traces show no spawn/despawn world events — capture confirms whether that gap persists."
   },
   {
     "id": "combat_food_potion_recovery",
@@ -1349,7 +1351,6 @@
     "status": "Pending",
     "description": "Engage hostile mobs until Health or Mana falls below 50%, disengage/defeat enemy, and consume food (bread/soup) or potion items to recover resources while out of combat.",
     "target_packets": [
-      "CSUseItemPacket",
       "CSStartSkillPacket",
       "SCItemTaskSuccessPacket",
       "SCUnitPointsPacket",
@@ -1390,7 +1391,7 @@
         "required": true
       }
     ],
-    "notes": "Ground truth trace for PlayerBot sustain loop. Empirically verifies item-to-skill spell triggering and out-of-combat regeneration curve."
+    "notes": "Ground truth trace for PlayerBot sustain loop. Empirically verifies item-to-skill spell triggering and out-of-combat regeneration curve.\n\nDiscovery triage 2026-09-23: WHAT: item-driven out-of-combat resource recovery. KNOWN: use_bag_consumable capture contains CSStartSkillPacket, item success and resource-point updates. NEXT: inspect item identity and HP/MP deltas in that existing capture; request only the missing recovery condition if it is absent. DONE WHEN: the evidence distinguishes consumed item effect from passive regeneration. Shared packet presence is only a reuse lead.\nReuse review 2026-09-23: Reviewed use_bag_consumable__Dingus__20260914_194518.jsonl: item-caster skill request exists (SkillId 25202), but SCUnitPointsPacket contains only Packet/Opcode, no HP/MP values. Reuse for wire sequence only. NEXT: correlate item identity and authoritative before/after HP/MP, combat state and item count; do not repeat the same packet-only recording to prove recovery.\nObservation review 2026-09-23: Observation map: ActorObservation already has Hp/MaxHp/Mp/MaxMp and BagItemCounts. Pair existing saved snapshots with item/action identity; combat-state and passive-regen attribution remain separate. CAUTION: external queued Observe can preempt world-owned active requests; do not poll it during an autonomous recovery gate."
   },
   {
     "id": "combat_knockback_ranged_fallback",
@@ -1447,7 +1448,7 @@
         "required": true
       }
     ],
-    "notes": "Captures distance separation handling and transition from melee to ranged projectile fire when airborne or displaced."
+    "notes": "Captures distance separation handling and transition from melee to ranged projectile fire when airborne or displaced.\n\nDiscovery triage 2026-09-23: WHAT: recover from knockback by selecting a legal ranged action. NEXT: inspect candidate combat windows for actual displacement and subsequent range-dependent action; generic combat packet overlap is insufficient. DONE WHEN: knockback and recovery are observed, or one missing-condition capture is specified.\nReuse review 2026-09-23: Reviewed combat_basic_ranged__Dingus__20260914_194001.jsonl: damage and points packets lack payload values; packet overlap does not identify forced displacement or a range-driven choice. NEXT: name displacement cause, before/after position and selected-action/range observations before any capture request."
   },
   {
     "id": "travel_mount_and_ride",
@@ -1462,7 +1463,7 @@
       "SCSkillFiredPacket",
       "CSMountMatePacket",
       "CSMoveUnitPacket",
-      "CSLeaveUnitPacket"
+      "CSUnMountMatePacket"
     ],
     "instructions": [
       "Identify a destination or quest hub 100m+ away along a road.",
@@ -1505,7 +1506,7 @@
         "required": true
       }
     ],
-    "notes": "Establishes canonical mounted travel sequence, velocity changes, and mount dismount protocol for bot travel routines."
+    "notes": "Establishes canonical mounted travel sequence, velocity changes, and mount dismount protocol for bot travel routines.\n\nDiscovery triage 2026-09-23: WHAT: summon, board, ride, dismount. KNOWN: CSUnMountMatePacket invokes MateManager.UnMountMate; separate mount/dismount captures already exist. NEXT: inspect those captures for reusable legs, then name the missing mounted travel segment and endpoint proof. DONE WHEN: the selected route has real movement and observed dismount; standalone captures do not prove the whole loop.\nReuse review 2026-09-23: Reviewed mount_horse__Dingus__20260914_072606.jsonl and dismount_horse__Dingus__20260914_072629.jsonl: separate board/dismount reference captures exist. They cannot be joined into proof of one 100m ride. NEXT: obtain correlated mounted state and route endpoints from existing bot observations before requesting a missing travel segment.\nObservation review 2026-09-23: Observation map: current dirty source now includes ActorObservation.IsMounted (concurrent work, not this change), plus Position. Availability in deployed builds is unverified. Do not add duplicate mounted-state instrumentation. External queued Observe can preempt a world-owned movement request; use existing saved snapshots or resolve passive sampling first."
   },
   {
     "id": "quest_multi_objective_progression",
@@ -1564,7 +1565,7 @@
         "required": true
       }
     ],
-    "notes": "Expands quest automation beyond single-step tasks into multi-objective state progression."
+    "notes": "Expands quest automation beyond single-step tasks into multi-objective state progression.\n\nDiscovery triage 2026-09-23: WHAT: progress multiple distinct quest objectives. NEXT: inspect objective identity/counter changes in quest_accept_and_turnin before requesting another quest trace. DONE WHEN: multiple objective families are evidenced, or the precise missing variant is named. One quest completion packet does not establish multi-objective coverage.\nReuse review 2026-09-23: Reviewed quest_accept_and_turnin__Dingus__20260914_194206.jsonl: SCQuestContextUpdatedPacket records only Packet/Opcode, not quest/objective counters. Reuse the accept/update/turn-in sequence. NEXT: correlate quest identity and objective counters from bot/server observation; packet counts cannot distinguish objective families.\nObservation review 2026-09-23: Observation map: ActorObservation exposes ActiveQuestIds only; E2E-only drive questState exposes step/status/objectives. Reuse existing saved quest observations with quest/actor/wake identity. Do not substitute the drive event-injection commands for gameplay; queued Observe may preempt active world-owned requests."
   },
   {
     "id": "bot_party_combat_assist",
@@ -1616,7 +1617,7 @@
         "required": true
       }
     ],
-    "notes": "Captures party combat assist flow and cross-character target acquisition for cooperative PlayerBot groups."
+    "notes": "Captures party combat assist flow and cross-character target acquisition for cooperative PlayerBot groups.\n\nDiscovery triage 2026-09-23: WHAT: a bot chooses to assist its party through ordinary combat. NEXT: locate bot decision/action/postcondition evidence for party assistance; existing human combat captures can only supply client-sequence reference. DONE WHEN: party context and bot choice are observed. A human combat capture cannot close bot autonomy.\nReuse review 2026-09-23: Reviewed the combat candidates: human targeting/skill/damage packets are reference only; they do not identify a bot decision to assist a party member. NEXT: inspect the existing party-assist bot evidence in playerbot-capability-matrix.md and isolate the missing decision/context leg. Do not use another human combat recording to close it.\nObservation review 2026-09-23: Observation map: ActorObservation exposes InParty, PartyOwnerId, PartyLeaderObjId, PartyLeaderTargetObjId and CurrentTargetObjId. Correlate existing decision/audit records with these snapshots. They provide context, not proof of causal assist choice. Avoid queued Observe during autonomous actions because it can preempt them."
   },
   {
     "id": "bot_reboot_persistence_validation",
@@ -1669,6 +1670,7 @@
         "required": true
       }
     ],
-    "notes": "Verified by unit tests and PB-006 closure. Fixes roll/yaw SQL swap, equipment save directly to DB, and coordinate zero-wipe."
+    "notes": "Verified by unit tests and PB-006 closure. Fixes roll/yaw SQL swap, equipment save directly to DB, and coordinate zero-wipe.\n\nDiscovery triage 2026-09-23: WHAT: bot position/equipment retention across restart. KNOWN: catalog Complete is attributed to unit tests/PB-006, not a local human trace. NEXT: locate the original persistence receipt and classify its tested layer; reconcile with current bot requirements. DONE WHEN: before/after state, restart boundary and source revision are linked. Movement packet presence cannot prove persistence; do not request a movement capture to close this task.\nRouting: state_comparison; excluded from new human capture recommendations. Legacy packet assertions retained as history, not a persistence acceptance test.\nEvidence located: scorecard-explorations/playerbot-blockers.md section “PlayerBot Reboot Persistence & Restoration Gap” records 10 DormantBotRegistry + 32 BotAdminService tests and a historical gate. That section does not provide a raw process-restart state receipt. PB-006 is also reused for ship physics elsewhere. NEXT: reference the section title, and locate position/equipment before/after restart evidence; unit counts alone cannot establish the live claim.",
+    "evaluation_kind": "state_comparison"
   }
 ]

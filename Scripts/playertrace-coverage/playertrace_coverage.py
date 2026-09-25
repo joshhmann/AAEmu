@@ -30,6 +30,7 @@ from coverage_engine import (
     PacketCoverageItem,
     ScenarioSimilarityItem,
 )
+from task_triage import fingerprint, triage_tasks
 from packet_inventory import PacketInventory
 from trace_parser import discover_trace_files, stream_trace_file
 
@@ -326,6 +327,7 @@ def main() -> int:
         help="Skip JSON summary generation"
     )
 
+    parser.add_argument("--tasks-file", help="Task catalog (default: <repo-root>/playertrace-coverage/dashboard_tasks.json)")
     args = parser.parse_args()
 
     repo_root = os.path.abspath(args.repo_root)
@@ -378,6 +380,10 @@ def main() -> int:
     cooccurrences = engine.compute_cooccurrence()
     similarities = engine.compute_scenario_similarity()
     families = engine.compute_candidate_families()
+    tasks_path = args.tasks_file or os.path.join(repo_root, "playertrace-coverage", "dashboard_tasks.json")
+    with open(tasks_path, encoding="utf-8") as stream:
+        tasks = json.load(stream)
+    engine.task_findings = triage_tasks(tasks, trace_files, inventory, scenario_filters)
     gaps = engine.compute_coverage_gaps()
     recommendations = engine.compute_recommendations()
 
@@ -441,6 +447,12 @@ def main() -> int:
 
     # Git metadata
     git_branch, git_sha = get_git_info(repo_root)
+    try:
+        dirty_status = subprocess.check_output(
+            ["git", "status", "--porcelain"], cwd=repo_root, text=True, stderr=subprocess.DEVNULL
+        ).splitlines()
+    except (OSError, subprocess.CalledProcessError):
+        dirty_status = None
 
     # JSON: summary.json
     if not args.no_json:
@@ -449,7 +461,8 @@ def main() -> int:
             "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
             "git": {
                 "branch": git_branch,
-                "commit": git_sha
+                "commit": git_sha,
+                "dirty_status": dirty_status
             },
             "corpus_summary": asdict(summary),
             "packet_coverage": {
@@ -464,7 +477,15 @@ def main() -> int:
             "candidate_families": [asdict(f) for f in families],
             "similarities": [asdict(s) for s in similarities],
             "gaps": [asdict(g) for g in gaps],
-            "recommendations": [asdict(r) for r in recommendations]
+            "recommendations": [asdict(r) for r in recommendations],
+            "task_triage": engine.task_findings,
+            "task_catalog": {"path": tasks_path, "sha256": fingerprint(tasks_path)},
+            "triage_provenance": {
+                "scope": "selected corpus only; no gameplay or autonomy verification",
+                "scenario_filter": sorted(scenario_filters) if scenario_filters else None,
+                "tool_sha256": {name: fingerprint(os.path.join(os.path.dirname(__file__), name))
+                                for name in ("playertrace_coverage.py", "coverage_engine.py", "task_triage.py", "task_evaluator.py", "trace_parser.py", "packet_inventory.py")},
+            },
         }
         if delta:
             summary_data["baseline_delta"] = delta
@@ -489,6 +510,18 @@ def main() -> int:
             git_branch=git_branch,
             git_sha=git_sha
         )
+        md_text += "\n\n## Task capture triage\n\nCapture assertions and structural leads only; no gameplay, autonomy or H promotion.\n\n"
+        md_text += "| Task | Disposition | Existing evidence |\n| --- | --- | --- |\n"
+        for row in engine.task_findings:
+            references = [f"`{os.path.basename(c['path'])}` ({c['evaluation']['verdict']})" for c in row["captures"]]
+            references += [f"`{os.path.basename(c['path'])}` (structural candidate)" for c in row["reuse_candidates"]]
+            if row["unknown_packets"]:
+                references.append("Unresolved: " + ", ".join(row["unknown_packets"]))
+            md_text += f"| `{row['task_id']}` | {row['status']} | {'; '.join(references) or 'None in selected corpus'} |\n"
+        md_text += "\n### What each task needs next\n\n"
+        for row in engine.task_findings:
+            if row["work_brief"]:
+                md_text += f"- **{row['task_id']}**: {row['work_brief']}\n\n"
         md_path = os.path.join(out_dir, "summary.md")
         with open(md_path, "w", encoding="utf-8") as f:
             f.write(md_text)

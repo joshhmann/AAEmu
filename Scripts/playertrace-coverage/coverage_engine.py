@@ -27,6 +27,8 @@ from trace_parser import TraceRecord
 NOISE_PACKETS = {
     "PingPacket",
     "PongPacket",
+    "FastPingPacket",
+    "FastPongPacket",
     "SCTimeOfDayPacket",
 }
 
@@ -129,6 +131,7 @@ class CoverageEngine:
     """Orchestrates coverage analysis across a corpus of traces."""
 
     def __init__(self, inventory: PacketInventory, similarity_threshold: float = 0.35, min_ngram_count: int = 1):
+        self.task_findings = []
         self.inventory = inventory
         self.similarity_threshold = similarity_threshold
         self.min_ngram_count = min_ngram_count
@@ -648,115 +651,20 @@ class CoverageEngine:
         return families
 
     def compute_coverage_gaps(self) -> List[CoverageGap]:
-        gaps: List[CoverageGap] = []
-        observed_packets = set(self.packet_counts.keys())
-
-        # Gap 1: Combat lifecycle
-        combat_pkts = ["CSSetTargetPacket", "CSAttackPacket", "CSCancelSkillPacket", "SCDamagePacket", "SCSkillDamagePacket"]
-        unseen_combat = [p for p in combat_pkts if p not in observed_packets]
-        gaps.append(CoverageGap(
-            gap_type="UNTRACED ACTION FAMILY",
-            title="Basic Combat & Auto-Attack Lifecycle",
-            description="No human trace currently records hostile target selection, basic melee/ranged attack sequences, damage exchange, or combat state transitions.",
-            affected_packets=unseen_combat,
-            suggested_action="Collect trace for basic melee combat against a stationary hostile mob (e.g., target -> engage -> attack -> defeat)."
-        ))
-
-        # Gap 2: Direct Player-to-Player Trading
-        trade_pkts = ["CSTradeLockPacket", "CSPutupTradeItemPacket", "CSAskTradePacket", "SCTradeStartPacket"]
-        unseen_trade = [p for p in trade_pkts if p not in observed_packets]
-        gaps.append(CoverageGap(
-            gap_type="UNTRACED ACTION FAMILY",
-            title="Direct Player-to-Player Trading",
-            description="P2P trade window initialization, item placement, trade lock, and trade commitment have zero representation in the corpus.",
-            affected_packets=unseen_trade,
-            suggested_action="Trace bilateral trade between two player characters with item & gold exchange."
-        ))
-
-        # Gap 3: Item Crafting & Production
-        craft_pkts = ["CSCraftPacket", "SCCraftStartedPacket", "SCCraftEndedPacket"]
-        unseen_craft = [p for p in craft_pkts if p not in observed_packets]
-        gaps.append(CoverageGap(
-            gap_type="UNTRACED ACTION FAMILY",
-            title="Recipe Crafting & Production",
-            description="Workstation interaction, recipe consumption, crafting progress bar, and crafted item insertion into inventory remain untraced.",
-            affected_packets=unseen_craft,
-            suggested_action="Trace crafting a basic item at a carpentry/blacksmithing workbench."
-        ))
-
-        # Gap 4: Quest Progression & Turn-in
-        quest_pkts = ["CSQuestStartWithPacket", "CSQuestCompletePacket", "SCQuestStatusPacket"]
-        unseen_quest = [p for p in quest_pkts if p not in observed_packets]
-        gaps.append(CoverageGap(
-            gap_type="UNTRACED ACTION FAMILY",
-            title="Quest Acceptance, Objective Progression & Turn-In",
-            description="NPC dialogue quest acceptance, objective tracker updates, and quest reward handoff have not been traced.",
-            affected_packets=unseen_quest,
-            suggested_action="Trace picking up an introductory quest from an NPC, completing objective, and turning it in."
-        ))
-
-        # Gap 5: Bag Item Use & Consumables
-        item_pkts = ["CSUseBagItemPacket", "CSDeleteItemPacket", "SCItemCooldownPacket"]
-        unseen_items = [p for p in item_pkts if p not in observed_packets]
-        gaps.append(CoverageGap(
-            gap_type="PACKET KNOWN BUT CONTEXT UNKNOWN",
-            title="Consumable / Bag Item Activation",
-            description="Client inventory item consumption (potions, food, quest items) exists in server code but has no trace corroboration.",
-            affected_packets=unseen_items,
-            suggested_action="Trace using a bread or potion from the player inventory bag."
-        ))
-
-        # Gap 6: Tooling Blind Spots
-        gaps.append(CoverageGap(
-            gap_type="TRACE TOOLING LIMITATION",
-            title="Absence of Action-End Intent Markers & UI Dialog Hooks",
-            description="Traces currently log /trace mark as instantaneous events without duration boundaries. Client-side UI dialog choices are only partially visible through network request packets.",
-            affected_packets=[],
-            suggested_action="Standardize '/trace mark start:<action>' and '/trace mark end:<action>' pairs to delimit complex interaction windows."
-        ))
-
-        return gaps
+        return [CoverageGap(
+            gap_type=row["status"], title=row["title"],
+            description=f"Task {row['task_id']}: {len(row['captures'])} exact captures; "
+                        f"{len(row['reuse_candidates'])} structural reuse candidates. "
+                        "Capture evidence does not establish gameplay or bot autonomy.",
+            affected_packets=row["unknown_packets"] or row["target_packets"],
+            suggested_action=row["next_action"],
+        ) for row in self.task_findings if row["status"] != "CAPTURE_AVAILABLE"]
 
     def compute_recommendations(self) -> List[NextTraceRecommendation]:
-        return [
-            NextTraceRecommendation(
-                rank=1,
-                scenario_name="combat_basic_melee",
-                priority="HIGH",
-                rationale="Fills the entire untraced Combat action family; validates targeting, GCD, auto-attack, damage packets, and target death handling.",
-                target_packets=["CSSetTargetPacket", "CSAttackPacket", "SCDamagePacket", "SCSkillDamagePacket"],
-                expected_action_family="Hostile Unit Combat"
-            ),
-            NextTraceRecommendation(
-                rank=2,
-                scenario_name="quest_accept_and_turnin",
-                priority="HIGH",
-                rationale="Bridges NPC interaction with quest progression and inventory reward delivery; exercises dialogue choice branches.",
-                target_packets=["CSQuestStartWithPacket", "CSQuestCompletePacket", "SCQuestStatusPacket"],
-                expected_action_family="Quest Lifecycle"
-            ),
-            NextTraceRecommendation(
-                rank=3,
-                scenario_name="craft_single_item",
-                priority="HIGH",
-                rationale="Exercises workbench doodad interaction, recipe labor deduction, and output item creation, filling the untraced Crafting family.",
-                target_packets=["CSCraftPacket", "SCCraftStartedPacket", "SCCraftEndedPacket"],
-                expected_action_family="Crafting & Processing"
-            ),
-            NextTraceRecommendation(
-                rank=4,
-                scenario_name="use_bag_consumable",
-                priority="MEDIUM",
-                rationale="Tests client-initiated inventory item consumption (CSUseBagItemPacket) without workstation/NPC dependencies.",
-                target_packets=["CSUseBagItemPacket", "SCItemCooldownPacket", "SCUnitPointsPacket"],
-                expected_action_family="Inventory & Consumables"
-            ),
-            NextTraceRecommendation(
-                rank=5,
-                scenario_name="trade_direct_player",
-                priority="MEDIUM",
-                rationale="Validates two-player interaction, trade synchronization, item locking, and atomic inventory commit.",
-                target_packets=["CSAskTradePacket", "CSPutupTradeItemPacket", "CSTradeLockPacket"],
-                expected_action_family="Player-to-Player Trading"
-            )
-        ]
+        ready = [row for row in self.task_findings if row["status"] == "CAPTURE_NEEDED"]
+        ready.sort(key=lambda row: ({"HIGH": 0, "MEDIUM": 1, "LOW": 2}.get(row["priority"], 3), row["task_id"]))
+        return [NextTraceRecommendation(
+            rank=index, scenario_name=row["scenario"], priority=row["priority"],
+            rationale=row["next_action"], target_packets=row["target_packets"],
+            expected_action_family=row["category"],
+        ) for index, row in enumerate(ready, 1)]

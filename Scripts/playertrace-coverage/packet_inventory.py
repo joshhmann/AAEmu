@@ -132,8 +132,13 @@ class PacketInventory:
                         continue
                     class_name = m_class.group(1)
 
-                    # Only index packet-like classes
-                    if not (class_name.endswith("Packet") or "Packet" in class_name):
+                    # Some registered wire types (e.g. CSExecuteCraft) omit Packet
+                    # from their name. Recognize direct packet inheritance too.
+                    packet_base = re.search(
+                        rf"\bclass\s+{re.escape(class_name)}(?:\s*\([^{{}};]*?\))?"
+                        r"\s*:\s*(?:GamePacket|LoginPacket|PacketBase)\b", content
+                    )
+                    if "Packet" not in class_name and not packet_base:
                         continue
 
                     direction, channel, subsystem = self._determine_direction_and_channel(rel_path, class_name)

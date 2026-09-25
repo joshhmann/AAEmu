@@ -1,7 +1,7 @@
 # AAEmu PlayerTrace Coverage Report
 
-> **Generated:** 2026-09-16 13:05:42 UTC
-> **Repository State:** `develop` @ `63f6567e7a`
+> **Generated:** 2026-09-18 17:13:49 UTC
+> **Repository State:** `develop` @ `d0bea9e6a0`
 
 ## 1. Corpus Summary
 

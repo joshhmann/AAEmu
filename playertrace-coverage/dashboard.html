@@ -812,6 +812,8 @@
             <button class="nav-tab-btn" id="tabBtn-lanes" onclick="switchMainTab('lanes')">🧭 Domain Lanes & Router</button>
             <button class="nav-tab-btn" id="tabBtn-coverage" onclick="switchMainTab('coverage')">📊 Coverage & Telemetry</button>
             <button class="nav-tab-btn" id="tabBtn-map" onclick="switchMainTab('map')">🗺️ World Map & Atlas <span class="tab-badge" style="background:rgba(16,185,129,0.2);color:#34d399;">136 Hubs</span></button>
+            <button class="nav-tab-btn" id="tabBtn-gates" onclick="switchMainTab('gates')">🧪 Human Gates <span class="tab-badge">H</span></button>
+            <button class="nav-tab-btn" id="tabBtn-lanes2" onclick="switchMainTab('lanes2')">🖥️ E2E Lanes <span class="tab-badge">live</span></button>
         </div>
     </div>
 
@@ -909,7 +911,7 @@
                 <p class="task-desc">Target: ArcheAge 1.2.4.13 / r208022. Human playability and autonomous residents are separate commitments sharing ordinary gameplay. No overall completion percentage is claimed.</p>
                 <div class="meta-row">
                 <span>Planning freshness</span>
-                <span class="meta-val">2026-09-18 · source 533bfcae5becc0264946dbdd1ecde3141595b8b3 + dirty tree · claim/construct loop VERIFIED by independent re-run (step-7 1/1, step-8 1/1, fresh bots); plant/harvest/tax/travel/H open</span>
+                <span class="meta-val">2026-09-18 · source d0bea9e6a (Wave One shipped, origin develop) + deployed .165 2026-09-18 · claim/construct loop VERIFIED by independent re-run (step-7 1/1, step-8 1/1, fresh bots); plant/harvest/tax/travel/H open</span>
                 </div>
                 <p class="task-desc">Wave One exit VERIFIED by independent second-session re-run 2026-09-18: the named claim→construct loop ran at L per the step-8 dossier + b1housing report; all other lanes remain planning snapshots, not live acceptance telemetry. No human (H) verdict exists. Sources: VISION.md, PROJECT-CONTROL.md#delivery-contract, ROADMAP.md#current-delivery-direction, SCORECARD.md and STATUS.md.</p>
                 </div>
@@ -1317,6 +1319,122 @@
                         <label class="map-note">Copy fallback / export preview<textarea id="mapOutput" class="notes-area" rows="4" readonly aria-label="Map export preview"></textarea></label>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="tab-pane" id="tabPane-gates">
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Wave One live context — what H still owns</div>
+                </div>
+                <p class="task-desc">Deployed <strong>d0bea9e6a</strong> on .165 (2026-09-18). H owns the M3a/M3b rows and everything still at <strong>U</strong>; no H=1 or H=2 has been awarded anywhere. The human cards below are <strong>review/acceptance checkpoints</strong>; bot capability proof lives in the conversion scenarios (<code>scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md</code>). Ambient expectation: <strong>25 active citizens</strong> roaming under HUNT=1 (home 14460/14400/109, radius 45). A bot ignoring your invite is <strong>normal</strong> — except in M7, where it is a FAIL/blocker prereq. Bot interference with a row (e.g. contested kills) is a <strong>FAIL</strong>: record whether you disabled or relocated the hunters (required for M1).</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Rules strip — what makes a result an H result</div>
+                </div>
+                <p class="task-desc">H = an ACTUAL PLAYER completing the curated scenario — never a bot or scripted actor. Grades: <strong>U</strong> unassessed · <strong>0</strong> absent/broken · <strong>1</strong> partial/proxy (never a real player attempt) · <strong>2</strong> verified for the named scope · <strong>N/A</strong> only with a written reason. Never averaged; weakest dimension wins. One fresh character per row (cheat residue persists). Cheats (<code>.kit hytest</code>, <code>.teleport</code>, <code>.level</code>, <code>.labor</code>, <code>.gold</code>, <code>.exprate</code>, <code>.growthrate</code>) are legal <strong>only as setup the row does not test</strong>, recorded verbatim — helping the tested step is a FAIL. H rows close only in <strong>REALTIME</strong> (FAST_SIM is A/R). One row = <strong>PASS / FAIL / CAVEAT</strong>. Source: <code>Docs/wiki/Human-Gate-Field-Guide.md</code> §0, §5.0.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Preflight P0–P5 (dev host, /root/aaemu-dev)</div>
+                </div>
+                <p class="task-desc"><strong>P0 pin revision:</strong> <code>git rev-parse HEAD</code> · <code>git status --porcelain</code> (uncommitted under AAEmu.*/ = stop) · <code>git rev-parse --abbrev-ref HEAD</code> (expect develop).</p>
+                <p class="task-desc"><strong>P1 canonical data (hard gate):</strong> <code>md5sum AAEmu.Game/Data/compact.sqlite3</code> — expect <code>78b3bdbf038db3b927056106efdf91af</code>; mismatch refuses the lane.</p>
+                <p class="task-desc"><strong>P2 asset inventory (3×OK):</strong> <code>bash .agents/skills/aaemu-setup/scripts/test-aaemu-assets.sh</code> — client (<code>game_pak</code> + <code>bin32/archeage.exe</code>), <code>compact.sqlite3</code>, launcher (<code>AAEmu.Launcher.exe</code>). Missing client/launcher stops the wave. Optional GitHub-only fetch: same script with <code>--fetch-launcher</code>.</p>
+                <p class="task-desc"><strong>P3 lane ports:</strong> own root <code>/root/aaemu-e2e-&lt;lane&gt;</code>, own port block derived from lane name; never <code>1234 1237 1239 1250 1260 1280 3306</code>; pkill banned.</p>
+                <p class="task-desc"><strong>P4 prod untouched:</strong> <code>ssh root@192.168.0.165 'ss -ltn | grep -E ":(1237|1239|1250|3306)\b"'</code> · <code>ssh root@192.168.0.165 'docker ps --format "{{.Names}} {{.Status}}"'</code> — /root/AAEmu not modified.</p>
+                <p class="task-desc"><strong>P5 host split:</strong> launcher on the dev-host side; lanes run remotely; <code>run-qa-suite.sh</code> launches from the dev checkout only.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">M1 — Quest spine, curated Solzreed route (H: U)</div>
+                </div>
+                <p class="task-desc"><strong>Contract REQ-M1-10.</strong> Reset: fresh Nuian, Solzreed (zones 9/124/125), level 1; travel-only kit allowed. Steps: (a) board+errands 250→2532, (b) chain 254→259, (c) shepherd 265/266/354 via report act, (d) mount chain → horses 8159/8160/8161 + 18649, (e) logout/restart relog (watch timed 350/4292), (f) Bloody Hand 2255→2266, (g) bounty kills + journal (BUG-006). State: automated CLOSED, human OPEN (deferred #1), H UNKNOWN.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">M2 — Golden path, two-player leg (H: U)</div>
+                </div>
+                <p class="task-desc"><strong>Contract REQ-M2-5.</strong> Reset: documented third-party-reproducible procedure; two accounts/clients (one person OK). Expected: both reach mount/baseline state; every blocker with stage + repro + evidence + owning card. State: two-player baseline deferred gate #2, H UNKNOWN.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">M3a — Homestead shell, one session (H: U)</div>
+                </div>
+                <p class="task-desc"><strong>Exit:</strong> two players, adjacent homesteads, one uninterrupted session. Steps: place (overlap rejected), build normal path, plant→grow→harvest, storage + furniture, cross-player ownership/permissions. Expected: rejection on overlap, decoration limits, crops harvest, coffer correct. State: COMPLETE (proxy only, H UNKNOWN), replay deferred #3.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">M3b — Property persistence and recovery (H: U)</div>
+                </div>
+                <p class="task-desc"><strong>Exit:</strong> same two homesteads survive logout, restart, kill-9-in-save, re-entry — no loss/duplication. Scale: N≥3 crash cycles, autosave p95 &lt; 2 s. Expected: furniture/crops/storage identical each cycle; failures name the cycle. State: R=2 COMPLETE, player/H UAT open.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">M4 — Trade/craft/transport, four players (H: U)</div>
+                </div>
+                <p class="task-desc"><strong>Exit (REQ-M4-5):</strong> gather → craft pack → load owned vehicle → drive route → unload → sell → correct reward → restart → repeat, no GM repair. Cross-checks: labor −60/pack, mail payout 124540/pack. State: scripted proxy CLOSED, human deferred gate #4 (deployment lane after Josh GO), H UNKNOWN.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">M5 / M5.3 — Actor feel (H: U; core contract N/A)</div>
+                </div>
+                <p class="task-desc">Core contract N/A (feel belongs to later phases). Open scope: movement-fidelity regrade (trapezoidal profile). Steps: walk/strafe/turn, mouse steering, approach-and-stop, corner drive, door/NPC + mid-action stop. Expected: smooth heading/velocity, no snap/rubber-band, stops land, no camera fighting. Record feel verbatim with coordinates. H U.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">M6 — Restart/soak gate (H: N/A with reason)</div>
+                </div>
+                <p class="task-desc">10 bots, 6 hours, no unrecovered loops/duplication/runaway combat/DB corruption/tick overrun. N/A because M6 is a restart/soak gate, not a client-feel gate — this claims nothing about other M6 human acceptance. Bot-visibility notes go in the notes column with H staying N/A.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">M7 — Party bots: DO-NOT-RUN (prereq blocked, H: U)</div>
+                </div>
+                <p class="task-desc"><strong>Blocked prereq:</strong> no live party-consent path — no code shows a roamer auto-accepting invites. Contract (when unblocked): one human + three bots, route + group encounter; invite accepted, follow, assist, regroup, mounted travel. If any bot ignores/refuses: failed prerequisite, stop the row, record verbatim as FAIL/blocker. Never a pass. H U because unverified, not because attempted.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">M8 — Living Village day: DO-NOT-RUN human-observed scenario (C1/C2 H: U)</div>
+                </div>
+                <p class="task-desc"><strong>Blocked prereq:</strong> no deployed profession roster (RecordProfession only from automated seams). Exit when unblocked: 2 farmers + 1 crafter + 2 haulers + 3 adventurers + human homes, full day, ≥3 restarts, auditable economy at 25 embodied. Legs: owned-plot harvest/replant, workstation converts, haul→sale→deposit→return-home, adventurer routes, human coexistence, explicable payouts, restart continuity. Automated C5/A5/G1 context only — never H. QUALIFIED runtime exit stands; C1/C2 feel UNKNOWN (not DEFERRED).</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Restart checkpoints R1–R5 (inside a row, same order)</div>
+                </div>
+                <p class="task-desc"><strong>R1</strong> logout→relog · <strong>R2</strong> clean game-process restart · <strong>R3</strong> kill -9 in a save window · <strong>R4</strong> MySQL container restart (recovery rows only) · <strong>R5</strong> timed-quest focus (mid-350/4292). Expected: state identical, no orphans/duplicates, timers resume. R2/R3 on shared stacks are owner-gated; lane-scope them or PID-verify under the intended root. Unscoped <code>pkill -f AAEmu.Game</code> is banned.</p>
+            </div>
+        </div>
+        <div class="tab-pane" id="tabPane-lanes2">
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Lane cards — static snapshot 2026-09-18 (rerun regen to refresh; no live polling)</div>
+                </div>
+                <p class="task-desc"><strong>b1housing</strong> (Wave One exit lane): root <code>/root/aaemu-e2e-b1housing</code>, compose <code>aaemu_b1housing</code>, DB 56306 · login 7337 · game 7339 · stream 7350 · bridge 7360. Last reports: <code>logs/step8-bot-loop-report.json</code> (11 legs, bots Step8LoopA4e6e6d/B64e26e, rev 533bfcae5, layer L) and <code>logs/step7-claim-place-plot-report.json</code> (bot Step7Claimbcf917, claim Completed, layer L). Last verdict: step-8 loop 1/1, step-7 1/1.</p>
+                <p class="task-desc"><strong>.165 deployed</strong> (play surface, not a test lane): revision <strong>d0bea9e6a</strong>, ports 1237/1239/1250/1280, bridge 1260 closed. Verification: Registered GameServer, 25/25 citizen bots, lane smoke + claim/loop with restart green. Source: STATUS.md exit entry.</p>
+                <p class="task-desc">Recent soak artifacts: <code>soak-artifacts/deploy165-step8/20260918-010355</code> (step-8 logs + summary.txt), <code>deploy165-claimplace/20260918-010029</code>, <code>deploy165-postcheck/20260918-005449</code>, plus <code>farm-s1</code>, <code>m8v6-soak</code>, <code>smoke-rb</code>, <code>auction-cancel</code>, <code>human-gate-preflight</code>.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Bot activity — what 25 citizens prove (and don't)</div>
+                </div>
+                <p class="task-desc"><strong>Proves:</strong> 25 embodied citizens roam the live world under HUNT=1 (home 14460/14400/109, radius 45) without crashing the lane — liveness only. <strong>Does not prove:</strong> task competence, progression, economy participation, or cooperation. Invite-ignore is normal; contested kills invalidate evidence rows. A citizen count ≠ a capability verdict.</p>
+            </div>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">Wave One evidence (paths on this host)</div>
+                <p class="task-desc">Unit <strong>107/107</strong> (8 classes, Release, second session). Step-7 live <strong>1/1</strong>: <code>/root/aaemu-e2e-b1housing/logs/step7-claim-place-plot-report.json</code>. Step-8 loop <strong>1/1</strong> (2m51s, fresh bots, restart byte-equal, LP delta 10): <code>/root/aaemu-e2e-b1housing/logs/step8-bot-loop-report.json</code> (+ <code>.md</code>). Dossier: <code>scorecard-explorations/mechanics/step8-bot-loop-dossier-2026-09-17.md</code>. H stays UNKNOWN.</p>
+            <div class="info-card" style="margin-bottom:20px">
+                <div class="info-card-header">
+                <div class="info-card-title">E2E suite map — <code>AAEmu.IntegrationTests/E2e/</code> (57 classes; last result this wave or UNRUN)</div>
+                </div>
+                <p class="task-desc"><strong>Wave One (green 2026-09-18):</strong> <code>HomesteadClaimPlacePlotE2eTests</code> — one real claim on live lane (1/1) · <code>HomesteadBotLoopStep8E2eTests</code> — full claim→construct loop with restart (1/1).</p>
+                <p class="task-desc"><strong>Restart persistence (precedent green):</strong> <code>B1HousingRestartE2eTests</code> — house construct/decorate survives kill-9 byte-equal · <code>ShipyardFramePersistenceE2eTests</code> — shipyard frame survives restart byte-equal · <code>AuctionHouseRestartE2eTests</code> — auction state across restart · <code>B2FarmRestartE2eTests</code> — farm state across restart · <code>B4BotRestartPersistenceE2eTests</code> — bot persistence across restart · <code>DominionRestartPersistenceE2eTests</code> — dominion state across restart · <code>HaulerMidRouteRestartE2eTests</code> — mid-route hauler survives restart · <code>M51AttachedPackRestartE2eTests</code> — attached-pack state across restart · <code>MailS3RestartE2eTests</code> — mail across restart · <code>VillageDayCycleRestartE2eTests</code> / <code>VillageFullDayRestartE2eTests</code> — village continuity across restarts. Last result: UNRUN this wave.</p>
+                <p class="task-desc"><strong>Live-bot loops (conversion-doc grounded):</strong> <code>AdventurerSpikeE2eTests</code> — adventurer spike, bot-driven · <code>Q4LiveHuntLootE2eTests</code> — REAL-BOT cast-kill + loot delta · <code>QuestDiscoveryE2eTests</code> — live discovery via MCP pipe · <code>InterzoneLoopE2eTests</code> — REAL-BOT Dewstone chain + highway · <code>M1M2ContractReplayE2eTests</code> — bridge-op contract replay · <code>M3aM4EconomicReplayE2eTests</code> — economy replay · <code>NeedsFarmLoopE2eTests</code> — farm plant/wait/harvest/replant + defer leg · <code>NeedsFarmEarnLoopE2eTests</code> — farm earn loop · <code>PartyFollowAssistE2eTests</code> / <code>PartySpikeE2eTests</code> — party behaviors · <code>QuestDiscoveryE2eTests</code> — see above. Last result: UNRUN this wave.</p>
+                <p class="task-desc"><strong>Soak/cycle:</strong> <code>B4FarmSoakE2eTests</code> · <code>B4PackSoakE2eTests</code> · <code>B4SlaveSoakE2eTests</code> — B4 duration soaks · <code>DominionSoakCycleE2eTests</code> — dominion soak · <code>EconomyDayCycleE2eTests</code> — day-cycle economy. Last result: UNRUN this wave.</p>
+                <p class="task-desc"><strong>Trade/combat/systems:</strong> <code>B6MerchantConservationE2eTests</code> — merchant conservation · <code>DirectTradeE2eTests</code> — direct trade · <code>SpecialtyPackSaleE2eTests</code> — pack sale payout · <code>LaneDAuctionHouseE2eTests</code> — auction house · <code>DuelFactionSwapE2eTests</code> — duel/faction swap · <code>JusticeCrimeE2eTests</code> — crime/justice · <code>PvpHandshakeE2eTests</code> — PvP handshake · <code>EquipmentRepairE2eTests</code> — repair · <code>LivestockButcherE2eTests</code> — livestock butcher · <code>TransferRideE2eTests</code> — transfer ride · <code>RowboatE2eTests</code> — rowboat · <code>FishingVerificationE2eTests</code> — fishing · <code>IndunExitE2eTests</code> / <code>IndunPartyE2eTests</code> — dungeon exit/party · <code>ExpeditionFlowE2eTests</code> — expedition · <code>M51DepositWithdrawReplayHookE2eTests</code> — deposit/withdraw hook · <code>MovementStopInterruptE2eTests</code> — stop/interrupt · <code>RecoveryHealingE2eTests</code> — recovery/healing · <code>SlaveTestBugHuntE2eTests</code> — slave test rig · <code>BotDriveClientCancellationTests</code> / <code>BotControlActionMcpE2eTests</code> / <code>BotControlApiE2eTests</code> — bot-control pipe/API. Last result: UNRUN this wave.</p>
+                <p class="task-desc">Helpers (not suites): <code>BotDriveClient</code>, <code>BotNetworkSession</code>, <code>BotTcpLink</code>, <code>BotTcpLinkParserTests</code>, <code>E2eQuestDriver</code>, <code>E2eQuestManifest</code>, <code>E2eStack</code>. Purposes above derive from class/file naming + conversion-doc citations; UNRUN means not executed in the Wave One window, not broken.</p>
             </div>
         </div>
     </div>
