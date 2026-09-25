@@ -1014,6 +1014,94 @@ public static class E2eStack
         return rows;
     }
 
+    /// <summary>
+    /// One behavior-affecting lane flag: its name, the value the lane was
+    /// booted with (runner environment — the game process inherits it, see
+    /// <see cref="Source"/>), and where that value came from.
+    /// </summary>
+    public sealed record LaneCapabilityFlag(string Name, string? Value, string Source);
+
+    /// <summary>
+    /// Lane manifest (prereq Part 1): the static, self-describing list of
+    /// behavior-affecting flags the lane was booted with (gap-nav-persist
+    /// §4.1: quest-bootstrap, needs-farm, presence, dormancy/proximity,
+    /// scheduler, chatter, fishing-contest, bot-control gates). Values are
+    /// read from the RUNNER environment — the game process inherits the
+    /// runner env at boot (StartServerProcess), with four flags forwarded
+    /// explicitly; the Source column names which path each flag rides.
+    /// The control token is presence-only ("(set)"), never echoed into
+    /// evidence. Boot behavior is unchanged — this only describes it.
+    /// Emit the manifest into test evidence alongside any verdict that
+    /// depends on a flag being on or off.
+    /// </summary>
+    public static IReadOnlyList<LaneCapabilityFlag> CapabilityManifest()
+    {
+        LaneCapabilityFlag F(string name, string? value, bool forwarded) => new(name, value,
+            forwarded ? "runner-env (forwarded explicitly to game process)"
+                      : "runner-env (inherited by game process)");
+        string? Raw(string name) => Environment.GetEnvironmentVariable(name);
+        return
+        [
+            // External control gate.
+            F("AAEMU_BOT_CTRL", Raw("AAEMU_BOT_CTRL"), false),
+            F("AAEMU_BOT_CTRL_TOKEN", Raw("AAEMU_BOT_CTRL_TOKEN") == null ? null : "(set)", false),
+            F("AAEMU_BOT_CTRL_URL", Raw("AAEMU_BOT_CTRL_URL"), false),
+            // Autonomy module gates.
+            F("AAEMU_QUEST_BOOTSTRAP_ENABLED", Raw("AAEMU_QUEST_BOOTSTRAP_ENABLED"), true),
+            F("AAEMU_NEEDS_FARM_ENABLED", Raw("AAEMU_NEEDS_FARM_ENABLED"), true),
+            // Presence overlay + hunt/butcher profile.
+            F("AAEMU_PRESENCE_DEMO", Raw("AAEMU_PRESENCE_DEMO"), false),
+            F("AAEMU_PRESENCE_BOT_COUNT", Raw("AAEMU_PRESENCE_BOT_COUNT"), false),
+            F("AAEMU_PRESENCE_MAX_BOTS", Raw("AAEMU_PRESENCE_MAX_BOTS"), false),
+            F("AAEMU_PRESENCE_MANIFEST", Raw("AAEMU_PRESENCE_MANIFEST"), false),
+            F("AAEMU_PRESENCE_HOME_X", Raw("AAEMU_PRESENCE_HOME_X"), false),
+            F("AAEMU_PRESENCE_HOME_Y", Raw("AAEMU_PRESENCE_HOME_Y"), false),
+            F("AAEMU_PRESENCE_HOME_Z", Raw("AAEMU_PRESENCE_HOME_Z"), false),
+            F("AAEMU_PRESENCE_HUNT", Raw("AAEMU_PRESENCE_HUNT"), true),
+            F("AAEMU_PRESENCE_HUNT_RADIUS", Raw("AAEMU_PRESENCE_HUNT_RADIUS"), true),
+            F("AAEMU_PRESENCE_BUTCHER", Raw("AAEMU_PRESENCE_BUTCHER"), false),
+            F("AAEMU_PRESENCE_BUTCHER_RADIUS", Raw("AAEMU_PRESENCE_BUTCHER_RADIUS"), false),
+            F("AAEMU_PRESENCE_BROADCAST_HZ", Raw("AAEMU_PRESENCE_BROADCAST_HZ"), false),
+            // Schedules, chatter, fishing contest.
+            F("AAEMU_BOT_SCHEDULES_ENABLED", Raw("AAEMU_BOT_SCHEDULES_ENABLED"), false),
+            F("AAEMU_BOT_SCHEDULE_SCAN_SECONDS", Raw("AAEMU_BOT_SCHEDULE_SCAN_SECONDS"), false),
+            F("AAEMU_BOT_CHATTER_ENABLED", Raw("AAEMU_BOT_CHATTER_ENABLED"), false),
+            F("AAEMU_BOT_CHATTER_RADIUS", Raw("AAEMU_BOT_CHATTER_RADIUS"), false),
+            F("AAEMU_BOT_CHATTER_ZONE_BUDGET", Raw("AAEMU_BOT_CHATTER_ZONE_BUDGET"), false),
+            F("AAEMU_FISHING_CONTEST_ENABLED", Raw("AAEMU_FISHING_CONTEST_ENABLED"), false),
+            // Proximity fidelity / dormancy / scheduler shaping.
+            F("AAEMU_BOT_PROXIMITY_FIDELITY", Raw("AAEMU_BOT_PROXIMITY_FIDELITY"), false),
+            F("AAEMU_BOT_PROXIMITY_FULL_M", Raw("AAEMU_BOT_PROXIMITY_FULL_M"), false),
+            F("AAEMU_BOT_PROXIMITY_REDUCED_M", Raw("AAEMU_BOT_PROXIMITY_REDUCED_M"), false),
+            F("AAEMU_BOT_TRUE_DORMANCY", Raw("AAEMU_BOT_TRUE_DORMANCY"), false),
+            F("AAEMU_BOT_STAGGERED_WAKES", Raw("AAEMU_BOT_STAGGERED_WAKES"), false),
+            F("AAEMU_BOT_STAGGER_WINDOW_MS", Raw("AAEMU_BOT_STAGGER_WINDOW_MS"), false),
+            F("AAEMU_BOT_DORMANCY_MATERIALIZE_PER_SWEEP", Raw("AAEMU_BOT_DORMANCY_MATERIALIZE_PER_SWEEP"), false),
+            F("AAEMU_BOT_AUTO_RESTORE", Raw("AAEMU_BOT_AUTO_RESTORE"), false),
+        ];
+    }
+
+    /// <summary>
+    /// Fail-early lane guard (prereq Part 1): throws
+    /// <see cref="InvalidOperationException"/> — a configuration error,
+    /// never a gameplay timeout — when any required flag is absent (unset
+    /// or empty) from the runner environment. Call at test start, before
+    /// booting or waking anything. Absence is literal: a flag set to "0"
+    /// is present-but-off — tests asserting enablement read
+    /// <see cref="CapabilityManifest"/> values directly.
+    /// </summary>
+    public static void RequireFlags(params string[] names)
+    {
+        ArgumentNullException.ThrowIfNull(names);
+        var missing = names.Where(n => string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(n))).ToList();
+        if (missing.Count == 0)
+            return;
+        var manifest = string.Join("; ", CapabilityManifest().Select(f => $"{f.Name}={f.Value ?? "<unset>"}"));
+        throw new InvalidOperationException(
+            $"E2E lane misconfigured: required capability flag(s) absent: {string.Join(", ", missing)}. " +
+            $"Lane manifest: {manifest}");
+    }
+
     private static void CopyDirectory(string source, string dest)
     {
         Directory.CreateDirectory(dest);
