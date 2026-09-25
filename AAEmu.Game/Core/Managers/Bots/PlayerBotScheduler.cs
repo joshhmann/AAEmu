@@ -87,6 +87,11 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     // added when a dead bot's step is skipped and removed on resurrection or
     // when the bot is seen alive again.
     private readonly ConcurrentDictionary<uint, DateTime> _deadSince = new();
+    // §4 diagnostic (additive only): last terminal outcome per bot + per-bot
+    // counters. Updated ONLY at the four terminal sites of
+    // ExecuteStepOnExecutionBoundary (skip/timeout/fail/run) — never on the
+    // hot path — so steady-state stepping allocates nothing extra.
+    private readonly ConcurrentDictionary<uint, BotStepOutcome> _botStepOutcomes = new();
 
     public PlayerBotScheduler(
         IPlayerBotManager manager,
@@ -356,9 +361,12 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         {
             // Registry consumption: resolve the runtime now; a bot that left the
             // Active set while queued is skipped, never stepped.
-            if (!_manager.TryGet(step.BotId, out var runtime) || runtime!.State != PlayerBotState.Active)
+            if (!_manager.TryGet(step.BotId, out var runtime) || runtime is null || runtime!.State != PlayerBotState.Active)
             {
+                var reason = runtime is null ? "TryGet-miss" : $"State={runtime.State}";
+                Logger.Debug("PlayerBot step skipped: character {CharacterId} ({Reason})", step.BotId, reason);
                 Interlocked.Increment(ref _totalStepsSkipped);
+                RecordBotStepOutcome(step.BotId, BotStepOutcomeKind.Skipped);
                 ReleaseLease(step.BotId);
                 return;
             }
@@ -409,6 +417,7 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             {
                 ok = false;
                 Interlocked.Increment(ref _totalStepsTimedOut);
+                RecordBotStepOutcome(step.BotId, BotStepOutcomeKind.TimedOut);
                 Logger.Warn("PlayerBot step timed out after {Timeout}s: character {CharacterId}",
                     _options.StepTimeout.TotalSeconds, step.BotId);
             }
@@ -416,6 +425,7 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             {
                 ok = false;
                 Interlocked.Increment(ref _totalStepsFailed);
+                RecordBotStepOutcome(step.BotId, BotStepOutcomeKind.Failed);
                 Logger.Error(ex, "PlayerBot step failed: character {CharacterId}", step.BotId);
             }
             finally
@@ -424,7 +434,10 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             }
 
             if (ok)
+            {
                 Interlocked.Increment(ref _totalStepsRun);
+                RecordBotStepOutcome(step.BotId, BotStepOutcomeKind.Ran);
+            }
 
             // Lease release + next scheduling decision, atomic with pending wake.
             // External wakes are always honored; step-driven cadence only after success.
@@ -456,6 +469,53 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             Interlocked.Add(ref _busyTicks, Stopwatch.GetTimestamp() - startTimestamp);
         }
     }
+
+    /// <summary>
+    /// §4 diagnostic query: last terminal step outcome for one bot (null when
+    /// the bot never reached a terminal site since Start). Read-only.
+    /// </summary>
+    public BotStepOutcome? GetBotStepState(uint characterId)
+        => _botStepOutcomes.TryGetValue(characterId, out var outcome) ? outcome : null;
+
+    private void RecordBotStepOutcome(uint botId, BotStepOutcomeKind kind)
+    {
+        var now = UtcNow;
+        _botStepOutcomes.AddOrUpdate(botId,
+            static (_, state) => BotStepOutcome.FromKind(state.kind, state.now),
+            static (_, existing, state) => existing.With(state.kind, state.now),
+            (kind, now));
+    }
+
+    /// <summary>§4 diagnostic: terminal disposition of one bot step.</summary>
+    public enum BotStepOutcomeKind
+    {
+        Skipped,
+        TimedOut,
+        Failed,
+        Ran,
+    }
+
+    /// <summary>
+    /// §4 diagnostic: last terminal outcome + UTC + per-outcome counts for one
+    /// bot. Immutable; replaced (never mutated) on each terminal site.
+    /// </summary>
+    public sealed record BotStepOutcome(BotStepOutcomeKind LastOutcome, DateTime LastUtc, long Skipped, long TimedOut, long Failed, long Ran)
+    {
+        internal static BotStepOutcome FromKind(BotStepOutcomeKind kind, DateTime now) =>
+            new(kind, now,
+                kind == BotStepOutcomeKind.Skipped ? 1 : 0,
+                kind == BotStepOutcomeKind.TimedOut ? 1 : 0,
+                kind == BotStepOutcomeKind.Failed ? 1 : 0,
+                kind == BotStepOutcomeKind.Ran ? 1 : 0);
+
+        internal BotStepOutcome With(BotStepOutcomeKind kind, DateTime now) =>
+            new(kind, now,
+                Skipped + (kind == BotStepOutcomeKind.Skipped ? 1 : 0),
+                TimedOut + (kind == BotStepOutcomeKind.TimedOut ? 1 : 0),
+                Failed + (kind == BotStepOutcomeKind.Failed ? 1 : 0),
+                Ran + (kind == BotStepOutcomeKind.Ran ? 1 : 0));
+    }
+
 
     /// <summary>
     /// M6.2 death watch (death/resurrection — the 6.2 safety item that did

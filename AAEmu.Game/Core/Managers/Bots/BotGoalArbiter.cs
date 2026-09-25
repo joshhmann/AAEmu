@@ -21,10 +21,10 @@ public enum BotArbitrationOutcome : byte
 }
 
 /// <summary>Result of one arbitration pass.</summary>
-public sealed record BotArbitration(BotArbitrationOutcome Outcome, BotActivity? Activity = null, string? WhyNot = null)
+public sealed record BotArbitration(BotArbitrationOutcome Outcome, BotActivity? Activity = null, string? WhyNot = null, int Candidates = 0, int Rejections = 0)
 {
     public static BotArbitration None { get; } = new(BotArbitrationOutcome.None);
-    public static BotArbitration Unchanged(BotActivity activity) => new(BotArbitrationOutcome.Unchanged, activity);
+    public static BotArbitration Unchanged(BotActivity activity, int candidates = 0, int rejections = 0) => new(BotArbitrationOutcome.Unchanged, activity, null, candidates, rejections);
 }
 
 /// <summary>
@@ -154,8 +154,10 @@ public sealed class BotGoalArbiter : IBotGoalArbiter
             ActiveActivity = activeName,
         };
 
-        foreach (var module in snapshot)
+        var rejected = 0;
+        for (var i = 0; i < snapshot.Count; i++)
         {
+            var module = snapshot[i];
             BotActivityDecision decision;
             try
             {
@@ -166,23 +168,27 @@ public sealed class BotGoalArbiter : IBotGoalArbiter
                 // A broken module must never take gameplay down — skip it.
                 Logger.Error(ex, "BotGoalArbiter: module {Module} CanActivate failed for bot {CharacterId} — skipped",
                     module.Name, bot.CharacterId);
+                rejected++;
                 continue;
             }
 
             if (!decision.CanActivate)
+            {
+                rejected++;
                 continue;
+            }
 
             var activityName = decision.ActivityName;
             if (string.IsNullOrEmpty(activityName))
             {
                 Logger.Warn("BotGoalArbiter: module {Module} allowed activation without an activity name — skipped",
                     module.Name);
+                rejected++;
                 continue;
             }
 
             if (activityName == activeName)
-                return BotArbitration.Unchanged(new BotActivity(activityName, module.Name));
-
+                return BotArbitration.Unchanged(new BotActivity(activityName, module.Name), snapshot.Count, rejected);
             // Transition: replace the single active activity, apply once, log once.
             _activeActivity[bot.CharacterId] = activityName;
             Interlocked.Increment(ref _transitions);
@@ -208,7 +214,7 @@ public sealed class BotGoalArbiter : IBotGoalArbiter
 
             Logger.Info("BotGoalArbiter: bot {CharacterId} activity {Old} -> {New} (module {Module})",
                 bot.CharacterId, activeName ?? "(none)", activity.Name, module.Name);
-            return new BotArbitration(BotArbitrationOutcome.Activated, activity);
+            return new BotArbitration(BotArbitrationOutcome.Activated, activity, null, snapshot.Count, rejected);
         }
 
         // Nobody can act: drop the stale memory so the next successful
@@ -221,7 +227,7 @@ public sealed class BotGoalArbiter : IBotGoalArbiter
                 bot.CharacterId, activeName);
         }
 
-        return new BotArbitration(BotArbitrationOutcome.NoCandidate);
+        return new BotArbitration(BotArbitrationOutcome.NoCandidate, null, null, snapshot.Count, rejected);
     }
 
     /// <inheritdoc />

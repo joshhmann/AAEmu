@@ -120,6 +120,39 @@ public abstract class NpcAi
         _currentBehavior?.Enter();
     }
 
+    /// <summary>
+    /// The behavior kinds that represent combat entry — the NPC holds a live aggro
+    /// target and is about to fight (every attack behavior registered by the
+    /// AiCharacters; Alert/ReturnState/Idle are not combat).
+    /// </summary>
+    private static readonly HashSet<BehaviorKind> CombatEntryKinds =
+    [
+        BehaviorKind.Attack,
+        BehaviorKind.AlmightyAttack,
+        BehaviorKind.ArcherAttack,
+        BehaviorKind.BigMonsterAttack,
+        BehaviorKind.FlytrapAttack,
+        BehaviorKind.WildBoarAttack
+    ];
+
+    /// <summary>
+    /// Combat-entry leash re-anchor. An NPC that aggroes while its leash origin
+    /// (IdlePosition) has drifted from the spawn point satisfies ShouldReturn on the
+    /// very tick it acquires aggro, so ReturnState clears that aggro immediately and the
+    /// mob leashes home on every engagement instead of fighting back. Entering a combat
+    /// behavior is the one moment where the NPC is (by construction) holding a live
+    /// aggro entry and is about to fight — there the leash origin is re-anchored to the
+    /// spawn point (HomePosition), so the leash measures "did I drag the fight off
+    /// spawn" (which is what ReturnState walks back to) rather than "did I wander from
+    /// my current spot". Out-of-combat roam is untouched: no combat-entry transition,
+    /// no write.
+    /// </summary>
+    private void AnchorLeashOnCombatEntry(BehaviorKind kind)
+    {
+        if (CombatEntryKinds.Contains(kind))
+            IdlePosition = HomePosition;
+    }
+
     protected void SetCurrentBehavior(BehaviorKind kind)
     {
         if (!_behaviors.TryGetValue(kind, out var value))
@@ -130,6 +163,7 @@ $"Trying to set Npc {Owner.TemplateId}:{Owner.ObjId} current behavior, but it is
         }
 
         Logger.Trace($"Set Npc {Owner.TemplateId}:{Owner.ObjId} current behavior: {kind}");
+        AnchorLeashOnCombatEntry(kind);
         SetCurrentBehavior(value);
     }
 

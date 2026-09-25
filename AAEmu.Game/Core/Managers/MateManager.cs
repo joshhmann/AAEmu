@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using AAEmu.Commons.Utils;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Connections;
@@ -183,6 +184,16 @@ public class MateManager(WorldInstance parentWorldInstance)
 
                 character.Buffs.TriggerRemoveOn(BuffRemoveOn.Mount);
                 Logger.Debug($"MountMate. mountTlId: {mateInfo.TlId}, attachPoint: {attachPoint}, reason: {reason}, seats: {string.Join(", ", mateInfo.Passengers.Values.ToList())}");
+
+                // Trace (consequence state, schema v2): the mount is an outcome
+                // — the snapshot records isMounted/target/pos as the engine left
+                // them after the seat attach. Ordinary accessors only.
+                if (PlayerTraceService.Instance.IsActive)
+                {
+                    PlayerTraceService.Instance.RecordInteraction(character, "mount_mate", mateInfo.ObjId, "Mate",
+                        new { TlId = mateInfo.TlId, TemplateId = mateInfo.TemplateId, AttachPoint = attachPoint.ToString(), Reason = reason.ToString() });
+                }
+
                 return true;
             }
 
@@ -240,6 +251,14 @@ public class MateManager(WorldInstance parentWorldInstance)
             mateInfo.Buffs.TriggerRemoveOn(BuffRemoveOn.Unmount);
             targetObj.Buffs.TriggerRemoveOn(BuffRemoveOn.Unmount);
             Logger.Debug($"UnMountMate. mountTlId: {mateInfo.TlId}, targetObjId: {targetObj.ObjId}, attachPoint: {attachPoint}, reason: {reason}");
+
+            // Trace (consequence state, schema v2): the dismount is an outcome —
+            // snapshot the post-detach state (isMounted false, ground position).
+            if (PlayerTraceService.Instance.IsActive)
+            {
+                PlayerTraceService.Instance.RecordInteraction(targetObj, "dismount_mate", mateInfo.ObjId, "Mate",
+                    new { TlId = mateInfo.TlId, TemplateId = mateInfo.TemplateId, AttachPoint = attachPoint.ToString(), Reason = reason.ToString() });
+            }
         }
         else
         {

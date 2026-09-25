@@ -1,4 +1,5 @@
 ﻿using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Game;
@@ -685,6 +686,25 @@ public class LootingContainer(IBaseUnit owner)
             }
             // TODO: check what packet this sends to others
             player.SendPacket(new SCLootItemTookPacket(itemEntry.Item.TemplateId, itemEntry.ItemIndex, LootOwnerType, LootOwner.ObjId, itemEntry.Item.Count));
+
+            // Trace (consequence state, schema v2): the grant is an outcome —
+            // record WHAT landed together with the exact bag delta of this
+            // grant and the post-grant state. Coins land in money, not the bag,
+            // so their bag delta stays null (money carries the change). Read
+            // through ordinary accessors only; tracing never affects the grant.
+            if (PlayerTraceService.Instance.IsActive)
+            {
+                var isCoins = itemEntry.Item.TemplateId == Item.Coins;
+                var bagDelta = isCoins ? null : (int?)itemEntry.Item.Count;
+                PlayerTraceService.Instance.RecordLoot(player, "loot_granted", LootOwner.ObjId, itemEntry.Item.TemplateId,
+                    itemEntry.Item.Count, bagDelta, new
+                    {
+                        LootOwnerType = LootOwnerType.ToString(),
+                        itemEntry.ItemIndex,
+                        Grade = itemEntry.Item.Grade,
+                        LootAll = didLootAll
+                    });
+            }
 
             if (Items.Count <= 0)
                 UpdateLootState();

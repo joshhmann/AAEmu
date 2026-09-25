@@ -1,9 +1,12 @@
 using System.Net;
 using System.Numerics;
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Services.WebApi.Models;
+using Microsoft.Extensions.DependencyInjection;
 using NetCoreServer;
 using NLog;
 
@@ -142,7 +145,122 @@ internal class BotControlController : BaseController
         }
     }
 
-    // ---------------------------------------------------------------- helpers
+    /// <summary>
+    /// Brain Inspector fleet view (Phase 1 diagnostics): state/leg counts
+    /// over all registered bots plus the already-available scheduler metrics
+    /// passthrough. Read-only: flag reads + metric snapshot, no wakes, no
+    /// mutations. Same gate as the rest of this surface (disabled by default,
+    /// token required).
+    /// </summary>
+    [WebApiGet("^/api/bots/brain$")]
+    public HttpResponse BrainFleet(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var sp = SingletonContainer.ServiceProvider;
+            var manager = sp?.GetService<IPlayerBotManager>();
+            var scheduler = sp?.GetService<IPlayerBotScheduler>();
+            var executor = sp?.GetService<BotRoamStepExecutor>();
+            if (manager == null || scheduler == null || executor == null)
+                return JsonResponse(HttpStatusCode.ServiceUnavailable,
+                    new ErrorModel("bot scheduler/registry unavailable in DI"));
+            var inputs = new List<BotBrainProjection.BotFleetInput>();
+            foreach (var runtime in manager.GetAll())
+            {
+                var state = executor.GetBotState(runtime.CharacterId);
+                executor.TryGetQuestRuntime(runtime.CharacterId, out var quest);
+                var character = state?.Actor.Character ?? runtime.Character;
+                inputs.Add(new BotBrainProjection.BotFleetInput(
+                    runtime.State == PlayerBotState.Active,
+                    state?.QuestLegActive ?? false,
+                    state?.NeedsLegActive ?? false,
+                    state?.NeedsFarmPhase ?? BotRoamStepExecutor.NeedsFarmLoopPhase.Idle,
+                    (state?.TargetNpcObjId ?? 0) != 0
+                        || (state?.TargetPlayerObjId ?? 0) != 0
+                        || (state?.TargetButcherDoodadObjId ?? 0) != 0
+                        || character.CurrentTarget != null,
+                    state?.Path is { IsFinished: false },
+                    quest?.Status == BotBehaviorStatus.Blocked));
+            }
+            return OkJson(BotBrainProjection.CaptureFleet(inputs, scheduler.GetMetrics()));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "BotControl: brain fleet failed");
+        }
+    }
+
+    /// <summary>
+    /// Brain Inspector per-bot view (Phase 1 diagnostics): one bounded
+    /// read-only projection over production-owned state (wake counter,
+    /// behavior runtime, live actor request + audit trace, leg/travel flags).
+    /// The dashboard renders this verbatim — it never decides, owns state,
+    /// mutates Character, or re-reads Character to infer behavior. Unknown
+    /// bot → 404 JSON (never an empty projection).
+    /// </summary>
+    [WebApiGet("^/api/bots/brain/([^/]+)$")]
+    public HttpResponse BrainInspect(HttpRequest request, MatchCollection matches)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var nameOrId = matches[0].Groups[1].Value;
+            var sp = SingletonContainer.ServiceProvider;
+            var manager = sp?.GetService<IPlayerBotManager>();
+            var executor = sp?.GetService<BotRoamStepExecutor>();
+            if (manager == null || executor == null)
+                return JsonResponse(HttpStatusCode.ServiceUnavailable,
+                    new ErrorModel("bot scheduler/registry unavailable in DI"));
+            if (!TryResolveBot(manager, nameOrId, out var runtime) || runtime == null)
+                return JsonResponse(HttpStatusCode.NotFound,
+                    new ErrorModel($"unknown bot '{nameOrId}'"));
+            var state = executor.GetBotState(runtime.CharacterId);
+            executor.TryGetQuestRuntime(runtime.CharacterId, out var quest);
+            var decorator = sp?.GetService<BotGoalArbiterStepExecutor>();
+            var arbiter = sp?.GetService<IBotGoalArbiter>();
+            var acting = state?.Actor.Character ?? runtime.Character;
+            var pos = acting.Transform.World.Position;
+            var target = acting.CurrentTarget;
+            var travel = state?.QuestTravelTarget;
+            return OkJson(BotBrainProjection.Capture(
+                runtime.CharacterId,
+                runtime.Character.Name,
+                pos.X, pos.Y, pos.Z,
+                acting.Transform.ZoneId,
+                acting.ParentWorld?.Id ?? 0u,
+                acting.Transform.InstanceId,
+                target?.ObjId ?? 0u,
+                target?.GetType().Name,
+                decorator?.GetWakeSequence(runtime.CharacterId),
+                arbiter?.GetActiveActivity(runtime.CharacterId),
+                quest,
+                state?.Actor.ActiveRequest,
+                state?.Actor.AuditTrace,
+                state?.QuestLegActive ?? false,
+                travel?.X, travel?.Y, travel?.Z,
+                state?.QuestTravelReason));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "BotControl: brain inspect failed");
+        }
+    }
+
+    /// <summary>Resolves a bot by numeric id or case-insensitive name (the BotAdminService precedent).</summary>
+    private static bool TryResolveBot(IPlayerBotManager manager, string nameOrId, out PlayerBotRuntime? runtime)
+    {
+        if (uint.TryParse(nameOrId, out var id) && manager.TryGet(id, out runtime) && runtime != null)
+            return true;
+        runtime = manager.GetAll().FirstOrDefault(r =>
+            r.Character.Name.Equals(nameOrId.Trim(), StringComparison.OrdinalIgnoreCase));
+        return runtime != null;
+    }
+
 
     /// <summary>Gate: null when authorized, otherwise the error response to return.</summary>
     private static HttpResponse? CheckGate(HttpRequest request)

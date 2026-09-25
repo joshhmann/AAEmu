@@ -184,6 +184,53 @@ public class GameplayActor : IGameplayActor
     public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed)
         => _pendingDecision = (goal, policy, candidates, rejections, seed);
 
+    /// <summary>
+    /// Pending Part-3 join key for the next created request. Staged
+    /// separately from the decision tuple so the queue can stamp a cycle id
+    /// without clobbering scenario-staged goal context (and vice versa).
+    /// Null clears the staged key.
+    /// </summary>
+    private string? _pendingCycleId;
+
+    /// <summary>
+    /// Pending Phase 1 per-bot wake sequence for the next created request.
+    /// Staged separately like the cycle id; null clears the staged sequence.
+    /// </summary>
+    private long? _pendingWakeSeq;
+
+    /// <inheritdoc />
+    public void SetPendingCycleId(string? cycleId) => _pendingCycleId = cycleId;
+    /// <summary>
+    /// Pending movement-owner tag for the next created Move/Drive request.
+    /// Staged by dispatchers (pursuit/roam/hunt/quest-travel) before the
+    /// action method runs; consumed by <see cref="NewRequest"/> like the
+    /// cycle-id staging. Null clears nothing — the action method applies
+    /// its own default owner when nothing was staged.
+    /// Telemetry only — never read by behavior.
+    /// </summary>
+    private string? _pendingMoveOwner;
+
+    /// <summary>
+    /// Stages the movement-owner tag for the next created request
+    /// (PURSUIT_MOVE_TO_UNIT / QUEST_TRAVEL / ROAM / HUNT / NAVIGATION /
+    /// UNSTICK / NETWORK_MOVE / FIXTURE_TELEPORT / OTHER:&lt;path&gt;).
+    /// Null clears the staged owner.
+    /// </summary>
+    public void SetPendingMoveOwner(string? moveOwner) => _pendingMoveOwner = moveOwner;
+
+    /// <summary>
+    /// Movement-owner tag of the most recent position application
+    /// (UNSTICK while stepping a recovery nudge, OTHER:ground-clamp after
+    /// an executor ground-clamp write, otherwise the leg's staged owner).
+    /// Telemetry only — never read by behavior.
+    /// </summary>
+    public string CurrentMoveOwner { get; private set; } = "NONE";
+
+    /// <summary>Destination of the most recent position application. Telemetry only.</summary>
+    public Vector3 LastAppliedPosition { get; private set; }
+    /// <inheritdoc />
+    public void SetPendingWakeSequence(long? wakeSequence) => _pendingWakeSeq = wakeSequence;
+
     public uint ActorId => Character.ObjId;
 
     public Character Character { get; }
@@ -255,7 +302,8 @@ public class GameplayActor : IGameplayActor
             PendingInvitationOwnerId = TeamManager.Instance.GetActiveInvitation(Character.Id)?.Owner?.ObjId ?? 0,
             PartyLeaderObjId = partyLeaderObjId,
             PartyLeaderPosition = partyLeaderPosition,
-            PartyLeaderTargetObjId = partyLeaderTargetObjId
+            PartyLeaderTargetObjId = partyLeaderTargetObjId,
+            IsMounted = BotMountManager.IsMounted(Character)
         };
 
         // Observe is a query, not a mutation: it completes immediately and
@@ -298,7 +346,12 @@ public class GameplayActor : IGameplayActor
         // the game loop.
         ExecutionBoundary.AssertOnExecutionThread("MoveTo");
 
+        // Telemetry default: dispatchers (pursuit/roam/hunt/quest-travel)
+        // stage an explicit owner first; unstaged callers (API queue,
+        // scenarios, tests) fall back to the method-shaped OTHER tag.
+        _pendingMoveOwner ??= "OTHER:move-to";
         var request = NewRequest(ActorActionType.Move, 0, destination, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
+
         if (!TryBegin(request, "move"))
             return request;
 
@@ -313,6 +366,8 @@ public class GameplayActor : IGameplayActor
     {
         ExecutionBoundary.AssertOnExecutionThread("NavigateTo");
 
+        // Telemetry default (unstaged callers fall back to NAVIGATION).
+        _pendingMoveOwner ??= "NAVIGATION";
         var request = NewRequest(ActorActionType.Move, 0, destination, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "navigate"))
             return request;
@@ -324,6 +379,8 @@ public class GameplayActor : IGameplayActor
     {
         ExecutionBoundary.AssertOnExecutionThread("NavigateToUnit");
 
+        // Telemetry default (unstaged callers fall back to NAVIGATION).
+        _pendingMoveOwner ??= "NAVIGATION";
         var request = NewRequest(ActorActionType.Move, targetObjId, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "navigate"))
             return request;
@@ -333,6 +390,40 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.RejectedAction, "target unit not found");
 
         return NavigateToInternal(request, unit.Transform.World.Position, speed);
+    }
+
+    /// <summary>
+    /// Telemetry: one bounded line per terminal transition (the Running→
+    /// terminal edge with owner + pumped elapsed + detail). Move/Drive at
+    /// Info, everything else at Debug. Additive — no behavior input.
+    /// </summary>
+    private void LogMoveTerminal(ActorRequest request)
+    {
+        var message =
+            "BotMoveTerminal trace={TraceId} actor={ActorId}({Name}) action={Action} target={TargetId} " +
+            "result={Result} failure={Failure} owner={Owner} elapsed={ElapsedS:F1}s detail={Detail}";
+        if (request.Action is ActorActionType.Move or ActorActionType.Drive)
+            Logger.Info(message,
+                request.TraceId, ActorId, Character.Name, request.Action, request.TargetId,
+                request.State, request.Failure?.ToString() ?? "-", request.MoveOwner ?? "NONE",
+                request.Elapsed.TotalSeconds, request.Detail ?? "-");
+        else
+            Logger.Debug(message,
+                request.TraceId, ActorId, Character.Name, request.Action, request.TargetId,
+                request.State, request.Failure?.ToString() ?? "-", request.MoveOwner ?? "NONE",
+                request.Elapsed.TotalSeconds, request.Detail ?? "-");
+    }
+
+    /// <summary>
+    /// Telemetry: one bounded Info line when a Move/Drive leg enters Running
+    /// (the ACCEPTED→Running edge, with the dispatch-attributed owner and
+    /// the resolved destination snapshot). Additive — no behavior input.
+    /// </summary>
+    private void LogMoveStart(ActorRequest request, string mode, Vector3 destination, float speed)
+    {
+        Logger.Info("BotMoveStart trace={TraceId} actor={ActorId}({Name}) mode={Mode} owner={Owner} dest=({X:F1},{Y:F1},{Z:F1}) speed={Speed:F1}",
+            request.TraceId, ActorId, Character.Name, mode, request.MoveOwner ?? "NONE",
+            destination.X, destination.Y, destination.Z, speed);
     }
 
     private ActorRequest NavigateToInternal(ActorRequest request, Vector3 destination, float speed)
@@ -364,6 +455,7 @@ public class GameplayActor : IGameplayActor
                     ResetMoveProgressTracking();
                     _moveTarget = _moveWaypoints.Dequeue();
                     request.Start($"navigating route ({path.Count} waypoints)");
+                    LogMoveStart(request, "navigate-route", destination, speed);
                     return request;
                 }
             }
@@ -384,8 +476,9 @@ public class GameplayActor : IGameplayActor
                 ResetMoveProgressTracking();
                 _moveTarget = _moveWaypoints.Dequeue();
                 request.Start($"navigating obstacle detour ({detour.Count} waypoints)");
+                LogMoveStart(request, "navigate-detour", destination, speed);
                 return request;
-            }
+                }
         }
 
         return StartMove(request, destination, speed);
@@ -407,12 +500,12 @@ public class GameplayActor : IGameplayActor
             request.Start("walking");
             return Complete(request, "already at destination");
         }
-
         _moveWaypoints = null;
         _moveTarget = destination;
         _moveSpeed = speed;
         ResetMoveProgressTracking();
         request.Start("walking");
+        LogMoveStart(request, "move", destination, speed);
         return request;
     }
 
@@ -464,6 +557,8 @@ public class GameplayActor : IGameplayActor
         // REQ-M5.3-7 — see MoveTo.
         ExecutionBoundary.AssertOnExecutionThread("MoveToUnit");
 
+        // Telemetry default (pursuit/hunt/pvp stage an explicit owner first).
+        _pendingMoveOwner ??= "OTHER:move-to-unit";
         var request = NewRequest(ActorActionType.Move, targetObjId, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "move"))
             return request;
@@ -497,6 +592,22 @@ public class GameplayActor : IGameplayActor
         request.Start("interrupting");
         Finish(request, request.Complete(detail: "stopped"));
         return request;
+    }
+
+    /// <inheritdoc />
+    public bool PreemptCurrent(string reason)
+    {
+        // REQ-M5.3-7 — see MoveTo: preemption mutates actor execution state.
+        ExecutionBoundary.AssertOnExecutionThread("PreemptCurrent");
+
+        if (_active is not { IsTerminal: false })
+            return false;
+        // Same standstill broadcast Stop emits for a walking Move, so
+        // observers see the halt either way (dossier §1.6).
+        if (_active.Action == ActorActionType.Move && _moveTarget != null)
+            BroadcastStop();
+        InterruptActive(reason);
+        return true;
     }
 
     public ActorRequest SetTarget(uint targetObjId)
@@ -1209,23 +1320,38 @@ public class GameplayActor : IGameplayActor
 
         // 4. Fail-closed filter through the REAL AddQuest pre-conditions —
         //    everything AcceptQuest would refuse is not discoverable.
+        //    Diagnostic: per-candidate reject codes ride the Complete detail
+        //    (bounded: 6 entries + overflow count), from the SAME predicates
+        //    via DiscoverRejectReason — no second gate, no behavior change.
         var offerings = new List<QuestOffering>();
         var questIds = new HashSet<uint>(candidates);
         foreach (var questId in killCandidates)
             questIds.Add(questId);
+        var rejectShown = new List<string>();
         foreach (var questId in questIds.Order())
         {
-            if (!IsDiscoverable(questId))
+            var reject = DiscoverRejectReason(questId);
+            if (reject.Length != 0)
+            {
+                if (rejectShown.Count < 6)
+                    rejectShown.Add($"{questId}:{reject}");
                 continue;
+            }
             var template = QuestManager.Instance.GetTemplate(questId)!;
             var isKillOffer = killCandidates.Contains(questId);
             offerings.Add(new QuestOffering(questId, template.Level,
                 isKillOffer ? QuestAcceptorType.Kill : acceptorType, acceptorTemplateId));
         }
+        var rejectSuffix = rejectShown.Count == 0 && questIds.Count == offerings.Count
+            ? ""
+            : $" [cands={questIds.Count} reject={(rejectShown.Count == 0 ? "-" : string.Join(",", rejectShown))}" +
+              (questIds.Count - offerings.Count > rejectShown.Count
+                  ? $"+{questIds.Count - offerings.Count - rejectShown.Count}more" : "") + "]";
 
         var result = new QuestDiscoveryResult(targetObjId, acceptorType, acceptorTemplateId, offerings);
         return Complete(request, result,
-            $"discovered {offerings.Count} quest(s) at {acceptorType} {acceptorTemplateId}");
+            $"discovered {offerings.Count} quest(s) at {acceptorType} {acceptorTemplateId}{rejectSuffix}");
+
     }
 
     /// <summary>
@@ -1369,23 +1495,37 @@ public class GameplayActor : IGameplayActor
     /// stays hidden.
     /// </summary>
     internal bool IsDiscoverable(uint questId)
+        => DiscoverRejectReason(questId).Length == 0;
+
+    /// <summary>
+    /// Diagnostic twin of <see cref="IsDiscoverable"/>: the SAME predicates in
+    /// the SAME order, returning the rejecting predicate's code (or "" when
+    /// discoverable). Codes: NO_TEMPLATE (unknown quest id), NO_QUEST_STATE
+    /// (character quest state missing), ALREADY_ACTIVE, SUPPLY_BLOCKED
+    /// (backpack supply gate), REQ_FAIL_START_{componentId} (a Start
+    /// component's unit_reqs fail for this character — level/race/chain),
+    /// COMPLETED_NON_REPEATABLE. Read-only; AddQuest gate order mirrored.
+    /// </summary>
+    internal string DiscoverRejectReason(uint questId)
     {
         var template = QuestManager.Instance.GetTemplate(questId);
         var quests = Character.Quests;
-        if (template == null || quests == null)
-            return false;
+        if (template == null)
+            return "NO_TEMPLATE";
+        if (quests == null)
+            return "NO_QUEST_STATE";
         if (quests.ActiveQuests.ContainsKey(questId))
-            return false;
+            return "ALREADY_ACTIVE";
         if (!quests.CanAcceptSupplyItems(template))
-            return false;
+            return "SUPPLY_BLOCKED";
         foreach (var startComponent in template.GetComponents(QuestComponentKind.Start))
         {
             if (!UnitRequirementsGameData.Instance.CanComponentRun(startComponent, Character))
-                return false;
+                return $"REQ_FAIL_START_{startComponent.Id}";
         }
         if (quests.HasQuestCompleted(questId) && !template.Repeatable)
-            return false;
-        return true;
+            return "COMPLETED_NON_REPEATABLE";
+        return "";
     }
 
     #endregion
@@ -2097,6 +2237,8 @@ public class GameplayActor : IGameplayActor
 
     public ActorRequest DriveVehicle(uint vehicleObjId, Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
     {
+        // Telemetry default (unstaged callers fall back to the method-shaped OTHER tag).
+        _pendingMoveOwner ??= "OTHER:drive-vehicle";
         var request = NewRequest(ActorActionType.Drive, vehicleObjId, destination, timeout: timeout ?? DefaultMoveTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "drive"))
             return request;
@@ -2136,6 +2278,7 @@ public class GameplayActor : IGameplayActor
         _driveSpeed = speed;
         _driveVehicle = vehicle;
         request.Start($"driving vehicle {vehicle.ObjId} ({vehicle.Name})");
+        LogMoveStart(request, "drive", destination, speed);
         return request;
     }
 
@@ -4186,6 +4329,10 @@ public class GameplayActor : IGameplayActor
                 return;
 
             var dt = (float)Math.Max(elapsed.TotalSeconds, 0.05);
+            // Telemetry: a recovery-nudge step is owned by UNSTICK even
+            // though it advances the same request; otherwise the leg keeps
+            // its dispatch-attributed owner for every applied step.
+            var stepOwner = _unstickWaypoint != null ? "UNSTICK" : request.MoveOwner ?? "OTHER:tick-move";
             if (flatDistance > 0.0001f)
             {
                 var step = Math.Min(ProfiledMoveSpeed(flatDistance, dt) * dt, flatDistance);
@@ -4194,12 +4341,14 @@ public class GameplayActor : IGameplayActor
                 var fraction = step / flatDistance;
                 var newZ = position.Z + (legTarget.Z - position.Z) * fraction;
                 ApplyCharacterMove(new Vector3(newX, newY, newZ));
+                NoteMoveApplied(stepOwner, new Vector3(newX, newY, newZ));
             }
             else
             {
                 var dir = legTarget.Z >= position.Z ? 1f : -1f;
                 var zStep = Math.Min(ProfiledMoveSpeed(zDistance, dt) * dt, zDistance);
                 ApplyCharacterMove(new Vector3(position.X, position.Y, position.Z + dir * zStep));
+                NoteMoveApplied(stepOwner, new Vector3(position.X, position.Y, position.Z + dir * zStep));
             }
             return;
         }
@@ -4238,6 +4387,7 @@ public class GameplayActor : IGameplayActor
             // broadcast + FinalizeTransform. The vehicle Transform is never
             // assigned directly here.
             ApplyVehicleMove(vehicle, next);
+            NoteMoveApplied(request.MoveOwner ?? "OTHER:tick-drive", next);
         }
     }
 
@@ -4441,6 +4591,27 @@ public class GameplayActor : IGameplayActor
         }
     }
 
+    /// <summary>
+    /// Telemetry: records which owner wrote the last applied position.
+    /// Called after every Tick-driven apply (walk/drive) and by the
+    /// executor after out-of-request writes (ground clamp). Bounded
+    /// in-memory state (two fields) — no log line per tick, no behavior
+    /// input.
+    /// </summary>
+    private void NoteMoveApplied(string owner, Vector3 applied)
+    {
+        CurrentMoveOwner = owner;
+        LastAppliedPosition = applied;
+    }
+
+    /// <summary>
+    /// Telemetry entry for position writes that happen outside any actor
+    /// request (executor ground clamp, fixture teleports applied through
+    /// the actor's character). Records the owner so the next attribution
+    /// read names the real writer instead of a stale leg owner.
+    /// </summary>
+    public void NoteExternalPositionWrite(string owner, Vector3 applied) => NoteMoveApplied(owner, applied);
+
     private void ClearMovementState()
     {
         _moveTarget = null;
@@ -4553,6 +4724,21 @@ public class GameplayActor : IGameplayActor
             request.AnnotateDecision(pending.Goal, pending.Policy, pending.Candidates, pending.Rejections, pending.Seed);
             _pendingDecision = null;
         }
+        if (_pendingCycleId != null)
+        {
+            request.SetDecisionCycleId(_pendingCycleId);
+            _pendingCycleId = null;
+        }
+        if (_pendingWakeSeq != null)
+        {
+            request.SetWakeSequence(_pendingWakeSeq);
+            _pendingWakeSeq = null;
+        }
+        if (_pendingMoveOwner != null)
+        {
+            request.SetMoveOwner(_pendingMoveOwner);
+            _pendingMoveOwner = null;
+        }
         return request;
     }
 
@@ -4651,7 +4837,13 @@ public class GameplayActor : IGameplayActor
             request.State, request.Failure, request.Detail, request.StateChanges.ToList(),
             DecisionGoal: request.DecisionGoal, DecisionPolicy: request.DecisionPolicy,
             DecisionCandidates: request.DecisionCandidates, DecisionRejections: request.DecisionRejections,
-            DecisionSeed: request.DecisionSeed));
+            DecisionSeed: request.DecisionSeed, DecisionCycleId: request.DecisionCycleId,
+            WakeSequence: request.WakeSequence, MoveOwner: request.MoveOwner));
+        // Telemetry: one bounded line per terminal transition so a lane log
+        // joins ACCEPTED→Running (BotMoveStart) to its terminal outcome.
+        // Move/Drive legs log at Info (legs are seconds-to-minutes long);
+        // all other actions stay at Debug.
+        LogMoveTerminal(request);
         if (_trace.Count > MaxTraceRecords)
             _trace.RemoveRange(0, _trace.Count - MaxTraceRecords);
         if (ReferenceEquals(_active, request))

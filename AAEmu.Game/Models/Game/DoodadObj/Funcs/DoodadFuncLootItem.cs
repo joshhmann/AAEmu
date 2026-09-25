@@ -1,4 +1,5 @@
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.Items;
@@ -32,6 +33,11 @@ public class DoodadFuncLootItem : DoodadFuncTemplate
         if (character == null)
             return;
 
+        // Trace (consequence state, schema v2): measure the bag before the
+        // grant so the loot row can carry the exact item-unit delta. Null when
+        // the container is unreadable (explicit unknown).
+        var traceBagBefore = PlayerTraceService.Instance.IsActive ? PlayerTraceService.BagItemUnits(character) : null;
+
         var chance = Random.Shared.Next(0, 10000);
         if (chance > Percent)
             return;
@@ -62,6 +68,26 @@ public class DoodadFuncLootItem : DoodadFuncTemplate
 
         if (res == false)
             character.SendErrorMessage(ErrorMessageType.BagInvalidItem);
+
+        // Trace (consequence state, schema v2): record the doodad loot outcome
+        // with its grant result (res), the exact bag delta of the grant, and the
+        // post-grant snapshot. Coins (ItemId 500) land in money, so their bag
+        // delta stays null. Ordinary accessors only; tracing mutates nothing.
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            var bagAfter = PlayerTraceService.BagItemUnits(character);
+            var bagDelta = res && ItemId != Item.Coins && traceBagBefore.HasValue && bagAfter.HasValue
+                ? bagAfter.Value - traceBagBefore.Value
+                : (int?)null;
+            PlayerTraceService.Instance.RecordLoot(character, "loot_granted", owner.ObjId, ItemId, res ? count : 0, bagDelta, new
+            {
+                Source = "DoodadFuncLootItem",
+                DoodadTemplateId = owner.TemplateId,
+                Granted = res,
+                RollPercent = Percent,
+                GroupId
+            });
+        }
 
         // Move to next phase only when loot was actually granted.
         owner.ToNextPhase = res;

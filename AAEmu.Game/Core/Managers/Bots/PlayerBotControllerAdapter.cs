@@ -46,6 +46,10 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed)
         => Actor.SetPendingDecision(goal, policy, candidates, rejections, seed);
 
+    public void SetPendingCycleId(string? cycleId) => Actor.SetPendingCycleId(cycleId);
+
+    public void SetPendingWakeSequence(long? wakeSequence) => Actor.SetPendingWakeSequence(wakeSequence);
+
     public ActorObservation Observe() => Actor.Observe();
 
     public ActorRequest MoveTo(System.Numerics.Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
@@ -64,6 +68,8 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
         => Actor.DriveVehicle(vehicleObjId, destination, speed, timeout, idempotencyKey);
 
     public ActorRequest Stop() => Actor.Stop();
+
+    public bool PreemptCurrent(string reason) => Actor.PreemptCurrent(reason);
 
     public ActorRequest SetTarget(uint targetObjId) => Actor.SetTarget(targetObjId);
 

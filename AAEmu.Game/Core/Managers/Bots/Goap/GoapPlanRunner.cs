@@ -37,6 +37,22 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
             ? ActivePlan.Actions[CurrentActionIndex]
             : null;
 
+    /// <summary>
+    /// Canonical preemption at the plan layer (prereq Part 4): stops the
+    /// in-flight actor request via <see cref="IGameplayActor.PreemptCurrent"/>
+    /// so no orphan leg keeps running past its plan, then drops the
+    /// runner's reference. A no-op when the request already terminated —
+    /// completion paths keep their exact semantics. Callers keep their
+    /// existing plan/index/retry resets (the replan trigger); this only
+    /// closes the orphan-request window the reference-drop left behind.
+    /// </summary>
+    private void DropInFlightRequest(IGameplayActor actor, string reason)
+    {
+        if (CurrentActorRequest != null)
+            actor.PreemptCurrent(reason);
+        CurrentActorRequest = null;
+    }
+
     public GoapPlanRunner(
         IBotWorldStateProvider? stateProvider = null,
         IGoalArbitrator? goalArbitrator = null,
@@ -113,7 +129,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                 ActivePlan = null;
                 CurrentActionIndex = 0;
                 CurrentActionStatus = GoapActionStatus.NotStarted;
-                CurrentActorRequest = null;
+                DropInFlightRequest(actor, "goap survival interrupt");
                 ActionRetryCount = 0;
 
                 EmitTelemetry(GoapTelemetryEventType.InterruptTriggered, InterruptGoal.Name, CurrentAction?.Name,
@@ -142,7 +158,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                         ActivePlan = null;
                         CurrentActionIndex = 0;
                         CurrentActionStatus = GoapActionStatus.NotStarted;
-                        CurrentActorRequest = null;
+                        DropInFlightRequest(actor, "goap primary-intent resume");
                         ActionRetryCount = 0;
                     }
                     else
@@ -171,7 +187,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                     context.Memory.ClearActionFailures(actionInFlight.Name);
                     CurrentActionIndex++;
                     CurrentActionStatus = GoapActionStatus.NotStarted;
-                    CurrentActorRequest = null;
+                    DropInFlightRequest(actor, "goap action succeeded");
                     ActionRetryCount = 0;
 
                     if (CurrentActionIndex >= ActivePlan.Actions.Count)
@@ -190,7 +206,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                     {
                         ActionRetryCount++;
                         CurrentActionStatus = GoapActionStatus.NotStarted;
-                        CurrentActorRequest = null;
+                        DropInFlightRequest(actor, "goap action retry");
                         EmitTelemetry(GoapTelemetryEventType.ActionStarted, ActiveGoal.Name, actionInFlight.Name,
                             $"Retrying action (attempt {ActionRetryCount}/{MaxActionRetries})", observedState.Flags, context);
                     }
@@ -209,7 +225,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                             ActivePlan = null;
                             CurrentActionIndex = 0;
                             CurrentActionStatus = GoapActionStatus.NotStarted;
-                            CurrentActorRequest = null;
+                            DropInFlightRequest(actor, "goap goal abandoned");
                             ActionRetryCount = 0;
                             return false;
                         }
@@ -220,7 +236,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                         ActivePlan = null;
                         CurrentActionIndex = 0;
                         CurrentActionStatus = GoapActionStatus.NotStarted;
-                        CurrentActorRequest = null;
+                        DropInFlightRequest(actor, "goap replan");
                         ActionRetryCount = 0;
                     }
                     break;
@@ -234,7 +250,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                     ActivePlan = null;
                     CurrentActionIndex = 0;
                     CurrentActionStatus = GoapActionStatus.NotStarted;
-                    CurrentActorRequest = null;
+                    DropInFlightRequest(actor, "goap action invalidated");
                     ActionRetryCount = 0;
                     break;
 
@@ -262,7 +278,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                     ActivePlan = null;
                     CurrentActionIndex = 0;
                     CurrentActionStatus = GoapActionStatus.NotStarted;
-                    CurrentActorRequest = null;
+                    DropInFlightRequest(actor, "goap interrupt satisfied");
                     ActionRetryCount = 0;
                     return true;
                 }
@@ -273,7 +289,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                 ActivePlan = null;
                 CurrentActionIndex = 0;
                 CurrentActionStatus = GoapActionStatus.NotStarted;
-                CurrentActorRequest = null;
+                DropInFlightRequest(actor, "goap goal satisfied");
                 ActionRetryCount = 0;
                 return false;
             }
@@ -288,7 +304,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
             ActivePlan = null;
             CurrentActionIndex = 0;
             CurrentActionStatus = GoapActionStatus.NotStarted;
-            CurrentActorRequest = null;
+            DropInFlightRequest(actor, "goap goal unachievable");
             ActionRetryCount = 0;
         }
 
@@ -333,7 +349,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
             ActivePlan = planResult;
             CurrentActionIndex = 0;
             CurrentActionStatus = GoapActionStatus.NotStarted;
-            CurrentActorRequest = null;
+            DropInFlightRequest(actor, "goap plan generated");
             ActionRetryCount = 0;
 
             EmitTelemetry(GoapTelemetryEventType.PlanGenerated, ActiveGoal.Name, null,
@@ -360,7 +376,7 @@ public sealed class GoapPlanRunner : IGoapPlanRunner
                 ActivePlan = null;
                 CurrentActionIndex = 0;
                 CurrentActionStatus = GoapActionStatus.NotStarted;
-                CurrentActorRequest = null;
+                DropInFlightRequest(actor, "goap precondition invalidated");
                 return true;
             }
 

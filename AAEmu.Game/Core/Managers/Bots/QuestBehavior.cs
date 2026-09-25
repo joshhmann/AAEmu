@@ -1,0 +1,1676 @@
+using System.Globalization;
+using System.Numerics;
+using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Quests;
+using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Director;
+using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Utils;
+
+using NLog;
+
+namespace AAEmu.Game.Core.Managers.Bots;
+
+/// <summary>
+/// Quest behavior leg (copper-bootstrap): the WHOLE quest decision — advance
+/// each active quest once, otherwise discover from the nearest in-range NPCs
+/// and accept the lowest-level in-band offer — through the ONE shared
+/// <see cref="BotDecisionSelector"/> (Finding D: accept is NOT split out —
+/// accept proposals compete with advance/turn-in in a single Select over one
+/// proposal list with deterministic cross-type priorities).
+///
+/// Reuses, never duplicates: <see cref="BotObservedContext"/> perceive entry,
+/// <see cref="BotDecisionProposal"/> (+ hard preconditions), the shared
+/// selector, <see cref="BotDecisionCycle"/> stage/dispatch/terminal bridge,
+/// existing <see cref="IGameplayActor"/> verbs only, per-wake idempotency
+/// keys, and the existing audit records. Objective pursuit itself (kill,
+/// gather, talk) rides the existing hunt/interact branches — this behavior
+/// only advances the step machine and acquires new quests.
+///
+/// Owned by <see cref="BotBehaviorRuntime"/> (lifecycle); hosted per-wake by
+/// the roam executor's quest leg. NOT owned here: leg gating (quest.* +
+/// actor-idle), CycleId minting, band/cap defaults
+/// (<see cref="QuestDecisionScenario.QuestOptions"/> are constructed by the
+/// caller), travel fallback (ArmQuestTravel stays navigation-side), and all
+/// engine legality (range, IsDiscoverable, liveness stay fail-closed gates at
+/// dispatch via TryBegin/Reject).
+///
+/// Decision discipline (the NeedsDecisionScenario precedent):
+///   - perception rides BotObservedContext.Capture (active quest ids) plus
+///     live NPC resolution for discovery targets;
+///   - hard legality is evaluated BEFORE preference; range, liveness, and
+///     gate checks stay the engine's own fail-closed gates at dispatch;
+///   - selection is deterministic (fixed priority, personality weight 0);
+///   - dispatch calls existing actor methods only — no new gameplay path.
+/// </summary>
+public static class QuestBehavior
+{
+    private static readonly Logger SweepDiagLog = LogManager.GetCurrentClassLogger();
+
+    /// <summary>Diagnostic-only sweep enumeration cap (behavior take-3 cut is unchanged).</summary>
+    private const int SweepDiagEnumCap = 256;
+    /// <summary>Diagnostic-only per-field caps so log/detail strings stay bounded.</summary>
+    private const int SweepDiagCandidatesShown = 8;
+    private const int SweepDiagOutcomesShown = 3;
+
+    /// <summary>
+    /// G5 pursuit: fixture-scoped engagement boundary for skill-2 autoattack.
+    /// Quoted from the roam <c>HuntMeleeRange</c> precedent (3.0 m,
+    /// BotRoamStepExecutor): the flat distance at which the bot STOPS closing
+    /// and holds. Fixture-scoped, NOT a universal combat-range rule — the
+    /// engine owns real range refusal (Skill.Use TooClose/TooFar bands).
+    /// </summary>
+    private const float PursuitStopRadiusM = 3.0f;
+    /// <summary>
+    /// G5 pursuit retrack gate: a live pursuit leg is re-issued only after
+    /// the committed target moved more than this since the last issue.
+    /// Quoted exactly from the roam drift precedent (BotRoamStepExecutor
+    /// hunt/butcher/follow legs: reissue only on &gt; 2.0 m destination
+    /// drift) — per-wake re-issue discipline, never in-leg tracking.
+    /// </summary>
+    private const float PursuitRetrackDriftM = 2.0f;
+    /// <summary>G5 pursuit leg speed (roam HuntChaseSpeed default precedent).</summary>
+    private const float PursuitSpeedMps = 4.5f;
+    /// <summary>G5 pursuit leg budget (roam hunt-leg 10 s precedent).</summary>
+    private static readonly TimeSpan PursuitLegTimeout = TimeSpan.FromSeconds(10);
+    /// <summary>Goal key routing turn-in proposals through Dispatch.</summary>
+    private const string TurnInGoal = "quest.turn-in";
+    /// <summary>Goal key routing the G8b return Move/Stop/InteractNpc through Dispatch.</summary>
+    private const string ReturnGoal = "quest.return";
+    /// <summary>
+    /// G8b return arrival radius: the InteractNpc engine gate itself
+    /// (GameplayActor.MaxInteractRange, 25 m flat). Inside → audited Stop,
+    /// then InteractNpc; outside → drift-gated MoveToUnit. Brain-side radius
+    /// check per wake, the PursuitStopRadiusM discipline at 25 m.
+    /// </summary>
+    private const float ReturnInteractRadiusM = GameplayActor.MaxInteractRange;
+    /// <summary>Goal key routing pursuit Move/Stop through Dispatch.</summary>
+    private const string PursuitGoal = "quest.objective-pursuit";
+    /// <summary>Goal key routing the G6 combat AutoAttack through Dispatch.</summary>
+    private const string CombatGoal = "quest.objective-combat";
+    /// <summary>Goal key routing the G7c corpse Loot through Dispatch.</summary>
+    private const string LootGoal = "quest.objective-loot";
+    /// G6 hold-confirm gate: a pursuit Stop leg already landed for this
+    /// (actor, target) at these poses stays landed — the Stop proposal
+    /// withdraws while neither side moved, so the lower-priority combat
+    /// proposal can win a settled wake. Any motion re-arms Stop (range-hold
+    /// wins). Memory-only wake cache, same discipline as LastPursuitIssue.
+    /// </summary>
+    private static readonly Dictionary<uint, (uint TargetObjId, Vector3 ActorPos, Vector3 TargetPos)> LastStopHold = new();
+    /// <summary>
+    /// Last-issued pursuit target position per actor (memory-only wake cache
+    /// for the drift gate; the G4 funnel re-selects every wake, this cache
+    /// never competes with it). Keyed by ActorId; bounded by full clear.
+    /// </summary>
+    private static readonly Dictionary<uint, (uint TargetObjId, Vector3 TargetPos)> LastPursuitIssue = new();
+    /// <summary>
+    /// Last-issued G8b return reporter position per actor (memory-only wake
+    /// cache for the drift gate; the reporter is re-resolved every wake, this
+    /// cache never competes with it). Separate from <c>LastPursuitIssue</c> so
+    /// prey-pursuit telemetry never entangles return intent. Keyed by
+    /// ActorId; bounded by full clear.
+    /// </summary>
+    private static readonly Dictionary<uint, (uint TargetObjId, Vector3 TargetPos)> LastReturnIssue = new();
+    private static readonly object PursuitSync = new();
+    /// <summary>
+    /// G7b corpse recognition (observe-only): the pinned prey corpse per actor.
+    /// Populated ONLY from the pinned-target dead transition (the target-dead
+    /// withdrawal in <c>PursuitEmit</c>/<c>CombatEmit</c>, or the
+    /// no-selection withdrawal while a quest-pinned target (<c>LastStopHold</c> /
+    /// <c>LastPursuitIssue</c>) resolves dead): ObjId + TemplateId + QuestId +
+    /// detecting cycle/time. Same-ObjId continuity is mandatory (engine: live
+    /// Npc ObjId X stays corpse X until despawn) — a recorded objId that
+    /// resolves live again is dropped as recycled. Memory-only wake cache,
+    /// same discipline as <c>LastStopHold</c>/<c>LastPursuitIssue</c>: keyed by
+    /// ActorId, bounded by full clear. Never dispatches, never mutates.
+    /// </summary>
+    internal sealed record QuestCorpseRecord(uint ObjId, uint TemplateId, uint QuestId, string CycleId, DateTimeOffset DetectedUtc);
+    private static readonly Dictionary<uint, QuestCorpseRecord> LastCorpse = new();
+    private const int CorpseMemoryBound = 256;
+    /// <summary>
+    /// Records the pinned corpse for an actor. Guards (non-zero objId, the
+    /// fixture row's prey template, the row's own quest id) keep irrelevant
+    /// dead NPCs out — callers pass the pinned selection's live resolution,
+    /// never a world scan. The questId form derives the row itself (a direct
+    /// caller such as a test has no row in hand); the wake path passes the
+    /// already-resolved row so the per-wake derivation is never repeated.
+    /// </summary>
+    internal static void NotePinnedCorpse(uint actorId, uint objId, uint templateId, uint questId, string cycleId)
+        => NotePinnedCorpse(actorId, objId, templateId, QuestFixtureRow.FromQuestData(questId), cycleId);
+
+    private static void NotePinnedCorpse(uint actorId, uint objId, uint templateId, QuestFixtureRow fixture, string cycleId)
+    {
+        if (objId == 0 || templateId != fixture.PreyTemplate)
+            return;
+        lock (PursuitSync)
+        {
+            if (LastCorpse.Count >= CorpseMemoryBound)
+                LastCorpse.Clear();
+            LastCorpse[actorId] = new QuestCorpseRecord(objId, templateId, fixture.QuestId, cycleId ?? "-", DateTimeOffset.UtcNow);
+        }
+    }
+    internal static bool TryGetCorpse(uint actorId, out QuestCorpseRecord? record)
+    {
+        lock (PursuitSync)
+            return LastCorpse.TryGetValue(actorId, out record);
+    }
+    internal static void ClearCorpseMemory()
+    {
+        lock (PursuitSync)
+            LastCorpse.Clear();
+    }
+    /// <summary>
+    /// G7c loot-once memory: (actor, corpse ObjId) pairs whose Loot verb has
+    /// already run its terminal course. The proposal withholds any recorded
+    /// corpse present here, so the SAME corpse never re-dispatches across
+    /// re-ticks — even if its container refills. Keyed stable per corpse
+    /// (never per wake); the dispatch idempotency key mirrors it. Memory-only
+    /// wake cache, same discipline as <c>LastCorpse</c>: keyed by ActorId,
+    /// bounded by full clear. Records dispatches only, never policy.
+    /// </summary>
+    private static readonly HashSet<(uint ActorId, uint ObjId)> LootedCorpses = new();
+    internal static bool IsLootDispatched(uint actorId, uint objId)
+    {
+        lock (PursuitSync)
+            return LootedCorpses.Contains((actorId, objId));
+    }
+    internal static void ClearLootMemory()
+    {
+        lock (PursuitSync)
+            LootedCorpses.Clear();
+    }
+    /// <summary>
+    /// Read-only loot-container probe for a resolved corpse: containerExists +
+    /// item count + the authoritative lootable predicate reusing
+    /// <c>GameplayActor.Loot</c>'s own legality gates (owner resolves, flat
+    /// distance within <c>LootingContainer.MaxLootingRange</c>, non-empty
+    /// container) as reads only — never opening, mutating, or transferring.
+    /// Policy stays in <c>Loot</c>; this mirrors its preconditions.
+    /// </summary>
+    internal static (bool ContainerExists, int ItemCount, bool Lootable) ProbeCorpse(Character? character, Npc? npc)
+    {
+        if (character?.ParentWorld == null || npc == null)
+            return (false, 0, false);
+        var owner = character.ParentWorld.GetBaseUnit(npc.ObjId);
+        if (owner == null)
+            return (false, 0, false);
+        var container = owner.LootingContainer;
+        if (container == null)
+            return (false, 0, false);
+        var count = container.Items.Count;
+        var inRange = MathUtil.CalculateDistance(
+            character.Transform.World.Position, owner.Transform.World.Position, false)
+            <= Models.Game.Items.Containers.LootingContainer.MaxLootingRange;
+        return (true, count, count > 0 && inRange);
+    }
+    /// <summary>
+    /// Pure diag fragment for a recognized corpse
+    /// (<c>:corpse={objId}:container={n}:lootable={true|false}</c>) or
+    /// <c>:corpse={objId}:gone=true</c> once despawned. Carries no spaces or
+    /// brackets so the funnel log and DECIDE detail stay greppable and the
+    /// test-side funnel parser keeps parsing byte-identical.
+    /// </summary>
+    internal static string FormatCorpseFragment(uint objId, int itemCount, bool lootable)
+        => $":corpse={objId}:container={itemCount}:lootable={(lootable ? "true" : "false")}";
+    /// <summary>
+    /// G7b recognition arm 1 (direct): the pinned selection resolves dead in a
+    /// target-dead withdrawal — questId/objective-context (funnel), target
+    /// objId/template/dead-state (live npc) are all known here, so no second
+    /// world scan runs. Records the corpse (fixture-row prey-template guard
+    /// inside) and returns the read-only probe fragment, or "" when the dead
+    /// unit is not our prey (irrelevant-dead-NPC ignored). Dispatches nothing.
+    /// </summary>
+    private static string NoteDeadSelection(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts,
+        QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel, Npc npc)
+    {
+        if (npc.Hp > 0 || npc.TemplateId != funnel.Fixture.PreyTemplate)
+            return "";
+        NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId);
+        var probe = ProbeCorpse(actor.Character, npc);
+        return FormatCorpseFragment(npc.ObjId, probe.ItemCount, probe.Lootable);
+    }
+    /// <summary>
+    /// G7b recognition arm 2 (pin-memory): the funnel drops dead candidates,
+    /// so post-death wakes usually withdraw with no-selection — the committed
+    /// selection is then only reachable through the quest-pinned memories
+    /// (<c>LastStopHold</c> / <c>LastPursuitIssue</c>, both fixture-quest-owned
+    /// by construction) or the recorded corpse itself. Resolves ONLY that pinned
+    /// objId (a direct resolve, never a scan): dead prey → record + probe
+    /// fragment; recorded objId resolving live → drop as recycled; recorded
+    /// objId gone from the world → gone fragment (no container claim).
+    /// Death-wake re-pin: a newly dead quest-relevant pinned target shadows
+    /// any stale record — the fresh corpse is pinned (old released) so
+    /// <c>LootEmit</c> evaluates the fresh container. Same-ObjId pins
+    /// keep continuity through the record path; irrelevant dead units never
+    /// re-pin. Dispatches nothing.
+    /// </summary>
+    private static string ObservePinnedCorpse(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts,
+        QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel)
+    {
+        var character = actor.Character;
+        uint pin = 0;
+        QuestCorpseRecord? stale = null;
+        lock (PursuitSync)
+        {
+            LastCorpse.TryGetValue(actor.ActorId, out stale);
+            if (LastStopHold.TryGetValue(actor.ActorId, out var hold))
+                pin = hold.TargetObjId;
+            else if (LastPursuitIssue.TryGetValue(actor.ActorId, out var last))
+                pin = last.TargetObjId;
+        }
+        if (pin != 0 && (stale == null || pin != stale.ObjId))
+        {
+            var fresh = character?.ParentWorld?.GetNpc(pin);
+            if (fresh != null && fresh.Hp <= 0 && fresh.TemplateId == funnel.Fixture.PreyTemplate)
+            {
+                NotePinnedCorpse(actor.ActorId, fresh.ObjId, fresh.TemplateId, funnel.Fixture, opts.CycleId);
+                var freshProbe = ProbeCorpse(character, fresh);
+                return FormatCorpseFragment(fresh.ObjId, freshProbe.ItemCount, freshProbe.Lootable);
+            }
+        }
+        if (stale != null)
+        {
+            var cur = character?.ParentWorld?.GetNpc(stale.ObjId);
+            if (cur != null && cur.Hp > 0)
+            {
+                lock (PursuitSync)
+                    LastCorpse.Remove(actor.ActorId);
+            }
+            else if (cur == null)
+            {
+                return $":corpse={stale.ObjId}:gone=true";
+            }
+            else
+            {
+                var probe = ProbeCorpse(character, cur);
+                return FormatCorpseFragment(stale.ObjId, probe.ItemCount, probe.Lootable);
+            }
+        }
+        if (pin == 0)
+            return "";
+        var npc = character?.ParentWorld?.GetNpc(pin);
+        if (npc == null || npc.Hp > 0 || npc.TemplateId != funnel.Fixture.PreyTemplate)
+            return "";
+        NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId);
+        var probeNow = ProbeCorpse(character, npc);
+        return FormatCorpseFragment(npc.ObjId, probeNow.ItemCount, probeNow.Lootable);
+    }
+    /// <summary>Diagnostic-only raw sweep objId census bound (objId:templateId:flatM, no spaces).</summary>
+    private const int SweepDiagRawIdsShown = 12;
+    /// <summary>
+    /// Runs the wake's plan set through the leg loop and the decision
+    /// pipeline: <see cref="QuestDirector.Run"/> perceives once and assembles
+    /// the plans, then hands them here with that same snapshot.
+    /// </summary>
+    internal static QuestDecisionScenario.QuestRunResult Run(
+        IGameplayActor actor,
+        QuestDecisionScenario.QuestOptions opts,
+        BotObservedContext context,
+        IReadOnlyList<QuestPlan> plans,
+        Func<Character, float, IEnumerable<Npc>>? nearbyNpcs)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(opts);
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(plans);
+
+        try
+        {
+            // ---------------------------------------------------- 1. PERCEIVE
+            var before = context.ActiveQuestIds.ToHashSet();
+
+            // G4 objective→target (additive): per-active-quest proposal path
+            // for the wired quest's first progress step. Evaluated once per wake from
+            // the perceive snapshot; a selection competes as a Target proposal
+            // dispatched through GameplayActor.SetTarget only. Discovery,
+            // accept, advance, and turn-in below are untouched (G3 frozen).
+            var proposals = new List<BotDecisionProposal>();
+            QuestObjectiveTargetSelector.ObjectiveTargetFunnel? objectiveFunnel = null;
+            QuestFixtureRow? objectiveFixture = null;
+            var combatHpBefore = -1;
+            // Stage 4 failed-plan evidence: a plan that failed its fixture gate is
+            // named at run-result level (never a silent skip) and in the lane log,
+            // whether or not the wake found other work.
+            var planFailures = new List<QuestPlanFailure>();
+            // Per-wake evidence rows in plan/leg evaluation order: skipped legs
+            // carry their enter gate's named reason, entered legs their own diag.
+            var legEvidence = new List<LegEvidence>();
+            foreach (var plan in plans)
+            {
+                if (plan.HasFailed)
+                {
+                    var failure = new QuestPlanFailure(plan.QuestId, plan.FailStage, plan.FailReason);
+                    planFailures.Add(failure);
+                    LogPlanFailure(actor, opts, failure);
+                    continue;
+                }
+                var questId = plan.QuestId;
+                var fixture = plan.Fixture;
+                // Stage 4: one plan per quest per wake (assembled by
+                // QuestDirector.PlanWake from the wake's single perception),
+                // driven here as a generic leg loop. The plan's declaration
+                // order IS the evaluation order, so each leg's Emit runs in the
+                // pre-factoring order and the proposal list is assembled
+                // exactly as the inline arms did, no new arm and no new goal.
+                // The Advance leg's enter gate owns the "already-Ready quest has
+                // no advance work" rule (RunCurrentStep from Ready is a no-op
+                // that still reports Completed, which the leg would count as
+                // landed work — starving the route layer so the bot never walks
+                // to an out-of-range reporter: observed live, 60 "advances" on a
+                // Ready quest, 0 turn-ins, bot never moved).
+                var legContext = new QuestLegContext(actor, opts, questId, fixture, null);
+                var wake = new QuestLegWake();
+                QuestObjectiveTargetSelector.ObjectiveTargetFunnel? planFunnel = null;
+                foreach (var leg in plan.Legs)
+                {
+                    // NeedsFunnel marks the objective group: the plan's shared
+                    // funnel is evaluated exactly once per wake, immediately
+                    // before the first leg that reads it (the plan never stores
+                    // it, and the run result keeps the first one for the DECIDE
+                    // bracket and the combat/loot outcome lines).
+                    if (leg.NeedsFunnel && planFunnel == null)
+                    {
+                        planFunnel = QuestObjectiveTargetSelector.Evaluate(
+                            actor.Character, context, opts.CycleId, fixture!);
+                        objectiveFixture ??= fixture;
+                        objectiveFunnel ??= planFunnel;
+                        legContext = legContext with { Funnel = planFunnel };
+                    }
+                    // The leg's own entry gate decides whether it runs this wake
+                    // and, when it does not, names why — the loop never invents a
+                    // skip reason. A null gate enters unconditionally.
+                    var skip = leg.Enter?.Invoke(legContext, wake);
+                    if (skip != null)
+                    {
+                        wake.RecordSkip(questId, leg.Id, skip);
+                        continue;
+                    }
+                    var diag = QuestLegWake.NoProposal;
+                    var hpBefore = wake.HpBefore;
+                    var proposal = leg.Emit(legContext, ref diag, ref hpBefore);
+                    wake.HpBefore = hpBefore;
+                    // The leg's convergence check (only Return has one) reads the
+                    // proposal it just emitted; its verdict is wake state TurnIn's
+                    // gate reads, never a reason the loop invents.
+                    if (proposal != null && leg.Exit != null)
+                        wake.ReturnConverged = leg.Exit(actor, proposal);
+                    wake.Record(questId, leg.Id, proposal, diag);
+                    if (leg.Id == QuestLegId.Combat)
+                        combatHpBefore = wake.HpBefore;
+                    if (proposal != null)
+                        proposals.Add(proposal);
+                }
+                legEvidence.AddRange(wake.Evidence);
+                if (planFunnel != null)
+                    LogObjectiveFunnel(actor, opts, planFunnel, wake);
+            }
+            // Discovery needs live NPC targets: nearest in-range NPCs only
+            // (range itself stays the engine gate at dispatch).
+            // Nearest-first flat-distance order before the MaxDiscoverTargets
+            // take cut (raw diagnostics above stay enumeration order).
+            var discoverTargets = new List<uint>();
+            // ---- sweep diagnostics (additive, bounded; behavior unchanged) ----
+            // rawCount = full provider enumeration (capped); rawShown =
+            // bounded per-candidate table (objId:templateId:flatM:3dM) in
+            // enumeration order; the behavior take-3 cut below is untouched.
+            var rawCount = 0;
+            var enumCapped = false;
+            var rawShown = new List<string>();
+            // Raw sweep objId census (diagnostic-only, additive): first-N
+            // objId:templateId:flatM in enumeration order. No spaces so the
+            // DECIDE bracket keeps parsing byte-identical (parser ignores it).
+            var rawIds = new List<string>();
+            // carries one. UNAVAILABLE/NULL tokens, never an exception.
+            var actorPos = actor.Character?.Transform?.World.Position;
+            var actorPosText = actorPos.HasValue
+                ? $"({actorPos.Value.X:F1},{actorPos.Value.Y:F1},{actorPos.Value.Z:F1})"
+                : "UNAVAILABLE";
+            var actorZone = actor.Character?.Transform?.ZoneId.ToString() ?? "UNAVAILABLE";
+            var actorRegion = actor.Character?.Region != null ? actor.Character.Region.Id.ToString() : "NULL";
+            if (nearbyNpcs != null)
+            {
+                var position = context.Position;
+                var candidates = new List<Npc>();
+                foreach (var npc in nearbyNpcs(actor.Character, GameplayActor.MaxQuestDiscoverRange))
+                {
+                    if (npc == null)
+                        continue;
+                    if (rawCount >= SweepDiagEnumCap)
+                    {
+                        enumCapped = true;
+                        break;
+                    }
+                    rawCount++;
+                    if (rawShown.Count < SweepDiagCandidatesShown)
+                    {
+                        var npcPos = npc.Transform.World.Position;
+                        var shown = !actorPos.HasValue
+                            ? $"{npc.ObjId}:{npc.TemplateId}:NA:NA"
+                            : $"{npc.ObjId}:{npc.TemplateId}:{MathUtil.CalculateDistance(actorPos.Value, npcPos, false):F1}:{MathUtil.CalculateDistance(actorPos.Value, npcPos, true):F1}";
+                        rawShown.Add(shown);
+                    }
+                    if (rawIds.Count < SweepDiagRawIdsShown)
+                    {
+                        var npcPos2 = npc.Transform.World.Position;
+                        rawIds.Add(!actorPos.HasValue
+                            ? $"{npc.ObjId}:{npc.TemplateId}:NA"
+                            : $"{npc.ObjId}:{npc.TemplateId}:{MathUtil.CalculateDistance(actorPos.Value, npcPos2, false):F1}");
+                    }
+                    candidates.Add(npc);
+                }
+                // Ordering-only: nearest-first (flat distance from actor)
+                // before the take-3 cut. Cap, band/active filters, selector,
+                // dispatch, and legality gates are unchanged.
+                IEnumerable<Npc> ordered = candidates;
+                if (actorPos.HasValue)
+                    ordered = candidates
+                        .OrderBy(n => MathUtil.CalculateDistance(actorPos.Value, n.Transform.World.Position, false))
+                        .ThenBy(n => n.ObjId);
+                foreach (var npc in ordered)
+                {
+                    discoverTargets.Add(npc.ObjId);
+                    if (discoverTargets.Count >= opts.MaxDiscoverTargets)
+                        break;
+                }
+            }
+
+            // Discover first (read-like, non-mutating), then offer accepts.
+            var offerings = new List<(uint TargetObjId, QuestOffering Offering)>();
+            var inBand = 0; // funnel tally only: band-passing offers seen (no behavior use)
+            var outcomeShown = new List<string>(); // bounded per-target discover outcomes
+            foreach (var targetObjId in discoverTargets)
+            {
+                var discover = actor.DiscoverQuests(targetObjId,
+                    idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:discover:{targetObjId}");
+                if (outcomeShown.Count < SweepDiagOutcomesShown)
+                    outcomeShown.Add(DescribeDiscoverOutcome(discover));
+                if (discover is not { IsTerminal: true, State: ActorLifecycleState.Completed })
+                    continue;
+                if (discover.Result is not QuestDiscoveryResult result)
+                    continue;
+                foreach (var offering in result.Offerings)
+                {
+                    if (offering.Level < opts.BandMin || offering.Level > opts.BandMax)
+                        continue;
+                    inBand++;
+                    if (before.Contains(offering.QuestId))
+                        continue;
+                    offerings.Add((targetObjId, offering));
+                }
+            }
+            // One bounded Info line per quest wake so a lane log joins the sweep
+            // end to end (raw candidates with distances, truncation, per-target
+            // outcomes, actor pose). No behavior input; Info (not Debug) so the
+            // lane file target records it.
+            SweepDiagLog.Info(
+                "QuestSweepDiag cycle={Cycle} char={CharId} actor={Actor} zone={Zone} region={Region} " +
+                "raw={Raw}{Capped} eval=[{Eval}] trunc={Trunc} outcomes=[{Outcomes}] offers={Offers} inBand={InBand}",
+                opts.CycleId, actor.ActorId,
+                actorPosText, actorZone, actorRegion,
+                rawCount, enumCapped ? "+" : "", string.Join(",", rawShown),
+                Math.Max(0, rawCount - discoverTargets.Count),
+                string.Join(";", outcomeShown),
+                offerings.Count, inBand);
+            foreach (var (targetObjId, offering) in offerings
+                         .OrderBy(o => o.Offering.Level)
+                         .ThenBy(o => o.Offering.QuestId))
+                proposals.Add(AcceptProposal(actor, opts, targetObjId, offering));
+
+            var decideContext = BotObservedContext.Capture(actor);
+            var decision = BotDecisionSelector.Select(decideContext, proposals);
+            if (!decision.HasProposal)
+            {
+                // Funnel tallies (counts only, feeds bridge lastDetail): where the
+                // quest pipeline ran dry — sweep-empty vs no-offerings vs all-filtered.
+                // Appended sweep keys (raw/trunc/actor/zone/region/outcomes/rawIds)
+                // ride inside the same bracket for the lane log; the BotQuestFunnel
+                // parser ignores unknown keys, and values carry no spaces so the
+                // known keys keep parsing byte-identical. rawIds sits right after
+                // targets (early) so it survives the 600-char QuestDecideDetail cut.
+                var firstZero = discoverTargets.Count == 0 ? "sweep-empty" : offerings.Count == 0 ? "no-offerings" : "all-filtered";
+                var rawIdsValue = rawIds.Count == 0 ? "-" : string.Join(",", rawIds);
+                // G7b (observe-only): corpse recognition rides the DECIDE
+                // bracket right after rawIds (early — survives the 600-char
+                // QuestDecideDetail cut) so the observe payload names OUR
+                // corpse quest-side. Parser-safe keys (parser ignores unknown
+                // keys); zero behavior input, zero dispatch.
+                var corpseKeys = objectiveFunnel == null ? "" : ObservePinnedCorpse(actor, opts, objectiveFunnel).Replace(":", " ");
+                var sweepKeys =
+                    $" raw={rawCount} trunc={Math.Max(0, rawCount - discoverTargets.Count)}" +
+                    $" actor={actorPosText} zone={actorZone} region={actorRegion}" +
+                    $" outcomes={TruncateSweep(string.Join(";", outcomeShown), 300)}";
+                // G4 funnel keys (additive, parser-safe): the 251
+                // objective→target tallies ride the same DECIDE bracket so a
+                // no-selection wake names its earliest failing predicate.
+                var objectiveKeys = objectiveFunnel == null ? "" :
+                    $" q251tgt_raw={objectiveFunnel.RawCount} q251tgt_rel={objectiveFunnel.RelevantCount}" +
+                    $" q251tgt_legal={objectiveFunnel.LegalCount}" +
+                    $" q251tgt_selected={(objectiveFunnel.SelectedObjId == 0 ? "-" : objectiveFunnel.SelectedObjId.ToString(CultureInfo.InvariantCulture))}" +
+                    $" q251tgt_objective={(objectiveFunnel.ObjectiveResolved ? "ok" : "FAIL-OBJECTIVE")}" +
+                    $" q251tgt_source={(objectiveFunnel.SourceResolved ? "ok" : "FAIL-SOURCE")}" +
+                    $" q251tgt_relevance={(objectiveFunnel.Relevance ? "true" : "false")}";
+                // Stage 4: a wake whose only quest failed its fixture gate
+                // reports FIXTURE, never a bare sweep miss — the plan's own
+                // reason leads, and the bracket stays byte-identical behind it
+                // so the BotQuestFunnel parser keeps parsing.
+                var decideDetail = $"no legal quest proposal: {decision.Explanation} [swept={discoverTargets.Count} targets={string.Join(",", discoverTargets)} rawIds={rawIdsValue}{corpseKeys} offerings={offerings.Count} inBand={inBand} legal={proposals.Count} firstZero={firstZero}{sweepKeys}{objectiveKeys}]";
+                var failStage = "DECIDE";
+                if (planFailures.Count > 0)
+                {
+                    failStage = "FIXTURE";
+                    decideDetail = $"plan failed: {string.Join(" ; ", planFailures.Select(f => f.Reason))} | {decideDetail}";
+                }
+                return Fail(failStage, ActorFailureReason.WrongDecision, decideDetail,
+                    actor, null, decision.Rejections, null, legEvidence, planFailures);
+            }
+
+            // ---------------------------------------------------- 3. EXECUTE
+            var selected = decision.Proposal!;
+            // E2E-ONLY turn-in withhold (default-off): the leg ran whole —
+            // perception, eligibility, and selection above are untouched — but
+            // a selected turn-in is NOT dispatched. SelectedAction stays set
+            // (the proposal is observable in diagnostics) while Request stays
+            // null (nothing landed) and the quest stays Ready/active.
+            if (opts.WithholdTurnIn && selected.Goal == TurnInGoal)
+            {
+                var reporterObjId = selected.Payload is QuestTurnInParams turnInParams ? turnInParams.TargetObjId : 0u;
+                return Fail("WITHHELD", ActorFailureReason.WrongDecision,
+                    $"withheld turn-in {selected.Action} quest {selected.TargetId} reporter={reporterObjId} (test-only withhold; proposal observable, dispatch skipped): {decision.Explanation}",
+                    actor, selected.Action, decision.Rejections);
+            }
+            actor.SetPendingDecision(selected.Goal, opts.PolicyVersion,
+                decision.Rejections.Count + 1, decision.Rejections.Count, opts.CycleId);
+            // Part-3 join key: the per-wake CycleId (StepQuestLeg mints
+            // quest-{characterId}-{ticks}) travels request → audit record so
+            // a test can join this wake to its terminal audit row.
+            actor.SetPendingCycleId(opts.CycleId);
+            var execution = BotDecisionCycle.Execute(actor, decideContext, selected,
+                static (gameplayActor, proposal) => Dispatch(gameplayActor, proposal));
+            var request = execution.Request;
+            if (selected.Goal == CombatGoal && objectiveFixture != null)
+                LogCombatOutcome(actor, opts, selected, request, combatHpBefore, objectiveFixture);
+            if (selected.Goal == LootGoal && objectiveFixture != null)
+                LogLootOutcome(actor, opts, selected, request, objectiveFixture);
+            if (!request.IsTerminal)
+            {
+                // G5 pursuit: a dispatched-but-running Move leg IS the landed
+                // work — closing 10-20 m takes many wakes, and the quest leg
+                // only runs while the actor is idle, so a Running leg means
+                // the NEXT wakes skip this leg until the move terminates.
+                // Returning landed keeps QuestLegActive (the quest-blind
+                // hunt/butcher loops stay suppressed while closing) and keeps
+                // the travel fallback from arming against our own leg. Every
+                // pre-existing action keeps the terminal-surface contract.
+                if ((selected.Goal == PursuitGoal || selected.Goal == ReturnGoal) && selected.Action == ActorActionType.Move
+                    && request.State == ActorLifecycleState.Running)
+                {
+                    var afterRunning = BotObservedContext.Capture(actor).ActiveQuestIds.ToHashSet();
+                    var completedRunning = before.Where(q => !afterRunning.Contains(q)).ToList();
+                    var legKind = selected.Goal == ReturnGoal ? "return" : "pursuit";
+                    return new QuestDecisionScenario.QuestRunResult
+                    {
+                        Scenario = QuestDecisionScenario.ScenarioName,
+                        WorkSelected = true,
+                        SelectedAction = selected.Action,
+                        Request = request,
+                        Rejections = decision.Rejections,
+                        Explanation = decision.Explanation + $" [{legKind} leg running toward {selected.TargetId}]",
+                        CompletedQuestIds = completedRunning,
+                        LegEvidence = legEvidence,
+                        PlanFailures = planFailures,
+                        TraceRecords = [.. actor.AuditTrace]
+                    };
+                }
+                return Fail("EXECUTE", ActorFailureReason.Starvation,
+                    $"{request.Action} left the terminal surface",
+                    actor, selected.Action, decision.Rejections, request, legEvidence, planFailures);
+            }
+
+            var after = BotObservedContext.Capture(actor).ActiveQuestIds.ToHashSet();
+            var completed = before.Where(q => !after.Contains(q)).ToList();
+            return new QuestDecisionScenario.QuestRunResult
+            {
+                Scenario = QuestDecisionScenario.ScenarioName,
+                WorkSelected = true,
+                SelectedAction = selected.Action,
+                Request = request,
+                Rejections = decision.Rejections,
+                Explanation = decision.Explanation,
+                CompletedQuestIds = completed,
+                LegEvidence = legEvidence,
+                PlanFailures = planFailures,
+                TraceRecords = [.. actor.AuditTrace]
+            };
+        }
+        catch (Exception ex)
+        {
+            return Fail("RUN", ActorFailureReason.FidelityError,
+                $"{ex.GetType().Name}: {ex.Message}", actor, null, []);
+        }
+    }
+
+    /// <summary>
+    /// Advance leg entry gate: the step machine has work only for an active,
+    /// non-Ready quest (a Ready quest's only legal work is turn-in). The gate
+    /// owns this reason, so the loop's evidence names the real cause of the
+    /// withdraw instead of a generic skip.
+    /// </summary>
+    internal static string? AdvanceEnter(QuestLegContext context, QuestLegWake wake)
+        => context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId) is not { Status: not QuestStatus.Ready and not QuestStatus.Completed }
+            ? "quest-not-advanceable"
+            : null;
+
+    /// <summary>
+    /// TurnIn leg entry gate — the G8b return arbitration: the quest-owned
+    /// return leg owns the wake while converting (outside 25 m → Move, inside
+    /// unsettled → Stop, settled → first InteractNpc). Without it the
+    /// priority-30 TurnIn would win every Ready wake (WITHHELD under withhold)
+    /// and the return leg could never dispatch. Suppression is wake-scoped,
+    /// 251-shaped, and convergence-gated: it lifts exactly when the return leg
+    /// has converged (a settled InteractNpc proposal whose Completed
+    /// InteractNpc to the same reporter already sits in the audit trace), so
+    /// TurnIn flows the first wake it is legitimate. Whenever the return slice
+    /// withdraws, TurnIn enters unchanged (and the withhold seam still guards
+    /// it), so G8a-shape wakes (return withdrawn) keep their WITHHELD
+    /// observable.
+    /// </summary>
+    internal static string? TurnInEnter(QuestLegContext context, QuestLegWake wake)
+        => wake.ReturnProposal != null && !wake.ReturnConverged
+            ? "return-leg-owns-wake"
+            : null;
+
+    /// <summary>Advance leg: one step-machine advance for an active, non-Ready quest.</summary>
+    internal static BotDecisionProposal? AdvanceEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var questId = context.QuestId;
+        return new(
+            goal: "quest.advance",
+            action: ActorActionType.AdvanceQuest,
+            targetId: questId,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"quest {questId} step machine advanced",
+                _ => true),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:advance:{questId}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: "advance the active quest step machine",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.AdvancePriority,
+            tieBreakKey: $"advance:{questId:D10}",
+            payload: null,
+            hardPreconditions:
+            [
+                new BotProposalPrecondition("quest-active",
+                    observed => observed.ActiveQuestIds.Contains(questId))
+            ]);
+    }
+    /// <summary>
+    /// Turn-in leg (the LevelingLoop TurnIn precedent): one proposal for a Ready
+    /// active quest — NPC reporter → TurnInQuest, doodad reporter →
+    /// TurnInAtDoodad, neither → AutoTurnInQuest — or null when the quest is not
+    /// Ready or no reporter resolves. Reporter objIds resolve per wake — never
+    /// stored. Readiness is the live quest Status; the engine revalidates at
+    /// dispatch.
+    /// </summary>
+    internal static BotDecisionProposal? TurnInEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var questId = context.QuestId;
+        var character = actor.Character;
+        if (character.Quests?.ActiveQuests.GetValueOrDefault(questId) is not { Status: QuestStatus.Ready })
+            return null;
+        var template = QuestManager.Instance.GetTemplate(questId);
+        if (template == null)
+            return null;
+        var readyActs = template.GetComponents(QuestComponentKind.Ready)
+            .SelectMany(c => c.ActTemplates).ToList();
+        var reportNpc = readyActs.OfType<QuestActConReportNpc>().FirstOrDefault();
+        var reportDoodad = readyActs.OfType<QuestActConReportDoodad>().FirstOrDefault();
+        if (reportNpc != null)
+        {
+            var reporter = character.ParentWorld?.GetNpcByTemplateId(reportNpc.NpcId);
+            if (reporter == null)
+                return null;
+            return TurnInProposalFor(actor, opts, questId, ActorActionType.TurnInQuest,
+                reporter.ObjId, new QuestTurnInParams(reporter.ObjId, -1));
+        }
+        else if (reportDoodad != null)
+        {
+            var doodad = character.ParentWorld?.GetAllDoodads().FirstOrDefault(d => d?.TemplateId == reportDoodad.DoodadId);
+            if (doodad == null)
+                return null;
+            return TurnInProposalFor(actor, opts, questId, ActorActionType.TurnInDoodad,
+                doodad.ObjId, new QuestTurnInParams(doodad.ObjId, -1));
+        }
+        else
+        {
+            return TurnInProposalFor(actor, opts, questId, ActorActionType.AutoTurnIn,
+                0, new QuestTurnInParams(0, -1));
+        }
+    }
+
+    private static BotDecisionProposal TurnInProposalFor(
+        IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, uint questId,
+        ActorActionType action, uint targetId, QuestTurnInParams turnIn)
+        => new(
+            goal: TurnInGoal,
+            action: action,
+            targetId: questId,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"quest {questId} completed by turn-in",
+                _ => true),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:turnin:{questId}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: "turn in the ready quest for copper reward",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.TurnInPriority,
+            tieBreakKey: $"turnin:{questId:D10}",
+            payload: turnIn,
+            hardPreconditions:
+            [
+                new BotProposalPrecondition("quest-active",
+                    observed => observed.ActiveQuestIds.Contains(questId))
+            ]);
+
+    private static BotDecisionProposal AcceptProposal(
+        IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, uint targetObjId, QuestOffering offering)
+        => new(
+            goal: "quest.accept",
+            action: ActorActionType.AcceptQuest,
+            targetId: offering.QuestId,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"quest {offering.QuestId} is active",
+                observed => observed.ActiveQuestIds.Contains(offering.QuestId)),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:accept:{offering.QuestId}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: $"lowest offered level in [{opts.BandMin}..{opts.BandMax}]",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.AcceptPriority + Math.Max(0, opts.BandMax - offering.Level),
+            tieBreakKey: offering.QuestId.ToString("D10"),
+            payload: (offering, targetObjId),
+            hardPreconditions:
+            [
+                new BotProposalPrecondition("quest-not-active",
+                    observed => !observed.ActiveQuestIds.Contains(offering.QuestId))
+            ]);
+
+    /// <summary>
+    /// G4 objective→target proposal (the wired quest only): the selector's
+    /// selected live prey as a Target-proposal competing in the shared Select. Priority
+    /// sits above advance/accept (pursue the held objective) and below turn-in
+    /// (a Ready quest still reports first). Null when the funnel carries no
+    /// selection — relevance, objective, and source gates stay fail-closed.
+    ///
+    /// G5 enabling (single line, G4 PASS-preserving): the target-unassigned
+    /// precondition yields the wake's single dispatch slot once the assignment
+    /// postcondition already holds — re-issuing SetTarget for the assigned
+    /// target is a terminal no-op that would otherwise starve every
+    /// lower-priority proposal (including pursuit-24) forever. The frozen G4
+    /// chain fires unchanged whenever the target is NOT assigned, which is
+    /// exactly the G4 gate's START condition (fresh staging, never targeted).
+    /// </summary>
+    internal static BotDecisionProposal? TargetEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var funnel = context.Funnel!;
+        var fixture = context.Fixture!;
+        if (!funnel.ObjectiveResolved || !funnel.SourceResolved || !funnel.Relevance || funnel.SelectedObjId == 0)
+            return null;
+        var selected = funnel.SelectedObjId;
+        var dist = double.IsNaN(funnel.SelectedDistanceM)
+            ? "NA"
+            : funnel.SelectedDistanceM.ToString("F1", CultureInfo.InvariantCulture);
+        return new BotDecisionProposal(
+            goal: "quest.objective-target",
+            action: ActorActionType.Target,
+            targetId: selected,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"current target is {selected}",
+                observed => observed.CurrentTargetObjId == selected),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:target:{fixture.QuestId}:{selected}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: $"quest {fixture.QuestId} objective: live {funnel.SelectedTemplateId} {selected} at {dist}m",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.ObjectiveTargetPriority,
+            tieBreakKey: $"target:{fixture.QuestId}:{selected:D10}",
+            hardPreconditions:
+            [
+                new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
+                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                new BotProposalPrecondition("target-unassigned",
+                    observed => observed.CurrentTargetObjId != selected)
+            ]);
+    }
+
+    /// <summary>
+    /// G5 pursuit proposal (the wired quest only): Move/Stop for the G4-selected
+    /// prey objId at <c>ObjectivePursuitPriority</c> (just below Target-25,
+    /// so assignment wins first). Target commitment: the funnel's selection
+    /// is taken as committed — NO second candidate competition runs here;
+    /// only the committed unit is revalidated live every wake
+    /// (ParentWorld resolve + alive + <see cref="CombatDecisionTree.IsHostileTarget"/>
+    /// + CanAttack + visible; legality is reused, never duplicated).
+    /// Per wake: outside the 3.0 m fixture stop radius → Move (fresh leg when
+    /// no Move is live, drift-gated retrack only after &gt; 2.0 m target
+    /// motion since the last issue); inside → Stop (audited halt, remain
+    /// settled). Lost/invalid targets withdraw the proposal with a named
+    /// reason (reselect is the funnel's next-wake job). Never Cast,
+    /// AutoAttack, Loot, or credit — those verbs are unreachable from here.
+    /// </summary>
+    internal static BotDecisionProposal? PursuitEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var funnel = context.Funnel!;
+        var fixture = context.Fixture!;
+        static string M(double value)
+            => double.IsNaN(value) ? "NA" : value.ToString("F1", CultureInfo.InvariantCulture);
+        var selected = funnel.SelectedObjId;
+        if (!funnel.ObjectiveResolved || !funnel.SourceResolved)
+        {
+            diag = "validate=FAIL-static:rangeM=NA:dispatch=withdrawn:reason=" +
+                (!funnel.ObjectiveResolved ? "FAIL-OBJECTIVE" : "FAIL-SOURCE");
+            return null;
+        }
+        if (selected == 0 || !funnel.Relevance)
+        {
+            // G7b (observe-only): the funnel drops dead candidates, so the
+            // post-death wake withdraws here — re-resolve ONLY the quest-pinned
+            // objId (never a scan) and name the corpse with its probe.
+            var corpseFrag = ObservePinnedCorpse(actor, opts, funnel);
+            diag = $"validate={(selected == 0 ? "no-selection" : "not-relevant")}:rangeM=NA:dispatch=withdrawn:reason=" +
+                (selected == 0 ? "no-selection" : "not-relevant") + corpseFrag;
+            return null;
+        }
+        var character = actor.Character;
+        var actorPos = character?.Transform.World.Position;
+        var npc = character?.ParentWorld?.GetNpc(selected);
+        string invalidReason;
+        Vector3 npcPos;
+        if (character == null || !actorPos.HasValue || character.ParentWorld == null)
+            invalidReason = "no-world";
+        else if (npc == null)
+            invalidReason = "target-lost";
+        else if (npc.Hp <= 0)
+            invalidReason = "target-dead";
+        else if (!CombatDecisionTree.IsHostileTarget(character, npc))
+            invalidReason = "target-not-hostile";
+        else if (!character.CanAttack(npc))
+            invalidReason = "target-not-attackable";
+        else if (!character.CanSeeTarget(npc))
+            invalidReason = "target-not-visible";
+        else
+            invalidReason = "";
+        if (invalidReason != "")
+        {
+            // G7b (observe-only): the pinned-target dead transition names the
+            // corpse with its read-only probe (all context known here: funnel
+            // quest/objective, pinned objId/template/dead-state). A lost
+            // target re-resolves ONLY the quest-pinned objId (never a scan).
+            var corpseFrag = invalidReason == "target-dead" && npc != null
+                ? NoteDeadSelection(actor, opts, funnel, npc)
+                : ObservePinnedCorpse(actor, opts, funnel);
+            diag = $"validate=FAIL-{invalidReason}:rangeM=NA:dispatch=withdrawn:reason={invalidReason}{corpseFrag}";
+            return null;
+        }
+        npcPos = npc!.Transform.World.Position;
+        var dist = MathUtil.CalculateDistance(actorPos!.Value, npcPos, false);
+        if (dist <= PursuitStopRadiusM)
+        {
+            // G6 hold-confirm: a Stop already landed for this target at these
+            // poses stays landed — withdraw so the combat proposal (priority
+            // 23) can win a settled wake. Any actor/target motion re-arms
+            // Stop, and an unassigned target never withdraws (Target-25 owns
+            // assignment). G5-observed states (closing, holding pre-settle)
+            // still land Stop exactly as before.
+            lock (PursuitSync)
+            {
+                if (LastStopHold.TryGetValue(actor.ActorId, out var hold) && hold.TargetObjId == selected
+                    && character!.CurrentTarget?.ObjId == selected
+                    && Vector3.Distance(hold.ActorPos, actorPos!.Value) <= 0.5f
+                    && Vector3.Distance(hold.TargetPos, npcPos) <= 0.5f)
+                {
+                    diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=hold-confirmed";
+                    return null;
+                }
+            }
+            diag = $"validate=ok:rangeM={M(dist)}:dispatch=stop:reason=in-range";
+            return new BotDecisionProposal(
+                goal: PursuitGoal,
+                action: ActorActionType.Stop,
+                targetId: selected,
+                expectedPostcondition: new BotProposalPostcondition(
+                    $"holding at {M(dist)}m off quest {fixture.QuestId} target {selected} (stop-before-attack)",
+                    _ => true),
+                idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:pursuit-stop:{fixture.QuestId}:{selected}",
+                timeout: TimeSpan.FromSeconds(30),
+                rationale: $"quest {fixture.QuestId} pursuit: live {fixture.PreyTemplate} {selected} at {M(dist)}m (inside {PursuitStopRadiusM:F1}m stop radius) — hold, no attack",
+                policyVersion: opts.PolicyVersion,
+                priority: opts.ObjectivePursuitPriority,
+                tieBreakKey: $"pursuit:{fixture.QuestId}:{selected:D10}",
+                hardPreconditions:
+                [
+                    new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
+                        observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+                ]);
+        }
+        var liveMove = actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move };
+        var driftText = "fresh";
+        var retrack = true;
+        lock (PursuitSync)
+        {
+            if (LastPursuitIssue.TryGetValue(actor.ActorId, out var last) && last.TargetObjId == selected)
+            {
+                var drift = Vector3.Distance(last.TargetPos, npcPos);
+                driftText = $"{drift.ToString("F1", CultureInfo.InvariantCulture)}m";
+                retrack = !liveMove || drift > PursuitRetrackDriftM;
+                if (!retrack)
+                {
+                    diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=drift-held(drift={driftText})";
+                    return null;
+                }
+            }
+        }
+        diag = $"validate=ok:rangeM={M(dist)}:dispatch=move:reason={(liveMove ? "retrack" : driftText)}";
+        return new BotDecisionProposal(
+            goal: PursuitGoal,
+            action: ActorActionType.Move,
+            targetId: selected,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"pursuit leg toward quest {fixture.QuestId} target {selected} dispatched",
+                _ => true),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:pursuit:{fixture.QuestId}:{selected}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: $"quest {fixture.QuestId} pursuit: live {fixture.PreyTemplate} {selected} at {M(dist)}m (outside {PursuitStopRadiusM:F1}m stop radius), drift {driftText} — closing",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.ObjectivePursuitPriority,
+            tieBreakKey: $"pursuit:{fixture.QuestId}:{selected:D10}",
+            hardPreconditions:
+            [
+                new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
+                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+            ]);
+    }
+    /// <summary>
+    /// G6 combat proposal (the wired quest only): AutoAttack for the G4-selected
+    /// prey objId at <c>ObjectiveCombatPriority</c> (just below pursuit 24,
+    /// so range-hold always wins while closing or holding). Target
+    /// commitment: the funnel's selection is taken as committed — NO second
+    /// candidate competition runs here (same-target-no-recompetition); only
+    /// the committed unit is revalidated live every wake (ParentWorld
+    /// resolve + alive + <see cref="CombatDecisionTree.IsHostileTarget"/>
+    /// + CanAttack + visible + assigned + in-range; legality is reused,
+    /// never duplicated). Per wake: in-range + G4-assigned + loop not yet
+    /// live → AutoAttack (engine's live-actor verb, the roam hunt-leg
+    /// shape). Withdraws (null + named diag) when the target is unassigned
+    /// (Target-25 owns assignment), out of range (pursuit owns), already
+    /// live (no re-dispatch, never steal another loop), or invalid.
+    /// Dispatches ONLY GameplayActor.AutoAttack — no Cast, Loot, or credit.
+    /// </summary>
+    internal static BotDecisionProposal? CombatEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var funnel = context.Funnel!;
+        var fixture = context.Fixture!;
+        static string M(double value)
+            => double.IsNaN(value) ? "NA" : value.ToString("F1", CultureInfo.InvariantCulture);
+        hpBefore = -1;
+        var selected = funnel.SelectedObjId;
+        if (!funnel.ObjectiveResolved || !funnel.SourceResolved)
+        {
+            diag = "validate=FAIL-static:target=-:template=-:alive=NA:visible=NA:hostile=NA:legal=NA:distM=NA:verb=none:hpBefore=NA";
+            return null;
+        }
+        if (selected == 0 || !funnel.Relevance)
+        {
+            // G7b (observe-only): post-death funnel withdrawal — re-resolve ONLY
+            // the quest-pinned objId (never a scan), name the corpse + probe.
+            var corpseFrag = ObservePinnedCorpse(actor, opts, funnel);
+            diag = $"validate={(selected == 0 ? "no-selection" : "not-relevant")}:target=-:template=-:alive=NA:visible=NA:hostile=NA:legal=NA:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
+            return null;
+        }
+        var character = actor.Character;
+        var actorPos = character?.Transform.World.Position;
+        var npc = character?.ParentWorld?.GetNpc(selected);
+        if (character == null || !actorPos.HasValue || character.ParentWorld == null || npc == null)
+        {
+            var corpseFrag = ObservePinnedCorpse(actor, opts, funnel);
+            diag = $"validate=target-lost:target={selected}:template={fixture.PreyTemplate}:alive=NA:visible=NA:hostile=NA:legal=NA:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
+            return null;
+        }
+        var alive = npc.Hp > 0;
+        var hostile = alive && CombatDecisionTree.IsHostileTarget(character, npc);
+        var attackable = alive && character.CanAttack(npc);
+        var visible = character.CanSeeTarget(npc);
+        if (!alive)
+        {
+            // G7b (observe-only): THE pinned-target dead transition — questId /
+            // objective-context (funnel) + target objId / template / dead-state
+            // (live npc) all known here; recognition runs on this resolve, no
+            // second world scan. Read-only probe, zero dispatch.
+            var corpseFrag = NoteDeadSelection(actor, opts, funnel, npc);
+            diag = $"validate=target-dead:target={selected}:template={npc.TemplateId}:alive=false:visible={visible}:hostile=false:legal=false:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
+            return null;
+        }
+        if (!hostile || !attackable || !visible)
+        {
+            var reason = !hostile ? "target-not-hostile" : !attackable ? "target-not-attackable" : "target-not-visible";
+            diag = $"validate={reason}:target={selected}:template={npc.TemplateId}:alive=true:visible={visible}:hostile={hostile}:legal=false:distM=NA:verb=none:hpBefore=NA";
+            return null;
+        }
+        if (character.CurrentTarget?.ObjId != selected)
+        {
+            diag = $"validate=target-unassigned:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false))}:verb=none:hpBefore=NA";
+            return null;
+        }
+        if (character.IsAutoAttack)
+        {
+            diag = $"validate=already-live:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false))}:verb=none:hpBefore={npc.Hp}";
+            return null;
+        }
+        var dist = MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false);
+        if (dist > PursuitStopRadiusM)
+        {
+            diag = $"validate=out-of-range:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(dist)}:verb=none:hpBefore={npc.Hp}";
+            return null;
+        }
+        hpBefore = npc.Hp;
+        diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(dist)}:verb=AutoAttack:hpBefore={npc.Hp}";
+        return new BotDecisionProposal(
+            goal: CombatGoal,
+            action: ActorActionType.AutoAttack,
+            targetId: selected,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"auto-attack loop live on quest {fixture.QuestId} target {selected}",
+                _ => true),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:combat:{fixture.QuestId}:{selected}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: $"quest {fixture.QuestId} combat: live {fixture.PreyTemplate} {selected} at {M(dist)}m (inside {PursuitStopRadiusM:F1}m stop radius), hp {npc.Hp} — AutoAttack",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.ObjectiveCombatPriority,
+            tieBreakKey: $"combat:{fixture.QuestId}:{selected:D10}",
+            hardPreconditions:
+            [
+                new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
+                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                new BotProposalPrecondition("target-assigned",
+                    observed => observed.CurrentTargetObjId == selected)
+            ]);
+    }
+
+    /// <summary>
+    /// G7c loot proposal (the wired quest only): Loot for the G7b-recognized corpse
+    /// at <c>ObjectiveLootPriority</c> (just below combat 23, so a live combat
+    /// decision always wins while the target is alive; above advance so a
+    /// lootable corpse is taken before step-machine work). Reads ONLY the
+    /// quest-owned corpse memory (<c>LastCorpse</c>, same ObjId continuity the
+    /// G7b arms demand) plus the read-only container probe — never a world
+    /// scan. Withholds (null + named diag) when no corpse is recognized, the
+    /// recorded objId is gone (despawned) or live again (recycled), the unit
+    /// is not the fixture row's prey, the probe reads not-lootable (empty container or
+    /// out of loot range), the corpse already ran its Loot course (loot-once
+    /// memory — never re-dispatches for the same corpse, even if its container
+    /// refills), or the auto-attack loop that owns the kill has not yet torn
+    /// down (loot releases only post-teardown; see the loop-release seam).
+    /// Dispatches ONLY GameplayActor.Loot, once.
+    /// </summary>
+    internal static BotDecisionProposal? LootEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var fixture = context.Fixture!;
+        QuestCorpseRecord? rec;
+        lock (PursuitSync)
+            LastCorpse.TryGetValue(actor.ActorId, out rec);
+        if (rec == null || rec.QuestId != fixture.QuestId)
+        {
+            diag = "validate=no-corpse:target=-:container=-:lootable=-:verb=none";
+            return null;
+        }
+        bool already;
+        lock (PursuitSync)
+            already = LootedCorpses.Contains((actor.ActorId, rec.ObjId));
+        var character = actor.Character;
+        var npc = character?.ParentWorld?.GetNpc(rec.ObjId);
+        if (npc == null || npc.Hp > 0
+            || npc.TemplateId != fixture.PreyTemplate)
+        {
+            var gone = npc == null ? "gone" : "recycled";
+            diag = $"validate={gone}:target={rec.ObjId}:container=-:lootable=-:verb=none";
+            return null;
+        }
+        var probe = ProbeCorpse(character, npc);
+        if (already || !probe.Lootable)
+        {
+            var reason = already ? "already-looted" : "not-lootable";
+            diag = $"validate={reason}:target={rec.ObjId}:container={probe.ItemCount}:lootable={(probe.Lootable ? "true" : "false")}:verb=none";
+            return null;
+        }
+        // Loop-release seam: withhold the loot while the auto-attack loop is
+        // still live for this actor. The loop owns the corpse until it tears
+        // itself down (UseAutoAttackSkillTask stops on target null/dead, and
+        // teardown clears CurrentTarget + generates loot), so a Loot dispatched
+        // mid-loop would race the kill legs' own teardown — the G7c loot watch
+        // and the G7d per-cycle legs REQUIRE the post-death quest-owned Loot to
+        // land only after that teardown, which is why loot releases by
+        // construction rather than by a timer here.
+        if (character!.IsAutoAttack)
+        {
+            diag = $"validate=loop-live:target={rec.ObjId}:container={probe.ItemCount}:lootable=true:verb=none";
+            return null;
+        }
+        diag = $"validate=ok:target={rec.ObjId}:container={probe.ItemCount}:lootable=true:verb=Loot";
+        return new BotDecisionProposal(
+            goal: LootGoal,
+            action: ActorActionType.Loot,
+            targetId: rec.ObjId,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"looted quest {fixture.QuestId} corpse {rec.ObjId}",
+                _ => true),
+            idempotencyKey: $"quest:{actor.ActorId}:loot:{fixture.QuestId}:{rec.ObjId}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: $"quest {fixture.QuestId} loot: dead {fixture.PreyTemplate} {rec.ObjId} container={probe.ItemCount} — Loot once",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.ObjectiveLootPriority,
+            tieBreakKey: $"loot:{fixture.QuestId}:{rec.ObjId:D10}",
+            hardPreconditions:
+            [
+                new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
+                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+            ]);
+    }
+    /// <summary>
+    /// G8b return proposal (the wired quest only): Move/Stop/InteractNpc for the
+    /// Ready-step reporter at <c>ObjectiveReturnPriority</c> (below
+    /// pursuit/combat/loot, above advance — the existing layout). Per-wake
+    /// live revalidation: the fixture quest active + Ready, reporter resolved per
+    /// wake via GetNpcByTemplateId(fixture reporter) (never stored) + template +
+    /// flat distance.
+    /// Per wake: outside the 25 m InteractNpc gate → Move (fresh leg when no
+    /// Move is live, drift-gated retrack only after &gt; 2.0 m reporter motion
+    /// since the last issue — the pursuit discipline); inside → Stop (audited
+    /// halt); Stop hold-confirmed (landed Stop + poses within 0.5 m) →
+    /// InteractNpc (dialogue fallback expected — the quest carries no talk-family
+    /// objective, so Talk would void-reject; never Talk). Withdraws (null +
+    /// named diag) when the quest is not Ready or the reporter is lost/recycled.
+    /// Never TurnIn — the TurnIn proposal stays a separate competitor (and
+    /// the withhold seam still guards it), so withhold can never swallow the
+    /// return leg. Never Cast, AutoAttack, Loot, or credit.
+    /// </summary>
+    internal static BotDecisionProposal? ReturnEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var fixture = context.Fixture!;
+        static string M(double value)
+            => double.IsNaN(value) ? "NA" : value.ToString("F1", CultureInfo.InvariantCulture);
+        var character = actor.Character;
+        if (character?.Quests?.ActiveQuests.GetValueOrDefault(fixture.QuestId) is not { Status: QuestStatus.Ready })
+        {
+            diag = "validate=not-ready:reporter=-:template=-:flatM=NA:dist3D=NA:dispatch=withdrawn:reason=not-ready";
+            return null;
+        }
+        var actorPos = character?.Transform.World.Position;
+        var reporter = character?.ParentWorld?.GetNpcByTemplateId(fixture.ReporterTemplate);
+        if (character == null || !actorPos.HasValue || character.ParentWorld == null || reporter == null)
+        {
+            diag = $"validate=FAIL-reporter-lost:reporter=-:template={fixture.ReporterTemplate}:flatM=NA:dist3D=NA:dispatch=withdrawn:reason=reporter-lost";
+            return null;
+        }
+        if (reporter.TemplateId != fixture.ReporterTemplate)
+        {
+            diag = $"validate=FAIL-reporter-recycled:reporter={reporter.ObjId}:template={reporter.TemplateId}:flatM=NA:dist3D=NA:dispatch=withdrawn:reason=reporter-recycled";
+            return null;
+        }
+        var reporterPos = reporter.Transform.World.Position;
+        var flat = MathUtil.CalculateDistance(actorPos.Value, reporterPos, false);
+        var dist3 = MathUtil.CalculateDistance(actorPos.Value, reporterPos, true);
+        if (flat <= ReturnInteractRadiusM)
+        {
+            // Hold-confirm (the G6 discipline, without the assignment gate —
+            // return never assigns): a Stop already landed for this reporter
+            // at these poses stays landed — withdraw so the InteractNpc
+            // proposal can win a settled wake. Any actor/reporter motion
+            // re-arms Stop (range-hold wins). Without the withdraw, Stop
+            // would win every in-range wake and InteractNpc could never fire;
+            // without Stop-first, a live leg busy-rejects InteractNpc.
+            lock (PursuitSync)
+            {
+                if (LastStopHold.TryGetValue(actor.ActorId, out var hold) && hold.TargetObjId == reporter.ObjId
+                    && Vector3.Distance(hold.ActorPos, actorPos.Value) <= 0.5f
+                    && Vector3.Distance(hold.TargetPos, reporterPos) <= 0.5f)
+                {
+                    diag = $"validate=ok:reporter={reporter.ObjId}:template={fixture.ReporterTemplate}:flatM={M(flat)}:dist3D={M(dist3)}:dispatch=interact:reason=settled";
+                    return new BotDecisionProposal(
+                        goal: ReturnGoal,
+                        action: ActorActionType.InteractNpc,
+                        targetId: reporter.ObjId,
+                        expectedPostcondition: new BotProposalPostcondition(
+                            $"dialogue with quest {fixture.QuestId} reporter {reporter.ObjId} delivered",
+                            _ => true),
+                        idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:return-interact:{fixture.QuestId}:{reporter.ObjId}",
+                        timeout: TimeSpan.FromSeconds(30),
+                        rationale: $"quest {fixture.QuestId} return: live reporter {fixture.ReporterTemplate} ({reporter.ObjId}) at {M(flat)}m flat (inside {ReturnInteractRadiusM:F1}m gate), settled — InteractNpc dialogue",
+                        policyVersion: opts.PolicyVersion,
+                        priority: opts.ObjectiveReturnPriority,
+                        tieBreakKey: $"return:{fixture.QuestId}:{reporter.ObjId:D10}",
+                        hardPreconditions:
+                        [
+                            new BotProposalPrecondition("quest-active",
+                                observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
+                        ]);
+                }
+            }
+            diag = $"validate=ok:reporter={reporter.ObjId}:template={fixture.ReporterTemplate}:flatM={M(flat)}:dist3D={M(dist3)}:dispatch=stop:reason=in-range";
+            return new BotDecisionProposal(
+                goal: ReturnGoal,
+                action: ActorActionType.Stop,
+                targetId: reporter.ObjId,
+                expectedPostcondition: new BotProposalPostcondition(
+                    $"holding at {M(flat)}m off quest {fixture.QuestId} reporter {reporter.ObjId} (stop-before-interact)",
+                    _ => true),
+                idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:return-stop:{fixture.QuestId}:{reporter.ObjId}",
+                timeout: TimeSpan.FromSeconds(30),
+                rationale: $"quest {fixture.QuestId} return: live reporter {fixture.ReporterTemplate} ({reporter.ObjId}) at {M(flat)}m flat (inside {ReturnInteractRadiusM:F1}m gate) — hold, no interact yet",
+                policyVersion: opts.PolicyVersion,
+                priority: opts.ObjectiveReturnPriority,
+                tieBreakKey: $"return:{fixture.QuestId}:{reporter.ObjId:D10}",
+                hardPreconditions:
+                [
+                    new BotProposalPrecondition("quest-active",
+                        observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
+                ]);
+        }
+        var liveMove = actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move };
+        var driftText = "fresh";
+        var retrack = true;
+        lock (PursuitSync)
+        {
+            if (LastReturnIssue.TryGetValue(actor.ActorId, out var last) && last.TargetObjId == reporter.ObjId)
+            {
+                var drift = Vector3.Distance(last.TargetPos, reporterPos);
+                driftText = $"{drift.ToString("F1", CultureInfo.InvariantCulture)}m";
+                retrack = !liveMove || drift > PursuitRetrackDriftM;
+                if (!retrack)
+                {
+                    diag = $"validate=ok:reporter={reporter.ObjId}:template={fixture.ReporterTemplate}:flatM={M(flat)}:dist3D={M(dist3)}:dispatch=held:reason=drift-held(drift={driftText})";
+                    return null;
+                }
+            }
+        }
+        diag = $"validate=ok:reporter={reporter.ObjId}:template={fixture.ReporterTemplate}:flatM={M(flat)}:dist3D={M(dist3)}:dispatch=move:reason={(liveMove ? "retrack" : driftText)}";
+        return new BotDecisionProposal(
+            goal: ReturnGoal,
+            action: ActorActionType.Move,
+            targetId: reporter.ObjId,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"return leg toward quest {fixture.QuestId} reporter {reporter.ObjId} dispatched",
+                _ => true),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:return:{fixture.QuestId}:{reporter.ObjId}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: $"quest {fixture.QuestId} return: live reporter {fixture.ReporterTemplate} ({reporter.ObjId}) at {M(flat)}m flat (outside {ReturnInteractRadiusM:F1}m gate), drift {driftText} — closing",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.ObjectiveReturnPriority,
+            tieBreakKey: $"return:{fixture.QuestId}:{reporter.ObjId:D10}",
+            hardPreconditions:
+            [
+                new BotProposalPrecondition("quest-active",
+                    observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
+            ]);
+    }
+
+    /// <summary>
+    /// G8c turn-in release: the wake-scoped TurnIn suppression lifts exactly
+    /// when the return leg has converged — the live return proposal is the
+    /// settled InteractNpc AND a Completed InteractNpc to the same reporter
+    /// already sits in the actor's audit trace (every action emits exactly one
+    /// record on its terminal transition). Move/Stop proposals stay suppressed
+    /// (outside range / en route / unsettled), and the first settled wake stays
+    /// suppressed so its InteractNpc still lands; the release fires on the next
+    /// settled wake, when TurnIn (priority 30) outranks the repeat InteractNpc.
+    /// A Rejected/timed-out InteractNpc never converges (leg retries cleanly).
+    /// Read-only audit scan, bounded trace — never dispatches, never mutates.
+    /// </summary>
+    internal static bool ReturnExit(IGameplayActor actor, BotDecisionProposal returnProposal)
+    {
+        if (returnProposal.Goal != ReturnGoal || returnProposal.Action != ActorActionType.InteractNpc)
+            return false;
+        return actor.AuditTrace.Any(r => r.Action == ActorActionType.InteractNpc
+            && r.TargetId == returnProposal.TargetId
+            && r.Result == ActorLifecycleState.Completed);
+    }
+
+    /// <summary>
+    /// G4 funnel diagnostics (additive, bounded): one Info line per quest wake
+    /// carrying the wired quest's objective→target funnel — objective/source resolution,
+    /// relevance, raw/relevant/legal tallies, selection + template + distance,
+    /// per-predicate reject counts, ordered candidate rows, the CycleId join
+    /// key, plus the G5 pursuit / G6 combat / G7c loot / G8b return outcomes
+    /// (each leg's own validate/range/dispatch diag fragment, read back from the
+    /// wake's evidence). Values carry no spaces so the line stays greppable. No
+    /// behavior input; Info (not Debug) so the lane file target records it.
+    /// </summary>
+    private static void LogObjectiveFunnel(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel, QuestLegWake wake)
+    {
+        static string Num(double value)
+            => double.IsNaN(value) ? "NA" : value.ToString("F1", CultureInfo.InvariantCulture);
+        var rows = funnel.Candidates.Select(c =>
+            $"{c.ObjId}:{c.TemplateId}:{(c.QuestRelevant ? 1 : 0)}:{(c.CombatLegal ? 1 : 0)}:{Num(c.DistanceM)}:{c.Reject}");
+        SweepDiagLog.Info(
+            "QuestObjectiveTargetDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} objective=[{Objective}] source=[{Source}] " +
+            "relevance={Relevance} have={Have} need={Need} raw={Raw} relevant={Relevant} legal={Legal} " +
+            "selected={Selected} template={Template} distM={Dist} " +
+            "rejects=[unresolved={Unresolved} dead={Dead} template={TemplateRejects} hostile={Hostile} attack={Attack} stealth={Stealth}] " +
+            "candidates=[{Candidates}] pursuit=[{Pursuit}] combat=[{Combat}] loot=[{Loot}] return=[{Return}]",
+            opts.CycleId, actor.Character.Id, actor.ActorId, funnel.QuestId,
+            funnel.ObjectiveResolved ? $"ok:{funnel.ObjectiveDetail}" : $"FAIL-OBJECTIVE:{funnel.ObjectiveDetail}",
+            funnel.SourceResolved ? $"ok:{funnel.SourceDetail}" : $"FAIL-SOURCE:{funnel.SourceDetail}",
+            funnel.Relevance ? "true" : "false", funnel.HaveCount, funnel.NeedCount,
+            funnel.RawCount, funnel.RelevantCount, funnel.LegalCount,
+            funnel.SelectedObjId == 0 ? "-" : funnel.SelectedObjId.ToString(CultureInfo.InvariantCulture),
+            funnel.SelectedTemplateId == 0 ? "-" : funnel.SelectedTemplateId.ToString(CultureInfo.InvariantCulture),
+            Num(funnel.SelectedDistanceM),
+            funnel.RejectUnresolved, funnel.RejectDead, funnel.RejectTemplate,
+            funnel.RejectHostile, funnel.RejectAttack, funnel.RejectStealth,
+            string.Join(",", rows),
+            wake.Detail(QuestLegId.Pursuit), wake.Detail(QuestLegId.Combat),
+            wake.Detail(QuestLegId.Loot), wake.Detail(QuestLegId.Return));
+    }
+
+    /// <summary>
+    /// Stage 4 failed-plan diagnostics (additive, bounded): one Info line per
+    /// failed plan per wake, so a quest whose plan failed its fixture gate is
+    /// visible in the lane even when other work won the wake. Reads only the
+    /// plan's own already-computed failure. Info (not Debug) so the lane file
+    /// target records it; values carry no spaces.
+    /// </summary>
+    private static void LogPlanFailure(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, QuestPlanFailure failure)
+    {
+        SweepDiagLog.Info(
+            "QuestPlanDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} plan=failed stage={Stage} reason=[{Reason}]",
+            opts.CycleId, actor.Character?.Id ?? 0, actor.ActorId, failure.QuestId,
+            failure.Stage, failure.Reason.Replace(' ', '_'));
+    }
+    private static ActorRequest Dispatch(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        return proposal.Action switch
+        {
+            ActorActionType.AdvanceQuest => gameplayActor.AdvanceQuest(
+                proposal.TargetId, proposal.IdempotencyKey),
+            ActorActionType.AcceptQuest when proposal.Payload is (QuestOffering offering, uint _) => gameplayActor.AcceptQuest(
+                proposal.TargetId, offering.AcceptorType, offering.AcceptorId, proposal.IdempotencyKey),
+            ActorActionType.TurnInQuest when proposal.Payload is QuestTurnInParams turnIn => gameplayActor.TurnInQuest(
+                proposal.TargetId, turnIn.TargetObjId, turnIn.SelectedReward, proposal.IdempotencyKey),
+            ActorActionType.TurnInDoodad when proposal.Payload is QuestTurnInParams turnInDoodad => gameplayActor.TurnInAtDoodad(
+                proposal.TargetId, turnInDoodad.TargetObjId, turnInDoodad.SelectedReward, proposal.IdempotencyKey),
+            ActorActionType.AutoTurnIn when proposal.Payload is QuestTurnInParams auto => gameplayActor.AutoTurnInQuest(
+                proposal.TargetId, auto.SelectedReward, proposal.IdempotencyKey),
+            // G4 objective→target: assignment rides the canonical SetTarget verb
+            // only — never a direct CurrentTarget write, never the roam bypass.
+            ActorActionType.Target => gameplayActor.SetTarget(proposal.TargetId),
+            // G5 pursuit: unit-relative close-in rides MoveToUnit (externally
+            // reachable, quest-pinned — the roam hunt-leg shape, brain-owned
+            // per-wake revalidation, never in-leg tracking). A live Move leg
+            // is preempted first (roam :787-789 precedent, public verb) so a
+            // retrack never busy-rejects against our own leg. Stop rides the
+            // audited Stop halt. Goal-guarded so no other Move/Stop proposal
+            // can ever route here.
+            ActorActionType.Move when proposal.Goal == PursuitGoal => DispatchPursuitMove(gameplayActor, proposal),
+            ActorActionType.Stop when proposal.Goal == PursuitGoal => DispatchPursuitStop(gameplayActor, proposal),
+            // G8b return: the quest-owned return leg rides MoveToUnit on the
+            // live reporter objId (the pursuit shape, RETURN_MOVE_TO_UNIT
+            // owner), the audited Stop halt inside 25 m, and InteractNpc once
+            // settled (dialogue fallback expected — 251 carries no talk-family
+            // objective, so Talk would void-reject; never Talk). Goal-guarded
+            // so no other Move/Stop/InteractNpc proposal can ever route here.
+            ActorActionType.Move when proposal.Goal == ReturnGoal => DispatchReturnMove(gameplayActor, proposal),
+            ActorActionType.Stop when proposal.Goal == ReturnGoal => DispatchReturnStop(gameplayActor, proposal),
+            ActorActionType.InteractNpc when proposal.Goal == ReturnGoal => gameplayActor.InteractNpc(proposal.TargetId, proposal.IdempotencyKey),
+            // G6 combat: the quest-owned first combat action rides the live
+            // actor's AutoAttack verb only (no queue kind exists for it by
+            // design — dispatched like the roam hunt leg does). Goal-guarded
+            // so no other AutoAttack proposal can ever route here. No Cast,
+            // no rotation, no Loot, no credit — those are G7.
+            ActorActionType.AutoAttack when proposal.Goal == CombatGoal => gameplayActor.AutoAttack(proposal.TargetId, proposal.IdempotencyKey),
+            // G7c loot: the quest-owned corpse take rides the live actor's
+            // Loot verb only (the exact CSLootOpenBagPacket lootAll call).
+            // Goal-guarded so no other Loot proposal can ever route here.
+            // No Cast, no rotation, no credit — G7d owns credit.
+            ActorActionType.Loot when proposal.Goal == LootGoal => DispatchLoot(gameplayActor, proposal),
+        };
+    }
+
+    /// <summary>
+    /// G5 pursuit dispatch: preempt a live Move leg (retrack only), issue the
+    /// unit-relative MoveToUnit leg, and record the committed target's live
+    /// position for the next wake's drift gate. Never touches _move state or
+    /// queue kinds — public actor verbs only.
+    /// </summary>
+    private static ActorRequest DispatchPursuitMove(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        if (gameplayActor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+            gameplayActor.PreemptCurrent("quest pursuit retrack");
+        // Telemetry: this leg owns as PURSUIT_MOVE_TO_UNIT (staged before
+        // dispatch; PreemptCurrent above carries no request so the stage
+        // survives to the MoveToUnit below).
+        if (gameplayActor is GameplayActor concrete)
+            concrete.SetPendingMoveOwner("PURSUIT_MOVE_TO_UNIT");
+        var request = gameplayActor.MoveToUnit(proposal.TargetId, PursuitSpeedMps, PursuitLegTimeout, proposal.IdempotencyKey);
+        var npcPos = gameplayActor.Character?.ParentWorld?.GetNpc(proposal.TargetId)?.Transform.World.Position;
+        if (npcPos.HasValue)
+        {
+            lock (PursuitSync)
+            {
+                if (LastPursuitIssue.Count >= 256)
+                    LastPursuitIssue.Clear();
+                LastPursuitIssue[gameplayActor.ActorId] = (proposal.TargetId, npcPos.Value);
+            }
+        }
+        return request;
+    }
+    /// <summary>
+    /// G5 pursuit Stop dispatch (G6 hold-confirm): issue the audited Stop
+    /// halt, then record both poses so the next wake's Stop proposal can
+    /// confirm the hold and yield to combat. Never touches _move state or
+    /// queue kinds — public actor verbs only.
+    /// </summary>
+    private static ActorRequest DispatchPursuitStop(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        var request = gameplayActor.Stop();
+        var character = gameplayActor.Character;
+        var actorPos = character?.Transform.World.Position;
+        var npcPos = character?.ParentWorld?.GetNpc(proposal.TargetId)?.Transform.World.Position;
+        if (actorPos.HasValue && npcPos.HasValue)
+        {
+            lock (PursuitSync)
+            {
+                if (LastStopHold.Count >= 256)
+                    LastStopHold.Clear();
+                LastStopHold[gameplayActor.ActorId] = (proposal.TargetId, actorPos.Value, npcPos.Value);
+            }
+        }
+        return request;
+    }
+    /// <summary>
+    /// G8b return dispatch: preempt a live Move leg (retrack only), issue the
+    /// unit-relative MoveToUnit leg on the live reporter objId, and record the
+    /// reporter's live position for the next wake's drift gate. The pursuit
+    /// shape with the RETURN_MOVE_TO_UNIT owner tag; reuses pursuit speed,
+    /// budget, and drift disciplines. Never touches _move state or queue
+    /// kinds — public actor verbs only.
+    /// </summary>
+    private static ActorRequest DispatchReturnMove(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        if (gameplayActor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+            gameplayActor.PreemptCurrent("quest return retrack");
+        // Telemetry: this leg owns as RETURN_MOVE_TO_UNIT (staged before
+        // dispatch; PreemptCurrent above carries no request so the stage
+        // survives to the MoveToUnit below).
+        if (gameplayActor is GameplayActor concrete)
+            concrete.SetPendingMoveOwner("RETURN_MOVE_TO_UNIT");
+        var request = gameplayActor.MoveToUnit(proposal.TargetId, PursuitSpeedMps, PursuitLegTimeout, proposal.IdempotencyKey);
+        var npcPos = gameplayActor.Character?.ParentWorld?.GetNpc(proposal.TargetId)?.Transform.World.Position;
+        if (npcPos.HasValue)
+        {
+            lock (PursuitSync)
+            {
+                if (LastReturnIssue.Count >= 256)
+                    LastReturnIssue.Clear();
+                LastReturnIssue[gameplayActor.ActorId] = (proposal.TargetId, npcPos.Value);
+            }
+        }
+        return request;
+    }
+    /// <summary>
+    /// G8b return Stop dispatch (hold-confirm): issue the audited Stop halt,
+    /// then record both poses in the shared hold memory so the next wake's
+    /// return proposal can confirm the hold and yield to InteractNpc. Shares
+    /// <c>LastStopHold</c> with pursuit — entries are (actor, target) keyed by
+    /// check, and the reporter objId never equals a pursuit target. Never
+    /// touches _move state or queue kinds — public actor verbs only.
+    /// </summary>
+    private static ActorRequest DispatchReturnStop(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        var request = gameplayActor.Stop();
+        var character = gameplayActor.Character;
+        var actorPos = character?.Transform.World.Position;
+        var npcPos = character?.ParentWorld?.GetNpc(proposal.TargetId)?.Transform.World.Position;
+        if (actorPos.HasValue && npcPos.HasValue)
+        {
+            lock (PursuitSync)
+            {
+                if (LastStopHold.Count >= 256)
+                    LastStopHold.Clear();
+                LastStopHold[gameplayActor.ActorId] = (proposal.TargetId, actorPos.Value, npcPos.Value);
+            }
+        }
+        return request;
+    }
+    /// <summary>
+    /// G7c loot dispatch: the quest-owned corpse take through the live actor's
+    /// canonical <c>Loot</c> verb (the exact CSLootOpenBagPacket lootAll call)
+    /// with the per-corpse idempotency key. A terminal outcome (Completed or
+    /// Rejected — the verb ran its course) records the loot-once memory so the
+    /// proposal withholds this corpse on every later wake. A non-terminal
+    /// outcome (a live leg holds the actor) records nothing, so the next wake
+    /// retries cleanly. Public actor verbs only.
+    /// </summary>
+    private static ActorRequest DispatchLoot(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        var request = gameplayActor.Loot(proposal.TargetId, proposal.IdempotencyKey);
+        if (request.IsTerminal)
+        {
+            lock (PursuitSync)
+            {
+                if (LootedCorpses.Count >= 256)
+                    LootedCorpses.Clear();
+                LootedCorpses.Add((gameplayActor.ActorId, proposal.TargetId));
+            }
+        }
+        return request;
+    }
+    /// <summary>
+    /// G7c loot outcome diagnostics (additive, bounded): one Info line when
+    /// the loot proposal wins a wake — quest/CycleId/target/template/verb,
+    /// the dispatch trace + terminal state + grant (container entries taken)
+    /// + detail. The gate joins this grant to the container before/after
+    /// tallies for conservation. No behavior input; Info so the lane file
+    /// target records it.
+    /// </summary>
+    private static void LogLootOutcome(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, BotDecisionProposal selected, ActorRequest request, QuestFixtureRow fixture)
+    {
+        var detail = (request.Detail ?? "").Replace(' ', '_');
+        SweepDiagLog.Info(
+            "QuestObjectiveLootDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} target={Target} template={Template} verb=Loot " +
+            "trace={Trace} state={State} grant={Grant} detail=[{Detail}]",
+            opts.CycleId, actor.Character?.Id ?? 0, actor.ActorId, fixture.QuestId, selected.TargetId, fixture.PreyTemplate,
+            request.TraceId, request.State, request.Result, TruncateSweep(detail, 200));
+    }
+
+    /// <summary>
+    /// G6 combat outcome diagnostics (additive, bounded): one Info line when
+    /// the combat proposal wins a wake — quest/CycleId/target/template/verb,
+    /// the dispatch trace + terminal state + detail, and the authoritative
+    /// target HP before (proposal time) → after (post-dispatch) with delta.
+    /// Damage lands on attack-delay ticks after the terminal, so hpAfter
+    /// usually equals hpBefore here; the gate observes the trailing fall on
+    /// later wakes. No behavior input; Info so the lane file target records.
+    /// </summary>
+    private static void LogCombatOutcome(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, BotDecisionProposal selected, ActorRequest request, int hpBefore, QuestFixtureRow fixture)
+    {
+        var npc = actor.Character?.ParentWorld?.GetNpc(selected.TargetId);
+        var hpAfter = npc?.Hp ?? -1;
+        var delta = hpBefore >= 0 && hpAfter >= 0 ? hpAfter - hpBefore : 0;
+        var detail = (request.Detail ?? "").Replace(' ', '_');
+        SweepDiagLog.Info(
+            "QuestObjectiveCombatDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} target={Target} template={Template} verb=AutoAttack " +
+            "trace={Trace} state={State} detail=[{Detail}] hpBefore={HpBefore} hpAfter={HpAfter} delta={Delta} targetAlive={Alive}",
+            opts.CycleId, actor.Character?.Id ?? 0, actor.ActorId, fixture.QuestId, selected.TargetId,
+            npc?.TemplateId ?? 0, request.TraceId, request.State,
+            TruncateSweep(detail, 200), hpBefore, hpAfter, delta, npc != null && npc.Hp > 0);
+    }
+    /// <summary>
+    /// Diagnostic-only one-token summary of a per-target DiscoverQuests call:
+    /// <c>objId:State:sanitized-detail</c> (spaces become underscores and
+    /// square brackets become parens so the token stays parseable inside the
+    /// DECIDE bracket — the nested <c>[cands=N reject=...]</c> reject block
+    /// would otherwise nest brackets and the funnel parser's LastIndexOf
+    /// scan would land on the inner open and lose the funnel). Reads only.
+    /// </summary>
+    private static string DescribeDiscoverOutcome(ActorRequest discover)
+    {
+        var detail = (discover.Detail ?? "").Replace(' ', '_').Replace('[', '(').Replace(']', ')');
+        if (discover is { IsTerminal: true, State: ActorLifecycleState.Completed })
+        {
+            if (discover.Result is QuestDiscoveryResult result)
+            {
+                var offers = result.Offerings.Count == 0
+                    ? "offers=-"
+                    : "offers=" + string.Join(",", result.Offerings.Take(5).Select(o => $"{o.QuestId}L{o.Level}"))
+                      + (result.Offerings.Count > 5 ? $"+{result.Offerings.Count - 5}" : "");
+                return $"{discover.TargetId}:Completed:{offers}_{TruncateSweep(detail, 120)}";
+            }
+            return $"{discover.TargetId}:Completed:NoResult";
+        }
+        return $"{discover.TargetId}:{discover.State}:{TruncateSweep(detail, 120)}";
+    }
+
+    private static string TruncateSweep(string value, int max)
+        => value.Length <= max ? value : value.Substring(0, max) + "…";
+
+    /// <summary>
+    /// Bounded fail-result factory, shared with <see cref="QuestDirector.Run"/>
+    /// so a wake that throws before the leg loop (perception or plan
+    /// assembly) reports the same RUN/FidelityError surface it always has.
+    /// </summary>
+    internal static QuestDecisionScenario.QuestRunResult Fail(
+        string stage, ActorFailureReason reason, string detail,
+        IGameplayActor actor,
+        ActorActionType? selected,
+        IReadOnlyList<BotProposalRejection> rejections,
+        ActorRequest? request = null,
+        IReadOnlyList<LegEvidence>? legEvidence = null,
+        IReadOnlyList<QuestPlanFailure>? planFailures = null)
+        => new()
+        {
+            Scenario = QuestDecisionScenario.ScenarioName,
+            WorkSelected = false,
+            SelectedAction = selected,
+            Request = request,
+            Rejections = rejections,
+            Explanation = detail,
+            FailStage = stage,
+            Failure = reason,
+            FailReason = detail,
+            LegEvidence = legEvidence ?? [],
+            PlanFailures = planFailures ?? [],
+            TraceRecords = [.. actor.AuditTrace]
+        };
+}

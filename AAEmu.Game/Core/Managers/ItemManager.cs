@@ -16,6 +16,7 @@ using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.Items.Procs;
 using AAEmu.Game.Models.Game.Items.Templates;
+using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.StaticValues;
@@ -122,6 +123,17 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
     public List<LootPackDroppingNpc> GetLootPackIdByNpcId(uint npcId)
     {
         return _lootPackDroppingNpc.TryGetValue(npcId, out var value) ? value : [];
+    }
+
+    /// <summary>
+    /// Enumerates every npc→loot-pack row — the inverse lookup of
+    /// <see cref="GetLootPackIdByNpcId"/>. Fixture derivation inverts the
+    /// npc→pack→item chain to find an item's drop source without a hand-typed
+    /// npc id. Read-only; never mutates
+    /// </summary>
+    public IEnumerable<LootPackDroppingNpc> GetAllLootPackDroppingNpcs()
+    {
+        return _lootPackDroppingNpc?.Values.SelectMany(rows => rows) ?? [];
     }
 
     /// <summary>
@@ -446,6 +458,12 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
     {
         if (_loaded)
             return;
+
+        // The bot fixture rows invert the npc→loot-pack table this loader
+        // rebuilds (plus the item templates supplying their reward item), so
+        // every memoized row is stale as soon as a reload starts. Explicit
+        // invalidation seam — see QuestFixtureRow.
+        QuestFixtureRow.InvalidateAll();
 
         _grades = [];
         _holdables = [];

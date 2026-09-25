@@ -1464,6 +1464,21 @@ public class Skill
                 // We multiply the BASE value for server settings, not the total (although I don't think this would affect anything since we don't really have a +1 badge/action buff)
                 character.ChangeGamePoints(GamePointKind.Vocation, (int)Math.Ceiling(AppConfiguration.Instance.World.VocationRate * Template.GainLifePoint));
             }
+
+            // Trace (consequence state, schema v2): the skill's effects have
+            // landed and the cost has been charged — this is the RESULT row a
+            // cast-time skill otherwise never emits (cast_started is the
+            // pre-application row). State is read here, post-effect and
+            // post-labor. Cancelled skills emit nothing (no outcome occurred).
+            if (!Cancelled && PlayerTraceService.Instance.IsActive)
+            {
+                PlayerTraceService.Instance.RecordSkill(character, "cast_applied", Template.Id, new
+                {
+                    TargetObjId = InitialTarget?.ObjId ?? 0,
+                    TargetType = InitialTarget?.GetType().Name,
+                    LaborCost = laborCost
+                });
+            }
         }
 
         Callback?.Invoke();

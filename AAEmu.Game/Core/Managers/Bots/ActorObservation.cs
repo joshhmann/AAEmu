@@ -84,6 +84,9 @@ public sealed class ActorObservation
     /// <summary>ObjId of the team leader's current target (0 = none).</summary>
     public uint PartyLeaderTargetObjId { get; init; }
 
+    /// <summary>True when the character is mounted on an active mate (BotMountManager.IsMounted, direct query).</summary>
+    public bool IsMounted { get; init; }
+
     public override string ToString()
         => $"actor={ActorId} pos={Position} target={CurrentTargetObjId} hp={Hp}/{MaxHp} mp={Mp}/{MaxMp} " +
            $"money={Money} bank={BankMoney} labor={LaborPower} inParty={InParty} " +

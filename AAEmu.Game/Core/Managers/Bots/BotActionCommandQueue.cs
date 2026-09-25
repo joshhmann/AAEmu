@@ -147,7 +147,9 @@ public sealed record BotActionSpec(
     uint SkillId = 0,
     TimeSpan? Timeout = null,
     string? IdempotencyKey = null,
-    object? Payload = null);
+    object? Payload = null,
+    string? DecisionCycleId = null,
+    long? WakeSequence = null);
 
 /// <summary>Enqueue outcome: the API trace id to poll, or the failure reason.</summary>
 public sealed record BotActionEnqueueResult(Guid TraceId, uint CharacterId, string BotName, bool Ok, string Error)
@@ -164,7 +166,6 @@ public sealed record BotActionEnqueueResult(Guid TraceId, uint CharacterId, stri
 /// API threads read (never the actor). Published by the drain on the
 /// execution boundary via a volatile swap; safe for concurrent readers.
 /// Field names are contract (the control-plane API serializes them as-is).
-/// </summary>
 public sealed record BotActionSnapshot(
     Guid TraceId,
     uint ActorId,
@@ -178,7 +179,9 @@ public sealed record BotActionSnapshot(
     DateTime? CompletedAtUtc,
     IReadOnlyList<string> StateChanges,
     string? AuditJson,
-    object? Result);
+    object? Result,
+    string? DecisionCycleId = null,
+    long? WakeSequence = null);
 
 /// <summary>Configuration for <see cref="BotActionCommandQueue"/>.</summary>
 public sealed class BotActionQueueOptions
@@ -451,6 +454,17 @@ public sealed class BotActionCommandQueue
                 _ = actor.Interrupt(busy.TraceId);
             }
 
+            // Part-3 join key: stage the caller-supplied cycle id so the
+            // dispatched request (created inside ExecuteKind) carries it
+            // into its audit record. Staged separately from decision
+            // context — never clobbers scenario stamps.
+            if (spec.DecisionCycleId != null)
+                actor.SetPendingCycleId(spec.DecisionCycleId);
+            // Phase 1 wake identity: same staging for the caller-supplied
+            // wake sequence (external commands carry none — null stays null).
+            if (spec.WakeSequence != null)
+                actor.SetPendingWakeSequence(spec.WakeSequence);
+
             var (request, result) = ExecuteKind(actor, spec);
             entry.Result = result;
 
@@ -499,7 +513,10 @@ public sealed class BotActionCommandQueue
         catch (Exception ex)
         {
             Logger.Error(ex, "BotActionQueue: command execution failed (trace {TraceId})", entry.TraceId);
-            RejectEntry(entry, ActorFailureReason.RejectedAction, $"command execution failed: {ex.Message}");
+            // A staged cycle id whose dispatch threw must not leak onto the
+            // actor's next unrelated request.
+            entry.Actor?.SetPendingCycleId(null);
+            entry.Actor?.SetPendingWakeSequence(null);
         }
     }
 
@@ -523,7 +540,8 @@ public sealed class BotActionCommandQueue
                 var speed = spec.Payload is MoveActionParams m ? m.Speed : 5f;
                 var destination = spec.Destination
                     ?? throw new ArgumentException("move requires a destination (x/y/z)");
-                return (actor.MoveTo(destination, speed, spec.Timeout, key), null);
+                var moveRequest = actor.MoveTo(destination, speed, spec.Timeout, key);
+                return (moveRequest, moveRequest.Result);
             }
 
             case BotActionKind.Navigate:
@@ -531,88 +549,107 @@ public sealed class BotActionCommandQueue
                 var speed = spec.Payload is MoveActionParams m ? m.Speed : 5f;
                 var destination = spec.Destination
                     ?? throw new ArgumentException("navigate requires a destination (x/y/z)");
-                return (actor.NavigateTo(destination, speed, spec.Timeout, key), null);
+                var navigateRequest = actor.NavigateTo(destination, speed, spec.Timeout, key);
+                return (navigateRequest, navigateRequest.Result);
             }
 
             case BotActionKind.MoveToUnit:
             {
                 var speed = spec.Payload is MoveActionParams m ? m.Speed : 5f;
-                return (actor.MoveToUnit(spec.TargetId, speed, spec.Timeout, key), null);
+                var moveUnitRequest = actor.MoveToUnit(spec.TargetId, speed, spec.Timeout, key);
+                return (moveUnitRequest, moveUnitRequest.Result);
             }
 
             case BotActionKind.NavigateToUnit:
             {
                 var speed = spec.Payload is MoveActionParams m ? m.Speed : 5f;
-                return (actor.NavigateToUnit(spec.TargetId, speed, spec.Timeout, key), null);
+                var navigateUnitRequest = actor.NavigateToUnit(spec.TargetId, speed, spec.Timeout, key);
+                return (navigateUnitRequest, navigateUnitRequest.Result);
             }
 
             case BotActionKind.Stop:
-                return (actor.Stop(), null);
+                var stopRequest = actor.Stop();
+                return (stopRequest, stopRequest.Result);
 
             case BotActionKind.Target:
-                return (actor.SetTarget(spec.TargetId), null);
+                var setTargetRequest = actor.SetTarget(spec.TargetId);
+                return (setTargetRequest, setTargetRequest.Result);
 
             case BotActionKind.Cast:
-                return (actor.Cast(spec.SkillId, spec.TargetId, key), null);
+                var castRequest = actor.Cast(spec.SkillId, spec.TargetId, key);
+                return (castRequest, castRequest.Result);
 
             case BotActionKind.Interact:
             {
                 var skill = spec.Payload is InteractActionParams p ? p.SkillId : spec.SkillId;
-                return (actor.Interact(spec.TargetId, skill, key), null);
+                var interactRequest = actor.Interact(spec.TargetId, skill, key);
+                return (interactRequest, interactRequest.Result);
             }
 
             case BotActionKind.Loot:
-                return (actor.Loot(spec.TargetId, key), null);
+                var lootRequest = actor.Loot(spec.TargetId, key);
+                return (lootRequest, lootRequest.Result);
 
             case BotActionKind.UseItem:
             {
                 var target = spec.Payload is ItemUseActionParams p ? p.TargetObjId : 0u;
-                return (actor.UseItem(spec.TargetId, target, key), null);
+                var useItemRequest = actor.UseItem(spec.TargetId, target, key);
+                return (useItemRequest, useItemRequest.Result);
             }
 
             case BotActionKind.Mount:
-                return (actor.Mount(spec.TargetId, key), null);
+                var mountRequest = actor.Mount(spec.TargetId, key);
+                return (mountRequest, mountRequest.Result);
 
             case BotActionKind.Dismount:
             {
                 var mate = spec.Payload is DismountActionParams p ? p.MateObjId : 0u;
-                return (actor.Dismount(mate, key), null);
+                var dismountRequest = actor.Dismount(mate, key);
+                return (dismountRequest, dismountRequest.Result);
             }
             case BotActionKind.DiscoverQuests:
-                return (actor.DiscoverQuests(spec.TargetId, key), null);
+                var discoverQuestsRequest = actor.DiscoverQuests(spec.TargetId, key);
+                return (discoverQuestsRequest, discoverQuestsRequest.Result);
 
             case BotActionKind.DiscoverSelfQuests:
-                return (actor.DiscoverSelfQuests(key), null);
+                var discoverSelfQuestsRequest = actor.DiscoverSelfQuests(key);
+                return (discoverSelfQuestsRequest, discoverSelfQuestsRequest.Result);
 
             case BotActionKind.InteractWith:
-                return (actor.InteractWith(spec.TargetId, key), null);
+                var interactWithRequest = actor.InteractWith(spec.TargetId, key);
+                return (interactWithRequest, interactWithRequest.Result);
 
             case BotActionKind.Talk:
-                return (actor.Talk(spec.TargetId, key), null);
+                var talkRequest = actor.Talk(spec.TargetId, key);
+                return (talkRequest, talkRequest.Result);
 
             case BotActionKind.Equip:
-                return (actor.Equip(spec.TargetId, key), null);
+                var equipRequest = actor.Equip(spec.TargetId, key);
+                return (equipRequest, equipRequest.Result);
 
             case BotActionKind.AcceptQuest:
             {
                 var p = (QuestAcceptParams)spec.Payload!;
-                return (actor.AcceptQuest(spec.TargetId, p.AcceptorType, p.AcceptorId, key), null);
+                var acceptQuestRequest = actor.AcceptQuest(spec.TargetId, p.AcceptorType, p.AcceptorId, key);
+                return (acceptQuestRequest, acceptQuestRequest.Result);
             }
 
             case BotActionKind.AdvanceQuest:
-                return (actor.AdvanceQuest(spec.TargetId, key), null);
+                var advanceQuestRequest = actor.AdvanceQuest(spec.TargetId, key);
+                return (advanceQuestRequest, advanceQuestRequest.Result);
 
             case BotActionKind.TurnInQuest:
             case BotActionKind.TurnInDoodad:
             case BotActionKind.AutoTurnIn:
             {
                 var p = (QuestTurnInParams)spec.Payload!;
-                return spec.Kind switch
+                var turnIn = spec.Kind switch
                 {
-                    BotActionKind.TurnInQuest => (actor.TurnInQuest(spec.TargetId, p.TargetObjId, p.SelectedReward, key), null),
-                    BotActionKind.TurnInDoodad => (actor.TurnInAtDoodad(spec.TargetId, p.TargetObjId, p.SelectedReward, key), null),
-                    _ => (actor.AutoTurnInQuest(spec.TargetId, p.SelectedReward, key), null)
+                    BotActionKind.TurnInQuest => actor.TurnInQuest(spec.TargetId, p.TargetObjId, p.SelectedReward, key),
+                    BotActionKind.TurnInDoodad => actor.TurnInAtDoodad(spec.TargetId, p.TargetObjId, p.SelectedReward, key),
+                    _ => actor.AutoTurnInQuest(spec.TargetId, p.SelectedReward, key)
                 };
+                return (turnIn, turnIn.Result);
             }
 
             case BotActionKind.Interrupt:
@@ -634,26 +671,31 @@ public sealed class BotActionCommandQueue
             case BotActionKind.Craft:
             {
                 var doodad = spec.Payload is CraftActionParams p ? p.DoodadObjId : 0u;
-                return (actor.Craft(spec.TargetId, doodad, spec.Timeout, key), null);
+                var craftRequest = actor.Craft(spec.TargetId, doodad, spec.Timeout, key);
+                return (craftRequest, craftRequest.Result);
             }
 
             case BotActionKind.DepositMoney:
             {
                 var amount = spec.Payload is MoneyActionParams p ? p.Amount : (long)spec.TargetId;
-                return (actor.DepositMoney(amount, key), null);
+                var depositMoneyRequest = actor.DepositMoney(amount, key);
+                return (depositMoneyRequest, depositMoneyRequest.Result);
             }
 
             case BotActionKind.WithdrawMoney:
             {
                 var amount = spec.Payload is MoneyActionParams p ? p.Amount : (long)spec.TargetId;
-                return (actor.WithdrawMoney(amount, key), null);
+                var withdrawMoneyRequest = actor.WithdrawMoney(amount, key);
+                return (withdrawMoneyRequest, withdrawMoneyRequest.Result);
             }
 
             case BotActionKind.DepositItem:
-                return (actor.DepositItem(spec.TargetId, key), null);
+                var depositItemRequest = actor.DepositItem(spec.TargetId, key);
+                return (depositItemRequest, depositItemRequest.Result);
 
             case BotActionKind.WithdrawItem:
-                return (actor.WithdrawItem(spec.TargetId, key), null);
+                var withdrawItemRequest = actor.WithdrawItem(spec.TargetId, key);
+                return (withdrawItemRequest, withdrawItemRequest.Result);
 
             case BotActionKind.Plant:
             {
@@ -665,11 +707,13 @@ public sealed class BotActionCommandQueue
                     zRot = p.ZRot;
                     scale = p.Scale;
                 }
-                return (actor.Plant(spec.TargetId, pos, zRot, scale, key), null);
+                var plantRequest = actor.Plant(spec.TargetId, pos, zRot, scale, key);
+                return (plantRequest, plantRequest.Result);
             }
 
             case BotActionKind.Harvest:
-                return (actor.Harvest(spec.TargetId, key), null);
+                var harvestRequest = actor.Harvest(spec.TargetId, key);
+                return (harvestRequest, harvestRequest.Result);
 
             case BotActionKind.Buy:
             {
@@ -680,44 +724,53 @@ public sealed class BotActionCommandQueue
                     template = p.ItemTemplateId;
                     count = p.Count;
                 }
-                return (actor.Buy(spec.TargetId, template, count, key), null);
+                var buy = actor.Buy(spec.TargetId, template, count, key);
+                return (buy, buy.Result);
             }
 
             case BotActionKind.Sell:
             {
                 var itemId = spec.Payload is SellActionParams p ? p.ItemId : 0UL;
-                return (actor.Sell(spec.TargetId, itemId, key), null);
+                var sellRequest = actor.Sell(spec.TargetId, itemId, key);
+                return (sellRequest, sellRequest.Result);
             }
 
             case BotActionKind.Repair:
             {
                 var repairItemId = spec.Payload is SellActionParams rp ? rp.ItemId : 0UL;
-                return (actor.Repair(spec.TargetId, repairItemId, key), null);
+                var repairRequest = actor.Repair(spec.TargetId, repairItemId, key);
+                return (repairRequest, repairRequest.Result);
             }
 
             case BotActionKind.SellSpecialty:
-                return (actor.SellSpecialty(spec.TargetId, key), null);
+                var sellSpecialtyRequest = actor.SellSpecialty(spec.TargetId, key);
+                return (sellSpecialtyRequest, sellSpecialtyRequest.Result);
 
             case BotActionKind.TradeOffer:
-                return (actor.TradeOffer(spec.TargetId, key), null);
+                var tradeOfferRequest = actor.TradeOffer(spec.TargetId, key);
+                return (tradeOfferRequest, tradeOfferRequest.Result);
 
             case BotActionKind.TradePutup:
             {
                 var putupCount = spec.Payload is BuyActionParams pp ? pp.Count : 1;
-                return (actor.TradePutup(spec.TargetId, putupCount, key), null);
+                var tradePutupRequest = actor.TradePutup(spec.TargetId, putupCount, key);
+                return (tradePutupRequest, tradePutupRequest.Result);
             }
 
             case BotActionKind.TradeLockOk:
-                return (actor.TradeLockOk(key), null);
+                var tradeLockRequest = actor.TradeLockOk(key);
+                return (tradeLockRequest, tradeLockRequest.Result);
 
             case BotActionKind.BoardVehicle:
             {
                 var attach = spec.Payload is BoardVehicleActionParams p ? p.AttachPoint : AttachPointKind.Driver;
-                return (actor.BoardVehicle(spec.TargetId, attach, key), null);
+                var boardRequest = actor.BoardVehicle(spec.TargetId, attach, key);
+                return (boardRequest, boardRequest.Result);
             }
 
             case BotActionKind.UnboardVehicle:
-                return (actor.UnboardVehicle(spec.TargetId, key), null);
+                var unboardRequest = actor.UnboardVehicle(spec.TargetId, key);
+                return (unboardRequest, unboardRequest.Result);
 
             case BotActionKind.DriveVehicle:
             {
@@ -730,19 +783,23 @@ public sealed class BotActionCommandQueue
                     speed = p.Speed;
                     timeout = p.Timeout;
                 }
-                return (actor.DriveVehicle(spec.TargetId, dest, speed, timeout, key), null);
+                var driveRequest = actor.DriveVehicle(spec.TargetId, dest, speed, timeout, key);
+                return (driveRequest, driveRequest.Result);
             }
 
             case BotActionKind.PackPickup:
-                return (actor.PackPickup(spec.TargetId, key), null);
+                var packPickupRequest = actor.PackPickup(spec.TargetId, key);
+                return (packPickupRequest, packPickupRequest.Result);
 
             case BotActionKind.PutDown:
-                return (actor.PutDown(spec.TargetId, key), null);
+                var putDownRequest = actor.PutDown(spec.TargetId, key);
+                return (putDownRequest, putDownRequest.Result);
 
             case BotActionKind.LoadPackOntoVehicle:
             {
                 var placedPackId = spec.Payload is LoadPackOntoVehicleActionParams p ? p.PlacedPackDoodadObjId : null;
-                return (actor.LoadPackOntoVehicle(spec.TargetId, placedPackId, key), null);
+                var loadPackRequest = actor.LoadPackOntoVehicle(spec.TargetId, placedPackId, key);
+                return (loadPackRequest, loadPackRequest.Result);
             }
 
             default:
@@ -827,7 +884,8 @@ public sealed class BotActionCommandQueue
             ?? new ActorAuditRecord(
                 request.TraceId, entry.Actor?.ActorId ?? entry.CharacterId, request.Action,
                 request.TargetId, request.RequestedAtUtc, request.StartedAtUtc, request.CompletedAtUtc,
-                request.State, request.Failure, request.Detail, request.StateChanges.ToList());
+                request.State, request.Failure, request.Detail, request.StateChanges.ToList(),
+                DecisionCycleId: request.DecisionCycleId, WakeSequence: request.WakeSequence);
     }
 
     private void PublishSnapshot(BotActionCommand entry)
@@ -851,7 +909,6 @@ public sealed class BotActionCommandQueue
             entry.AuditFlushed = true;
             PlayerBotAuditSink.Instance.Enqueue(entry.CharacterId, record.ToJson());
         }
-
         entry.Publish(new BotActionSnapshot(
             TraceId: entry.TraceId,
             ActorId: entry.Actor?.ActorId ?? entry.CharacterId,
@@ -865,7 +922,9 @@ public sealed class BotActionCommandQueue
             CompletedAtUtc: request?.CompletedAtUtc ?? record?.CompletedAtUtc,
             StateChanges: stateChanges,
             AuditJson: record?.ToJson(),
-            Result: entry.Result));
+            Result: entry.Result,
+            DecisionCycleId: request?.DecisionCycleId ?? record?.DecisionCycleId ?? entry.Spec.DecisionCycleId,
+            WakeSequence: request?.WakeSequence ?? record?.WakeSequence ?? entry.Spec.WakeSequence));
     }
 
     /// <summary>Maps a command kind to the actor action for constructed audit records.</summary>
@@ -996,7 +1055,7 @@ public sealed class BotActionCommand
         _snapshot = new BotActionSnapshot(
             TraceId, characterId, botName, spec.Kind.ToString(),
             nameof(ActorLifecycleState.Requested), null, null,
-            enqueuedAtUtc, null, null, ["Requested"], null, null);
+            enqueuedAtUtc, null, null, ["Requested"], null, null, spec.DecisionCycleId, spec.WakeSequence);
     }
 
     public void Publish(BotActionSnapshot snapshot) => _snapshot = snapshot;

@@ -1,36 +1,23 @@
-using System.Numerics;
-
-using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
-using AAEmu.Game.Models.Game.Quests;
-using AAEmu.Game.Models.Game.Quests.Acts;
-using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Director;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
 /// <summary>
-/// Quest bootstrap decision scenario (copper-bootstrap leg): one
-/// quest action per scheduler wake through EXISTING
-/// <see cref="IGameplayActor"/> actions only.
+/// Quest bootstrap decision scenario (copper-bootstrap leg): one quest action
+/// per scheduler wake through the behavior runtime's hosted
+/// <see cref="QuestBehavior"/> — advance, turn-in, discover, and accept
+/// compete in a single shared <see cref="BotDecisionSelector"/> pass
+/// (Finding D: accept is not split out).
 ///
-/// Decision discipline (the <see cref="NeedsDecisionScenario"/> precedent):
-///   - perception rides <see cref="BotObservedContext.Capture"/> (active
-///     quest ids) plus live NPC resolution for discovery targets;
-///   - hard legality is evaluated BEFORE preference; range, liveness, and
-///     gate checks stay the engine's own fail-closed gates at dispatch;
-///   - selection is deterministic (fixed priority, personality weight 0);
-///   - dispatch calls existing actor methods only — AdvanceQuest,
-///     DiscoverQuests, AcceptQuest — no new gameplay path.
-///
-/// Per-wake order: advance each active quest once (objective credit flows
-/// from world events the hunt/interact legs drive; completions drop the
-/// quest from ActiveQuests and pay copper rewards through the normal
-/// engine path), otherwise discover from the nearest in-range NPCs and
-/// accept the lowest-level in-band offer. Objective pursuit itself (kill,
-/// gather, talk) rides the existing hunt/interact branches — this scenario
-/// only advances the step machine and acquires new quests.
+/// This class is the recomposed shell: it keeps the public contract
+/// (<see cref="ScenarioName"/>, <see cref="QuestOptions"/>,
+/// <see cref="QuestRunResult"/>, <see cref="Run"/>) byte-identical for the
+/// existing callers (roam executor quest leg, unit tests) while the whole
+/// decision implementation lives in <see cref="QuestBehavior"/> under
+/// <see cref="BotBehaviorRuntime"/> lifecycle. No semantic change.
 /// </summary>
 public static class QuestDecisionScenario
 {
@@ -40,6 +27,7 @@ public static class QuestDecisionScenario
     /// <summary>
     /// Scenario parameters. Defaults configure no discovery band, so a
     /// default run only advances active quests and never accepts (never throws).
+    /// Constructed by the caller (band/cap defaults stay outside the behavior).
     /// </summary>
     public sealed record QuestOptions
     {
@@ -59,7 +47,44 @@ public static class QuestDecisionScenario
         public int MaxDiscoverTargets { get; init; } = 3;
 
         // ---- fixed priorities (policy; personality weight stays 0) ----
+        /// <summary>E2E-ONLY test override (default-off): when true, a selected
+        /// quest turn-in proposal stays observable (eligibility + selection flow
+        /// through the normal leg) but dispatch is withheld — the quest stays
+        /// Ready/active and no turn-in lands. Production never sets this.</summary>
+        public bool WithholdTurnIn { get; init; } = false;
         public int TurnInPriority { get; init; } = 30;
+        /// <summary>G4 objective-target priority: above advance/accept (pursue
+        /// the held 251 objective first), below turn-in (a Ready quest still
+        /// reports first).</summary>
+        public int ObjectiveTargetPriority { get; init; } = 25;
+        /// <summary>G5 pursuit priority: just below the G4 objective-target
+        /// selection (25) so assignment wins first, above advance (20) so a
+        /// live pursuit leg outranks step-machine work. The G4 Target proposal
+        /// yields via its target-unassigned precondition once assigned, which
+        /// is when this proposal can win a wake.</summary>
+        public int ObjectivePursuitPriority { get; init; } = 24;
+        /// <summary>G6 combat priority: just below the G5 pursuit leg (24) so
+        /// range-hold (Move/Stop) always wins while closing or holding, above
+        /// advance (20) so a live combat leg outranks step-machine work. The
+        /// pursuit Stop leg yields via hold-confirm withdrawal once settled,
+        /// which is when this proposal can win a wake.</summary>
+        public int ObjectiveCombatPriority { get; init; } = 23;
+        /// <summary>G7c loot priority: just below the G6 combat leg (23) so a
+        /// live combat decision always wins while the target is alive, above
+        /// advance (20) so a lootable corpse is taken before step-machine
+        /// work. Fires only on a recognized lootable corpse (post-death wakes
+        /// withdraw pursuit/combat, so this is when the proposal can win).</summary>
+        public int ObjectiveLootPriority { get; init; } = 22;
+        /// <summary>G8b return priority: below the G5 pursuit leg (24), G6
+        /// combat (23), and G7c loot (22) so live objective work always wins
+        /// while closing/fighting/looting, above advance (20) so the return
+        /// leg outranks step-machine work. Fires only on Ready 251 with a
+        /// live 3512 reporter (Progress wakes withdraw it, so this is when
+        /// the proposal can win). While live it owns the wake over the
+        /// priority-30 TurnIn via wake-scoped arbitration (not priority) —
+        /// the TurnIn proposal is withheld that wake and the withhold seam
+        /// still guards any TurnIn that does get selected.</summary>
+        public int ObjectiveReturnPriority { get; init; } = 21;
         public int AdvancePriority { get; init; } = 20;
         public int AcceptPriority { get; init; } = 10;
     }
@@ -81,266 +106,31 @@ public static class QuestDecisionScenario
         public string FailStage { get; init; } = "";
         public ActorFailureReason? Failure { get; init; }
         public string FailReason { get; init; } = "";
+        /// <summary>
+        /// Per-leg wake evidence, in plan/leg evaluation order: which leg ran,
+        /// whether it emitted, and the leg's own named detail (its enter gate's
+        /// skip reason when withheld, otherwise its validate/dispatch diag).
+        /// </summary>
+        public IReadOnlyList<LegEvidence> LegEvidence { get; init; } = [];
+        /// <summary>
+        /// Every plan that failed its fixture gate this wake, named with the
+        /// plan's own stage and reason. Non-empty means those quests' legs were
+        /// deliberately not driven — never a silent skip, whether or not the
+        /// wake found other work.
+        /// </summary>
+        public IReadOnlyList<QuestPlanFailure> PlanFailures { get; init; } = [];
         /// <summary>The actor's full audit trace, in execution order.</summary>
         public List<ActorAuditRecord> TraceRecords { get; init; } = [];
     }
 
-    /// <summary>Runs one quest-bootstrap decision cycle on a live actor.</summary>
+    /// <summary>
+    /// Runs one quest-bootstrap decision cycle on a live actor (delegates to
+    /// <see cref="QuestDirector.Run"/>, which assembles the wake's plans; the
+    /// behavior's leg loop drives them. Contract unchanged).
+    /// </summary>
     public static QuestRunResult Run(
         IGameplayActor actor,
         Func<Character, float, IEnumerable<Npc>>? nearbyNpcs,
         QuestOptions? options = null)
-    {
-        ArgumentNullException.ThrowIfNull(actor);
-        var opts = options ?? new QuestOptions();
-
-        try
-        {
-            // ---------------------------------------------------- 1. PERCEIVE
-            var context = BotObservedContext.Capture(actor);
-            var before = context.ActiveQuestIds.ToHashSet();
-
-            // ---------------------------------------------------- 2. DECIDE
-            var proposals = new List<BotDecisionProposal>();
-            foreach (var questId in before.Order())
-            {
-                // An already-Ready quest has no advance work: RunCurrentStep
-                // from Ready is a no-op that still reports Completed, which the
-                // leg counts as landed work — starving the route layer so the
-                // bot never walks to an out-of-range reporter (observed live:
-                // 60 "advances" on a Ready quest, 0 turn-ins, bot never moved).
-                // Turn-in is the only legal work for a Ready quest.
-                var active = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
-                if (active is { Status: not QuestStatus.Ready and not QuestStatus.Completed })
-                    proposals.Add(AdvanceProposal(actor, opts, questId));
-                foreach (var turnIn in TurnInProposals(actor, opts, questId))
-                    proposals.Add(turnIn);
-            }
-            // Discovery needs live NPC targets: nearest in-range NPCs only
-            // (range itself stays the engine gate at dispatch).
-            var discoverTargets = new List<uint>();
-            if (nearbyNpcs != null)
-            {
-                var position = context.Position;
-                foreach (var npc in nearbyNpcs(actor.Character, GameplayActor.MaxQuestDiscoverRange))
-                {
-                    if (npc == null)
-                        continue;
-                    discoverTargets.Add(npc.ObjId);
-                    if (discoverTargets.Count >= opts.MaxDiscoverTargets)
-                        break;
-                }
-            }
-
-            // Discover first (read-like, non-mutating), then offer accepts.
-            var offerings = new List<(uint TargetObjId, QuestOffering Offering)>();
-            foreach (var targetObjId in discoverTargets)
-            {
-                var discover = actor.DiscoverQuests(targetObjId,
-                    idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:discover:{targetObjId}");
-                if (discover is not { IsTerminal: true, State: ActorLifecycleState.Completed })
-                    continue;
-                if (discover.Result is not QuestDiscoveryResult result)
-                    continue;
-                foreach (var offering in result.Offerings)
-                {
-                    if (offering.Level < opts.BandMin || offering.Level > opts.BandMax)
-                        continue;
-                    if (before.Contains(offering.QuestId))
-                        continue;
-                    offerings.Add((targetObjId, offering));
-                }
-            }
-            foreach (var (targetObjId, offering) in offerings
-                         .OrderBy(o => o.Offering.Level)
-                         .ThenBy(o => o.Offering.QuestId))
-                proposals.Add(AcceptProposal(actor, opts, targetObjId, offering));
-
-            var decideContext = BotObservedContext.Capture(actor);
-            var decision = BotDecisionSelector.Select(decideContext, proposals);
-            if (!decision.HasProposal)
-            {
-                return Fail("DECIDE", ActorFailureReason.WrongDecision,
-                    $"no legal quest proposal: {decision.Explanation}", actor, null, decision.Rejections);
-            }
-
-            // ---------------------------------------------------- 3. EXECUTE
-            var selected = decision.Proposal!;
-            actor.SetPendingDecision(selected.Goal, opts.PolicyVersion,
-                decision.Rejections.Count + 1, decision.Rejections.Count, opts.CycleId);
-            var execution = BotDecisionCycle.Execute(actor, decideContext, selected,
-                static (gameplayActor, proposal) => Dispatch(gameplayActor, proposal));
-            var request = execution.Request;
-            if (!request.IsTerminal)
-            {
-                return Fail("EXECUTE", ActorFailureReason.Starvation,
-                    $"{request.Action} left the terminal surface",
-                    actor, selected.Action, decision.Rejections, request);
-            }
-
-            var after = BotObservedContext.Capture(actor).ActiveQuestIds.ToHashSet();
-            var completed = before.Where(q => !after.Contains(q)).ToList();
-            return new QuestRunResult
-            {
-                Scenario = ScenarioName,
-                WorkSelected = true,
-                SelectedAction = selected.Action,
-                Request = request,
-                Rejections = decision.Rejections,
-                Explanation = decision.Explanation,
-                CompletedQuestIds = completed,
-                TraceRecords = [.. actor.AuditTrace]
-            };
-        }
-        catch (Exception ex)
-        {
-            return Fail("RUN", ActorFailureReason.FidelityError,
-                $"{ex.GetType().Name}: {ex.Message}", actor, null, []);
-        }
-    }
-
-    private static BotDecisionProposal AdvanceProposal(IGameplayActor actor, QuestOptions opts, uint questId)
-        => new(
-            goal: "quest.advance",
-            action: ActorActionType.AdvanceQuest,
-            targetId: questId,
-            expectedPostcondition: new BotProposalPostcondition(
-                $"quest {questId} step machine advanced",
-                _ => true),
-            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:advance:{questId}",
-            timeout: TimeSpan.FromSeconds(30),
-            rationale: "advance the active quest step machine",
-            policyVersion: opts.PolicyVersion,
-            priority: opts.AdvancePriority,
-            tieBreakKey: $"advance:{questId:D10}",
-            payload: null,
-            hardPreconditions:
-            [
-                new BotProposalPrecondition("quest-active",
-                    observed => observed.ActiveQuestIds.Contains(questId))
-            ]);
-    /// <summary>
-    /// Turn-in proposals for a Ready active quest (the LevelingLoop TurnIn
-    /// precedent): NPC reporter → TurnInQuest, doodad reporter →
-    /// TurnInAtDoodad, neither → AutoTurnInQuest. Reporter objIds resolve
-    /// per wake — never stored. Readiness is the live quest Status; the
-    /// engine revalidates at dispatch.
-    /// </summary>
-    private static IEnumerable<BotDecisionProposal> TurnInProposals(
-        IGameplayActor actor, QuestOptions opts, uint questId)
-    {
-        var character = actor.Character;
-        if (character.Quests?.ActiveQuests.GetValueOrDefault(questId) is not { Status: QuestStatus.Ready })
-            yield break;
-        var template = QuestManager.Instance.GetTemplate(questId);
-        if (template == null)
-            yield break;
-        var readyActs = template.GetComponents(QuestComponentKind.Ready)
-            .SelectMany(c => c.ActTemplates).ToList();
-        var reportNpc = readyActs.OfType<QuestActConReportNpc>().FirstOrDefault();
-        var reportDoodad = readyActs.OfType<QuestActConReportDoodad>().FirstOrDefault();
-        if (reportNpc != null)
-        {
-            var reporter = character.ParentWorld?.GetNpcByTemplateId(reportNpc.NpcId);
-            if (reporter == null)
-                yield break;
-            yield return TurnInProposal(actor, opts, questId, ActorActionType.TurnInQuest,
-                reporter.ObjId, new QuestTurnInParams(reporter.ObjId, -1));
-        }
-        else if (reportDoodad != null)
-        {
-            var doodad = character.ParentWorld?.GetAllDoodads().FirstOrDefault(d => d?.TemplateId == reportDoodad.DoodadId);
-            if (doodad == null)
-                yield break;
-            yield return TurnInProposal(actor, opts, questId, ActorActionType.TurnInDoodad,
-                doodad.ObjId, new QuestTurnInParams(doodad.ObjId, -1));
-        }
-        else
-        {
-            yield return TurnInProposal(actor, opts, questId, ActorActionType.AutoTurnIn,
-                0, new QuestTurnInParams(0, -1));
-        }
-    }
-
-    private static BotDecisionProposal TurnInProposal(
-        IGameplayActor actor, QuestOptions opts, uint questId,
-        ActorActionType action, uint targetId, QuestTurnInParams turnIn)
-        => new(
-            goal: "quest.turn-in",
-            action: action,
-            targetId: questId,
-            expectedPostcondition: new BotProposalPostcondition(
-                $"quest {questId} completed by turn-in",
-                _ => true),
-            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:turnin:{questId}",
-            timeout: TimeSpan.FromSeconds(30),
-            rationale: "turn in the ready quest for copper reward",
-            policyVersion: opts.PolicyVersion,
-            priority: opts.TurnInPriority,
-            tieBreakKey: $"turnin:{questId:D10}",
-            payload: turnIn,
-            hardPreconditions:
-            [
-                new BotProposalPrecondition("quest-active",
-                    observed => observed.ActiveQuestIds.Contains(questId))
-            ]);
-
-    private static BotDecisionProposal AcceptProposal(
-        IGameplayActor actor, QuestOptions opts, uint targetObjId, QuestOffering offering)
-        => new(
-            goal: "quest.accept",
-            action: ActorActionType.AcceptQuest,
-            targetId: offering.QuestId,
-            expectedPostcondition: new BotProposalPostcondition(
-                $"quest {offering.QuestId} is active",
-                observed => observed.ActiveQuestIds.Contains(offering.QuestId)),
-            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:accept:{offering.QuestId}",
-            timeout: TimeSpan.FromSeconds(30),
-            rationale: $"lowest offered level in [{opts.BandMin}..{opts.BandMax}]",
-            policyVersion: opts.PolicyVersion,
-            priority: opts.AcceptPriority + Math.Max(0, opts.BandMax - offering.Level),
-            tieBreakKey: offering.QuestId.ToString("D10"),
-            payload: (offering, targetObjId),
-            hardPreconditions:
-            [
-                new BotProposalPrecondition("quest-not-active",
-                    observed => !observed.ActiveQuestIds.Contains(offering.QuestId))
-            ]);
-
-    private static ActorRequest Dispatch(IGameplayActor gameplayActor, BotDecisionProposal proposal)
-    {
-        return proposal.Action switch
-        {
-            ActorActionType.AdvanceQuest => gameplayActor.AdvanceQuest(
-                proposal.TargetId, proposal.IdempotencyKey),
-            ActorActionType.AcceptQuest when proposal.Payload is (QuestOffering offering, uint _) => gameplayActor.AcceptQuest(
-                proposal.TargetId, offering.AcceptorType, offering.AcceptorId, proposal.IdempotencyKey),
-            ActorActionType.TurnInQuest when proposal.Payload is QuestTurnInParams turnIn => gameplayActor.TurnInQuest(
-                proposal.TargetId, turnIn.TargetObjId, turnIn.SelectedReward, proposal.IdempotencyKey),
-            ActorActionType.TurnInDoodad when proposal.Payload is QuestTurnInParams turnInDoodad => gameplayActor.TurnInAtDoodad(
-                proposal.TargetId, turnInDoodad.TargetObjId, turnInDoodad.SelectedReward, proposal.IdempotencyKey),
-            ActorActionType.AutoTurnIn when proposal.Payload is QuestTurnInParams auto => gameplayActor.AutoTurnInQuest(
-                proposal.TargetId, auto.SelectedReward, proposal.IdempotencyKey),
-        };
-    }
-
-    private static QuestRunResult Fail(
-        string stage, ActorFailureReason reason, string detail,
-        IGameplayActor actor,
-        ActorActionType? selected,
-        IReadOnlyList<BotProposalRejection> rejections,
-        ActorRequest? request = null)
-        => new()
-        {
-            Scenario = ScenarioName,
-            WorkSelected = false,
-            SelectedAction = selected,
-            Request = request,
-            Rejections = rejections,
-            Explanation = detail,
-            FailStage = stage,
-            Failure = reason,
-            FailReason = detail,
-            TraceRecords = [.. actor.AuditTrace]
-        };
+        => QuestDirector.Run(actor, nearbyNpcs, options);
 }

@@ -818,6 +818,31 @@ public sealed class BotDriveBridge
                 var npc = character.ParentWorld.GetNpcByTemplateId(GetUInt(root, "npc"));
                 return Ok(new { objId = npc?.ObjId ?? 0u });
             }
+            case "npcState":
+            {
+                // G6 combat-gate read-only probe (E2E-ONLY, additive): live
+                // HP/aliveness of one world NPC by objId (preferred — the
+                // gate pins the funnel-selected objId) or by template id.
+                // Pure read; never damages, moves, or targets anything.
+                // G7b (observe-only, additive): read-only loot-container state
+                // for the resolved corpse — container entry count (the test
+                // reads 'container' WITHOUT taking), containerExists, and the
+                // lootable predicate reusing GameplayActor.Loot's own gates
+                // (resolves + loot-range + non-empty) as reads only. No
+                // open/mutate/transfer anywhere on this path.
+                var wantObjId = GetUInt(root, "npcObjId");
+                var npc = wantObjId != 0
+                    ? character.ParentWorld.GetNpc(wantObjId)
+                    : character.ParentWorld.GetNpcByTemplateId(GetUInt(root, "npc"));
+                if (npc == null)
+                    return Ok(new { objId = 0u, templateId = 0u, hp = -1, maxHp = -1, alive = false });
+                var lootContainer = npc.LootingContainer;
+                var containerCount = lootContainer?.Items.Count ?? 0;
+                var lootable = containerCount > 0 && AAEmu.Game.Utils.MathUtil.CalculateDistance(
+                    character.Transform.World.Position, npc.Transform.World.Position, false)
+                    <= AAEmu.Game.Models.Game.Items.Containers.LootingContainer.MaxLootingRange;
+                return Ok(new { objId = npc.ObjId, templateId = npc.TemplateId, hp = npc.Hp, maxHp = npc.MaxHp, alive = npc.Hp > 0, container = containerCount, containerExists = lootContainer != null, lootable });
+            }
             case "doodadObjId":
             {
                 var doodad = character.ParentWorld.GetAllDoodads()
@@ -4330,10 +4355,12 @@ public sealed class BotDriveBridge
     /// the whole decision (discover/accept/advance/turn-in) through the
     /// production <c>QuestDecisionScenario</c> leg; this op only enrolls,
     /// wakes, and observes.
-    ///
     /// Subs:
-    ///   wake    — enroll + activate + wake + observe (default).
-    ///   observe — observe only, no enroll/activate/wake.
+    ///   wake     — enroll + activate + wake + observe (default).
+    ///   observe  — observe only, no enroll/activate/wake.
+    ///   withhold — E2E-ONLY turn-in withhold arm/clear (no wake, no gameplay
+    ///              action): {"sub":"withhold","on":true|false} flips the per-bot
+    ///              flag the quest leg reads; wake/observe payloads echo it.
     /// </summary>
     private string HandleQuestOp(JsonElement root)
     {
@@ -4369,6 +4396,33 @@ public sealed class BotDriveBridge
                 id = character.Id,
                 x = pp.X, y = pp.Y, z = pp.Z,
                 zoneId = character.Transform.ZoneId,
+            });
+        }
+        // E2E-ONLY turn-in withhold (default-off): arm/clear the per-bot flag
+        // the quest leg reads into QuestOptions.WithholdTurnIn. No gameplay
+        // action, no quest state touched — the leg still runs whole and the
+        // turn-in proposal stays observable while dispatch is withheld.
+        if (string.Equals(sub, "withhold", StringComparison.OrdinalIgnoreCase))
+        {
+            var on = true;
+            if (root.TryGetProperty("on", out var onEl))
+                on = onEl.ValueKind switch
+                {
+                    JsonValueKind.False => false,
+                    JsonValueKind.True => true,
+                    JsonValueKind.Number => onEl.GetInt32() != 0,
+                    JsonValueKind.String => onEl.GetString() is "1" or "true" or "True",
+                    _ => true
+                };
+            var questExecutor = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.BotRoamStepExecutor>();
+            if (questExecutor == null)
+                return Err("quest withhold: bot executor unavailable in DI");
+            questExecutor.SetQuestTurnInWithheld(character!.Id, on);
+            return Ok(new
+            {
+                name = character.Name,
+                id = character.Id,
+                withholdTurnIn = questExecutor.IsQuestTurnInWithheld(character.Id),
             });
         }
 
@@ -4412,10 +4466,15 @@ public sealed class BotDriveBridge
         }
         else if (!string.Equals(sub, "observe", StringComparison.OrdinalIgnoreCase))
         {
-            return Err($"quest: unknown sub '{sub}' (want 'wake' or 'observe')");
+            return Err($"quest: unknown sub '{sub}' (want 'wake', 'observe', or 'withhold')");
         }
 
-        var after = scheduler.GetMetrics().TotalStepsRun;
+        var metricsAfter = scheduler.GetMetrics();
+        var after = metricsAfter.TotalStepsRun;
+        // §4 diagnostic (read-only): per-bot terminal outcome for this charId
+        // (null until its wake reaches a terminal scheduler site) so one wake
+        // + one read discriminates skip/fail/timeout per bot.
+        var botStep = (scheduler as Core.Managers.Bots.PlayerBotScheduler)?.GetBotStepState(character!.Id);
         var state = executor.GetBotState(character!.Id);
         var snapshot = Core.Managers.Bots.BotQuestLoopObservation.Capture(
             character, state?.QuestLegActive ?? false, arcIds);
@@ -4437,6 +4496,41 @@ public sealed class BotDriveBridge
         var last = rows.LastOrDefault();
         var liveReq = state?.Actor.ActiveRequest;
 
+        // Phase 1 wake identity + position-gap probes (diagnostics only):
+        // the decorator's per-bot wake counter (null when undecorated),
+        // the executor actor's own character position/ids beside the
+        // snapshot's (a mismatch proves the decision path reads stale
+        // state), and DiscoverQuests row counts (sweep I/O evidence).
+        var arbiterStep = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.BotGoalArbiterStepExecutor>();
+        long? wakeSeq = arbiterStep != null ? arbiterStep.GetWakeSequence(character!.Id) : null;
+        // Arbiter-yield read-only (diagnostics only): the arbiter's CURRENT
+        // yielded activity for this bot (e.g. quest.progress, recovery.rest,
+        // null = none) — the same GetActiveActivity memory the Brain Inspector
+        // projects, exposed here because /api/bots/brain is bot-ctrl-gated.
+        // Pure read of the per-bot memory; never arbitrates, never mutates.
+        var arbiterActivity = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.IBotGoalArbiter>()?.GetActiveActivity(character!.Id);
+        var actorChar = state?.Actor.Character;
+        var actorPos = actorChar?.Transform.World.Position;
+        var discoverRows = rows.Where(r => r.Action == Core.Managers.Bots.ActorActionType.DiscoverQuests).ToList();
+        var lastDiscover = discoverRows.LastOrDefault();
+        // The staged sequence is consumed ONCE by each wake's first request
+        // (usually perception Observe), so the LAST row is usually unstamped
+        // — the max over the trace is the per-bot wake proof (monotonic per
+        // bot; null when no wake has dispatched through this actor yet).
+        long? maxTraceWakeSeq = null;
+        foreach (var row in trace)
+            if (row.WakeSequence > maxTraceWakeSeq)
+                maxTraceWakeSeq = row.WakeSequence;
+        // E2E-ONLY turn-in hold probe (read-only): when the caller names a
+        // reporter NPC template ("reporter": 3512), resolve the live NPC and
+        // project objId + position + flat distance so the hold proof (reporter
+        // resolved, bot held far away) needs no extra round trip.
+        var reporterTemplate = GetUInt(root, "reporter");
+        var reporter = reporterTemplate != 0 ? character!.ParentWorld?.GetNpcByTemplateId(reporterTemplate) : null;
+        var reporterPos = reporter?.Transform.World.Position;
+        var botPos = character!.Transform.World.Position;
+        var reporterDistM = reporterPos.HasValue ? (double)AAEmu.Game.Utils.MathUtil.CalculateDistance(botPos, reporterPos.Value, false) : -1.0;
+
         return Ok(new
         {
             name = character.Name,
@@ -4444,14 +4538,48 @@ public sealed class BotDriveBridge
             stepsBefore = before,
             stepsAfter = after,
             stepped,
+            totalStepsSkipped = metricsAfter.TotalStepsSkipped,
+            totalStepsFailed = metricsAfter.TotalStepsFailed,
+            totalStepsTimedOut = metricsAfter.TotalStepsTimedOut,
+            botLastStepOutcome = botStep?.LastOutcome.ToString(),
+            botLastStepUtc = botStep?.LastUtc,
+            botStepsSkipped = botStep?.Skipped ?? 0,
+            botStepsFailed = botStep?.Failed ?? 0,
+            botStepsTimedOut = botStep?.TimedOut ?? 0,
+            botStepsRan = botStep?.Ran ?? 0,
             level = snapshot.Level,
             money = snapshot.Money,
             x = snapshot.X, y = snapshot.Y, z = snapshot.Z,
             zoneId = snapshot.ZoneId,
+            worldId = character!.ParentWorld?.Id ?? 0u,
+            instanceId = character.Transform.InstanceId,
+            // Executor-actor side (position-gap probe: must equal x/y/z —
+            // a mismatch proves the decision path reads a stale Character).
+            actorX = actorPos?.X, actorY = actorPos?.Y, actorZ = actorPos?.Z,
+            actorZoneId = actorChar != null ? actorChar.Transform.ZoneId : 0u,
+            actorObjId = actorChar?.ObjId ?? 0u,
+            actorCharId = actorChar?.Id ?? 0u,
+            // Phase 1 wake identity: decorator wake counter for this bot +
+            // the newest trace row's stamped sequence (per-bot wake proof
+            // even when the wake dispatched nothing quest-side).
+            traceWakeSeq = trace.LastOrDefault()?.WakeSequence,
+            maxTraceWakeSeq = maxTraceWakeSeq,
             questLegActive = snapshot.QuestLegActive,
+            // Arbiter-yield read-only (diagnostics only): CURRENT yielded
+            // activity name for this bot (null = none yielded yet).
+            arbiterActivity = arbiterActivity,
+            // Sweep diagnostic (additive): last quest-leg outcome summary for
+            // this bot (landed action or fail stage + sweep tallies + actor
+            // pose), overwritten every quest wake. Read-only.
+            questDecideDetail = state?.QuestDecideDetail ?? "",
             questTravelTargetX = state?.QuestTravelTarget?.X,
             questTravelTargetY = state?.QuestTravelTarget?.Y,
             questTravelReason = state?.QuestTravelReason ?? "",
+            // E2E-ONLY turn-in withhold echo + reporter probe (read-only).
+            withholdTurnIn = executor.IsQuestTurnInWithheld(character!.Id),
+            reporterObjId = reporter?.ObjId ?? 0u,
+            reporterX = reporterPos?.X, reporterY = reporterPos?.Y, reporterZ = reporterPos?.Z,
+            reporterDistM = reporterDistM,
             activeQuests = snapshot.ActiveQuests.Select(q => new
             {
                 questId = q.QuestId,
@@ -4466,6 +4594,12 @@ public sealed class BotDriveBridge
             arcCompleted = snapshot.ArcCompleted,
             arcComplete = Core.Managers.Bots.BotQuestLoopObservation.ArcComplete(snapshot),
             questActionCount = rows.Count,
+            // Funnel sweep I/O (diagnostics): DiscoverQuests call outcomes.
+            discoverCalls = discoverRows.Count,
+            discoverCompleted = discoverRows.Count(r => r.Result == Core.Managers.Bots.ActorLifecycleState.Completed),
+            discoverRejected = discoverRows.Count(r => r.Result == Core.Managers.Bots.ActorLifecycleState.Rejected),
+            lastDiscoverDetail = lastDiscover?.Detail,
+            lastWakeSeq = last?.WakeSequence,
             accepts = rows.Count(r => r.Action == Core.Managers.Bots.ActorActionType.AcceptQuest
                 && r.Result == Core.Managers.Bots.ActorLifecycleState.Completed),
             turnIns = rows.Count(r => r.Action is Core.Managers.Bots.ActorActionType.TurnInQuest
@@ -4482,6 +4616,10 @@ public sealed class BotDriveBridge
             liveAction = liveReq?.Action.ToString(),
             liveState = liveReq?.State.ToString(),
             liveDetail = liveReq?.Detail,
+            // G6 combat-gate reads (additive, read-only): the auto-attack
+            // loop flag + pinned target straight off the character.
+            isAutoAttack = character!.IsAutoAttack,
+            currentTargetObjId = character!.CurrentTarget?.ObjId ?? 0u,
         });
     }
 

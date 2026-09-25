@@ -63,7 +63,10 @@ public sealed record ActorAuditRecord(
     string? DecisionPolicy = null,
     int DecisionCandidates = 0,
     int DecisionRejections = 0,
-    string? DecisionSeed = null)
+    string? DecisionSeed = null,
+    string? DecisionCycleId = null,
+    long? WakeSequence = null,
+    string? MoveOwner = null)
 {
     /// <summary>Stable one-line log form (structured fields, no packet content).</summary>
     public override string ToString()
@@ -107,6 +110,15 @@ public sealed record ActorAuditRecord(
             decision_policy = DecisionPolicy,
             decision_candidates = DecisionCandidates,
             decision_rejections = DecisionRejections,
-            decision_seed = DecisionSeed
+            decision_seed = DecisionSeed,
+            // Prereq Part 3 join key: wake → decision → request → terminal
+            // row. Null when unstamped; old consumers ignore unknown keys.
+            decision_cycle_id = DecisionCycleId,
+            // Phase 1 wake identity: per-bot scheduler-wake sequence from the
+            // arbitration decorator. Null when unstamped.
+            wake_sequence = WakeSequence,
+            // Movement owner: which dispatch path owns this Move/Drive leg
+            // (telemetry only, null when unstaged). Old consumers ignore it.
+            move_owner = MoveOwner
         });
 }

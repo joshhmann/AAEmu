@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Acts;
@@ -21,6 +22,23 @@ public partial class QuestManager
     /// <param name="selected">Selected reward (if any)</param>
     public void DoReportEvents(ICharacter owner, uint questContextId, uint npcObjId, uint doodadObjId, int selected)
     {
+        // Trace (consequence state, schema v2): the turn-in REQUEST is an
+        // outcome attempt — record it with the quest's state as the report
+        // lands. For the NPC/doodad branches the report act advances the quest
+        // synchronously inside the event call below; for the auto-complete
+        // branch the step change is applied right here. Emitted once, before
+        // the branch, so every turn-in shape is covered exactly once.
+        var traceCharacter = owner as Character;
+        if (PlayerTraceService.Instance.IsActive && traceCharacter != null)
+        {
+            PlayerTraceService.Instance.RecordQuest(traceCharacter, "quest_turnin_requested", questContextId, new
+            {
+                NpcObjId = npcObjId,
+                DoodadObjId = doodadObjId,
+                Selected = selected
+            });
+        }
+
         if (npcObjId > 0)
         {
             // Turning in at a NPC?

@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Items.Actions;
@@ -516,6 +517,11 @@ public class LootPack
         // If it is not generated yet, generate loot pack info now
         generatedList ??= GeneratePack(character, actabilityType, inheritedGrade);
 
+        // Trace (consequence state, schema v2): measure the bag BEFORE the
+        // grant so the event can report the exact item-unit delta the grant
+        // produced. Null when the container is unreadable (explicit unknown).
+        var traceBagBefore = PlayerTraceService.Instance.IsActive ? PlayerTraceService.BagItemUnits(character) : null;
+
         var canAdd = true;
         // First check for room
         foreach (var (itemTemplateId, count, _, _) in generatedList)
@@ -561,6 +567,25 @@ public class LootPack
             //We have coins to give out.
             // Logger.Debug("{Category} - {Character} got {Amount} from lootpack {Lootpack}");
             character.AddMoney(SlotType.Inventory, coinCount, taskType);
+        }
+
+        // Trace (consequence state, schema v2): the pack grant succeeded —
+        // report the item templates granted plus the exact bag delta (null when
+        // the pre-grant read failed; coins land in money, not the bag). All
+        // reads are ordinary accessors, post-grant.
+        if (PlayerTraceService.Instance.IsActive)
+        {
+            var bagAfter = PlayerTraceService.BagItemUnits(character);
+            var bagDelta = traceBagBefore.HasValue && bagAfter.HasValue ? bagAfter.Value - traceBagBefore.Value : (int?)null;
+            PlayerTraceService.Instance.RecordLoot(character, "loot_granted", 0, 0,
+                generatedList.Count, bagDelta, new
+                {
+                    Source = "LootPack",
+                    TaskType = taskType.ToString(),
+                    Actability = actabilityType.ToString(),
+                    Coins = coinCount,
+                    Items = generatedList.Select(i => new { i.itemId, i.count, i.grade }).ToList()
+                });
         }
 
         return true;

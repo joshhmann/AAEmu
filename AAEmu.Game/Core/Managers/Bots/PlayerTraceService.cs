@@ -13,7 +13,129 @@ using AAEmu.Game.Models.Game.Char;
 
 using NLog;
 
+// PlayerTrace JSONL schema (additive versions, old keys never change):
+//
+//   v1 — ts / elapsed_ms / character_id / character_name / category / event / data.
+//
+//   v2 — `state`: a compact CONSEQUENCE snapshot attached to every trace event
+//        that represents an action outcome (skill cast results, doodad use,
+//        resource money/labor changes, loot/item grants, quest accept and
+//        completion, mount/dismount, refusals). Fields: hp, maxHp, mp, maxMp,
+//        money, labor, bagTotal, bagSlots, bagFreeSlots, bagDelta, questId,
+//        questActive, questStep, questStatus, questObjectives, targetObjId,
+//        isMounted, pos{x,y,z}.
+//
+//        Every field is read through the SAME ordinary server accessors the M5
+//        observation snapshot (GameplayActor.Observe / ActorObservation) uses —
+//        no new engine queries, no packet injection, no engine mutation. A read
+//        that fails or does not apply to the event is written as an EXPLICIT
+//        JSON null: unknown stays unknown, nothing is fabricated or defaulted.
+//
+//        The bag is summarised as a cheap diff-friendly triple (bagTotal = all
+//        item units, bagSlots = occupied entries, bagFreeSlots) instead of a
+//        full per-template map, so outcome lines stay compact; consumers diff
+//        bagTotal between consecutive events to recover the bag delta of any
+//        event, and loot events carry the exact bagDelta of the grant.
+//
+//        Consumers that predate v2 simply ignore the extra `state` key.
+
 namespace AAEmu.Game.Core.Managers.Bots;
+
+/// <summary>
+/// Position triple carried inside <see cref="TraceStateSnapshot"/>.
+/// </summary>
+public sealed record TraceStatePos
+{
+    [JsonPropertyName("x"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public float X { get; init; }
+
+    [JsonPropertyName("y"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public float Y { get; init; }
+
+    [JsonPropertyName("z"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public float Z { get; init; }
+}
+
+/// <summary>
+/// Compact server-side consequence snapshot (trace schema v2) attached to
+/// action-outcome events. See the schema note at the top of this file: all
+/// fields are read through ordinary server accessors at event time, and every
+/// unreadable / inapplicable field is serialized as an explicit null.
+/// </summary>
+public sealed record TraceStateSnapshot
+{
+    [JsonPropertyName("hp"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public int? Hp { get; init; }
+
+    [JsonPropertyName("maxHp"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public int? MaxHp { get; init; }
+
+    [JsonPropertyName("mp"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public int? Mp { get; init; }
+
+    [JsonPropertyName("maxMp"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public int? MaxMp { get; init; }
+
+    /// <summary>Inventory copper balance (Character.Money).</summary>
+    [JsonPropertyName("money"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public long? Money { get; init; }
+
+    /// <summary>Current labor power (Character.LaborPower).</summary>
+    [JsonPropertyName("labor"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public short? Labor { get; init; }
+
+    /// <summary>Total item units currently in the bag container (Inventory.Bag).</summary>
+    [JsonPropertyName("bagTotal"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public int? BagTotal { get; init; }
+
+    /// <summary>Occupied bag entries (item stacks) in the bag container.</summary>
+    [JsonPropertyName("bagSlots"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public int? BagSlots { get; init; }
+
+    /// <summary>Free bag slots (ItemContainer.FreeSlotCount).</summary>
+    [JsonPropertyName("bagFreeSlots"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public int? BagFreeSlots { get; init; }
+
+    /// <summary>
+    /// Exact item-unit change of THIS event when the caller knows it (loot /
+    /// item grants, null for coin-only grants); null when the event does not
+    /// itself state a bag delta — diff <see cref="BagTotal"/> instead.
+    /// </summary>
+    [JsonPropertyName("bagDelta"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public int? BagDelta { get; init; }
+
+    /// <summary>Quest context id this event concerns (null when none applies).</summary>
+    [JsonPropertyName("questId"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public uint? QuestId { get; init; }
+
+    /// <summary>True when the quest is (still) in ActiveQuests at event time.</summary>
+    [JsonPropertyName("questActive"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public bool? QuestActive { get; init; }
+
+    /// <summary>Quest step (QuestComponentKind) at event time.</summary>
+    [JsonPropertyName("questStep"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public string? QuestStep { get; init; }
+
+    /// <summary>Quest status (QuestStatus) at event time.</summary>
+    [JsonPropertyName("questStatus"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public string? QuestStatus { get; init; }
+
+    /// <summary>Objective counters of the quest's current step at event time.</summary>
+    [JsonPropertyName("questObjectives"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public int[]? QuestObjectives { get; init; }
+
+    /// <summary>Current target objId (0 = no target).</summary>
+    [JsonPropertyName("targetObjId"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public uint? TargetObjId { get; init; }
+
+    /// <summary>True when mounted on an active mate (BotMountManager.IsMounted).</summary>
+    [JsonPropertyName("isMounted"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public bool? IsMounted { get; init; }
+
+    /// <summary>World position at event time (Transform.World.Position).</summary>
+    [JsonPropertyName("pos"), JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+    public TraceStatePos? Pos { get; init; }
+}
 
 /// <summary>
 /// A single machine-readable semantic trace record outputted to JSONL.
@@ -40,6 +162,14 @@ public sealed record PlayerTraceRecord
 
     [JsonPropertyName("data")]
     public object? Data { get; init; }
+
+    /// <summary>
+    /// Schema v2 consequence snapshot (null on events that carry no consequence
+    /// state, e.g. lifecycle/packet/marker/movement rows — those keep the v1
+    /// shape plus their own payloads).
+    /// </summary>
+    [JsonPropertyName("state")]
+    public TraceStateSnapshot? State { get; init; }
 }
 
 /// <summary>
@@ -218,9 +348,17 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
     }
 
     /// <summary>
-    /// Direct, thread-safe write to trace output.
+    /// Direct, thread-safe write to trace output (schema v1 call shape — no state).
     /// </summary>
     public void RecordRaw(uint characterId, string category, string eventName, object? data = null)
+        => RecordRaw(characterId, category, eventName, data, state: null);
+
+    /// <summary>
+    /// Direct, thread-safe write to trace output, with an optional schema v2
+    /// consequence snapshot. Both entry points share this body so no event can
+    /// accidentally bypass the state slot.
+    /// </summary>
+    public void RecordRaw(uint characterId, string category, string eventName, object? data, TraceStateSnapshot? state)
     {
         if (!_isActive || characterId != _tracedCharacterId)
             return;
@@ -240,7 +378,8 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
                     CharacterName = _tracedCharacterName,
                     Category = category,
                     Event = eventName,
-                    Data = data
+                    Data = data,
+                    State = state
                 };
 
                 var line = JsonSerializer.Serialize(record, JsonOptions);
@@ -251,6 +390,134 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
             {
                 // Never allow trace serialization failures to disrupt server or gameplay
             }
+        }
+    }
+
+    /// <summary>
+    /// Builds the schema v2 consequence snapshot for <paramref name="character"/>
+    /// at event time. Every field is read through the same ordinary server
+    /// accessors the M5 observation snapshot uses
+    /// (<see cref="GameplayActor.Observe"/> / <see cref="ActorObservation"/>):
+    /// Character vitals, Money, LaborPower, Inventory.Bag, Quests.ActiveQuests,
+    /// CurrentTarget, BotMountManager.IsMounted, Transform.World.Position.
+    ///
+    /// A read that throws, or a field that does not apply to this event, is left
+    /// as an explicit null — the tracer never fabricates, infers, or defaults a
+    /// value it could not actually read. This method performs no engine query
+    /// beyond those ordinary accessors and mutates nothing (tracing only).
+    /// </summary>
+    /// <param name="character">Character the event concerns (null = nothing readable).</param>
+    /// <param name="questId">Quest context this event concerns, when applicable.</param>
+    /// <param name="bagDelta">Exact bag delta of this event, when the caller knows it.</param>
+    internal static TraceStateSnapshot CaptureState(Character? character, uint? questId = null, int? bagDelta = null)
+    {
+        if (character == null)
+        {
+            // No actor to read: every field stays explicitly unknown.
+            return new TraceStateSnapshot { QuestId = questId, BagDelta = bagDelta };
+        }
+
+        int? hp = null, maxHp = null, mp = null, maxMp = null;
+        long? money = null;
+        short? labor = null;
+        int? bagTotal = null, bagSlots = null, bagFreeSlots = null;
+        uint? targetObjId = null;
+        bool? isMounted = null;
+        TraceStatePos? pos = null;
+        bool? questActive = null;
+        string? questStep = null, questStatus = null;
+        int[]? questObjectives = null;
+
+        try { hp = character.Hp; } catch { /* unknown stays unknown */ }
+        try { maxHp = character.MaxHp; } catch { /* unknown stays unknown */ }
+        try { mp = character.Mp; } catch { /* unknown stays unknown */ }
+        try { maxMp = character.MaxMp; } catch { /* unknown stays unknown */ }
+        try { money = character.Money; } catch { /* unknown stays unknown */ }
+        try { labor = character.LaborPower; } catch { /* unknown stays unknown */ }
+        try { targetObjId = character.CurrentTarget?.ObjId ?? 0; } catch { /* unknown stays unknown */ }
+        try { isMounted = BotMountManager.IsMounted(character); } catch { /* unknown stays unknown */ }
+        try
+        {
+            var worldPos = character.Transform.World.Position;
+            pos = new TraceStatePos { X = worldPos.X, Y = worldPos.Y, Z = worldPos.Z };
+        }
+        catch { /* unknown stays unknown */ }
+
+        try
+        {
+            var bag = character.Inventory?.Bag;
+            if (bag != null)
+            {
+                var items = bag.GetItemsSnapshot();
+                var total = 0;
+                foreach (var item in items)
+                    total += item.Count;
+                bagTotal = total;
+                bagSlots = items.Count;
+                bagFreeSlots = bag.FreeSlotCount;
+            }
+        }
+        catch { /* unknown stays unknown */ }
+
+        if (questId.HasValue)
+        {
+            try
+            {
+                var quest = character.Quests?.ActiveQuests.GetValueOrDefault(questId.Value);
+                questActive = quest != null;
+                if (quest != null)
+                {
+                    questStep = quest.Step.ToString();
+                    questStatus = quest.Status.ToString();
+                    questObjectives = quest.GetObjectives(quest.Step);
+                }
+            }
+            catch { /* unknown stays unknown */ }
+        }
+
+        return new TraceStateSnapshot
+        {
+            Hp = hp,
+            MaxHp = maxHp,
+            Mp = mp,
+            MaxMp = maxMp,
+            Money = money,
+            Labor = labor,
+            BagTotal = bagTotal,
+            BagSlots = bagSlots,
+            BagFreeSlots = bagFreeSlots,
+            BagDelta = bagDelta,
+            QuestId = questId,
+            QuestActive = questActive,
+            QuestStep = questStep,
+            QuestStatus = questStatus,
+            QuestObjectives = questObjectives,
+            TargetObjId = targetObjId,
+            IsMounted = isMounted,
+            Pos = pos
+        };
+    }
+
+    /// <summary>
+    /// Total item units currently held in the character's bag container — the
+    /// cheap diff-friendly half of the consequence snapshot. Returns null when
+    /// the container is unreadable (explicit unknown).
+    /// </summary>
+    internal static int? BagItemUnits(Character? character)
+    {
+        try
+        {
+            var bag = character?.Inventory?.Bag;
+            if (bag == null)
+                return null;
+            var total = 0;
+            foreach (var item in bag.GetItemsSnapshot())
+                total += item.Count;
+            return total;
+        }
+        catch
+        {
+            return null;
         }
     }
 
@@ -270,7 +537,7 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
             Packet = packet.GetType().Name,
             Opcode = $"0x{packet.TypeId:X3}",
             Details = details
-        });
+        }, ConsequencePacketState(character, packet));
     }
 
     public void RecordPacketOut(Character character, GamePacket packet)
@@ -283,7 +550,38 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
             Packet = packet.GetType().Name,
             Opcode = $"0x{packet.TypeId:X3}",
             Details = details
-        });
+        }, ConsequencePacketState(character, packet));
+    }
+
+    /// <summary>
+    /// Consequence snapshot for the small set of packets whose handling IS an
+    /// action outcome (quest accept / turn-in / step / completion, loot,
+    /// mount/dismount, skill cast). Every other packet row stays state-free —
+    /// packet volume is dominated by movement/ping traffic where a snapshot
+    /// would be pure noise.
+    ///
+    /// Packet handling runs inside <c>Decode</c> before this hook, so the state
+    /// read here is the post-action state of the opcode that just executed.
+    /// </summary>
+    private static TraceStateSnapshot? ConsequencePacketState(Character character, GamePacket packet)
+    {
+        switch (packet)
+        {
+            case CSStartQuestContextPacket or
+                 CSCompleteQuestContextPacket or
+                 CSTryQuestCompleteAsLetItDonePacket or
+                 CSDropQuestContextPacket or
+                 SCQuestContextStartedPacket or
+                 SCQuestContextUpdatedPacket or
+                 SCQuestContextCompletedPacket or
+                 SCQuestContextResetPacket:
+            case CSLootOpenBagPacket or CSLootItemPacket or SCLootItemTookPacket or SCLootBagDataPacket:
+            case CSMountMatePacket or CSUnMountMatePacket or CSRemoveMatePacket:
+            case CSStartSkillPacket or SCSkillFiredPacket or SCSkillEndedPacket:
+                return CaptureState(character);
+            default:
+                return null;
+        }
     }
 
     public void RecordMovementSample(Character character, bool isMoving, Vector3 pos, float yaw, Vector3? velocity = null)
@@ -351,10 +649,17 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
             TargetType = target?.GetType().Name,
             Range = range,
             Details = details
-        });
+        }, CaptureState(character));
     }
 
-    public void RecordInteraction(Character character, string interactionEvent, uint targetObjId, string targetType, object? details = null)
+    /// <summary>
+    /// Records an interaction outcome (doodad use, mount/dismount, merchant
+    /// traffic, dialogue) and attaches the schema v2 consequence snapshot.
+    /// <paramref name="bagDelta"/> carries the exact bag change of this event
+    /// when the caller knows it (loot/pickup); null otherwise (diff BagTotal).
+    /// </summary>
+    public void RecordInteraction(Character character, string interactionEvent, uint targetObjId, string targetType, object? details = null,
+        int? bagDelta = null)
     {
         if (!_isActive || character.Id != _tracedCharacterId) return;
         var pos = character.Transform.World.Position;
@@ -381,7 +686,39 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
             TargetZ = targetPos?.Z,
             Range = range,
             Details = details
-        });
+        }, CaptureState(character, bagDelta: bagDelta));
+    }
+
+    /// <summary>
+    /// Records a quest outcome (accept / turn-in / step change / completion)
+    /// with the quest's live consequence state: active flag, step, status and
+    /// the objective counters of the current step.
+    /// </summary>
+    public void RecordQuest(Character character, string questEvent, uint questId, object? details = null)
+    {
+        if (!_isActive || character.Id != _tracedCharacterId) return;
+        RecordRaw(character.Id, "quest", questEvent, new
+        {
+            QuestId = questId,
+            Details = details
+        }, CaptureState(character, questId: questId));
+    }
+
+    /// <summary>
+    /// Records a loot/item grant outcome with the exact bag delta of the grant
+    /// alongside the post-grant consequence snapshot. <paramref name="bagDelta"/>
+    /// is null for coin-only grants and when the container was unreadable.
+    /// </summary>
+    public void RecordLoot(Character character, string lootEvent, uint sourceObjId, uint itemTemplateId, int count, int? bagDelta, object? details = null)
+    {
+        if (!_isActive || character.Id != _tracedCharacterId) return;
+        RecordRaw(character.Id, "loot", lootEvent, new
+        {
+            SourceObjId = sourceObjId,
+            ItemTemplateId = itemTemplateId,
+            Count = count,
+            Details = details
+        }, CaptureState(character, bagDelta: bagDelta));
     }
 
     public void RecordWorld(Character character, string worldEvent, uint objId, uint templateId, object? details = null)
@@ -398,7 +735,7 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
             Z = pos.Z,
             Yaw = yaw,
             Details = details
-        });
+        }, CaptureState(character));
     }
 
     public void RecordRefusal(Character character, string actionType, uint actionId, string reason, uint errorValue, object? details = null)
@@ -421,7 +758,7 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
             TargetObjId = target?.ObjId,
             Range = range,
             Details = details
-        });
+        }, CaptureState(character));
     }
 
     public void RecordResource(Character character, string resourceEvent, string resourceType, long delta, long currentVal, object? details = null)
@@ -433,7 +770,7 @@ public class PlayerTraceService : Singleton<PlayerTraceService>
             Delta = delta,
             CurrentValue = currentVal,
             Details = details
-        });
+        }, CaptureState(character));
     }
 
     public void RecordTarget(Character character, string targetEvent, uint targetObjId, string? targetType = null)

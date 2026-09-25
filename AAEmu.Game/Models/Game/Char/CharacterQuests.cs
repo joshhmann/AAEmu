@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Data;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.GameData;
@@ -186,6 +187,21 @@ public class CharacterQuests(Character owner)
 
         // Execute the first Step
         _ = quest.RunCurrentStep(); // We don't need the return value here
+
+        // Trace (consequence state, schema v2): acceptance is an outcome —
+        // emit the quest's live step/status/objective counters AFTER the first
+        // step drained, so the row shows the state the acceptance actually
+        // left the quest in. Owner is ICharacter; the tracer takes the
+        // Character, and reads only ordinary quest accessors.
+        if (PlayerTraceService.Instance.IsActive && Owner is Character traceOwner)
+        {
+            PlayerTraceService.Instance.RecordQuest(traceOwner, "quest_accepted", quest.TemplateId, new
+            {
+                AcceptorType = questAcceptorType.ToString(),
+                AcceptorId = acceptorId,
+                DBQuestId = quest.Id
+            });
+        }
 
         quest.QuestInitialized();
         return true;

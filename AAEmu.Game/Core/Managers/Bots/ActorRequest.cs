@@ -91,6 +91,70 @@ public sealed class ActorRequest
     public int DecisionRejections { get; private set; }
     public string? DecisionSeed { get; private set; }
 
+    /// <summary>
+    /// Join key spanning wake → decision → capability request → terminal
+    /// result (prereq Part 3). One correlation id per decision cycle: set at
+    /// dispatch (staged via <c>SetPendingCycleId</c> or the queue spec) and
+    /// copied into the audit record at Finish, so a test can join a
+    /// scheduler wake to its terminal audit row. Null = unstamped (absent,
+    /// never synthesized). No distributed tracing — a plain string the test
+    /// chooses (e.g. the scenario CycleId).
+    /// </summary>
+    public string? DecisionCycleId { get; private set; }
+
+    /// <summary>
+    /// Per-bot wake sequence (Phase 1 wake identity): the scheduler wake that
+    /// produced this request, counted by the arbitration decorator
+    /// (<c>BotGoalArbiterStepExecutor</c>, one increment per StepAsync per bot)
+    /// and staged via <c>SetPendingWakeSequence</c>. Copied into the audit
+    /// record at Finish so a test joins wake → terminal row per bot without a
+    /// tracing framework. Null = unstamped (absent, never synthesized).
+    /// Bounded: one counter per bot in the decorator, no per-wake storage.
+    /// </summary>
+    public long? WakeSequence { get; private set; }
+
+    /// <summary>
+    /// Movement-owner tag for Move/Drive legs (PURSUIT_MOVE_TO_UNIT /
+    /// QUEST_TRAVEL / ROAM / HUNT / NAVIGATION / UNSTICK / NETWORK_MOVE /
+    /// FIXTURE_TELEPORT / OTHER:&lt;path&gt;). Staged by the dispatcher
+    /// before the action method runs (the pending-owner pattern, same as
+    /// the cycle-id staging); stamped into the audit record at Finish.
+    /// Null = unstaged (the action method applies its own default).
+    /// Telemetry only — never read by behavior.
+    /// </summary>
+    public string? MoveOwner { get; private set; }
+
+
+    /// <summary>
+    /// Stamps the join key. Null arguments are ignored (absent stays
+    /// absent); a set key is never cleared by a later null.
+    /// </summary>
+    public void SetDecisionCycleId(string? cycleId)
+    {
+        if (cycleId != null)
+            DecisionCycleId = cycleId;
+    }
+
+    /// <summary>
+    /// Stages the movement-owner tag for the next created request.
+    /// Null arguments are ignored (absent stays absent).
+    /// </summary>
+    internal void SetMoveOwner(string? moveOwner)
+    {
+        if (moveOwner != null)
+            MoveOwner = moveOwner;
+    }
+    /// <summary>
+    /// Stamps the wake sequence. Null arguments are ignored (absent stays
+    /// absent); a set sequence is never cleared by a later null.
+    /// </summary>
+    public void SetWakeSequence(long? wakeSequence)
+    {
+        if (wakeSequence != null)
+            WakeSequence = wakeSequence;
+    }
+
+
     public void AnnotateDecision(string? goal, string? policy, int candidates, int rejections, string? seed)
     {
         DecisionGoal = goal;

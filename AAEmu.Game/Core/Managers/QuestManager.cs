@@ -6,6 +6,7 @@ using AAEmu.Game.Models.Game.AI.Enums;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Skills;
@@ -241,6 +242,12 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
     {
         if (_loaded)
             return;
+
+        // The bot fixture rows are derived from these templates; a reload
+        // replaces them wholesale, so every memoized row is stale the moment
+        // this runs (QuestFixtureRow.InvalidateAll is the explicit invalidation
+        // seam — the memo never expires on its own).
+        QuestFixtureRow.InvalidateAll();
 
         foreach (var type in Helpers.GetTypesInNamespace(Assembly.GetAssembly(typeof(QuestManager)), "AAEmu.Game.Models.Game.Quests.Acts"))
             if (type.BaseType == typeof(QuestActTemplate))

@@ -358,6 +358,11 @@ public sealed class BotAdminService
         character.Transform.Local.SetPosition(clamped.X, clamped.Y, clamped.Z);
         _regionUpdater(character);
         _susMovementReset(character.Id);
+        // Telemetry: out-of-request teleport write — one bounded Info line
+        // naming the writer so a lane log never misattributes the jump to
+        // a live Move leg.
+        Logger.Info("BotFixtureTeleport actor={ActorId}({Name}) owner=FIXTURE_TELEPORT dest=({X:F1},{Y:F1},{Z:F1})",
+            character.ObjId, character.Name, clamped.X, clamped.Y, clamped.Z);
 
         ArmRoam(character, clamped);
         return new BotAdminCommandResult(true,

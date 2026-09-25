@@ -1,4 +1,6 @@
-﻿using AAEmu.Game.Core.Packets.G2C;
+﻿using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Packets.G2C;
+using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Units;
 
@@ -144,6 +146,20 @@ public partial class Quest
                     // copy body data for packet
                     var body = new byte[8];
                     completedBlock.Body.CopyTo(body, 0);
+
+                    // Trace (consequence state, schema v2): read the quest's
+                    // final state BEFORE the drop (the drop removes it from
+                    // ActiveQuests and clears the objective counters), so the
+                    // completion row carries the counters the turn-in closed on.
+                    // Step/status/objectives ride in the state snapshot; only
+                    // the reward pick needs its own field.
+                    if (PlayerTraceService.Instance.IsActive && Owner is Character traceOwner)
+                    {
+                        PlayerTraceService.Instance.RecordQuest(traceOwner, "quest_completed", TemplateId, new
+                        {
+                            SelectedRewardIndex = SelectedRewardIndex
+                        });
+                    }
 
                     Owner.Quests.DropQuest(TemplateId, false, false);
                     Owner.SendPacket(new SCQuestContextCompletedPacket(TemplateId, body, 0));

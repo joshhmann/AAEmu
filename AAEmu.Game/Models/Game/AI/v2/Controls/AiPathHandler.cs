@@ -103,8 +103,13 @@ public class AiPathHandler(NpcAi aiOwner)
             Owner.Owner.MoveTowards(TargetPosition, (float)moveSpeed, AiPathActorFlags);
             // Owner.Owner.MoveTowards(TargetPosition, AiPathSpeed * Owner.Owner.BaseMoveSpeed * (delta.Milliseconds / 1000.0f), AiPathStanceFlags);
 
-            // Move the idle "home" location along with the path, so it doesn't immediately trigger a return to home state when going into combat
-            Owner.IdlePosition = Owner.Owner.Transform.World.Position;
+            // NOTE: the leash origin (IdlePosition) is deliberately NOT walked along
+            // with the patrol here. Dragging it along the route made a patrolling NPC
+            // permanently "far from home", so ShouldReturn was true on the very tick
+            // it acquired aggro and ReturnState stripped that aggro immediately —
+            // the mob leashed itself on every engagement instead of fighting back.
+            // IdlePosition is anchored to the spawn point and re-anchored on combat
+            // entry (NpcAi.SetCurrentBehavior).
         }
 
         return HasUnhandledPathMovementData();

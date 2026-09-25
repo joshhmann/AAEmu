@@ -43,7 +43,10 @@ public class FollowUnitBehavior : BaseCombatBehavior
         var moveFlags = Ai.GetRealMovementFlags(moveSpeed);
         moveSpeed *= delta.Milliseconds / 1000.0;
         Ai.Owner.MoveTowards(Ai.AiFollowUnitObj.Transform.World.Position, (float)moveSpeed, moveFlags);
-        Ai.IdlePosition = Ai.Owner.Transform.World.Position;
+        // NOTE: see AiPathHandler.RunCurrentPath — the leash origin (IdlePosition)
+        // stays anchored to the spawn point instead of being dragged along by the
+        // follower, otherwise ShouldReturn fires on the first aggro tick and the
+        // NPC leashes itself home instead of fighting.
     }
 
     public override void Exit()

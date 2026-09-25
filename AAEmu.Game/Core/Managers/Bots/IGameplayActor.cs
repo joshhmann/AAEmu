@@ -62,6 +62,21 @@ public interface IGameplayActor
     /// </summary>
     void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed);
 
+    /// <summary>
+    /// Stages the Part-3 join key for the next created request (copied into
+    /// the request and its audit record at Finish). Null clears a staged
+    /// key; a null argument to the request setter never clears a set key.
+    /// </summary>
+    void SetPendingCycleId(string? cycleId);
+
+    /// <summary>
+    /// Stages the Phase 1 per-bot wake sequence for the next created request
+    /// (copied into the request and its audit record at Finish). Null clears
+    /// a staged sequence; a null argument to the request setter never clears
+    /// a set sequence.
+    /// </summary>
+    void SetPendingWakeSequence(long? wakeSequence);
+
     /// <summary>Structured trace of every request (newest last, bounded).</summary>
     IReadOnlyList<ActorAuditRecord> AuditTrace { get; }
 
@@ -104,6 +119,22 @@ public interface IGameplayActor
     /// detail "stop requested") and completes itself. No-op when idle.
     /// </summary>
     ActorRequest Stop();
+
+    /// <summary>
+    /// Canonical preemption helper (prereq Part 4): interrupts the live
+    /// request, if any, under <paramref name="reason"/> and clears
+    /// actor-owned execution state (movement/craft snapshots) so a fresh
+    /// decision can dispatch immediately. Unlike <see cref="Stop"/>, it
+    /// emits no request of its own — the interrupted request keeps its own
+    /// Interrupted record. Returns true when a live request was stopped.
+    ///
+    /// Ownership contract: the caller clears its own ownership after this
+    /// returns true (roam <c>PendingLeg = null</c>, GOAP
+    /// <c>CurrentActorRequest = null</c>) and treats any in-flight plan as
+    /// needing replan — this helper notifies by return value, never by
+    /// reaching into behavior state.
+    /// </summary>
+    bool PreemptCurrent(string reason);
 
     /// <summary>
     /// Sets the actor's current target through the real engine path

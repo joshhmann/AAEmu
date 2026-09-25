@@ -1,6 +1,7 @@
 ﻿using AAEmu.Commons.Utils;
 using AAEmu.Game.GameData.Framework;
 using AAEmu.Game.Models.Game.Items.Loots;
+using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Utils.DB;
 using Microsoft.Data.Sqlite;
 
@@ -24,6 +25,11 @@ public class LootGameData : Singleton<LootGameData>, IGameDataLoader
 
     public void Load(SqliteConnection connection)
     {
+        // The bot fixture rows invert these packs (each npc→pack row is probed
+        // for the item's presence), so a rebuild makes every memoized row
+        // stale. Explicit invalidation seam — see QuestFixtureRow.
+        QuestFixtureRow.InvalidateAll();
+
         _lootPacks = [];
 
         _loots = [];
