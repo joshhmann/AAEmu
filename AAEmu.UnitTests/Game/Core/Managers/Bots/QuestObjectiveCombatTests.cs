@@ -3,6 +3,7 @@ using System.Reflection;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.Bots.Combat;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
@@ -162,6 +163,84 @@ public class QuestObjectiveCombatTests
 
         await Assert.That(result.SelectedAction == ActorActionType.AutoAttack).IsFalse();
         await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AutoAttack)).IsFalse();
+    }
+
+    /// <summary>
+    /// The CombatBrain increment's LIVE wiring, end to end on the real headless
+    /// actor: with the rotation gate ON, the combat leg asks the brain for its
+    /// verb and the brain's decision reaches the engine AND the published
+    /// engagement facts. Without this the whole brain would be a pure unit surface
+    /// with no production caller.
+    /// </summary>
+    [Test]
+    public async Task CombatBrainRotation_OnDispatchesTheBrainsVerbAndPublishesTheEngagement()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("cb-live");
+        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
+        CombatBrainEngagement.ClearAll();
+
+        // Wake 1: range-hold (Stop, 24) still wins — no engagement published yet,
+        // because the combat proposal never dispatched.
+        var first = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "cb-live-1", EnableCombatRotation = true });
+        await Assert.That(first.SelectedAction).IsEqualTo(ActorActionType.Stop);
+        await Assert.That(CombatBrainEngagement.ShouldYieldPursuit(actor.ActorId)).IsFalse();
+
+        // Wake 2: settled — the brain's Opener verb (a Cast on the committed objId)
+        // lands through the engine, and the engagement is published.
+        var second = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "cb-live-2", EnableCombatRotation = true });
+
+        await Assert.That(second.WorkSelected).IsTrue();
+        await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.Cast);
+        await Assert.That(second.Request!.TargetId).IsEqualTo(npcObjId);
+        await Assert.That(second.Request!.SkillId == 0u).IsFalse();
+        await Assert.That(second.Request!.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        // The combat leg's own diag carries the brain's decision (the lane joins on it).
+        var combatDetail = second.LegEvidence.Single(e => e.Leg == QuestLegId.Combat).Detail;
+        await Assert.That(combatDetail.Contains("brain=arm=Opener")).IsTrue();
+        await Assert.That(combatDetail.Contains("verb=Cast")).IsTrue();
+        await Assert.That(combatDetail.Contains("band=1.00-3.50")).IsTrue();
+
+        // The published engagement: the yield fact the pursuit Stop leg reads.
+        await Assert.That(CombatBrainEngagement.TryGet(actor.ActorId, out var engagement)).IsTrue();
+        await Assert.That(engagement.IncumbentObjId).IsEqualTo(npcObjId);
+        await Assert.That(CombatBrainEngagement.ShouldYieldPursuit(actor.ActorId)).IsTrue();
+
+        // And the landed cast seeded the rotation chain for the next wake.
+        await Assert.That(engagement.LastSkillUsed).IsEqualTo(second.Request!.SkillId);
+
+        CombatBrainEngagement.ClearAll();
+    }
+
+    /// <summary>
+    /// The frozen G6 lane is unchanged by the increment: with the rotation gate
+    /// OFF (the default) the leg still dispatches the engine's auto-attack loop,
+    /// so no lane that predates the brain observes a different verb.
+    /// </summary>
+    [Test]
+    public async Task DefaultPolicy_KeepsTheFrozenAutoAttackOnlyVerb()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("cb-frozen");
+        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
+        CombatBrainEngagement.ClearAll();
+
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "cb-frozen-1" });
+        var second = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "cb-frozen-2" });
+
+        await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.AutoAttack);
+        await Assert.That(second.Request!.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Cast)).IsFalse();
+        await Assert.That(CombatBrainEngagement.TryGet(actor.ActorId, out _)).IsTrue();
+
+        CombatBrainEngagement.ClearAll();
     }
 
     [Test]
