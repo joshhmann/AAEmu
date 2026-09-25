@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.Bots.Belief;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -13,6 +14,12 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// step executors. Those paths consume <c>ActorObservation</c> /
 /// <c>BotObservedContext</c>, whose shape this stack deliberately does NOT
 /// touch (the decision inputs stay frozen).
+///
+/// The BELIEF layer (layer 4, <c>...Bots.Belief</c>) is part of this stack and
+/// is guarded by the same scan: it CONSUMES <see cref="BotPerceptionSnapshot.Snapshot"/>
+/// and <see cref="PerceptionFrameDiff"/> and exports only primitives
+/// (<see cref="BotBeliefState"/> and its companions), so nothing outside the
+/// stack — belief types included — may be referenced from a decision path.
 ///
 /// Proof shape: an ASSEMBLY-SURFACE scan of the shipping assembly's IL. For
 /// every type declared in AAEmu.Game other than the perception files
@@ -46,7 +53,21 @@ public class PerceptionStackSurfaceTests
         typeof(PerceptionFrameDiff).FullName!,
         typeof(PerceptionLifecycle).FullName!,
         typeof(EntityMove).FullName!,
-        typeof(EntityHealthChange).FullName!
+        typeof(EntityHealthChange).FullName!,
+
+        // Layer 4 — the belief stack over the perception stack. It takes the
+        // frame types as INPUT and exports primitives, so it is the one
+        // legitimate consumer inside the stack; everything outside the stack
+        // (decision paths included) remains forbidden from all of these.
+        typeof(BotBeliefState).FullName!,
+        typeof(BeliefFacts).FullName!,
+        typeof(BeliefNumbers).FullName!,
+        typeof(BeliefRefs).FullName!,
+        typeof(BeliefInputs).FullName!,
+        typeof(BeliefInterpreter).FullName!,
+        typeof(AttentionScorer).FullName!,
+        typeof(CurrentPlace).FullName!,
+        typeof(ThreatLevel).FullName!
     };
 
     private static readonly Assembly ShippingAssembly = typeof(BotRadarProjection).Assembly;
