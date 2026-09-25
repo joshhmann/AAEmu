@@ -81,6 +81,8 @@ timing. This leaves no loop or autonomy grade change.
 
 ## Wave One closeout control — 2026-09-17
 
+Superseded 2026-09-18: all eight items DONE + VERIFIED, freeze lifted for the loop scope — see Exit note below.
+
 The eight-item corrective queue is now a cheapest-proof-to-deepest-dependency acceptance
 program in [ROADMAP](ROADMAP.md#wave-one-closeout-program--2026-09-17). Every item remains
 non-DONE until its original acceptance criteria are met. Its final gate is one real bot
@@ -95,6 +97,12 @@ claim→construct loop ran at L per the step-8 dossier + live report (107/107 un
 plant/harvest/tax/travel/ordinary-acquisition stay open, H stays UNKNOWN, and all other breadth
 stays frozen. Existing grades below are otherwise unchanged.
 
+**Deployed 2026-09-18:** `d0bea9e6a` on root@192.168.0.165 (`/root/AAEmu`); pre-deploy dump
+`/tmp/tester-aaemu-dbs-pre-d0bea9e6a.sql` (2.6 MB); updates-table DROP pre-step (66/0 + 4/0, no
+Failed-to-update-database); ports listen, 1260 closed, Registered GameServer, 25/25 bots, lane smoke
++ claim/loop with restart green; rollback tags `rollback-pre-d0bea9e6a`; follow-ups recorded in STATUS.
+H UNKNOWN, Josh run pending.
+
 ## Current reading guide — 2026-09-15
 
 Read broad outcomes in [VISION](VISION.md), dispatch in
@@ -102,6 +110,7 @@ Read broad outcomes in [VISION](VISION.md), dispatch in
 [slice contract](PROJECT-CONTROL.md#delivery-contract). This scorecard measures
 evidence, not effort or overall project percent complete. Existing grades below
 are retained; this planning revision runs no gameplay tests and promotes none.
+Bot capability grades rest on bot-performed evidence per the [conversion doc](scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md); H is a review verdict, never execution evidence.
 
 Use two complementary views without combining them into one score:
 

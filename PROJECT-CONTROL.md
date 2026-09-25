@@ -29,6 +29,12 @@ dated evidence and locked milestone exit requirements below remain intact.
 executable cards. Conversely, one card per class or method hides integration risk.
 A slice should carry one meaningful behavior across the layers it actually needs.
 
+**Actors under test (reaudit 2026-09-18).** PlayerBots are the actors under test for every bot
+capability: each capability names the bot actor exercised through real engine paths. The human
+role is review / validate / approve only — human execution is never bot evidence, and synthetic
+success never earns live verdicts. See `scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-17.md`
+(conversion backlog) and `scorecard-explorations/mechanics/wave1-actor-audit-2026-09-18.md` (per-gate actor table).
+
 ### Repeatable scope-to-delivery process
 
 The [shared contract](.kanban-templates/implementation.md) applies to every zone,

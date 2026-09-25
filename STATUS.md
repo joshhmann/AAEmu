@@ -1,6 +1,8 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
 Updated: 2026-09-18 · Wave One exit VERIFIED by independent second-session re-run (step-7 E2E 1/1, step-8 loop 1/1, fresh bots, restart + conservation confirmed); plant/harvest/tax/travel/H open
+Next dispatch source: the conversion backlog (8 missing actor/paths, §E) in `scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md`.
+PlayerBot API/E2E control-layer architecture audit: `scorecard-explorations/mechanics/playerbot-api-architecture-2026-09-18.md` (investigation-only, no production changes). Audit note: P12 (PlanTemplateCache flags-only key) is stale — worktree key is (Flags,Labor,Gold,GoalName) per step 4.
 
 ## 2026-09-18 — Wave One exit (VERIFIED by independent second-session re-run)
 
@@ -22,7 +24,14 @@ Updated: 2026-09-18 · Wave One exit VERIFIED by independent second-session re-r
   travel/reach by ordinary movement (disclosed setup, not traversed; 25 m vs 10 m reach-gate asymmetry
   recorded open); plant/grow/harvest/craft legs out of scope; ten-bot/population claims unsupported;
   H UNKNOWN (Josh-owned). Freeze lifted for the proved claim→construct scope only; all other breadth
-  stays frozen. No grade promotion beyond the loop verdict; no deployment claim.
+  stays frozen. No grade promotion beyond the loop verdict.
+- **DEPLOYED 2026-09-18:** revision `d0bea9e6a` on root@192.168.0.165 (`/root/AAEmu`). Pre-deploy dump
+  `/tmp/tester-aaemu-dbs-pre-d0bea9e6a.sql` (2.6 MB); updates-table DROP pre-step taken (66/0 + 4/0,
+  0 errors, no Failed-to-update-database). Verification: ports 1237/1239/1250/1280 listen, 1260 closed,
+  Registered GameServer, 25/25 bots, lane smoke + claim 1/1 + loop 1/1 with restart. Rollback tags
+  `aaemu-game/login:rollback-pre-d0bea9e6a`. Follow-ups: run-qa-suite FQCN registration, BuildKit IPv6
+  fragility, rollback tag not byte-identical to pre-deploy binary (binaries preserved at
+  `/tmp/live-bins-6339b0e1b/`). H UNKNOWN, Josh run pending.
 
 ## 2026-09-16 — PlayerBot execution and dashboard realignment
 
