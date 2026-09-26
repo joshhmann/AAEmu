@@ -3,6 +3,7 @@ using System.Numerics;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots.Combat;
 using AAEmu.Game.Core.Managers.Bots.Loot;
+using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
@@ -1622,16 +1623,30 @@ public static class QuestBehavior
     /// live revalidation: the fixture quest active + Ready, reporter resolved per
     /// wake via GetNpcByTemplateId(fixture reporter) (never stored) + template +
     /// flat distance.
-    /// Per wake: outside the 25 m InteractNpc gate → Move (fresh leg when no
-    /// Move is live, drift-gated retrack only after &gt; 2.0 m reporter motion
-    /// since the last issue — the pursuit discipline); inside → Stop (audited
-    /// halt); Stop hold-confirmed (landed Stop + poses within 0.5 m) →
-    /// InteractNpc (dialogue fallback expected — the quest carries no talk-family
-    /// objective, so Talk would void-reject; never Talk). Withdraws (null +
-    /// named diag) when the quest is not Ready or the reporter is lost/recycled.
-    /// Never TurnIn — the TurnIn proposal stays a separate competitor (and
-    /// the withhold seam still guards it), so withhold can never swallow the
-    /// return leg. Never Cast, AutoAttack, Loot, or credit.
+    ///
+    /// TRAVEL BRAIN (the FIRST live dispatch caller): this leg's closing leg is
+    /// decided by <see cref="TravelBrain.Decide"/> through
+    /// <see cref="TravelLegDispatch"/> — the journey is armed once per reporter and
+    /// then the brain owns the verb, the drift hold, the repath budget, and the
+    /// named abandonment terminals (WrongWorld / TargetGone / Unreachable, never a
+    /// bare navigation failure). The leg keeps its own vocabulary and its own
+    /// dispatch shapes: the SAME <c>MoveToUnit</c> on the live reporter objId
+    /// (owner <c>RETURN_MOVE_TO_UNIT</c>), the SAME audited <c>Stop</c> inside the
+    /// 25 m InteractNpc gate, the SAME settled <c>InteractNpc</c> dialogue, and the
+    /// SAME <c>dispatch=</c>/<c>reason=</c> lane tokens; the brain's decision rides
+    /// additively in a <c>:travel=</c> fragment. The pre-brain rule is still the
+    /// fallback whenever no journey can be armed (an actor with no object identity),
+    /// and the journey is ended at this leg's own boundary (the quest stopped being
+    /// Ready, or the reporter identity is gone) so a banked verdict cannot outlive
+    /// the reason it was reached.
+    ///
+    /// Stop hold-confirmed (landed Stop + poses within 0.5 m) → InteractNpc
+    /// (dialogue fallback expected — the quest carries no talk-family objective, so
+    /// Talk would void-reject; never Talk). Withdraws (null + named diag) when the
+    /// quest is not Ready, the reporter is lost/recycled, or the travel journey
+    /// reached a terminal. Never TurnIn — the TurnIn proposal stays a separate
+    /// competitor (and the withhold seam still guards it), so withhold can never
+    /// swallow the return leg. Never Cast, AutoAttack, Loot, or credit.
     /// </summary>
     internal static BotDecisionProposal? ReturnEmit(QuestLegContext context, ref string diag, ref int hpBefore)
     {
@@ -1643,6 +1658,9 @@ public static class QuestBehavior
         var character = actor.Character;
         if (character?.Quests?.ActiveQuests.GetValueOrDefault(fixture.QuestId) is not { Status: QuestStatus.Ready })
         {
+            // The quest no longer needs this leg: the journey is over (a banked
+            // verdict must not outlive it), and the next Ready wake arms a fresh one.
+            TravelLegDispatch.EndJourney(actor);
             diag = "validate=not-ready:reporter=-:template=-:flatM=NA:dist3D=NA:dispatch=withdrawn:reason=not-ready";
             return null;
         }
@@ -1650,109 +1668,169 @@ public static class QuestBehavior
         var reporter = character?.ParentWorld?.GetNpcByTemplateId(fixture.ReporterTemplate);
         if (character == null || !actorPos.HasValue || character.ParentWorld == null || reporter == null)
         {
+            TravelLegDispatch.EndJourney(actor);
             diag = $"validate=FAIL-reporter-lost:reporter=-:template={fixture.ReporterTemplate}:flatM=NA:dist3D=NA:dispatch=withdrawn:reason=reporter-lost";
             return null;
         }
         if (reporter.TemplateId != fixture.ReporterTemplate)
         {
+            TravelLegDispatch.EndJourney(actor);
             diag = $"validate=FAIL-reporter-recycled:reporter={reporter.ObjId}:template={reporter.TemplateId}:flatM=NA:dist3D=NA:dispatch=withdrawn:reason=reporter-recycled";
             return null;
         }
         var reporterPos = reporter.Transform.World.Position;
         var flat = MathUtil.CalculateDistance(actorPos.Value, reporterPos, false);
         var dist3 = MathUtil.CalculateDistance(actorPos.Value, reporterPos, true);
-        if (flat <= ReturnInteractRadiusM)
+
+        // ------------------------------------------------------- TRAVEL DECISION
+        // What this leg dispatched (its own reading of its own leg — the brain never
+        // reads an actor request), then what the travel chain asks for this wake.
+        var legOutcome = TravelLegDispatch.MapLegOutcome(actor, reporter.ObjId, TravelLegDispatch.ReturnMoveOwner);
+        var (liveMove, legLive, driftText) = ReturnLegState(actor, reporter.ObjId, reporterPos);
+        var brain = TravelLegDispatch.Prepare(
+            actor, reporter.ObjId, reporterPos, ReturnInteractRadiusM, legLive, legOutcome);
+        var verdict = TravelLegDispatch.DecideReturnLeg(
+            brain, flat <= ReturnInteractRadiusM,
+            ReturnHoldConfirmed(actor, reporter.ObjId, actorPos.Value, reporterPos),
+            legLive, liveMove ? "retrack" : driftText, driftText);
+        // Flat, bracket-free additive fragment: the brain's own arm/verb/terminal/
+        // reason beside the leg's unchanged tokens (a lane parser that scans
+        // :dispatch= sees exactly what it saw before).
+        var travelFrag = brain is { } prepared
+            ? $":travel={prepared.Decision.Describe()}:routed=true"
+            : ":travel=fallback";
+        var prefix = $"validate=ok:reporter={reporter.ObjId}:template={fixture.ReporterTemplate}" +
+                     $":flatM={M(flat)}:dist3D={M(dist3)}";
+        var idempotencyKey = verdict.Verb switch
         {
-            // Hold-confirm (the G6 discipline, without the assignment gate —
-            // return never assigns): a Stop already landed for this reporter
-            // at these poses stays landed — withdraw so the InteractNpc
-            // proposal can win a settled wake. Any actor/reporter motion
-            // re-arms Stop (range-hold wins). Without the withdraw, Stop
-            // would win every in-range wake and InteractNpc could never fire;
-            // without Stop-first, a live leg busy-rejects InteractNpc.
-            lock (PursuitSync)
-            {
-                if (LastStopHold.TryGetValue(actor.ActorId, out var hold) && hold.TargetObjId == reporter.ObjId
-                    && Vector3.Distance(hold.ActorPos, actorPos.Value) <= 0.5f
-                    && Vector3.Distance(hold.TargetPos, reporterPos) <= 0.5f)
-                {
-                    diag = $"validate=ok:reporter={reporter.ObjId}:template={fixture.ReporterTemplate}:flatM={M(flat)}:dist3D={M(dist3)}:dispatch=interact:reason=settled";
-                    return new BotDecisionProposal(
-                        goal: ReturnGoal,
-                        action: ActorActionType.InteractNpc,
-                        targetId: reporter.ObjId,
-                        expectedPostcondition: new BotProposalPostcondition(
-                            $"dialogue with quest {fixture.QuestId} reporter {reporter.ObjId} delivered",
-                            _ => true),
-                        idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:return-interact:{fixture.QuestId}:{reporter.ObjId}",
-                        timeout: TimeSpan.FromSeconds(30),
-                        rationale: $"quest {fixture.QuestId} return: live reporter {fixture.ReporterTemplate} ({reporter.ObjId}) at {M(flat)}m flat (inside {ReturnInteractRadiusM:F1}m gate), settled — InteractNpc dialogue",
-                        policyVersion: opts.PolicyVersion,
-                        priority: opts.ObjectiveReturnPriority,
-                        tieBreakKey: $"return:{fixture.QuestId}:{reporter.ObjId:D10}",
-                        hardPreconditions:
-                        [
-                            new BotProposalPrecondition("quest-active",
-                                observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
-                        ]);
-                }
-            }
-            diag = $"validate=ok:reporter={reporter.ObjId}:template={fixture.ReporterTemplate}:flatM={M(flat)}:dist3D={M(dist3)}:dispatch=stop:reason=in-range";
-            return new BotDecisionProposal(
-                goal: ReturnGoal,
-                action: ActorActionType.Stop,
-                targetId: reporter.ObjId,
-                expectedPostcondition: new BotProposalPostcondition(
-                    $"holding at {M(flat)}m off quest {fixture.QuestId} reporter {reporter.ObjId} (stop-before-interact)",
-                    _ => true),
-                idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:return-stop:{fixture.QuestId}:{reporter.ObjId}",
-                timeout: TimeSpan.FromSeconds(30),
-                rationale: $"quest {fixture.QuestId} return: live reporter {fixture.ReporterTemplate} ({reporter.ObjId}) at {M(flat)}m flat (inside {ReturnInteractRadiusM:F1}m gate) — hold, no interact yet",
-                policyVersion: opts.PolicyVersion,
-                priority: opts.ObjectiveReturnPriority,
-                tieBreakKey: $"return:{fixture.QuestId}:{reporter.ObjId:D10}",
-                hardPreconditions:
-                [
-                    new BotProposalPrecondition("quest-active",
-                        observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
-                ]);
+            TravelLegDispatch.ReturnLegVerb.InteractNpc => $"quest:{actor.ActorId}:{opts.CycleId}:return-interact:{fixture.QuestId}:{reporter.ObjId}",
+            TravelLegDispatch.ReturnLegVerb.Stop => $"quest:{actor.ActorId}:{opts.CycleId}:return-stop:{fixture.QuestId}:{reporter.ObjId}",
+            _ => $"quest:{actor.ActorId}:{opts.CycleId}:return:{fixture.QuestId}:{reporter.ObjId}"
+        };
+        var payload = new TravelLegDispatch.TravelDispatchParams(verdict.Decision);
+
+        switch (verdict.Verb)
+        {
+            case TravelLegDispatch.ReturnLegVerb.InteractNpc:
+                // Hold-confirm (the G6 discipline, without the assignment gate —
+                // return never assigns): a Stop already landed for this reporter
+                // at these poses stays landed — withdraw so the InteractNpc
+                // proposal can win a settled wake. Any actor/reporter motion
+                // re-arms Stop (range-hold wins). Without the withdraw, Stop
+                // would win every in-range wake and InteractNpc could never fire;
+                // without Stop-first, a live leg busy-rejects InteractNpc.
+                diag = $"{prefix}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
+                return new BotDecisionProposal(
+                    goal: ReturnGoal,
+                    action: ActorActionType.InteractNpc,
+                    targetId: reporter.ObjId,
+                    expectedPostcondition: new BotProposalPostcondition(
+                        $"dialogue with quest {fixture.QuestId} reporter {reporter.ObjId} delivered",
+                        _ => true),
+                    idempotencyKey: idempotencyKey,
+                    timeout: TimeSpan.FromSeconds(30),
+                    rationale: $"quest {fixture.QuestId} return: live reporter {fixture.ReporterTemplate} ({reporter.ObjId}) at {M(flat)}m flat (inside {ReturnInteractRadiusM:F1}m gate), settled — InteractNpc dialogue",
+                    policyVersion: opts.PolicyVersion,
+                    priority: opts.ObjectiveReturnPriority,
+                    tieBreakKey: $"return:{fixture.QuestId}:{reporter.ObjId:D10}",
+                    payload: payload,
+                    hardPreconditions:
+                    [
+                        new BotProposalPrecondition("quest-active",
+                            observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
+                    ]);
+            case TravelLegDispatch.ReturnLegVerb.Stop:
+                diag = $"{prefix}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
+                return new BotDecisionProposal(
+                    goal: ReturnGoal,
+                    action: ActorActionType.Stop,
+                    targetId: reporter.ObjId,
+                    expectedPostcondition: new BotProposalPostcondition(
+                        $"holding at {M(flat)}m off quest {fixture.QuestId} reporter {reporter.ObjId} (stop-before-interact)",
+                        _ => true),
+                    idempotencyKey: idempotencyKey,
+                    timeout: TimeSpan.FromSeconds(30),
+                    rationale: $"quest {fixture.QuestId} return: live reporter {fixture.ReporterTemplate} ({reporter.ObjId}) at {M(flat)}m flat (inside {ReturnInteractRadiusM:F1}m gate) — hold, no interact yet",
+                    policyVersion: opts.PolicyVersion,
+                    priority: opts.ObjectiveReturnPriority,
+                    tieBreakKey: $"return:{fixture.QuestId}:{reporter.ObjId:D10}",
+                    payload: payload,
+                    hardPreconditions:
+                    [
+                        new BotProposalPrecondition("quest-active",
+                            observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
+                    ]);
+            case TravelLegDispatch.ReturnLegVerb.MoveToUnit:
+                diag = $"{prefix}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
+                return new BotDecisionProposal(
+                    goal: ReturnGoal,
+                    action: ActorActionType.Move,
+                    targetId: reporter.ObjId,
+                    expectedPostcondition: new BotProposalPostcondition(
+                        $"return leg toward quest {fixture.QuestId} reporter {reporter.ObjId} dispatched",
+                        _ => true),
+                    idempotencyKey: idempotencyKey,
+                    timeout: TimeSpan.FromSeconds(30),
+                    rationale: $"quest {fixture.QuestId} return: live reporter {fixture.ReporterTemplate} ({reporter.ObjId}) at {M(flat)}m flat (outside {ReturnInteractRadiusM:F1}m gate), drift {driftText} — closing",
+                    policyVersion: opts.PolicyVersion,
+                    priority: opts.ObjectiveReturnPriority,
+                    tieBreakKey: $"return:{fixture.QuestId}:{reporter.ObjId:D10}",
+                    payload: payload,
+                    hardPreconditions:
+                    [
+                        new BotProposalPrecondition("quest-active",
+                            observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
+                    ]);
+            default:
+                // Held (a live leg keeps its progress) or Withdrawn (a named travel
+                // terminal, or a verb this leg does not serve): no proposal, and the
+                // diag still names the reporter, the reason, and the terminal.
+                diag = $"{prefix}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
+                return null;
         }
-        var liveMove = actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move };
+    }
+
+    /// <summary>
+    /// The return leg's own reading of the leg IT dispatched (the pursuit
+    /// discipline, kept for this caller's lane vocabulary): whether a Move leg of
+    /// ours is live at all, and — when there is one — whether it still serves the
+    /// reporter (motion since the last issue under
+    /// <see cref="PursuitRetrackDriftM"/>). <c>driftText</c> is the caller's own
+    /// drift reading (<c>fresh</c> before any issue).
+    /// </summary>
+    private static (bool LiveMove, bool LegLive, string DriftText) ReturnLegState(
+        IGameplayActor actor, uint reporterObjId, Vector3 reporterPos)
+    {
+        var liveMove = TravelLegDispatch.IsOurLiveLeg(
+            actor.ActiveRequest, reporterObjId, TravelLegDispatch.ReturnMoveOwner);
         var driftText = "fresh";
-        var retrack = true;
+        var legLive = liveMove;
         lock (PursuitSync)
         {
-            if (LastReturnIssue.TryGetValue(actor.ActorId, out var last) && last.TargetObjId == reporter.ObjId)
+            if (LastReturnIssue.TryGetValue(actor.ActorId, out var last) && last.TargetObjId == reporterObjId)
             {
                 var drift = Vector3.Distance(last.TargetPos, reporterPos);
                 driftText = $"{drift.ToString("F1", CultureInfo.InvariantCulture)}m";
-                retrack = !liveMove || drift > PursuitRetrackDriftM;
-                if (!retrack)
-                {
-                    diag = $"validate=ok:reporter={reporter.ObjId}:template={fixture.ReporterTemplate}:flatM={M(flat)}:dist3D={M(dist3)}:dispatch=held:reason=drift-held(drift={driftText})";
-                    return null;
-                }
+                legLive = liveMove && drift <= PursuitRetrackDriftM;
             }
         }
-        diag = $"validate=ok:reporter={reporter.ObjId}:template={fixture.ReporterTemplate}:flatM={M(flat)}:dist3D={M(dist3)}:dispatch=move:reason={(liveMove ? "retrack" : driftText)}";
-        return new BotDecisionProposal(
-            goal: ReturnGoal,
-            action: ActorActionType.Move,
-            targetId: reporter.ObjId,
-            expectedPostcondition: new BotProposalPostcondition(
-                $"return leg toward quest {fixture.QuestId} reporter {reporter.ObjId} dispatched",
-                _ => true),
-            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:return:{fixture.QuestId}:{reporter.ObjId}",
-            timeout: TimeSpan.FromSeconds(30),
-            rationale: $"quest {fixture.QuestId} return: live reporter {fixture.ReporterTemplate} ({reporter.ObjId}) at {M(flat)}m flat (outside {ReturnInteractRadiusM:F1}m gate), drift {driftText} — closing",
-            policyVersion: opts.PolicyVersion,
-            priority: opts.ObjectiveReturnPriority,
-            tieBreakKey: $"return:{fixture.QuestId}:{reporter.ObjId:D10}",
-            hardPreconditions:
-            [
-                new BotProposalPrecondition("quest-active",
-                    observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
-            ]);
+        return (liveMove, legLive, driftText);
+    }
+
+    /// <summary>
+    /// The return leg's settled-halt memory: a Stop already landed for this reporter
+    /// at (nearly) these poses. Read-only over the shared hold memory.
+    /// </summary>
+    private static bool ReturnHoldConfirmed(
+        IGameplayActor actor, uint reporterObjId, Vector3 actorPos, Vector3 reporterPos)
+    {
+        lock (PursuitSync)
+        {
+            return LastStopHold.TryGetValue(actor.ActorId, out var hold)
+                   && hold.TargetObjId == reporterObjId
+                   && Vector3.Distance(hold.ActorPos, actorPos) <= 0.5f
+                   && Vector3.Distance(hold.TargetPos, reporterPos) <= 0.5f;
+        }
     }
 
     /// <summary>
@@ -2004,6 +2082,12 @@ public static class QuestBehavior
         if (gameplayActor is GameplayActor concrete)
             concrete.SetPendingMoveOwner("RETURN_MOVE_TO_UNIT");
         var request = gameplayActor.MoveToUnit(proposal.TargetId, PursuitSpeedMps, PursuitLegTimeout, proposal.IdempotencyKey);
+        // Travel brain: the leg that ACTUALLY ran is the one banked (the mode and
+        // the point it was issued against — the next wake's drift comparison — plus
+        // the repath it spent), read from the decision the proposal carries. A
+        // fallback proposal (no journey armed) carries none and banks nothing.
+        TravelLegDispatch.PublishDispatched(gameplayActor,
+            proposal.Payload is TravelLegDispatch.TravelDispatchParams travel ? travel.Decision : null);
         var npcPos = gameplayActor.Character?.ParentWorld?.GetNpc(proposal.TargetId)?.Transform.World.Position;
         if (npcPos.HasValue)
         {
