@@ -51,6 +51,13 @@ internal static class TravelLegDispatch
     /// <summary>The preemption detail the caller's own retrack stages.</summary>
     private const string ReturnRetrackDetail = "quest return retrack";
 
+    /// <summary>
+    /// The preemption detail the survival flee stages over a live Move leg it is
+    /// replacing (<c>BotRoamStepExecutor.StepSurvivalWake</c>). Caller-authored:
+    /// it retires a leg the brain stack decided to replace, never a navigation failure.
+    /// </summary>
+    private const string FleeRetrackDetail = "survival flee retrack";
+
     /// <summary>The halt detail the engine's own <c>Stop</c> stamps on the leg it interrupts.</summary>
     private const string StopDetail = "stop requested";
 
@@ -400,12 +407,13 @@ internal static class TravelLegDispatch
            && request.MoveOwner == moveOwner;
 
     /// <summary>
-    /// True for the two interrupt details the CALLER itself issues over its own leg
-    /// (the retrack preemption and the audited Stop halt). Both retire a leg the
-    /// caller decided to replace, so neither is a navigation failure.
+    /// True for the interrupt details the brain stack itself issues over its own leg
+    /// (the quest and survival retrack preemptions and the audited Stop halt). Each
+    /// retires a leg the caller decided to replace, so none is a navigation failure.
     /// </summary>
     private static bool IsCallerRetirement(string? detail)
         => detail != null
            && (detail.Contains(ReturnRetrackDetail, StringComparison.Ordinal)
+               || detail.Contains(FleeRetrackDetail, StringComparison.Ordinal)
                || detail.Equals(StopDetail, StringComparison.Ordinal));
 }
