@@ -26,7 +26,9 @@ namespace AAEmu.Game.Core.Managers.Bots.Needs;
 ///  - DEMAND ONLY, EXECUTION ELSEWHERE: nothing here dispatches. The travel arms
 ///    are walked by the EXISTING route layer (<c>BotPath.PathTo</c> + the roam
 ///    MoveTo legs), and the plant/harvest arms are dispatched by the EXISTING
-///    <c>NeedsDecisionScenario</c> leg — this layer names the demand and the point;
+///    <c>NeedsDecisionScenario</c> leg through
+///    <see cref="NeedsFarmLegDispatch"/> — this layer names the demand and the
+///    point;
 ///  - FAIL-CLOSED: an unreadable soil surface, seed count or crop read is a NAMED
 ///    hold, never a fabricated verdict; a soil destination exists ONLY when the
 ///    caller's bounded spiral produced one, so no destination is ever fabricated;

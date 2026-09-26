@@ -79,6 +79,12 @@ public static class NeedsBrainPlanner
     ///
     /// A value type carrying no engine type, so a unit test can drive the live
     /// adapter against a headless actor without constructing policy state.
+    ///
+    /// <see cref="SoilSearch"/> is the caller's own scoping fact, not a policy knob:
+    /// an arm that already owns the wake through a LIVE CROP (the harvest arm) has no
+    /// soil question this wake, so it says so and the adapter does not walk the bounded
+    /// spiral for a destination nothing would use. It defaults true, so every existing
+    /// caller's reading is unchanged.
     /// </summary>
     public readonly record struct Request(
         Vector3 SelfPosition,
@@ -101,7 +107,8 @@ public static class NeedsBrainPlanner
         bool SeedMerchantResolved,
         uint TrackedCropObjId,
         uint TrackedCropTemplateId,
-        Func<Character, uint, Doodad?>? DoodadResolver)
+        Func<Character, uint, Doodad?>? DoodadResolver,
+        bool SoilSearch = true)
     {
         /// <summary>The common case: no tracking facts beyond the actor's own state.</summary>
         public static Request Bare(Vector3 selfPosition, uint seedItemTemplateId)
@@ -214,17 +221,29 @@ public static class NeedsBrainPlanner
         }
 
         // ------------------------------------------------------ soil read
+        // SCOPED BY THE CALLER: an arm that owns the wake through a live crop (the
+        // harvest arm) has no soil question, so it says so and NO surface is read at
+        // all — the readings stay false and no spiral runs. That is the fail-closed
+        // direction for a wake that never asked: a fabricated surface reading, or a
+        // destination nothing would walk, is exactly what must not appear.
         var seedItemTemplateId = request.SeedItemTemplateId;
         var probe = request.SoilProbe
             ?? (Func<Character, Vector3, bool?>)((c, p) => NeedsSoil.Probe(c.ParentWorld, p, seedItemTemplateId));
         bool? underfoot;
-        try
-        {
-            underfoot = probe(character, position);
-        }
-        catch
+        if (!request.SoilSearch)
         {
             underfoot = null;
+        }
+        else
+        {
+            try
+            {
+                underfoot = probe(character, position);
+            }
+            catch
+            {
+                underfoot = null;
+            }
         }
 
         // The surface is READABLE when the point underfoot itself answered; that is

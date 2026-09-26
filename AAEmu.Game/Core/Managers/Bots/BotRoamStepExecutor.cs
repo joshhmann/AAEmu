@@ -362,11 +362,12 @@ public enum NeedsFarmLoopPhase
         /// <summary>
         /// Human-readable reason for the current phase (soil resolve source,
         /// defer cause, stale-drop cause, discard cause), plus the needs brain's
-        /// own decision fragment on the travel arm
+        /// own decision fragment on the arms the brain decides
         /// (<c>[brain=verdict=…:reason=…:verb=…:routed=…:dispatch=…]</c> — the
-        /// decision that produced the leg, or the named hold/bounded-spiral demand
-        /// the wake fell back on). Feeds log lines and test asserts; never a
-        /// tracing framework, and never read by behavior.
+        /// decision that produced the leg, the named hold/bounded-spiral demand the
+        /// wake fell back on, the maturity wait, or the plant/harvest dispatch). Feeds
+        /// log lines and test asserts; never a tracing framework, and never read by
+        /// behavior.
         /// </summary>
         public string NeedsFarmReason { get; set; } = "";
 
@@ -1755,6 +1756,14 @@ public enum NeedsFarmLoopPhase
     /// issued on wait wakes; the engine stays the sole maturity authority at
     /// dispatch.
     ///
+    /// PLANT and HARVEST are the brain's TWO ACTION ARMS (the second and third live
+    /// callers, through the same <see cref="NeedsFarmLegDispatch"/> seam): the
+    /// on-soil + seed wake is decided as the existing Plant verb and the
+    /// mature-crop-in-range wake as the existing Harvest verb, each with the arm's
+    /// own verdict table, and the named maturity wait is the hold that dispatches
+    /// nothing. Every other verdict falls back to this leg's own pre-brain rule, so
+    /// the wiring is additive and never widens a wake.
+    ///
     /// Returns true only when decision work actually landed (Completed) —
     /// reject/rest/wait/travel/defer wakes return false so the route still
     /// walks and the scheduler keeps its cadence instead of spinning.
@@ -1781,6 +1790,7 @@ public enum NeedsFarmLoopPhase
         // ---- 1. Tracked crop: cheap per-wake liveness check (one world
         // lookup + phase read — not a scan). Gone/harvested/despawned/
         // ownership-changed → drop the stale id and re-evaluate below.
+        // An immature crop defers through the brain's wait row — no harvest.
         if (state.NeedsFarmCropObjId != 0)
         {
             var tracked = ResolveDoodad(character, state.NeedsFarmCropObjId);
@@ -1794,17 +1804,21 @@ public enum NeedsFarmLoopPhase
             }
             else
             {
-                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
-                    $"crop {tracked!.ObjId} immature — waiting at plot, no harvest issued");
-                StepFarmLeisure(bot, actor, state, character, tracked!.Transform.World.Position);
-                return false;
+                // THE IMMATURE-CROP WAIT ROW: the tracked crop is live but not mature, so
+                // the wake's verdict is the NAMED hold — the brain says so and the leg
+                // dispatches nothing (a crop that matured between the two reads would be
+                // the same row at the next wake, and the engine revalidates maturity
+                // fail-closed at dispatch). This arm owns the wake through the live crop
+                // and asks no soil question, so no merchant is resolved for it.
+                return StepNeedsFarmImmatureCrop(bot, actor, state, character, position, tracked!,
+                    $"crop {tracked!.ObjId} immature");
             }
         }
 
         // ---- 2. Untracked scan: nearest owned/public crop in perception.
-        // Mature → harvest path; immature → adopt the track and defer (an
-        // immature target never reaches the decision, so no Harvest issues
-        // each wake).
+        // Mature → harvest path; immature → adopt the track and defer through the
+        // brain's wait row (the decision is asked every wake, and a wait issues no
+        // Harvest).
         var scanned = NearestNeedsFarmCrop(character, position);
         if (scanned != null)
         {
@@ -1812,10 +1826,8 @@ public enum NeedsFarmLoopPhase
                 return StepNeedsFarmMatureCrop(bot, actor, state, character, position, scanned);
             state.NeedsFarmCropObjId = scanned.ObjId;
             state.NeedsFarmCropTemplateId = scanned.TemplateId;
-            SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
-                $"adopted crop {scanned.ObjId} immature — waiting at plot, no harvest issued");
-            StepFarmLeisure(bot, actor, state, character, scanned.Transform.World.Position);
-            return false;
+            return StepNeedsFarmImmatureCrop(bot, actor, state, character, position, scanned,
+                $"adopted crop {scanned.ObjId} immature");
         }
 
         // ---- 3. Seed branches: seed absent → buy path; seed + valid soil →
@@ -1836,8 +1848,15 @@ public enum NeedsFarmLoopPhase
                     state.PendingLeg = null;
                 }
                 BroadcastStandstill(character);
-                return AfterNeedsFarmDispatch(state, bot,
-                    DispatchNeedsFarmLeg(bot, actor, merchantObjId, 0, position));
+                // THE ACTION ARM'S PLANT ROW: this wake is decided by the needs brain
+                // (seed on hand and standing on valid soil → the EXISTING Plant verb).
+                // Any other verdict is the named fallback, and the leg's own pre-brain
+                // rule — the plant this branch already earned — owns the dispatch, so
+                // the decision rides additively and never widens the wake.
+                var plantVerdict = DecideNeedsFarmActionLeg(state, actor, position,
+                    NeedsFarmLegDispatch.NeedsFarmArm.Plant, nearestMerchant);
+                return DispatchNeedsFarmActionLeg(bot, actor, state, plantVerdict,
+                    merchantObjId, 0, position, offerPlant: true);
             }
             return StepNeedsFarmTravel(bot, actor, state, character, position);
         }
@@ -1882,6 +1901,71 @@ public enum NeedsFarmLoopPhase
     }
 
     /// <summary>
+    /// THE ACTION ARM'S DISPATCH TAIL — the one place both action arms' verdicts
+    /// become (or refuse to become) a wake:
+    ///  - <see cref="NeedsFarmLegDispatch.NeedsFarmActionVerb.WaitMaturity"/>: the
+    ///    NAMED hold — no dispatch, no verb, the phase reports the wait. This is the
+    ///    row that stops a wake, so it is checked FIRST: a brain that says the crop is
+    ///    immature outranks the site's own reading of it.
+    ///  - every other verdict (the two routed verbs, and the fallback): the leg's own
+    ///    dispatch tail runs exactly as it did before the wiring —
+    ///    <paramref name="offerPlant"/> is the caller's pre-brain rule (the
+    ///    mature-harvest starvation guard), so a fallback can never dispatch something
+    ///    the wake did not already earn.
+    /// The brain's routing fact rides into the leg's phase reason either way, so the
+    /// decision that produced (or refused) the wake stays readable.
+    /// </summary>
+    private bool DispatchNeedsFarmActionLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state,
+        in NeedsFarmLegDispatch.NeedsFarmActionVerdict verdict,
+        uint merchantObjId, uint cropObjId, Vector3 position, bool offerPlant)
+    {
+        var note = BrainNote(verdict);
+        if (verdict.IsWait)
+        {
+            SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
+                $"crop {verdict.CropObjId} immature — holding, no dispatch{note}");
+            return false;
+        }
+        return AfterNeedsFarmDispatch(state, bot,
+            DispatchNeedsFarmLeg(bot, actor, merchantObjId, cropObjId, position, offerPlant), note);
+    }
+
+    /// <summary>The brain's routing fact as it rides the leg's own phase reason: the decision,
+    /// whether this arm routed through it, and the dispatch it named. Built on read only.</summary>
+    private static string BrainNote(in NeedsFarmLegDispatch.NeedsFarmActionVerdict verdict)
+        => $" [brain={NeedsFarmLegDispatch.Describe(verdict)}]";
+
+    /// <summary>
+    /// THE IMMATURE-CROP WAIT ROW — the leg's own pre-brain maturity read said the
+    /// tracked crop is not mature, so the wake asks the brain and reports its verdict.
+    /// That verdict is <see cref="NeedsBrain.Decide"/>'s own
+    /// <see cref="NeedsVerdict.WaitMaturity"/> row (the same shared maturity rule,
+    /// <see cref="NeedsCrop.IsMature"/>, read on the same doodad inside the same wake),
+    /// so the row NAMES the hold and dispatches nothing.
+    ///
+    /// The row is still served through the SAME action tail rather than logged and
+    /// ignored: were the two reads ever to disagree (a crop maturing between them), the
+    /// brain's dispatch is what the wake does — and the engine revalidates maturity
+    /// fail-closed at dispatch, so a harvest it refuses costs one wake, never a wrong
+    /// crop.
+    /// </summary>
+    private bool StepNeedsFarmImmatureCrop(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state,
+        Character character, Vector3 position, Doodad crop, string what)
+    {
+        var verdict = DecideNeedsFarmActionLeg(state, actor, position,
+            NeedsFarmLegDispatch.NeedsFarmArm.Harvest, nearestMerchant: null);
+        if (verdict.HasLeg)
+        {
+            return DispatchNeedsFarmActionLeg(bot, actor, state, verdict,
+                ResolveSeedMerchant(character, position), crop.ObjId, position, offerPlant: false);
+        }
+        SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
+            $"{what} — waiting at plot, no harvest issued{BrainNote(verdict)}");
+        StepFarmLeisure(bot, actor, state, character, crop.Transform.World.Position);
+        return false;
+    }
+
+    /// <summary>
     /// Mature-crop branch: in harvest range → harvest via the normal decision
     /// path; out of range → approach through the ordinary route layer with
     /// bounded re-arms (never spin), harvesting on arrival.
@@ -1892,7 +1976,12 @@ public enum NeedsFarmLoopPhase
         state.NeedsFarmCropObjId = crop.ObjId;
         state.NeedsFarmCropTemplateId = crop.TemplateId;
         var dist = MathUtil.CalculateDistance(position, crop.Transform.World.Position, false);
-        const float CropHarvestInteractRange = 2.5f;
+        // THE ONE HARVEST RANGE, shared with the brain so the two cannot drift: the arm
+        // scoping below relies on this branch and NeedsBrain.Decide agreeing on what
+        // "in harvest range" means — a leg that read a narrower range than the brain
+        // would approach a crop the brain already called harvestable, and a wider one
+        // would dispatch a harvest the brain called an approach.
+        const float CropHarvestInteractRange = NeedsBrain.DefaultHarvestRangeM;
         if (dist > CropHarvestInteractRange)
         {
             var enRoute = state.NeedsFarmSoilTarget is { } soil
@@ -1932,8 +2021,15 @@ public enum NeedsFarmLoopPhase
 
         state.NeedsFarmSoilAttempts = 0;
         var merchantObjId = ResolveSeedMerchant(character, position);
-        return AfterNeedsFarmDispatch(state, bot,
-            DispatchNeedsFarmLeg(bot, actor, merchantObjId, crop.ObjId, position, offerPlant: false));
+        // THE ACTION ARM'S HARVEST ROW: the mature-crop-in-range wake is decided by the
+        // needs brain (the live MATURE crop inside the harvest range → the EXISTING
+        // Harvest verb on the tracked objId). Any other verdict falls back to this
+        // leg's own pre-brain rule — the harvest this branch already earned — so the
+        // decision rides additively and never widens the wake.
+        var harvestVerdict = DecideNeedsFarmActionLeg(state, actor, position,
+            NeedsFarmLegDispatch.NeedsFarmArm.Harvest, nearestMerchant: null);
+        return DispatchNeedsFarmActionLeg(bot, actor, state, harvestVerdict,
+            merchantObjId, crop.ObjId, position, offerPlant: false);
     }
 
     /// <summary>
@@ -1960,8 +2056,14 @@ public enum NeedsFarmLoopPhase
             BroadcastStandstill(character);
             state.PlantingUntilUtc = TimeProvider.GetUtcNow().UtcDateTime.AddSeconds(2.0);
             var merchantObjId = ResolveSeedMerchant(character, position);
-            return AfterNeedsFarmDispatch(state, bot,
-                DispatchNeedsFarmLeg(bot, actor, merchantObjId, 0, position));
+            // THE SAME PLANT ARM, reached by ARRIVAL rather than by standing on soil at
+            // the head of the wake: the on-soil + seed wake is decided by the needs brain
+            // (the existing Plant verb), and every other verdict falls back to this
+            // branch's own pre-brain rule — the plant the arrival already earned.
+            var plantVerdict = DecideNeedsFarmActionLeg(state, actor, position,
+                NeedsFarmLegDispatch.NeedsFarmArm.Plant, nearestMerchant);
+            return DispatchNeedsFarmActionLeg(bot, actor, state, plantVerdict,
+                merchantObjId, 0, position, offerPlant: true);
         }
         if (state.NeedsFarmSoilTarget is { } target
             && state.Path is { IsFinished: false }
@@ -2052,18 +2154,54 @@ public enum NeedsFarmLoopPhase
     /// </summary>
     private NeedsBrainPlanner.Prepared PrepareNeedsFarmTravelBrain(
         BotRoamState state, IGameplayActor actor, Vector3 position, Npc? nearestMerchant)
-        => NeedsBrainPlanner.Prepare(actor, new NeedsBrainPlanner.Request(
+        => NeedsBrainPlanner.Prepare(actor, NeedsFarmBrainRequest(state, position, nearestMerchant,
+            soilSearch: true, cropArm: false));
+
+    /// <summary>
+    /// The leg's TWO ACTION ARMS through the brain (the second live caller): one
+    /// <see cref="NeedsBrainPlanner.Prepare"/> over this leg's own reads, then
+    /// <see cref="NeedsFarmLegDispatch.DecideNeedsFarmAction"/> scoped to
+    /// <paramref name="arm"/>. The leg's branch structure stays the caller's own
+    /// (its pre-brain rule) and the table names which row applies: the existing
+    /// Plant or Harvest verb, the no-verb maturity wait, or the fallback.
+    ///
+    /// The ACTION arms never run the bounded spiral (<c>SoilSearch</c> is false
+    /// whenever the wake is owned by a LIVE CROP), so no destination is produced or
+    /// consumed here at all — the planter's Plant verdict comes from the surface
+    /// read underfoot, and the harvest arm's from the tracked crop.
+    /// </summary>
+    private NeedsFarmLegDispatch.NeedsFarmActionVerdict DecideNeedsFarmActionLeg(
+        BotRoamState state, IGameplayActor actor, Vector3 position,
+        NeedsFarmLegDispatch.NeedsFarmArm arm, Npc? nearestMerchant)
+        => NeedsFarmLegDispatch.DecideNeedsFarmAction(
+            NeedsBrainPlanner.Prepare(actor, NeedsFarmBrainRequest(state, position, nearestMerchant,
+                soilSearch: arm == NeedsFarmLegDispatch.NeedsFarmArm.Plant, cropArm: true)),
+            arm);
+
+    /// <summary>
+    /// THE LEG'S ONE BRAIN REQUEST: every read this leg hands the planner is built
+    /// here — the travel arm and both action arms ask through the same request shape,
+    /// so the soil probe, the ground pin, the merchant exclusion and the tracked-crop
+    /// resolve are the same seam whoever asks (one destination authority, one crop
+    /// rule, one seed count).
+    ///
+    /// <paramref name="cropArm"/> selects which reading of the leg's shared attempt
+    /// counter feeds the CROP-approach budget: the travel arm reaches its destination
+    /// with the crop track already served by the wait/mature branches (so the layer's
+    /// default stands), while the action arms use the leg's own counter — the number
+    /// the mature-crop branch itself bounds its re-arms on.
+    /// </summary>
+    private NeedsBrainPlanner.Request NeedsFarmBrainRequest(
+        BotRoamState state, Vector3 position, Npc? nearestMerchant, bool soilSearch, bool cropArm)
+        => new(
             SelfPosition: position,
             SeedItemTemplateId: NeedsFarmSeedItemTemplateId,
             SeedReadable: true,
             SeedCount: 0, // the planner reads the bag itself from the template id (Request.Bare's shape)
             CropEnRoute: false,
-            SoilEnRoute: false, // the caller's live-leg hold is the leg's own reading above, never reached here
-            // This leg reaches its travel arm only with the crop track already resolved
-            // (a live crop is owned by the wait/mature branches earlier), so the crop
-            // approach budget is untouched — the defaults.
-            CropApproachAttempts: 0,
-            MaxCropApproachAttempts: NeedsBrain.DefaultMaxCropApproachAttempts,
+            SoilEnRoute: false, // the caller's live-leg hold is the leg's own reading, never reached here
+            CropApproachAttempts: cropArm ? state.NeedsFarmSoilAttempts : 0,
+            MaxCropApproachAttempts: cropArm ? NeedsFarmMaxSoilAttempts : NeedsBrain.DefaultMaxCropApproachAttempts,
             HarvestJustLanded: false,
             HarvestRangeM: NeedsBrain.DefaultHarvestRangeM,
             SoilAttempts: state.NeedsFarmSoilAttempts,
@@ -2079,7 +2217,8 @@ public enum NeedsFarmLoopPhase
             SeedMerchantResolved: nearestMerchant != null,
             TrackedCropObjId: state.NeedsFarmCropObjId,
             TrackedCropTemplateId: state.NeedsFarmCropTemplateId,
-            DoodadResolver: DoodadResolver));
+            DoodadResolver: DoodadResolver,
+            SoilSearch: soilSearch);
 
     /// <summary>
     /// Option 1: Leashed farm leisure / micro-wander while WaitingMaturity.
@@ -2141,7 +2280,7 @@ public enum NeedsFarmLoopPhase
     /// the 0b contract: true only when decision work landed (Completed).
     /// </summary>
     private bool AfterNeedsFarmDispatch(BotRoamState state, PlayerBotRuntime bot,
-        NeedsDecisionScenario.NeedsRunResult? result)
+        NeedsDecisionScenario.NeedsRunResult? result, string brainNote = "")
     {
         if (result == null)
         {
@@ -2163,15 +2302,16 @@ public enum NeedsFarmLoopPhase
                     ResolveDoodad(bot.Character, plantedObjId)?.TemplateId ?? 0;
                 state.PlantingUntilUtc = TimeProvider.GetUtcNow().UtcDateTime.AddSeconds(2.0);
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.WaitingMaturity,
-                    $"planted crop {plantedObjId} — waiting maturity");
+                    $"planted crop {plantedObjId} — waiting maturity{brainNote}");
                 break;
             case ActorActionType.Plant when landed:
                 state.PlantingUntilUtc = TimeProvider.GetUtcNow().UtcDateTime.AddSeconds(2.0);
-                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Planting, "plant landed without crop objId");
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Planting,
+                    $"plant landed without crop objId{brainNote}");
                 break;
             case ActorActionType.Plant:
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Planting,
-                    $"plant dispatched ({result.Request?.State})");
+                    $"plant dispatched ({result.Request?.State}){brainNote}");
                 break;
             case ActorActionType.Harvest when landed:
                 var harvested = state.NeedsFarmCropObjId;
@@ -2184,24 +2324,26 @@ public enum NeedsFarmLoopPhase
                 }
                 state.HarvestingUntilUtc = TimeProvider.GetUtcNow().UtcDateTime.AddSeconds(castSeconds);
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Replanting,
-                    $"harvested crop {harvested} — re-evaluating (seed+output → replant)");
+                    $"harvested crop {harvested} — re-evaluating (seed+output → replant){brainNote}");
                 break;
             case ActorActionType.Harvest:
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Harvesting,
-                    $"harvest dispatched ({result.Request?.State})");
+                    $"harvest dispatched ({result.Request?.State}){brainNote}");
                 break;
             case ActorActionType.Buy when landed:
-                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle, "seed bought — re-evaluating");
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle,
+                    $"seed bought — re-evaluating{brainNote}");
                 break;
             case ActorActionType.Sell when landed:
                 // Earn leg landed: surplus liquidated toward the seed price.
                 // Idle re-evaluates to buy on the NEXT wake — never a scripted
                 // sell-then-buy chain in one wake (re-evaluation discipline).
-                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle, "surplus sold — re-evaluating");
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle,
+                    $"surplus sold — re-evaluating{brainNote}");
                 break;
             default:
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle,
-                    $"rest/reject ({result.SelectedAction}) — yielding");
+                    $"rest/reject ({result.SelectedAction}) — yielding{brainNote}");
                 break;
         }
         return landed;
