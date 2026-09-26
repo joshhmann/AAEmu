@@ -397,17 +397,17 @@ public static class CombatBrain
     /// The retreat destination: straight away from the committed target, or the
     /// engine precedent's fixed step when nothing is readable (an unreadable
     /// position must not produce a NaN destination the Move verb would refuse).
+    ///
+    /// The escape math itself lives in exactly one place —
+    /// <see cref="AAEmu.Game.Core.Managers.Bots.Travel.TravelBrain.SafeAnchor"/> —
+    /// so this flee leg and the TRAVEL brain's retreat leg (which the disengage/kite
+    /// consumers dispatch) are the same shape by construction rather than by
+    /// coincidence. Only the distance is this brain's own
+    /// (<see cref="RetreatDistanceM"/>).
     /// </summary>
     private static Vector3 RetreatDestination(in CombatBrainInputs inputs)
-    {
-        var from = inputs.IncumbentPosition != Vector3.Zero
-            ? inputs.IncumbentPosition
-            : inputs.SelfPosition - new Vector3(1f, 0f, 0f);
-        var direction = Vector3.Normalize(inputs.SelfPosition - from);
-        if (!IsFinite(direction))
-            direction = new Vector3(1f, 0f, 0f);
-        return inputs.SelfPosition + direction * RetreatDistanceM;
-    }
+        => AAEmu.Game.Core.Managers.Bots.Travel.TravelBrain.SafeAnchor(
+            inputs.SelfPosition, inputs.IncumbentPosition, RetreatDistanceM);
 
     /// <summary>The close-in destination: a point just inside the band's ceiling, on the line to the target.</summary>
     private static Vector3 ApproachDestination(in CombatBrainInputs inputs, float bandMax)
