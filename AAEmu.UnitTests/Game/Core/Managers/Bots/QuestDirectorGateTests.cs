@@ -30,6 +30,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 public class QuestDirectorGateTests
 {
     private const uint Quest251 = 251;
+    private const uint Quest252 = 252;
     private const uint Boar3475 = 3475;
     private const uint Pack4530 = 4530;
     private const uint Meat4058 = 4058;
@@ -123,17 +124,54 @@ public class QuestDirectorGateTests
 
     // ------------------------------------------- pattern / source branches
 
+    /// <summary>
+    /// A quest with NO Progress objective act is the pure BOOTSTRAP shape: the
+    /// generalized director derives a row for every active quest, so "no act"
+    /// must be the ordinary bootstrap floor (Advance + TurnIn), not a failure —
+    /// otherwise every bootstrap quest in the game would go legless. Nothing is
+    /// named as unserved either: there is no gap, the shape is simply
+    /// objective-less.
+    /// </summary>
     [Test]
-    public async Task Plan_NoRecognizedAct_FailsUnprovenPattern()
+    public async Task Plan_NoObjectiveAct_IsBootstrapFloor_NoFailure()
     {
         var fixture = new QuestFixtureRow(Quest251, 0, 0, 0, 0, 0, 0, 0);
 
         var plan = QuestDirector.Plan(Quest251, fixture);
 
-        await Assert.That(plan.HasFailed).IsTrue();
-        await Assert.That(plan.FailStage).IsEqualTo("FIXTURE");
-        await Assert.That(plan.FailReason).IsEqualTo("HARNESS/UNPROVEN-PATTERN quest=251 act=absent");
-        await AssertNoLegs(plan);
+        await Assert.That(plan.HasFailed).IsFalse();
+        await Assert.That(plan.Unserved).IsEqualTo("");
+        await Assert.That(plan.Pattern).IsEqualTo(QuestPattern.Unknown);
+        await Assert.That(plan.Legs.Count).IsEqualTo(2);
+        await Assert.That(plan.Leg(QuestLegId.Advance)).IsNotNull();
+        await Assert.That(plan.Leg(QuestLegId.TurnIn)).IsNotNull();
+    }
+
+    /// <summary>
+    /// An objective act this vocabulary cannot serve yet keeps the bootstrap
+    /// floor — the work the step machine can always do, byte-identical to what
+    /// every non-251 quest got before the director was generalized — but the gap
+    /// is NAMED (<c>HARNESS/UNPROVEN-PATTERN</c>) rather than silent: the
+    /// behavior logs it and the give-up rule reads it. The act type is named, so
+    /// the refusal says WHICH act could not be served.
+    /// </summary>
+    [Test]
+    public async Task Plan_UnservedObjectiveAct_KeepsBootstrapFloor_NamesTheGap()
+    {
+        var fixture = new QuestFixtureRow(Quest251, 0, 0, 0, 0, 0, 0, 0)
+        {
+            ObjectiveActType = "QuestActObjMonsterHunt"
+        };
+
+        var plan = QuestDirector.Plan(Quest251, fixture);
+
+        await Assert.That(plan.HasFailed).IsFalse();
+        await Assert.That(plan.Unserved)
+            .IsEqualTo("HARNESS/UNPROVEN-PATTERN quest=251 act=QuestActObjMonsterHunt");
+        await Assert.That(plan.Pattern).IsEqualTo(QuestPattern.Unknown);
+        await Assert.That(plan.Legs.Count).IsEqualTo(2);
+        await Assert.That(plan.Leg(QuestLegId.Advance)).IsNotNull();
+        await Assert.That(plan.Leg(QuestLegId.TurnIn)).IsNotNull();
     }
 
     [Test]
@@ -148,6 +186,26 @@ public class QuestDirectorGateTests
         await Assert.That(plan.HasFailed).IsTrue();
         await Assert.That(plan.FailStage).IsEqualTo("FIXTURE");
         await Assert.That(plan.FailReason).IsEqualTo("HARNESS/UNPROVEN-SOURCE quest=251 act=10473 item=4058");
+        await AssertNoLegs(plan);
+    }
+
+    [Test]
+    public async Task Plan_ItemUseActWithoutItem_FailsUnprovenSource()
+    {
+        // An item-use objective whose act resolved no item template: there is
+        // nothing to consume, so the plan fails closed naming the act.
+        var fixture = new QuestFixtureRow(Quest252, 0, 0, 0, 0, 0, 7653, 0)
+        {
+            ObjectivePattern = QuestPattern.UseItem,
+            ObjectiveActType = "QuestActObjItemUse",
+            UseItemActId = 1600
+        };
+
+        var plan = QuestDirector.Plan(Quest252, fixture);
+
+        await Assert.That(plan.HasFailed).IsTrue();
+        await Assert.That(plan.FailStage).IsEqualTo("FIXTURE");
+        await Assert.That(plan.FailReason).IsEqualTo("HARNESS/UNPROVEN-SOURCE quest=252 act=1600 item=0");
         await AssertNoLegs(plan);
     }
 
@@ -289,6 +347,95 @@ public class QuestDirectorGateTests
         // The three ungated-by-declaration verbs stay off the gate-checked set.
         foreach (var ungated in new[] { "AdvanceQuest", "TurnInDoodad", "AutoTurnIn" })
             await Assert.That(PatternCatalog.VerbsFor(QuestPattern.KillX)).DoesNotContain(ungated);
+    }
+
+    /// <summary>
+    /// The item-use shape's own verb set: the two verbs its legs dispatch, both
+    /// registry-green. The verb keys are distinct from the kill-to-gather set,
+    /// so a plan cannot inherit a proof it does not need — and the director's
+    /// gate has no ungated-by-declaration exceptions to hide behind.
+    /// </summary>
+    [Test]
+    public async Task PatternCatalog_UseItemCoversItsTwoGreenVerbs()
+    {
+        await Assert.That(PatternCatalog.VerbsFor(QuestPattern.UseItem)).IsEquivalentTo(new[]
+        {
+            "UseItem", "TurnInQuest"
+        });
+
+        foreach (var verbKey in PatternCatalog.VerbsFor(QuestPattern.UseItem))
+        {
+            var gate = VerifiedVerbRegistry.Instance.Resolve(verbKey);
+            await Assert.That(gate.IsGreen).IsTrue();
+            await Assert.That(gate.GateId.Length).IsGreaterThan(0);
+            await Assert.That(gate.EvidencePath.Length).IsGreaterThan(0);
+        }
+
+        var useItem = VerifiedVerbRegistry.Instance.Resolve("UseItem");
+        await Assert.That(useItem.GateId).IsEqualTo("COMBAT-01");
+        await Assert.That(useItem.EvidencePath).IsEqualTo("recovery-heal-report.json");
+
+        // A pattern with no proven set stays EMPTY (fail-closed by
+        // classification, never by a guessed verb list).
+        await Assert.That(PatternCatalog.VerbsFor(QuestPattern.Unknown).Count).IsEqualTo(0);
+        await Assert.That(PatternCatalog.VerbsFor(QuestPattern.Craft).Count).IsEqualTo(0);
+    }
+
+    // ------------------------------------------------- 252 second proof
+
+    /// <summary>
+    /// The second shape, derived with NO director change: quest 252's row comes
+    /// off the canonical quest data (an item-use objective consuming 7738 ×1,
+    /// auto-complete on the Reward step), classifies as
+    /// <see cref="QuestPattern.UseItem"/> from its own act, and builds a real
+    /// leg set whose verbs the registry proves. Nothing in the director names
+    /// 252 — the same derivation that serves 251 serves this.
+    /// </summary>
+    [Test]
+    public async Task Plan252_ItemUseObjective_DerivesUseItemPlan()
+    {
+        var fixture = QuestFixtureRow.FromQuestData(Quest252);
+
+        await Assert.That(fixture.UseItemActId).IsEqualTo(1600u);
+        await Assert.That(fixture.UseItemTemplateId).IsEqualTo(7738u);
+        await Assert.That(fixture.UseItemNeed).IsEqualTo(1);
+        await Assert.That(fixture.AutoComplete).IsTrue();
+        await Assert.That(fixture.ObjectivePattern).IsEqualTo(QuestPattern.UseItem);
+        await Assert.That(fixture.ObjectiveActType).IsEqualTo("QuestActObjItemUse");
+        await Assert.That(fixture.GatherActId).IsEqualTo(0u);
+
+        var plan = QuestDirector.Plan(Quest252, fixture);
+
+        await Assert.That(plan.HasFailed).IsFalse();
+        await Assert.That(plan.Unserved).IsEqualTo("");
+        await Assert.That(plan.Pattern).IsEqualTo(QuestPattern.UseItem);
+        await Assert.That(plan.Legs.Select(l => l.Id)).IsEquivalentTo(new[]
+        {
+            QuestLegId.Advance, QuestLegId.UseItem, QuestLegId.TurnIn
+        });
+        await Assert.That(plan.Leg(QuestLegId.UseItem)).IsNotNull();
+        await Assert.That(plan.Leg(QuestLegId.Combat)).IsNull();
+    }
+
+    /// <summary>
+    /// The wake path derives a plan for EVERY active quest, not just the wired
+    /// one: two active quests of two shapes yield two plans in quest-id order,
+    /// each carrying its own shape's legs. This is the selection surface the
+    /// brain ranks over — no quest id is special-cased anywhere in it.
+    /// </summary>
+    [Test]
+    public async Task PlanWake_TwoActiveQuests_TwoShapeCorrectPlans()
+    {
+        var context = new BotObservedContext { ActiveQuestIds = [Quest252, Quest251] };
+
+        var plans = QuestDirector.PlanWake(context);
+
+        await Assert.That(plans.Select(p => p.QuestId)).IsEquivalentTo(new[] { Quest251, Quest252 });
+        await Assert.That(plans[0].Pattern).IsEqualTo(QuestPattern.KillX);
+        await Assert.That(plans[0].Legs.Count).IsEqualTo(7);
+        await Assert.That(plans[1].Pattern).IsEqualTo(QuestPattern.UseItem);
+        await Assert.That(plans[1].Legs.Count).IsEqualTo(3);
+        await Assert.That(plans.All(p => !p.HasFailed)).IsTrue();
     }
 
     // ------------------------------------------------------------ fixture
