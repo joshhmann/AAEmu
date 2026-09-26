@@ -20,12 +20,30 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 /// Derivation (every field read off the loaded QuestManager / ItemManager /
 /// LootGameData surfaces; any unresolvable field stays zero and the caller's
 /// fail-closed predicates name the failure):
+///   ObjectivePattern / ObjectiveActType — the quest's objective SHAPE, read
+///     off the Progress component's first objective act (CountsAsAnObjective,
+///     in (component id, act id) order): an item gather derives
+///     <see cref="QuestPattern.KillX"/>, an item use derives
+///     <see cref="QuestPattern.UseItem"/>. A quest with NO Progress objective
+///     act derives <see cref="QuestPattern.Unknown"/> with an empty act type —
+///     the pure-bootstrap shape (advance + turn-in only). A Progress objective
+///     act the vocabulary does not serve yet derives
+///     <see cref="QuestPattern.Unknown"/> WITH its act type name, which is the
+///     caller's fail-closed trigger. The row is derived for EVERY quest; the
+///     shape is what lets the director tell "no objective" (bootstrap) from
+///     "an objective we cannot serve" (fail closed).
 ///   GatherActId / PreyItem / Need — the Progress component's first
 ///     QuestActObjItemGather (act id, item id, count), in (component id, act
 ///     id) order.
 ///   PreyTemplate / PreyPack — the loot chain for PreyItem: the
 ///     loot_pack_dropping_npcs row whose loot pack actually carries the item,
 ///     preferring a default-pack row, then the lowest (npc, pack) ids.
+///   UseItemActId / UseItemTemplateId / UseItemNeed — the Progress component's
+///     first QuestActObjItemUse (act id, item template, count), the item-use
+///     objective's own facts (distinct from the gather act's).
+///   AutoComplete — true when the quest carries a QuestActConAutoComplete in
+///     its Ready or Reward component: the engine completes it on its own
+///     evaluation, so the plan needs no NPC turn-in leg to finish it.
 ///   ReporterTemplate — the Ready component's QuestActConReportNpc npc,
 ///     falling back to the Start component's QuestActConAcceptNpc.
 ///   RewardItem — the Reward component's QuestActSupplyItem item, falling back
@@ -58,6 +76,40 @@ public sealed record QuestFixtureRow(
     uint ReporterTemplate,
     uint RewardItem)
 {
+    /// <summary>
+    /// The quest's objective shape, derived from the Progress component's first
+    /// objective act (see the type doc). <see cref="QuestPattern.Unknown"/> with
+    /// an empty <see cref="ObjectiveActType"/> is the pure-bootstrap shape (no
+    /// Progress objective act at all); <see cref="QuestPattern.Unknown"/> WITH an
+    /// act type is an objective this vocabulary cannot serve yet — the caller's
+    /// fail-closed trigger.
+    /// </summary>
+    public QuestPattern ObjectivePattern { get; init; } = QuestPattern.Unknown;
+
+    /// <summary>
+    /// The Progress objective act's CLR type name (e.g.
+    /// <c>QuestActObjItemGather</c>), or "" when the quest carries no objective
+    /// act. Named so an unserved objective's refusal says WHICH act it could
+    /// not serve.
+    /// </summary>
+    public string ObjectiveActType { get; init; } = "";
+
+    /// <summary>The Progress component's first QuestActObjItemUse act id (0 when the quest carries none).</summary>
+    public uint UseItemActId { get; init; }
+
+    /// <summary>The item template that act consumes (0 when the quest carries no item-use objective).</summary>
+    public uint UseItemTemplateId { get; init; }
+
+    /// <summary>The item-use objective's required count (0 when the quest carries none).</summary>
+    public int UseItemNeed { get; init; }
+
+    /// <summary>
+    /// True when the quest carries a <c>QuestActConAutoComplete</c> in its Ready
+    /// or Reward component: the engine completes the quest on its own step
+    /// evaluation, so the plan needs no NPC turn-in leg to finish it.
+    /// </summary>
+    public bool AutoComplete { get; init; }
+
     /// <summary>
     /// Memo of derived rows, one per quest id. Concurrent: the wake path can
     /// derive different quests from different bot threads.
@@ -158,6 +210,12 @@ public sealed record QuestFixtureRow(
         var need = 0;
         uint reporterTemplate = 0;
         uint rewardItem = 0;
+        uint useItemActId = 0;
+        uint useItemTemplateId = 0;
+        var useItemNeed = 0;
+        var autoComplete = false;
+        var objectivePattern = QuestPattern.Unknown;
+        var objectiveActType = "";
         try
         {
             var template = QuestManager.Instance?.GetTemplate(questId);
@@ -171,6 +229,42 @@ public sealed record QuestFixtureRow(
                 preyItem = gather.ItemId;
                 need = gather.Count;
             }
+
+            var useItem = FirstAct<QuestActObjItemUse>(template, QuestComponentKind.Progress);
+            if (useItem != null)
+            {
+                useItemActId = useItem.ActId;
+                useItemTemplateId = useItem.ItemId;
+                useItemNeed = useItem.Count;
+            }
+
+            // The objective SHAPE is the Progress component's first act that
+            // counts as an objective — the act the quest's step machine waits
+            // on. A quest with none is the pure-bootstrap shape; one whose act
+            // this vocabulary does not serve keeps the act's name so the
+            // director can refuse it BY NAME instead of guessing.
+            var objective = template.GetComponents(QuestComponentKind.Progress)
+                .SelectMany(c => c.ActTemplates)
+                .Where(a => a.CountsAsAnObjective)
+                .OrderBy(a => a.ParentComponent.Id)
+                .ThenBy(a => a.ActId)
+                .FirstOrDefault();
+            if (objective != null)
+            {
+                objectiveActType = objective.GetType().Name;
+                objectivePattern = objective switch
+                {
+                    QuestActObjItemGather => QuestPattern.KillX,
+                    QuestActObjItemUse => QuestPattern.UseItem,
+                    _ => QuestPattern.Unknown
+                };
+            }
+
+            // Auto-complete: the engine's own completion act, on the Ready or
+            // Reward step (252 carries it on Reward; a quest that carries it
+            // needs no reporter turn-in leg).
+            autoComplete = FirstAct<QuestActConAutoComplete>(template, QuestComponentKind.Ready) != null
+                           || FirstAct<QuestActConAutoComplete>(template, QuestComponentKind.Reward) != null;
 
             // Reporter: the Ready-step turn-in target, else the Start-step
             // acceptor (a quest may carry both; for 251 they agree).
@@ -190,7 +284,15 @@ public sealed record QuestFixtureRow(
         var (preyTemplate, preyPack) = ResolveDropSource(preyItem);
 
         return new QuestFixtureRow(
-            questId, gatherActId, preyItem, need, preyTemplate, preyPack, reporterTemplate, rewardItem);
+            questId, gatherActId, preyItem, need, preyTemplate, preyPack, reporterTemplate, rewardItem)
+        {
+            ObjectivePattern = objectivePattern,
+            ObjectiveActType = objectiveActType,
+            UseItemActId = useItemActId,
+            UseItemTemplateId = useItemTemplateId,
+            UseItemNeed = useItemNeed,
+            AutoComplete = autoComplete
+        };
     }
 
     private static QuestFixtureRow Empty(uint questId)

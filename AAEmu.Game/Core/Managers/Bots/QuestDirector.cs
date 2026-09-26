@@ -6,45 +6,40 @@ using AAEmu.Game.Models.Game.Quests.Director;
 namespace AAEmu.Game.Core.Managers.Bots;
 
 /// <summary>
-/// Quest director — Stage 2 (leg assembly), Stage 3 (fixture gate-check) and
-/// Stage 4 (plan-driven run wiring). Assembles one quest's
-/// <see cref="QuestPlan"/> from the behavior's leg <c>Emit</c> providers,
-/// reproducing the leg set the wake path used to hard-wire:
+/// Quest director — the quest BRAIN's plan assembly and gate-check.
 ///
-///   - a bootstrap quest (no fixture row) carries Advance + TurnIn — the
-///     pre-G4 shape, unchanged for every quest except the wired objective one;
-///   - a quest with a derived fixture row additionally carries
-///     Return / Target / Pursuit / Combat / Loot — the wired objective path.
+/// Assembles one <see cref="QuestPlan"/> per active quest, from the behavior's
+/// leg <c>Emit</c> providers, over EVERY quest: the shape is decided by the
+/// quest's derived <see cref="QuestFixtureRow"/>, never by a quest id. Three
+/// shapes exist, and they are exhaustive by construction:
+///
+///   - a bootstrap quest (no Progress objective act) carries Advance + TurnIn —
+///     the pre-G4 shape, unchanged;
+///   - a gather-from-prey quest (an item-gather objective whose loot chain
+///     resolves) additionally carries Return / Target / Pursuit / Combat /
+///     Loot — the kill-to-gather path, unchanged for 251;
+///   - an item-use quest (an item-use objective) additionally carries UseItem —
+///     the consume-an-item path (252 is its proof).
 ///
 /// The plan carries legs and data only. Every leg body, every per-actor memory
-/// (hold/drift/pursuit/return issue, corpse, loot-once) and all dispatch stay in
-/// <see cref="QuestBehavior"/>; the plan never stores per-wake state.
+/// (hold/drift/pursuit/return issue, corpse, loot-once, give-up streak) and all
+/// dispatch stay in <see cref="QuestBehavior"/>; the plan never stores per-wake
+/// state.
 ///
 /// The gate-check runs between the fixture row and the first leg, so it precedes
 /// every wake and every perception read: a pattern whose verbs are not all
-/// registry-green, an act the pattern vocabulary does not recognize, or an
+/// registry-green, an objective act the pattern vocabulary does not serve, or an
 /// unresolvable objective source all produce a plan that carries a named
 /// <c>HARNESS/UNPROVEN-*</c> failure and NO legs. The registry is the only
 /// source of a verb key — the director never invents one.
 ///
 /// <see cref="Run"/> is the wake's entry point: it perceives once, assembles the
-/// wake's plan set through <see cref="PlanWake"/> (the data-driven wiring this
-/// stage introduces — the quest-scoped constant below is the ONLY quest wiring
-/// left) and hands that set to <see cref="QuestBehavior.Run"/>, which owns the
-/// leg loop and the decision pipeline. The director owns the plan; the behavior
-/// owns running it.
+/// wake's plan set through <see cref="PlanWake"/> and hands that set to
+/// <see cref="QuestBehavior.Run"/>, which owns the leg loop and the decision
+/// pipeline. The director owns the plan; the behavior owns running it.
 /// </summary>
 public static class QuestDirector
 {
-    /// <summary>
-    /// The quest whose objective path (G4-G8b) is wired into the plan set. The
-    /// path's VALUES are all data-derived (<see cref="QuestFixtureRow"/>); only
-    /// the wiring is quest-scoped for now — the last piece Stage 4 leaves
-    /// hard-wired. Resolved per wake through the fixture row, never carried as a
-    /// template constant.
-    /// </summary>
-    private const uint ObjectiveQuestId = 251;
-
     /// <summary>
     /// The two leg sets, built once: a <see cref="QuestLeg"/> is an id plus its
     /// static-method delegates, so it carries no per-actor or per-wake state and
@@ -75,6 +70,25 @@ public static class QuestDirector
         new(QuestLegId.Combat, QuestBehavior.CombatEmit, NeedsFunnel: true),
         new(QuestLegId.Loot, QuestBehavior.LootEmit, NeedsFunnel: true),
         new(QuestLegId.Target, QuestBehavior.TargetEmit, NeedsFunnel: true)
+    });
+
+    /// <summary>
+    /// The item-use leg set: Advance, the item-use objective leg, then TurnIn.
+    /// No Return leg — the shape's quest may complete on its own
+    /// (<see cref="QuestFixtureRow.AutoComplete"/>), and a shape that still
+    /// needs a reporter is turned in by the ordinary TurnIn leg against the
+    /// row's <see cref="QuestFixtureRow.ReporterTemplate"/>. No funnel legs:
+    /// the objective needs no world target (the item is in the bag and the
+    /// wake's own perception carries the counts).
+    /// </summary>
+    private static readonly IReadOnlyList<QuestLeg> UseItemLegs = Array.AsReadOnly(new QuestLeg[]
+    {
+        new(QuestLegId.Advance, QuestBehavior.AdvanceEmit,
+            Enter: QuestBehavior.AdvanceEnter),
+        new(QuestLegId.UseItem, QuestBehavior.UseItemEmit,
+            Enter: QuestBehavior.UseItemEnter),
+        new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
+            Enter: QuestBehavior.TurnInEnter)
     });
 
     private static readonly IReadOnlyList<QuestLeg> NoLegs = Array.AsReadOnly(Array.Empty<QuestLeg>());
@@ -112,8 +126,11 @@ public static class QuestDirector
     /// <summary>
     /// The wake's plan set: one gate-checked plan per active quest, in
     /// ascending quest-id order (the decision order the wake has always used).
-    /// A plan that failed its gate is present and legless — the run loop names
-    /// it at run-result level instead of silently skipping the quest.
+    /// Every active quest gets a row derived from its own data — the quest id is
+    /// never compared against a wired constant, so a quest the vocabulary can
+    /// serve derives its plan the moment it is active. A plan that failed its
+    /// gate is present and legless — the run loop names it at run-result level
+    /// instead of silently skipping the quest.
     /// </summary>
     public static IReadOnlyList<QuestPlan> PlanWake(BotObservedContext context)
     {
@@ -121,12 +138,9 @@ public static class QuestDirector
         var plans = new List<QuestPlan>(context.ActiveQuestIds.Count);
         foreach (var questId in context.ActiveQuestIds.Order())
         {
-            // The fixture row is derived ONCE per quest per wake and threaded
-            // into the plan; no leg re-derives it.
-            var fixture = questId == ObjectiveQuestId
-                ? QuestFixtureRow.FromQuestData(questId)
-                : null;
-            plans.Add(Plan(questId, fixture));
+            // The fixture row is derived ONCE per quest per wake (memoized in
+            // the row) and threaded into the plan; no leg re-derives it.
+            plans.Add(Plan(questId, QuestFixtureRow.FromQuestData(questId)));
         }
         return plans;
     }
@@ -146,24 +160,47 @@ public static class QuestDirector
         if (fixture == null)
             return new QuestPlan(questId, QuestPattern.Unknown, null, BootstrapLegs);
 
-        // Classification stays the Stage 2 rule (act-type coverage grows it):
-        // a row whose gather act resolved to a prey template through the loot
-        // chain is a kill-to-gather quest.
-        var pattern = fixture.PreyTemplate != 0 ? QuestPattern.KillX : QuestPattern.Unknown;
+        // Classification is the row's own derived shape — no act vocabulary is
+        // re-read here, and no quest id is special-cased. A row built by hand
+        // (a test staging one fact) carries no derived pattern, so the shape
+        // falls back to the row's OWN objective facts under the same rule the
+        // derivation applies, so both paths agree.
+        var pattern = fixture.ObjectivePattern != QuestPattern.Unknown
+            ? fixture.ObjectivePattern
+            : fixture.UseItemActId != 0
+                ? QuestPattern.UseItem
+                : fixture.GatherActId != 0
+                    ? QuestPattern.KillX
+                    : QuestPattern.Unknown;
 
-        // Gate-check, before a single leg exists. Each branch names what is
-        // missing and fails closed with zero legs (no perception, no dispatch).
+        // An objective the vocabulary cannot SERVE yet keeps the bootstrap floor
+        // and names the gap. It is not a gate failure (the registry never
+        // questioned it) and not silence (the gap must be visible): the behavior
+        // logs it and the give-up rule reads it. A quest with no Progress
+        // objective act at all is the pure bootstrap shape — same legs, no gap.
         if (pattern == QuestPattern.Unknown)
         {
-            return Failed(questId, pattern, fixture,
-                fixture.GatherActId == 0
-                    // No recognized progress act: the pattern vocabulary does
-                    // not cover this quest's objective shape yet.
-                    ? $"HARNESS/UNPROVEN-PATTERN quest={fixture.QuestId} act=absent"
-                    // A recognized act whose source did not resolve: the loot
-                    // chain carries no row for the objective item.
-                    : $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.GatherActId} item={fixture.PreyItem}");
+            var unserved = fixture.ObjectiveActType.Length == 0
+                ? ""
+                : $"HARNESS/UNPROVEN-PATTERN quest={fixture.QuestId} act={fixture.ObjectiveActType}";
+            return new QuestPlan(questId, pattern, fixture, BootstrapLegs, Unserved: unserved);
         }
+
+        // A gather-shaped act whose loot chain did not resolve has no prey to
+        // pursue: the source is the missing piece, named as such, and the plan
+        // fails closed with zero legs rather than reaching the leg loop with no
+        // target to find. (This is the shape's own precondition — the loot
+        // chain is what makes the objective completable at all.)
+        if (pattern == QuestPattern.KillX && fixture.PreyTemplate == 0)
+            return Failed(questId, pattern, fixture,
+                $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.GatherActId} item={fixture.PreyItem}");
+
+        // An item-use objective names its item and its count; without either
+        // there is nothing to consume, so the plan fails as an unresolvable
+        // source exactly as the gather shape does.
+        if (pattern == QuestPattern.UseItem && fixture.UseItemTemplateId == 0)
+            return Failed(questId, pattern, fixture,
+                $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.UseItemActId} item=0");
 
         // Every verb the pattern dispatches is checked here — except three that
         // are UNGATED BY DECLARATION, deliberately absent from the catalog's verb
@@ -183,7 +220,12 @@ public static class QuestDirector
                 return Failed(questId, pattern, fixture, UnprovenVerb(gate));
         }
 
-        return new QuestPlan(questId, pattern, fixture, ObjectiveLegs);
+        return new QuestPlan(questId, pattern, fixture, pattern switch
+        {
+            QuestPattern.KillX => ObjectiveLegs,
+            QuestPattern.UseItem => UseItemLegs,
+            _ => NoLegs
+        });
     }
 
     /// <summary>

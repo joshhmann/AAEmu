@@ -95,6 +95,8 @@ public static class QuestBehavior
     private const string CombatGoal = "quest.objective-combat";
     /// <summary>Goal key routing the G7c corpse Loot through Dispatch.</summary>
     private const string LootGoal = "quest.objective-loot";
+    /// <summary>Goal key routing the item-use objective's UseItem through Dispatch.</summary>
+    private const string UseItemGoal = "quest.objective-use-item";
     /// G6 hold-confirm gate: a pursuit Stop leg already landed for this
     /// (actor, target) at these poses stays landed — the Stop proposal
     /// withdraws while neither side moved, so the lower-priority combat
@@ -117,6 +119,69 @@ public static class QuestBehavior
     /// </summary>
     private static readonly Dictionary<uint, (uint TargetObjId, Vector3 TargetPos)> LastReturnIssue = new();
     private static readonly object PursuitSync = new();
+
+    /// <summary>
+    /// Give-up streaks per (actor, quest): how many consecutive wakes the
+    /// quest's plan failed its gate, or its objective slice resolved no target,
+    /// with the NAMED reason of the latest streak. Reset the moment the quest's
+    /// slice resolves or lands, so a data reload that fixes a plan clears the
+    /// streak instead of counting toward the give-up. Memory-only wake cache,
+    /// same discipline as <c>LastCorpse</c>/<c>LootedCorpses</c>: keyed by
+    /// (actor, quest), bounded by full clear.
+    /// </summary>
+    private static readonly Dictionary<(uint ActorId, uint QuestId), QuestGiveUpStreak> GiveUpStreaks = new();
+
+    /// <summary>One quest's give-up streak: the consecutive-wake count and the named reason it is counting toward.</summary>
+    internal sealed record QuestGiveUpStreak(int Wakes, string Reason);
+
+    internal static bool TryGetGiveUpStreak(uint actorId, uint questId, out QuestGiveUpStreak? streak)
+    {
+        lock (PursuitSync)
+            return GiveUpStreaks.TryGetValue((actorId, questId), out streak);
+    }
+
+    internal static void ClearGiveUpMemory()
+    {
+        lock (PursuitSync)
+            GiveUpStreaks.Clear();
+    }
+
+    /// <summary>
+    /// Counts one failed wake for (actor, quest) and reports whether the streak
+    /// has reached <paramref name="threshold"/>: the give-up verdict. A streak
+    /// whose reason CHANGED restarts at one — the count must belong to one named
+    /// failure, or a quest whose failure mode flips every wake would "earn" a
+    /// give-up it never sustained. A threshold of 0 disables the rule (no
+    /// streak is kept, no verdict is reached).
+    /// </summary>
+    private static bool CountGiveUpWake(uint actorId, uint questId, string reason, int threshold)
+    {
+        if (threshold <= 0)
+            return false;
+        lock (PursuitSync)
+        {
+            if (GiveUpStreaks.Count >= GiveUpMemoryBound)
+                GiveUpStreaks.Clear();
+            var wakes = GiveUpStreaks.TryGetValue((actorId, questId), out var prior) && prior.Reason == reason
+                ? prior.Wakes + 1
+                : 1;
+            GiveUpStreaks[(actorId, questId)] = new QuestGiveUpStreak(wakes, reason);
+            return wakes >= threshold;
+        }
+    }
+
+    /// <summary>Clears a (actor, quest) streak: the quest's slice resolved or landed this wake.</summary>
+    private static void ClearGiveUpWake(uint actorId, uint questId)
+    {
+        lock (PursuitSync)
+            GiveUpStreaks.Remove((actorId, questId));
+    }
+
+    private static void PublishGiveUp(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, QuestGiveUp giveUp)
+        => SweepDiagLog.Info(
+            "QuestGiveUpDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} wakes={Wakes} threshold={Threshold} reason=[{Reason}]",
+            opts.CycleId, actor.Character?.Id ?? 0, actor.ActorId, giveUp.QuestId,
+            giveUp.Wakes, giveUp.Threshold, giveUp.Reason.Replace(' ', '_'));
 
     /// <summary>
     /// The survival-veto-clear precondition, shared by every objective leg that
@@ -169,6 +234,8 @@ public static class QuestBehavior
     internal sealed record QuestCorpseRecord(uint ObjId, uint TemplateId, uint QuestId, string CycleId, DateTimeOffset DetectedUtc);
     private static readonly Dictionary<uint, QuestCorpseRecord> LastCorpse = new();
     private const int CorpseMemoryBound = 256;
+    /// <summary>Bound for the give-up streak map (one entry per actor+quest; full clear when exceeded).</summary>
+    private const int GiveUpMemoryBound = 512;
     /// <summary>
     /// Records the pinned corpse for an actor. Guards (non-zero objId, the
     /// fixture row's prey template, the row's own quest id) keep irrelevant
@@ -374,6 +441,8 @@ public static class QuestBehavior
             // named at run-result level (never a silent skip) and in the lane log,
             // whether or not the wake found other work.
             var planFailures = new List<QuestPlanFailure>();
+            // Give-up verdicts this wake, named with the streak that earned them.
+            var giveUps = new List<QuestGiveUp>();
             // Per-wake evidence rows in plan/leg evaluation order: skipped legs
             // carry their enter gate's named reason, entered legs their own diag.
             var legEvidence = new List<LegEvidence>();
@@ -384,7 +453,40 @@ public static class QuestBehavior
                     var failure = new QuestPlanFailure(plan.QuestId, plan.FailStage, plan.FailReason);
                     planFailures.Add(failure);
                     LogPlanFailure(actor, opts, failure);
+                    // Give-up rule, branch 1: a plan that fails its gate the same
+                    // way for N consecutive wakes is not retried any more — and
+                    // the give-up NAMES the plan's own reason verbatim, so the
+                    // decision is never silent and never invented.
+                    if (CountGiveUpWake(actor.ActorId, plan.QuestId, failure.Reason, opts.GiveUpAfterPlanFailures))
+                    {
+                        var giveUp = new QuestGiveUp(plan.QuestId, failure.Reason,
+                            opts.GiveUpAfterPlanFailures, opts.GiveUpAfterPlanFailures);
+                        giveUps.Add(giveUp);
+                        PublishGiveUp(actor, opts, giveUp);
+                    }
                     continue;
+                }
+                // An objective shape this vocabulary cannot serve yet keeps its
+                // bootstrap floor; the gap is logged (never silent) and gives up
+                // on the same rule, naming the act it could not serve. A plan
+                // that neither failed nor is unserved clears its plan-failure
+                // streak — EXCEPT when it carries an objective slice, whose own
+                // resolution decides (branch 2 below owns that clear, so a plan
+                // whose slice is unresolved keeps its count).
+                if (plan.Unserved.Length != 0)
+                {
+                    LogUnservedPlan(actor, opts, plan);
+                    if (CountGiveUpWake(actor.ActorId, plan.QuestId, plan.Unserved, opts.GiveUpAfterPlanFailures))
+                    {
+                        var giveUp = new QuestGiveUp(plan.QuestId, plan.Unserved,
+                            opts.GiveUpAfterPlanFailures, opts.GiveUpAfterPlanFailures);
+                        giveUps.Add(giveUp);
+                        PublishGiveUp(actor, opts, giveUp);
+                    }
+                }
+                else if (!HasObjectiveSlice(plan))
+                {
+                    ClearGiveUpWake(actor.ActorId, plan.QuestId);
                 }
                 var questId = plan.QuestId;
                 var fixture = plan.Fixture;
@@ -449,7 +551,27 @@ public static class QuestBehavior
                 }
                 legEvidence.AddRange(wake.Evidence);
                 if (planFunnel != null)
+                {
                     LogObjectiveFunnel(actor, opts, planFunnel, wake);
+                    // Give-up rule, branch 2: a plan that RUNS but whose objective
+                    // slice resolves no target for N consecutive wakes is given up
+                    // too — the target the quest needs is not reachable in this
+                    // world, and the reason is the slice's own named detail
+                    // (objective/source/selection), never a generic phrase. A
+                    // resolved slice clears the streak immediately.
+                    var unresolved = UnresolvedTargetReason(questId, planFunnel);
+                    if (unresolved.Length == 0)
+                    {
+                        ClearGiveUpWake(actor.ActorId, questId);
+                    }
+                    else if (CountGiveUpWake(actor.ActorId, questId, unresolved, opts.GiveUpAfterUnresolvedWakes))
+                    {
+                        var giveUp = new QuestGiveUp(questId, unresolved,
+                            opts.GiveUpAfterUnresolvedWakes, opts.GiveUpAfterUnresolvedWakes);
+                        giveUps.Add(giveUp);
+                        PublishGiveUp(actor, opts, giveUp);
+                    }
+                }
             }
             // Discovery needs live NPC targets: nearest in-range NPCs only
             // (range itself stays the engine gate at dispatch).
@@ -558,10 +680,29 @@ public static class QuestBehavior
                 Math.Max(0, rawCount - discoverTargets.Count),
                 string.Join(";", outcomeShown),
                 offerings.Count, inBand);
-            foreach (var (targetObjId, offering) in offerings
-                         .OrderBy(o => o.Offering.Level)
-                         .ThenBy(o => o.Offering.QuestId))
-                proposals.Add(AcceptProposal(actor, opts, targetObjId, offering));
+            // Offerings are RANKED before they are proposed, and the bound is
+            // applied after ranking — so a wake with more in-band offers than
+            // the bound drops its WORST offers, and the shared selector never
+            // sees a candidate list past its own ceiling (which would make it
+            // decide nothing at all). Each offering's quest row is derived ONCE
+            // here and reused by both the ranking cut and the emitted proposal,
+            // so the two never disagree about what the quest offers. The order is
+            // the selector's own key order (priority, weight, tie-break), so the
+            // bound's cut and the selector's pick agree on what "best" means.
+            var ranked = offerings
+                .Select(o => (o.TargetObjId, o.Offering, Row: QuestFixtureRow.FromQuestData(o.Offering.QuestId)))
+                .OrderByDescending(o => AcceptRank(opts, o.Offering, o.Row).Priority)
+                .ThenByDescending(o => AcceptRank(opts, o.Offering, o.Row).Weight)
+                .ThenBy(o => o.Offering.QuestId)
+                .ToList();
+            var proposed = 0;
+            foreach (var (targetObjId, offering, row) in ranked)
+            {
+                if (opts.MaxAcceptProposals > 0 && proposed >= opts.MaxAcceptProposals)
+                    break;
+                proposals.Add(AcceptProposal(actor, opts, targetObjId, offering, row));
+                proposed++;
+            }
 
             var decideContext = BotObservedContext.Capture(actor);
             var decision = BotDecisionSelector.Select(decideContext, proposals);
@@ -608,7 +749,7 @@ public static class QuestBehavior
                     decideDetail = $"plan failed: {string.Join(" ; ", planFailures.Select(f => f.Reason))} | {decideDetail}";
                 }
                 return Fail(failStage, ActorFailureReason.WrongDecision, decideDetail,
-                    actor, null, decision.Rejections, null, legEvidence, planFailures);
+                    actor, null, decision.Rejections, null, legEvidence, planFailures, giveUps);
             }
 
             // ---------------------------------------------------- 3. EXECUTE
@@ -665,16 +806,21 @@ public static class QuestBehavior
                         CompletedQuestIds = completedRunning,
                         LegEvidence = legEvidence,
                         PlanFailures = planFailures,
+                        GiveUps = giveUps,
                         TraceRecords = [.. actor.AuditTrace]
                     };
                 }
                 return Fail("EXECUTE", ActorFailureReason.Starvation,
                     $"{request.Action} left the terminal surface",
-                    actor, selected.Action, decision.Rejections, request, legEvidence, planFailures);
+                    actor, selected.Action, decision.Rejections, request, legEvidence, planFailures, giveUps);
             }
 
             var after = BotObservedContext.Capture(actor).ActiveQuestIds.ToHashSet();
             var completed = before.Where(q => !after.Contains(q)).ToList();
+            // A completed quest leaves the plan set, so its streak is gone with
+            // it — cleared explicitly so the map never holds a stale quest.
+            foreach (var completedId in completed)
+                ClearGiveUpWake(actor.ActorId, completedId);
             return new QuestDecisionScenario.QuestRunResult
             {
                 Scenario = QuestDecisionScenario.ScenarioName,
@@ -686,6 +832,7 @@ public static class QuestBehavior
                 CompletedQuestIds = completed,
                 LegEvidence = legEvidence,
                 PlanFailures = planFailures,
+                GiveUps = giveUps,
                 TraceRecords = [.. actor.AuditTrace]
             };
         }
@@ -694,6 +841,103 @@ public static class QuestBehavior
             return Fail("RUN", ActorFailureReason.FidelityError,
                 $"{ex.GetType().Name}: {ex.Message}", actor, null, []);
         }
+    }
+
+    /// <summary>
+    /// Item-use leg entry gate: the step machine has work only for an active,
+    /// non-Ready quest (a Ready quest's only legal work is turn-in), and the
+    /// objective leg has work only while the item-use objective is not yet
+    /// credited. The gate owns both reasons, so the loop's evidence names the
+    /// real cause of the withdraw.
+    /// </summary>
+    internal static string? UseItemEnter(QuestLegContext context, QuestLegWake wake)
+    {
+        var quest = context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId);
+        if (quest is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
+            return "quest-not-usable";
+        var fixture = context.Fixture!;
+        return ItemUseCredited(context.QuestId, quest, fixture)
+            ? "objective-credited"
+            : null;
+    }
+
+    /// <summary>
+    /// True when the quest's item-use objective already carries its required
+    /// count. Reads the act's live objective counter off the SAME quest object
+    /// the leg already holds (<c>QuestActTemplate.GetObjective</c>), resolving
+    /// the act from the static template tables exactly as the TurnIn leg
+    /// resolves its report acts — game data, never a world/perception read.
+    /// Fail-closed: an unreadable template or a missing act reads NOT credited,
+    /// so the leg keeps working rather than silently declaring victory.
+    /// </summary>
+    private static bool ItemUseCredited(uint questId, Quest quest, QuestFixtureRow fixture)
+    {
+        var use = QuestManager.Instance?.GetTemplate(questId)?
+            .GetComponents(QuestComponentKind.Progress)
+            .SelectMany(c => c.ActTemplates)
+            .OfType<QuestActObjItemUse>()
+            .FirstOrDefault(a => a.ActId == fixture.UseItemActId);
+        if (use == null)
+            return false;
+        return use.GetObjective(quest) >= Math.Max(1, use.Count);
+    }
+
+    /// <summary>
+    /// Item-use leg: consume the objective item through the real
+    /// <c>UseItem</c> contract. The leg reads the wake's OWN perception
+    /// snapshot (never a second one) for the bag count and the live quest state
+    /// for the credit; when the bag is empty it withdraws with a named reason
+    /// rather than dispatching a use the engine would refuse. Never advances,
+    /// never turns in — those legs stay separate competitors.
+    /// </summary>
+    internal static BotDecisionProposal? UseItemEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var fixture = context.Fixture!;
+        var questId = context.QuestId;
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+        {
+            diag = $"validate=quest-not-active:item={fixture.UseItemTemplateId}:need={fixture.UseItemNeed}:have=NA:dispatch=withdrawn:reason=quest-not-active";
+            return null;
+        }
+        var have = 0;
+        if (context.Observation?.BagItemCounts.TryGetValue(fixture.UseItemTemplateId, out var held) == true)
+            have = held;
+        var credited = ItemUseCredited(questId, quest, fixture);
+        if (credited)
+        {
+            diag = $"validate=objective-credited:item={fixture.UseItemTemplateId}:need={fixture.UseItemNeed}:have={have}:dispatch=withdrawn:reason=objective-credited";
+            return null;
+        }
+        if (have <= 0)
+        {
+            diag = $"validate=no-item:item={fixture.UseItemTemplateId}:need={fixture.UseItemNeed}:have=0:dispatch=withdrawn:reason=no-item";
+            return null;
+        }
+        diag = $"validate=ok:item={fixture.UseItemTemplateId}:need={fixture.UseItemNeed}:have={have}:dispatch=use:reason=objective-open";
+        return new BotDecisionProposal(
+            goal: UseItemGoal,
+            action: ActorActionType.UseItem,
+            // The verb's own primary argument: UseItem(itemTemplateId, targetObjId).
+            // The consume is self-targeted, so targetId is the ITEM.
+            targetId: fixture.UseItemTemplateId,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"quest {questId} item-use objective credited (item {fixture.UseItemTemplateId})",
+                _ => true),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:useitem:{questId}:{fixture.UseItemTemplateId}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: $"quest {questId} item-use: consume {fixture.UseItemTemplateId} x{fixture.UseItemNeed} (have {have}) — UseItem",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.ObjectiveUseItemPriority,
+            tieBreakKey: $"useitem:{questId}:{fixture.UseItemTemplateId:D10}",
+            hardPreconditions:
+            [
+                new BotProposalPrecondition($"quest-{questId}-relevant",
+                    observed => observed.ActiveQuestIds.Contains(questId)),
+                SurvivalVetoClear(actor)
+            ]);
     }
 
     /// <summary>
@@ -821,9 +1065,50 @@ public static class QuestBehavior
                     observed => observed.ActiveQuestIds.Contains(questId))
             ]);
 
+    /// <summary>
+    /// The accept RANK of one live offering — the brain's selection hook, a
+    /// pure function of the policy options, the offering, and the offering
+    /// quest's derived row:
+    ///
+    ///   - <c>Priority</c> is the frozen band rule,
+    ///     <c>AcceptPriority + (BandMax - Level)</c>, clamped at zero below the
+    ///     band floor: BAND IS PRIMARY, byte-identical to the pre-brain rule.
+    ///   - <c>Weight</c> carries the two tie-break hooks — the REWARD hook (an
+    ///     offering whose quest carries a reward item outranks a band-equal one
+    ///     that carries none, when <see cref="QuestOptions.PreferRewardingOffers"/>)
+    ///     and <see cref="QuestOptions.AcceptPersonalityWeight"/> (0 = uniform
+    ///     by default). It rides the selector's own second ordering key, never
+    ///     the priority, so a hook can only ever reorder offers the band term
+    ///     already tied — it can never lift a lower-band offer above a
+    ///     higher-band one.
+    ///
+    /// The ranked cut and the emitted proposal both read this, so the offers the
+    /// bound drops are exactly the ones the selector would have ranked last.
+    /// </summary>
+    internal static (int Priority, int Weight) AcceptRank(
+        QuestDecisionScenario.QuestOptions opts, QuestOffering offering, QuestFixtureRow row)
+    {
+        var priority = opts.AcceptPriority + Math.Max(0, opts.BandMax - offering.Level);
+        var rewarding = opts.PreferRewardingOffers && row.RewardItem != 0;
+        var weight = Math.Clamp(
+            opts.AcceptPersonalityWeight + (rewarding ? 1 : 0),
+            -BotDecisionProposal.MaxPersonalityWeight,
+            BotDecisionProposal.MaxPersonalityWeight);
+        return (priority, weight);
+    }
+
+    /// <summary>
+    /// Accept proposal for one live offering, ranked by <see cref="AcceptRank"/>
+    /// (band primary, then the reward/personality tie-break hooks). The row is
+    /// passed in — the caller derives it once per offering per wake, so the
+    /// ranking cut and the proposal never disagree about what the quest offers.
+    /// </summary>
     private static BotDecisionProposal AcceptProposal(
-        IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, uint targetObjId, QuestOffering offering)
-        => new(
+        IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, uint targetObjId,
+        QuestOffering offering, QuestFixtureRow row)
+    {
+        var (priority, weight) = AcceptRank(opts, offering, row);
+        return new BotDecisionProposal(
             goal: "quest.accept",
             action: ActorActionType.AcceptQuest,
             targetId: offering.QuestId,
@@ -834,7 +1119,8 @@ public static class QuestBehavior
             timeout: TimeSpan.FromSeconds(30),
             rationale: $"lowest offered level in [{opts.BandMin}..{opts.BandMax}]",
             policyVersion: opts.PolicyVersion,
-            priority: opts.AcceptPriority + Math.Max(0, opts.BandMax - offering.Level),
+            priority: priority,
+            personalityWeight: weight,
             tieBreakKey: offering.QuestId.ToString("D10"),
             payload: (offering, targetObjId),
             hardPreconditions:
@@ -842,6 +1128,7 @@ public static class QuestBehavior
                 new BotProposalPrecondition("quest-not-active",
                     observed => !observed.ActiveQuestIds.Contains(offering.QuestId))
             ]);
+    }
 
     /// <summary>
     /// G4 objective→target proposal (the wired quest only): the selector's
@@ -1540,6 +1827,55 @@ public static class QuestBehavior
             opts.CycleId, actor.Character?.Id ?? 0, actor.ActorId, failure.QuestId,
             failure.Stage, failure.Reason.Replace(' ', '_'));
     }
+
+    /// <summary>
+    /// The bootstrap-floor plan whose objective shape this vocabulary cannot
+    /// serve yet: one Info line per quest per wake naming the act it could not
+    /// serve, so the gap is visible in the lane (never a silent skip) even
+    /// though the plan itself keeps the work the step machine can do.
+    /// </summary>
+    private static void LogUnservedPlan(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, QuestPlan plan)
+    {
+        SweepDiagLog.Info(
+            "QuestPlanDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} plan=bootstrap unserved=[{Unserved}]",
+            opts.CycleId, actor.Character?.Id ?? 0, actor.ActorId, plan.QuestId,
+            plan.Unserved.Replace(' ', '_'));
+    }
+
+    /// <summary>
+    /// True when the plan carries an objective SLICE whose own resolution the
+    /// give-up rule tracks (branch 2) — i.e. it has legs marked
+    /// <see cref="QuestLeg.NeedsFunnel"/>. Such a plan's streak is owned by the
+    /// funnel outcome, not by the plan-success path, so the plan loop must not
+    /// clear it early.
+    /// </summary>
+    private static bool HasObjectiveSlice(QuestPlan plan)
+    {
+        foreach (var leg in plan.Legs)
+        {
+            if (leg.NeedsFunnel)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// The named reason a plan's objective slice resolved no target this wake,
+    /// or "" when it resolved one. The vocabulary is the slice's own — the SAME
+    /// fail-closed predicates the funnel already reports (objective resolution,
+    /// source resolution, selection) — so a give-up cites the real missing
+    /// piece and never a phrase this loop invented.
+    /// </summary>
+    private static string UnresolvedTargetReason(uint questId, QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel)
+    {
+        if (!funnel.ObjectiveResolved)
+            return $"GIVE-UP/UNRESOLVED-TARGET quest={questId} stage=OBJECTIVE detail={funnel.ObjectiveDetail}";
+        if (!funnel.SourceResolved)
+            return $"GIVE-UP/UNRESOLVED-TARGET quest={questId} stage=SOURCE detail={funnel.SourceDetail}";
+        if (funnel.SelectedObjId == 0)
+            return $"GIVE-UP/UNRESOLVED-TARGET quest={questId} stage=SELECT detail=no-target raw={funnel.RawCount} relevant={funnel.RelevantCount}";
+        return "";
+    }
     private static ActorRequest Dispatch(IGameplayActor gameplayActor, BotDecisionProposal proposal)
     {
         return proposal.Action switch
@@ -1586,6 +1922,11 @@ public static class QuestBehavior
             ActorActionType.Cast when proposal.Goal == CombatGoal => DispatchCombatCast(gameplayActor, proposal),
             ActorActionType.UseItem when proposal.Goal == CombatGoal => DispatchCombatHeal(gameplayActor, proposal),
             ActorActionType.Move when proposal.Goal == CombatGoal => DispatchCombatMove(gameplayActor, proposal),
+            // Item-use objective: the quest-owned consume rides the live actor's
+            // UseItem verb (the exact SkillItem caster branch the COMBAT-01 heal
+            // gate proved), goal-guarded so no other UseItem proposal — the
+            // combat heal's included — can ever route here.
+            ActorActionType.UseItem when proposal.Goal == UseItemGoal => gameplayActor.UseItem(proposal.TargetId, 0, proposal.IdempotencyKey),
             // G7c loot: the quest-owned corpse take rides the live actor's
             // Loot verb only (the exact CSLootOpenBagPacket lootAll call).
             // Goal-guarded so no other Loot proposal can ever route here.
@@ -1893,7 +2234,8 @@ public static class QuestBehavior
         IReadOnlyList<BotProposalRejection> rejections,
         ActorRequest? request = null,
         IReadOnlyList<LegEvidence>? legEvidence = null,
-        IReadOnlyList<QuestPlanFailure>? planFailures = null)
+        IReadOnlyList<QuestPlanFailure>? planFailures = null,
+        IReadOnlyList<QuestGiveUp>? giveUps = null)
         => new()
         {
             Scenario = QuestDecisionScenario.ScenarioName,
@@ -1907,6 +2249,7 @@ public static class QuestBehavior
             FailReason = detail,
             LegEvidence = legEvidence ?? [],
             PlanFailures = planFailures ?? [],
+            GiveUps = giveUps ?? [],
             TraceRecords = [.. actor.AuditTrace]
         };
 }

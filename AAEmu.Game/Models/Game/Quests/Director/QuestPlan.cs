@@ -4,14 +4,18 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 
 /// <summary>
 /// The quest plan's pattern vocabulary: how the plan's legs accomplish the
-/// quest (kill a prey for a gather, pick an npc up, use a doodad, talk a chain,
-/// reach a position, craft, escort). Distinct from the template-level
-/// <c>Quests.Static.QuestPattern</c> (Objective/Reward component axis) — this one
-/// classifies the objective SHAPE the leg set implements. Stage 2's
-/// <c>QuestDirector.Plan</c> produces <see cref="KillX"/> for a gather-from-prey
-/// row and <see cref="Unknown"/> for an absent/unrecognized row (fail-closed
-/// default); the remaining members are the catalog vocabulary the Stage 3 verb
-/// gate maps to verb keys.
+/// quest (kill a prey for a gather, pick an npc up, use a doodad, consume an
+/// item, talk a chain, reach a position, craft, escort). Distinct from the
+/// template-level <c>Quests.Static.QuestPattern</c> (Objective/Reward component
+/// axis) — this one classifies the objective SHAPE the leg set implements.
+///
+/// Stage 2's <c>QuestDirector.Plan</c> produced <see cref="KillX"/> for a
+/// gather-from-prey row and <see cref="Unknown"/> for an absent/unrecognized
+/// row (fail-closed default). The generalized director classifies from the
+/// derived row's own objective act (<see cref="QuestFixtureRow.ObjectivePattern"/>),
+/// so a second shape — <see cref="UseItem"/>, the consume-an-item objective —
+/// derives the same way, with no per-quest wiring. The remaining members are the
+/// catalog vocabulary the verb gate maps to verb keys.
 /// </summary>
 public enum QuestPattern
 {
@@ -29,6 +33,9 @@ public enum QuestPattern
 /// <summary>
 /// One decision leg of a quest plan. Stable ids so a wake can name the leg it
 /// is evaluating (log/diag and the Stage 4 loop) without re-deriving it.
+/// <see cref="UseItem"/> is the item-use objective's own leg (the item-use
+/// pattern's only objective leg); a plan carries either the objective group
+/// (gather-from-prey) or this leg, never both.
 /// </summary>
 public enum QuestLegId
 {
@@ -38,7 +45,8 @@ public enum QuestLegId
     Pursuit,
     Combat,
     Loot,
-    Return
+    Return,
+    UseItem
 }
 
 /// <summary>
@@ -185,6 +193,19 @@ public sealed class QuestLegWake
 public readonly record struct QuestPlanFailure(uint QuestId, string Stage, string Reason);
 
 /// <summary>
+/// A give-up the director's rule decided this wake: the quest stops being
+/// retried, with a NAMED reason and the wake count that earned it. Never
+/// silent — a give-up always cites the plan's own failure reason (a plan that
+/// failed its gate) or the objective slice's own unresolved detail (a plan that
+/// ran and found no target), verbatim.
+/// </summary>
+public readonly record struct QuestGiveUp(
+    uint QuestId,
+    string Reason,
+    int Wakes,
+    int Threshold);
+
+/// <summary>
 /// One leg of a quest plan: its id, the proposal provider that evaluates it, the
 /// convergence check where the leg has one (only Return does), and the entry
 /// gate where the leg has one (Advance's step-work guard and TurnIn's return
@@ -215,9 +236,19 @@ public sealed record QuestLeg(
 ///
 /// A plan that failed its fixture gate carries <see cref="FailStage"/> /
 /// <see cref="FailReason"/> and NO legs: the failure is named before the first
-/// wake (unproven verb / pattern / source, with the gate and the fixture
-/// evidence in the reason), so a plan can never dispatch behavior the registry
-/// has not proven.
+/// wake (unproven verb / an unresolvable objective source, with the gate and the
+/// fixture evidence in the reason), so a plan can never dispatch behavior the
+/// registry has not proven.
+///
+/// <see cref="Unserved"/> is the NON-fatal naming beside that failure: an
+/// objective shape this vocabulary cannot serve yet, named with the plan's own
+/// <c>HARNESS/UNPROVEN-PATTERN</c> reason. Such a quest keeps the bootstrap
+/// floor (Advance + TurnIn — the work the step machine can always do, and what
+/// every unserved quest got before this director was generalized), so nothing
+/// regresses, but the gap is NAMED rather than silent: the behavior logs it and
+/// the give-up rule reads it. A legless failure would strip work the registry
+/// never questioned; a silent bootstrap would hide the gap. This is the third
+/// option.
 /// </summary>
 public readonly record struct QuestPlan(
     uint QuestId,
@@ -225,7 +256,8 @@ public readonly record struct QuestPlan(
     QuestFixtureRow? Fixture,
     IReadOnlyList<QuestLeg> Legs,
     string FailStage = "",
-    string FailReason = "")
+    string FailReason = "",
+    string Unserved = "")
 {
     /// <summary>
     /// True when the plan failed its fixture gate and therefore carries no legs;

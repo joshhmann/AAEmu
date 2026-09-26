@@ -115,6 +115,62 @@ public static class QuestDecisionScenario
         public int ObjectiveReturnPriority { get; init; } = 21;
         public int AdvancePriority { get; init; } = 20;
         public int AcceptPriority { get; init; } = 10;
+        /// <summary>
+        /// Item-use objective priority: above advance (20) so a live item-use
+        /// objective outranks step-machine work, below turn-in (30) so a Ready
+        /// quest still reports first — the same band the kill-to-gather
+        /// objective legs sit in (the two shapes never co-occur; the distinct
+        /// value keeps the ordering readable per shape). The leg fires only
+        /// while the objective is uncredited and the bag holds the item.
+        /// </summary>
+        public int ObjectiveUseItemPriority { get; init; } = 26;
+
+        // ---- offering rank policy (the selection hook) ----
+        /// <summary>
+        /// Personality weight added to EVERY accept proposal's rank, so a
+        /// personality layer can bias offering choice without touching the
+        /// frozen priority. Default 0 = uniform (the frozen behavior: rank is
+        /// the band term alone). The value rides
+        /// <see cref="BotDecisionProposal.PersonalityWeight"/> — the selector's
+        /// own second ordering key — so a nonzero weight only ever reorders
+        /// proposals the priority already tied, never a higher-priority one.
+        /// </summary>
+        public int AcceptPersonalityWeight { get; init; } = 0;
+        /// <summary>
+        /// Reward rank weight: when true (the default), an offering whose quest
+        /// carries a reward item is ranked above an equal-band offering that
+        /// carries none. It rides the same second ordering key as the
+        /// personality weight, so it can only break a priority tie — the
+        /// selection that the frozen priority order already decided is
+        /// untouched.
+        /// </summary>
+        public bool PreferRewardingOffers { get; init; } = true;
+        /// <summary>
+        /// Candidate bound for the wake's accept proposals: at most this many
+        /// offerings are proposed to the shared <see cref="BotDecisionSelector"/>
+        /// (ranked first, so the bound drops the WORST offers). The bound keeps
+        /// the selector's own 64-candidate ceiling unreachable — a wake with
+        /// many in-band offers would otherwise return "candidate bound
+        /// exceeded" and decide nothing.
+        /// </summary>
+        public int MaxAcceptProposals { get; init; } = 16;
+
+        // ---- give-up rule policy ----
+        /// <summary>
+        /// Consecutive wakes a quest's plan may fail its fixture gate before the
+        /// director gives the quest up with the plan's own named reason. 0
+        /// disables the rule. Default 10: long enough that a data reload or a
+        /// staged surface lands first, short enough that a broken plan does not
+        /// spin forever.
+        /// </summary>
+        public int GiveUpAfterPlanFailures { get; init; } = 10;
+        /// <summary>
+        /// Consecutive wakes a quest's objective slice may resolve NO target
+        /// (no objective/source/no selection) before the director gives the
+        /// quest up with that slice's own named detail. 0 disables the rule.
+        /// Default 10, matching the plan-failure threshold.
+        /// </summary>
+        public int GiveUpAfterUnresolvedWakes { get; init; } = 10;
     }
 
     /// <summary>Structured run result — decision-path evidence attached.</summary>
@@ -147,6 +203,13 @@ public static class QuestDecisionScenario
         /// wake found other work.
         /// </summary>
         public IReadOnlyList<QuestPlanFailure> PlanFailures { get; init; } = [];
+        /// <summary>
+        /// Quests the give-up rule decided to stop retrying this wake, each with
+        /// the NAMED reason and the streak that earned it. Non-empty means the
+        /// wake's plan loop deliberately gave up on those quests — never silent,
+        /// and never a dispatch (no abandon verb exists on the actor contract).
+        /// </summary>
+        public IReadOnlyList<QuestGiveUp> GiveUps { get; init; } = [];
         /// <summary>The actor's full audit trace, in execution order.</summary>
         public List<ActorAuditRecord> TraceRecords { get; init; } = [];
     }
