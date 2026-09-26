@@ -55,8 +55,10 @@ internal static class TravelLegDispatch
     /// The preemption detail the survival flee stages over a live Move leg it is
     /// replacing (<c>BotRoamStepExecutor.StepSurvivalWake</c>). Caller-authored:
     /// it retires a leg the brain stack decided to replace, never a navigation failure.
+    /// Shared (not private) so the staging site and <see cref="IsCallerRetirement"/>
+    /// can never drift apart again — a rename re-arms the repath-exhaustion bug silently.
     /// </summary>
-    private const string FleeRetrackDetail = "survival flee retrack";
+    internal const string SurvivalFleeRetrackDetail = "survival flee retrack";
 
     /// <summary>The halt detail the engine's own <c>Stop</c> stamps on the leg it interrupts.</summary>
     private const string StopDetail = "stop requested";
@@ -414,6 +416,6 @@ internal static class TravelLegDispatch
     private static bool IsCallerRetirement(string? detail)
         => detail != null
            && (detail.Contains(ReturnRetrackDetail, StringComparison.Ordinal)
-               || detail.Contains(FleeRetrackDetail, StringComparison.Ordinal)
+               || detail.Contains(SurvivalFleeRetrackDetail, StringComparison.Ordinal)
                || detail.Equals(StopDetail, StringComparison.Ordinal));
 }

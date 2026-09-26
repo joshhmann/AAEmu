@@ -1384,7 +1384,7 @@ public enum NeedsFarmLoopPhase
         if (bot.Character.IsAutoAttack)
             actor.StopAutoAttack();
         if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
-            actor.PreemptCurrent("survival flee retrack");
+            actor.PreemptCurrent(TravelLegDispatch.SurvivalFleeRetrackDetail);
 
         StageMoveOwner(actor, SurvivalFleeMoveOwner);
         state.PendingLeg = actor.MoveTo(destination, SurvivalFleeSpeed, SurvivalFleeLegTimeout);
