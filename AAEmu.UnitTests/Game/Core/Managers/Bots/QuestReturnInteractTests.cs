@@ -2,6 +2,7 @@ using System.Numerics;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
@@ -44,6 +45,7 @@ public class QuestReturnInteractTests
         AppConfiguration.Instance.World ??= new WorldConfig();
         PlayerbotPilotRig.SeedPilotSingletons();
         GameplayActorTestRig.Seed();
+        TravelIntentStore.ClearAll();
         // The Stage 3 plan gate derives the 251 row's prey/pack through the
         // loot chain; without the 3475→4530→4058 link seeded the row classifies
         // UNPROVEN-SOURCE and the plan carries no legs (nothing to drive).
@@ -66,6 +68,36 @@ public class QuestReturnInteractTests
         // TurnIn suppressed this wake: no WITHHELD observable, the leg owns it.
         await Assert.That(result.FailStage).IsNotEqualTo("WITHHELD");
         await Assert.That(actor.Character.Quests.ActiveQuests[Quest251].Status).IsEqualTo(QuestStatus.Ready);
+        // THE TRAVEL BRAIN DECIDED IT (first real dispatch caller): the leg's own
+        // lane tokens are unchanged, and the additive :travel= fragment names the
+        // brain's arm/verb/mode/terminal/reason. A unit target selects Follow.
+        var detail = result.LegEvidence.Single(e => e.Leg == QuestLegId.Return).Detail;
+        await Assert.That(detail).Contains(":dispatch=move:");
+        await Assert.That(detail).Contains(":travel=arm=Follow:verb=MoveToUnit:mode=Follow:terminal=none:");
+        await Assert.That(detail).Contains(":routed=true");
+    }
+
+    [Test]
+    public async Task InGate_StopThenInteract_RideTheBrainArrivalArm()
+    {
+        var (actor, _) = CreateReadyActor("g8b-brain-near", new Vector3(0, 0, 0), new Vector3(10, 0, 0));
+
+        var first = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g8b-brain-near-1", WithholdTurnIn = true });
+        await Assert.That(first.SelectedAction).IsEqualTo(ActorActionType.Stop);
+        var stopDetail = first.LegEvidence.Single(e => e.Leg == QuestLegId.Return).Detail;
+        await Assert.That(stopDetail).Contains(":dispatch=stop:reason=in-range");
+        // The brain's ARRIVAL arm owns the Stop (a keeping-station follow: the
+        // intent stays live, so no arrival is banked and the next wake re-decides).
+        await Assert.That(stopDetail).Contains(":travel=arm=Arrival:verb=Stop:");
+        await Assert.That(stopDetail).Contains(":reason=FollowInPosition:");
+
+        var second = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g8b-brain-near-2", WithholdTurnIn = true });
+        await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.InteractNpc);
+        var interactDetail = second.LegEvidence.Single(e => e.Leg == QuestLegId.Return).Detail;
+        await Assert.That(interactDetail).Contains(":dispatch=interact:reason=settled");
+        await Assert.That(interactDetail).Contains(":travel=arm=Arrival:verb=Stop:");
     }
 
     [Test]
@@ -139,6 +171,146 @@ public class QuestReturnInteractTests
             or ActorActionType.TurnInQuest or ActorActionType.TurnInDoodad or ActorActionType.AutoTurnIn)).IsFalse();
         await Assert.That(actor.Character.Quests.ActiveQuests[Quest251].Status).IsEqualTo(QuestStatus.Ready);
         await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(Quest251)).IsTrue();
+    }
+
+    /// <summary>
+    /// THE ABANDONMENT VOCABULARY, observed by the caller: a leg the brain cannot
+    /// walk (here a foreign preemption of every closing leg) spends the repath
+    /// budget and then abandons UNREACHABLE. The intent then carries that NAMED
+    /// terminal (the store's sticky verdict, which is what a consumer re-reads), no
+    /// fourth leg is ever dispatched to the abandoned destination, and the wake is
+    /// released to TurnIn rather than reported as a bare navigation failure.
+    /// </summary>
+    [Test]
+    public async Task SpentRepathBudget_AbandonsUnreachable_NamedTerminal_NeverABareFail()
+    {
+        var (actor, _) = CreateReadyActor("g8b-brain-unreachable", new Vector3(0, 0, 0), new Vector3(30, 0, 0));
+
+        // Wakes 1-3: each closing leg is preempted by something OUTSIDE the travel
+        // intent (the brain's Interrupted leg-failure evidence). The budget is two
+        // repaths, so the THIRD failure abandons.
+        var diags = new List<string>();
+        for (var wake = 1; wake <= 3; wake++)
+        {
+            var run = QuestDecisionScenario.Run(actor, (_, _) => [],
+                new QuestDecisionScenario.QuestOptions { CycleId = $"g8b-brain-unreach-{wake}", WithholdTurnIn = true });
+            diags.Add(run.LegEvidence.Single(e => e.Leg == QuestLegId.Return).Detail);
+            await Assert.That(run.SelectedAction).IsEqualTo(ActorActionType.Move);
+            await Assert.That(actor.PreemptCurrent($"unit-test foreign preempt {wake}")).IsTrue();
+        }
+        await Assert.That(diags[0]).Contains(":travel=arm=Follow:verb=MoveToUnit:mode=Follow:terminal=none:");
+        await Assert.That(diags[1]).Contains(":reason=Repathed:");
+        await Assert.That(diags[1]).Contains(":repaths=1");
+        await Assert.That(diags[2]).Contains(":reason=Repathed:");
+        await Assert.That(diags[2]).Contains(":repaths=2");
+
+        // Wake 4: the budget is spent — the journey is abandoned with the NAMED
+        // terminal, and the leg dispatches nothing (TurnIn takes the wake back).
+        var abandon = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g8b-brain-unreach-4", WithholdTurnIn = true });
+        await Assert.That(abandon.SelectedAction == ActorActionType.Move).IsFalse();
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var abandoned)).IsTrue();
+        await Assert.That(abandoned.Terminal).IsEqualTo(TravelTerminal.Unreachable);
+        await Assert.That(abandoned.Reason).IsEqualTo(TravelReason.RepathExhausted);
+        await Assert.That(TravelBrain.Token(abandoned.Terminal)).IsEqualTo("unreachable");
+
+        // STICKY: a later wake re-reads the same named verdict instead of re-deriving
+        // a bare failure, and still dispatches nothing.
+        QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g8b-brain-unreach-5", WithholdTurnIn = true });
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var reRead)).IsTrue();
+        await Assert.That(reRead.Terminal).IsEqualTo(TravelTerminal.Unreachable);
+
+        // Exactly three legs were ever issued, and the reporter was never dialled.
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move
+            && r.MoveOwner == "RETURN_MOVE_TO_UNIT")).IsEqualTo(3);
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.InteractNpc)).IsEqualTo(0);
+    }
+
+    /// <summary>
+    /// THE CALLER'S OWN RETRACK IS NOT A FAILURE: when the reporter walks off the
+    /// point the live leg was issued against, the leg preempts that leg ITSELF (the
+    /// pre-brain retrack). If that self-preemption were read as a foreign
+    /// interruption, every retrack would spend a repath and a healthy journey would
+    /// abandon after two — so this pins that the budget survives a retrack and the
+    /// leg holds once it is re-issued on the new point.
+    /// </summary>
+    [Test]
+    public async Task CallerRetrack_DoesNotSpendTheRepathBudget()
+    {
+        var (actor, session) = CreateReadyActor("g8b-brain-retrack", new Vector3(0, 0, 0), new Vector3(30, 0, 0));
+        var reporterObjId = session.World.GetNpcByTemplateId(Reporter3512)!.ObjId;
+
+        // Wake 1: the closing leg goes out (fresh journey, no repath).
+        var first = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g8b-retrack-1", WithholdTurnIn = true });
+        await Assert.That(first.SelectedAction).IsEqualTo(ActorActionType.Move);
+        var firstDetail = first.LegEvidence.Single(e => e.Leg == QuestLegId.Return).Detail;
+        await Assert.That(firstDetail).Contains(":reason=FollowSelected:");
+        await Assert.That(firstDetail).Contains(":repaths=0");
+
+        // The reporter walks off the point the leg was issued against, but stays
+        // outside the 25 m gate (so the leg is re-issued rather than halted).
+        GameplayActorTestRig.SetNpcPosition(session, reporterObjId, new Vector3(40, 0, 0));
+
+        // Wake 2 re-issued the leg on the moving reporter: the caller's own retrack
+        // retired the first leg (Interrupted by the caller's own preemption, NOT a
+        // navigation failure) and the budget is untouched.
+        var second = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g8b-retrack-2", WithholdTurnIn = true });
+        await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.Move);
+        var secondDetail = second.LegEvidence.Single(e => e.Leg == QuestLegId.Return).Detail;
+        await Assert.That(secondDetail).Contains(":repaths=0");
+        await Assert.That(secondDetail).Contains(":travel=arm=Follow:verb=MoveToUnit:");
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var armed)).IsTrue();
+        await Assert.That(armed.RepathCount).IsEqualTo(0);
+        await Assert.That(armed.Terminal).IsEqualTo(TravelTerminal.None);
+        // The leg that ran before the retrack was retired by the CALLER itself.
+        var retired = actor.AuditTrace.Single(r => r.Action == ActorActionType.Move
+            && r.MoveOwner == "RETURN_MOVE_TO_UNIT");
+        await Assert.That(retired.Result).IsEqualTo(ActorLifecycleState.Interrupted);
+        await Assert.That(retired.Detail).Contains("quest return retrack");
+
+        // Wake 3: the re-issued leg now serves the new point, so the brain HOLDS it
+        // (no restart) and the return leg withdraws — TurnIn takes the wake back
+        // (the same withheld release the pre-brain drift hold produced).
+        var third = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g8b-retrack-3", WithholdTurnIn = true });
+        await Assert.That(third.FailStage).IsEqualTo("WITHHELD");
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var still)).IsTrue();
+        await Assert.That(still.RepathCount).IsEqualTo(0);
+        await Assert.That(still.Terminal).IsEqualTo(TravelTerminal.None);
+        // Still exactly one retirement — the hold issued no new leg.
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move
+            && r.MoveOwner == "RETURN_MOVE_TO_UNIT")).IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// The ADDITIVE FALLBACK: an actor with no object identity cannot own a journey
+    /// (<see cref="TravelIntentStore.Arm"/> refuses id 0), so the leg keeps its own
+    /// pre-brain rule byte-for-byte — the same Move, the same dispatch/reason tokens,
+    /// and the diag names the fallback rather than a brain arm.
+    /// </summary>
+    [Test]
+    public async Task NoJourneyIdentity_FallsBackToThePreBrainRule()
+    {
+        var (actor, session) = CreateReadyActor("g8b-brain-fallback", new Vector3(0, 0, 0), new Vector3(30, 0, 0));
+        var reporterObjId = session.World.GetNpcByTemplateId(Reporter3512)!.ObjId;
+        // An actor that owns no journey key: the arm is refused, so the caller's own
+        // rule decides (the world registry keeps the old key, so the engine verbs the
+        // leg dispatches still resolve).
+        actor.Character.ObjId = 0;
+
+        var result = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g8b-brain-fallback-1", WithholdTurnIn = true });
+
+        await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.Move);
+        await Assert.That(result.Request!.TargetId).IsEqualTo(reporterObjId);
+        await Assert.That(result.Request.MoveOwner).IsEqualTo("RETURN_MOVE_TO_UNIT");
+        var detail = result.LegEvidence.Single(e => e.Leg == QuestLegId.Return).Detail;
+        await Assert.That(detail).Contains(":dispatch=move:reason=fresh");
+        await Assert.That(detail).Contains(":travel=fallback");
+        await Assert.That(TravelIntentStore.Count).IsEqualTo(0);
     }
 
     [Test]
