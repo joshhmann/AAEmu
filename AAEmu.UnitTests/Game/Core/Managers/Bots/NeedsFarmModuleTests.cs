@@ -861,6 +861,76 @@ public class NeedsFarmModuleTests
         await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Harvest)).IsFalse();
     }
 
+    [Test]
+    public async Task StepAsync_SeedPresentOffSoil_RoutesThroughTheBrainDecision()
+    {
+        // The needs brain's first live dispatch caller: the travel arm's soil
+        // destination is decided by NeedsBrain.Decide through the planner and walked
+        // by the existing route layer. The leg's own wake record proves the routing:
+        // the decision that produced the leg rides in the reason, naming the
+        // soil-travel verdict and routed=true, and the route's target is the point
+        // the shared bounded spiral resolved — never a fabricated one.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-brain-1");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        StockLoopSeed(rigged);
+        GameplayActorTestRig.SetFarmGateEnabled(true);
+        SeedLoopPotatoAllowlist();
+        var soil = TestPosition + new Vector3(10f, 0f, 0f);
+        var (executor, runtime, clock) = FarmLoopRig(rigged,
+            (c, p) => MathUtil.CalculateDistance(p, soil, false) <= 1f,
+            (_, _) => []);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Traveling);
+        await Assert.That(state.NeedsFarmReason).Contains("brain=verdict=travel:reason=soil-resolved:verb=move-to");
+        await Assert.That(state.NeedsFarmReason).Contains("routed=true:dispatch=walk");
+        var route = executor.GetRoamRoute(runtime.CharacterId);
+        await Assert.That(route).IsNotNull();
+        await Assert.That(MathUtil.CalculateDistance(route!.CurrentTarget, soil, false) <= 1f).IsTrue();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Plant)).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_BrainHolds_NoRouteArmedAndNoSecondSoilSearch()
+    {
+        // Fail-closed + additive: a surface that answers no for every candidate is
+        // the brain's own bounded-spiral demand (no plantable soil anywhere near), so
+        // the arm falls back to the leg's pre-brain outcome — bounded defer, no route,
+        // no Plant — and the search it already ran is NOT run a second time. The probe
+        // tally is the proof: one resolve wake costs one bounded pass (the perception
+        // spiral, the coarser discovery extension, and the underfoot read); a wired
+        // fallback that re-searched would cost two.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-brain-2");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        StockLoopSeed(rigged);
+        var probes = 0;
+        var (executor, runtime, clock) = FarmLoopRig(rigged,
+            (c, p) => { probes++; return false; }, (_, _) => []);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.SeekingSoil);
+        await Assert.That(state.NeedsFarmReason).Contains("brain=verdict=seek-soil:reason=no-soil-nearby");
+        await Assert.That(state.NeedsFarmReason).Contains("routed=false:dispatch=fallback:search-covered=true");
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action is ActorActionType.Plant or ActorActionType.Move)).IsFalse();
+        // The bounded spiral's own candidate set (the NeedsSoil geometry) plus the
+        // handful of underfoot reads this leg makes: comfortably under the ~260 a
+        // second search would add.
+        await Assert.That(probes > 100 && probes < 200).IsTrue();
+    }
+
     // ------------------------------------------------------------ travel-to-soil + maturity-wait/RESUME
 
     private static (BotRoamStepExecutor Executor, PlayerBotRuntime Runtime, FakeTimeProvider Clock) FarmLoopRig(
