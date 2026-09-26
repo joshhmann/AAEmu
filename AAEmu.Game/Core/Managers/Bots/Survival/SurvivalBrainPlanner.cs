@@ -89,6 +89,66 @@ public static class SurvivalBrainPlanner
     }
 
     /// <summary>
+    /// THE ELECTED-WAKE FROZEN SNAPSHOT: the same inputs <see cref="SnapshotInputs(uint, BotObservedContext?)"/>
+    /// builds, from the raw vitals the caller already holds — no snapshot object and
+    /// no world read, so the gate adds no heap of its own to the per-wake budget (the
+    /// formula-backed <c>MaxHp</c> read does allocate, which is exactly why
+    /// <see cref="CouldVeto"/> gates this call to the wakes where a veto arm can
+    /// apply).
+    ///
+    /// An unreadable maximum (0 — a character whose formula-backed <c>MaxHp</c> could
+    /// not be evaluated) reads as the named <see cref="SurvivalReason.VitalsUnreadable"/>
+    /// hold, never a fabricated veto.
+    ///
+    /// <paramref name="hp"/> and <paramref name="maxHp"/> are read once by the caller
+    /// and never stored: a veto decision never reads the actor's POSITION (only the
+    /// flee leg's anchor does, and <see cref="Prepare(IGameplayActor, in SurvivalBrainInputs)"/>
+    /// resolves it live), so a caller evaluating a precondition must not hand a stale
+    /// or fabricated point to the decision.
+    /// </summary>
+    public static SurvivalBrainInputs SnapshotInputs(
+        uint actorObjId, int hp, int maxHp, uint selectedTargetObjId)
+    {
+        var retreatPublished = false;
+        var committedTarget = 0u;
+        if (CombatBrainEngagement.TryGet(actorObjId, out var engagement))
+        {
+            retreatPublished = engagement.Disengaging;
+            committedTarget = engagement.IncumbentObjId;
+        }
+
+        return new SurvivalBrainInputs(
+            ActorObjId: actorObjId,
+            SelfHpRatio: Ratio(hp, maxHp),
+            CombatRetreatPublished: retreatPublished,
+            CommittedTargetObjId: committedTarget,
+            SelectedTargetObjId: selectedTargetObjId,
+            SelfPosition: Vector3.Zero,
+            ThreatPosition: Vector3.Zero);
+    }
+
+    /// <summary>
+    /// THE CHEAP PRECONDITION: could a veto arm possibly apply to this wake? Reads
+    /// only facts that are free per wake (the hp field, the selection, and the combat
+    /// engagement's published facts) and deliberately NOT the formula-backed
+    /// <c>Character.MaxHp</c>, whose read allocates. A false answer means the wake
+    /// decides a non-vetoing verdict (healthy, a non-critical fight, or the recovery
+    /// demand), so a caller can skip the whole evaluation — and a caller that owns a
+    /// published fact from an earlier wake can clear it, because the cause is gone.
+    ///
+    /// Fail-closed toward evaluation: an unreadable hp (0) reads as "evaluate", which
+    /// lands on the incapacitated hold or the named unreadable hold — never on a
+    /// silently skipped wake.
+    /// </summary>
+    public static bool CouldVeto(uint actorObjId, int hp, uint selectedTargetObjId)
+    {
+        if (hp <= 0 || selectedTargetObjId != 0)
+            return true;
+        return CombatBrainEngagement.TryGet(actorObjId, out var engagement)
+               && (engagement.Disengaging || engagement.IncumbentObjId != 0);
+    }
+
+    /// <summary>
     /// Evaluates the wake's decision from the actor's OWN frozen observation and the
     /// combat layer's published facts, resolving the threat's live position for the
     /// flee leg. Writes nothing: the caller publishes through <see cref="Publish"/>
@@ -104,14 +164,25 @@ public static class SurvivalBrainPlanner
     public static Prepared Prepare(IGameplayActor actor, BotObservedContext? observation)
     {
         ArgumentNullException.ThrowIfNull(actor);
+        return Prepare(actor, SnapshotInputs(actor.ActorId, observation));
+    }
+
+    /// <summary>
+    /// The same wake evaluation from inputs the caller ALREADY froze (the
+    /// allocation-free elected-wake path): the verdict is decided from exactly the
+    /// facts the caller published, and only the flee leg's threat position is
+    /// resolved live. No snapshot object is built, so this path stays out of the
+    /// per-wake heap budget.
+    /// </summary>
+    public static Prepared Prepare(IGameplayActor actor, in SurvivalBrainInputs frozen)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
 
         var character = actor.Character;
-        var selfPosition = character?.Transform.World.Position ?? Vector3.Zero;
-        var snapshot = SnapshotInputs(actor.ActorId, observation);
-        var inputs = snapshot with
+        var inputs = frozen with
         {
-            SelfPosition = selfPosition,
-            ThreatPosition = ResolvePosition(character, snapshot.ThreatObjId)
+            SelfPosition = character?.Transform.World.Position ?? Vector3.Zero,
+            ThreatPosition = ResolvePosition(character, frozen.ThreatObjId)
         };
 
         return new Prepared(inputs, SurvivalBrain.Decide(inputs));

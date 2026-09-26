@@ -5,6 +5,8 @@ using AAEmu.Game.GameData;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Core.Managers.Bots.Survival;
+using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
@@ -120,6 +122,25 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
 
     /// <summary>Speed at which the bot chases target wildlife (default = 4.5 m/s sprint).</summary>
     public float HuntChaseSpeed { get; init; } = 4.5f;
+
+    /// <summary>
+    /// Speed of the survival flee leg (default = 4.5 m/s — the same retreat sprint
+    /// the combat/pursuit legs use; breaking contact is not a walk).
+    /// </summary>
+    public float SurvivalFleeSpeed { get; init; } = 4.5f;
+
+    /// <summary>
+    /// Per-leg budget of the survival flee leg (default = 10s — the combat spacing
+    /// leg's budget; a retreat that cannot walk 25 m in ten seconds re-decides).
+    /// </summary>
+    public TimeSpan SurvivalFleeLegTimeout { get; init; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>
+    /// Movement-owner tag of the survival flee leg. Telemetry only, like every
+    /// other owner tag — it is what lets the flee's own live leg be recognised
+    /// (and held rather than restarted) on the next wake.
+    /// </summary>
+    public const string SurvivalFleeMoveOwner = "SURVIVAL_FLEE";
 
     /// <summary>Nearby NPC detection seam (null → WorldManager.GetAround&lt;Npc&gt;).</summary>
     public Func<Character, float, IEnumerable<Npc>>? NearbyNpcProvider { get; init; }
@@ -289,6 +310,15 @@ public enum NeedsFarmLoopPhase
         /// wildlife but never party handling or PvP.
         /// </summary>
         public bool HomesteadLegActive { get; set; }
+
+        /// <summary>
+        /// Survival wake ownership flag: set when the ELECTED-WAKE survival gate found
+        /// a vetoing verdict (a flee, or the incapacitated hold) and therefore owns
+        /// this wake. While set, every other leg this wake stands down. Readable for
+        /// tests and diagnostics; the gate re-decides every wake, so the flag is
+        /// overwritten rather than latched.
+        /// </summary>
+        public bool SurvivalWakeOwned { get; set; }
 
         /// <summary>
         /// Tier 0 needs-work flag: set when the needs leg ran work this wake.
@@ -560,13 +590,21 @@ public enum NeedsFarmLoopPhase
         if (actor is GameplayActor concreteActor && concreteActor.BroadcastMovement)
             concreteActor.BroadcastMovement = false;
 
+        // 0- SURVIVAL ELECTED-WAKE GATE, evaluated FIRST — before party handling,
+        // before any module election branch: the survival rule runs where the wake
+        // actually goes, so the critical-in-fight flee reaches the actor even when
+        // the arbiter elects recovery.rest or nothing at all. Only a Flee verdict
+        // owns the wake; Hold/Recover leave every existing branch exactly as it is,
+        // so healthy wakes are byte-identical to the pre-gate behavior.
+        state.SurvivalWakeOwned = StepSurvivalWake(bot, actor, state);
+
         // 0. Party coordination (PB-002 follow & assist):
         // Auto-accept pending party invites, and if in a party as member, follow/assist the leader.
         bool handledByParty = false;
         try
         {
             var tm = TeamManager.Instance;
-            if (tm != null)
+            if (tm != null && !state.SurvivalWakeOwned)
             {
                 if (tm.GetActiveInvitation(bot.CharacterId) is { } invite)
                 {
@@ -661,7 +699,8 @@ public enum NeedsFarmLoopPhase
         // of attackable wildlife. Runs only when ActiveActivityProvider names
         // a conflict activity — null provider preserves today's behavior.
         var pvpEngaged = false;
-        if (!handledByParty && ActiveActivityProvider?.Invoke(bot.CharacterId) is string pvpActivity
+        if (!handledByParty && !state.SurvivalWakeOwned
+            && ActiveActivityProvider?.Invoke(bot.CharacterId) is string pvpActivity
             && pvpActivity.StartsWith("conflict.", StringComparison.Ordinal))
         {
             pvpEngaged = StepPvpEngagement(bot, actor, state, now);
@@ -679,7 +718,7 @@ public enum NeedsFarmLoopPhase
         // route layer, the latter ARE the landed work. Null provider
         // preserves today's behavior exactly.
         state.NeedsLegActive = false;
-        if (!handledByParty && !pvpEngaged
+        if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
             && ActiveActivityProvider?.Invoke(bot.CharacterId) is string needsActivity
             && needsActivity.StartsWith("needs.", StringComparison.Ordinal))
         {
@@ -705,12 +744,20 @@ public enum NeedsFarmLoopPhase
         // exactly. The arbiter holds ONE activity per wake, so at most one
         // of the 0a/0b legs fires; both flags stay readable for tests.
         state.QuestLegActive = false;
-        if (!handledByParty && !pvpEngaged
+        if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
             && ActiveActivityProvider?.Invoke(bot.CharacterId) is string questActivity
             && questActivity.StartsWith("quest.", StringComparison.Ordinal)
             && actor.ActiveRequest is not { IsTerminal: false })
         {
             state.QuestLegActive = StepQuestLeg(bot, actor, state, questActivity);
+        }
+        else if (state.SurvivalWakeOwned && _questRuntimes.TryGetValue(bot.CharacterId, out var fleeQuest))
+        {
+            // A flee owns the wake: the quest tick is superseded this wake
+            // (observation only — any live preemption stays with the owning
+            // leg via PreemptCurrent, the same discipline as the electing
+            // activity moving away).
+            fleeQuest.Cancel("survival flee owns the wake");
         }
         else if (_questRuntimes.TryGetValue(bot.CharacterId, out var idleQuest))
         {
@@ -723,7 +770,7 @@ public enum NeedsFarmLoopPhase
         // 0c. Homestead progression leg: while the arbiter holds a homestead.*
         // activity, run one GOAP plan step per wake against the bot's actor.
         state.HomesteadLegActive = false;
-        if (!handledByParty && !pvpEngaged
+        if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
             && ActiveActivityProvider?.Invoke(bot.CharacterId) is string homeActivity
             && homeActivity.StartsWith("homestead.", StringComparison.Ordinal)
             && actor.ActiveRequest is not { IsTerminal: false })
@@ -734,7 +781,8 @@ public enum NeedsFarmLoopPhase
         // 1. Opportunistic wildlife hunt loop (skipped while fighting players,
         // or while a work leg landed, or while actively farming — needs/quest/homestead preempt hunt acquisition/engagement).
         var isFarmingActive = state.NeedsFarmPhase != NeedsFarmLoopPhase.Idle;
-        if (!handledByParty && !pvpEngaged && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeHunt)
+        if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
+            && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeHunt)
         {
             if (state.TargetNpcObjId != 0)
             {
@@ -912,7 +960,7 @@ public enum NeedsFarmLoopPhase
         // ActorRequest. Logging only on the terminal outcome (slice 1/3
         // idiom) — zero success-path change. Skipped while a work leg landed
         // or while actively farming (needs/quest/homestead preempt butcher acquisition/engagement).
-        if (!handledByParty && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeButcher)
+        if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeButcher)
         {
             if (state.TargetButcherDoodadObjId != 0)
             {
@@ -1026,7 +1074,7 @@ public enum NeedsFarmLoopPhase
             SupersedeQuestTravelRoute(state, $"pending leg foreign-interrupted ({detail})");
         }
         // 2. Issue the next leg when idle, not in party, not hunting, not butchering, not work-legged, not waiting for crop, and a route is active.
-        if (!handledByParty && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive
+        if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
         {
@@ -1054,7 +1102,8 @@ public enum NeedsFarmLoopPhase
         actor.Tick(elapsed);
 
         // 3a. Flat arrival owns the leg for ground-clamped walkers (only when roaming)
-        if (state.TargetNpcObjId == 0
+        if (!state.SurvivalWakeOwned
+            && state.TargetNpcObjId == 0
             && state.TargetButcherDoodadObjId == 0
             && state.PendingLeg is { IsTerminal: false, Action: ActorActionType.Move }
             && state.Path is { IsFinished: false })
@@ -1066,7 +1115,8 @@ public enum NeedsFarmLoopPhase
         }
         // 3b. Route advance on arrival: when the pending Move leg reached a terminal state
         // (deferred while a work leg landed — needs/quest preempt route advancement too).
-        if (!state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive
+        if (!state.SurvivalWakeOwned
+            && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0
             && state.TargetButcherDoodadObjId == 0
@@ -1228,6 +1278,153 @@ public enum NeedsFarmLoopPhase
     /// (cheap counters per wake; spiral probes only on resolve wakes).
     /// </summary>
     public const int NeedsFarmSoilResolveIntervalWakes = 10;
+
+    /// <summary>
+    /// THE ELECTED-WAKE SURVIVAL GATE.
+    ///
+    /// The survival veto's only consumers used to live inside the quest leg loop,
+    /// but the arm the veto targets (critical hp WITH fight evidence) is exactly the
+    /// arm where the arbiter elects recovery.rest (85 &gt; quest 58) or nothing at all
+    /// (both the quest module's and the recovery module's in-battle deny) — so the
+    /// rule was never evaluated on the wake it was written for. This gate evaluates
+    /// it HERE, at the top of the step, before any module election can branch the
+    /// wake away, and dispatches the flee leg it asks for.
+    ///
+    /// The evaluation is FROZEN and allocation-free on the calm path: hp, the
+    /// selection and the combat engagement's published facts are plain field/dictionary
+    /// reads, so a healthy wake neither scans the world nor pays the formula-backed
+    /// <c>Character.MaxHp</c> read. The verdict is published through the single
+    /// publisher whenever a veto arm could apply, so every existing consumer reads
+    /// this wake's fact rather than a stale one.
+    ///
+    /// Dispatched legs are held rather than restarted: while our own flee leg is
+    /// live and still points at this wake's anchor (within the shared
+    /// <see cref="TravelBrain.LegDriftToleranceM"/>), the leg keeps its progress and
+    /// the wake is still owned. Only a Flee verdict owns the wake; a Hold (healthy,
+    /// or a non-critical fight the combat brain owns) and a Recover (the existing
+    /// out-of-combat recovery module's demand) leave the election exactly as it is —
+    /// healthy wakes are byte-identical to the pre-gate behavior.
+    ///
+    /// Returns true when a survival condition owns this wake (a flee leg was
+    /// dispatched or held, or the incapacitated hold vetoed every other leg).
+    /// </summary>
+    private bool StepSurvivalWake(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
+    {
+        var character = bot.Character;
+
+        // CHEAP FACTS FIRST: hp and the selection are plain character fields, and
+        // the engagement is one dictionary read — everything the "could this wake
+        // veto?" question needs. The hp RATIO needs Character.MaxHp, which is
+        // formula-backed and allocates a parameters dictionary on every read, so it
+        // is only touched on wakes where a veto arm can actually apply. Calm wakes
+        // (hp up, no fight, no retreat) cost nothing and cannot veto.
+        var hp = SafeHp(character);
+        var selectedTargetObjId = character.CurrentTarget?.ObjId ?? 0u;
+
+        // No veto arm can apply: a readable-hp, non-incapacitated actor with no fight
+        // evidence and no published retreat decides Hold(Healthy) or a RECOVER demand
+        // — neither vetoes and neither dispatches. Drop any fact still standing from
+        // an earlier wake (the cause cleared) and leave every branch as it was.
+        if (!SurvivalBrainPlanner.CouldVeto(actor.ActorId, hp, selectedTargetObjId))
+        {
+            SurvivalVetoState.Clear(actor.ActorId);
+            return false;
+        }
+
+        // 1. The FROZEN verdict — the one rule, over the facts this wake holds. An
+        //    unreadable maximum (an unevaluatable formula) reads as the named hold
+        //    that vetoes nobody rather than throwing out of the wake.
+        var frozen = SurvivalBrainPlanner.SnapshotInputs(
+            actor.ActorId, hp, SafeMaxHp(character), selectedTargetObjId);
+        SurvivalVetoState.Publish(actor.ActorId, frozen, out var decision);
+
+        // A non-vetoing verdict (a non-critical fight the combat brain owns, the
+        // recovery demand) leaves every downstream branch exactly as it was. The
+        // incapacitated hold vetoes but dispatches nothing: it still owns the wake,
+        // so no leg takes it from a down actor.
+        if (!decision.IsFlee)
+            return decision.Veto;
+
+        // 2. The flee destination needs the threat's live position — the one world
+        //    resolve the planner performs, and only on the arm that asks for a leg.
+        //    The verdict is a pure function of the same frozen facts, so this
+        //    resolves the leg's destination rather than re-deciding the wake.
+        var prepared = SurvivalBrainPlanner.Prepare(actor, frozen);
+        if (prepared.Decision.Destination is not { } destination)
+            return decision.Veto;
+
+        // 3. Hold a live flee leg that still serves this anchor: the anchor is
+        //    recomputed from the actor's own position every wake, so re-issuing
+        //    unconditionally would restart the escape on every wake and the bot
+        //    would never advance. A leg drifted past the shared tolerance is
+        //    re-issued (the anchor receded as the bot walked).
+        if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move } live
+            && live.MoveOwner == SurvivalFleeMoveOwner
+            && live.Destination is { } liveDestination
+            && Vector3.Distance(liveDestination, destination) <= TravelBrain.LegDriftToleranceM)
+        {
+            state.PendingLeg = live;
+            return true;
+        }
+
+        // A live FOREIGN non-move leg (a cast, a loot) keeps the actor this
+        // wake: the flee still OWNS the wake (every other leg stands down),
+        // but no leg is dispatched against a busy actor — the next wake
+        // dispatches once the leg finishes.
+        if (actor.ActiveRequest is { IsTerminal: false } busy && busy.Action != ActorActionType.Move)
+        {
+            state.PendingLeg = busy;
+            return true;
+        }
+
+        // Dispatch the leg. A live auto-attack loop would keep firing on the mob
+        // the bot is walking away from, and a live Move leg would busy-reject
+        // this one — the same ordered teardown the combat spacing dispatch uses
+        // (stop the loop first, then retrack the leg).
+        if (bot.Character.IsAutoAttack)
+            actor.StopAutoAttack();
+        if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+            actor.PreemptCurrent("survival flee retrack");
+
+        StageMoveOwner(actor, SurvivalFleeMoveOwner);
+        state.PendingLeg = actor.MoveTo(destination, SurvivalFleeSpeed, SurvivalFleeLegTimeout);
+        return true;
+    }
+
+    /// <summary>
+    /// The actor's current hp, or 0 when the property cannot be read (an unreadable
+    /// frame — the same named hold the decision chain assigns it, never a throw out
+    /// of the wake).
+    /// </summary>
+    private static int SafeHp(Character character)
+    {
+        try
+        {
+            return character.Hp;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+
+    /// <summary>
+    /// The actor's maximum hp, or 0 when the formula-backed property cannot be
+    /// evaluated. 0 is the honest "no readable maximum" the survival chain handles by
+    /// <see cref="SurvivalReason.VitalsUnreadable"/>; a throw here would otherwise
+    /// take the whole wake down over a measurement the gate could not make.
+    /// </summary>
+    private static int SafeMaxHp(Character character)
+    {
+        try
+        {
+            return character.MaxHp;
+        }
+        catch
+        {
+            return 0;
+        }
+    }
 
     /// <summary>
     /// Copper-bootstrap quest leg (branch 0a): one runtime-hosted
