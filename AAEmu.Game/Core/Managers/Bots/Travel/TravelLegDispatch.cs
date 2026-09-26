@@ -48,8 +48,15 @@ internal static class TravelLegDispatch
     /// </summary>
     private const int TraceScanRows = 64;
 
-    /// <summary>The preemption detail the caller's own retrack stages.</summary>
-    private const string ReturnRetrackDetail = "quest return retrack";
+    /// <summary>
+    /// The preemption detail the caller's own return retrack stages
+    /// (<c>QuestBehavior.DispatchReturnMove</c>). Caller-authored: it retires a
+    /// leg the caller itself decided to replace, never a navigation failure.
+    /// Shared (not private) so the staging site and <see cref="IsCallerRetirement"/>
+    /// can never drift apart — a rename at either end would silently re-arm the
+    /// repath-exhaustion bug.
+    /// </summary>
+    internal const string ReturnRetrackDetail = "quest return retrack";
 
     /// <summary>
     /// The preemption detail the survival flee stages over a live Move leg it is

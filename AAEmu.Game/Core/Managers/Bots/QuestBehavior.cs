@@ -2082,7 +2082,7 @@ public static class QuestBehavior
     private static ActorRequest DispatchReturnMove(IGameplayActor gameplayActor, BotDecisionProposal proposal)
     {
         if (gameplayActor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
-            gameplayActor.PreemptCurrent("quest return retrack");
+            gameplayActor.PreemptCurrent(TravelLegDispatch.ReturnRetrackDetail);
         // Telemetry: this leg owns as RETURN_MOVE_TO_UNIT (staged before
         // dispatch; PreemptCurrent above carries no request so the stage
         // survives to the MoveToUnit below).

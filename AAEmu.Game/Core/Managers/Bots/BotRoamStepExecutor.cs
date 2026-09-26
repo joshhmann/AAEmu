@@ -5,6 +5,7 @@ using AAEmu.Game.GameData;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Core.Managers.Bots.Needs;
 using AAEmu.Game.Core.Managers.Bots.Survival;
 using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.Core.Packets.G2C;
@@ -1253,17 +1254,17 @@ public enum NeedsFarmLoopPhase
     /// radius seams via <see cref="WorldManager.GetAround{T}"/> over
     /// whole-world scans every wake).
     /// </summary>
-    public const float NeedsFarmPerceptionRadius = 45f;
+    public const float NeedsFarmPerceptionRadius = NeedsSoil.DefaultPerceptionRadiusM;
     /// <summary>
     /// Discovery extension for soil resolution: the perception-radius spiral
     /// runs first; when it finds nothing, a coarser spiral out to this bound
     /// runs before the leg defers (bounded discovery fallback — never a
-    /// whole-world scan).
+    /// whole-world scan). The bound itself lives once, in <see cref="NeedsSoil"/>.
     /// </summary>
-    public const float NeedsFarmSoilDiscoveryRadius = 150f;
+    public const float NeedsFarmSoilDiscoveryRadius = NeedsSoil.DefaultDiscoveryRadiusM;
 
-    /// <summary>Coarse spiral step for the discovery extension.</summary>
-    public const float NeedsFarmSoilDiscoveryStep = 15f;
+    /// <summary>Coarse spiral step for the discovery extension (shared, <see cref="NeedsSoil"/>).</summary>
+    public const float NeedsFarmSoilDiscoveryStep = NeedsSoil.DefaultDiscoveryStepM;
 
     /// <summary>
     /// Soil-destination discards per discovery episode before the leg stops
@@ -2195,23 +2196,11 @@ public enum NeedsFarmLoopPhase
     /// <summary>
     /// Tracked-crop liveness: null/gone, despawn-scheduled, template-swapped,
     /// or no longer ours (ownership change) all read stale. Maturity stays
-    /// the engine's gate — this only decides whether the track is OURS.
+    /// the engine's gate — this only decides whether the track is OURS. The rule
+    /// lives once, in <see cref="NeedsCrop"/> (shared with the needs brain).
     /// </summary>
     private static bool IsTrackedCropLive(Doodad? tracked, Character character, BotRoamState state)
-    {
-        if (tracked == null || tracked.Despawn > DateTime.MinValue)
-            return false;
-        if (state.NeedsFarmCropTemplateId != 0 && tracked.TemplateId != state.NeedsFarmCropTemplateId)
-            return false;
-        try
-        {
-            return IsNeedsFarmCrop(tracked, character);
-        }
-        catch
-        {
-            return false;
-        }
-    }
+        => NeedsCrop.IsTrackedLive(tracked, character, state.NeedsFarmCropTemplateId);
 
     private static void DropTrackedCrop(BotRoamState state, PlayerBotRuntime bot, string reason)
     {
@@ -2224,25 +2213,18 @@ public enum NeedsFarmLoopPhase
 
     /// <summary>
     /// Maturity read: the same data-driven harvestability the Harvest engine
-    /// path resolves (current phase carries a loot-linked interaction).
-    /// Never mutates — a probe, not a transition.
+    /// path resolves (current phase carries a loot-linked interaction), shared
+    /// with the needs brain through <see cref="NeedsCrop"/>. Never mutates — a
+    /// probe, not a transition.
     /// </summary>
-    private static bool IsCropMature(Doodad doodad)
-    {
-        try
-        {
-            return M3aM4ReplayScenario.TryGetHarvestSkill(doodad, out _);
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    private static bool IsCropMature(Doodad doodad) => NeedsCrop.IsMature(doodad);
 
     /// <summary>
-    /// Valid plant soil for our seed: the same membership + doodad-type legs
-    /// the decision's perception gate mirrors (the engine revalidates the
-    /// count cap fail-closed at dispatch).
+    /// Valid plant soil for our seed: the injectable probe (a headless test may map
+    /// a surface) or the shared engine membership chain
+    /// (<see cref="NeedsSoil.Probe"/> — the same rule and allowlist the needs
+    /// BRAIN's planner resolves destinations with). The engine revalidates the
+    /// count cap fail-closed at dispatch.
     /// </summary>
     private bool IsValidFarmSoil(Character character, Vector3 position)
     {
@@ -2257,46 +2239,25 @@ public enum NeedsFarmLoopPhase
                 return false;
             }
         }
-        var world = character.ParentWorld;
-        if (world == null)
-            return false;
-        if (!PublicFarmManager.Instance.InPublicFarm(world.Template, position))
-            return false;
-        var farmType = PublicFarmManager.Instance.GetFarmType(world, position);
-        if (farmType == FarmType.Invalid)
-            return false;
-        var doodadId = ItemManager.Instance.GetDoodadIdFromItem(NeedsFarmSeedItemTemplateId);
-        if (doodadId == 0)
-            return false;
-        return CommonFarmGameData.Instance.GetAllowedDoodads(farmType).Contains(doodadId);
+        return NeedsSoil.Probe(character.ParentWorld, position, NeedsFarmSeedItemTemplateId) == true;
     }
 
     /// <summary>
-    /// Nearest valid soil: deterministic spiral (8 compass points per ring)
-    /// to the perception radius, then a coarser bounded discovery extension.
-    /// The decision says "need valid soil"; this owns waypoints.
+    /// Nearest valid soil: the shared bounded spiral (perception rings, then the
+    /// coarser discovery extension) over the shared soil probe — the SAME
+    /// destination authority the needs brain's planner uses. The decision says
+    /// "need valid soil"; this owns waypoints, and never a fixture-injected point.
     /// </summary>
     private Vector3? ResolveSoilTarget(Character character, Vector3 from)
     {
         var (nearestMerchant, _) = ResolveNearestSeedMerchant(character, from);
         var merchantPos = nearestMerchant?.Transform.World.Position;
-
-        foreach (var candidate in SoilSpiralCandidates(from, NeedsFarmPerceptionRadius, 5f))
-        {
-            if (merchantPos.HasValue && MathUtil.CalculateDistance(candidate, merchantPos.Value, false) <= 5.0f)
-                continue;
-            if (IsValidFarmSoil(character, candidate))
-                return WithGroundZ(character, candidate, from.Z);
-        }
-        foreach (var candidate in SoilSpiralCandidates(from, NeedsFarmSoilDiscoveryRadius,
-                     NeedsFarmSoilDiscoveryStep, NeedsFarmPerceptionRadius))
-        {
-            if (merchantPos.HasValue && MathUtil.CalculateDistance(candidate, merchantPos.Value, false) <= 5.0f)
-                continue;
-            if (IsValidFarmSoil(character, candidate))
-                return WithGroundZ(character, candidate, from.Z);
-        }
-        return null;
+        var search = NeedsSoil.ResolveDestination(
+            from,
+            candidate => IsValidFarmSoil(character, candidate),
+            merchantPos,
+            (candidate, fallbackZ) => WithGroundZ(character, candidate, fallbackZ));
+        return search.Destination;
     }
 
     /// <summary>
@@ -2326,24 +2287,6 @@ public enum NeedsFarmLoopPhase
             groundZ = 0f;
         }
         return groundZ != 0f ? new Vector3(candidate.X, candidate.Y, groundZ) : candidate;
-    }
-
-    private static IEnumerable<Vector3> SoilSpiralCandidates(Vector3 origin, float maxRadius, float step,
-        float skipWithin = 0f)
-    {
-        for (var r = step; r <= maxRadius + 0.001f; r += step)
-        {
-            if (r <= skipWithin)
-                continue;
-            for (var k = 0; k < 8; k++)
-            {
-                var a = (float)(k * Math.PI / 4);
-                yield return new Vector3(
-                    origin.X + MathF.Cos(a) * r,
-                    origin.Y + MathF.Sin(a) * r,
-                    origin.Z);
-            }
-        }
     }
 
     /// <summary>
@@ -2509,28 +2452,11 @@ public enum NeedsFarmLoopPhase
     /// where the house allows interaction (the FarmerCycleScenario owned-plot
     /// precedent). System-owned crops on public-farm soil are also accepted
     /// after PublicFarmTick expiry clears their owner. Maturity stays the
-    /// engine's own fail-closed gate at dispatch.
+    /// engine's own fail-closed gate at dispatch. The rule lives once, in
+    /// <see cref="NeedsCrop"/> (shared with the needs brain).
     /// </summary>
     private static bool IsNeedsFarmCrop(Doodad doodad, Character character)
-    {
-        if (doodad.OwnerType == DoodadOwnerType.Character)
-            return doodad.OwnerId == character.Id;
-        if (doodad.OwnerType == DoodadOwnerType.Housing)
-            return HousingManager.Instance.GetHouseById(doodad.OwnerDbId)?.AllowedToInteract(character) == true;
-        if (doodad.OwnerType != DoodadOwnerType.System && doodad.OwnerId != 0)
-            return false;
-
-        var world = doodad.ParentWorld;
-        if (world == null)
-            return false;
-        var position = doodad.Transform.World.Position;
-        if (!PublicFarmManager.Instance.InPublicFarm(world.Template, position) ||
-            PublicFarmManager.IsProtected(doodad))
-            return false;
-
-        var farmType = PublicFarmManager.Instance.GetFarmType(world, position);
-        return CommonFarmGameData.Instance.GetAllowedDoodads(farmType).Contains(doodad.TemplateId);
-    }
+        => NeedsCrop.IsOurs(doodad, character);
 
 
     /// <summary>
