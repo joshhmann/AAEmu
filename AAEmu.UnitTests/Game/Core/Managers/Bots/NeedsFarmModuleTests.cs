@@ -931,6 +931,93 @@ public class NeedsFarmModuleTests
         await Assert.That(probes > 100 && probes < 200).IsTrue();
     }
 
+    [Test]
+    public async Task StepAsync_MatureCropInRange_RoutesHarvestThroughTheBrainDecision()
+    {
+        // The brain's HARVEST action arm: the mature-in-range wake is decided by
+        // NeedsBrain.Decide through the planner and reports the existing Harvest verb
+        // on the tracked crop — and the harvest itself still lands through the leg's
+        // own dispatch tail, unchanged.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-brain-harvest");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        var crop = PlantMatureCrop(actor, session);
+        crop.Transform.Local.SetPosition(TestPosition + new Vector3(2f, 0f, 0f));
+        var (executor, runtime, clock) = FarmLoopRig(rigged, (c, p) => true, (_, _) => [crop]);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmReason)
+            .Contains("brain=verdict=harvest:reason=crop-mature:verb=harvest");
+        await Assert.That(state.NeedsFarmReason).Contains("routed=true:dispatch=harvest");
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Harvest
+            && r.Result == ActorLifecycleState.Completed)).IsTrue();
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Replanting);
+    }
+
+    [Test]
+    public async Task StepAsync_OnSoilWithSeed_RoutesPlantThroughTheBrainDecision()
+    {
+        // The brain's PLANT action arm: seed on hand and standing on valid soil is
+        // decided as the existing Plant verb, and the plant still lands through the
+        // leg's own dispatch tail with the crop tracked for the wait branch.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-brain-plant");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        StockLoopSeed(rigged);
+        GameplayActorTestRig.SetFarmGateEnabled(true);
+        SeedLoopPotatoAllowlist();
+        // Standing ON valid soil: the soil provider answers yes underfoot, so the leg
+        // takes its plant branch on this very wake.
+        var (executor, runtime, clock) = FarmLoopRig(rigged, (c, p) => true, (_, _) => []);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmReason)
+            .Contains("brain=verdict=plant:reason=seed-on-soil:verb=plant");
+        await Assert.That(state.NeedsFarmReason).Contains("routed=true:dispatch=plant");
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Plant)).IsTrue();
+    }
+
+    [Test]
+    public async Task StepAsync_ImmatureCrop_HoldsOnTheNamedWait_NoDispatch()
+    {
+        // The brain's third action row is the one that STOPS a wake: a live immature
+        // crop is the named maturity wait, routed and reported, and NOTHING is
+        // dispatched — the engine stays the sole maturity authority.
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-brain-wait");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        actor.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.DoodadCreate,
+            CropHarvestLoopTests.PotatoSeedItemId, 5);
+        var crop = CropHarvestLoopRig.Plant(actor.Character, session.World,
+            CropHarvestLoopRig.MakeHouse(actor.Character));
+        crop.Transform.Local.SetPosition(TestPosition + new Vector3(2f, 0f, 0f));
+        var (executor, runtime, clock) = FarmLoopRig(rigged, (c, p) => true, (_, _) => [crop]);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.WaitingMaturity);
+        await Assert.That(state.NeedsFarmReason)
+            .Contains("brain=verdict=wait-maturity:reason=crop-immature:verb=hold");
+        await Assert.That(state.NeedsFarmReason).Contains("routed=true:dispatch=wait-maturity");
+        await Assert.That(actor.AuditTrace.Any(r => r.Action is ActorActionType.Harvest or ActorActionType.Plant))
+            .IsFalse();
+        await Assert.That(state.NeedsFarmCropObjId).IsEqualTo(crop.ObjId);
+    }
+
     // ------------------------------------------------------------ travel-to-soil + maturity-wait/RESUME
 
     private static (BotRoamStepExecutor Executor, PlayerBotRuntime Runtime, FakeTimeProvider Clock) FarmLoopRig(

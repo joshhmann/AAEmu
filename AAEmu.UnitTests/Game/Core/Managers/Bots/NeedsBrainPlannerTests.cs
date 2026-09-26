@@ -352,6 +352,36 @@ public class NeedsBrainPlannerTests
         await Assert.That(prepared.Decision.Reason).IsEqualTo(NeedsReason.NoSoilNearby);
     }
 
+    [Test]
+    public async Task CropOwnedWake_ReadsNoSoilSurfaceAtAll()
+    {
+        // The action arms that are owned by a LIVE CROP have no soil question, so the
+        // caller scopes the adapter: NOT ONE surface is probed and no spiral runs. The
+        // tally is the proof — an unscoped harvest wake would pay the spiral's ~200
+        // candidate reads for a destination nothing would ever walk.
+        var (actor, session) = CreateActorOnUniqueWorld("needs-crop-scoped");
+        GameplayActorTestRig.SetPosition(actor, Here);
+        var crop = PlantCrop(actor, session, Here + new Vector3(2f, 0f, 0f));
+        GrowToMature(crop);
+        var probes = 0;
+
+        var prepared = NeedsBrainPlanner.Prepare(actor, Request() with
+        {
+            TrackedCropObjId = crop.ObjId,
+            TrackedCropTemplateId = crop.TemplateId,
+            SoilProbe = (_, _) => { probes++; return true; },
+            GroundZ = (_, candidate) => candidate,
+            SoilSearch = false
+        });
+
+        await Assert.That(probes).IsEqualTo(0);
+        await Assert.That(prepared.Decision.Verdict).IsEqualTo(NeedsVerdict.Harvest);
+        await Assert.That(prepared.Decision.Reason).IsEqualTo(NeedsReason.CropMature);
+        await Assert.That(prepared.SoilDestination).IsNull();
+        await Assert.That(prepared.SoilProbesReadable).IsEqualTo(0);
+        await Assert.That(prepared.Inputs.OnValidSoil).IsFalse();
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private static Doodad PlantCrop(GameplayActor actor, HeadlessSession session, Vector3 position)
