@@ -3,6 +3,7 @@ using System.Numerics;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots.Combat;
 using AAEmu.Game.Core.Managers.Bots.Loot;
+using AAEmu.Game.Core.Managers.Bots.Survival;
 using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
@@ -205,21 +206,27 @@ public static class QuestBehavior
     private static BotProposalPrecondition SurvivalVetoClear(IGameplayActor actor)
         => new("survival-veto-clear", observed => !IsSurvivalVetoed(actor.ActorId, observed));
 
-    /// <summary>True while the published fact, or the observation's own vitals, say a survival condition owns the wake.</summary>
+    /// <summary>
+    /// True while a survival condition owns the wake, as the SURVIVAL layer
+    /// published it.
+    ///
+    /// The rule itself lives in exactly one place — <see cref="SurvivalVetoState"/>
+    /// (fed by <see cref="SurvivalBrain.Decide"/> through
+    /// <see cref="SurvivalBrainPlanner"/>) — so this precondition, the loot
+    /// planner's own veto read, and the lane's recorded verdict can never be three
+    /// drifting versions of the same rule. See the planner for the evaluated arms
+    /// (down, the combat brain's published retreat, critical hp with fight evidence,
+    /// and the named holds that veto nobody).
+    ///
+    /// <paramref name="observed"/> is the frozen observation the wake already holds:
+    /// the veto is EVALUATED for it and published, so the fact a consumer reads on
+    /// this wake describes exactly this frame — and an unreadable frame
+    /// (an unknown maximum) is the named, non-vetoing hold rather than a fabricated
+    /// veto.
+    /// </summary>
     internal static bool IsSurvivalVetoed(uint actorObjId, BotObservedContext observed)
-    {
-        if (CombatBrainEngagement.IsSurvivalVetoed(actorObjId))
-            return true;
-        if (observed.MaxHp <= 0)
-            return false; // unreadable vitals never fabricate a veto
-        if (observed.Hp <= 0)
-            return true;
-        var hpRatio = (float)observed.Hp / observed.MaxHp;
-        if (hpRatio > CombatBrain.FleeHpThreshold)
-            return false;
-        return observed.CurrentTargetObjId != 0
-            || CombatBrainEngagement.TryGet(actorObjId, out var engagement) && engagement.IncumbentObjId != 0;
-    }
+        => SurvivalBrainPlanner.EvaluateAndPublish(actorObjId, observed);
+
     /// <summary>
     /// G7b corpse recognition (observe-only): the pinned prey corpse per actor.
     /// Populated ONLY from the pinned-target dead transition (the target-dead
