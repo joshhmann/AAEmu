@@ -361,8 +361,12 @@ public enum NeedsFarmLoopPhase
 
         /// <summary>
         /// Human-readable reason for the current phase (soil resolve source,
-        /// defer cause, stale-drop cause, discard cause). Feeds log lines and
-        /// test asserts; never a tracing framework.
+        /// defer cause, stale-drop cause, discard cause), plus the needs brain's
+        /// own decision fragment on the travel arm
+        /// (<c>[brain=verdict=…:reason=…:verb=…:routed=…:dispatch=…]</c> — the
+        /// decision that produced the leg, or the named hold/bounded-spiral demand
+        /// the wake fell back on). Feeds log lines and test asserts; never a
+        /// tracing framework, and never read by behavior.
         /// </summary>
         public string NeedsFarmReason { get; set; } = "";
 
@@ -1738,13 +1742,18 @@ public enum NeedsFarmLoopPhase
     /// replant next wake.
     ///
     /// TRAVEL-TO-SOIL arms an ordinary <see cref="BotPath"/> (single-leg
-    /// <c>PathTo</c>) to a spiral-resolved soil destination and returns false
-    /// so the route layer's own MoveTo legs + arrival advance carry the bot
-    /// (no teleport, no Transform writes — movement applies through the
-    /// actor tick exactly like patrol legs). Arrival re-observes and plants
-    /// normally. MATURITY-WAIT tracks the planted crop (objId + template) and
-    /// defers while its phase reads immature — no Harvest is issued on wait
-    /// wakes; the engine stays the sole maturity authority at dispatch.
+    /// <c>PathTo</c>) to a soil destination and returns false so the route
+    /// layer's own MoveTo legs + arrival advance carry the bot (no teleport,
+    /// no Transform writes — movement applies through the actor tick exactly
+    /// like patrol legs). The destination is decided by the NEEDS BRAIN
+    /// (<see cref="NeedsBrain.Decide"/> through <see cref="NeedsBrainPlanner"/> and
+    /// <see cref="NeedsFarmLegDispatch"/>) on the wake that resolves it — the same
+    /// bounded spiral, so the destination authority is unchanged — and every
+    /// verdict the leg cannot serve falls back to the pre-brain rule. Arrival
+    /// re-observes and plants normally. MATURITY-WAIT tracks the planted crop
+    /// (objId + template) and defers while its phase reads immature — no Harvest is
+    /// issued on wait wakes; the engine stays the sole maturity authority at
+    /// dispatch.
     ///
     /// Returns true only when decision work actually landed (Completed) —
     /// reject/rest/wait/travel/defer wakes return false so the route still
@@ -1975,14 +1984,45 @@ public enum NeedsFarmLoopPhase
         state.NeedsFarmDeferWakes++;
         var resolveWake = state.NeedsFarmDeferWakes <= 1
             || (state.NeedsFarmDeferWakes - 1) % NeedsFarmSoilResolveIntervalWakes == 0;
+        var brainReason = "";
         if (resolveWake && state.NeedsFarmSoilAttempts <= NeedsFarmMaxSoilAttempts)
         {
-            var resolved = ResolveSoilTarget(character, position);
-            if (resolved != null)
+            // ---- THE NEEDS BRAIN'S FIRST LIVE DISPATCH CALLER: this leg's soil
+            // destination is decided by <see cref="NeedsBrain.Decide"/> through
+            // <see cref="NeedsBrainPlanner"/> — the SAME bounded spiral, so the
+            // destination authority is unchanged — and the point the decision names
+            // is walked by the existing route layer below. The caller never supplies
+            // a destination to the planner (SoilDestinationResolved stays false), so
+            // a fabricated point cannot reach a travel leg through it: the spiral
+            // produced the destination, or the pre-brain rule below owns the wake.
+            //
+            // The decision rides ADDITIVELY: every verdict that is not a soil
+            // destination this leg can walk — a NAMED hold (an unreadable soil
+            // surface or seed count, a spent resolve budget), the bounded-spiral
+            // demand, a crop arm this leg does not serve, or the brain's own
+            // plant-on-soil reading when this leg is standing on soil it refuses to
+            // plant on (the merchant-proximity rule) — falls through to the caller's
+            // exact pre-brain rule. The route-layer hold for a leg already walking
+            // its point stays the CALLER's own reading above (the leg it itself
+            // issued), never a second brain arm.
+            var verdict = NeedsFarmLegDispatch.DecideNeedsTravelLeg(
+                PrepareNeedsFarmTravelBrain(state, actor, position, nearestMerchant));
+            brainReason = $" [brain={NeedsFarmLegDispatch.Describe(verdict)}]";
+            if (verdict.HasLeg)
+            {
+                var destination = verdict.Destination!.Value;
+                state.NeedsFarmDeferWakes = 0;
+                ArmFarmRoute(state, bot, destination,
+                    $"soil resolved ({destination.X:F0},{destination.Y:F0}) — traveling{brainReason}");
+                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Traveling, state.NeedsFarmReason);
+                return false;
+            }
+            var fallback = verdict.SearchCovered ? null : ResolveSoilTarget(character, position);
+            if (fallback != null)
             {
                 state.NeedsFarmDeferWakes = 0;
-                ArmFarmRoute(state, bot, resolved.Value,
-                    $"soil resolved ({resolved.Value.X:F0},{resolved.Value.Y:F0}) — traveling");
+                ArmFarmRoute(state, bot, fallback.Value,
+                    $"soil resolved ({fallback.Value.X:F0},{fallback.Value.Y:F0}) — traveling{brainReason}");
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Traveling, state.NeedsFarmReason);
                 return false;
             }
@@ -1990,10 +2030,56 @@ public enum NeedsFarmLoopPhase
         RestoreFarmRoute(state, bot, "no farm nearby — bounded defer");
         SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.SeekingSoil,
             state.NeedsFarmSoilAttempts > NeedsFarmMaxSoilAttempts
-                ? "no farm nearby — resolve budget spent, holding defer"
-                : "no farm nearby — bounded defer");
+                ? $"no farm nearby — resolve budget spent, holding defer{brainReason}"
+                : $"no farm nearby — bounded defer{brainReason}");
         return false;
     }
+
+    /// <summary>
+    /// The needs brain's LIVE PREPARATION for this leg's travel arm: one
+    /// <see cref="NeedsBrainPlanner.Prepare"/> over the actor's own record, driven
+    /// by THIS leg's own reads and seams — the shared soil probe
+    /// (<see cref="ProbeFarmSoil"/>, so the injectable surface the leg uses is the
+    /// surface the spiral walks), the shared ground pin
+    /// (<see cref="WithGroundZ"/>), the merchant exclusion this leg already
+    /// resolved, and the tracked-crop resolve. The SEED COUNT and the crop's
+    /// liveness/maturity/distance are read by the planner itself; the SOIL attempt
+    /// count is the leg's own, so this leg's resolve bound and the brain's budget
+    /// are the same number by construction.
+    ///
+    /// No destination and no resolve flag is supplied: the destination can only be
+    /// the bounded spiral's own output.
+    /// </summary>
+    private NeedsBrainPlanner.Prepared PrepareNeedsFarmTravelBrain(
+        BotRoamState state, IGameplayActor actor, Vector3 position, Npc? nearestMerchant)
+        => NeedsBrainPlanner.Prepare(actor, new NeedsBrainPlanner.Request(
+            SelfPosition: position,
+            SeedItemTemplateId: NeedsFarmSeedItemTemplateId,
+            SeedReadable: true,
+            SeedCount: 0, // the planner reads the bag itself from the template id (Request.Bare's shape)
+            CropEnRoute: false,
+            SoilEnRoute: false, // the caller's live-leg hold is the leg's own reading above, never reached here
+            // This leg reaches its travel arm only with the crop track already resolved
+            // (a live crop is owned by the wait/mature branches earlier), so the crop
+            // approach budget is untouched — the defaults.
+            CropApproachAttempts: 0,
+            MaxCropApproachAttempts: NeedsBrain.DefaultMaxCropApproachAttempts,
+            HarvestJustLanded: false,
+            HarvestRangeM: NeedsBrain.DefaultHarvestRangeM,
+            SoilAttempts: state.NeedsFarmSoilAttempts,
+            MaxSoilAttempts: NeedsFarmMaxSoilAttempts,
+            SoilProbe: (c, candidate) => ProbeFarmSoil(c, candidate),
+            // The same ground pin the pre-brain search applies, with the same anchor
+            // Z fallback (the planner hands the candidate alone); 0 height = no data
+            // → the anchor Z stands.
+            GroundZ: (candidateCharacter, candidate) => WithGroundZ(candidateCharacter, candidate, position.Z),
+            SoilDestination: null,
+            SoilDestinationResolved: false,
+            SeedMerchantPosition: nearestMerchant?.Transform.World.Position ?? Vector3.Zero,
+            SeedMerchantResolved: nearestMerchant != null,
+            TrackedCropObjId: state.NeedsFarmCropObjId,
+            TrackedCropTemplateId: state.NeedsFarmCropTemplateId,
+            DoodadResolver: DoodadResolver));
 
     /// <summary>
     /// Option 1: Leashed farm leisure / micro-wander while WaitingMaturity.
@@ -2220,13 +2306,16 @@ public enum NeedsFarmLoopPhase
     private static bool IsCropMature(Doodad doodad) => NeedsCrop.IsMature(doodad);
 
     /// <summary>
-    /// Valid plant soil for our seed: the injectable probe (a headless test may map
-    /// a surface) or the shared engine membership chain
+    /// THE SOIL READ, TRI-STATE: the injectable probe (a headless test may map a
+    /// surface — always a readable answer) or the shared engine membership chain
     /// (<see cref="NeedsSoil.Probe"/> — the same rule and allowlist the needs
-    /// BRAIN's planner resolves destinations with). The engine revalidates the
-    /// count cap fail-closed at dispatch.
+    /// BRAIN's planner resolves destinations with). <c>null</c> means the surface
+    /// could not be read at all, which the needs brain turns into a NAMED hold
+    /// rather than a fabricated "no soil here"; a probe that threw is that same
+    /// unreadable surface. The engine revalidates the count cap fail-closed at
+    /// dispatch.
     /// </summary>
-    private bool IsValidFarmSoil(Character character, Vector3 position)
+    private bool? ProbeFarmSoil(Character character, Vector3 position)
     {
         if (FarmSoilProvider != null)
         {
@@ -2236,17 +2325,24 @@ public enum NeedsFarmLoopPhase
             }
             catch
             {
-                return false;
+                return null;
             }
         }
-        return NeedsSoil.Probe(character.ParentWorld, position, NeedsFarmSeedItemTemplateId) == true;
+        return NeedsSoil.Probe(character.ParentWorld, position, NeedsFarmSeedItemTemplateId);
     }
 
+    /// <summary>Valid plant soil for our seed: a readable probe that answered yes (an unreadable surface is never a yes).</summary>
+    private bool IsValidFarmSoil(Character character, Vector3 position)
+        => ProbeFarmSoil(character, position) == true;
+
     /// <summary>
-    /// Nearest valid soil: the shared bounded spiral (perception rings, then the
-    /// coarser discovery extension) over the shared soil probe — the SAME
-    /// destination authority the needs brain's planner uses. The decision says
-    /// "need valid soil"; this owns waypoints, and never a fixture-injected point.
+    /// THE CALLER'S PRE-BRAIN RULE, unchanged: nearest valid soil through the shared
+    /// bounded spiral (perception rings, then the coarser discovery extension) over
+    /// the same soil probe — the destination authority the needs brain's planner
+    /// uses, so both paths resolve the same point from the same surface. Reached only
+    /// when the brain itself did not walk that spiral this wake (an unreadable
+    /// surface underfoot, or the on-soil-but-too-close-to-merchant case the planter
+    /// refuses), so the search is never run twice for the same answer.
     /// </summary>
     private Vector3? ResolveSoilTarget(Character character, Vector3 from)
     {
@@ -2254,7 +2350,7 @@ public enum NeedsFarmLoopPhase
         var merchantPos = nearestMerchant?.Transform.World.Position;
         var search = NeedsSoil.ResolveDestination(
             from,
-            candidate => IsValidFarmSoil(character, candidate),
+            candidate => ProbeFarmSoil(character, candidate),
             merchantPos,
             (candidate, fallbackZ) => WithGroundZ(character, candidate, fallbackZ));
         return search.Destination;
