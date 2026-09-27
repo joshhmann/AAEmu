@@ -209,7 +209,7 @@ public class QuestReturnInteractTests
         var abandon = QuestDecisionScenario.Run(actor, (_, _) => [],
             new QuestDecisionScenario.QuestOptions { CycleId = "g8b-brain-unreach-4", WithholdTurnIn = true });
         await Assert.That(abandon.SelectedAction == ActorActionType.Move).IsFalse();
-        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var abandoned)).IsTrue();
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var abandoned, TravelLegDispatch.ReturnMoveOwner)).IsTrue();
         await Assert.That(abandoned.Terminal).IsEqualTo(TravelTerminal.Unreachable);
         await Assert.That(abandoned.Reason).IsEqualTo(TravelReason.RepathExhausted);
         await Assert.That(TravelBrain.Token(abandoned.Terminal)).IsEqualTo("unreachable");
@@ -218,7 +218,7 @@ public class QuestReturnInteractTests
         // a bare failure, and still dispatches nothing.
         QuestDecisionScenario.Run(actor, (_, _) => [],
             new QuestDecisionScenario.QuestOptions { CycleId = "g8b-brain-unreach-5", WithholdTurnIn = true });
-        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var reRead)).IsTrue();
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var reRead, TravelLegDispatch.ReturnMoveOwner)).IsTrue();
         await Assert.That(reRead.Terminal).IsEqualTo(TravelTerminal.Unreachable);
 
         // Exactly three legs were ever issued, and the reporter was never dialled.
@@ -262,7 +262,7 @@ public class QuestReturnInteractTests
         var secondDetail = second.LegEvidence.Single(e => e.Leg == QuestLegId.Return).Detail;
         await Assert.That(secondDetail).Contains(":repaths=0");
         await Assert.That(secondDetail).Contains(":travel=arm=Follow:verb=MoveToUnit:");
-        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var armed)).IsTrue();
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var armed, TravelLegDispatch.ReturnMoveOwner)).IsTrue();
         await Assert.That(armed.RepathCount).IsEqualTo(0);
         await Assert.That(armed.Terminal).IsEqualTo(TravelTerminal.None);
         // The leg that ran before the retrack was retired by the CALLER itself.
@@ -277,7 +277,7 @@ public class QuestReturnInteractTests
         var third = QuestDecisionScenario.Run(actor, (_, _) => [],
             new QuestDecisionScenario.QuestOptions { CycleId = "g8b-retrack-3", WithholdTurnIn = true });
         await Assert.That(third.FailStage).IsEqualTo("WITHHELD");
-        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var still)).IsTrue();
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var still, TravelLegDispatch.ReturnMoveOwner)).IsTrue();
         await Assert.That(still.RepathCount).IsEqualTo(0);
         await Assert.That(still.Terminal).IsEqualTo(TravelTerminal.None);
         // Still exactly one retirement — the hold issued no new leg.

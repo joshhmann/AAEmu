@@ -488,19 +488,13 @@ public class BotRoamSurvivalWakeTests
     /// failure, so the return intent keeps its identity and its repath budget, and
     /// once the flee clears the return leg re-issues on the same journey.
     ///
-    /// EXPOSES A REAL BUG (reported, not fixed — ticket contract): the flee's own
-    /// preemption stages the detail <c>"survival flee retrack"</c>
-    /// (<c>BotRoamStepExecutor.StepSurvivalWake</c>), but
-    /// <c>TravelLegDispatch.IsCallerRetirement</c> recognises only
-    /// <c>"quest return retrack"</c> and <c>"stop requested"</c>, so
-    /// <c>MapLegOutcome</c> reads the survival retirement as a FOREIGN interruption
-    /// (<see cref="TravelLegOutcome.Interrupted"/>). <c>TravelBrain.Decide</c> then
-    /// treats it as a navigation failure and spends a repath
-    /// (<c>reason=Repathed:repaths=1</c>), so this assertion fails against current
-    /// production. The budget is two, so two flee episodes reach
-    /// <see cref="TravelTerminal.Unreachable"/> / <see cref="TravelReason.RepathExhausted"/>
-    /// and the return journey is STICKILY abandoned although the legs never failed
-    /// to navigate.
+    /// The flee's own preemption stages the shared <c>"survival flee retrack"</c>
+    /// detail (<c>BotRoamStepExecutor.StepSurvivalWake</c>), which
+    /// <c>TravelLegDispatch.IsCallerRetirement</c> recognises (fix 6a2cf33b9), so
+    /// <c>MapLegOutcome</c> reads the survival retirement as the caller's own
+    /// (Running) rather than a foreign interruption — a flee spends no repath, and
+    /// no episode can walk the return journey to a fabricated
+    /// <see cref="TravelTerminal.Unreachable"/>. Regression guard for that fix.
     /// </summary>
     [Test]
     public async Task ReturnJourneySurvivesTheFleePreemption_IntentStaysArmedAndTheLegReIssues()
@@ -513,7 +507,7 @@ public class BotRoamSurvivalWakeTests
         clock.Advance(TimeSpan.FromMilliseconds(100));
         await executor.StepAsync(runtime, CancellationToken.None);
         await Assert.That(actor.ActiveRequest?.MoveOwner).IsEqualTo(ReturnMoveOwner);
-        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var armed)).IsTrue();
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var armed, TravelLegDispatch.ReturnMoveOwner)).IsTrue();
         await Assert.That(armed.Kind).IsEqualTo(TravelTargetKind.Unit);
         await Assert.That(armed.TargetObjId).IsEqualTo(reporterObjId);
         await Assert.That(armed.Terminal).IsEqualTo(TravelTerminal.None);
@@ -526,7 +520,7 @@ public class BotRoamSurvivalWakeTests
         clock.Advance(TimeSpan.FromMilliseconds(100));
         await executor.StepAsync(runtime, CancellationToken.None);
         await Assert.That(executor.GetBotState(runtime.CharacterId)!.SurvivalWakeOwned).IsTrue();
-        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var afterFlee)).IsTrue();
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var afterFlee, TravelLegDispatch.ReturnMoveOwner)).IsTrue();
         await Assert.That(afterFlee.Terminal).IsEqualTo(TravelTerminal.None);
         await Assert.That(afterFlee.RepathCount).IsEqualTo(0);
 
@@ -551,7 +545,7 @@ public class BotRoamSurvivalWakeTests
         await Assert.That(resumedRuntime!.LastResult is { WorkSelected: true, SelectedAction: ActorActionType.Move }).IsTrue()
             .Because("the re-issued leg must be the quest tick's own landed return work");
         await Assert.That(resumedRuntime.LastResult!.Request!.MoveOwner).IsEqualTo(ReturnMoveOwner);
-        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var resumed)).IsTrue();
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var resumed, TravelLegDispatch.ReturnMoveOwner)).IsTrue();
         await Assert.That(resumed.TargetObjId).IsEqualTo(reporterObjId);
         await Assert.That(resumed.Terminal).IsEqualTo(TravelTerminal.None);
 
