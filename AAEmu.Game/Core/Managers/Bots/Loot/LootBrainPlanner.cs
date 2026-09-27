@@ -105,29 +105,14 @@ public static class LootBrainPlanner
         var survivalVetoed = observation != null && QuestBehavior.IsSurvivalVetoed(actor.ActorId, observation);
 
         // ------------------------------------------------------------- corpse
+        // THE ONE corpse-identity rule (<see cref="LootCorpseProbe"/>), shared with
+        // the corpse-approach travel seam so both read the same recycle verdict.
         // Unreadable covers both "no corpse pinned at all" and "no actor frame to
         // resolve one against", so a caller cannot mistake an absent corpse for a
         // lootable one.
-        var corpseState = LootCorpseState.Unreadable;
-        Npc? corpse = null;
-        if (corpseObjId != 0 && character != null)
-        {
-            corpse = character.ParentWorld?.GetNpc(corpseObjId);
-            if (corpse == null)
-            {
-                corpseState = LootCorpseState.Gone;
-            }
-            else
-            {
-                // The engine's own ObjId recycling rule: a recorded objId that
-                // resolves LIVE again is not our corpse. The template gate is
-                // applied only when the caller established one (0 = not
-                // established, never a fabricated match).
-                corpseState = corpse.Hp > 0 || (preyTemplateId != 0 && corpse.TemplateId != preyTemplateId)
-                    ? LootCorpseState.Recycled
-                    : LootCorpseState.Dead;
-            }
-        }
+        var resolved = LootCorpseProbe.Resolve(character, corpseObjId, preyTemplateId);
+        var corpseState = resolved.State;
+        var corpse = resolved.Corpse;
 
         // ---------------------------------------------------------- container
         var (containerReadable, containerCount, containerInRange, worth) =
