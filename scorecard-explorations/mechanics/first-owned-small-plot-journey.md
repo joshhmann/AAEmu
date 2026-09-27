@@ -91,7 +91,7 @@
 | 8. Quest 4438 (Reward) | Turn in to NPC 9789; receive 15596, 8337, 25× 31892 | Implemented in `CharacterQuests` | Unit / DB verified | Legitimate reward assertion |
 | 9. Place 8×8 Scarecrow | `HousingManager.Build` deducts 15 certs (31892) | Fixed in `HousingManager.cs` (zero-house bug resolved) | Unit test green | Verify housing zone coordinate resolution |
 | 10. Complete Build Step | Skill 18553 (10 LP, 0 packs) | Implemented via `ConstructPlotAction` | Code path verified | Replace multi-pack assumption for 8×8 |
-| 11. Cultivate & Harvest | Plant 15659, wait for growth, harvest into bag | Implemented in `PlantOnPlotAction` & `GameplayActor.Harvest` | Rig tested green | Confirm inventory persistence |
+| 11. Cultivate & Harvest | Plant canonical sapling 4862, wait for growth, harvest into bag | Implemented in `PlantOnPlotAction` & `GameplayActor.Harvest` | Rig tested green | Confirm inventory persistence |
 | 12. Tax Sustainment Craft| Craft 76 at Plaque 2392 (200 LP → 5× 31892) | Implemented via `CraftTaxCertificatesAction` | Code path verified | Wire Plaque interaction to GOAP |
 | 13. Human In-Client Eval | Josh logs in and observes live Nuian bot run | PENDING | Layer H (currently UNKNOWN) | Human evaluation session |
 

@@ -308,7 +308,9 @@ public class HomesteadRuntimeTests
     public async Task GoapPlanner_FullProgressionFromStarterToErectHome_ChainsAcrossDomains()
     {
         var planner = new GoapPlanner(maxExpansions: 5000);
-        var startState = BotWorldState.Empty.WithGold(100);
+        // The ErectHome chain establishes HasTreeSaplings through the canonical
+        // sapling purchase (4862 → 400 copper), so the bot must be able to afford it.
+        var startState = BotWorldState.Empty.WithGold(SharedGameKnowledge.TreeSaplingUnitPrice);
         var goal = GoalArbitrator.GoalErectHome;
 
         var actions = GoapActionRegistry.Instance.GetAllActions();
@@ -460,6 +462,13 @@ public class HomesteadRuntimeTests
         // Step 1: PlantOnPlot
         runner.Tick(bot, actor, context);
         await Assert.That(runner.CurrentAction!.Name).IsEqualTo("PlantOnPlot");
+
+        // The dispatched plant carries the CANONICAL sapling (4862), not the potato
+        // seed the removed alias substituted — the bag flag and the planted item are
+        // the same tree.
+        await Assert.That(actor.DispatchedRequests[^1].Payload).IsEqualTo(SharedGameKnowledge.TreeSaplingItemId);
+        await Assert.That(actor.DispatchedRequests[^1].Payload).IsNotEqualTo(SharedGameKnowledge.PotatoSeedItemId);
+
         context.Memory.AddGrove(1, homePos, DateTime.UtcNow.AddMinutes(-30));
         actor.DispatchedRequests[^1].Complete("Trees planted on plot");
 

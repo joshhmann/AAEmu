@@ -55,4 +55,24 @@ public class SharedGameKnowledgeTests
         await Assert.That(SharedGameKnowledge.ScarecrowDesignQuestId).IsEqualTo(4438u);
         await Assert.That(SharedGameKnowledge.ScarecrowDesignItemId).IsEqualTo(15596u);
     }
+
+    [Test]
+    public async Task TreeSaplingIdentity_IsNotThePotatoSeed()
+    {
+        // The removed alias made 15659 satisfy HasTreeSaplings and get planted as a
+        // tree. Sapling identity is its own canonical row (4862, 코르크참나무 묘목,
+        // ItemCategory.Saplings), never the potato seed.
+        await Assert.That(SharedGameKnowledge.TreeSaplingItemId).IsEqualTo(4862u);
+        await Assert.That(SharedGameKnowledge.TreeSaplingItemId)
+            .IsNotEqualTo(SharedGameKnowledge.PotatoSeedItemId);
+        await Assert.That(SharedGameKnowledge.TreeSaplingUnitPrice).IsEqualTo(400u);
+    }
+
+    [Test]
+    public async Task IsTreeSapling_UnknownOrUnloadedTemplate_FailsClosed()
+    {
+        // The predicate reads the engine's live template registry; an id the
+        // registry has never seen is not a sapling (and never a seed by default).
+        await Assert.That(SharedGameKnowledge.IsTreeSapling(0xDEADu)).IsFalse();
+    }
 }

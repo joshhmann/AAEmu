@@ -1,6 +1,11 @@
 #nullable enable
 
+using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Bots.Goap;
+using AAEmu.Game.Core.Managers.Bots.Goap.Actions;
+using AAEmu.Game.Models.Game.Items;
+using AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots.Goap;
 
@@ -119,5 +124,33 @@ public class GoapActionLibraryTests
 
         // Bounded search (well under 100 nodes expanded)
         await Assert.That(result.NodesExpanded).IsLessThan(100);
+    }
+
+    [Test]
+    public async Task Treearms_CarryCanonicalSaplingIdentity_NotThePotatoSeed()
+    {
+        // Regression for the seed==sapling alias: every arm that buys or plants a
+        // TREE must carry the canonical sapling row (4862, ItemCategory.Saplings).
+        // The potato seed 15659 is a crop seed — an arm carrying it would plant
+        // 감자 2259 while the plan claimed a grove.
+        GameplayActorTestRig.Seed();
+        GameplayActorTestRig.SeedItemTemplate(SharedGameKnowledge.TreeSaplingItemId);
+        ItemManager.Instance.GetTemplate(SharedGameKnowledge.TreeSaplingItemId).CategoryId =
+            (int)ItemCategory.Saplings;
+        GameplayActorTestRig.SeedItemTemplate(SharedGameKnowledge.PotatoSeedItemId);
+        ItemManager.Instance.GetTemplate(SharedGameKnowledge.PotatoSeedItemId).CategoryId =
+            (int)ItemCategory.Seed;
+
+        var byName = new GoapActionRegistry().GetAllActions().ToDictionary(a => a.Name);
+
+        var buy = (BuySaplingsAction)byName["BuyTreeSaplings"];
+        var wild = (PlantWildSaplingAction)byName["PlantSecretGrove"];
+
+        await Assert.That(buy.SaplingTemplateId).IsEqualTo(SharedGameKnowledge.TreeSaplingItemId);
+        await Assert.That(wild.SaplingTemplateId).IsEqualTo(SharedGameKnowledge.TreeSaplingItemId);
+
+        // The identity is a sapling by the engine's own category — and is not the seed.
+        await Assert.That(SharedGameKnowledge.IsTreeSapling(buy.SaplingTemplateId)).IsTrue();
+        await Assert.That(SharedGameKnowledge.IsTreeSapling(SharedGameKnowledge.PotatoSeedItemId)).IsFalse();
     }
 }

@@ -1,5 +1,6 @@
 #nullable enable
 
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Bots.Goap;
 using AAEmu.Game.Core.Managers.Bots.Goap.Actions;
 
@@ -39,6 +40,34 @@ public class GoapPlannerTests
         await Assert.That(state.Satisfies(reqPass)).IsTrue();
         await Assert.That(state.Satisfies(reqFailLabor)).IsFalse();
         await Assert.That(state.Satisfies(reqFailGold)).IsFalse();
+    }
+
+    [Test]
+    public async Task BuySaplingsAction_AffordabilityTracksCanonicalSaplingPrice()
+    {
+        // The registry's buy arm must be affordable exactly at the canonical sapling
+        // price (4862 → 400): one copper short fails, exact succeeds. Pins the buy
+        // action's gold precondition to the same shared const the arbitrator reads,
+        // so the removed seed alias cannot leave the gate and the plan disagreeing.
+        var registry = new GoapActionRegistry();
+        var planner = new GoapPlanner();
+        var goal = new GoapGoal("SecretWildFarm").WithCondition(BotWorldState.SecretGrovePlanted);
+        var actions = registry.GetActions(GoapDomain.WildFarming);
+
+        var shortState = BotWorldState.Empty
+            .With(BotWorldState.NearSeedMerchant)
+            .WithLabor(100)
+            .WithGold(SharedGameKnowledge.TreeSaplingUnitPrice - 1);
+        var exactState = BotWorldState.Empty
+            .With(BotWorldState.NearSeedMerchant)
+            .WithLabor(100)
+            .WithGold(SharedGameKnowledge.TreeSaplingUnitPrice);
+
+        var shortResult = planner.Plan(null, shortState, goal, actions);
+        var exactResult = planner.Plan(null, exactState, goal, actions);
+
+        await Assert.That(shortResult.Success).IsFalse();
+        await Assert.That(exactResult.Success).IsTrue();
     }
 
     [Test]
@@ -443,7 +472,9 @@ public class GoapPlannerTests
         // The full cross-domain registry needs a wider budget than DefaultMaxExpansions
         // (see GoapPlanner_FullProgressionFromStarterToErectHome_ChainsAcrossDomains).
         var planner = new GoapPlanner(maxExpansions: 5000);
-        var startState = BotWorldState.Empty.WithGold(100);
+        // ErectHome is reached through the canonical sapling purchase (4862 → 400),
+        // so the bot must be able to afford it.
+        var startState = BotWorldState.Empty.WithGold(SharedGameKnowledge.TreeSaplingUnitPrice);
         var goal = GoalArbitrator.GoalErectHome;
         var actions = GoapActionRegistry.Instance.GetAllActions();
 

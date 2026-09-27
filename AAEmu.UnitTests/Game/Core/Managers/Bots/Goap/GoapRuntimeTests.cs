@@ -127,6 +127,33 @@ public class GoapRuntimeTests
     }
 
     [Test]
+    public async Task GoalArbitrator_WildFarmAffordability_TracksCanonicalSaplingPrice()
+    {
+        // The arbitrated wild-farm demand is affordable exactly at the canonical
+        // sapling price (400 for 4862). One copper short and the goal is not
+        // arbitrated at all — the bot can never be steered into a purchase it
+        // cannot afford. A held sapling needs no gold.
+        var arbitrator = new GoalArbitrator();
+        var bot = NewBot("afford-bot");
+        var context = new BotContext();
+        context.Memory.TargetWildFarmPos = new Vector3(500f, 500f, 10f);
+
+        var shortState = BotWorldState.Empty
+            .WithLabor(100)
+            .WithGold(SharedGameKnowledge.TreeSaplingUnitPrice - 1);
+        var exactState = BotWorldState.Empty
+            .WithLabor(100)
+            .WithGold(SharedGameKnowledge.TreeSaplingUnitPrice);
+
+        var shortGoal = arbitrator.ArbitrateGoal(bot, shortState, context, currentPrimaryGoal: null);
+        var exactGoal = arbitrator.ArbitrateGoal(bot, exactState, context, currentPrimaryGoal: null);
+
+        await Assert.That(shortGoal?.Name).IsNotEqualTo("PlantWildFarm");
+        await Assert.That(exactGoal).IsNotNull();
+        await Assert.That(exactGoal!.Name).IsEqualTo("PlantWildFarm");
+    }
+
+    [Test]
     public async Task PlanTemplateCache_StoresAndRetrievesActionSequences()
     {
         var cache = new PlanTemplateCache();
@@ -277,6 +304,44 @@ public class GoapRuntimeTests
         var state = provider.Project(bot, context);
 
         await Assert.That(state.Has(BotWorldState.HasBuildingMaterials)).IsTrue();
+    }
+
+    [Test]
+    public async Task Saplings_PotatoSeedInBag_DoesNotSetFlag()
+    {
+        // Regression: the removed alias made the potato SEED 15659 satisfy
+        // HasTreeSaplings. A seed is ItemCategory.Seed, never a sapling.
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("seed-only-bot");
+        GameplayActorTestRig.SeedItemTemplate(SharedGameKnowledge.PotatoSeedItemId);
+        ItemManager.Instance.GetTemplate(SharedGameKnowledge.PotatoSeedItemId).CategoryId = (int)ItemCategory.Seed;
+        var granted = bot.Character.Inventory.Bag.AcquireDefaultItem(
+            ItemTaskType.Gm, SharedGameKnowledge.PotatoSeedItemId, 1, 1);
+        await Assert.That(granted).IsTrue();
+        var context = new BotContext();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.HasTreeSaplings)).IsFalse();
+    }
+
+    [Test]
+    public async Task Saplings_CanonicalSaplingInBag_SetsFlag()
+    {
+        // The same projection DOES recognize the canonical sapling row (4862,
+        // ItemCategory.Saplings) — the identity the wild-farm/plot plant arms use.
+        var provider = new BotWorldStateProvider();
+        var bot = NewBot("sapling-bot");
+        GameplayActorTestRig.SeedItemTemplate(SharedGameKnowledge.TreeSaplingItemId);
+        ItemManager.Instance.GetTemplate(SharedGameKnowledge.TreeSaplingItemId).CategoryId = (int)ItemCategory.Saplings;
+        var granted = bot.Character.Inventory.Bag.AcquireDefaultItem(
+            ItemTaskType.Gm, SharedGameKnowledge.TreeSaplingItemId, 1, 1);
+        await Assert.That(granted).IsTrue();
+        var context = new BotContext();
+
+        var state = provider.Project(bot, context);
+
+        await Assert.That(state.Has(BotWorldState.HasTreeSaplings)).IsTrue();
     }
 
     [Test]
