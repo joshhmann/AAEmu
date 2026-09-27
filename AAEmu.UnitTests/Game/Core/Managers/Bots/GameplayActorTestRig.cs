@@ -1305,7 +1305,7 @@ public static class GameplayActorTestRig
         var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
         var dictFields = new[]
         {
-            "_templates", "_funcsByGroups", "_funcsById", "_funcTemplates", "_phaseFuncs", "_phaseFuncTemplates"
+            "_templates", "_allFuncGroups", "_funcsByGroups", "_funcsById", "_funcTemplates", "_phaseFuncs", "_phaseFuncTemplates"
         };
         foreach (var name in dictFields)
         {
@@ -1383,6 +1383,69 @@ public static class GameplayActorTestRig
         // DoFunc → HasOnlyGroupKindStart() reads Template.FuncGroups (Doodad.cs:795);
         // an empty list keeps the one-shot loot doodad alive (start-only rule).
         doodad.Template = new DoodadTemplate { Id = groupId, FuncGroups = [] };
+        return doodadObjId;
+    }
+    /// <summary>
+    /// Seeds the DoodadManager surface for one gather-from-doodad source: a
+    /// doodad template whose func groups carry a skill-less loot func granting
+    /// <paramref name="itemTemplateId"/> (the well-draw path's
+    /// <c>QuestFixtureRow.ResolveDoodadSource</c> inversion target), plus the
+    /// template row itself so the scan enumerates it. Missing-only per row.
+    /// </summary>
+    public static void SeedGatherDoodadSource(uint doodadTemplateId, uint groupId, uint funcId, uint itemTemplateId, int count = 1)
+    {
+        // The func row must be visible through BOTH surfaces the game reads:
+        // the group→func map (Doodad.Use/DoFunc at interact time) and the
+        // template→group binding (fixture derivation + DoodadManager.Create).
+        // SeedDoodadLootInteraction owns only the first, so bind the template
+        // row here — missing-only, never replacing a canonical template.
+        SeedDoodadLootInteraction(groupId, funcId, itemTemplateId, count);
+        var manager = DoodadManager.Instance;
+        var templates = (Dictionary<uint, DoodadTemplate>)GetField(manager, "_templates");
+        if (!templates.TryGetValue(doodadTemplateId, out var template))
+        {
+            template = new DoodadTemplate { Id = doodadTemplateId, FuncGroups = [] };
+            templates[doodadTemplateId] = template;
+        }
+        if (template.FuncGroups.All(g => g.Id != groupId))
+        {
+            var allGroups = (Dictionary<uint, DoodadFuncGroups>)GetField(manager, "_allFuncGroups");
+            if (!allGroups.TryGetValue(groupId, out var bound))
+            {
+                bound = new DoodadFuncGroups
+                {
+                    Id = groupId,
+                    Almighty = doodadTemplateId,
+                    GroupKindId = DoodadFuncGroups.DoodadFuncGroupKind.Start
+                };
+                allGroups[groupId] = bound;
+            }
+            if (bound.Almighty == doodadTemplateId)
+                template.FuncGroups.Add(bound);
+        }
+    }
+
+    /// <summary>
+    /// Spawns a gather-source doodad in the session world: the raw world object
+    /// with the seeded template id, joined to the region graph at
+    /// <paramref name="position"/> so wake perception carries it.
+    /// </summary>
+    public static uint SpawnGatherDoodad(HeadlessSession session, uint doodadTemplateId, uint groupId, uint funcId, uint itemTemplateId, System.Numerics.Vector3 position)
+    {
+        SeedGatherDoodadSource(doodadTemplateId, groupId, funcId, itemTemplateId);
+        var doodadObjId = session.SpawnDoodad(doodadTemplateId);
+        var doodad = session.World.GetDoodad(doodadObjId)!;
+        doodad.FuncGroupId = groupId;
+        // Same one-shot shape as SpawnInteractableDoodad: empty FuncGroups keeps
+        // the loot doodad alive through DoFunc's start-only rule.
+        doodad.Template = new DoodadTemplate { Id = doodadTemplateId, FuncGroups = [] };
+        var region = session.World.GetRegionByPos(position);
+        doodad.Transform.Local.SetPosition(position);
+        if (region != null)
+        {
+            region.AddObject(doodad);
+            doodad.Region = region;
+        }
         return doodadObjId;
     }
 
