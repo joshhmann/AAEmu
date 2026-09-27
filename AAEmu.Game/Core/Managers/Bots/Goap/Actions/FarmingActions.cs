@@ -7,7 +7,7 @@ using AAEmu.Game.Core.Managers.Bots;
 namespace AAEmu.Game.Core.Managers.Bots.Goap.Actions;
 
 /// <summary>
-/// Navigates the bot to the nearest known seed/sapling merchant hub.
+/// Navigates the bot to the nearest known seed/merchant hub.
 /// </summary>
 public sealed class TravelToSeedMerchantAction : GoapActionBase
 {
@@ -57,7 +57,11 @@ public sealed class TravelToSeedMerchantAction : GoapActionBase
 }
 
 /// <summary>
-/// Purchases tree saplings from the seed merchant.
+/// Purchases TREE SAPLINGS from the sapling merchant (canonical pack 141,
+/// 묘목 상인 — never the seed vendor's potato seed 15659). The purchased item is
+/// <see cref="SharedGameKnowledge.TreeSaplingItemId"/> (4862, 코르크참나무 묘목:
+/// ItemCategory.Saplings), the same identity the projection's HasTreeSaplings
+/// flag resolves, so the plan's buy effect and the observed effect cannot drift.
 /// Requires NearSeedMerchant and gold.
 /// </summary>
 public sealed class BuySaplingsAction : GoapActionBase
@@ -66,7 +70,16 @@ public sealed class BuySaplingsAction : GoapActionBase
     public int SaplingCount { get; init; }
     public uint GoldCost { get; init; }
 
-    public BuySaplingsAction(uint saplingTemplateId = 15659, int saplingCount = 5, uint goldCost = 50, float baseCost = 1.0f)
+    /// <summary>
+    /// One canonical sapling at its canonical price: the minimum purchase that
+    /// establishes <see cref="BotWorldState.HasTreeSaplings"/> (a single plantable
+    /// tree), and exactly what <see cref="BotWorldStateProvider"/> observes in the bag.
+    /// </summary>
+    public BuySaplingsAction(
+        uint saplingTemplateId = SharedGameKnowledge.TreeSaplingItemId,
+        int saplingCount = 1,
+        uint goldCost = SharedGameKnowledge.TreeSaplingUnitPrice,
+        float baseCost = 1.0f)
         : base("BuyTreeSaplings", baseCost)
     {
         SaplingTemplateId = saplingTemplateId;
@@ -168,7 +181,9 @@ public sealed class HikeToWildFarmAction : GoapActionBase
 }
 
 /// <summary>
-/// Plants tree saplings at the secluded wild tree farm.
+/// Plants TREE SAPLINGS at the secluded wild tree farm.
+/// The planted item is <see cref="SharedGameKnowledge.TreeSaplingItemId"/> (4862,
+/// 코르크참나무 묘목 — ItemCategory.Saplings), never a crop seed.
 /// Consumes saplings and labor points.
 /// </summary>
 public sealed class PlantWildSaplingAction : GoapActionBase
@@ -176,7 +191,10 @@ public sealed class PlantWildSaplingAction : GoapActionBase
     public uint SaplingTemplateId { get; init; }
     public ushort LaborCost { get; init; }
 
-    public PlantWildSaplingAction(uint saplingTemplateId = 15659, ushort laborCost = 10, float baseCost = 2.0f)
+    public PlantWildSaplingAction(
+        uint saplingTemplateId = SharedGameKnowledge.TreeSaplingItemId,
+        ushort laborCost = 10,
+        float baseCost = 2.0f)
         : base("PlantSecretGrove", baseCost)
     {
         SaplingTemplateId = saplingTemplateId;

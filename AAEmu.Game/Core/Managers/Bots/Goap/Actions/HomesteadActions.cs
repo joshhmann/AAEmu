@@ -360,11 +360,16 @@ public sealed class TravelToHomeSiteAction : GoapActionBase
 }
 
 /// <summary>
-/// Plants crops or trees specifically within the protected boundaries of the bot's owned plot.
+/// Plants TREE SAPLINGS within the protected boundaries of the bot's owned plot.
+/// The planted item is the canonical sapling identity
+/// (<see cref="SharedGameKnowledge.TreeSaplingItemId"/> 4862, ItemCategory.Saplings)
+/// — the SAME identity <see cref="BotWorldState.HasTreeSaplings"/> observes in the
+/// bag, so the precondition and the dispatched item cannot be different plants.
+/// (A crop seed — potato 15659 — is NOT a sapling and must never satisfy this arm.)
 /// </summary>
 public sealed class PlantOnPlotAction : GoapActionBase
 {
-    public const uint DefaultSeedTemplateId = 15659;
+    public const uint SaplingTemplateId = SharedGameKnowledge.TreeSaplingItemId;
 
     public PlantOnPlotAction(float baseCost = 2.5f)
         : base("PlantOnPlot", baseCost)
@@ -379,7 +384,7 @@ public sealed class PlantOnPlotAction : GoapActionBase
     {
         var effectiveActor = actor ?? new GameplayActor(bot.Character);
         var plotCenter = bot.Character.Transform?.World?.Position ?? Vector3.Zero;
-        return effectiveActor.Plant(DefaultSeedTemplateId, plotCenter, zRot: 0f);
+        return effectiveActor.Plant(SaplingTemplateId, plotCenter, zRot: 0f);
     }
 
     public override GoapActionStatus EvaluateStatus(

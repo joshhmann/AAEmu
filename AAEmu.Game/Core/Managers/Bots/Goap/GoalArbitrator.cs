@@ -84,9 +84,13 @@ public sealed class GoalArbitrator : IGoalArbitrator
         }
 
         // B) Plant wild farm (Priority 60)
+        // Economically canonical: affording the wild-farm goal means affording ONE
+        // canonical tree sapling (4862 → 400 copper). The gate references the same
+        // shared const the buy action charges, so a bot can never be arbitrated into
+        // a plan whose purchase it cannot afford. A held sapling needs no gold.
         if (context.Memory.TargetWildFarmPos.HasValue
             && observedState.Labor >= 10
-            && (observedState.Gold >= 50 || observedState.Has(BotWorldState.HasTreeSaplings))
+            && (observedState.Gold >= SharedGameKnowledge.TreeSaplingUnitPrice || observedState.Has(BotWorldState.HasTreeSaplings))
             && !context.Memory.TargetWildFarmPoiInvalidated
             && (observedState.Has(BotWorldState.HasTreeSaplings) || context.Memory.GetActionFailures("BuyTreeSaplings") <= context.MaxActionRetries))
         {

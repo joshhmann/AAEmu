@@ -17,9 +17,6 @@ namespace AAEmu.Game.Core.Managers.Bots.Goap;
 /// </summary>
 public sealed class BotWorldStateProvider : IBotWorldStateProvider
 {
-    /// <summary>Canonical potato seed item id (15659, 감자 씨앗).</summary>
-    public const uint DefaultSeedTemplateId = 15659;
-    public const uint DefaultSaplingTemplateId = DefaultSeedTemplateId;
     public const uint DefaultFoodTemplateId = 8219;
 
     /// <summary>
@@ -95,8 +92,12 @@ public sealed class BotWorldStateProvider : IBotWorldStateProvider
         if (hasFood)
             flags |= BotWorldState.HasEdibleFood;
 
+        // Sapling identity is CANONICAL: a bag item counts only when its own item
+        // template sits in ItemCategory.Saplings (묘목). The potato SEED 15659
+        // (ItemCategory.Seed) is NOT a sapling — the removed alias that made it one
+        // satisfied this grove/plot flag from a crop seed.
         bool hasSaplings = context.Memory.HasSaplingsOverride ??
-            (ch.Inventory != null && ch.Inventory.Bag.Items.Any(i => i != null && i.TemplateId == DefaultSaplingTemplateId));
+            (ch.Inventory != null && ch.Inventory.Bag.Items.Any(i => i != null && SharedGameKnowledge.IsTreeSapling(i.TemplateId)));
         if (hasSaplings)
             flags |= BotWorldState.HasTreeSaplings;
 
