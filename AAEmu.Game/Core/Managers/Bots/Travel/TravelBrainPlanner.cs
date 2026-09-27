@@ -98,10 +98,11 @@ public static class TravelBrainPlanner
         bool followRequested,
         float arrivalRadiusM = TravelBrain.DefaultArrivalRadiusM,
         float localModeMaxM = TravelBrain.DefaultLocalModeMaxM,
-        int repathBudget = TravelBrain.DefaultRepathBudget)
+        int repathBudget = TravelBrain.DefaultRepathBudget,
+        string legOwner = "")
         => TravelIntentStore.Arm(
             actorObjId, kind, targetObjId, destination, followRequested,
-            arrivalRadiusM, localModeMaxM, repathBudget, SameDestinationToleranceM);
+            arrivalRadiusM, localModeMaxM, repathBudget, SameDestinationToleranceM, legOwner);
 
     /// <summary>
     /// Builds the wake's inputs and evaluates the decision. Writes nothing: the
@@ -116,13 +117,14 @@ public static class TravelBrainPlanner
     /// fail-closed direction (a local leg still serves the destination).
     /// </param>
     public static Prepared Prepare(
-        IGameplayActor actor, in Request request, IRoadNetworkService? roads = null)
+        IGameplayActor actor, in Request request, IRoadNetworkService? roads = null,
+        string legOwner = "")
     {
         ArgumentNullException.ThrowIfNull(actor);
 
         var character = actor.Character;
         var selfPosition = character?.Transform.World.Position ?? Vector3.Zero;
-        TravelIntentStore.TryGet(actor.ActorId, out var intent);
+        TravelIntentStore.TryGet(actor.ActorId, out var intent, legOwner);
 
         // ------------------------------------------------------ destination + probe
         var destination = request.Destination;
@@ -219,24 +221,24 @@ public static class TravelBrainPlanner
     /// target's consecutive miss or its clearing, and the road route the wake
     /// resolved. Called by the caller immediately after <see cref="Prepare"/>.
     /// </summary>
-    public static void Publish(uint actorObjId, in Prepared prepared)
+    public static void Publish(uint actorObjId, in Prepared prepared, string legOwner = "")
     {
         if (prepared.Decision.IsTerminal)
         {
-            TravelIntentStore.BankTerminal(actorObjId, prepared.Decision.Terminal, prepared.Decision.Reason);
+            TravelIntentStore.BankTerminal(actorObjId, prepared.Decision.Terminal, prepared.Decision.Reason, legOwner);
             return;
         }
 
         if (prepared.Route.Count > 0)
-            TravelIntentStore.SetRoute(actorObjId, prepared.Route);
+            TravelIntentStore.SetRoute(actorObjId, prepared.Route, legOwner);
 
         if (prepared.Inputs.TargetKind != TravelTargetKind.Unit)
             return;
 
         if (prepared.Inputs.TargetResolved)
-            TravelIntentStore.NoteResolved(actorObjId);
+            TravelIntentStore.NoteResolved(actorObjId, legOwner);
         else if (prepared.Decision.Arm == TravelArm.TargetProbe)
-            TravelIntentStore.NoteResolveMiss(actorObjId);
+            TravelIntentStore.NoteResolveMiss(actorObjId, legOwner);
     }
 
     /// <summary>
@@ -245,7 +247,7 @@ public static class TravelBrainPlanner
     /// really sent to, and a repath spends its attempt. A verb-less decision banks
     /// nothing.
     /// </summary>
-    public static void PublishDispatched(IGameplayActor actor, in TravelDecision decision)
+    public static void PublishDispatched(IGameplayActor actor, in TravelDecision decision, string legOwner = "")
     {
         ArgumentNullException.ThrowIfNull(actor);
         if (decision.Verb == TravelVerb.Hold)
@@ -253,9 +255,9 @@ public static class TravelBrainPlanner
 
         if (decision.Reason == TravelReason.Repathed)
             TravelIntentStore.NoteRepath(actor.ActorId, decision.RepathCount, decision.Mode,
-                decision.Destination ?? Vector3.Zero);
+                decision.Destination ?? Vector3.Zero, legOwner);
         else if (decision.Destination.HasValue)
-            TravelIntentStore.NoteIssued(actor.ActorId, decision.Mode, decision.Destination.Value);
+            TravelIntentStore.NoteIssued(actor.ActorId, decision.Mode, decision.Destination.Value, legOwner);
     }
 
     /// <summary>
@@ -264,12 +266,12 @@ public static class TravelBrainPlanner
     /// route at junction one. Called by the caller when its leg reached a terminal
     /// success.
     /// </summary>
-    public static bool PublishLegCompleted(IGameplayActor actor)
+    public static bool PublishLegCompleted(IGameplayActor actor, string legOwner = "")
     {
         ArgumentNullException.ThrowIfNull(actor);
         var position = actor.Character?.Transform.World.Position;
         return position.HasValue
-               && TravelIntentStore.AdvanceRoute(actor.ActorId, position.Value, TravelBrain.DefaultArrivalRadiusM);
+               && TravelIntentStore.AdvanceRoute(actor.ActorId, position.Value, TravelBrain.DefaultArrivalRadiusM, legOwner);
     }
 
     // ------------------------------------------------------------------ live reads

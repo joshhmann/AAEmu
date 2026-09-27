@@ -1501,9 +1501,11 @@ public enum NeedsFarmLoopPhase
             // completes (the next quest wake re-arms when travel is needed).
             // G8b: the quest-owned return leg preempts the same way.
             var moveOwner = result?.Request?.MoveOwner;
-            var returnDispatched = string.Equals(moveOwner, "RETURN_MOVE_TO_UNIT", StringComparison.Ordinal);
+            var returnDispatched = string.Equals(
+                moveOwner, TravelLegDispatch.ReturnMoveOwner, StringComparison.Ordinal);
             if (result?.SelectedAction == ActorActionType.Move
-                && (returnDispatched || string.Equals(moveOwner, "PURSUIT_MOVE_TO_UNIT", StringComparison.Ordinal)))
+                && (returnDispatched
+                    || string.Equals(moveOwner, TravelLegDispatch.PursuitMoveOwner, StringComparison.Ordinal)))
             {
                 SupersedeQuestTravelRoute(state, returnDispatched ? "quest return dispatched" : "quest pursuit dispatched");
             }

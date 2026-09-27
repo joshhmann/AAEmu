@@ -42,6 +42,20 @@ internal static class TravelLegDispatch
     internal const string ReturnMoveOwner = "RETURN_MOVE_TO_UNIT";
 
     /// <summary>
+    /// The quest PURSUIT leg's movement-owner tag (the value the roam executor's own
+    /// supersede rule reads, quoted byte-identically so the two can never drift).
+    /// </summary>
+    internal const string PursuitMoveOwner = "PURSUIT_MOVE_TO_UNIT";
+
+    /// <summary>
+    /// The preemption detail the caller's own pursuit retrack stages
+    /// (<c>QuestBehavior.DispatchPursuitMove</c>). Caller-authored: it retires a leg
+    /// the caller itself decided to replace, never a navigation failure. Shared (not
+    /// private) for the same reason <see cref="ReturnRetrackDetail"/> is.
+    /// </summary>
+    internal const string PursuitRetrackDetail = "quest pursuit retrack";
+
+    /// <summary>
     /// How many of the actor's newest audit rows <see cref="MapLegOutcome"/> walks
     /// looking for the caller's own last leg. The trace is bounded (512 rows) and
     /// the caller's leg is always within a few rows of the tail.
@@ -94,17 +108,18 @@ internal static class TravelLegDispatch
     /// <returns>True when a journey is armed for this target; false when the arm was refused (no actor identity).</returns>
     internal static bool EnsureJourney(
         IGameplayActor actor, uint targetObjId, Vector3 targetPosition,
-        float arrivalRadiusM, int repathBudget)
+        float arrivalRadiusM, int repathBudget, string legOwner = "")
     {
         ArgumentNullException.ThrowIfNull(actor);
-        if (TravelIntentStore.TryGet(actor.ActorId, out var armed)
+        if (TravelIntentStore.TryGet(actor.ActorId, out var armed, legOwner)
             && armed.Kind == TravelTargetKind.Unit
             && armed.TargetObjId == targetObjId)
             return true;
 
         return TravelBrainPlanner.Arm(
             actor.ActorId, TravelTargetKind.Unit, targetObjId, targetPosition,
-            followRequested: true, arrivalRadiusM: arrivalRadiusM, repathBudget: repathBudget);
+            followRequested: true, arrivalRadiusM: arrivalRadiusM, repathBudget: repathBudget,
+            legOwner: legOwner);
     }
 
     /// <summary>
@@ -114,10 +129,10 @@ internal static class TravelLegDispatch
     /// a cause OUTSIDE the travel layer — the quest no longer needs the return leg,
     /// or its target identity is gone.
     /// </summary>
-    internal static bool EndJourney(IGameplayActor actor)
+    internal static bool EndJourney(IGameplayActor actor, string legOwner = "")
     {
         ArgumentNullException.ThrowIfNull(actor);
-        return TravelIntentStore.Disarm(actor.ActorId);
+        return TravelIntentStore.Disarm(actor.ActorId, legOwner);
     }
 
     // ---------------------------------------------------------------- decision
@@ -147,10 +162,10 @@ internal static class TravelLegDispatch
     internal static TravelBrainPlanner.Prepared? Prepare(
         IGameplayActor actor, uint targetObjId, Vector3 targetPosition, float arrivalRadiusM,
         bool legLive, TravelLegOutcome legOutcome,
-        int repathBudget = TravelBrain.DefaultRepathBudget)
+        int repathBudget = TravelBrain.DefaultRepathBudget, string legOwner = "")
     {
         ArgumentNullException.ThrowIfNull(actor);
-        if (!EnsureJourney(actor, targetObjId, targetPosition, arrivalRadiusM, repathBudget))
+        if (!EnsureJourney(actor, targetObjId, targetPosition, arrivalRadiusM, repathBudget, legOwner))
             return null;
 
         var prepared = TravelBrainPlanner.Prepare(actor, new TravelBrainPlanner.Request(
@@ -181,16 +196,16 @@ internal static class TravelLegDispatch
             LegDestination: Vector3.Zero,
             RetreatRequested: false,
             ThreatObjId: 0,
-            ThreatPosition: Vector3.Zero));
+            ThreatPosition: Vector3.Zero), legOwner: legOwner);
 
         // THE STORE'S STICKINESS, made real for the consumer: a journey that already
         // reached a terminal re-reads that NAMED verdict instead of deciding again,
         // so an abandoned destination can never be re-derived as a bare failure (or
         // silently resumed) later in the same journey.
-        if (TravelIntentStore.TryGet(actor.ActorId, out var armed) && armed.IsSettled)
+        if (TravelIntentStore.TryGet(actor.ActorId, out var armed, legOwner) && armed.IsSettled)
             prepared = prepared with { Decision = SettledTerminal(armed) };
 
-        TravelBrainPlanner.Publish(actor.ActorId, prepared);
+        TravelBrainPlanner.Publish(actor.ActorId, prepared, legOwner);
         return prepared;
     }
 
@@ -296,6 +311,77 @@ internal static class TravelLegDispatch
         }
     }
 
+    /// <summary>
+    /// THE CALLER'S PURSUIT VERDICT TABLE — the pursuit leg's own copy of the ONE
+    /// discipline <see cref="DecideReturnLeg"/> encodes, with the caller's pursuit
+    /// lane tokens preserved verbatim (<c>dispatch=move|stop|held|withdrawn</c>) and
+    /// the brain's own arm/reason riding additively in the caller's <c>:travel=</c>
+    /// fragment.
+    ///
+    /// It differs from the return table in exactly one arm, and deliberately so: the
+    /// return leg's PRE-BRAIN in-gate rule holds then dials (its reporter is an NPC
+    /// to talk to, so the settled wake yields to InteractNpc); the pursuit leg's
+    /// pre-brain in-gate rule holds and stays settled (its prey is a unit to close on
+    /// — combat, never conversation). Every other arm is the same vocabulary, and the
+    /// equivalence is pinned by test.
+    ///
+    /// Fail-closed in both directions, exactly as the return table is: a settled
+    /// decision withdraws NAMING the terminal, and any verb this leg cannot serve
+    /// (a position leg, the retreat leg) withdraws rather than dispatching blind.
+    /// </summary>
+    /// <param name="brain">The brain's wake preparation, or null when no journey could be armed.</param>
+    /// <param name="inGate">The caller's own stop-radius reading (fallback branch only).</param>
+    /// <param name="legLive">The caller's reading of the leg it dispatched (fallback branch only).</param>
+    /// <param name="moveReason">The caller's own move reason token (<c>retrack</c> when a live leg is being re-issued, otherwise the drift reading).</param>
+    /// <param name="driftText">The caller's own drift reading against its last issue (<c>fresh</c> before any issue).</param>
+    internal static ReturnLegVerdict DecidePursuitLeg(
+        TravelBrainPlanner.Prepared? brain,
+        bool inGate,
+        bool legLive,
+        string moveReason,
+        string driftText)
+    {
+        if (brain is not { } prepared)
+            return FallbackPursuit(inGate, legLive, moveReason, driftText);
+
+        var decision = prepared.Decision;
+        if (decision.IsAbandon)
+            return new ReturnLegVerdict(
+                ReturnLegVerb.Withdraw, "withdrawn", $"terminal-{TravelBrain.Token(decision.Terminal)}",
+                TravelBrain.Token(decision.Terminal), decision);
+
+        switch (decision.Verb)
+        {
+            case TravelVerb.Stop:
+                // A keep-station follow is not a finished journey: the arrival arm
+                // halts and the intent stays live, so the pursuit holds station with
+                // the SAME audited Stop token its own in-range rule printed.
+                return new ReturnLegVerdict(ReturnLegVerb.Stop, "stop", "in-range", null, decision);
+            case TravelVerb.MoveToUnit:
+                return new ReturnLegVerdict(ReturnLegVerb.MoveToUnit, "move", moveReason, null, decision);
+            case TravelVerb.Hold when decision.Reason == TravelReason.LegLive:
+                return new ReturnLegVerdict(
+                    ReturnLegVerb.Held, "held", $"drift-held(drift={driftText})", null, decision);
+            case TravelVerb.Hold:
+                return new ReturnLegVerdict(
+                    ReturnLegVerb.Withdraw, "withdrawn", ReasonToken(decision.Reason), TerminalOf(decision), decision);
+            default:
+                return new ReturnLegVerdict(
+                    ReturnLegVerb.Withdraw, "withdrawn", $"unexpected-verb-{decision.Verb}", TerminalOf(decision), decision);
+        }
+    }
+
+    /// <summary>The pursuit leg's own pre-brain rule, unchanged: inside the stop radius it holds and stays settled; outside it closes, drift-gated.</summary>
+    private static ReturnLegVerdict FallbackPursuit(
+        bool inGate, bool legLive, string moveReason, string driftText)
+    {
+        if (inGate)
+            return new ReturnLegVerdict(ReturnLegVerb.Stop, "stop", "in-range", null, null);
+        return legLive
+            ? new ReturnLegVerdict(ReturnLegVerb.Held, "held", $"drift-held(drift={driftText})", null, null)
+            : new ReturnLegVerdict(ReturnLegVerb.MoveToUnit, "move", moveReason, null, null);
+    }
+
     /// <summary>The leg's own <c>reason=</c> token for a brain reason (space-free, lowercase, the leg's vocabulary).</summary>
     private static string ReasonToken(TravelReason reason) => reason switch
     {
@@ -352,11 +438,11 @@ internal static class TravelLegDispatch
     /// the repath it spent). A fallback proposal carries no decision and banks
     /// nothing.
     /// </summary>
-    internal static void PublishDispatched(IGameplayActor actor, TravelDecision? decision)
+    internal static void PublishDispatched(IGameplayActor actor, TravelDecision? decision, string legOwner = "")
     {
         ArgumentNullException.ThrowIfNull(actor);
         if (decision.HasValue)
-            TravelBrainPlanner.PublishDispatched(actor, decision.Value);
+            TravelBrainPlanner.PublishDispatched(actor, decision.Value, legOwner);
     }
 
     /// <summary>
@@ -423,6 +509,7 @@ internal static class TravelLegDispatch
     private static bool IsCallerRetirement(string? detail)
         => detail != null
            && (detail.Contains(ReturnRetrackDetail, StringComparison.Ordinal)
+               || detail.Contains(PursuitRetrackDetail, StringComparison.Ordinal)
                || detail.Contains(SurvivalFleeRetrackDetail, StringComparison.Ordinal)
                || detail.Equals(StopDetail, StringComparison.Ordinal));
 }

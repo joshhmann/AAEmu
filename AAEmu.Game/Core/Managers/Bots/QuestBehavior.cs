@@ -1201,6 +1201,24 @@ public static class QuestBehavior
     /// settled). Lost/invalid targets withdraw the proposal with a named
     /// reason (reselect is the funnel's next-wake job). Never Cast,
     /// AutoAttack, Loot, or credit — those verbs are unreachable from here.
+    ///
+    /// TRAVEL BRAIN (the SECOND live dispatch caller, the return leg's twin):
+    /// this leg's closing leg is decided by <see cref="TravelBrain.Decide"/>
+    /// through <see cref="TravelLegDispatch"/> — the journey is armed once per
+    /// prey (owner-tagged <c>PURSUIT_MOVE_TO_UNIT</c>, so the return leg's own
+    /// boundary can never disarm it) and then the brain owns the verb, the drift
+    /// hold, the repath budget, and the named abandonment terminals (WrongWorld /
+    /// TargetGone / Unreachable, never a bare navigation failure). The leg keeps
+    /// its own vocabulary and its own dispatch shapes: the SAME <c>MoveToUnit</c>
+    /// on the live prey objId (owner <c>PURSUIT_MOVE_TO_UNIT</c>), the SAME
+    /// audited <c>Stop</c> inside the 3.0 m stop radius (whose
+    /// hold-confirm/combat-engaged yields are the leg's own and run first), and
+    /// the SAME <c>dispatch=</c>/<c>reason=</c> lane tokens; the brain's decision
+    /// rides additively in a <c>:travel=</c> fragment. The pre-brain rule is still
+    /// the fallback whenever no journey can be armed (an actor with no object
+    /// identity), and the journey is ended at this leg's own boundary (the prey
+    /// identity is gone) so a banked verdict cannot outlive the reason it was
+    /// reached.
     /// </summary>
     internal static BotDecisionProposal? PursuitEmit(QuestLegContext context, ref string diag, ref int hpBefore)
     {
@@ -1222,6 +1240,10 @@ public static class QuestBehavior
             // G7b (observe-only): the funnel drops dead candidates, so the
             // post-death wake withdraws here — re-resolve ONLY the quest-pinned
             // objId (never a scan) and name the corpse with its probe.
+            // The journey boundary: a prey identity the funnel no longer serves is
+            // over, so a banked verdict must not outlive it and a LATER prey must
+            // not inherit its repath budget (the return leg's own rule).
+            TravelLegDispatch.EndJourney(actor, TravelLegDispatch.PursuitMoveOwner);
             var corpseFrag = ObservePinnedCorpse(actor, opts, funnel);
             diag = $"validate={(selected == 0 ? "no-selection" : "not-relevant")}:rangeM=NA:dispatch=withdrawn:reason=" +
                 (selected == 0 ? "no-selection" : "not-relevant") + corpseFrag;
@@ -1260,6 +1282,28 @@ public static class QuestBehavior
         }
         npcPos = npc!.Transform.World.Position;
         var dist = MathUtil.CalculateDistance(actorPos!.Value, npcPos, false);
+
+        // ------------------------------------------------------- TRAVEL DECISION
+        // What this leg dispatched (its own reading of its own leg — the brain never
+        // reads an actor request), then what the travel chain asks for this wake.
+        // The journey is OWNER-TAGGED so the return leg's own boundary can never
+        // disarm it (one actor walks one journey PER OWNING LEG).
+        var legOutcome = TravelLegDispatch.MapLegOutcome(
+            actor, selected, TravelLegDispatch.PursuitMoveOwner);
+        var (liveMove, legLive, driftText) = PursuitLegState(actor, selected, npcPos);
+        var brain = TravelLegDispatch.Prepare(
+            actor, selected, npcPos, PursuitStopRadiusM, legLive, legOutcome,
+            legOwner: TravelLegDispatch.PursuitMoveOwner);
+        var verdict = TravelLegDispatch.DecidePursuitLeg(
+            brain, dist <= PursuitStopRadiusM, legLive, liveMove ? "retrack" : driftText, driftText);
+        // Flat, bracket-free additive fragment: the brain's own arm/verb/mode/
+        // terminal/reason beside the leg's unchanged tokens (a lane parser that
+        // scans :dispatch= sees exactly what it saw before).
+        var travelFrag = brain is { } prepared
+            ? $":travel={prepared.Decision.Describe()}:routed=true"
+            : ":travel=fallback";
+        var payload = new TravelLegDispatch.TravelDispatchParams(verdict.Decision);
+
         if (dist <= PursuitStopRadiusM)
         {
             // G6 hold-confirm: a Stop already landed for this target at these
@@ -1275,7 +1319,7 @@ public static class QuestBehavior
                     && Vector3.Distance(hold.ActorPos, actorPos!.Value) <= 0.5f
                     && Vector3.Distance(hold.TargetPos, npcPos) <= 0.5f)
                 {
-                    diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=hold-confirmed";
+                    diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=hold-confirmed{travelFrag}";
                     return null;
                 }
             }
@@ -1288,10 +1332,18 @@ public static class QuestBehavior
             // without a prior pursuit Stop.
             if (CombatBrainEngagement.ShouldYieldPursuit(actor.ActorId))
             {
-                diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=combat-brain-engaged";
+                diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=combat-brain-engaged{travelFrag}";
                 return null;
             }
-            diag = $"validate=ok:rangeM={M(dist)}:dispatch=stop:reason=in-range";
+            if (verdict.Verb != TravelLegDispatch.ReturnLegVerb.Stop)
+            {
+                // A settled/abandoned journey (the brain's own Hold carries it), or a
+                // verb this leg does not serve: no proposal, and the diag still names
+                // the prey, the reason, and the terminal.
+                diag = $"validate=ok:rangeM={M(dist)}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
+                return null;
+            }
+            diag = $"validate=ok:rangeM={M(dist)}:dispatch=stop:reason=in-range{travelFrag}";
             return new BotDecisionProposal(
                 goal: PursuitGoal,
                 action: ActorActionType.Stop,
@@ -1305,6 +1357,7 @@ public static class QuestBehavior
                 policyVersion: opts.PolicyVersion,
                 priority: opts.ObjectivePursuitPriority,
                 tieBreakKey: $"pursuit:{fixture.QuestId}:{selected:D10}",
+                payload: payload,
                 hardPreconditions:
                 [
                     new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
@@ -1317,24 +1370,14 @@ public static class QuestBehavior
                     SurvivalVetoClear(actor)
                 ]);
         }
-        var liveMove = actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move };
-        var driftText = "fresh";
-        var retrack = true;
-        lock (PursuitSync)
+        if (verdict.Verb != TravelLegDispatch.ReturnLegVerb.MoveToUnit)
         {
-            if (LastPursuitIssue.TryGetValue(actor.ActorId, out var last) && last.TargetObjId == selected)
-            {
-                var drift = Vector3.Distance(last.TargetPos, npcPos);
-                driftText = $"{drift.ToString("F1", CultureInfo.InvariantCulture)}m";
-                retrack = !liveMove || drift > PursuitRetrackDriftM;
-                if (!retrack)
-                {
-                    diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=drift-held(drift={driftText})";
-                    return null;
-                }
-            }
+            // A live leg still serves the prey (the brain's own leg-hold), or the
+            // journey settled: no new leg, and the diag names the reason.
+            diag = $"validate=ok:rangeM={M(dist)}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
+            return null;
         }
-        diag = $"validate=ok:rangeM={M(dist)}:dispatch=move:reason={(liveMove ? "retrack" : driftText)}";
+        diag = $"validate=ok:rangeM={M(dist)}:dispatch=move:reason={(liveMove ? "retrack" : driftText)}{travelFrag}";
         return new BotDecisionProposal(
             goal: PursuitGoal,
             action: ActorActionType.Move,
@@ -1348,6 +1391,7 @@ public static class QuestBehavior
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectivePursuitPriority,
             tieBreakKey: $"pursuit:{fixture.QuestId}:{selected:D10}",
+            payload: payload,
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
@@ -1667,7 +1711,9 @@ public static class QuestBehavior
         {
             // The quest no longer needs this leg: the journey is over (a banked
             // verdict must not outlive it), and the next Ready wake arms a fresh one.
-            TravelLegDispatch.EndJourney(actor);
+            // Owner-tagged: this boundary drops the RETURN leg's journey only, never
+            // the pursuit leg's armed one.
+            TravelLegDispatch.EndJourney(actor, TravelLegDispatch.ReturnMoveOwner);
             diag = "validate=not-ready:reporter=-:template=-:flatM=NA:dist3D=NA:dispatch=withdrawn:reason=not-ready";
             return null;
         }
@@ -1675,13 +1721,13 @@ public static class QuestBehavior
         var reporter = character?.ParentWorld?.GetNpcByTemplateId(fixture.ReporterTemplate);
         if (character == null || !actorPos.HasValue || character.ParentWorld == null || reporter == null)
         {
-            TravelLegDispatch.EndJourney(actor);
+            TravelLegDispatch.EndJourney(actor, TravelLegDispatch.ReturnMoveOwner);
             diag = $"validate=FAIL-reporter-lost:reporter=-:template={fixture.ReporterTemplate}:flatM=NA:dist3D=NA:dispatch=withdrawn:reason=reporter-lost";
             return null;
         }
         if (reporter.TemplateId != fixture.ReporterTemplate)
         {
-            TravelLegDispatch.EndJourney(actor);
+            TravelLegDispatch.EndJourney(actor, TravelLegDispatch.ReturnMoveOwner);
             diag = $"validate=FAIL-reporter-recycled:reporter={reporter.ObjId}:template={reporter.TemplateId}:flatM=NA:dist3D=NA:dispatch=withdrawn:reason=reporter-recycled";
             return null;
         }
@@ -1695,7 +1741,8 @@ public static class QuestBehavior
         var legOutcome = TravelLegDispatch.MapLegOutcome(actor, reporter.ObjId, TravelLegDispatch.ReturnMoveOwner);
         var (liveMove, legLive, driftText) = ReturnLegState(actor, reporter.ObjId, reporterPos);
         var brain = TravelLegDispatch.Prepare(
-            actor, reporter.ObjId, reporterPos, ReturnInteractRadiusM, legLive, legOutcome);
+            actor, reporter.ObjId, reporterPos, ReturnInteractRadiusM, legLive, legOutcome,
+            legOwner: TravelLegDispatch.ReturnMoveOwner);
         var verdict = TravelLegDispatch.DecideReturnLeg(
             brain, flat <= ReturnInteractRadiusM,
             ReturnHoldConfirmed(actor, reporter.ObjId, actorPos.Value, reporterPos),
@@ -1795,6 +1842,33 @@ public static class QuestBehavior
                 diag = $"{prefix}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
                 return null;
         }
+    }
+
+    /// <summary>
+    /// The pursuit leg's own reading of the leg IT dispatched (the same discipline
+    /// <see cref="ReturnLegState"/> keeps, with the pursuit's own owner tag and
+    /// <see cref="PursuitRetrackDriftM"/> window): whether a Move leg of ours is live
+    /// at all, and — when there is one — whether it still serves the prey (motion
+    /// since the last issue under the retrack window). <c>driftText</c> is the
+    /// caller's own drift reading (<c>fresh</c> before any issue).
+    /// </summary>
+    private static (bool LiveMove, bool LegLive, string DriftText) PursuitLegState(
+        IGameplayActor actor, uint preyObjId, Vector3 preyPos)
+    {
+        var liveMove = TravelLegDispatch.IsOurLiveLeg(
+            actor.ActiveRequest, preyObjId, TravelLegDispatch.PursuitMoveOwner);
+        var driftText = "fresh";
+        var legLive = liveMove;
+        lock (PursuitSync)
+        {
+            if (LastPursuitIssue.TryGetValue(actor.ActorId, out var last) && last.TargetObjId == preyObjId)
+            {
+                var drift = Vector3.Distance(last.TargetPos, preyPos);
+                driftText = $"{drift.ToString("F1", CultureInfo.InvariantCulture)}m";
+                legLive = liveMove && drift <= PursuitRetrackDriftM;
+            }
+        }
+        return (liveMove, legLive, driftText);
     }
 
     /// <summary>
@@ -2029,13 +2103,20 @@ public static class QuestBehavior
     private static ActorRequest DispatchPursuitMove(IGameplayActor gameplayActor, BotDecisionProposal proposal)
     {
         if (gameplayActor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
-            gameplayActor.PreemptCurrent("quest pursuit retrack");
+            gameplayActor.PreemptCurrent(TravelLegDispatch.PursuitRetrackDetail);
         // Telemetry: this leg owns as PURSUIT_MOVE_TO_UNIT (staged before
         // dispatch; PreemptCurrent above carries no request so the stage
         // survives to the MoveToUnit below).
         if (gameplayActor is GameplayActor concrete)
-            concrete.SetPendingMoveOwner("PURSUIT_MOVE_TO_UNIT");
+            concrete.SetPendingMoveOwner(TravelLegDispatch.PursuitMoveOwner);
         var request = gameplayActor.MoveToUnit(proposal.TargetId, PursuitSpeedMps, PursuitLegTimeout, proposal.IdempotencyKey);
+        // Travel brain: the leg that ACTUALLY ran is the one banked (its mode and
+        // the point it was issued against — the next wake's drift comparison — plus
+        // the repath it spent), read from the decision the proposal carries. A
+        // fallback proposal (no journey armed) carries none and banks nothing.
+        TravelLegDispatch.PublishDispatched(gameplayActor,
+            proposal.Payload is TravelLegDispatch.TravelDispatchParams travel ? travel.Decision : null,
+            TravelLegDispatch.PursuitMoveOwner);
         var npcPos = gameplayActor.Character?.ParentWorld?.GetNpc(proposal.TargetId)?.Transform.World.Position;
         if (npcPos.HasValue)
         {
@@ -2094,7 +2175,8 @@ public static class QuestBehavior
         // the repath it spent), read from the decision the proposal carries. A
         // fallback proposal (no journey armed) carries none and banks nothing.
         TravelLegDispatch.PublishDispatched(gameplayActor,
-            proposal.Payload is TravelLegDispatch.TravelDispatchParams travel ? travel.Decision : null);
+            proposal.Payload is TravelLegDispatch.TravelDispatchParams travel ? travel.Decision : null,
+            TravelLegDispatch.ReturnMoveOwner);
         var npcPos = gameplayActor.Character?.ParentWorld?.GetNpc(proposal.TargetId)?.Transform.World.Position;
         if (npcPos.HasValue)
         {
