@@ -583,8 +583,248 @@ public class LootTravelDispatchTests
         await Assert.That(lootArm).Contains("arm=LootOnce");
     }
 
-    // -------------------------------------------------------- verdict table
+    // ------------------------------------------------- live caller (G7c leg)
 
+    /// <summary>
+    /// THE WIRING, end to end on the real stack: a pinned corpse OUT of the engine's
+    /// loot range is exactly the withhold the take cannot fix, so the loot leg
+    /// dispatches the corpse-approach <c>Move</c> — on the SAME <c>MoveToUnit</c> verb
+    /// the sibling legs use, owner-tagged <c>LOOT_APPROACH_MOVE_TO_UNIT</c>, with the
+    /// frozen <c>validate=</c> token and the leg's own <c>dispatch=</c>/<c>reason=</c>
+    /// tokens plus the brain's additive <c>:travel=</c> fragment.
+    ///
+    /// It is also the PRIORITY proof: nothing else on this wake is legal (no prey in
+    /// the funnel census, the quest not Ready), so the approach at
+    /// <c>ObjectiveLootPriority</c> outranks the step machine's advance — the walk
+    /// happens BEFORE more quest work, which is the point of the leg.
+    /// </summary>
+    [Test]
+    public async Task PinnedCorpseOutOfLootRange_DispatchesTheApproachMove()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("loot-approach-wire");
+        var here = new Vector3(0f, 0f, 0f);
+        var corpseObjId = SpawnDeadBoar(session, actor, here, here + new Vector3(250f, 0f, 0f));
+        Activate251(actor.Character);
+        var npc = session.World.GetNpc(corpseObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
+        QuestBehavior.NotePinnedCorpse(actor.ActorId, corpseObjId, Boar3475, Quest251, "wire-1");
+
+        var run = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-wire-1" });
+
+        await Assert.That(run.SelectedAction).IsEqualTo(ActorActionType.Move);
+        await Assert.That(run.Request!.TargetId).IsEqualTo(corpseObjId);
+        await Assert.That(run.Request.MoveOwner).IsEqualTo(LootTravelDispatch.ApproachMoveOwner);
+        await Assert.That(run.Request.State).IsEqualTo(ActorLifecycleState.Running);
+
+        // The leg's own lane line: the frozen validate token for an unreachable corpse,
+        // the approach's own dispatch/reason tokens, and the brain's routing.
+        var lootArm = run.LegEvidence.Single(e => e.Leg == QuestLegId.Loot).Detail;
+        await Assert.That(lootArm).Contains("validate=not-lootable");
+        await Assert.That(lootArm).Contains(":dispatch=move");
+        await Assert.That(lootArm).Contains(":travel=");
+        await Assert.That(lootArm).Contains("routed=true");
+
+        // The journey is armed ON the corpse, owned by this leg, and banked unspent.
+        await Assert.That(TravelIntentStore.TryGet(
+            actor.ActorId, out var armed, LootTravelDispatch.ApproachMoveOwner)).IsTrue();
+        await Assert.That(armed.TargetObjId).IsEqualTo(corpseObjId);
+        await Assert.That(armed.Terminal).IsEqualTo(TravelTerminal.None);
+        await Assert.That(armed.RepathCount).IsEqualTo(0);
+    }
+
+    /// <summary>
+    /// THE TASK'S OWN VERIFY (walk → take, loot-once preserved): the approach closes
+    /// the distance and the SAME corpse is then TAKEN by the loot arm — the take is
+    /// still the only thing that touches the container, the ledger and the loot-once
+    /// flag, and the approach journey is ended with the take rather than left banked.
+    /// </summary>
+    [Test]
+    public async Task ApproachLands_ThenTheSameCorpseIsTakenAndTheJourneyEnds()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("loot-approach-take");
+        var here = new Vector3(0f, 0f, 0f);
+        var corpseObjId = SpawnDeadBoar(session, actor, here, here + new Vector3(250f, 0f, 0f));
+        Activate251(actor.Character);
+        var npc = session.World.GetNpc(corpseObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
+        QuestBehavior.NotePinnedCorpse(actor.ActorId, corpseObjId, Boar3475, Quest251, "take-1");
+        var bagBefore = GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId);
+
+        var walk = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-take-1" });
+        await Assert.That(walk.SelectedAction).IsEqualTo(ActorActionType.Move);
+
+        // The walk carries the actor into the loot gate (the leg's own arrival point);
+        // the leg then settles, which is the idle actor the take's wake needs.
+        GameplayActorTestRig.SetPosition(actor, new Vector3(240f, 0f, 0f));
+        await Assert.That(actor.PreemptCurrent("unit-test approach leg settled")).IsTrue();
+        var take = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-take-2" });
+
+        await Assert.That(take.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(take.Request?.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId) - bagBefore).IsEqualTo(1);
+        await Assert.That(npc.LootingContainer.Items.Count).IsEqualTo(0);
+
+        // The take ended the approach journey (a later re-pin of this corpse arms clean
+        // instead of inheriting a banked terminal), and the loot-once memory is the
+        // take's own: the NEXT wake still withholds with the frozen token.
+        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, corpseObjId)).IsTrue();
+        await Assert.That(LootLedger.Read(actor.ActorId, corpseObjId).Disposition)
+            .IsEqualTo(LootDisposition.Take);
+        await Assert.That(TravelIntentStore.TryGet(
+            actor.ActorId, out _, LootTravelDispatch.ApproachMoveOwner)).IsFalse();
+
+        GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
+        var after = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-take-3" });
+        await Assert.That(after.SelectedAction == ActorActionType.Loot).IsFalse();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(1);
+        var lootArm = after.LegEvidence.Single(e => e.Leg == QuestLegId.Loot).Detail;
+        await Assert.That(lootArm).Contains("validate=already-looted");
+        // The loot-once withhold is NOT a reachability withhold: no approach leg.
+        await Assert.That(lootArm.Contains(":dispatch=move")).IsFalse();
+    }
+
+    /// <summary>
+    /// RECYCLE, LIVE (the whole stack, not just the seam): once the recorded objId
+    /// resolves LIVE again it is not our corpse, and the actor is never walked to
+    /// whatever now holds that objId — the recognition arm drops the record, so the
+    /// loot chain sees no corpse at all and the leg issues no second approach. The
+    /// seam's own named <see cref="TravelTerminal.TargetGone"/> override for a corpse
+    /// that resolves onto an occupant is pinned separately, directly over
+    /// <see cref="LootTravelDispatch"/>.
+    /// </summary>
+    [Test]
+    public async Task PinnedCorpseRecycled_Live_IssuesNoLegOntoTheNewOccupant()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("loot-approach-recycle-live");
+        var here = new Vector3(0f, 0f, 0f);
+        var corpseObjId = SpawnDeadBoar(session, actor, here, here + new Vector3(250f, 0f, 0f));
+        Activate251(actor.Character);
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(session.World.GetNpc(corpseObjId)!, (ProbeItemTemplateId, 1));
+        QuestBehavior.NotePinnedCorpse(actor.ActorId, corpseObjId, Boar3475, Quest251, "recycle-1");
+
+        // Wake 1: dead and out of reach — the approach is armed and dispatched.
+        var walk = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-recycle-1" });
+        await Assert.That(walk.SelectedAction).IsEqualTo(ActorActionType.Move);
+        await Assert.That(TravelIntentStore.TryGet(
+            actor.ActorId, out _, LootTravelDispatch.ApproachMoveOwner)).IsTrue();
+        // The walk leg settles (a running leg lives in ActiveRequest, not the trace).
+        await Assert.That(actor.PreemptCurrent("unit-test approach leg settled")).IsTrue();
+        await Assert.That(actor.AuditTrace.Count(r => r.MoveOwner == LootTravelDispatch.ApproachMoveOwner)).IsEqualTo(1);
+
+        // The objId is alive again: it is not our corpse any more. No second leg is
+        // issued onto the row that now holds that objId, the frozen withhold stands,
+        // and the approach journey ended with the record it belonged to.
+        session.World.GetNpc(corpseObjId)!.Hp = 100;
+        var run = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-recycle-2" });
+
+        await Assert.That(run.SelectedAction == ActorActionType.Move).IsFalse();
+        await Assert.That(actor.AuditTrace.Count(r => r.MoveOwner == LootTravelDispatch.ApproachMoveOwner)).IsEqualTo(1);
+        var lootArm = run.LegEvidence.Single(e => e.Leg == QuestLegId.Loot).Detail;
+        await Assert.That(lootArm.Contains(":dispatch=move")).IsFalse();
+        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out _)).IsFalse();
+        await Assert.That(TravelIntentStore.TryGet(
+            actor.ActorId, out _, LootTravelDispatch.ApproachMoveOwner)).IsFalse();
+    }
+
+    /// <summary>
+    /// THE RETRACK IS NOT A FAILURE: when the pinned corpse's position is not the point
+    /// the live approach leg was issued against, the leg preempts that leg ITSELF. If
+    /// that self-preemption were read as a foreign interruption, every re-issue would
+    /// spend a repath and a healthy approach would abandon after two — so this pins
+    /// that the budget survives it, exactly as the pursuit leg's own retrack does.
+    /// </summary>
+    [Test]
+    public async Task ApproachRetrack_DoesNotSpendTheRepathBudget()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("loot-approach-retrack");
+        var here = new Vector3(0f, 0f, 0f);
+        var corpseObjId = SpawnDeadBoar(session, actor, here, here + new Vector3(250f, 0f, 0f));
+        Activate251(actor.Character);
+        var npc = session.World.GetNpc(corpseObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
+        QuestBehavior.NotePinnedCorpse(actor.ActorId, corpseObjId, Boar3475, Quest251, "retrack-1");
+
+        var first = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-retrack-1" });
+        await Assert.That(first.SelectedAction).IsEqualTo(ActorActionType.Move);
+
+        // The corpse's recorded point moves (a haul, a rig, a GM) but stays out of
+        // range, so this wake re-issues rather than holding.
+        GameplayActorTestRig.SetNpcPosition(session, corpseObjId, here + new Vector3(260f, 0f, 0f));
+
+        var second = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-retrack-2" });
+        await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.Move);
+        var lootArm = second.LegEvidence.Single(e => e.Leg == QuestLegId.Loot).Detail;
+        await Assert.That(lootArm).Contains(":reason=retrack");
+        await Assert.That(TravelIntentStore.TryGet(
+            actor.ActorId, out var armed, LootTravelDispatch.ApproachMoveOwner)).IsTrue();
+        await Assert.That(armed.RepathCount).IsEqualTo(0);
+        await Assert.That(armed.Terminal).IsEqualTo(TravelTerminal.None);
+
+        // The retired leg was retired by the CALLER itself — the shared constant, so the
+        // staging site and the recognizer can never drift apart.
+        var retired = actor.AuditTrace.First(r => r.Action == ActorActionType.Move
+            && r.MoveOwner == LootTravelDispatch.ApproachMoveOwner);
+        await Assert.That(retired.Result).IsEqualTo(ActorLifecycleState.Interrupted);
+        await Assert.That(retired.Detail).Contains(TravelLegDispatch.LootApproachRetrackDetail);
+    }
+
+    /// <summary>
+    /// NO PIN, NO LEG (the fail-closed direction on the real stack): a corpse the chain
+    /// did not establish as OURS, and a corpse the ledger banked a terminal skip for,
+    /// both keep the frozen withhold — <c>verb=none</c> and no journey — because
+    /// neither is reachability. The brain never fabricates a leg for a corpse it was
+    /// not armed for.
+    /// </summary>
+    [Test]
+    public async Task WithholdThatIsNotReachability_DispatchesNoLeg()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("loot-approach-noleg");
+        var here = new Vector3(0f, 0f, 0f);
+        var corpseObjId = SpawnDeadBoar(session, actor, here, here + new Vector3(250f, 0f, 0f));
+        Activate251(actor.Character);
+        var npc = session.World.GetNpc(corpseObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
+
+        // No pin at all: the chain reads no corpse, so the frozen withhold stands.
+        var noPin = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-noleg-1" });
+        await Assert.That(noPin.SelectedAction == ActorActionType.Move).IsFalse();
+        var noPinArm = noPin.LegEvidence.Single(e => e.Leg == QuestLegId.Loot).Detail;
+        await Assert.That(noPinArm).Contains("verb=none");
+        await Assert.That(noPinArm.Contains(":dispatch=move")).IsFalse();
+        await Assert.That(TravelIntentStore.Count).IsEqualTo(0);
+
+        // A corpse the ledger banked a TERMINAL skip for, at the same out-of-range
+        // distance. The chain's order puts the PROBE arm first, so the frozen token is
+        // the out-of-range one — but the walk is still refused, because a corpse this
+        // chain will never take is not worth approaching.
+        QuestBehavior.NotePinnedCorpse(actor.ActorId, corpseObjId, Boar3475, Quest251, "noleg-2");
+        LootLedger.Bank(actor.ActorId, corpseObjId, LootDisposition.Skipped, LootReason.Junk, DateTime.UtcNow);
+        var skipped = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-noleg-2" });
+        await Assert.That(skipped.SelectedAction == ActorActionType.Move).IsFalse();
+        var skipArm = skipped.LegEvidence.Single(e => e.Leg == QuestLegId.Loot).Detail;
+        await Assert.That(skipArm).Contains("validate=not-lootable");
+        await Assert.That(skipArm).Contains("ownership=Self");
+        await Assert.That(skipArm.Contains(":dispatch=move")).IsFalse();
+        await Assert.That(TravelIntentStore.TryGet(
+            actor.ActorId, out _, LootTravelDispatch.ApproachMoveOwner)).IsFalse();
+    }
+
+    // -------------------------------------------------------- verdict table
     /// <summary>
     /// The table over hand-built brain wakes — no world, no actor. A position leg
     /// and the retreat leg are verbs this approach does not serve, so they withdraw
