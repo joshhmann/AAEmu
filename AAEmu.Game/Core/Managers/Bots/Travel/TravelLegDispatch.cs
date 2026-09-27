@@ -81,6 +81,17 @@ internal static class TravelLegDispatch
     /// </summary>
     internal const string SurvivalFleeRetrackDetail = "survival flee retrack";
 
+    /// <summary>
+    /// The preemption detail the loot corpse-approach stages over a live Move leg it
+    /// is replacing (<c>QuestBehavior.DispatchLootApproachMove</c>). Caller-authored:
+    /// it retires a leg the caller itself decided to replace, never a navigation
+    /// failure. Shared (not private) for the same reason the sibling retrack details
+    /// are: the staging site and <see cref="IsCallerRetirement"/> must never drift,
+    /// or every approach retrack would read as a foreign interruption and spend the
+    /// journey's repath budget.
+    /// </summary>
+    internal const string LootApproachRetrackDetail = "loot approach retrack";
+
     /// <summary>The halt detail the engine's own <c>Stop</c> stamps on the leg it interrupts.</summary>
     private const string StopDetail = "stop requested";
 
@@ -511,5 +522,6 @@ internal static class TravelLegDispatch
            && (detail.Contains(ReturnRetrackDetail, StringComparison.Ordinal)
                || detail.Contains(PursuitRetrackDetail, StringComparison.Ordinal)
                || detail.Contains(SurvivalFleeRetrackDetail, StringComparison.Ordinal)
+               || detail.Contains(LootApproachRetrackDetail, StringComparison.Ordinal)
                || detail.Equals(StopDetail, StringComparison.Ordinal));
 }

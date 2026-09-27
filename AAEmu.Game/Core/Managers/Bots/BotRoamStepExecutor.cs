@@ -6,6 +6,7 @@ using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Managers.Bots.Needs;
+using AAEmu.Game.Core.Managers.Bots.Loot;
 using AAEmu.Game.Core.Managers.Bots.Survival;
 using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.Core.Packets.G2C;
@@ -1499,15 +1500,21 @@ public enum NeedsFarmLoopPhase
             // armed quest-travel route — drop it synchronously so the route
             // layer can never resume the stale destination after the pursuit
             // completes (the next quest wake re-arms when travel is needed).
-            // G8b: the quest-owned return leg preempts the same way.
+            // G8b: the quest-owned return leg preempts the same way, and G7c's
+            // corpse approach is the third leg that walks the actor itself.
             var moveOwner = result?.Request?.MoveOwner;
             var returnDispatched = string.Equals(
                 moveOwner, TravelLegDispatch.ReturnMoveOwner, StringComparison.Ordinal);
+            var approachDispatched = string.Equals(
+                moveOwner, LootTravelDispatch.ApproachMoveOwner, StringComparison.Ordinal);
             if (result?.SelectedAction == ActorActionType.Move
-                && (returnDispatched
+                && (returnDispatched || approachDispatched
                     || string.Equals(moveOwner, TravelLegDispatch.PursuitMoveOwner, StringComparison.Ordinal)))
             {
-                SupersedeQuestTravelRoute(state, returnDispatched ? "quest return dispatched" : "quest pursuit dispatched");
+                SupersedeQuestTravelRoute(state,
+                    returnDispatched ? "quest return dispatched"
+                    : approachDispatched ? "loot approach dispatched"
+                    : "quest pursuit dispatched");
             }
             Logger.Debug("Roam quest leg completed for bot {CharacterId}: {Action} ({Detail})",
                 bot.CharacterId, result?.SelectedAction, result?.Request?.Detail);

@@ -2,6 +2,7 @@
 
 using System.Numerics;
 using AAEmu.Game.Core.Managers.Bots.Travel;
+using AAEmu.Game.Models.Game.Items.Containers;
 
 namespace AAEmu.Game.Core.Managers.Bots.Loot;
 
@@ -45,6 +46,13 @@ namespace AAEmu.Game.Core.Managers.Bots.Loot;
 /// keeps the counters — so a re-pinned corpse can never inherit the abandoned one's
 /// budget, and neither journey's boundary can disarm the other's.
 ///
+/// The caller's journey boundaries, all of them owner-scoped and all of them facts
+/// the caller established OUTSIDE this seam: the pin re-pointed to another corpse
+/// (<see cref="EndJourneyForPin"/>), the corpse taken (<see cref="EndJourney"/>), and
+/// a corpse the loot chain will never take (a terminal skip) — refused before a
+/// journey is ever armed, because walking to it would be motion with no take at the
+/// end of it.
+///
 /// Fail-closed, in the direction this slice's own evidence allows:
 ///  - no pinned corpse at all (<see cref="Request.CorpseObjId"/> 0) and an actor
 ///    with no identity to key a journey on both return <c>null</c>, and
@@ -72,6 +80,25 @@ internal static class LootTravelDispatch
     /// legs can never be read as ours.
     /// </summary>
     internal const string ApproachMoveOwner = "LOOT_APPROACH_MOVE_TO_UNIT";
+
+    /// <summary>
+    /// The corpse-approach journey's arrival radius — the leg's own HALT BAND, and
+    /// deliberately the engine's loot gate itself
+    /// (<see cref="LootingContainer.MaxLootingRange"/>): a corpse approach is over
+    /// exactly when <c>GameplayActor.Loot</c> becomes legal, so the journey's own
+    /// <see cref="TravelTerminal.Arrived"/> and the take's reachability band are the
+    /// same reading rather than two bands that could drift apart. Quoted from the
+    /// engine constant, never re-typed.
+    /// </summary>
+    internal const float ApproachArrivalRadiusM = LootingContainer.MaxLootingRange;
+
+    /// <summary>
+    /// The corpse-approach journey's repath budget (the shared travel default: two
+    /// repaths, then the named <see cref="TravelTerminal.Unreachable"/> terminal).
+    /// A corpse does not walk away, so this budget is spent only by legs the actor
+    /// could not walk — never by a moving destination.
+    /// </summary>
+    internal const int ApproachRepathBudget = TravelBrain.DefaultRepathBudget;
 
     /// <summary>
     /// Arms the caller's journey for <paramref name="corpseObjId"/> when it does not
@@ -130,6 +157,34 @@ internal static class LootTravelDispatch
         ArgumentNullException.ThrowIfNull(actor);
         return TravelIntentStore.Disarm(actor.ActorId, ApproachMoveOwner);
     }
+
+    /// <summary>
+    /// The PIN-IDENTITY form of <see cref="EndJourney(IGameplayActor)"/>, for the one
+    /// site that knows the corpse identity changed WITHOUT a live actor in hand: the
+    /// caller's pin write. It carries an actor id rather than an
+    /// <see cref="IGameplayActor"/> because the pin is re-pointed inside the caller's own
+    /// memory block, before any wake reads the store — so a banked terminal reached on
+    /// the previous corpse can never be re-read for the next one.
+    ///
+    /// Scoped to this leg's owner exactly as the actor overload is: a re-pin drops the
+    /// corpse approach and nothing else on that actor.
+    /// </summary>
+    internal static bool EndJourneyForPin(uint actorObjId)
+    {
+        if (actorObjId == 0)
+            return false;
+        return TravelIntentStore.Disarm(actorObjId, ApproachMoveOwner);
+    }
+
+    /// <summary>
+    /// The brain decision a dispatched approach proposal carries to its dispatch site,
+    /// so the leg that actually RAN is the one banked (its mode and destination — the
+    /// next wake's drift comparison — plus the repath it spent). <c>null</c> for a
+    /// proposal the caller's own pre-brain fallback produced, which banks nothing.
+    /// The same shape the sibling caller seams' dispatch payloads use, for this leg's
+    /// own vocabulary.
+    /// </summary>
+    internal readonly record struct LootApproachDispatchParams(TravelDecision? Decision);
 
     /// <summary>
     /// Everything this seam needs from the caller that is NOT a live world read: the

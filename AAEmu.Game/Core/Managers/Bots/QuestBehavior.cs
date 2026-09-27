@@ -80,6 +80,15 @@ public static class QuestBehavior
     private const float PursuitSpeedMps = 4.5f;
     /// <summary>G5 pursuit leg budget (roam hunt-leg 10 s precedent).</summary>
     private static readonly TimeSpan PursuitLegTimeout = TimeSpan.FromSeconds(10);
+    /// <summary>
+    /// G7c corpse-approach leg budget: the walk to a STATIC pinned corpse, so the roam
+    /// point-leg precedent (60 s) rather than the pursuit's 10 s chase budget — at
+    /// <see cref="PursuitSpeedMps"/> one leg crosses the engine's whole loot range
+    /// (200 m) and arrives, instead of timing out mid-walk and spending the journey's
+    /// repath budget on ground the actor was already covering. A corpse does not run,
+    /// so there is nothing for a tighter leg budget to protect against.
+    /// </summary>
+    private static readonly TimeSpan LootApproachLegTimeout = TimeSpan.FromSeconds(60);
     /// <summary>Goal key routing turn-in proposals through Dispatch.</summary>
     private const string TurnInGoal = "quest.turn-in";
     /// <summary>Goal key routing the G8b return Move/Stop/InteractNpc through Dispatch.</summary>
@@ -120,6 +129,14 @@ public static class QuestBehavior
     /// ActorId; bounded by full clear.
     /// </summary>
     private static readonly Dictionary<uint, (uint TargetObjId, Vector3 TargetPos)> LastReturnIssue = new();
+    /// <summary>
+    /// Last-issued corpse-approach position per actor (memory-only wake cache for the
+    /// approach leg's own drift reading, the same discipline <c>LastPursuitIssue</c>
+    /// keeps). Separate from the other issue memories so a corpse approach can never
+    /// entangle the prey/reporter telemetry, and vice versa. Keyed by ActorId;
+    /// bounded by full clear.
+    /// </summary>
+    private static readonly Dictionary<uint, (uint TargetObjId, Vector3 TargetPos)> LastApproachIssue = new();
     private static readonly object PursuitSync = new();
 
     /// <summary>
@@ -263,6 +280,14 @@ public static class QuestBehavior
         {
             if (LastCorpse.Count >= CorpseMemoryBound)
                 LastCorpse.Clear();
+            // The PIN is this leg's journey identity: a DIFFERENT corpse is another
+            // journey, so the corpse approach armed for the previous pin ends with it
+            // (a banked terminal must not outlive the corpse it was reached on, and a
+            // fresh corpse must never inherit the old one's spent repath budget), while
+            // a same-ObjId re-pin keeps that journey's counters. Owner-scoped, so no
+            // other leg's journey on this actor is dropped.
+            if (LastCorpse.TryGetValue(actorId, out var prior) && prior.ObjId != objId)
+                LootTravelDispatch.EndJourneyForPin(actorId);
             LastCorpse[actorId] = new QuestCorpseRecord(objId, templateId, fixture.QuestId, cycleId ?? "-", DateTimeOffset.UtcNow);
         }
     }
@@ -392,6 +417,12 @@ public static class QuestBehavior
             {
                 lock (PursuitSync)
                     LastCorpse.Remove(actor.ActorId);
+                // The recorded objId resolves LIVE: the corpse this leg could have been
+                // walking to is not our corpse any more, so the corpse approach ends with
+                // the record (owner-scoped — no other leg's journey is touched). Without
+                // it a recycled corpse would leave an armed journey behind that a later
+                // re-pin of the same objId could inherit.
+                LootTravelDispatch.EndJourneyForPin(actor.ActorId);
             }
             else if (cur == null)
             {
@@ -797,12 +828,17 @@ public static class QuestBehavior
                 // hunt/butcher loops stay suppressed while closing) and keeps
                 // the travel fallback from arming against our own leg. Every
                 // pre-existing action keeps the terminal-surface contract.
-                if ((selected.Goal == PursuitGoal || selected.Goal == ReturnGoal) && selected.Action == ActorActionType.Move
+                if (selected.Goal is PursuitGoal or ReturnGoal or LootGoal && selected.Action == ActorActionType.Move
                     && request.State == ActorLifecycleState.Running)
                 {
                     var afterRunning = BotObservedContext.Capture(actor).ActiveQuestIds.ToHashSet();
                     var completedRunning = before.Where(q => !afterRunning.Contains(q)).ToList();
-                    var legKind = selected.Goal == ReturnGoal ? "return" : "pursuit";
+                    var legKind = selected.Goal switch
+                    {
+                        ReturnGoal => "return",
+                        LootGoal => "loot approach",
+                        _ => "pursuit"
+                    };
                     return new QuestDecisionScenario.QuestRunResult
                     {
                         Scenario = QuestDecisionScenario.ScenarioName,
@@ -1640,6 +1676,20 @@ public static class QuestBehavior
     /// flat sibling key list, never a nested bracket block), so
     /// no lane parser changes shape. Withholds (null + named diag) on every
     /// non-emit arm; dispatches ONLY GameplayActor.Loot, once.
+    ///
+    /// CORPSE APPROACH (the travel brain's THIRD live dispatch caller, the
+    /// pursuit/return legs' twin): one withheld arm is not the take's to fix — the
+    /// corpse is OURS, lootable-shaped, and simply out of reach — so that arm closes
+    /// on the pinned corpse through <see cref="LootTravelDispatch"/>, over the same
+    /// <c>MoveToUnit</c> leg the sibling legs dispatch (owner-tagged
+    /// <c>LOOT_APPROACH_MOVE_TO_UNIT</c>; the seam's arrival halt is deliberately NOT
+    /// dispatched here, because arrival is exactly when the take itself becomes
+    /// legal). The take itself, the loot-once memory, the ledger and every priority
+    /// are untouched: the approach only moves the actor into the range its own chain
+    /// already published as the reason it could not take, and the SAME wake's
+    /// <c>validate=</c> token is preserved byte-for-byte (the leg's
+    /// <c>dispatch=</c>/<c>reason=</c> evidence rides additively in a <c>:travel=</c>
+    /// fragment).
     /// </summary>
     internal static BotDecisionProposal? LootEmit(QuestLegContext context, ref string diag, ref int hpBefore)
     {
@@ -1687,9 +1737,38 @@ public static class QuestBehavior
             // The banked skip is final, so it is recorded here — a terminal skip
             // never lags an act the way a take would.
             LootBrainPlanner.PublishSkip(prepared, DateTime.UtcNow);
-            diag = $"validate={validate}:target={ShowCorpse(prepared)}:container={containerText}" +
-                   $":lootable={lootableText}:verb=none{brainFrag}";
-            return null;
+            // ------------------------------------------------- CORPSE APPROACH
+            // The ONE withhold a WALK can clear. The chain reaches its probe arm only
+            // for OUR corpse, past the ownership and loot-once gates, so the probe's own
+            // `ContainerOutOfRange` verdict is by construction exactly "ours, lootable-
+            // shaped, and out of reach" — the brain's reading is taken verbatim rather
+            // than its gates being reassembled here, and it can never drift from them.
+            // No other withhold asks for a leg: ownership, safety and loop-live are not
+            // reachability.
+            //
+            // The probe arm PRECEDES loot-once in the chain, so an out-of-range corpse
+            // can still be one this actor has already taken or one the ledger banked a
+            // terminal skip for. Walking to either would be motion with no take at the
+            // end of it, so the terminal memories the chain publishes as facts (the
+            // caller's own loot-once flag, and the ledger's terminal dispositions — the
+            // two sides of the same take, plus the skip the chain never reconsiders) are
+            // refused here. Both are READS of established facts, never a second
+            // reachability rule.
+            var prefix = $"validate={validate}:target={ShowCorpse(prepared)}:container={containerText}" +
+                         $":lootable={lootableText}:verb=none{brainFrag}";
+            var terminal = already || prepared.Inputs.PriorDisposition is LootDisposition.Take or LootDisposition.Skipped;
+            if (prepared.Decision.Reason != LootReason.ContainerOutOfRange || terminal)
+            {
+                diag = prefix;
+                return null;
+            }
+            // The pinned corpse is the journey's identity, so the approach gets a real
+            // repath budget and the named abandonment terminals the sibling legs have.
+            // The leg's own routing rides the SAME `dispatch=`/`reason=` keys and the
+            // `:travel=` fragment the pursuit / return / combat-kite legs print.
+            var approach = RunLootApproach(actor, opts, fixture, prepared);
+            diag = $"{prefix}:dispatch={approach.DispatchToken}:reason={approach.Reason}:travel={approach.Travel}";
+            return approach.Proposal;
         }
 
         diag = $"validate={validate}:target={decision.CorpseObjId}:container={containerText}" +
@@ -1723,6 +1802,150 @@ public static class QuestBehavior
         => prepared.Inputs.CorpseObjId != 0
             ? prepared.Inputs.CorpseObjId.ToString(CultureInfo.InvariantCulture)
             : "-";
+
+    /// <summary>
+    /// One corpse-approach wake: the proposal the leg would dispatch (null when it
+    /// holds or withdraws), the lane's <c>dispatch=</c>/<c>reason=</c> tokens, and the
+    /// brain's own additive decision fragment. The journey is owner-tagged
+    /// (<see cref="LootTravelDispatch.ApproachMoveOwner"/>) so no other leg's boundary
+    /// can disarm it.
+    /// </summary>
+    private readonly record struct LootApproachWake(BotDecisionProposal? Proposal, string DispatchToken, string Reason, string Travel);
+
+    /// <summary>
+    /// Runs the corpse-approach decision for this wake over the SAME pinned corpse the
+    /// loot chain just read, and shapes it into the leg's proposal.
+    ///
+    /// Failure direction: a journey that could not be armed (no actor identity) and a
+    /// verb this leg does not serve both produce NO proposal and tokens naming the
+    /// fact — never a fabricated leg. The take's own arm is untouched either way.
+    /// </summary>
+    private static LootApproachWake RunLootApproach(
+        IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, QuestFixtureRow fixture,
+        in LootBrainPlanner.Prepared prepared)
+    {
+        var corpseObjId = prepared.Inputs.CorpseObjId;
+        var legOutcome = LootTravelDispatch.MapLegOutcome(actor, corpseObjId);
+        var (liveMove, legLive, driftText) = LootApproachLegState(actor, corpseObjId);
+        var brain = LootTravelDispatch.Prepare(actor, new LootTravelDispatch.Request(
+            CorpseObjId: corpseObjId,
+            PreyTemplateId: fixture.PreyTemplate,
+            ArrivalRadiusM: LootTravelDispatch.ApproachArrivalRadiusM,
+            LegOutcome: legOutcome,
+            LegLive: legLive,
+            RepathBudget: LootTravelDispatch.ApproachRepathBudget));
+        var verdict = LootTravelDispatch.DecideApproach(
+            brain, prepared.Inputs.ContainerInRange, legLive,
+            liveMove ? "retrack" : driftText, driftText);
+        var travel = LootTravelDispatch.Describe(verdict);
+        // This caller serves exactly ONE verb — the closing Move. The seam's Stop arm
+        // (the arrival halt) is deliberately NOT dispatched here, because arrival at
+        // this leg's radius is precisely when <c>GameplayActor.Loot</c> becomes legal:
+        // the take fires on that wake instead, so a halt the caller issued would be a
+        // leg nobody needs. Anything else (a hold, a named terminal, a verb this leg
+        // cannot serve) dispatches nothing and still names WHY.
+        if (verdict.Verb != LootTravelDispatch.ApproachVerb.MoveToUnit)
+            return new LootApproachWake(null, verdict.DispatchToken, verdict.Reason, travel);
+
+        var payload = new LootTravelDispatch.LootApproachDispatchParams(verdict.Decision);
+        return new LootApproachWake(
+            new BotDecisionProposal(
+                goal: LootGoal,
+                action: ActorActionType.Move,
+                targetId: corpseObjId,
+                expectedPostcondition: new BotProposalPostcondition(
+                    $"corpse approach toward quest {fixture.QuestId} corpse {corpseObjId} dispatched",
+                    _ => true),
+                idempotencyKey: $"{opts.CycleId}:loot-approach:{fixture.QuestId}:{corpseObjId}",
+                timeout: TimeSpan.FromSeconds(30),
+                rationale: $"quest {fixture.QuestId} corpse approach: prey {fixture.PreyTemplate} {corpseObjId} out of loot range — closing ({verdict.Reason})",
+                policyVersion: opts.PolicyVersion,
+                priority: opts.ObjectiveLootPriority,
+                tieBreakKey: $"loot-approach:{fixture.QuestId}:{corpseObjId:D10}",
+                payload: payload,
+                hardPreconditions: LootApproachPreconditions(fixture)),
+            verdict.DispatchToken,
+            verdict.Reason,
+            travel);
+    }
+
+    /// <summary>
+    /// The approach leg's preconditions: the SAME quest-relevance gate every other
+    /// objective leg of this quest carries (the quest is still active and its prey
+    /// item is still missing), so the walk is withdrawn the moment the corpse stops
+    /// being this quest's work.
+    /// </summary>
+    private static BotProposalPrecondition[] LootApproachPreconditions(QuestFixtureRow fixture)
+        =>
+        [
+            new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
+                observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+        ];
+
+    /// <summary>
+    /// The approach leg's own reading of the leg IT dispatched (the same discipline
+    /// <c>PursuitLegState</c> keeps, with this leg's own owner tag and the shared
+    /// <see cref="TravelBrain.LegDriftToleranceM"/> window): whether a Move leg of
+    /// ours is live at all, and — when there is one — whether it still serves the
+    /// corpse (motion since the last issue within the retrack window). A corpse does
+    /// not walk, so the drift reading is normally 0.0 m and the hold is the steady
+    /// state; the window exists so a corpse that WAS moved (a rig, a GM, a future
+    /// haul) re-issues rather than being walked to a stale point.
+    /// </summary>
+    private static (bool LiveMove, bool LegLive, string DriftText) LootApproachLegState(
+        IGameplayActor actor, uint corpseObjId)
+    {
+        var liveMove = LootTravelDispatch.IsOurLiveLeg(actor.ActiveRequest, corpseObjId);
+        var driftText = "fresh";
+        var legLive = liveMove;
+        lock (PursuitSync)
+        {
+            if (LastApproachIssue.TryGetValue(actor.ActorId, out var last) && last.TargetObjId == corpseObjId)
+            {
+                var corpsePos = actor.Character?.ParentWorld?.GetNpc(corpseObjId)?.Transform.World.Position;
+                if (corpsePos.HasValue)
+                {
+                    var drift = Vector3.Distance(last.TargetPos, corpsePos.Value);
+                    driftText = $"{drift.ToString("F1", CultureInfo.InvariantCulture)}m";
+                    legLive = liveMove && drift <= TravelBrain.LegDriftToleranceM;
+                }
+            }
+        }
+        return (liveMove, legLive, driftText);
+    }
+
+    /// <summary>
+    /// G7c corpse-approach dispatch: preempt a live Move leg the leg itself is
+    /// replacing (owner-staged so the retrack preemption is recognised as the
+    /// caller's OWN retirement and never spends the journey's repath budget), issue
+    /// the unit-relative <c>MoveToUnit</c> on the pinned corpse, then bank the leg
+    /// that actually ran. Never touches the loot-once memory, the ledger, or the
+    /// take — those belong to the Loot arm alone, which fires on the wake after this
+    /// leg lands (the actor is idle again, and inside the engine's loot range).
+    /// </summary>
+    private static ActorRequest DispatchLootApproachMove(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        if (gameplayActor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+            gameplayActor.PreemptCurrent(TravelLegDispatch.LootApproachRetrackDetail);
+        // Telemetry: this leg owns as LOOT_APPROACH_MOVE_TO_UNIT (staged before
+        // dispatch; PreemptCurrent above carries no request so the stage survives).
+        if (gameplayActor is GameplayActor concrete)
+            concrete.SetPendingMoveOwner(LootTravelDispatch.ApproachMoveOwner);
+        var request = gameplayActor.MoveToUnit(proposal.TargetId, PursuitSpeedMps, LootApproachLegTimeout, proposal.IdempotencyKey);
+        LootTravelDispatch.PublishDispatched(gameplayActor,
+            proposal.Payload is LootTravelDispatch.LootApproachDispatchParams p ? p.Decision : null);
+        var corpsePos = gameplayActor.Character?.ParentWorld?.GetNpc(proposal.TargetId)?.Transform.World.Position;
+        if (corpsePos.HasValue)
+        {
+            lock (PursuitSync)
+            {
+                if (LastApproachIssue.Count >= 256)
+                    LastApproachIssue.Clear();
+                LastApproachIssue[gameplayActor.ActorId] = (proposal.TargetId, corpsePos.Value);
+            }
+        }
+        return request;
+    }
     /// <summary>
     /// G8b return proposal (the wired quest only): Move/Stop/InteractNpc for the
     /// Ready-step reporter at <c>ObjectiveReturnPriority</c> (below
@@ -2147,6 +2370,13 @@ public static class QuestBehavior
             // Goal-guarded so no other Loot proposal can ever route here.
             // No Cast, no rotation, no credit — G7d owns credit.
             ActorActionType.Loot when proposal.Goal == LootGoal => DispatchLoot(gameplayActor, proposal),
+            // G7c corpse approach: the walk INTO the loot gate rides the same
+            // unit-relative MoveToUnit leg the pursuit leg dispatches (owner
+            // LOOT_APPROACH_MOVE_TO_UNIT). The arrival halt is deliberately NOT a
+            // route here — arrival is when the take itself becomes legal, so that
+            // wake's proposal is the Loot arm above. Goal-guarded so no other Move
+            // proposal can route here, and still no new verb.
+            ActorActionType.Move when proposal.Goal == LootGoal => DispatchLootApproachMove(gameplayActor, proposal),
         };
     }
 
@@ -2399,6 +2629,13 @@ public static class QuestBehavior
             // only for a Loot verb that actually ran its terminal course, so the
             // ledger never claims a take the actor refused.
             LootBrainPlanner.PublishTake(gameplayActor.ActorId, proposal.TargetId, DateTime.UtcNow);
+            // The corpse this leg was walking to is DONE: the approach journey is over
+            // (owner-scoped, so no other leg's journey on this actor is dropped), and a
+            // later re-pin of the same objId arms clean rather than inheriting a banked
+            // terminal. The approach leg's own issue memory goes with it.
+            LootTravelDispatch.EndJourney(gameplayActor);
+            lock (PursuitSync)
+                LastApproachIssue.Remove(gameplayActor.ActorId);
         }
         return request;
     }
