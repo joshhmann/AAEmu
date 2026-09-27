@@ -30,17 +30,18 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// Gather-from-doodad (4415 well-draw): the quest BRAIN's third objective shape,
 /// on the REAL headless actor through <see cref="QuestDecisionScenario.Run"/>.
 ///
-///   - the 4415 fixture row derives GatherDoodad + the 2306 well off canonical
-///     quest data plus a missing-only doodad func seed (no hand-typed ids flow
-///     into the plan — the seed only stages the same func tables the pilot's
-///     Load fills in production);
+///   - the 4415 fixture row derives GatherDoodad + the 2306 well + the draw
+///     skill off canonical quest data plus a missing-only doodad func seed (no
+///     hand-typed ids flow into the plan — the seed only stages the same func
+///     tables the pilot's Load fills in production: group 4581's FakeUse row
+///     carries fake_skill_id 13154, group 4583's loot row grants the water);
 ///   - the plan carries Advance/Gather/TurnIn and the catalog maps the shape to
 ///     its six-verb set while Interact stays registry-absent (UNPROVEN-VERB,
 ///     zero legs) until the stub graduates it;
 ///   - with Interact graduated the Gather leg drives Move (outside 25 m) →
-///     Stop (inside, unsettled) → Interact (settled) through the real engine
-///     verbs, and the engine credits the objective (no new actor verb — a
-///     skill-0 Doodad.Use loot, like the B1 Interact rig).
+///     Stop (inside, unsettled) → Interact (settled, SkillId 13154) through the
+///     real engine verbs, and the engine credits the objective (no new actor
+///     verb — a skill-bound Doodad.Use draw, like the client cast).
 /// </summary>
 [NotInParallel]
 public class QuestGatherDoodadTests
@@ -48,6 +49,10 @@ public class QuestGatherDoodadTests
     private const uint Quest4415 = 4415;
     private const uint Water15694 = 15694;
     private const uint Well2306 = 2306;
+    private const uint WellStartGroup4581 = 4581;
+    private const uint WellFakeFunc3853 = 3853;
+    private const uint WellFakeTemplate511 = 511;
+    private const uint DrawWater13154 = 13154;
     private const uint WellGroup4583 = 4583;
     private const uint WellFunc1256 = 1256;
     private const uint GatherAct26186 = 26186;
@@ -82,6 +87,8 @@ public class QuestGatherDoodadTests
         await Assert.That(fixture.PreyItem).IsEqualTo(Water15694);
         await Assert.That(fixture.Need).IsEqualTo(GatherNeed);
         await Assert.That(fixture.GatherDoodadTemplate).IsEqualTo(Well2306);
+        // The draw skill comes off the well's OWN FakeUse row — never hard-coded.
+        await Assert.That(fixture.GatherUseSkill).IsEqualTo(DrawWater13154);
         await Assert.That(fixture.ObjectivePattern).IsEqualTo(QuestPattern.GatherDoodad);
         await Assert.That(fixture.ObjectiveActType).IsEqualTo(nameof(QuestActObjItemGather));
         // The water comes from no npc loot pack — the doodad chain is the only source.
@@ -229,6 +236,7 @@ public class QuestGatherDoodadTests
         await Assert.That(second.WorkSelected).IsTrue();
         await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.Interact);
         await Assert.That(second.Request!.TargetId).IsEqualTo(wellObjId);
+        await Assert.That(second.Request.SkillId).IsEqualTo(DrawWater13154);
         await Assert.That(second.Request.State).IsEqualTo(ActorLifecycleState.Completed);
         var interactDetail = second.LegEvidence.Single(e => e.Leg == QuestLegId.Gather).Detail;
         await Assert.That(interactDetail).Contains(":dispatch=interact:reason=settled");
@@ -241,12 +249,11 @@ public class QuestGatherDoodadTests
         GameplayActorTestRig.SeedItemTemplate(Water15694);
         var (actor, _) = CreateGatheringActor("gather-credit", new Vector3(0, 0, 0), new Vector3(10, 0, 0));
 
-        // Wake 1 settles (Stop), wake 2 draws (Interact x1 through the real Doodad.Use).
+        // Wake 1 settles (Stop), wake 2 draws (Interact with the row's draw skill).
         RunGather(actor, "gather-credit-1");
         var draw = RunGather(actor, "gather-credit-2");
         await Assert.That(draw.SelectedAction).IsEqualTo(ActorActionType.Interact);
-        var have = GameplayActorTestRig.BagCount(actor, Water15694);
-        await Assert.That(have).IsGreaterThanOrEqualTo(1);
+        await Assert.That(draw.Request!.SkillId).IsEqualTo(DrawWater13154);
 
         // The engine credited the objective off the live quest object.
         var quest = actor.Character.Quests!.ActiveQuests[Quest4415];
@@ -274,6 +281,65 @@ public class QuestGatherDoodadTests
         await Assert.That(evidence.Detail).IsEqualTo("gather-no-source");
         await Assert.That(actor.AuditTrace.Any(r => r.Action is ActorActionType.Move
             or ActorActionType.Stop or ActorActionType.Interact)).IsFalse();
+    }
+
+    [Test]
+    public async Task RowDerivation_FollowsFuncTablePrecedence()
+    {
+        // The well's start group carries the FakeUse row first: the derived draw
+        // skill is the fake_skill_id, not the loot row (which carries none).
+        var fixture = QuestFixtureRow.FromQuestData(Quest4415);
+        await Assert.That(fixture.GatherDoodadTemplate).IsEqualTo(Well2306);
+        await Assert.That(fixture.GatherUseSkill).IsEqualTo(DrawWater13154);
+        // A row with no doodad source carries no draw skill.
+        var bare = new QuestFixtureRow(Quest4415, GatherAct26186, Water15694, GatherNeed, 0, 0, 9789, 0)
+        {
+            ObjectivePattern = QuestPattern.GatherDoodad,
+            ObjectiveActType = nameof(QuestActObjItemGather),
+            GatherDoodadTemplate = 0
+        };
+        await Assert.That(bare.GatherUseSkill).IsEqualTo(0u);
+    }
+
+    [Test]
+    public async Task HandBuiltRow_WithoutUseSkill_DispatchesSkillLessInteract()
+    {
+        // Regression: a hand-built row (GatherUseSkill 0) keeps the old
+        // skill-less Interact — the leg never invents a skill id.
+        var (actor, session) = CreateGatheringActor("gather-skill0", new Vector3(0, 0, 0), new Vector3(10, 0, 0));
+        var wellObjId = session.World.GetAllDoodads().First(d => d.TemplateId == Well2306).ObjId;
+        var bareRow = new QuestFixtureRow(Quest4415, GatherAct26186, Water15694, GatherNeed, 0, 0, 9789, 0)
+        {
+            ObjectivePattern = QuestPattern.GatherDoodad,
+            ObjectiveActType = nameof(QuestActObjItemGather),
+            GatherDoodadTemplate = Well2306
+        };
+        var registry = new StubVerbRegistry().Force("Interact", VerbGateStatus.Fresh, "G9", "g9-gather-report.json");
+        var plan = QuestDirector.Plan(Quest4415, bareRow, registry);
+        if (plan.HasFailed)
+            throw new InvalidOperationException($"stub gather plan failed: {plan.FailReason}");
+        // Wake 1 settles (Stop); wake 2 draws skill-less.
+        QuestBehavior.Run(actor, new QuestDecisionScenario.QuestOptions { CycleId = "gather-skill0-1" },
+            BotObservedContext.Capture(actor), [plan], (_, _) => []);
+        var draw = QuestBehavior.Run(actor, new QuestDecisionScenario.QuestOptions { CycleId = "gather-skill0-2" },
+            BotObservedContext.Capture(actor), [plan], (_, _) => []);
+        await Assert.That(draw.SelectedAction).IsEqualTo(ActorActionType.Interact);
+        await Assert.That(draw.Request!.TargetId).IsEqualTo(wellObjId);
+        await Assert.That(draw.Request!.SkillId).IsEqualTo(0u);
+    }
+
+    [Test]
+    public async Task Interact_UnknownSkill_RejectsNamingSkill()
+    {
+        // No learned-skill requirement (template-existence only): an UNKNOWN
+        // skill id still fails closed, naming the skill.
+        var (actor, session) = CreateGatheringActor("gather-badskill", new Vector3(0, 0, 0), new Vector3(10, 0, 0));
+        var wellObjId = session.World.GetAllDoodads().First(d => d.TemplateId == Well2306).ObjId;
+        const uint unknownSkill = 19_999_991;
+        await Assert.That(AAEmu.Game.Core.Managers.SkillManager.Instance.GetSkillTemplate(unknownSkill)).IsNull();
+        var request = actor.Interact(wellObjId, unknownSkill, "gather-badskill-1");
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(request.Detail).Contains($"unknown interaction skill {unknownSkill}");
     }
 
     /// <summary>
@@ -334,19 +400,25 @@ public class QuestGatherDoodadTests
             staged.Objectives = [0, 0, 0, 0, 0];
 
         GameplayActorTestRig.SpawnGatherDoodad(
-            session, Well2306, WellGroup4583, WellFunc1256, Water15694, wellPos);
+            session, Well2306, WellStartGroup4581, WellFakeFunc3853, Water15694, wellPos);
         var well = session.World.GetAllDoodads().First(d => d.TemplateId == Well2306);
+        well.FuncGroupId = WellStartGroup4581;
         if (well.ObjId == 0)
             throw new InvalidOperationException("well 2306 not in world after spawn");
         return (actor, session);
     }
 
     /// <summary>
-    /// Additive, missing-only seed of the 2306→4583→1256→15694 doodad loot link
-    /// the 4415 row resolves its well through. Canonical pilot data is never
-    /// clobbered: each row is added only when the lookup would otherwise resolve
-    /// empty, and the group binding is added only when the template carries no
-    /// such group.
+    /// Additive, missing-only seed of the 2306→4581(FakeUse 13154)→4583→1256→15694
+    /// doodad chain the 4415 row resolves its well AND its draw skill through.
+    /// Mirrors the canonical compact.sqlite3 rows: group 4581's FakeUse row
+    /// (func key 3853 → template 511) carries fake_skill_id 13154, group 4583's
+    /// loot row (func key 3854 → template 1256) grants the water. Canonical
+    /// pilot data is never clobbered: each row is added only when the lookup
+    /// would otherwise resolve empty, and group bindings are added only when
+    /// the template carries no such group. The 4415 row memo derives from
+    /// exactly these tables, so the seed also seeds the 13154 skill template
+    /// (the Interact template-existence gate) and invalidates the memo.
     private static void SeedWellLootLink()
     {
         const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
@@ -360,14 +432,43 @@ public class QuestGatherDoodadTests
         if (manager == null)
             return;
 
-
-
         var funcsByGroups = (Dictionary<uint, List<DoodadFunc>>)typeof(DoodadManager)
             .GetField("_funcsByGroups", flags)!.GetValue(manager)!;
         var funcsById = (Dictionary<uint, DoodadFunc>)typeof(DoodadManager)
             .GetField("_funcsById", flags)!.GetValue(manager)!;
         var funcTemplates = (Dictionary<string, Dictionary<uint, DoodadFuncTemplate>>)typeof(DoodadManager)
             .GetField("_funcTemplates", flags)!.GetValue(manager)!;
+
+        if (!funcsById.ContainsKey(WellFakeFunc3853))
+            funcsById[WellFakeFunc3853] = new DoodadFunc
+            {
+                GroupId = WellStartGroup4581,
+                FuncId = WellFakeTemplate511,
+                FuncKey = WellFakeFunc3853,
+                FuncType = "DoodadFuncFakeUse",
+                NextPhase = 4583,
+                SkillId = 0
+            };
+        if (!funcsByGroups.TryGetValue(WellStartGroup4581, out var startGroup))
+        {
+            startGroup = [];
+            funcsByGroups[WellStartGroup4581] = startGroup;
+        }
+        if (startGroup.All(f => f.FuncId != WellFakeTemplate511))
+            startGroup.Add(funcsById[WellFakeFunc3853]);
+
+        if (!funcTemplates.TryGetValue("DoodadFuncFakeUse", out var fakeTemplates))
+        {
+            fakeTemplates = [];
+            funcTemplates["DoodadFuncFakeUse"] = fakeTemplates;
+        }
+        if (!fakeTemplates.ContainsKey(WellFakeTemplate511))
+        {
+            fakeTemplates[WellFakeTemplate511] = new DoodadFuncFakeUse
+            {
+                FakeSkillId = DrawWater13154
+            };
+        }
         var templates = (Dictionary<uint, DoodadTemplate>)typeof(DoodadManager)
             .GetField("_templates", flags)!.GetValue(manager)!;
 
@@ -411,6 +512,13 @@ public class QuestGatherDoodadTests
             template = new DoodadTemplate { Id = Well2306, FuncGroups = [] };
             templates[Well2306] = template;
         }
+        if (template.FuncGroups.All(g => g.Id != WellStartGroup4581))
+            template.FuncGroups.Add(new DoodadFuncGroups
+            {
+                Id = WellStartGroup4581,
+                Almighty = Well2306,
+                GroupKindId = DoodadFuncGroups.DoodadFuncGroupKind.Start
+            });
         if (template.FuncGroups.All(g => g.Id != WellGroup4583))
             template.FuncGroups.Add(new DoodadFuncGroups
             {
@@ -420,7 +528,9 @@ public class QuestGatherDoodadTests
             });
 
         // The 4415 row memo is derived from exactly these tables: a staged link
-        // must never be shadowed by a row memoized from the prior staging.
+        // must never be shadowed by a row memoized from the prior staging. The
+        // draw skill needs a template row for the Interact existence gate.
+        GameplayActorTestRig.SeedSkillTemplate(DrawWater13154);
         QuestFixtureRow.InvalidateAll();
     }
 }
