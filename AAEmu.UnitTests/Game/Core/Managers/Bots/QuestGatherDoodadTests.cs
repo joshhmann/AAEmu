@@ -36,8 +36,9 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 ///     tables the pilot's Load fills in production: group 4581's FakeUse row
 ///     carries fake_skill_id 13154, group 4583's loot row grants the water);
 ///   - the plan carries Advance/Gather/TurnIn and the catalog maps the shape to
-///     its six-verb set while Interact stays registry-absent (UNPROVEN-VERB,
-///     zero legs) until the stub graduates it;
+///     its six-verb set, all registry-green since the G9a skill-bound draw
+///     graduated Interact (a stub override still exercises the same legs —
+///     belt-and-braces on the override seam, not a fallback for a refusal);
 ///   - with Interact graduated the Gather leg drives Move (outside 25 m) →
 ///     Stop (inside, unsettled) → Interact (settled, SkillId 13154) through the
 ///     real engine verbs, and the engine credits the objective (no new actor
@@ -96,12 +97,18 @@ public class QuestGatherDoodadTests
     }
 
     [Test]
-    public async Task Plan4415_WithGraduatedInteract_CarriesAdvanceGatherTurnIn()
+    public async Task Plan4415_ProductionRegistry_InteractGreen_BuildsGatherPlan()
     {
         var fixture = QuestFixtureRow.FromQuestData(Quest4415);
-        var registry = new StubVerbRegistry().Force("Interact", VerbGateStatus.Fresh, "G9", "g9-gather-report.json");
 
-        var plan = QuestDirector.Plan(Quest4415, fixture, registry);
+        // G9a graduated Interact: the production row is green, citing the
+        // skill-bound draw probe — the precondition the passing plan depends on.
+        var gate = VerifiedVerbRegistry.Instance.Resolve("Interact");
+        await Assert.That(gate.IsGreen).IsTrue();
+        await Assert.That(gate.GateId).IsEqualTo("G9a");
+        await Assert.That(gate.EvidencePath).IsEqualTo("g9a-skill-reprobe-report.20260927T220439Z.json");
+
+        var plan = QuestDirector.Plan(Quest4415, fixture);
 
         await Assert.That(plan.HasFailed).IsFalse();
         await Assert.That(plan.Unserved).IsEqualTo("");
@@ -116,43 +123,26 @@ public class QuestGatherDoodadTests
     }
 
     [Test]
-    public async Task Plan4415_ProductionRegistry_FailsUnprovenVerb_NamingInteract_ZeroLegs()
-    {
-        var fixture = QuestFixtureRow.FromQuestData(Quest4415);
-
-        // Interact has no production row yet — the precondition the failure depends on.
-        await Assert.That(VerifiedVerbRegistry.Instance.Resolve("Interact").IsGreen).IsFalse();
-
-        var plan = QuestDirector.Plan(Quest4415, fixture);
-
-        await Assert.That(plan.HasFailed).IsTrue();
-        await Assert.That(plan.FailStage).IsEqualTo("FIXTURE");
-        await Assert.That(plan.FailReason).StartsWith("HARNESS/UNPROVEN-VERB verb=Interact");
-        await Assert.That(plan.FailReason).Contains("gate=absent");
-        await Assert.That(plan.Legs.Count).IsEqualTo(0);
-        foreach (var id in Enum.GetValues<QuestLegId>())
-            await Assert.That(plan.Leg(id)).IsNull();
-    }
-
-    [Test]
-    public async Task PatternCatalog_GatherDoodad_MapsSixVerbs_InteractAbsentFromRegistry()
+    public async Task PatternCatalog_GatherDoodad_MapsSixVerbs_AllRegistryGreen()
     {
         await Assert.That(PatternCatalog.VerbsFor(QuestPattern.GatherDoodad)).IsEquivalentTo(new[]
         {
             "MoveTo", "Stop", "Observe", "AcceptQuest", "Interact", "TurnInQuest"
         });
 
-        // Every verb EXCEPT Interact resolves green — the interim the slice names.
+        // All six resolve green since G9a graduated Interact — including the
+        // graduated row's gate/evidence identity (same shape as the UseItem
+        // row's gate assertion in the gate tests).
         foreach (var verbKey in PatternCatalog.VerbsFor(QuestPattern.GatherDoodad))
         {
-            if (verbKey == "Interact")
-                continue;
             var gate = VerifiedVerbRegistry.Instance.Resolve(verbKey);
             await Assert.That(gate.IsGreen).IsTrue();
             await Assert.That(gate.GateId.Length).IsGreaterThan(0);
             await Assert.That(gate.EvidencePath.Length).IsGreaterThan(0);
         }
-        await Assert.That(VerifiedVerbRegistry.Instance.Resolve("Interact").IsGreen).IsFalse();
+        var interact = VerifiedVerbRegistry.Instance.Resolve("Interact");
+        await Assert.That(interact.GateId).IsEqualTo("G9a");
+        await Assert.That(interact.EvidencePath).IsEqualTo("g9a-skill-reprobe-report.20260927T220439Z.json");
     }
 
     [Test]
@@ -189,10 +179,11 @@ public class QuestGatherDoodadTests
 
     // ------------------------------------------------------------ leg dispatch
     //
-    // The production registry still refuses Interact (UNPROVEN-VERB above), so
-    // these wakes run through QuestBehavior.Run with a stub-graduated plan —
-    // the same legs, the same selector, the same private Dispatch — proving the
-    // leg body and the dispatch arms without graduating the production row.
+    // Interact is production-graduated (G9a above), so these wakes run through
+    // QuestBehavior.Run with the production plan — the same legs, the same
+    // selector, the same private Dispatch — proving the leg body and the
+    // dispatch arms end to end. RunGather keeps a stub override layered on the
+    // same green row (belt-and-braces on the override seam, not a fallback).
 
     [Test]
     public async Task OutsideRange_MoveDispatched_OwnerTagged()
@@ -314,11 +305,9 @@ public class QuestGatherDoodadTests
             ObjectiveActType = nameof(QuestActObjItemGather),
             GatherDoodadTemplate = Well2306
         };
-        var registry = new StubVerbRegistry().Force("Interact", VerbGateStatus.Fresh, "G9", "g9-gather-report.json");
-        var plan = QuestDirector.Plan(Quest4415, bareRow, registry);
+        var plan = QuestDirector.Plan(Quest4415, bareRow);
         if (plan.HasFailed)
-            throw new InvalidOperationException($"stub gather plan failed: {plan.FailReason}");
-        // Wake 1 settles (Stop); wake 2 draws skill-less.
+            throw new InvalidOperationException($"production gather plan failed: {plan.FailReason}");
         QuestBehavior.Run(actor, new QuestDecisionScenario.QuestOptions { CycleId = "gather-skill0-1" },
             BotObservedContext.Capture(actor), [plan], (_, _) => []);
         var draw = QuestBehavior.Run(actor, new QuestDecisionScenario.QuestOptions { CycleId = "gather-skill0-2" },
@@ -343,20 +332,19 @@ public class QuestGatherDoodadTests
     }
 
     /// <summary>
-    /// One gather wake through the behavior's own leg loop with a
-    /// stub-graduated plan: the same selector and the same private dispatch the
-    /// production wake runs, minus the production registry's Interact refusal.
-    /// An explicit snapshot simulates a stale perception (the doodad moved since
-    /// the wake perceived); omitted, the wake perceives fresh.
+    /// One gather wake through the behavior's own leg loop with the production
+    /// plan (Interact graduated G9a): the same selector and the same private
+    /// dispatch the production wake runs. An explicit snapshot simulates a
+    /// stale perception (the doodad moved since the wake perceived); omitted,
+    /// the wake perceives fresh.
     /// </summary>
     private static QuestDecisionScenario.QuestRunResult RunGather(
         GameplayActor actor, string cycle, BotObservedContext? snapshot = null)
     {
         var fixture = QuestFixtureRow.FromQuestData(Quest4415);
-        var registry = new StubVerbRegistry().Force("Interact", VerbGateStatus.Fresh, "G9", "g9-gather-report.json");
-        var plan = QuestDirector.Plan(Quest4415, fixture, registry);
+        var plan = QuestDirector.Plan(Quest4415, fixture);
         if (plan.HasFailed)
-            throw new InvalidOperationException($"stub gather plan failed: {plan.FailReason}");
+            throw new InvalidOperationException($"production gather plan failed: {plan.FailReason}");
         var context = snapshot ?? BotObservedContext.Capture(actor);
         return QuestBehavior.Run(
             actor,
