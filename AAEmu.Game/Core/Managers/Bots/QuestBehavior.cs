@@ -1143,7 +1143,7 @@ public static class QuestBehavior
                     SurvivalVetoClear(actor)
                 ]);
         }
-        diag = $"{prefix}:dispatch=interact:reason=settled";
+        diag = $"{prefix}:dispatch=interact:reason=settled:skill={fixture.GatherUseSkill}";
         return new BotDecisionProposal(
             goal: GatherGoal,
             action: ActorActionType.Interact,
