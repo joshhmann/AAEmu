@@ -34,8 +34,10 @@ public enum QuestPattern
 /// One decision leg of a quest plan. Stable ids so a wake can name the leg it
 /// is evaluating (log/diag and the Stage 4 loop) without re-deriving it.
 /// <see cref="UseItem"/> is the item-use objective's own leg (the item-use
-/// pattern's only objective leg); a plan carries either the objective group
-/// (gather-from-prey) or this leg, never both.
+/// pattern's only objective leg); <see cref="Gather"/> is the gather-from-doodad
+/// objective's own leg (the <see cref="QuestPattern.GatherDoodad"/> shape's only
+/// objective leg). A plan carries at most one objective group (gather-from-prey
+/// or gather-from-doodad) or the item-use leg, never two.
 /// </summary>
 public enum QuestLegId
 {
@@ -46,7 +48,8 @@ public enum QuestLegId
     Combat,
     Loot,
     Return,
-    UseItem
+    UseItem,
+    Gather
 }
 
 /// <summary>

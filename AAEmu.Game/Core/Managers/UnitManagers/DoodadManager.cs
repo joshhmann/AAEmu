@@ -2734,6 +2734,7 @@ public class DoodadManager(IObjectIdManager objectIdManager, IDoodadIdManager do
         }
 
         CreateTemplateCaches();
+        AAEmu.Game.Models.Game.Quests.Director.QuestFixtureRow.InvalidateAll();
         _loaded = true;
     }
 
@@ -3009,6 +3010,15 @@ public class DoodadManager(IObjectIdManager objectIdManager, IDoodadIdManager do
         }
 
         return listId;
+    }
+
+    /// <summary>
+    /// Every loaded doodad template. The quest fixture derivation inverts the
+    /// doodad→loot-func→item chain over this surface (read-only; never mutates).
+    /// </summary>
+    public System.Collections.Generic.IEnumerable<DoodadTemplate> GetAllTemplates()
+    {
+        return _templates?.Values ?? System.Linq.Enumerable.Empty<DoodadTemplate>();
     }
 
     /// <summary>

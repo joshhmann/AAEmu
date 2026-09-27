@@ -124,6 +124,15 @@ public static class QuestDecisionScenario
         /// while the objective is uncredited and the bag holds the item.
         /// </summary>
         public int ObjectiveUseItemPriority { get; init; } = 26;
+        /// <summary>
+        /// Gather-from-doodad objective priority: above advance (20) so a live
+        /// draw outranks step-machine work, below turn-in (30) so a Ready quest
+        /// still reports first — the same band the kill-to-gather objective legs
+        /// sit in (distinct from every frozen value; the shapes compete only
+        /// across quests). The leg fires only while the objective is uncredited
+        /// and a source doodad is perceived.
+        /// </summary>
+        public int ObjectiveGatherPriority { get; init; } = 27;
 
         // ---- offering rank policy (the selection hook) ----
         /// <summary>

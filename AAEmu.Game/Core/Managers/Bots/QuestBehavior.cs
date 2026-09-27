@@ -108,6 +108,26 @@ public static class QuestBehavior
     private const string LootGoal = "quest.objective-loot";
     /// <summary>Goal key routing the item-use objective's UseItem through Dispatch.</summary>
     private const string UseItemGoal = "quest.objective-use-item";
+    /// <summary>Goal key routing the gather-from-doodad objective's Interact through Dispatch.</summary>
+    private const string GatherGoal = "quest.objective-gather";
+    /// <summary>
+    /// Gather arrival radius: the Interact engine gate itself
+    /// (GameplayActor.MaxInteractRange, 25 m flat). Inside → audited Stop,
+    /// then Interact; outside → drift-gated MoveTo. The return leg's own
+    /// radius discipline at 25 m.
+    /// </summary>
+    private const float GatherInteractRadiusM = GameplayActor.MaxInteractRange;
+    /// <summary>
+    /// The gather leg's movement-owner tag (telemetry + the leg's own live-leg
+    /// reading, so the return/pursuit/loot boundaries can never disarm it and it
+    /// can never disarm theirs — one actor walks one journey PER OWNING LEG).
+    /// </summary>
+    internal const string GatherMoveOwner = "GATHER_MOVE_TO_UNIT";
+    /// <summary>
+    /// The preemption detail the gather retrack stages (caller-authored: retires
+    /// a leg the caller itself decided to replace, never a navigation failure).
+    /// </summary>
+    internal const string GatherRetrackDetail = "quest gather retrack";
     /// G6 hold-confirm gate: a pursuit Stop leg already landed for this
     /// (actor, target) at these poses stays landed — the Stop proposal
     /// withdraws while neither side moved, so the lower-priority combat
@@ -137,6 +157,14 @@ public static class QuestBehavior
     /// bounded by full clear.
     /// </summary>
     private static readonly Dictionary<uint, (uint TargetObjId, Vector3 TargetPos)> LastApproachIssue = new();
+    /// <summary>
+    /// Last-issued gather-doodad position per actor (memory-only wake cache for
+    /// the gather leg's own drift reading, the same discipline
+    /// <c>LastPursuitIssue</c> keeps). Separate from the other issue memories
+    /// so a well approach can never entangle prey/reporter/corpse telemetry,
+    /// and vice versa. Keyed by ActorId; bounded by full clear.
+    /// </summary>
+    private static readonly Dictionary<uint, (uint TargetObjId, Vector3 TargetPos)> LastGatherIssue = new();
     private static readonly object PursuitSync = new();
 
     /// <summary>
@@ -320,6 +348,13 @@ public static class QuestBehavior
     {
         lock (PursuitSync)
             LootedCorpses.Clear();
+    }
+
+    /// <summary>Test-only reset for the gather leg's issue memory (same discipline as the sibling clears).</summary>
+    internal static void ClearGatherMemory()
+    {
+        lock (PursuitSync)
+            LastGatherIssue.Clear();
     }
     /// <summary>
     /// Read-only loot-container probe for a resolved corpse: containerExists +
@@ -828,7 +863,7 @@ public static class QuestBehavior
                 // hunt/butcher loops stay suppressed while closing) and keeps
                 // the travel fallback from arming against our own leg. Every
                 // pre-existing action keeps the terminal-surface contract.
-                if (selected.Goal is PursuitGoal or ReturnGoal or LootGoal && selected.Action == ActorActionType.Move
+                if (selected.Goal is PursuitGoal or ReturnGoal or LootGoal or GatherGoal && selected.Action == ActorActionType.Move
                     && request.State == ActorLifecycleState.Running)
                 {
                     var afterRunning = BotObservedContext.Capture(actor).ActiveQuestIds.ToHashSet();
@@ -837,6 +872,7 @@ public static class QuestBehavior
                     {
                         ReturnGoal => "return",
                         LootGoal => "loot approach",
+                        GatherGoal => "gather",
                         _ => "pursuit"
                     };
                     return new QuestDecisionScenario.QuestRunResult
@@ -924,6 +960,251 @@ public static class QuestBehavior
         if (use == null)
             return false;
         return use.GetObjective(quest) >= Math.Max(1, use.Count);
+    }
+
+    /// <summary>
+    /// True when the quest's gather objective already carries its required
+    /// count. The item-use credit helper's twin for the gather act: reads the
+    /// act's live objective counter off the SAME quest object the leg already
+    /// holds, resolving the <c>QuestActObjItemGather</c> from the static
+    /// template tables — game data, never a world/perception read.
+    /// Fail-closed: an unreadable template or a missing act reads NOT credited,
+    /// so the leg keeps working rather than silently declaring victory.
+    /// </summary>
+    private static bool GatherCredited(uint questId, Quest quest, QuestFixtureRow fixture)
+    {
+        var gather = QuestManager.Instance?.GetTemplate(questId)?
+            .GetComponents(QuestComponentKind.Progress)
+            .SelectMany(c => c.ActTemplates)
+            .OfType<QuestActObjItemGather>()
+            .FirstOrDefault(a => a.ActId == fixture.GatherActId);
+        if (gather == null)
+            return false;
+        return gather.GetObjective(quest) >= Math.Max(1, gather.Count);
+    }
+    /// <summary>
+    /// Gather-from-doodad leg entry gate: the step machine has work only for an
+    /// active, non-Ready quest, the objective leg has work only while the gather
+    /// objective is not yet credited, and the leg needs a source — a perceived
+    /// doodad of the row's own <c>GatherDoodadTemplate</c> — to walk to. The
+    /// gate owns all three reasons, so the loop's evidence names the real cause
+    /// of the withdraw. Never dispatches; the resolve is a read-only census of
+    /// the wake's own perception snapshot.
+    internal static string? GatherEnter(QuestLegContext context, QuestLegWake wake)
+    {
+        var quest = context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId);
+        if (quest is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
+            return "quest-not-usable";
+        var fixture = context.Fixture!;
+        if (GatherCredited(context.QuestId, quest, fixture))
+            return "objective-credited";
+        return ResolveGatherDoodad(context, fixture) == 0 ? "gather-no-source" : null;
+    }
+
+    /// <summary>
+    /// The wake's gather source: the first perceived doodad objId whose template
+    /// is the row's own <c>GatherDoodadTemplate</c> (perception order — the same
+    /// nearest-first discipline the discovery sweep uses is left to the wake's
+    /// snapshot order; the leg never re-sorts). 0 when the row names no template
+    /// or none is perceived. Read-only over the wake's own snapshot — never a
+    /// world scan, never stored.
+    /// </summary>
+    private static uint ResolveGatherDoodad(QuestLegContext context, QuestFixtureRow fixture)
+    {
+        if (fixture.GatherDoodadTemplate == 0)
+            return 0;
+        var observed = context.Observation?.NearbyDoodadObjIds;
+        if (observed == null || observed.Count == 0)
+            return 0;
+        var world = context.Actor.Character?.ParentWorld;
+        if (world == null)
+            return 0;
+        foreach (var objId in observed)
+        {
+            var doodad = world.GetDoodad(objId);
+            if (doodad != null && doodad.TemplateId == fixture.GatherDoodadTemplate)
+                return objId;
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// Gather-from-doodad leg: draw the objective item from the perceived well
+    /// through the real <c>Interact</c> contract (skill-less — the well's loot
+    /// func grants on a skill-0 <c>Doodad.Use</c>; no new actor verb). Per wake:
+    /// source lost → withdraw; outside the 25 m Interact gate → Move (drift-gated
+    /// retrack only after &gt; 2.0 m target motion since the last issue); inside
+    /// unsettled → Stop (audited halt); settled → Interact. Credit is the
+    /// engine's own objective counter plus the wake's bag census (never a world
+    /// re-scan). Never advances, never turns in — those legs stay separate
+    /// competitors.
+    /// </summary>
+    internal static BotDecisionProposal? GatherEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var fixture = context.Fixture!;
+        var questId = context.QuestId;
+        static string M(double value)
+            => double.IsNaN(value) ? "NA" : value.ToString("F1", CultureInfo.InvariantCulture);
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+        {
+            diag = $"validate=quest-not-active:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have=NA:rangeM=NA:dispatch=withdrawn:reason=quest-not-active";
+            return null;
+        }
+        var have = 0;
+        if (context.Observation?.BagItemCounts.TryGetValue(fixture.PreyItem, out var held) == true)
+            have = held;
+        if (GatherCredited(questId, quest, fixture))
+        {
+            diag = $"validate=objective-credited:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:rangeM=NA:dispatch=withdrawn:reason=objective-credited";
+            return null;
+        }
+        var selected = ResolveGatherDoodad(context, fixture);
+        if (selected == 0)
+        {
+            diag = $"validate=no-source:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:rangeM=NA:dispatch=withdrawn:reason=no-source";
+            return null;
+        }
+        var character = actor.Character;
+        var actorPos = character?.Transform.World.Position;
+        var doodad = character?.ParentWorld?.GetDoodad(selected);
+        if (character == null || !actorPos.HasValue || character.ParentWorld == null || doodad == null)
+        {
+            diag = $"validate=FAIL-source-lost:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:target={selected}:rangeM=NA:dispatch=withdrawn:reason=source-lost";
+            return null;
+        }
+        if (doodad.TemplateId != fixture.GatherDoodadTemplate)
+        {
+            diag = $"validate=FAIL-source-recycled:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:target={selected}:template={doodad.TemplateId}:rangeM=NA:dispatch=withdrawn:reason=source-recycled";
+            return null;
+        }
+        if (doodad.Despawn > DateTime.MinValue)
+        {
+            diag = $"validate=FAIL-source-despawn:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:target={selected}:rangeM=NA:dispatch=withdrawn:reason=source-despawn";
+            return null;
+        }
+        var doodadPos = doodad.Transform.World.Position;
+        var dist = MathUtil.CalculateDistance(actorPos.Value, doodadPos, false);
+        var prefix = $"validate=ok:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:target={selected}:rangeM={M(dist)}";
+        if (dist > GatherInteractRadiusM)
+        {
+            var (liveMove, legLive, driftText) = GatherLegState(actor, selected, doodadPos);
+            if (legLive)
+            {
+                diag = $"{prefix}:dispatch=held:reason=drift-held(drift={driftText})";
+                return null;
+            }
+            diag = $"{prefix}:dispatch=move:reason={(liveMove ? "retrack" : driftText)}";
+            return new BotDecisionProposal(
+                goal: GatherGoal,
+                action: ActorActionType.Move,
+                targetId: selected,
+                expectedPostcondition: new BotProposalPostcondition(
+                    $"gather leg toward quest {questId} doodad {selected} dispatched",
+                    _ => true),
+                idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:gather:{questId}:{selected}",
+                timeout: TimeSpan.FromSeconds(30),
+                rationale: $"quest {questId} gather: well {fixture.GatherDoodadTemplate} ({selected}) at {M(dist)}m flat (outside {GatherInteractRadiusM:F1}m gate), drift {driftText} — closing",
+                policyVersion: opts.PolicyVersion,
+                priority: opts.ObjectiveGatherPriority,
+                tieBreakKey: $"gather:{questId}:{selected:D10}",
+                destination: doodadPos,
+                hardPreconditions:
+                [
+                    new BotProposalPrecondition($"quest-{questId}-relevant",
+                        observed => observed.ActiveQuestIds.Contains(questId)),
+                    SurvivalVetoClear(actor)
+                ]);
+        }
+        if (!GatherHoldConfirmed(actor, selected, actorPos.Value, doodadPos))
+        {
+            diag = $"{prefix}:dispatch=stop:reason=in-range";
+            return new BotDecisionProposal(
+                goal: GatherGoal,
+                action: ActorActionType.Stop,
+                targetId: selected,
+                expectedPostcondition: new BotProposalPostcondition(
+                    $"holding at {M(dist)}m off quest {questId} doodad {selected} (stop-before-interact)",
+                    _ => true),
+                idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:gather-stop:{questId}:{selected}",
+                timeout: TimeSpan.FromSeconds(30),
+                rationale: $"quest {questId} gather: well {fixture.GatherDoodadTemplate} ({selected}) at {M(dist)}m flat (inside {GatherInteractRadiusM:F1}m gate) — hold, no interact yet",
+                policyVersion: opts.PolicyVersion,
+                priority: opts.ObjectiveGatherPriority,
+                tieBreakKey: $"gather:{questId}:{selected:D10}",
+                hardPreconditions:
+                [
+                    new BotProposalPrecondition($"quest-{questId}-relevant",
+                        observed => observed.ActiveQuestIds.Contains(questId)),
+                    SurvivalVetoClear(actor)
+                ]);
+        }
+        diag = $"{prefix}:dispatch=interact:reason=settled";
+        return new BotDecisionProposal(
+            goal: GatherGoal,
+            action: ActorActionType.Interact,
+            targetId: selected,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"quest {questId} gather interact on doodad {selected} delivered",
+                _ => true),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:gather-interact:{questId}:{selected}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: $"quest {questId} gather: well {fixture.GatherDoodadTemplate} ({selected}) at {M(dist)}m flat (inside {GatherInteractRadiusM:F1}m gate), settled — Interact draw",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.ObjectiveGatherPriority,
+            tieBreakKey: $"gather:{questId}:{selected:D10}",
+            hardPreconditions:
+            [
+                new BotProposalPrecondition($"quest-{questId}-relevant",
+                    observed => observed.ActiveQuestIds.Contains(questId)),
+                SurvivalVetoClear(actor)
+            ]);
+    }
+
+    /// <summary>
+    /// The gather leg's own reading of the leg IT dispatched (the pursuit
+    /// discipline, kept for this caller's lane vocabulary): whether a Move leg of
+    /// ours is live at all, and — when there is one — whether it still serves the
+    /// well (motion since the last issue under <see cref="PursuitRetrackDriftM"/>).
+    /// <c>driftText</c> is the caller's own drift reading (<c>fresh</c> before any
+    /// issue).
+    /// </summary>
+    private static (bool LiveMove, bool LegLive, string DriftText) GatherLegState(
+        IGameplayActor actor, uint doodadObjId, Vector3 doodadPos)
+    {
+        var liveMove = actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move }
+            && actor.ActiveRequest.TargetId == doodadObjId
+            && actor.ActiveRequest.MoveOwner == GatherMoveOwner;
+        var driftText = "fresh";
+        var legLive = liveMove;
+        lock (PursuitSync)
+        {
+            if (LastGatherIssue.TryGetValue(actor.ActorId, out var last) && last.TargetObjId == doodadObjId)
+            {
+                var drift = Vector3.Distance(last.TargetPos, doodadPos);
+                driftText = $"{drift.ToString("F1", CultureInfo.InvariantCulture)}m";
+                legLive = liveMove && drift <= PursuitRetrackDriftM;
+            }
+        }
+        return (liveMove, legLive, driftText);
+    }
+
+    /// <summary>
+    /// The gather leg's settled-halt memory: a Stop already landed for this well
+    /// at (nearly) these poses. Read-only over the shared hold memory.
+    /// </summary>
+    private static bool GatherHoldConfirmed(
+        IGameplayActor actor, uint doodadObjId, Vector3 actorPos, Vector3 doodadPos)
+    {
+        lock (PursuitSync)
+        {
+            return LastStopHold.TryGetValue(actor.ActorId, out var hold)
+                   && hold.TargetObjId == doodadObjId
+                   && Vector3.Distance(hold.ActorPos, actorPos) <= 0.5f
+                   && Vector3.Distance(hold.TargetPos, doodadPos) <= 0.5f;
+        }
     }
 
     /// <summary>
@@ -2370,13 +2651,17 @@ public static class QuestBehavior
             // Goal-guarded so no other Loot proposal can ever route here.
             // No Cast, no rotation, no credit — G7d owns credit.
             ActorActionType.Loot when proposal.Goal == LootGoal => DispatchLoot(gameplayActor, proposal),
-            // G7c corpse approach: the walk INTO the loot gate rides the same
-            // unit-relative MoveToUnit leg the pursuit leg dispatches (owner
-            // LOOT_APPROACH_MOVE_TO_UNIT). The arrival halt is deliberately NOT a
-            // route here — arrival is when the take itself becomes legal, so that
-            // wake's proposal is the Loot arm above. Goal-guarded so no other Move
-            // proposal can route here, and still no new verb.
             ActorActionType.Move when proposal.Goal == LootGoal => DispatchLootApproachMove(gameplayActor, proposal),
+            // Gather-from-doodad: the quest-owned well draw rides MoveTo on the
+            // doodad's live POSITION (a doodad is BaseUnit, never Unit — the
+            // position leg is the roam butcher-approach shape), the audited Stop
+            // halt inside 25 m, and skill-less Interact once settled (the well's
+            // loot func grants on a skill-0 Doodad.Use; no new actor verb).
+            // Goal-guarded so no other Move/Stop/Interact proposal can ever
+            // route here.
+            ActorActionType.Move when proposal.Goal == GatherGoal => DispatchGatherMove(gameplayActor, proposal),
+            ActorActionType.Stop when proposal.Goal == GatherGoal => DispatchGatherStop(gameplayActor, proposal),
+            ActorActionType.Interact when proposal.Goal == GatherGoal => gameplayActor.Interact(proposal.TargetId, proposal.SkillId, proposal.IdempotencyKey),
         };
     }
 
@@ -2636,6 +2921,61 @@ public static class QuestBehavior
             LootTravelDispatch.EndJourney(gameplayActor);
             lock (PursuitSync)
                 LastApproachIssue.Remove(gameplayActor.ActorId);
+        }
+        return request;
+    }
+    /// <summary>
+    /// Gather Move dispatch: preempt a live Move leg (retrack only), issue the
+    /// position leg on the well's live position (the roam butcher-approach shape
+    /// — a doodad is BaseUnit, never Unit, so MoveToUnit cannot resolve it), and
+    /// record the well's live position for the next wake's drift gate. Never
+    /// touches _move state or queue kinds — public actor verbs only.
+    /// </summary>
+    private static ActorRequest DispatchGatherMove(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        if (gameplayActor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+            gameplayActor.PreemptCurrent(GatherRetrackDetail);
+        if (gameplayActor is GameplayActor concrete)
+            concrete.SetPendingMoveOwner(GatherMoveOwner);
+        var destination = proposal.Destination
+            ?? gameplayActor.Character?.ParentWorld?.GetDoodad(proposal.TargetId)?.Transform.World.Position
+            ?? gameplayActor.Character?.Transform.World.Position
+            ?? Vector3.Zero;
+        var request = gameplayActor.MoveTo(destination, PursuitSpeedMps, PursuitLegTimeout, proposal.IdempotencyKey);
+        var doodadPos = gameplayActor.Character?.ParentWorld?.GetDoodad(proposal.TargetId)?.Transform.World.Position;
+        if (doodadPos.HasValue)
+        {
+            lock (PursuitSync)
+            {
+                if (LastGatherIssue.Count >= 256)
+                    LastGatherIssue.Clear();
+                LastGatherIssue[gameplayActor.ActorId] = (proposal.TargetId, doodadPos.Value);
+            }
+        }
+        return request;
+    }
+    /// <summary>
+    /// Gather Stop dispatch: issue the audited Stop halt, then record both poses
+    /// in the shared hold memory so the next wake's gather proposal can confirm
+    /// the hold and yield to Interact. Shares <c>LastStopHold</c> with the other
+    /// legs — entries are (actor, target) keyed by check, and the well objId
+    /// never equals a prey/reporter/corpse target. Never touches _move state or
+    /// queue kinds — public actor verbs only.
+    /// </summary>
+    private static ActorRequest DispatchGatherStop(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        var request = gameplayActor.Stop();
+        var character = gameplayActor.Character;
+        var actorPos = character?.Transform.World.Position;
+        var doodadPos = character?.ParentWorld?.GetDoodad(proposal.TargetId)?.Transform.World.Position;
+        if (actorPos.HasValue && doodadPos.HasValue)
+        {
+            lock (PursuitSync)
+            {
+                if (LastStopHold.Count >= 256)
+                    LastStopHold.Clear();
+                LastStopHold[gameplayActor.ActorId] = (proposal.TargetId, actorPos.Value, doodadPos.Value);
+            }
         }
         return request;
     }

@@ -5,12 +5,11 @@ using AAEmu.Game.Models.Game.Quests.Director;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
-/// <summary>
 /// Quest director — the quest BRAIN's plan assembly and gate-check.
 ///
 /// Assembles one <see cref="QuestPlan"/> per active quest, from the behavior's
 /// leg <c>Emit</c> providers, over EVERY quest: the shape is decided by the
-/// quest's derived <see cref="QuestFixtureRow"/>, never by a quest id. Three
+/// quest's derived <see cref="QuestFixtureRow"/>, never by a quest id. Four
 /// shapes exist, and they are exhaustive by construction:
 ///
 ///   - a bootstrap quest (no Progress objective act) carries Advance + TurnIn —
@@ -19,8 +18,13 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     resolves) additionally carries Return / Target / Pursuit / Combat /
 ///     Loot — the kill-to-gather path, unchanged for 251;
 ///   - an item-use quest (an item-use objective) additionally carries UseItem —
-///     the consume-an-item path (252 is its proof).
-///
+///     the consume-an-item path (252 is its proof);
+///   - a gather-from-doodad quest (an item-gather objective whose npc loot
+///     chain does NOT resolve but whose doodad func chain DOES) carries
+///     Gather — the well-draw path (4415 is its first quest). The shape's
+///     <c>Interact</c> verb has no registry row yet, so the plan fails as
+///     <c>HARNESS/UNPROVEN-VERB</c> until the live gate proves the real path
+///     and graduates the row.
 /// The plan carries legs and data only. Every leg body, every per-actor memory
 /// (hold/drift/pursuit/return issue, corpse, loot-once, give-up streak) and all
 /// dispatch stay in <see cref="QuestBehavior"/>; the plan never stores per-wake
@@ -41,7 +45,7 @@ namespace AAEmu.Game.Core.Managers.Bots;
 public static class QuestDirector
 {
     /// <summary>
-    /// The two leg sets, built once: a <see cref="QuestLeg"/> is an id plus its
+    /// The four leg sets, built once: a <see cref="QuestLeg"/> is an id plus its
     /// static-method delegates, so it carries no per-actor or per-wake state and
     /// is shared across every plan and every actor.
     ///
@@ -87,6 +91,25 @@ public static class QuestDirector
             Enter: QuestBehavior.AdvanceEnter),
         new(QuestLegId.UseItem, QuestBehavior.UseItemEmit,
             Enter: QuestBehavior.UseItemEnter),
+        new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
+            Enter: QuestBehavior.TurnInEnter)
+    });
+
+    /// <summary>
+    /// The gather-from-doodad leg set: Advance, the gather objective leg, then
+    /// TurnIn. The ordinary TurnIn leg serves the Ready step against the row's
+    /// <see cref="QuestFixtureRow.ReporterTemplate"/> (4415 reports to the
+    /// same NPC that gave it); Advance serves the step machine as always. No
+    /// funnel legs: the objective's target is a doodad resolved per wake from
+    /// the row's own <see cref="QuestFixtureRow.GatherDoodadTemplate"/>, never
+    /// the npc funnel.
+    /// </summary>
+    private static readonly IReadOnlyList<QuestLeg> GatherDoodadLegs = Array.AsReadOnly(new QuestLeg[]
+    {
+        new(QuestLegId.Advance, QuestBehavior.AdvanceEmit,
+            Enter: QuestBehavior.AdvanceEnter),
+        new(QuestLegId.Gather, QuestBehavior.GatherEmit,
+            Enter: QuestBehavior.GatherEnter),
         new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
             Enter: QuestBehavior.TurnInEnter)
     });
@@ -169,9 +192,11 @@ public static class QuestDirector
             ? fixture.ObjectivePattern
             : fixture.UseItemActId != 0
                 ? QuestPattern.UseItem
-                : fixture.GatherActId != 0
-                    ? QuestPattern.KillX
-                    : QuestPattern.Unknown;
+                : fixture.GatherActId != 0 && fixture.GatherDoodadTemplate != 0
+                    ? QuestPattern.GatherDoodad
+                    : fixture.GatherActId != 0
+                        ? QuestPattern.KillX
+                        : QuestPattern.Unknown;
 
         // An objective the vocabulary cannot SERVE yet keeps the bootstrap floor
         // and names the gap. It is not a gate failure (the registry never
@@ -185,13 +210,19 @@ public static class QuestDirector
                 : $"HARNESS/UNPROVEN-PATTERN quest={fixture.QuestId} act={fixture.ObjectiveActType}";
             return new QuestPlan(questId, pattern, fixture, BootstrapLegs, Unserved: unserved);
         }
-
         // A gather-shaped act whose loot chain did not resolve has no prey to
         // pursue: the source is the missing piece, named as such, and the plan
         // fails closed with zero legs rather than reaching the leg loop with no
         // target to find. (This is the shape's own precondition — the loot
         // chain is what makes the objective completable at all.)
         if (pattern == QuestPattern.KillX && fixture.PreyTemplate == 0)
+            return Failed(questId, pattern, fixture,
+                $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.GatherActId} item={fixture.PreyItem}");
+
+        // A gather-from-doodad act whose doodad func chain did not resolve has
+        // no well to draw from: same fail-closed shape as the prey path, naming
+        // the same act and item so the gap reads identically in the lane.
+        if (pattern == QuestPattern.GatherDoodad && fixture.GatherDoodadTemplate == 0)
             return Failed(questId, pattern, fixture,
                 $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.GatherActId} item={fixture.PreyItem}");
 
@@ -224,6 +255,7 @@ public static class QuestDirector
         {
             QuestPattern.KillX => ObjectiveLegs,
             QuestPattern.UseItem => UseItemLegs,
+            QuestPattern.GatherDoodad => GatherDoodadLegs,
             _ => NoLegs
         });
     }
