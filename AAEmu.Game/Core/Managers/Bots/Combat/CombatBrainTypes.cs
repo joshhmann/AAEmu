@@ -3,6 +3,8 @@
 using System.Globalization;
 using System.Numerics;
 
+using AAEmu.Game.Core.Managers.Bots.Travel;
+
 namespace AAEmu.Game.Core.Managers.Bots.Combat;
 
 /// <summary>
@@ -214,7 +216,18 @@ public enum CombatReason
 /// pursuit Stop) won, and the pursuit leg would then stand down for an
 /// engagement that never acted — the opposite of what the fact means.
 /// </summary>
-public readonly record struct CombatDispatchParams(CombatBrainDecision Decision);
+/// <param name="Decision">The combat brain's own decision for the wake this proposal was built on.</param>
+/// <param name="KiteDecision">
+/// The TRAVEL chain's decision, when the combat <c>Move</c> is the ROUTED kite leg
+/// (<see cref="CombatTravelDispatch"/>) — <c>null</c> on the leg's own pre-brain
+/// fallback, and on every non-Move verb. The dispatch site banks the leg it ACTUALLY
+/// issued from it (mode + destination, so the next wake's drift read is honest) and
+/// tags the movement with the kite's own owner; a fallback carries none, so it keeps
+/// the pre-brain owner tag and banks nothing.
+/// </param>
+public readonly record struct CombatDispatchParams(
+    CombatBrainDecision Decision,
+    TravelDecision? KiteDecision = null);
 
 /// <summary>
 /// One candidate row the combat brain may commit to. Every flag is a live

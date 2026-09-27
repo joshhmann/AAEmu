@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Numerics;
-using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Bots.Combat;
 using AAEmu.Game.Core.Managers.Bots.Loot;
 using AAEmu.Game.Core.Managers.Bots.Survival;
@@ -1433,6 +1433,11 @@ public static class QuestBehavior
         {
             // G7b (observe-only): post-death funnel withdrawal — re-resolve ONLY
             // the quest-pinned objId (never a scan), name the corpse + probe.
+            // The kite's journey boundary: a threat identity the funnel no longer
+            // serves is over, so a banked verdict must not outlive it and a LATER
+            // threat must not inherit its repath budget (the pursuit leg's own
+            // rule, from the same seam).
+            CombatTravelDispatch.EndJourney(actor);
             var corpseFrag = ObservePinnedCorpse(actor, opts, funnel);
             diag = $"validate={(selected == 0 ? "no-selection" : "not-relevant")}:target=-:template=-:alive=NA:visible=NA:hostile=NA:legal=NA:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
             return null;
@@ -1442,6 +1447,10 @@ public static class QuestBehavior
         var npc = character?.ParentWorld?.GetNpc(selected);
         if (character == null || !actorPos.HasValue || character.ParentWorld == null || npc == null)
         {
+            // The threat identity is gone: the journey it armed is over (a fresh
+            // resolve next wake arms a clean one) — never a banked verdict or a
+            // spent budget carried onto an identity that no longer exists.
+            CombatTravelDispatch.EndJourney(actor);
             var corpseFrag = ObservePinnedCorpse(actor, opts, funnel);
             diag = $"validate=target-lost:target={selected}:template={fixture.PreyTemplate}:alive=NA:visible=NA:hostile=NA:legal=NA:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
             return null;
@@ -1455,7 +1464,9 @@ public static class QuestBehavior
             // G7b (observe-only): THE pinned-target dead transition — questId /
             // objective-context (funnel) + target objId / template / dead-state
             // (live npc) all known here; recognition runs on this resolve, no
-            // second world scan. Read-only probe, zero dispatch.
+            // second world scan. Read-only probe, zero dispatch. A corpse is a
+            // threat identity that is gone: the kite journey ends with it.
+            CombatTravelDispatch.EndJourney(actor);
             var corpseFrag = NoteDeadSelection(actor, opts, funnel, npc);
             diag = $"validate=target-dead:target={selected}:template={npc.TemplateId}:alive=false:visible={visible}:hostile=false:legal=false:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
             return null;
@@ -1503,6 +1514,30 @@ public static class QuestBehavior
             nowUtc: DateTime.UtcNow);
         var brainDecision = CombatBrainPlanner.Decide(combatBrain);
 
+        // ------------------------------------------------------- KITE TRAVEL DECISION
+        // The brain's own Move arm is this leg's SPACING leg, and the sub-critical
+        // spacing wake (the ranged/caster kite — see
+        // <see cref="CombatTravelDispatch.IsSubCriticalSpacing"/>) is decided by the
+        // TRAVEL chain: the SAME shared <see cref="TravelBrain.SafeAnchor"/>, now with
+        // the journey's own budget, drift hold, and named abandonment terminals.
+        // Every other arm — and a kite whose journey could not be armed — keeps the
+        // caller's exact pre-brain rule (the brain's own destination), so the fallback
+        // leg is byte-identical to what this leg issued before the wiring.
+        var kiteLeg = actor.ActiveRequest;
+        var kiteBrain = CombatTravelDispatch.IsSubCriticalSpacing(brainDecision)
+            ? CombatTravelDispatch.Prepare(actor, selected, npc.Transform.World.Position,
+                CombatTravelDispatch.IsOurLiveLeg(kiteLeg) ? kiteLeg!.Destination : null)
+            : null;
+        var kite = CombatTravelDispatch.DecideKiteLeg(kiteBrain, brainDecision);
+        // The kite got its room (the brain is not asking for spacing this wake) or the
+        // arm is falling back to its pre-brain rule: that is this leg's JOURNEY
+        // BOUNDARY, so the next kite wake arms a clean one instead of inheriting a
+        // spent budget or a banked verdict. A ROUTED verdict (move / stop / held)
+        // keeps the journey — including the chain's own settled terminal, which the
+        // store re-reads stickily instead of letting this caller re-derive it.
+        if (!kite.Routed)
+            CombatTravelDispatch.EndJourney(actor);
+
         if (brainDecision.Arm is CombatArm.SurvivalVeto or CombatArm.Disengage or CombatArm.CrowdControl)
         {
             diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
@@ -1524,6 +1559,24 @@ public static class QuestBehavior
                    $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}";
             return null;
         }
+        // The travel chain's own withholds on the spacing arm: a live kite leg that
+        // still serves this wake's anchor keeps its progress (the anchor RECEDES as
+        // the bot walks, so the chain's own leg-hold arm cannot serve it and this
+        // reading does), and a journey that reached a named terminal withdraws naming
+        // it — never a leg to an abandoned destination, and never a bare failure.
+        // A FALLBACK is NOT a withhold: it is this leg's pre-brain leg (the brain's
+        // own destination) and dispatches exactly as it did before the wiring, under
+        // the original owner.
+        var kiteFrag = brainVerb == CombatVerb.Move
+            ? $":travel={CombatTravelDispatch.Describe(kite)}"
+            : "";
+        if (brainVerb == CombatVerb.Move
+            && kite.Verb is CombatTravelDispatch.KiteLegVerb.Held or CombatTravelDispatch.KiteLegVerb.Withdraw)
+        {
+            diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
+                   $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{kiteFrag}";
+            return null;
+        }
         var verbText = brainVerb == CombatVerb.Cast
             ? $"Cast({brainDecision.SkillId})"
             : brainVerb == CombatVerb.UseItem
@@ -1531,8 +1584,11 @@ public static class QuestBehavior
                 : brainVerb == CombatVerb.Move ? "Move" : "AutoAttack";
         if (brainVerb == CombatVerb.AutoAttack)
             hpBefore = npc.Hp;
+        // The leg that RUNS is the routed one when the travel chain produced it (its
+        // own destination is authoritative); the fallback keeps the brain's own.
+        var destination = kite.Destination ?? brainDecision.Destination;
         diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
-               $":distM={M(dist)}:verb={verbText}:hpBefore={npc.Hp}:brain={brainDecision.Describe()}";
+               $":distM={M(dist)}:verb={verbText}:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{kiteFrag}";
         return new BotDecisionProposal(
             goal: CombatGoal,
             action: action,
@@ -1546,9 +1602,9 @@ public static class QuestBehavior
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectiveCombatPriority,
             tieBreakKey: $"combat:{fixture.QuestId}:{selected:D10}",
-            destination: brainDecision.Destination,
+            destination: destination,
             skillId: brainDecision.SkillId,
-            payload: new CombatDispatchParams(brainDecision),
+            payload: new CombatDispatchParams(brainDecision, kite.Decision),
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
@@ -2223,6 +2279,17 @@ public static class QuestBehavior
     /// busy-rejects against our own movement — and then issues the destination
     /// leg, tagged so the telemetry names WHICH spacing leg owns the movement.
     /// Never touches _move state or queue kinds — public actor verbs only.
+    ///
+    /// TRAVEL BRAIN (the kite's live dispatch caller): the sub-critical spacing
+    /// wake is decided by <see cref="CombatTravelDispatch"/> — the journey is
+    /// armed once per threat and the travel chain owns the anchor, the drift hold,
+    /// the repath budget, and the named abandonment terminals — so the leg's
+    /// destination is the chain's own, and the leg that actually ran is banked
+    /// through <see cref="CombatTravelDispatch.PublishDispatched"/> under the
+    /// kite's own owner tag (<c>COMBAT_KITE_MOVE</c>). Every other spacing move
+    /// (close-in, and a kite whose journey could not be armed) carries no travel
+    /// decision and keeps the pre-brain behavior byte-identically: the brain's own
+    /// destination under the original <c>COMBAT_MOVE_TO</c> owner.
     /// </summary>
     private static ActorRequest DispatchCombatMove(IGameplayActor gameplayActor, BotDecisionProposal proposal)
     {
@@ -2235,12 +2302,21 @@ public static class QuestBehavior
             gameplayActor.StopAutoAttack($"{proposal.IdempotencyKey}:stop-attack");
         if (gameplayActor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
             gameplayActor.PreemptCurrent("combat spacing retrack");
+        // The travel decision travels on the payload: a routed kite leg carries one
+        // (and owns as COMBAT_KITE_MOVE, so the next wake's leg reading — and the
+        // journey's own counters — are scoped to this leg), the fallback carries
+        // none (and keeps the pre-brain owner).
+        var kiteDecision = proposal.Payload is CombatDispatchParams parameters ? parameters.KiteDecision : null;
         if (gameplayActor is GameplayActor concrete)
-            concrete.SetPendingMoveOwner("COMBAT_MOVE_TO");
+            concrete.SetPendingMoveOwner(kiteDecision.HasValue ? CombatTravelDispatch.KiteMoveOwner : "COMBAT_MOVE_TO");
         var destination = proposal.Destination
             ?? gameplayActor.Character?.Transform.World.Position
             ?? Vector3.Zero;
         var request = gameplayActor.MoveTo(destination, PursuitSpeedMps, PursuitLegTimeout, proposal.IdempotencyKey);
+        // The leg that ACTUALLY ran is the one banked (its mode and destination —
+        // the next wake's drift comparison). A fallback proposal carries no travel
+        // decision and banks nothing.
+        CombatTravelDispatch.PublishDispatched(gameplayActor, kiteDecision);
         PublishCombatEngagement(gameplayActor, proposal);
         return request;
     }

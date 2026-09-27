@@ -265,7 +265,8 @@ internal static class CombatTravelDispatch
     /// own routing meet. The leg's lane tokens (<c>dispatch=move|stop|held|withdrawn</c>
     /// and the <c>reason=</c> vocabulary) mirror the sibling caller seams, and the
     /// travel brain's own arm/reason/terminal ride additively in the caller's
-    /// <c>:kite=</c> fragment.
+    /// <c>:travel=</c> fragment (the same key <c>PursuitEmit</c> and <c>ReturnEmit</c>
+    /// print, so one lane parser reads every travel-routed leg).
     ///
     /// Fail-closed in every direction:
     ///  - a wake that is not the sub-critical kite, and a wake whose journey could not
