@@ -10,8 +10,8 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 /// One entry per pattern the director can classify from a derived
 /// <see cref="QuestFixtureRow"/> (the row's <c>ObjectivePattern</c>): the
 /// kill-to-gather shape, the item-use shape, and the gather-from-doodad shape
-/// (whose <c>Interact</c> key is deliberately unproven: the plan-time gate
-/// refuses it as <c>UNPROVEN-VERB</c> until the live gate graduates the row).
+/// (whose <c>Interact</c> key the G9a skill-bound draw graduated into
+/// <see cref="VerifiedVerbRegistry"/>).
 /// A pattern with no proven verb set maps to EMPTY, so the plan-time gate
 /// checks nothing for it and classification (not this catalog) is what refuses
 /// it. That keeps the fail-closed direction explicit: an unrecognized pattern
@@ -85,18 +85,14 @@ public static class PatternCatalog
         "TurnInQuest"
     });
 
-    /// <summary>
-    /// The gather-from-doodad verb set — the verbs the well-draw path needs:
-    /// travel to the doodad (<c>MoveTo</c>), stop in range (<c>Stop</c>),
-    /// observe it (<c>Observe</c>), accept the quest (<c>AcceptQuest</c>), draw
-    /// from it through the real <c>Interact</c> contract, and hand the turn-in
-    /// to the NPC reporter (<c>TurnInQuest</c>). <c>Interact</c> has no gate
-    /// row yet, so it resolves OPEN and the plan fails as
-    /// <c>HARNESS/UNPROVEN-VERB</c> until the live gate proves the real path
-    /// (doodad perceived, ranged, interacted, objective credited) and graduates
-    /// it into <see cref="VerifiedVerbRegistry"/> — the unit-gated interim the
-    /// slice names, never a guessed proof.
-    /// </summary>
+/// The gather-from-doodad verb set — the verbs the well-draw path needs:
+/// travel to the doodad (<c>MoveTo</c>), stop in range (<c>Stop</c>),
+/// observe it (<c>Observe</c>), accept the quest (<c>AcceptQuest</c>), draw
+/// from it through the real <c>Interact</c> contract, and hand the turn-in
+/// to the NPC reporter (<c>TurnInQuest</c>). <c>Interact</c> is a first-class
+/// row (G9a skill-bound draw, same class of proof as the UseItem row), so a
+/// plan that draws from a doodad is gate-checked exactly like a plan that
+/// kills for one.
     private static readonly IReadOnlyList<string> GatherDoodadVerbs = Array.AsReadOnly(new[]
     {
         "MoveTo",

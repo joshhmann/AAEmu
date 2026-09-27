@@ -25,6 +25,7 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 ///   Talk        FROZEN G2       g2-talk-capability-report.json
 ///   InteractNpc FRESH  G8b      g8b-return-report.json
 ///   UseItem     FRESH  COMBAT-01 recovery-heal-report.json
+///   Interact    FRESH  G9a      g9a-skill-reprobe-report.20260927T220439Z.json
 ///
 /// Two rows are worth their history: AcceptQuest keeps its FROZEN G3 status
 /// (the freeze is the gate's doctrine) but its evidence path is repointed to
@@ -47,8 +48,21 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 /// than the catalog's ungated declarations, so a plan that consumes an item is
 /// gated exactly like a plan that kills for one.
 ///
+/// Interact is the row the gather-from-doodad pattern added: its gate is the
+/// G9a skill re-probe, which drives the real <c>GameplayActor.Interact</c>
+/// contract (the skill-bound Doodad.Use draw branch) to a Completed request
+/// through the live engine — direct POST /api/actors/interact against the live
+/// well 2306 (objId 1683) with the FakeUse draw skill 13154, server log phase
+/// 4581/skill13154 -&gt; 4583 -&gt; 4584 — and observes the grant land (bag
+/// 15694 0-&gt;1 plus quest credit, objectives [0,0,0,0,0]-&gt;[1,0,0,0,0]).
+/// Same class of proof as the UseItem row: a real actor verb completing
+/// against the live engine with its effect observed, not a claim. The
+/// skill-less Interact stays unproven by this row — the probe proves the
+/// skill-bound draw, which is exactly what the 4415 fixture row derives off
+/// the well's own FakeUse table.
+///
 /// The table is deliberately NOT the whole IGameplayActor vocabulary
-/// (Interact/Buy/Sell/Plant/Harvest/Mount and friends have no gate yet): those
+/// (Buy/Sell/Plant/Harvest/Mount and friends have no gate yet): those
 /// keys stay absent, so any plan that needs one fails as UNPROVEN-VERB instead
 /// of dispatching unproven behavior. The verbs a plan dispatches that are
 /// ungated by declaration (AdvanceQuest, TurnInDoodad, AutoTurnIn) are named —
@@ -73,7 +87,8 @@ public sealed class VerifiedVerbRegistry : IVerifiedVerbRegistry
         ["TurnInQuest"] = new("TurnInQuest", VerbGateStatus.Fresh, "G8c", "g8c-turnin-report.json"),
         ["Talk"] = new("Talk", VerbGateStatus.Frozen, "G2", "g2-talk-capability-report.json"),
         ["InteractNpc"] = new("InteractNpc", VerbGateStatus.Fresh, "G8b", "g8b-return-report.json"),
-        ["UseItem"] = new("UseItem", VerbGateStatus.Fresh, "COMBAT-01", "recovery-heal-report.json")
+        ["UseItem"] = new("UseItem", VerbGateStatus.Fresh, "COMBAT-01", "recovery-heal-report.json"),
+        ["Interact"] = new("Interact", VerbGateStatus.Fresh, "G9a", "g9a-skill-reprobe-report.20260927T220439Z.json")
     };
 
     /// <inheritdoc />

@@ -22,9 +22,8 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///   - a gather-from-doodad quest (an item-gather objective whose npc loot
 ///     chain does NOT resolve but whose doodad func chain DOES) carries
 ///     Gather — the well-draw path (4415 is its first quest). The shape's
-///     <c>Interact</c> verb has no registry row yet, so the plan fails as
-///     <c>HARNESS/UNPROVEN-VERB</c> until the live gate proves the real path
-///     and graduates the row.
+///     <c>Interact</c> verb is registry-green (G9a skill-bound draw), so the
+///     plan gates exactly like the kill-to-gather and item-use shapes.
 /// The plan carries legs and data only. Every leg body, every per-actor memory
 /// (hold/drift/pursuit/return issue, corpse, loot-once, give-up streak) and all
 /// dispatch stay in <see cref="QuestBehavior"/>; the plan never stores per-wake
