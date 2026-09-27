@@ -1030,8 +1030,10 @@ public static class QuestBehavior
 
     /// <summary>
     /// Gather-from-doodad leg: draw the objective item from the perceived well
-    /// through the real <c>Interact</c> contract (skill-less — the well's loot
-    /// func grants on a skill-0 <c>Doodad.Use</c>; no new actor verb). Per wake:
+    /// through the real <c>Interact</c> contract with the row's own
+    /// <c>GatherUseSkill</c> (read off the well's func tables — e.g. the
+    /// well's fake-use row carries the draw skill; a skill-0 row stays a
+    /// skill-less <c>Doodad.Use</c>; no new actor verb). Per wake:
     /// source lost → withdraw; outside the 25 m Interact gate → Move (drift-gated
     /// retrack only after &gt; 2.0 m target motion since the last issue); inside
     /// unsettled → Stop (audited halt); settled → Interact. Credit is the
@@ -1155,6 +1157,7 @@ public static class QuestBehavior
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectiveGatherPriority,
             tieBreakKey: $"gather:{questId}:{selected:D10}",
+            skillId: fixture.GatherUseSkill,
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{questId}-relevant",
@@ -2649,14 +2652,12 @@ public static class QuestBehavior
             // G7c loot: the quest-owned corpse take rides the live actor's
             // Loot verb only (the exact CSLootOpenBagPacket lootAll call).
             // Goal-guarded so no other Loot proposal can ever route here.
-            // No Cast, no rotation, no credit — G7d owns credit.
-            ActorActionType.Loot when proposal.Goal == LootGoal => DispatchLoot(gameplayActor, proposal),
-            ActorActionType.Move when proposal.Goal == LootGoal => DispatchLootApproachMove(gameplayActor, proposal),
             // Gather-from-doodad: the quest-owned well draw rides MoveTo on the
             // doodad's live POSITION (a doodad is BaseUnit, never Unit — the
             // position leg is the roam butcher-approach shape), the audited Stop
-            // halt inside 25 m, and skill-less Interact once settled (the well's
-            // loot func grants on a skill-0 Doodad.Use; no new actor verb).
+            // halt inside 25 m, and Interact with the row's own GatherUseSkill
+            // once settled (the use skill read off the well's func tables; a
+            // skill-0 row stays skill-less; no new actor verb).
             // Goal-guarded so no other Move/Stop/Interact proposal can ever
             // route here.
             ActorActionType.Move when proposal.Goal == GatherGoal => DispatchGatherMove(gameplayActor, proposal),

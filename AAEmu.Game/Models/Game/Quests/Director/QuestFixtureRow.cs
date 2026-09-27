@@ -121,9 +121,21 @@ public sealed record QuestFixtureRow(
     /// (func-group → <c>DoodadFuncLootItem</c>/<c>DoodadFuncLootPack</c> whose
     /// pack carries the item), preferring the lowest doodad template id so the
     /// result is deterministic for any item — never hand-typed, never a quest id.
-    /// Zero is the shape's unresolvable-source signal, named by the director.
     /// </summary>
     public uint GatherDoodadTemplate { get; init; }
+
+    /// <summary>
+    /// The interaction skill the gather draw enters through, derived from the
+    /// gather source's OWN func tables — never hand-typed. Mirrors the
+    /// precedence <c>GameplayActor.ResolveInteractionSkill</c> applies to the
+    /// client's skill-targeted use: an explicit <c>func.SkillId</c> binding
+    /// first, then <c>DoodadFuncUse</c> / <c>DoodadFuncFakeUse</c> template
+    /// skill ids, scanning the template's func groups in ascending group-id
+    /// order. 0 = plain skill-less draw (loot / phase funcs). The gather leg
+    /// rides this id on its Interact proposal; the actor gates on template
+    /// existence only (no learned-skill requirement).
+    /// </summary>
+    public uint GatherUseSkill { get; init; }
 
     /// <summary>
     /// Memo of derived rows, one per quest id. Concurrent: the wake path can
@@ -319,7 +331,8 @@ public sealed record QuestFixtureRow(
             UseItemTemplateId = useItemTemplateId,
             UseItemNeed = useItemNeed,
             AutoComplete = autoComplete,
-            GatherDoodadTemplate = gatherDoodad
+            GatherDoodadTemplate = gatherDoodad,
+            GatherUseSkill = ResolveDoodadUseSkill(gatherDoodad)
         };
     }
 
@@ -464,6 +477,49 @@ public sealed record QuestFixtureRow(
             }
         }
         return false;
+    }
+
+    /// <summary>
+    /// The interaction skill for <paramref name="doodadTemplateId"/>'s draw,
+    /// read off the template's OWN func tables — never hand-typed, never a
+    /// skill constant. Precedence mirrors
+    /// <c>GameplayActor.ResolveInteractionSkill</c> (and the client's
+    /// skill-targeted use through <c>DoodadManager.GetFunc</c>): within the
+    /// template's func groups in ascending group-id order, the first explicit
+    /// <c>func.SkillId</c> binding, else the first <c>DoodadFuncUse</c> /
+    /// <c>DoodadFuncFakeUse</c> template skill id. 0 = skill-less draw.
+    /// Never throws (an unreadable doodad surface yields 0).
+    /// </summary>
+    private static uint ResolveDoodadUseSkill(uint doodadTemplateId)
+    {
+        if (doodadTemplateId == 0)
+            return 0;
+        try
+        {
+            var doodads = Singleton<DoodadManager>.PeekInstance;
+            if (doodads == null)
+                return 0;
+            foreach (var groupId in doodads.GetDoodadFuncGroupsId(doodadTemplateId).OrderBy(g => g))
+            {
+                foreach (var func in doodads.GetDoodadFuncs(groupId))
+                {
+                    if (func == null)
+                        continue;
+                    if (func.SkillId > 0)
+                        return func.SkillId;
+                    var template = doodads.GetFuncTemplate(func.FuncId, func.FuncType);
+                    if (template is DoodadFuncUse { SkillId: > 0 } useTemplate)
+                        return useTemplate.SkillId;
+                    if (template is DoodadFuncFakeUse { FakeSkillId: > 0 } fakeUseTemplate)
+                        return fakeUseTemplate.FakeSkillId;
+                }
+            }
+            return 0;
+        }
+        catch
+        {
+            return 0;
+        }
     }
 
     /// <summary>
