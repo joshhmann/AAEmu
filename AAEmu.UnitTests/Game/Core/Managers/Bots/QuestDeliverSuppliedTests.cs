@@ -276,6 +276,81 @@ public class QuestDeliverSuppliedTests
     }
 
     [Test]
+    public async Task SupplyStageMonitor_HitsOnCreditedObjective_NeverDispatches()
+    {
+        // The Supply-stage observable: straight after accept the supply receipt
+        // already credited the objective (bag 0->1 via the step machine) while
+        // the quest still rests at Progress — the monitor fires its observation
+        // hit (dispatch=monitor) there instead of withdrawing, so the lane sees
+        // the delivery before the single advance drains Progress → Ready.
+        var (actor, _) = CreateDeliveryActor("deliver-supply-hit");
+        var character = actor.Character;
+        var staged = character.Quests!.ActiveQuests[Quest4424]!;
+        await Assert.That(staged.Status).IsEqualTo(QuestStatus.Progress);
+        var gather = QuestManager.Instance.GetTemplate(Quest4424)!
+            .GetComponents(QuestComponentKind.Progress)
+            .SelectMany(c => c.ActTemplates)
+            .OfType<QuestActObjItemGather>()
+            .First(a => a.DetailId == 2104);
+        await Assert.That(gather.GetObjective(staged)).IsGreaterThanOrEqualTo(1);
+
+        var fixture = QuestFixtureRow.FromQuestData(Quest4424);
+        var plan = QuestDirector.Plan(Quest4424, fixture);
+        if (plan.HasFailed)
+            throw new InvalidOperationException($"production deliver plan failed: {plan.FailReason}");
+        var result = QuestBehavior.Run(
+            actor,
+            new QuestDecisionScenario.QuestOptions { CycleId = "deliver-supply-hit-1" },
+            BotObservedContext.Capture(actor),
+            [plan],
+            (_, _) => []);
+
+        var evidence = result.LegEvidence.Single(e => e.Leg == QuestLegId.Deliver);
+        await Assert.That(evidence.Entered).IsTrue();
+        await Assert.That(evidence.Emitted).IsFalse();
+        await Assert.That(evidence.Detail).Contains("dispatch=monitor:reason=objective-credited");
+        await Assert.That(evidence.Detail).Contains($"item={Basil24376}");
+        await Assert.That(evidence.Detail).Contains($"supply={Basil24376}");
+        await Assert.That(evidence.Detail).Contains("split=accept-9789-report-10857");
+        await Assert.That(actor.AuditTrace.Any(r => r.Action is ActorActionType.Move
+            or ActorActionType.Stop or ActorActionType.Interact or ActorActionType.InteractWith)).IsFalse();
+    }
+
+    [Test]
+    public async Task UnrelatedQuest_NeverFiresDeliverMonitor()
+    {
+        // Fail-closed: a quest whose gather item is NOT the supply grant never
+        // fires the supply monitor — the emit withdraws naming unproven-source
+        // instead of observing a delivery that is not there.
+        GameplayActorTestRig.RegisterPlainItemTemplate(99999);
+        var fixture = new QuestFixtureRow(Quest4424, GatherAct26227, Basil24376, GatherNeed, 0, 0, ReportNpc10857, 0)
+        {
+            ObjectivePattern = QuestPattern.Deliver,
+            ObjectiveActType = nameof(QuestActObjItemGather),
+            SupplyActId = SupplyAct26226,
+            SupplyItem = 99999,
+            SupplyCount = 1
+        };
+        var (actor, _) = CreateDeliveryActor("deliver-unrelated");
+        var character = actor.Character;
+        var staged = character.Quests!.ActiveQuests[Quest4424]!;
+        await Assert.That(staged.Status).IsEqualTo(QuestStatus.Progress);
+
+        var context = BotObservedContext.Capture(actor);
+        var legContext = new QuestLegContext(actor, new QuestDecisionScenario.QuestOptions(), Quest4424, fixture, null)
+        {
+            Observation = context
+        };
+        var reason = QuestBehavior.DeliverEnter(legContext, new QuestLegWake());
+        var diag = "";
+        var hpBefore = -1;
+        _ = QuestBehavior.DeliverEmit(legContext, ref diag, ref hpBefore);
+        await Assert.That(reason).IsNull();
+        await Assert.That(diag).Contains("dispatch=withdrawn:reason=unproven-source");
+        await Assert.That(diag).DoesNotContain("dispatch=monitor");
+    }
+
+    [Test]
     public async Task ReadyReportsToSplit10857_NeverThe9789Giver()
     {
         var (actor, session) = CreateDeliveryActor("deliver-split");
@@ -314,7 +389,7 @@ public class QuestDeliverSuppliedTests
     }
 
     [Test]
-    public async Task CreditedObjective_WithdrawsMonitor_Named()
+    public async Task ReadyWithdrawsMonitor_Named()
     {
         var (actor, _) = CreateDeliveryActor("deliver-credited");
         var character = actor.Character;
