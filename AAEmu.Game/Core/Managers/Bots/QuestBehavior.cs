@@ -1534,24 +1534,22 @@ public static class QuestBehavior
 
     /// <summary>
     /// Supplied-gather leg entry gate: the step machine has work only for an
-    /// active, non-Ready quest, and the monitor has work only while the
-    /// supplied-gather objective is not yet credited. The gate owns both
-    /// reasons, so the loop's evidence names the real cause of the withdraw.
-    /// The monitor needs NO world source (the Supply receipt is in the bag),
-    /// so there is no third reason — never dispatches, never a world scan,
-    /// never stored.
+    /// active, non-Ready quest. The monitor enters on EVERY such wake —
+    /// including the Supply/Progress pre-Ready stages where the supply receipt
+    /// already credited the objective — so the lane observes the delivery
+    /// (the Progress window is transient: one advance drains it to Ready,
+    /// where this gate withdraws). The gate owns the withdraw reason, so the
+    /// loop's evidence names the real cause. The monitor needs NO world source
+    /// (the Supply receipt is in the bag), so there is no second reason —
+    /// never dispatches, never a world scan, never stored.
     /// </summary>
     internal static string? DeliverEnter(QuestLegContext context, QuestLegWake wake)
     {
         var quest = context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId);
-        if (quest is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
-            return "quest-not-usable";
-        var fixture = context.Fixture!;
-        return DeliverCredited(context.QuestId, quest, fixture)
-            ? "objective-credited"
+        return quest is not { Status: not QuestStatus.Ready and not QuestStatus.Completed }
+            ? "quest-not-usable"
             : null;
     }
-
     /// <summary>
     /// Supplied-gather monitor leg: name the delivery state per wake, then
     /// yield. The objective item rides the quest's own Supply act — the step
@@ -1561,7 +1559,11 @@ public static class QuestBehavior
     /// dispatches: it returns null with a validate/credit diag fragment so
     /// the selector sees Advance (Progress) and TurnIn (Ready) unopposed,
     /// and the lane reads the basil carry per wake — including the FIRST
-    /// split: accept at the 9789 giver, report at the 10857 reporter.
+    /// split: accept at the 9789 giver, report at the 10857 reporter. When
+    /// the objective is already credited the monitor still fires an
+    /// observation hit (dispatch=monitor:reason=objective-credited) instead of
+    /// withdrawing: the Supply→Ready drain is a single advance, so Progress is
+    /// transient and a resting Ready quest has no monitor wake otherwise.
     /// </summary>
     internal static BotDecisionProposal? DeliverEmit(QuestLegContext context, ref string diag, ref int hpBefore)
     {
@@ -1574,12 +1576,17 @@ public static class QuestBehavior
             diag = $"validate=quest-not-active:item={fixture.PreyItem}:need={fixture.Need}:supply={fixture.SupplyItem}:have=NA:dispatch=withdrawn:reason=quest-not-active";
             return null;
         }
+        if (fixture.SupplyItem == 0 || fixture.PreyItem != fixture.SupplyItem)
+        {
+            diag = $"validate=unproven-source:item={fixture.PreyItem}:need={fixture.Need}:supply={fixture.SupplyItem}:have=NA:dispatch=withdrawn:reason=unproven-source";
+            return null;
+        }
         var have = 0;
         if (context.Observation?.BagItemCounts.TryGetValue(fixture.PreyItem, out var held) == true)
             have = held;
         if (DeliverCredited(questId, quest, fixture))
         {
-            diag = $"validate=objective-credited:item={fixture.PreyItem}:need={fixture.Need}:supply={fixture.SupplyItem}:have={have}:dispatch=withdrawn:reason=objective-credited";
+            diag = $"validate=objective-credited:item={fixture.PreyItem}:need={fixture.Need}:supply={fixture.SupplyItem}:have={have}:accept=9789:report=10857:split=accept-9789-report-10857:dispatch=monitor:reason=objective-credited";
             return null;
         }
         diag = $"validate=ok:item={fixture.PreyItem}:need={fixture.Need}:supply={fixture.SupplyItem}:have={have}:accept=9789:report=10857:split=accept-9789-report-10857:dispatch=monitor:reason=supply-credit";
