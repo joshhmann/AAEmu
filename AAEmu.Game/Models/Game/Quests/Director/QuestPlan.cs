@@ -2,10 +2,10 @@ using AAEmu.Game.Core.Managers.Bots;
 
 namespace AAEmu.Game.Models.Game.Quests.Director;
 
-/// <summary>
 /// The quest plan's pattern vocabulary: how the plan's legs accomplish the
-/// quest (kill a prey for a gather, pick an npc up, use a doodad, consume an
-/// item, talk a chain, reach a position, craft, escort). Distinct from the
+/// quest (kill a prey for a gather, pick an npc up, use a doodad, draw from a
+/// doodad, work a doodad through its use-skill, consume an item, talk a
+/// chain, reach a position, craft, escort). Distinct from the
 /// template-level <c>Quests.Static.QuestPattern</c> (Objective/Reward component
 /// axis) — this one classifies the objective SHAPE the leg set implements.
 ///
@@ -13,16 +13,18 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 /// gather-from-prey row and <see cref="Unknown"/> for an absent/unrecognized
 /// row (fail-closed default). The generalized director classifies from the
 /// derived row's own objective act (<see cref="QuestFixtureRow.ObjectivePattern"/>),
-/// so a second shape — <see cref="UseItem"/>, the consume-an-item objective —
-/// derives the same way, with no per-quest wiring. The remaining members are the
-/// catalog vocabulary the verb gate maps to verb keys.
-/// </summary>
+/// so further shapes — <see cref="UseItem"/>, the consume-an-item objective,
+/// <see cref="GatherDoodad"/>, the draw-from-a-doodad objective, and
+/// <see cref="InteractDoodad"/>, the work-a-doodad-through-its-use-skill
+/// objective — derive the same way, with no per-quest wiring. The remaining
+/// members are the catalog vocabulary the verb gate maps to verb keys.
 public enum QuestPattern
 {
     Unknown,
     KillX,
     PickupNpc,
     GatherDoodad,
+    InteractDoodad,
     UseItem,
     TalkChain,
     ReachPos,
@@ -30,14 +32,15 @@ public enum QuestPattern
     Escort
 }
 
-/// <summary>
 /// One decision leg of a quest plan. Stable ids so a wake can name the leg it
 /// is evaluating (log/diag and the Stage 4 loop) without re-deriving it.
 /// <see cref="UseItem"/> is the item-use objective's own leg (the item-use
 /// pattern's only objective leg); <see cref="Gather"/> is the gather-from-doodad
 /// objective's own leg (the <see cref="QuestPattern.GatherDoodad"/> shape's only
-/// objective leg). A plan carries at most one objective group (gather-from-prey
-/// or gather-from-doodad) or the item-use leg, never two.
+/// objective leg); <see cref="Interact"/> is the interact-with-doodad
+/// objective's own leg (the <see cref="QuestPattern.InteractDoodad"/> shape's
+/// only objective leg). A plan carries at most one objective leg (gather-from-prey
+/// rides the funnel group instead) — objective legs never co-occur.
 /// </summary>
 public enum QuestLegId
 {
@@ -49,7 +52,8 @@ public enum QuestLegId
     Loot,
     Return,
     UseItem,
-    Gather
+    Gather,
+    Interact
 }
 
 /// <summary>

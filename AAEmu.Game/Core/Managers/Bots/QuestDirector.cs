@@ -9,7 +9,7 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///
 /// Assembles one <see cref="QuestPlan"/> per active quest, from the behavior's
 /// leg <c>Emit</c> providers, over EVERY quest: the shape is decided by the
-/// quest's derived <see cref="QuestFixtureRow"/>, never by a quest id. Four
+/// quest's derived <see cref="QuestFixtureRow"/>, never by a quest id. Five
 /// shapes exist, and they are exhaustive by construction:
 ///
 ///   - a bootstrap quest (no Progress objective act) carries Advance + TurnIn —
@@ -24,6 +24,13 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     Gather — the well-draw path (4415 is its first quest). The shape's
 ///     <c>Interact</c> verb is registry-green (G9a skill-bound draw), so the
 ///     plan gates exactly like the kill-to-gather and item-use shapes.
+///   - an interact-with-doodad quest (a doodad-interaction objective) carries
+///     Interact — the seedling-watering path (4479 is its first quest). The
+///     shape rides the SAME <c>Interact</c> verb key (registry-green since
+///     G9a), so the plan gates exactly like the gather shape — plus a
+///     skill gate: the leg is refused at plan time when the row's
+///     <c>InteractUseSkill</c> is 0 (the seedling skill binding the sibling
+///     worker resolves), fail-closed.
 /// The plan carries legs and data only. Every leg body, every per-actor memory
 /// (hold/drift/pursuit/return issue, corpse, loot-once, give-up streak) and all
 /// dispatch stay in <see cref="QuestBehavior"/>; the plan never stores per-wake
@@ -43,8 +50,7 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// </summary>
 public static class QuestDirector
 {
-    /// <summary>
-    /// The four leg sets, built once: a <see cref="QuestLeg"/> is an id plus its
+    /// The five leg sets, built once: a <see cref="QuestLeg"/> is an id plus its
     /// static-method delegates, so it carries no per-actor or per-wake state and
     /// is shared across every plan and every actor.
     ///
@@ -109,6 +115,28 @@ public static class QuestDirector
             Enter: QuestBehavior.AdvanceEnter),
         new(QuestLegId.Gather, QuestBehavior.GatherEmit,
             Enter: QuestBehavior.GatherEnter),
+        new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
+            Enter: QuestBehavior.TurnInEnter)
+    });
+    /// <summary>
+    /// The interact-with-doodad leg set: Advance, the interact objective leg,
+    /// then TurnIn. The ordinary TurnIn leg serves the Ready step against the
+    /// row's <see cref="QuestFixtureRow.ReporterTemplate"/> (4479 reports to
+    /// the same NPC that gave it); Advance serves the step machine as always.
+    /// No funnel legs: the objective's target is a doodad resolved per wake
+    /// from the row's own
+    /// <see cref="QuestFixtureRow.InteractDoodadTemplate"/>, never the npc
+    /// funnel. The Interact verb key is the SAME one the gather shape rides
+    /// (registry-green since G9a) — but the seedling's skill binding is
+    /// resolved by the sibling worker, so the leg is gated on a derived
+    /// <see cref="QuestFixtureRow.InteractUseSkill"/>, fail-closed otherwise.
+    /// </summary>
+    private static readonly IReadOnlyList<QuestLeg> InteractDoodadLegs = Array.AsReadOnly(new QuestLeg[]
+    {
+        new(QuestLegId.Advance, QuestBehavior.AdvanceEmit,
+            Enter: QuestBehavior.AdvanceEnter),
+        new(QuestLegId.Interact, QuestBehavior.InteractEmit,
+            Enter: QuestBehavior.InteractEnter),
         new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
             Enter: QuestBehavior.TurnInEnter)
     });
@@ -186,17 +214,17 @@ public static class QuestDirector
         // re-read here, and no quest id is special-cased. A row built by hand
         // (a test staging one fact) carries no derived pattern, so the shape
         // falls back to the row's OWN objective facts under the same rule the
-        // derivation applies, so both paths agree.
         var pattern = fixture.ObjectivePattern != QuestPattern.Unknown
             ? fixture.ObjectivePattern
             : fixture.UseItemActId != 0
                 ? QuestPattern.UseItem
-                : fixture.GatherActId != 0 && fixture.GatherDoodadTemplate != 0
-                    ? QuestPattern.GatherDoodad
-                    : fixture.GatherActId != 0
-                        ? QuestPattern.KillX
-                        : QuestPattern.Unknown;
-
+                : fixture.InteractActId != 0 && fixture.InteractDoodadTemplate != 0
+                    ? QuestPattern.InteractDoodad
+                    : fixture.GatherActId != 0 && fixture.GatherDoodadTemplate != 0
+                        ? QuestPattern.GatherDoodad
+                        : fixture.GatherActId != 0
+                            ? QuestPattern.KillX
+                            : QuestPattern.Unknown;
         // An objective the vocabulary cannot SERVE yet keeps the bootstrap floor
         // and names the gap. It is not a gate failure (the registry never
         // questioned it) and not silence (the gap must be visible): the behavior
@@ -232,6 +260,22 @@ public static class QuestDirector
             return Failed(questId, pattern, fixture,
                 $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.UseItemActId} item=0");
 
+        // An interact-with-doodad act whose doodad template did not resolve has
+        // no seedling to work: same fail-closed shape as the gather path, naming
+        // the act and the doodad so the gap reads identically in the lane.
+        if (pattern == QuestPattern.InteractDoodad && fixture.InteractDoodadTemplate == 0)
+            return Failed(questId, pattern, fixture,
+                $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.InteractActId} doodad=0");
+
+        // An interact-with-doodad leg with no derived skill is refused HERE, not
+        // at dispatch: a skill-less Use never emits the quest interaction event
+        // (InteractionEffect is the only emitter), so the leg could never credit.
+        // The seedling skill binding is resolved by the sibling worker — until
+        // its func-table row lands, this gate holds the plan fail-closed.
+        if (pattern == QuestPattern.InteractDoodad && fixture.InteractUseSkill == 0)
+            return Failed(questId, pattern, fixture,
+                $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.InteractActId} doodad={fixture.InteractDoodadTemplate} skill=0");
+
         // Every verb the pattern dispatches is checked here — except three that
         // are UNGATED BY DECLARATION, deliberately absent from the catalog's verb
         // set (see PatternCatalog for the full declaration and each graduation
@@ -255,6 +299,7 @@ public static class QuestDirector
             QuestPattern.KillX => ObjectiveLegs,
             QuestPattern.UseItem => UseItemLegs,
             QuestPattern.GatherDoodad => GatherDoodadLegs,
+            QuestPattern.InteractDoodad => InteractDoodadLegs,
             _ => NoLegs
         });
     }

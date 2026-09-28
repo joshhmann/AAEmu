@@ -9,8 +9,9 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 ///
 /// One entry per pattern the director can classify from a derived
 /// <see cref="QuestFixtureRow"/> (the row's <c>ObjectivePattern</c>): the
-/// kill-to-gather shape, the item-use shape, and the gather-from-doodad shape
-/// (whose <c>Interact</c> key the G9a skill-bound draw graduated into
+/// kill-to-gather shape, the item-use shape, the gather-from-doodad shape, and
+/// the interact-with-doodad shape (both doodad shapes ride the SAME
+/// <c>Interact</c> key the G9a skill-bound draw graduated into
 /// <see cref="VerifiedVerbRegistry"/>).
 /// A pattern with no proven verb set maps to EMPTY, so the plan-time gate
 /// checks nothing for it and classification (not this catalog) is what refuses
@@ -103,19 +104,38 @@ public static class PatternCatalog
         "TurnInQuest"
     });
 
+/// The interact-with-doodad verb set — the verbs the seedling-watering path
+/// needs: travel to the doodad (<c>MoveTo</c>), stop in range (<c>Stop</c>),
+/// observe it (<c>Observe</c>), accept the quest (<c>AcceptQuest</c>), work it
+/// through the real skill-bound <c>Interact</c> contract, and hand the turn-in
+/// to the NPC reporter (<c>TurnInQuest</c>). The SAME <c>Interact</c> verb key
+/// the gather-from-doodad shape rides (registry-green since G9a), so the plan
+/// gates exactly like the gather shape — but fail-closed on the skill: the
+/// skill-less Use never emits the quest interaction event, so a leg with no
+/// derived skill is refused at plan time (the director's own gate), not by
+/// guessing a second verb.
+    private static readonly IReadOnlyList<string> InteractDoodadVerbs = Array.AsReadOnly(new[]
+    {
+        "MoveTo",
+        "Stop",
+        "Observe",
+        "AcceptQuest",
+        "Interact",
+        "TurnInQuest"
+    });
     private static readonly IReadOnlyList<string> NoVerbs = Array.AsReadOnly(Array.Empty<string>());
 
     /// <summary>
     /// The verb keys a plan of <paramref name="pattern"/> must resolve green;
     /// empty when the pattern has no proven verb set (including
     /// <see cref="QuestPattern.Unknown"/>).
-    /// </summary>
     public static IReadOnlyList<string> VerbsFor(QuestPattern pattern)
         => pattern switch
         {
             QuestPattern.KillX => KillXVerbs,
             QuestPattern.UseItem => UseItemVerbs,
             QuestPattern.GatherDoodad => GatherDoodadVerbs,
+            QuestPattern.InteractDoodad => InteractDoodadVerbs,
             _ => NoVerbs
         };
 }

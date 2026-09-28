@@ -133,6 +133,16 @@ public static class QuestDecisionScenario
         /// and a source doodad is perceived.
         /// </summary>
         public int ObjectiveGatherPriority { get; init; } = 27;
+        /// <summary>
+        /// Interact-with-doodad objective priority: above advance (20) so a live
+        /// watering outranks step-machine work, below turn-in (30) so a Ready
+        /// quest still reports first — the same band the other objective legs
+        /// sit in (distinct from every frozen value AND from the gather leg's
+        /// 27; the shapes compete only across quests, so the distinct value
+        /// keeps the ordering readable per shape). The leg fires only while the
+        /// interaction objective is uncredited and a source doodad is perceived.
+        /// </summary>
+        public int ObjectiveInteractPriority { get; init; } = 28;
 
         // ---- offering rank policy (the selection hook) ----
         /// <summary>

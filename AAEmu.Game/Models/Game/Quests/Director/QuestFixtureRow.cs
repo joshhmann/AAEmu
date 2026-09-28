@@ -29,8 +29,10 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 ///     <see cref="QuestPattern.UseItem"/>; an item gather derives
 ///     <see cref="QuestPattern.KillX"/> when its item drops from an npc loot
 ///     pack, else <see cref="QuestPattern.GatherDoodad"/> when its item comes
-///     from a doodad loot func. A quest with NO Progress objective
-///     act derives <see cref="QuestPattern.Unknown"/> with an empty act type —
+///     from a doodad loot func; a doodad interaction derives
+///     <see cref="QuestPattern.InteractDoodad"/> (no loot-chain condition —
+///     the credit rides the skill pipeline's interaction effect, not an item
+///     grant). A quest with NO Progress objective act derives
 ///     the pure-bootstrap shape (advance + turn-in only). A Progress objective
 ///     act the vocabulary does not serve yet derives
 ///     <see cref="QuestPattern.Unknown"/> WITH its act type name, which is the
@@ -44,6 +46,10 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 ///   UseItemActId / UseItemTemplateId / UseItemNeed — the Progress component's
 ///     first QuestActObjItemUse (act id, item template, count), the item-use
 ///     objective's own facts (distinct from the gather act's).
+///   InteractActId / InteractDoodadTemplate / InteractNeed / InteractUseSkill —
+///     the Progress component's first QuestActObjInteraction (act id, doodad
+///     template, count), plus the interaction skill derived from that doodad
+///     template's OWN func tables.
 ///   AutoComplete — true when the quest carries a QuestActConAutoComplete in
 ///     its Ready or Reward component: the engine completes it on its own
 ///     evaluation, so the plan needs no NPC turn-in leg to finish it.
@@ -107,6 +113,40 @@ public sealed record QuestFixtureRow(
 
     /// <summary>The item-use objective's required count (0 when the quest carries no item-use objective).</summary>
     public int UseItemNeed { get; init; }
+    /// <summary>
+    /// The Progress component's first QuestActObjInteraction act id (0 when the
+    /// quest carries none).
+    /// </summary>
+    public uint InteractActId { get; init; }
+
+    /// <summary>
+    /// The doodad template the interaction objective works (0 when the quest
+    /// carries no interaction objective). Read off the act's own
+    /// <c>DoodadId</c> — never hand-typed, never a quest id.
+    /// </summary>
+    public uint InteractDoodadTemplate { get; init; }
+
+    /// <summary>
+    /// The interaction objective's required count (0 when the quest carries no
+    /// interaction objective).
+    /// </summary>
+    public int InteractNeed { get; init; }
+
+    /// <summary>
+    /// The interaction skill the interact leg enters through, derived from the
+    /// interaction target's OWN func tables — never hand-typed. Same precedence
+    /// as <see cref="GatherUseSkill"/> (and
+    /// <c>GameplayActor.ResolveInteractionSkill</c>): within the template's func
+    /// groups in ascending group-id order, the first explicit
+    /// <c>func.SkillId</c> binding, else the first <c>DoodadFuncUse</c> /
+    /// <c>DoodadFuncFakeUse</c> template skill id. 0 = plain skill-less use. The
+    /// interact leg rides this id; the actor gates on template existence only
+    /// (no learned-skill requirement). A 0 here means the target's func tables
+    /// name no skill — the leg fails closed (a skill-less Use never emits the
+    /// quest interaction event, so dispatching it would be a silent no-op the
+    /// credit check could never observe).
+    /// </summary>
+    public uint InteractUseSkill { get; init; }
 
     /// <summary>
     /// True when the quest carries a <c>QuestActConAutoComplete</c> in its Ready
@@ -234,7 +274,6 @@ public sealed record QuestFixtureRow(
     {
         if (questId == 0)
             return Empty(questId);
-
         uint gatherActId = 0;
         uint preyItem = 0;
         var need = 0;
@@ -243,6 +282,9 @@ public sealed record QuestFixtureRow(
         uint useItemActId = 0;
         uint useItemTemplateId = 0;
         var useItemNeed = 0;
+        uint interactActId = 0;
+        uint interactDoodad = 0;
+        var interactNeed = 0;
         var autoComplete = false;
         var objectivePattern = QuestPattern.Unknown;
         var objectiveActType = "";
@@ -267,6 +309,13 @@ public sealed record QuestFixtureRow(
                 useItemTemplateId = useItem.ItemId;
                 useItemNeed = useItem.Count;
             }
+            var interact = FirstAct<QuestActObjInteraction>(template, QuestComponentKind.Progress);
+            if (interact != null)
+            {
+                interactActId = interact.ActId;
+                interactDoodad = interact.DoodadId;
+                interactNeed = interact.Count;
+            }
 
             // The objective SHAPE is the Progress component's first act that
             // counts as an objective — the act the quest's step machine waits
@@ -286,6 +335,7 @@ public sealed record QuestFixtureRow(
                 {
                     QuestActObjItemGather => QuestPattern.KillX,
                     QuestActObjItemUse => QuestPattern.UseItem,
+                    QuestActObjInteraction => QuestPattern.InteractDoodad,
                     _ => QuestPattern.Unknown
                 };
             }
@@ -330,6 +380,10 @@ public sealed record QuestFixtureRow(
             UseItemActId = useItemActId,
             UseItemTemplateId = useItemTemplateId,
             UseItemNeed = useItemNeed,
+            InteractActId = interactActId,
+            InteractDoodadTemplate = interactDoodad,
+            InteractNeed = interactNeed,
+            InteractUseSkill = ResolveDoodadUseSkill(interactDoodad),
             AutoComplete = autoComplete,
             GatherDoodadTemplate = gatherDoodad,
             GatherUseSkill = ResolveDoodadUseSkill(gatherDoodad)
