@@ -29,7 +29,10 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 ///     <see cref="QuestPattern.UseItem"/>; an item gather derives
 ///     <see cref="QuestPattern.KillX"/> when its item drops from an npc loot
 ///     pack, else <see cref="QuestPattern.GatherDoodad"/> when its item comes
-///     from a doodad loot func; a doodad interaction derives
+///     from a doodad loot func, else <see cref="QuestPattern.Deliver"/> when
+///     its item rides the quest's own Supply component (the step machine
+///     grants it on accept — the basil-delivery path, no loot chain at all);
+///     a doodad interaction derives
 ///     <see cref="QuestPattern.InteractDoodad"/> (no loot-chain condition —
 ///     the credit rides the skill pipeline's interaction effect, not an item
 ///     grant). A quest with NO Progress objective act derives
@@ -176,6 +179,26 @@ public sealed record QuestFixtureRow(
     /// existence only (no learned-skill requirement).
     /// </summary>
     public uint GatherUseSkill { get; init; }
+    /// <summary>
+    /// The Supply component's first QuestActSupplyItem act id (0 when the quest
+    /// carries none). The supplied-gather shape's own source fact: the
+    /// step machine grants this item on accept, so the objective credits off
+    /// the legitimate supply receipt — no kill, no draw, no injection.
+    /// </summary>
+    public uint SupplyActId { get; init; }
+
+    /// <summary>
+    /// The item template the Supply act grants (0 when the quest carries no
+    /// Supply act). The deliver shape matches it against
+    /// <see cref="PreyItem"/>: only a gather for the SUPPLIED item classifies
+    /// as supplied-gather.
+    /// </summary>
+    public uint SupplyItem { get; init; }
+
+    /// <summary>
+    /// The Supply act's granted count (0 when the quest carries no Supply act).
+    /// </summary>
+    public int SupplyCount { get; init; }
 
     /// <summary>
     /// Memo of derived rows, one per quest id. Concurrent: the wake path can
@@ -285,6 +308,9 @@ public sealed record QuestFixtureRow(
         uint interactActId = 0;
         uint interactDoodad = 0;
         var interactNeed = 0;
+        uint supplyActId = 0;
+        uint supplyItem = 0;
+        var supplyCount = 0;
         var autoComplete = false;
         var objectivePattern = QuestPattern.Unknown;
         var objectiveActType = "";
@@ -315,6 +341,13 @@ public sealed record QuestFixtureRow(
                 interactActId = interact.ActId;
                 interactDoodad = interact.DoodadId;
                 interactNeed = interact.Count;
+            }
+            var supply = FirstAct<QuestActSupplyItem>(template, QuestComponentKind.Supply);
+            if (supply != null)
+            {
+                supplyActId = supply.ActId;
+                supplyItem = supply.ItemId;
+                supplyCount = supply.Count;
             }
 
             // The objective SHAPE is the Progress component's first act that
@@ -371,6 +404,16 @@ public sealed record QuestFixtureRow(
         // prey shape and fails on the prey precondition as before.
         if (objectivePattern == QuestPattern.KillX && preyItem != 0 && preyTemplate == 0 && gatherDoodad != 0)
             objectivePattern = QuestPattern.GatherDoodad;
+        // A gather whose item rides the quest's OWN Supply act is the
+        // supplied-gather shape (the basil-delivery path): the step machine
+        // grants it on accept, so the credit is the legitimate supply receipt
+        // — no prey to kill, no doodad to draw, no item to inject. Supply wins
+        // over the doodad chain (both may name the item; the engine grant is
+        // the authoritative source), and a gather for any OTHER item keeps its
+        // prior shape.
+        if (objectivePattern is QuestPattern.KillX or QuestPattern.GatherDoodad
+            && preyItem != 0 && supplyItem != 0 && preyItem == supplyItem)
+            objectivePattern = QuestPattern.Deliver;
 
         return new QuestFixtureRow(
             questId, gatherActId, preyItem, need, preyTemplate, preyPack, reporterTemplate, rewardItem)
@@ -386,7 +429,10 @@ public sealed record QuestFixtureRow(
             InteractUseSkill = ResolveDoodadUseSkill(interactDoodad),
             AutoComplete = autoComplete,
             GatherDoodadTemplate = gatherDoodad,
-            GatherUseSkill = ResolveDoodadUseSkill(gatherDoodad)
+            GatherUseSkill = ResolveDoodadUseSkill(gatherDoodad),
+            SupplyActId = supplyActId,
+            SupplyItem = supplyItem,
+            SupplyCount = supplyCount
         };
     }
 

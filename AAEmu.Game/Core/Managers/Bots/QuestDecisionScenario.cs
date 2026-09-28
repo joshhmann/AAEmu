@@ -143,6 +143,17 @@ public static class QuestDecisionScenario
         /// interaction objective is uncredited and a source doodad is perceived.
         /// </summary>
         public int ObjectiveInteractPriority { get; init; } = 28;
+        /// <summary>
+        /// Supplied-gather monitor priority: above advance (20) so the live
+        /// delivery outranks step-machine work, below turn-in (30) so a Ready
+        /// quest still reports first — the same band the other objective legs
+        /// sit in (distinct from every frozen value AND from the gather leg's
+        /// 27 and the interact leg's 28; the shapes compete only across
+        /// quests, so the distinct value keeps the ordering readable per
+        /// shape). The monitor never dispatches — its priority only orders
+        /// the lane evidence, never a verb.
+        /// </summary>
+        public int ObjectiveDeliverPriority { get; init; } = 29;
 
         // ---- offering rank policy (the selection hook) ----
         /// <summary>

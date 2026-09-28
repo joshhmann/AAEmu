@@ -5,11 +5,9 @@ using AAEmu.Game.Models.Game.Quests.Director;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
-/// Quest director — the quest BRAIN's plan assembly and gate-check.
-///
 /// Assembles one <see cref="QuestPlan"/> per active quest, from the behavior's
 /// leg <c>Emit</c> providers, over EVERY quest: the shape is decided by the
-/// quest's derived <see cref="QuestFixtureRow"/>, never by a quest id. Five
+/// quest's derived <see cref="QuestFixtureRow"/>, never by a quest id. Six
 /// shapes exist, and they are exhaustive by construction:
 ///
 ///   - a bootstrap quest (no Progress objective act) carries Advance + TurnIn —
@@ -31,6 +29,17 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///     skill gate: the leg is refused at plan time when the row's
 ///     <c>InteractUseSkill</c> is 0 (the seedling skill binding the sibling
 ///     worker resolves), fail-closed.
+///   - a supplied-gather quest (an item-gather objective for the item the
+///     quest's own Supply act grants) carries Deliver — the basil-delivery
+///     path (4424 is its first quest). The credit is the legitimate supply
+///     receipt the step machine grants on accept (no kill, no draw, no
+///     injection — the leg never dispatches), then the ordinary TurnIn leg
+///     serves the Ready step against the row's
+///     <see cref="QuestFixtureRow.ReporterTemplate"/> — 4424's FIRST split:
+///     the acceptor (9789) and the reporter (10857) differ, so the return
+///     journey walks to the auctioneer, not the giver. The verb set is a
+///     strict subset of the gather set (no Interact key), so the plan gates
+///     like the gather shape with nothing new to prove.
 /// The plan carries legs and data only. Every leg body, every per-actor memory
 /// (hold/drift/pursuit/return issue, corpse, loot-once, give-up streak) and all
 /// dispatch stay in <see cref="QuestBehavior"/>; the plan never stores per-wake
@@ -140,7 +149,28 @@ public static class QuestDirector
         new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
             Enter: QuestBehavior.TurnInEnter)
     });
-
+    /// <summary>
+    /// The supplied-gather leg set: Advance, the deliver monitor leg, then
+    /// TurnIn. The ordinary TurnIn leg serves the Ready step against the row's
+    /// <see cref="QuestFixtureRow.ReporterTemplate"/> (4424 reports to the
+    /// 10857 auctioneer — the first split from the 9789 acceptor); Advance
+    /// serves the step machine as always (the Supply grant lands through it).
+    /// No Return leg (the kill-shape's corpse journey has no meaning here),
+    /// no funnel legs: the objective needs no world target (the item is in
+    /// the bag from the Supply receipt and the wake's own perception carries
+    /// the counts). The Deliver monitor never dispatches — it names the
+    /// supply-credit state per wake so the lane reads the delivery, then
+    /// yields to Advance (Progress) and TurnIn (Ready).
+    /// </summary>
+    private static readonly IReadOnlyList<QuestLeg> DeliverLegs = Array.AsReadOnly(new QuestLeg[]
+    {
+        new(QuestLegId.Advance, QuestBehavior.AdvanceEmit,
+            Enter: QuestBehavior.AdvanceEnter),
+        new(QuestLegId.Deliver, QuestBehavior.DeliverEmit,
+            Enter: QuestBehavior.DeliverEnter),
+        new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
+            Enter: QuestBehavior.TurnInEnter)
+    });
     private static readonly IReadOnlyList<QuestLeg> NoLegs = Array.AsReadOnly(Array.Empty<QuestLeg>());
 
     /// <summary>
@@ -220,11 +250,13 @@ public static class QuestDirector
                 ? QuestPattern.UseItem
                 : fixture.InteractActId != 0 && fixture.InteractDoodadTemplate != 0
                     ? QuestPattern.InteractDoodad
-                    : fixture.GatherActId != 0 && fixture.GatherDoodadTemplate != 0
-                        ? QuestPattern.GatherDoodad
-                        : fixture.GatherActId != 0
-                            ? QuestPattern.KillX
-                            : QuestPattern.Unknown;
+                    : fixture.GatherActId != 0 && fixture.SupplyItem != 0 && fixture.PreyItem == fixture.SupplyItem
+                        ? QuestPattern.Deliver
+                        : fixture.GatherActId != 0 && fixture.GatherDoodadTemplate != 0
+                            ? QuestPattern.GatherDoodad
+                            : fixture.GatherActId != 0
+                                ? QuestPattern.KillX
+                                : QuestPattern.Unknown;
         // An objective the vocabulary cannot SERVE yet keeps the bootstrap floor
         // and names the gap. It is not a gate failure (the registry never
         // questioned it) and not silence (the gap must be visible): the behavior
@@ -276,6 +308,15 @@ public static class QuestDirector
             return Failed(questId, pattern, fixture,
                 $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.InteractActId} doodad={fixture.InteractDoodadTemplate} skill=0");
 
+        // A supplied-gather act whose gather item is NOT the Supply grant has
+        // no legitimate credit path: the shape only serves a gather FOR the
+        // supplied item (the engine grant IS the source). Same fail-closed
+        // shape as the sibling source gates, naming the act and the item.
+        if (pattern == QuestPattern.Deliver && (fixture.SupplyItem == 0 || fixture.PreyItem != fixture.SupplyItem))
+            return Failed(questId, pattern, fixture,
+                $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.GatherActId} item={fixture.PreyItem}");
+
+
         // Every verb the pattern dispatches is checked here — except three that
         // are UNGATED BY DECLARATION, deliberately absent from the catalog's verb
         // set (see PatternCatalog for the full declaration and each graduation
@@ -300,6 +341,7 @@ public static class QuestDirector
             QuestPattern.UseItem => UseItemLegs,
             QuestPattern.GatherDoodad => GatherDoodadLegs,
             QuestPattern.InteractDoodad => InteractDoodadLegs,
+            QuestPattern.Deliver => DeliverLegs,
             _ => NoLegs
         });
     }

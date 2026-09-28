@@ -4,8 +4,9 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 
 /// The quest plan's pattern vocabulary: how the plan's legs accomplish the
 /// quest (kill a prey for a gather, pick an npc up, use a doodad, draw from a
-/// doodad, work a doodad through its use-skill, consume an item, talk a
-/// chain, reach a position, craft, escort). Distinct from the
+/// doodad, work a doodad through its use-skill, consume an item, carry a
+/// supply-granted item to a split reporter, talk a chain, reach a position,
+/// craft, escort). Distinct from the
 /// template-level <c>Quests.Static.QuestPattern</c> (Objective/Reward component
 /// axis) — this one classifies the objective SHAPE the leg set implements.
 ///
@@ -14,8 +15,9 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 /// row (fail-closed default). The generalized director classifies from the
 /// derived row's own objective act (<see cref="QuestFixtureRow.ObjectivePattern"/>),
 /// so further shapes — <see cref="UseItem"/>, the consume-an-item objective,
-/// <see cref="GatherDoodad"/>, the draw-from-a-doodad objective, and
+/// <see cref="GatherDoodad"/>, the draw-from-a-doodad objective,
 /// <see cref="InteractDoodad"/>, the work-a-doodad-through-its-use-skill
+/// objective, and <see cref="Deliver"/>, the carry-a-supply-granted-item
 /// objective — derive the same way, with no per-quest wiring. The remaining
 /// members are the catalog vocabulary the verb gate maps to verb keys.
 public enum QuestPattern
@@ -26,6 +28,7 @@ public enum QuestPattern
     GatherDoodad,
     InteractDoodad,
     UseItem,
+    Deliver,
     TalkChain,
     ReachPos,
     Craft,
@@ -39,8 +42,11 @@ public enum QuestPattern
 /// objective's own leg (the <see cref="QuestPattern.GatherDoodad"/> shape's only
 /// objective leg); <see cref="Interact"/> is the interact-with-doodad
 /// objective's own leg (the <see cref="QuestPattern.InteractDoodad"/> shape's
-/// only objective leg). A plan carries at most one objective leg (gather-from-prey
-/// rides the funnel group instead) — objective legs never co-occur.
+/// only objective leg); <see cref="Deliver"/> is the supplied-gather
+/// objective's own leg (the <see cref="QuestPattern.Deliver"/> shape's monitor
+/// leg — it never dispatches, it names the supply-credit state). A plan
+/// carries at most one objective leg (gather-from-prey rides the funnel group
+/// instead) — objective legs never co-occur.
 /// </summary>
 public enum QuestLegId
 {
@@ -53,7 +59,8 @@ public enum QuestLegId
     Return,
     UseItem,
     Gather,
-    Interact
+    Interact,
+    Deliver
 }
 
 /// <summary>

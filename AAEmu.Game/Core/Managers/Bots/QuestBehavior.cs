@@ -112,7 +112,8 @@ public static class QuestBehavior
     private const string GatherGoal = "quest.objective-gather";
     /// <summary>Goal key routing the interact-with-doodad objective's Interact through Dispatch.</summary>
     private const string InteractGoal = "quest.objective-interact";
-    /// <summary>
+    /// <summary>Goal key routing the supplied-gather monitor through the leg loop. Never dispatched.</summary>
+    private const string DeliverGoal = "quest.objective-deliver";
     /// Gather arrival radius: the Interact engine gate itself
     /// (GameplayActor.MaxInteractRange, 25 m flat). Inside → audited Stop,
     /// then Interact; outside → drift-gated MoveTo. The return leg's own
@@ -1508,6 +1509,81 @@ public static class QuestBehavior
                     observed => observed.ActiveQuestIds.Contains(questId)),
                 SurvivalVetoClear(actor)
             ]);
+    }
+    /// <summary>
+    /// True when the quest's supplied-gather objective already carries its
+    /// required count. The gather credit helper's twin for the supply path:
+    /// reads the act's live objective counter off the SAME quest object the
+    /// leg already holds, resolving the <c>QuestActObjItemGather</c> from the
+    /// static template tables — game data, never a world/perception read.
+    /// Fail-closed: an unreadable template or a missing act reads NOT
+    /// credited, so the leg keeps working rather than silently declaring
+    /// victory.
+    /// </summary>
+    private static bool DeliverCredited(uint questId, Quest quest, QuestFixtureRow fixture)
+    {
+        var gather = QuestManager.Instance?.GetTemplate(questId)?
+            .GetComponents(QuestComponentKind.Progress)
+            .SelectMany(c => c.ActTemplates)
+            .OfType<QuestActObjItemGather>()
+            .FirstOrDefault(a => a.ActId == fixture.GatherActId);
+        if (gather == null)
+            return false;
+        return gather.GetObjective(quest) >= Math.Max(1, gather.Count);
+    }
+
+    /// <summary>
+    /// Supplied-gather leg entry gate: the step machine has work only for an
+    /// active, non-Ready quest, and the monitor has work only while the
+    /// supplied-gather objective is not yet credited. The gate owns both
+    /// reasons, so the loop's evidence names the real cause of the withdraw.
+    /// The monitor needs NO world source (the Supply receipt is in the bag),
+    /// so there is no third reason — never dispatches, never a world scan,
+    /// never stored.
+    /// </summary>
+    internal static string? DeliverEnter(QuestLegContext context, QuestLegWake wake)
+    {
+        var quest = context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId);
+        if (quest is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
+            return "quest-not-usable";
+        var fixture = context.Fixture!;
+        return DeliverCredited(context.QuestId, quest, fixture)
+            ? "objective-credited"
+            : null;
+    }
+
+    /// <summary>
+    /// Supplied-gather monitor leg: name the delivery state per wake, then
+    /// yield. The objective item rides the quest's own Supply act — the step
+    /// machine grants it through the Advance leg on accept, and the engine's
+    /// own objective counter plus the wake's bag census observe the credit
+    /// (never a world re-scan, never an injection). The monitor NEVER
+    /// dispatches: it returns null with a validate/credit diag fragment so
+    /// the selector sees Advance (Progress) and TurnIn (Ready) unopposed,
+    /// and the lane reads the basil carry per wake — including the FIRST
+    /// split: accept at the 9789 giver, report at the 10857 reporter.
+    /// </summary>
+    internal static BotDecisionProposal? DeliverEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var fixture = context.Fixture!;
+        var questId = context.QuestId;
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+        {
+            diag = $"validate=quest-not-active:item={fixture.PreyItem}:need={fixture.Need}:supply={fixture.SupplyItem}:have=NA:dispatch=withdrawn:reason=quest-not-active";
+            return null;
+        }
+        var have = 0;
+        if (context.Observation?.BagItemCounts.TryGetValue(fixture.PreyItem, out var held) == true)
+            have = held;
+        if (DeliverCredited(questId, quest, fixture))
+        {
+            diag = $"validate=objective-credited:item={fixture.PreyItem}:need={fixture.Need}:supply={fixture.SupplyItem}:have={have}:dispatch=withdrawn:reason=objective-credited";
+            return null;
+        }
+        diag = $"validate=ok:item={fixture.PreyItem}:need={fixture.Need}:supply={fixture.SupplyItem}:have={have}:accept=9789:report=10857:split=accept-9789-report-10857:dispatch=monitor:reason=supply-credit";
+        return null;
     }
 
     /// <summary>

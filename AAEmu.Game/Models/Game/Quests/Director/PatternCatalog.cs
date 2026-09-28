@@ -103,7 +103,6 @@ public static class PatternCatalog
         "Interact",
         "TurnInQuest"
     });
-
 /// The interact-with-doodad verb set — the verbs the seedling-watering path
 /// needs: travel to the doodad (<c>MoveTo</c>), stop in range (<c>Stop</c>),
 /// observe it (<c>Observe</c>), accept the quest (<c>AcceptQuest</c>), work it
@@ -123,12 +122,24 @@ public static class PatternCatalog
         "Interact",
         "TurnInQuest"
     });
+/// The supplied-gather verb set — the verbs the basil-delivery path needs:
+/// travel to the reporter (<c>MoveTo</c>), stop in range (<c>Stop</c>),
+/// observe it (<c>Observe</c>), accept the quest (<c>AcceptQuest</c>), and
+/// hand the turn-in to the SPLIT NPC reporter (<c>TurnInQuest</c>). No
+/// <c>Interact</c>: the objective item rides the quest's own Supply act
+/// (the step machine grants it on accept), so there is no doodad draw to
+/// prove and no skill gate to hold. The verb set is a strict SUBSET of the
+/// gather-from-doodad set the G9a probe graduated — every key resolves
+/// through the SAME green rows, never a new proof.
+    private static readonly IReadOnlyList<string> DeliverVerbs = Array.AsReadOnly(new[]
+    {
+        "MoveTo",
+        "Stop",
+        "Observe",
+        "AcceptQuest",
+        "TurnInQuest"
+    });
     private static readonly IReadOnlyList<string> NoVerbs = Array.AsReadOnly(Array.Empty<string>());
-
-    /// <summary>
-    /// The verb keys a plan of <paramref name="pattern"/> must resolve green;
-    /// empty when the pattern has no proven verb set (including
-    /// <see cref="QuestPattern.Unknown"/>).
     public static IReadOnlyList<string> VerbsFor(QuestPattern pattern)
         => pattern switch
         {
@@ -136,6 +147,7 @@ public static class PatternCatalog
             QuestPattern.UseItem => UseItemVerbs,
             QuestPattern.GatherDoodad => GatherDoodadVerbs,
             QuestPattern.InteractDoodad => InteractDoodadVerbs,
+            QuestPattern.Deliver => DeliverVerbs,
             _ => NoVerbs
         };
 }
