@@ -1600,8 +1600,9 @@ public enum NeedsFarmLoopPhase
                 return false;
             }
             state.QuestTravelTarget = source;
+            var sourceDist = Vector3.Distance(character.Transform.World.Position, source);
             state.QuestTravelReason =
-                $"walking to quest objective source (doodad {sourceTemplate}) at ({source.X:F0},{source.Y:F0}) " +
+                $"walking to quest objective source (doodad {sourceTemplate} {sourceDist:F1}m) at ({source.X:F0},{source.Y:F0}) " +
                 $"from ({character.Transform.World.Position.X:F0},{character.Transform.World.Position.Y:F0})";
 
             state.Path = BotPath.PathTo(source);
@@ -1784,12 +1785,18 @@ public enum NeedsFarmLoopPhase
     /// <summary>
     /// Branch 1b: the nearest spawner position for an active non-Ready quest's
     /// uncredited gather/interact objective source. Quest-id order, gather
-    /// before interact within a quest. Resolves spawners through the
-    /// character's own world SpawnManager (same discipline as
-    /// TrySpawnerPosition); picks the nearest to the actor pose; returns the
-    /// position with the same construction as TrySpawnerPosition.
-    /// False when no active quest names an uncredited source (or its source
-    /// has no spawner).
+    /// before interact within a quest. The gather read is the brain's verdict
+    /// inputs in order — (1) requirements: the fixture row's granting set;
+    /// (2) nearby: the 25 m perception census — a perceived granting source
+    /// short-circuits travel (the gather leg owns the wake, no spawner walk);
+    /// (3) distance: the ranked spawner candidates across ALL granting
+    /// templates, nearest wins — with the reason naming template + distance.
+    /// The executor arms what the brain decides; it never re-decides: the
+    /// gather/interact legs own the travel/withdraw verdict, this resolver only
+    /// threads their ranked input through to the arming. Resolves spawners
+    /// through the character's own world SpawnManager (same discipline as
+    /// TrySpawnerPosition). False when no active quest names an uncredited
+    /// source (or its source has no spawner).
     /// </summary>
     private static bool ResolveQuestObjectiveSource(GameplayActor actor, out Vector3 source, out uint sourceTemplate)
     {
@@ -1814,12 +1821,21 @@ public enum NeedsFarmLoopPhase
             {
                 continue;
             }
-            if (row.GatherDoodadTemplate != 0 && !QuestBehavior.GatherCredited(questId, quest, row))
+            if (QuestBehavior.HasGatherTemplates(row) && !QuestBehavior.GatherCredited(questId, quest, row))
             {
-                if (QuestBehavior.TryNearestDoodadSpawnerPosition(world, row.GatherDoodadTemplate, here, out var gatherPos))
+                // Nearby first: a perceived granting source means the gather leg
+                // owns this wake — travel never preempts it.
+                var snapshot = BotObservedContext.Capture(actor);
+                var legContext = new QuestLegContext(actor, new QuestDecisionScenario.QuestOptions(), questId, row, null)
+                {
+                    Observation = snapshot
+                };
+                if (QuestBehavior.ResolveGatherDoodad(legContext, row).ObjId != 0)
+                    continue;
+                if (QuestBehavior.TryNearestGatherSpawnerPosition(world, row, here, out var gatherTemplate, out var gatherPos))
                 {
                     source = gatherPos;
-                    sourceTemplate = row.GatherDoodadTemplate;
+                    sourceTemplate = gatherTemplate;
                     return true;
                 }
             }

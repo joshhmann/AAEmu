@@ -159,13 +159,26 @@ public sealed record QuestFixtureRow(
     public bool AutoComplete { get; init; }
     /// <summary>
     /// The doodad template id whose loot funcs grant the gather item (0 when the
-    /// quest carries no gather-from-doodad source). Derived from
-    /// <see cref="PreyItem"/> by inverting the loaded doodad func surfaces
-    /// (func-group → <c>DoodadFuncLootItem</c>/<c>DoodadFuncLootPack</c> whose
-    /// pack carries the item), preferring the lowest doodad template id so the
-    /// result is deterministic for any item — never hand-typed, never a quest id.
+    /// quest carries no gather-from-doodad source). The lowest id of
+    /// <see cref="GatherDoodadTemplates"/> — kept so plan gating, diags and
+    /// hand-built rows keep a deterministic single id; the legs and the travel
+    /// resolver read the full set. Never hand-typed, never a quest id.
     /// </summary>
     public uint GatherDoodadTemplate { get; init; }
+
+    /// <summary>
+    /// EVERY doodad template id whose loot funcs grant the gather item
+    /// (<see cref="PreyItem"/>), ascending — derived by inverting the loaded
+    /// doodad func surfaces, never hand-typed. Empty on a hand-built row
+    /// (single-id rows predate the set — the legs fall back to the single id
+    /// there) and when no doodad grants the item — the director's
+    /// unresolvable-source signal for the gather-from-doodad shape
+    /// (fail-closed). The quest's <c>quest_act_obj_alias_id</c> (4415's 1784
+    /// "any well") accepts any of these sources, so the legs resolve the
+    /// NEAREST perceived member and the travel resolver the nearest spawner
+    /// across the whole set.
+    /// </summary>
+    public IReadOnlyList<uint> GatherDoodadTemplates { get; init; } = Array.Empty<uint>();
 
     /// <summary>
     /// The interaction skill the gather draw enters through, derived from the
@@ -395,7 +408,8 @@ public sealed record QuestFixtureRow(
         }
 
         var (preyTemplate, preyPack) = ResolveDropSource(preyItem);
-        var gatherDoodad = ResolveDoodadSource(preyItem);
+        var gatherDoodads = ResolveDoodadSources(preyItem);
+        var gatherDoodad = gatherDoodads.Count == 0 ? 0 : gatherDoodads[0];
 
         // A gather whose item comes from no npc loot pack but from a doodad loot
         // func is the gather-from-doodad shape (the well-draw path), not prey.
@@ -429,6 +443,7 @@ public sealed record QuestFixtureRow(
             InteractUseSkill = ResolveDoodadUseSkill(interactDoodad),
             AutoComplete = autoComplete,
             GatherDoodadTemplate = gatherDoodad,
+            GatherDoodadTemplates = gatherDoodads,
             GatherUseSkill = ResolveDoodadUseSkill(gatherDoodad),
             SupplyActId = supplyActId,
             SupplyItem = supplyItem,
@@ -506,41 +521,45 @@ public sealed record QuestFixtureRow(
 
     /// <summary>
     /// Inverts the doodad→loot-func→item chain for <paramref name="itemId"/>:
-    /// the lowest doodad template id whose func groups carry a loot func that
-    /// grants the item — a <c>DoodadFuncLootItem</c> naming it directly, or a
-    /// <c>DoodadFuncLootPack</c> whose loot pack carries it. The scan walks the
-    /// loaded <c>DoodadManager</c> func surfaces only (groups, funcs, loot-item
-    /// and loot-pack templates): never a world scan, never a hand-typed id.
-    /// Zero when no doodad grants the item (or the item is 0, or the doodad
-    /// surface is unreadable) — the director's unresolvable-source signal for
-    /// the gather-from-doodad shape. Never throws.
+    /// EVERY doodad template id whose func groups carry a loot func granting
+    /// the item — a <c>DoodadFuncLootItem</c> naming it directly, or a
+    /// <c>DoodadFuncLootPack</c> whose loot pack carries it — ascending. The
+    /// scan walks the loaded <c>DoodadManager</c> func surfaces only (groups,
+    /// funcs, loot-item and loot-pack templates): never a world scan, never a
+    /// hand-typed id. Empty when no doodad grants the item (or the item is 0,
+    /// or the doodad surface is unreadable) — the director's
+    /// unresolvable-source signal for the gather-from-doodad shape. Never
+    /// throws. A hand-built row that sets only
+    /// <see cref="GatherDoodadTemplate"/> (single, no set) keeps working: the
+    /// legs treat an empty set as "the single id".
     /// </summary>
-    private static uint ResolveDoodadSource(uint itemId)
+    private static IReadOnlyList<uint> ResolveDoodadSources(uint itemId)
     {
         if (itemId == 0)
-            return 0;
+            return Array.Empty<uint>();
 
         try
         {
             var doodads = Singleton<DoodadManager>.PeekInstance;
             var loot = Singleton<LootGameData>.PeekInstance;
             if (doodads == null || loot == null)
-                return 0;
-            uint best = 0;
+                return Array.Empty<uint>();
+            List<uint>? found = null;
             foreach (var template in DoodadTemplates(doodads))
             {
                 if (template == null || template.Id == 0)
                     continue;
-                if (best != 0 && template.Id >= best)
-                    continue;
                 if (GrantsItem(doodads, loot, template.Id, itemId))
-                    best = template.Id;
+                    (found ??= new List<uint>()).Add(template.Id);
             }
-            return best;
+            if (found == null)
+                return Array.Empty<uint>();
+            found.Sort();
+            return found.ToArray();
         }
         catch
         {
-            return 0;
+            return Array.Empty<uint>();
         }
     }
 
@@ -590,7 +609,7 @@ public sealed record QuestFixtureRow(
     /// <c>DoodadFuncFakeUse</c> template skill id. 0 = skill-less draw.
     /// Never throws (an unreadable doodad surface yields 0).
     /// </summary>
-    private static uint ResolveDoodadUseSkill(uint doodadTemplateId)
+    internal static uint ResolveDoodadUseSkill(uint doodadTemplateId)
     {
         if (doodadTemplateId == 0)
             return 0;

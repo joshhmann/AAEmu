@@ -1032,10 +1032,11 @@ public static class QuestBehavior
     /// Gather-from-doodad leg entry gate: the step machine has work only for an
     /// active, non-Ready quest, the objective leg has work only while the gather
     /// objective is not yet credited, and the leg needs a source — a perceived
-    /// doodad of the row's own <c>GatherDoodadTemplate</c> — to walk to. The
-    /// gate owns all three reasons, so the loop's evidence names the real cause
-    /// of the withdraw. Never dispatches; the resolve is a read-only census of
-    /// the wake's own perception snapshot.
+    /// doodad granting the row's item (ANY of <c>GatherDoodadTemplates</c>; the
+    /// quest's alias accepts every granting well) — to walk to. The gate owns
+    /// all three reasons, so the loop's evidence names the real cause of the
+    /// withdraw. Never dispatches; the resolve is a read-only census of the
+    /// wake's own perception snapshot.
     internal static string? GatherEnter(QuestLegContext context, QuestLegWake wake)
     {
         var quest = context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId);
@@ -1044,48 +1045,143 @@ public static class QuestBehavior
         var fixture = context.Fixture!;
         if (GatherCredited(context.QuestId, quest, fixture))
             return "objective-credited";
-        return ResolveGatherDoodad(context, fixture) == 0 ? "gather-no-source" : null;
+        return ResolveGatherDoodad(context, fixture).ObjId == 0 ? "gather-no-source" : null;
     }
 
     /// <summary>
-    /// The wake's gather source: the first perceived doodad objId whose template
-    /// is the row's own <c>GatherDoodadTemplate</c> (perception order — the same
-    /// nearest-first discipline the discovery sweep uses is left to the wake's
-    /// snapshot order; the leg never re-sorts). 0 when the row names no template
+    /// The wake's gather source: the NEAREST perceived doodad (flat distance
+    /// from the actor) whose template is ANY of the row's granting templates —
+    /// the quest's <c>quest_act_obj_alias_id</c> (4415's 1784 "any well") accepts
+    /// every granting well, so the leg walks the closest one, not the lowest-id
+    /// one. ObjId tiebreak. The chosen template's draw skill
+    /// (<see cref="QuestFixtureRow.ResolveDoodadUseSkill"/>, per-template — never
+    /// the row's single id) rides the selection. 0 when the row names no template
     /// or none is perceived. Read-only over the wake's own snapshot — never a
     /// world scan, never stored.
     /// </summary>
-    private static uint ResolveGatherDoodad(QuestLegContext context, QuestFixtureRow fixture)
+    internal static (uint ObjId, uint TemplateId, uint UseSkill) ResolveGatherDoodad(QuestLegContext context, QuestFixtureRow fixture)
     {
-        if (fixture.GatherDoodadTemplate == 0)
-            return 0;
-        var observed = context.Observation?.NearbyDoodadObjIds;
-        if (observed == null || observed.Count == 0)
-            return 0;
-        var world = context.Actor.Character?.ParentWorld;
-        if (world == null)
-            return 0;
-        foreach (var objId in observed)
-        {
-            var doodad = world.GetDoodad(objId);
-            if (doodad != null && doodad.TemplateId == fixture.GatherDoodadTemplate)
-                return objId;
-        }
-        return 0;
+        var intel = ReadGatherSourceIntel(context, fixture);
+        if (intel.PerceivedGranting.Count == 0)
+            return (0, 0, 0);
+        var first = intel.PerceivedGranting[0];
+        // Per-template skill: a hand-built row stages only the single id (no
+        // derived skill), so the leg resolves the CHOSEN template's skill live
+        // off its func tables — derived rows already carry the same value.
+        return (first.ObjId, first.TemplateId, QuestFixtureRow.ResolveDoodadUseSkill(first.TemplateId));
     }
 
     /// <summary>
+    /// One perceived granting source: a doodad in the wake's 25 m census whose
+    /// template grants the objective item, with its flat distance from the actor.
+    /// </summary>
+    public readonly record struct PerceivedGranting(uint ObjId, uint TemplateId, float DistanceM);
+
+    /// <summary>
+    /// The brain input shape for the gather-source decision — requirements →
+    /// nearby → distance, frozen per wake. (1) requirements arrive on the
+    /// fixture row itself (item, need, granting set, reporter); (2) nearby is
+    /// the perceived granting set (every census doodad granting the item,
+    /// nearest-first) plus the surroundings census around it (total perceived
+    /// doodads/NPCs — competing objectives and hazards the Decide chain reads
+    /// with context, never a single-point target); (3) distance is the ranked
+    /// spawner candidates across ALL granting templates. The Decide chain
+    /// (GatherEmit / the Advance gate / the travel arming) owns the
+    /// travel/withdraw verdict over this shape; the readers below never decide.
+    /// </summary>
+    public readonly record struct GatherSourceIntel(
+        IReadOnlyList<PerceivedGranting> PerceivedGranting,
+        int NearbyDoodadCount,
+        int NearbyNpcCount,
+        IReadOnlyList<GatherSpawnerCandidate> RankedSpawners);
+
+    /// <summary>
+    /// Reads the gather-source intel for one wake: the perceived granting set
+    /// (wake snapshot census × granting templates, nearest-first with an ObjId
+    /// tiebreak), the surroundings census counts, and — when
+    /// <paramref name="here"/> and <paramref name="world"/> are supplied — the
+    /// ranked spawner candidates. Null world/position reads perception only
+    /// (no spawner scan). Never dispatches, never stored.
+    /// </summary>
+    public static GatherSourceIntel ReadGatherSourceIntel(
+        QuestLegContext context, QuestFixtureRow fixture, WorldInstance? world = null, Vector3? here = null)
+    {
+        List<PerceivedGranting>? perceived = null;
+        var nearbyDoodads = 0;
+        var nearbyNpcs = 0;
+        var observed = context.Observation;
+        if (observed != null)
+        {
+            nearbyDoodads = observed.NearbyDoodadObjIds.Count;
+            nearbyNpcs = observed.NearbyNpcObjIds.Count;
+            var templates = fixture.GatherDoodadTemplates;
+            var singleFallback = templates == null || templates.Count == 0;
+            var character = context.Actor.Character;
+            var lookup = character?.ParentWorld;
+            var actorPos = character?.Transform.World.Position;
+            if ((singleFallback ? fixture.GatherDoodadTemplate != 0 : true)
+                && lookup != null && actorPos.HasValue)
+            {
+                foreach (var objId in observed.NearbyDoodadObjIds)
+                {
+                    var doodad = lookup.GetDoodad(objId);
+                    if (doodad == null)
+                        continue;
+                    var granting = singleFallback
+                        ? doodad.TemplateId == fixture.GatherDoodadTemplate
+                        : ContainsTemplate(templates!, doodad.TemplateId);
+                    if (!granting)
+                        continue;
+                    (perceived ??= new List<PerceivedGranting>()).Add(new PerceivedGranting(
+                        objId, doodad.TemplateId,
+                        MathUtil.CalculateDistance(actorPos.Value, doodad.Transform.World.Position, false)));
+                }
+            }
+        }
+        if (perceived != null)
+            perceived.Sort(static (a, b) =>
+            {
+                var d = a.DistanceM.CompareTo(b.DistanceM);
+                return d != 0 ? d : a.ObjId.CompareTo(b.ObjId);
+            });
+        IReadOnlyList<GatherSpawnerCandidate> ranked =
+            world != null && here.HasValue
+                ? RankGatherSpawnerCandidates(world, fixture, here.Value)
+                : Array.Empty<GatherSpawnerCandidate>();
+        return new GatherSourceIntel(
+            perceived != null ? perceived.ToArray() : Array.Empty<PerceivedGranting>(),
+            nearbyDoodads, nearbyNpcs, ranked);
+    }
+
+    /// <summary>Membership over the granting set without allocating (sets hold a handful of ids).</summary>
+    private static bool ContainsTemplate(IReadOnlyList<uint> templates, uint templateId)
+    {
+        for (var i = 0; i < templates.Count; i++)
+        {
+            if (templates[i] == templateId)
+                return true;
+        }
+        return false;
+    }
+
+
+    /// <summary>
     /// Gather-from-doodad leg: draw the objective item from the perceived well
-    /// through the real <c>Interact</c> contract with the row's own
-    /// <c>GatherUseSkill</c> (read off the well's func tables — e.g. the
+    /// through the real <c>Interact</c> contract with the CHOSEN well's own draw
+    /// skill (per-template <see cref="ResolveGatherDoodad"/> selection — e.g. the
     /// well's fake-use row carries the draw skill; a skill-0 row stays a
-    /// skill-less <c>Doodad.Use</c>; no new actor verb). Per wake:
-    /// source lost → withdraw; outside the 25 m Interact gate → Move (drift-gated
-    /// retrack only after &gt; 2.0 m target motion since the last issue); inside
-    /// unsettled → Stop (audited halt); settled → Interact. Credit is the
-    /// engine's own objective counter plus the wake's bag census (never a world
-    /// re-scan). Never advances, never turns in — those legs stay separate
-    /// competitors.
+    /// skill-less <c>Doodad.Use</c>; no new actor verb). The leg reads, in order:
+    /// (1) requirements — the fixture row (item, need, granting set, reporter);
+    /// (2) nearby — the 25 m perception census (a perceived granting source
+    /// short-circuits travel: no spawner walk while a source is in range);
+    /// (3) distance — the nearest perceived granting source by flat distance;
+    /// then the decision (Move / Stop / Interact) with the reason naming the
+    /// chosen template + distance. Per wake: source lost → withdraw; outside the
+    /// 25 m Interact gate → Move (drift-gated retrack only after &gt; 2.0 m target
+    /// motion since the last issue); inside unsettled → Stop (audited halt);
+    /// settled → Interact. Credit is the engine's own objective counter plus the
+    /// wake's bag census (never a world re-scan). Never advances, never turns
+    /// in — those legs stay separate competitors.
     /// </summary>
     internal static BotDecisionProposal? GatherEmit(QuestLegContext context, ref string diag, ref int hpBefore)
     {
@@ -1109,7 +1205,8 @@ public static class QuestBehavior
             diag = $"validate=objective-credited:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:rangeM=NA:dispatch=withdrawn:reason=objective-credited";
             return null;
         }
-        var selected = ResolveGatherDoodad(context, fixture);
+        var source = ResolveGatherDoodad(context, fixture);
+        var selected = source.ObjId;
         if (selected == 0)
         {
             diag = $"validate=no-source:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:rangeM=NA:dispatch=withdrawn:reason=no-source";
@@ -1123,9 +1220,24 @@ public static class QuestBehavior
             diag = $"validate=FAIL-source-lost:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:target={selected}:rangeM=NA:dispatch=withdrawn:reason=source-lost";
             return null;
         }
-        if (doodad.TemplateId != fixture.GatherDoodadTemplate)
+        var granting = false;
+        var templates = fixture.GatherDoodadTemplates;
+        if (templates == null || templates.Count == 0)
+            granting = doodad.TemplateId == fixture.GatherDoodadTemplate;
+        else
         {
-            diag = $"validate=FAIL-source-recycled:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:target={selected}:template={doodad.TemplateId}:rangeM=NA:dispatch=withdrawn:reason=source-recycled";
+            for (var i = 0; i < templates.Count; i++)
+            {
+                if (templates[i] == doodad.TemplateId)
+                {
+                    granting = true;
+                    break;
+                }
+            }
+        }
+        if (!granting)
+        {
+            diag = $"validate=FAIL-source-recycled:item={fixture.PreyItem}:need={fixture.Need}:doodad={source.TemplateId}:have={have}:target={selected}:template={doodad.TemplateId}:rangeM=NA:dispatch=withdrawn:reason=source-recycled";
             return null;
         }
         if (doodad.Despawn > DateTime.MinValue)
@@ -1135,7 +1247,16 @@ public static class QuestBehavior
         }
         var doodadPos = doodad.Transform.World.Position;
         var dist = MathUtil.CalculateDistance(actorPos.Value, doodadPos, false);
-        var prefix = $"validate=ok:item={fixture.PreyItem}:need={fixture.Need}:doodad={fixture.GatherDoodadTemplate}:have={have}:target={selected}:rangeM={M(dist)}";
+        var doodadTemplate = source.TemplateId != 0 ? source.TemplateId : doodad.TemplateId;
+        // The skill rides the row's staged id — EXCEPT a fully-derived row (set
+        // non-empty) always resolves the CHOSEN template's skill live off its
+        // func tables. A hand-built row (empty set) keeps its staged skill —
+        // the regression seam: GatherUseSkill 0 stays skill-less, and a staged
+        // non-zero id is never overwritten. The leg never invents a skill id.
+        var useSkill = fixture.GatherDoodadTemplates.Count != 0
+            ? source.UseSkill
+            : fixture.GatherUseSkill;
+        var prefix = $"validate=ok:item={fixture.PreyItem}:need={fixture.Need}:doodad={doodadTemplate}:have={have}:target={selected}:rangeM={M(dist)}";
         if (dist > GatherInteractRadiusM)
         {
             var (liveMove, legLive, driftText) = GatherLegState(actor, selected, doodadPos);
@@ -1154,7 +1275,7 @@ public static class QuestBehavior
                     _ => true),
                 idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:gather:{questId}:{selected}",
                 timeout: TimeSpan.FromSeconds(30),
-                rationale: $"quest {questId} gather: well {fixture.GatherDoodadTemplate} ({selected}) at {M(dist)}m flat (outside {GatherInteractRadiusM:F1}m gate), drift {driftText} — closing",
+                rationale: $"quest {questId} gather: well {doodadTemplate} ({selected}) at {M(dist)}m flat (outside {GatherInteractRadiusM:F1}m gate), drift {driftText} — closing",
                 policyVersion: opts.PolicyVersion,
                 priority: opts.ObjectiveGatherPriority,
                 tieBreakKey: $"gather:{questId}:{selected:D10}",
@@ -1178,7 +1299,7 @@ public static class QuestBehavior
                     _ => true),
                 idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:gather-stop:{questId}:{selected}",
                 timeout: TimeSpan.FromSeconds(30),
-                rationale: $"quest {questId} gather: well {fixture.GatherDoodadTemplate} ({selected}) at {M(dist)}m flat (inside {GatherInteractRadiusM:F1}m gate) — hold, no interact yet",
+                rationale: $"quest {questId} gather: well {doodadTemplate} ({selected}) at {M(dist)}m flat (inside {GatherInteractRadiusM:F1}m gate) — hold, no interact yet",
                 policyVersion: opts.PolicyVersion,
                 priority: opts.ObjectiveGatherPriority,
                 tieBreakKey: $"gather:{questId}:{selected:D10}",
@@ -1189,7 +1310,7 @@ public static class QuestBehavior
                     SurvivalVetoClear(actor)
                 ]);
         }
-        diag = $"{prefix}:dispatch=interact:reason=settled:skill={fixture.GatherUseSkill}";
+        diag = $"{prefix}:dispatch=interact:reason=settled:skill={useSkill}";
         return new BotDecisionProposal(
             goal: GatherGoal,
             action: ActorActionType.Interact,
@@ -1199,11 +1320,11 @@ public static class QuestBehavior
                 _ => true),
             idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:gather-interact:{questId}:{selected}",
             timeout: TimeSpan.FromSeconds(30),
-            rationale: $"quest {questId} gather: well {fixture.GatherDoodadTemplate} ({selected}) at {M(dist)}m flat (inside {GatherInteractRadiusM:F1}m gate), settled — Interact draw",
+            rationale: $"quest {questId} gather: well {doodadTemplate} ({selected}) at {M(dist)}m flat (inside {GatherInteractRadiusM:F1}m gate), settled — Interact draw",
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectiveGatherPriority,
             tieBreakKey: $"gather:{questId}:{selected:D10}",
-            skillId: fixture.GatherUseSkill,
+            skillId: useSkill,
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{questId}-relevant",
@@ -1694,12 +1815,16 @@ public static class QuestBehavior
         if (world?.SpawnManager == null)
             return false;
         var here = character.Transform.World.Position;
-        if (row.GatherDoodadTemplate != 0 && !GatherCredited(context.QuestId, quest, row))
-        {
-            if (TryNearestDoodadSpawnerPosition(world, row.GatherDoodadTemplate, here, out var gatherPos)
-                && MathUtil.CalculateDistance(here, gatherPos, false) > GameplayActor.MaxInteractRange)
-                return true;
-        }
+        // (1) requirements: the fixture row's granting set (single-id rows fall
+        // back to the single id). (2) nearby: a perceived granting source
+        // short-circuits travel — the gather leg owns this wake, no spawner walk.
+        // (3) distance: the nearest spawner across ALL granting templates.
+        if (!GatherCredited(context.QuestId, quest, row)
+            && HasGatherTemplates(row)
+            && ResolveGatherDoodad(context, row).ObjId == 0
+            && TryNearestGatherSpawnerPosition(world, row, here, out _, out var gatherPos)
+            && MathUtil.CalculateDistance(here, gatherPos, false) > GameplayActor.MaxInteractRange)
+            return true;
         if (row.InteractDoodadTemplate != 0 && !InteractCredited(context.QuestId, quest, row))
         {
             if (TryNearestDoodadSpawnerPosition(world, row.InteractDoodadTemplate, here, out var interactPos)
@@ -1707,6 +1832,101 @@ public static class QuestBehavior
                 return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// True when the row names any gather source: a non-empty granting set, or
+    /// a hand-built single id (the shared layer owns the set; single-id rows
+    /// predate it and keep working through the same fallback).
+    /// </summary>
+    internal static bool HasGatherTemplates(QuestFixtureRow row)
+        => (row.GatherDoodadTemplates != null && row.GatherDoodadTemplates.Count != 0)
+            || row.GatherDoodadTemplate != 0;
+
+    /// <summary>
+    /// One ranked spawner candidate: which granting template owns it, where it
+    /// is, and how far (flat) the actor stands from it. The brain input shape
+    /// for the objective-source decision — the Decide chain owns the
+    /// travel/withdraw verdict over this frozen ranking, never the resolver.
+    /// </summary>
+    public readonly record struct GatherSpawnerCandidate(uint TemplateId, Vector3 Position, float DistanceM);
+
+    /// <summary>
+    /// The ranked candidate set for the gather objective: every spawner of
+    /// every granting template (row set, else the single id), each with its
+    /// flat distance from <paramref name="here"/>, ascending with a template-id
+    /// tiebreak. Empty when no spawner exists (or the surfaces are unreadable) —
+    /// the caller's unresolvable-source signal. Pure data-layer scan: no
+    /// perception read, no dispatch, no verdict — the brain decides over it.
+    /// </summary>
+    public static IReadOnlyList<GatherSpawnerCandidate> RankGatherSpawnerCandidates(
+        WorldInstance world, QuestFixtureRow row, Vector3 here)
+    {
+        if (world?.SpawnManager == null || row == null)
+            return Array.Empty<GatherSpawnerCandidate>();
+        List<uint> templates;
+        if (row.GatherDoodadTemplates != null && row.GatherDoodadTemplates.Count != 0)
+            templates = new List<uint>(row.GatherDoodadTemplates);
+        else if (row.GatherDoodadTemplate != 0)
+            templates = new List<uint> { row.GatherDoodadTemplate };
+        else
+            return Array.Empty<GatherSpawnerCandidate>();
+        List<GatherSpawnerCandidate>? ranked = null;
+        foreach (var templateId in templates)
+        {
+            List<DoodadSpawner> spawners;
+            try
+            {
+                spawners = world.SpawnManager.GetDoodadSpawnersByUnitId(templateId);
+            }
+            catch
+            {
+                continue;
+            }
+            if (spawners == null)
+                continue;
+            foreach (var spawner in spawners)
+            {
+                if (spawner?.Position == null)
+                    continue;
+                var p = spawner.Position;
+                var candidate = new Vector3(p.X, p.Y, p.Z);
+                (ranked ??= new List<GatherSpawnerCandidate>()).Add(
+                    new GatherSpawnerCandidate(templateId, candidate, Vector3.Distance(here, candidate)));
+            }
+        }
+        if (ranked == null)
+            return Array.Empty<GatherSpawnerCandidate>();
+        ranked.Sort(static (a, b) =>
+        {
+            var d = a.DistanceM.CompareTo(b.DistanceM);
+            return d != 0 ? d : a.TemplateId.CompareTo(b.TemplateId);
+        });
+        return ranked.ToArray();
+    }
+
+    /// <summary>
+    /// Nearest spawner position ACROSS all granting templates (row set, else the
+    /// single id) — the quest's alias accepts every granting well, so the walk
+    /// targets the closest well's spawner, not the lowest-id template's. Also
+    /// returns the owning template (the reason string names template +
+    /// distance). False when no granting template has a spawner. The brain's
+    /// travel/withdraw verdict reads <see cref="RankGatherSpawnerCandidates"/>;
+    /// this is the single-winner convenience over that ranking.
+    /// </summary>
+    internal static bool TryNearestGatherSpawnerPosition(
+        WorldInstance world, QuestFixtureRow row, Vector3 here, out uint templateId, out Vector3 position)
+    {
+        var ranked = RankGatherSpawnerCandidates(world, row, here);
+        if (ranked.Count == 0)
+        {
+            templateId = 0;
+            position = default;
+            return false;
+        }
+        templateId = ranked[0].TemplateId;
+        position = ranked[0].Position;
+        return true;
     }
 
     /// <summary>Nearest spawner position for a doodad template, or false when unknown.</summary>
