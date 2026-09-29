@@ -1008,7 +1008,7 @@ public static class QuestBehavior
     /// Fail-closed: an unreadable template or a missing act reads NOT credited,
     /// so the leg keeps working rather than silently declaring victory.
     /// </summary>
-    private static bool GatherCredited(uint questId, Quest quest, QuestFixtureRow fixture)
+    internal static bool GatherCredited(uint questId, Quest quest, QuestFixtureRow fixture)
     {
         var gather = QuestManager.Instance?.GetTemplate(questId)?
             .GetComponents(QuestComponentKind.Progress)
@@ -1255,7 +1255,7 @@ public static class QuestBehavior
     /// Fail-closed: an unreadable template or a missing act reads NOT credited,
     /// so the leg keeps working rather than silently declaring victory.
     /// </summary>
-    private static bool InteractCredited(uint questId, Quest quest, QuestFixtureRow fixture)
+    internal static bool InteractCredited(uint questId, Quest quest, QuestFixtureRow fixture)
     {
         var interact = QuestManager.Instance?.GetTemplate(questId)?
             .GetComponents(QuestComponentKind.Progress)

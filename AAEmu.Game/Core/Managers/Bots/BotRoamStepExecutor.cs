@@ -20,6 +20,7 @@ using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Templates;
@@ -283,9 +284,27 @@ public enum NeedsFarmLoopPhase
         /// the state (a restart re-resolves).
         /// </summary>
         public Vector3? QuestTravelTarget { get; set; }
-
         /// <summary>Human-readable reason for the current quest-travel decision.</summary>
         public string QuestTravelReason { get; set; } = "";
+
+        /// <summary>
+        /// Branch-1b re-arm bound: the last armed objective-source spawner
+        /// position + template, consecutive arms to it, and the active-quest
+        /// id key those arms were counted against. Caps 3 consecutive arms to
+        /// the same spawner (1.0 m tolerance); further arms withhold with the
+        /// objective-source-unreachable reason until the active-quest set
+        /// changes. Memory-only like the rest of the state.
+        /// </summary>
+        public Vector3? QuestObjectiveSourcePos { get; set; }
+
+        /// <summary>Last armed objective-source doodad template (0 = none).</summary>
+        public uint QuestObjectiveSourceTemplate { get; set; }
+
+        /// <summary>Consecutive arms to <see cref="QuestObjectiveSourcePos"/>.</summary>
+        public int QuestObjectiveSourceArms { get; set; }
+
+        /// <summary>Sorted active-quest id key the arm count was counted against.</summary>
+        public string QuestObjectiveSourceQuestKey { get; set; } = "";
 
         /// <summary>
         /// Movement-owner tag staged for the NEXT route-layer MoveTo leg
@@ -1527,16 +1546,19 @@ public enum NeedsFarmLoopPhase
         }
         return landed;
     }
+
     /// <summary>Diagnostic-only bound for decide-detail strings (observe + log).</summary>
     private static string TruncateDecide(string? value, int max = 600)
         => string.IsNullOrEmpty(value) ? "" : value.Length <= max ? value : value.Substring(0, max) + "…";
 
     /// <summary>
     /// Arms a bounded Move leg toward the spawner of the target the bot's
-    /// active quests are currently waiting on (an unspawned report NPC), or —
-    /// while no quest is active — toward the nearest spawner offering a quest
-    /// in band. Returns true when a fresh route was armed. Purely a movement
-    /// decision: the engine still owns discovery/accept/turn-in at dispatch.
+    /// active quests are currently waiting on (an unspawned report NPC,
+    /// otherwise an uncredited gather/interact objective's doodad source),
+    /// or — while no quest is active — toward the nearest spawner offering
+    /// a quest in band. Returns true when a fresh route was armed. Purely a
+    /// movement decision: the engine still owns discovery/accept/turn-in at
+    /// dispatch.
     /// </summary>
     private bool ArmQuestTravel(PlayerBotRuntime bot, GameplayActor actor, BotRoamState state)
     {
@@ -1551,6 +1573,54 @@ public enum NeedsFarmLoopPhase
             state.QuestTravelReason = "no walkable quest target (nothing ready-unspawned, nothing in-band to discover)";
             return false;
         }
+
+        // Branch-1b bound: the resolver prefers a Ready reporter first, then an
+        // objective source, then an offerer — when the armed target IS the
+        // objective source, count consecutive arms to the same spawner (1.0 m
+        // tolerance) and withhold past 3 until the active-quest set changes.
+        if (character.Quests != null
+            && ResolveQuestObjectiveSource(actor, out var source, out var sourceTemplate)
+            && target.Value.Equals(source))
+        {
+            var questKey = string.Join(",", character.Quests.ActiveQuests.Keys.OrderBy(k => k));
+            if (!string.Equals(questKey, state.QuestObjectiveSourceQuestKey, StringComparison.Ordinal))
+            {
+                state.QuestObjectiveSourceQuestKey = questKey;
+                state.QuestObjectiveSourcePos = null;
+                state.QuestObjectiveSourceTemplate = 0;
+                state.QuestObjectiveSourceArms = 0;
+            }
+            var sameSpawner = state.QuestObjectiveSourcePos.HasValue
+                && Vector3.Distance(state.QuestObjectiveSourcePos.Value, source) <= 1.0f
+                && state.QuestObjectiveSourceTemplate == sourceTemplate;
+            if (sameSpawner && state.QuestObjectiveSourceArms >= 3)
+            {
+                state.QuestTravelTarget = null;
+                state.QuestTravelReason = $"objective-source-unreachable (doodad {sourceTemplate})";
+                return false;
+            }
+            state.QuestTravelTarget = source;
+            state.QuestTravelReason =
+                $"walking to quest objective source (doodad {sourceTemplate}) at ({source.X:F0},{source.Y:F0}) " +
+                $"from ({character.Transform.World.Position.X:F0},{character.Transform.World.Position.Y:F0})";
+
+            state.Path = BotPath.PathTo(source);
+            state.PendingLeg = null;
+            // Telemetry: the route layer's next legs own as QUEST_TRAVEL.
+            state.PendingMoveOwner = "QUEST_TRAVEL";
+            if (sameSpawner)
+                state.QuestObjectiveSourceArms++;
+            else
+            {
+                state.QuestObjectiveSourcePos = source;
+                state.QuestObjectiveSourceTemplate = sourceTemplate;
+                state.QuestObjectiveSourceArms = 1;
+            }
+            Logger.Debug("Roam quest travel armed for bot {CharacterId}: walking to quest objective source (doodad {Template}) at ({X:F0},{Y:F0})",
+                bot.CharacterId, sourceTemplate, source.X, source.Y);
+            return true;
+        }
+
         state.QuestTravelTarget = target;
         state.QuestTravelReason =
             $"walking to quest target at ({target.Value.X:F0},{target.Value.Y:F0}) " +
@@ -1638,6 +1708,13 @@ public enum NeedsFarmLoopPhase
                 return reportPos;
         }
 
+        // 1b. Active non-Ready quest waiting on an uncredited gather/interact
+        //     objective's doodad source — walk to the nearest spawner for that
+        //     source so the world's normal spawn path materializes it. Quest-id
+        //     order; gather before interact within a quest.
+        if (ResolveQuestObjectiveSource(actor, out var objectiveSource, out _))
+            return objectiveSource;
+
         // 2. Nothing active: walk to the nearest offerer spawner whose offers
         //    are actually worth walking to — in band and not already
         //    completed (a spawner whose only offers are done would send the
@@ -1702,6 +1779,97 @@ public enum NeedsFarmLoopPhase
         return spawner == null
             ? null
             : new Vector3(spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
+    }
+
+    /// <summary>
+    /// Branch 1b: the nearest spawner position for an active non-Ready quest's
+    /// uncredited gather/interact objective source. Quest-id order, gather
+    /// before interact within a quest. Resolves spawners through the
+    /// character's own world SpawnManager (same discipline as
+    /// TrySpawnerPosition); picks the nearest to the actor pose; returns the
+    /// position with the same construction as TrySpawnerPosition.
+    /// False when no active quest names an uncredited source (or its source
+    /// has no spawner).
+    /// </summary>
+    private static bool ResolveQuestObjectiveSource(GameplayActor actor, out Vector3 source, out uint sourceTemplate)
+    {
+        source = default;
+        sourceTemplate = 0;
+        var character = actor.Character;
+        var world = character.ParentWorld;
+        var quests = character.Quests;
+        if (world?.SpawnManager == null || quests == null)
+            return false;
+        var here = character.Transform.World.Position;
+        foreach (var (questId, quest) in quests.ActiveQuests.OrderBy(kv => kv.Key))
+        {
+            if (quest is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
+                continue;
+            QuestFixtureRow row;
+            try
+            {
+                row = QuestFixtureRow.FromQuestData(questId);
+            }
+            catch
+            {
+                continue;
+            }
+            if (row.GatherDoodadTemplate != 0 && !QuestBehavior.GatherCredited(questId, quest, row))
+            {
+                if (TryNearestDoodadSpawnerPosition(world, row.GatherDoodadTemplate, here, out var gatherPos))
+                {
+                    source = gatherPos;
+                    sourceTemplate = row.GatherDoodadTemplate;
+                    return true;
+                }
+            }
+            if (row.InteractDoodadTemplate != 0 && !QuestBehavior.InteractCredited(questId, quest, row))
+            {
+                if (TryNearestDoodadSpawnerPosition(world, row.InteractDoodadTemplate, here, out var interactPos))
+                {
+                    source = interactPos;
+                    sourceTemplate = row.InteractDoodadTemplate;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /// <summary>Nearest spawner position for a doodad template, or false when unknown.</summary>
+    private static bool TryNearestDoodadSpawnerPosition(WorldInstance world, uint doodadTemplateId, Vector3 here, out Vector3 position)
+    {
+        position = default;
+        List<DoodadSpawner> spawners;
+        try
+        {
+            spawners = world.SpawnManager.GetDoodadSpawnersByUnitId(doodadTemplateId);
+        }
+        catch
+        {
+            return false;
+        }
+        if (spawners == null || spawners.Count == 0)
+            return false;
+        var best = (Vector3?)null;
+        var bestDist = float.MaxValue;
+        foreach (var spawner in spawners)
+        {
+            if (spawner?.Position == null)
+                continue;
+            var p = spawner.Position;
+            var candidate = new Vector3(p.X, p.Y, p.Z);
+            var d = Vector3.Distance(here, candidate);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = candidate;
+            }
+        }
+        if (best == null)
+            return false;
+        position = best.Value;
+        return true;
     }
     /// <summary>Per-bot behavior runtimes hosting the quest leg (same pattern as the homestead runner cache).</summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, BotBehaviorRuntime> _questRuntimes = [];
