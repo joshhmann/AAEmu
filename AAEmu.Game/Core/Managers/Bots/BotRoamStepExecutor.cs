@@ -1816,7 +1816,7 @@ public enum NeedsFarmLoopPhase
             }
             if (row.GatherDoodadTemplate != 0 && !QuestBehavior.GatherCredited(questId, quest, row))
             {
-                if (TryNearestDoodadSpawnerPosition(world, row.GatherDoodadTemplate, here, out var gatherPos))
+                if (QuestBehavior.TryNearestDoodadSpawnerPosition(world, row.GatherDoodadTemplate, here, out var gatherPos))
                 {
                     source = gatherPos;
                     sourceTemplate = row.GatherDoodadTemplate;
@@ -1825,7 +1825,7 @@ public enum NeedsFarmLoopPhase
             }
             if (row.InteractDoodadTemplate != 0 && !QuestBehavior.InteractCredited(questId, quest, row))
             {
-                if (TryNearestDoodadSpawnerPosition(world, row.InteractDoodadTemplate, here, out var interactPos))
+                if (QuestBehavior.TryNearestDoodadSpawnerPosition(world, row.InteractDoodadTemplate, here, out var interactPos))
                 {
                     source = interactPos;
                     sourceTemplate = row.InteractDoodadTemplate;
@@ -1836,41 +1836,6 @@ public enum NeedsFarmLoopPhase
         return false;
     }
 
-    /// <summary>Nearest spawner position for a doodad template, or false when unknown.</summary>
-    private static bool TryNearestDoodadSpawnerPosition(WorldInstance world, uint doodadTemplateId, Vector3 here, out Vector3 position)
-    {
-        position = default;
-        List<DoodadSpawner> spawners;
-        try
-        {
-            spawners = world.SpawnManager.GetDoodadSpawnersByUnitId(doodadTemplateId);
-        }
-        catch
-        {
-            return false;
-        }
-        if (spawners == null || spawners.Count == 0)
-            return false;
-        var best = (Vector3?)null;
-        var bestDist = float.MaxValue;
-        foreach (var spawner in spawners)
-        {
-            if (spawner?.Position == null)
-                continue;
-            var p = spawner.Position;
-            var candidate = new Vector3(p.X, p.Y, p.Z);
-            var d = Vector3.Distance(here, candidate);
-            if (d < bestDist)
-            {
-                bestDist = d;
-                best = candidate;
-            }
-        }
-        if (best == null)
-            return false;
-        position = best.Value;
-        return true;
-    }
     /// <summary>Per-bot behavior runtimes hosting the quest leg (same pattern as the homestead runner cache).</summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, BotBehaviorRuntime> _questRuntimes = [];
     /// <summary>E2E-ONLY per-bot turn-in withhold flags (default-off, unset =

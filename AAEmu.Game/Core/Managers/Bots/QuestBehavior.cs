@@ -7,11 +7,13 @@ using AAEmu.Game.Core.Managers.Bots.Survival;
 using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Utils;
 
 using NLog;
@@ -1642,11 +1644,99 @@ public static class QuestBehavior
     /// non-Ready quest (a Ready quest's only legal work is turn-in). The gate
     /// owns this reason, so the loop's evidence names the real cause of the
     /// withdraw instead of a generic skip.
+    ///
+    /// Link-1 withdraw: a steady Progress quest whose uncredited gather/interact
+    /// objective's doodad source is known yet lies outside the 25 m perception
+    /// census also withdraws the advance — the step machine would no-op on the
+    /// steady step while the quest-travel arm walks the actor to the spawner.
+    /// Real Start/Supply-drain and credit-then-advance wakes keep landing: the
+    /// withdraw fires only when a known spawner sits outside perception range,
+    /// never on credited objectives, unknown spawners, or sources already in
+    /// range. The gate owns this reason too.
     /// </summary>
     internal static string? AdvanceEnter(QuestLegContext context, QuestLegWake wake)
-        => context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId) is not { Status: not QuestStatus.Ready and not QuestStatus.Completed }
-            ? "quest-not-advanceable"
+    {
+        if (context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId) is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
+            return "quest-not-advanceable";
+        return HasUncreditedSourceOutsidePerception(context, context.Fixture)
+            ? "steady-progress-uncredited-source"
             : null;
+    }
+
+    /// <summary>
+    /// True when the quest sits at a steady Progress step whose uncredited
+    /// gather/interact objective's doodad source is known (a spawner exists)
+    /// yet lies outside the 25 m perception census — the branch-1b arm
+    /// condition. Same reads as the travel fallback's objective-source
+    /// resolver (fixture templates + credit counters + spawner scan), never a
+    /// second scan discipline: KillX/Start/Supply/Deliver rows carry no doodad
+    /// template and read false here, so pursuit and drain wakes keep landing.
+    /// Fail-closed: an unreadable quest, fixture, world, or spawner surface
+    /// reads false (the advance keeps landing) rather than withdrawing work
+    /// the step machine could do.
+    /// </summary>
+    internal static bool HasUncreditedSourceOutsidePerception(QuestLegContext context, QuestFixtureRow? row)
+    {
+        var character = context.Actor.Character;
+        var quest = character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId);
+        if (quest is not { Status: QuestStatus.Progress })
+            return false;
+        if (row == null)
+            return false;
+        var world = character.ParentWorld;
+        if (world?.SpawnManager == null)
+            return false;
+        var here = character.Transform.World.Position;
+        if (row.GatherDoodadTemplate != 0 && !GatherCredited(context.QuestId, quest, row))
+        {
+            if (TryNearestDoodadSpawnerPosition(world, row.GatherDoodadTemplate, here, out var gatherPos)
+                && MathUtil.CalculateDistance(here, gatherPos, false) > GameplayActor.MaxInteractRange)
+                return true;
+        }
+        if (row.InteractDoodadTemplate != 0 && !InteractCredited(context.QuestId, quest, row))
+        {
+            if (TryNearestDoodadSpawnerPosition(world, row.InteractDoodadTemplate, here, out var interactPos)
+                && MathUtil.CalculateDistance(here, interactPos, false) > GameplayActor.MaxInteractRange)
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>Nearest spawner position for a doodad template, or false when unknown.</summary>
+    internal static bool TryNearestDoodadSpawnerPosition(WorldInstance world, uint doodadTemplateId, Vector3 here, out Vector3 position)
+    {
+        position = default;
+        List<DoodadSpawner> spawners;
+        try
+        {
+            spawners = world.SpawnManager.GetDoodadSpawnersByUnitId(doodadTemplateId);
+        }
+        catch
+        {
+            return false;
+        }
+        if (spawners == null || spawners.Count == 0)
+            return false;
+        var best = (Vector3?)null;
+        var bestDist = float.MaxValue;
+        foreach (var spawner in spawners)
+        {
+            if (spawner?.Position == null)
+                continue;
+            var p = spawner.Position;
+            var candidate = new Vector3(p.X, p.Y, p.Z);
+            var d = Vector3.Distance(here, candidate);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = candidate;
+            }
+        }
+        if (best == null)
+            return false;
+        position = best.Value;
+        return true;
+    }
 
     /// <summary>
     /// TurnIn leg entry gate — the G8b return arbitration: the quest-owned
