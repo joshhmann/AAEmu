@@ -849,11 +849,18 @@ public static class QuestBehavior
                     $" q251tgt_objective={(objectiveFunnel.ObjectiveResolved ? "ok" : "FAIL-OBJECTIVE")}" +
                     $" q251tgt_source={(objectiveFunnel.SourceResolved ? "ok" : "FAIL-SOURCE")}" +
                     $" q251tgt_relevance={(objectiveFunnel.Relevance ? "true" : "false")}";
+                // Link-1b observability: gate-withheld legs (e.g. the Advance
+                // steady-progress-uncredited-source withdraw) ride the DECIDE
+                // bracket as parser-safe withdraws=Leg:reason pairs placed before
+                // the 300-char outcomes blob so the token survives the 600-char
+                // QuestDecideDetail cut; "-" when nothing withdrew. Additive:
+                // unknown key, no spaces, existing keys byte-identical behind it.
+                var withdrawKeys = $" withdraws={(legEvidence.Any(e => !e.Entered) ? string.Join(",", legEvidence.Where(e => !e.Entered).Select(e => $"{e.Leg}:{e.Detail}".Replace(' ', '_'))) : "-")}";
                 // Stage 4: a wake whose only quest failed its fixture gate
                 // reports FIXTURE, never a bare sweep miss — the plan's own
                 // reason leads, and the bracket stays byte-identical behind it
                 // so the BotQuestFunnel parser keeps parsing.
-                var decideDetail = $"no legal quest proposal: {decision.Explanation} [swept={discoverTargets.Count} targets={string.Join(",", discoverTargets)} rawIds={rawIdsValue}{corpseKeys} offerings={offerings.Count} inBand={inBand} legal={proposals.Count} firstZero={firstZero}{sweepKeys}{objectiveKeys}]";
+                var decideDetail = $"no legal quest proposal: {decision.Explanation} [swept={discoverTargets.Count} targets={string.Join(",", discoverTargets)} rawIds={rawIdsValue}{corpseKeys} offerings={offerings.Count} inBand={inBand} legal={proposals.Count} firstZero={firstZero}{withdrawKeys}{sweepKeys}{objectiveKeys}]";
                 var failStage = "DECIDE";
                 if (planFailures.Count > 0)
                 {
