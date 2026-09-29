@@ -30,11 +30,14 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// Gather-from-doodad (4415 well-draw): the quest BRAIN's third objective shape,
 /// on the REAL headless actor through <see cref="QuestDecisionScenario.Run"/>.
 ///
-///   - the 4415 fixture row derives GatherDoodad + the 2306 well + the draw
-///     skill off canonical quest data plus a missing-only doodad func seed (no
-///     hand-typed ids flow into the plan — the seed only stages the same func
-///     tables the pilot's Load fills in production: group 4581's FakeUse row
-///     carries fake_skill_id 13154, group 4583's loot row grants the water);
+///   - the 4415 fixture row derives GatherDoodad + the granting well SET
+///     (2306 lowest, plus the 3215–3222 almighty wells and the 3621/4543/5539/
+///     7263/5061 sources — all canonical loot-func granters of the water) + the
+///     draw skill off canonical quest data plus a missing-only doodad func seed
+///     (no hand-typed ids flow into the plan — the seed only stages the same
+///     func tables the pilot's Load fills in production: group 4581's FakeUse
+///     row carries fake_skill_id 13154, group 4583's loot row grants the water,
+///     plus the 3221/3220 almighty links for the nearest-well tests);
 ///   - the plan carries Advance/Gather/TurnIn and the catalog maps the shape to
 ///     its six-verb set, all registry-green since the G9a skill-bound draw
 ///     graduated Interact (a stub override still exercises the same legs —
@@ -43,6 +46,11 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 ///     Stop (inside, unsettled) → Interact (settled, SkillId 13154) through the
 ///     real engine verbs, and the engine credits the objective (no new actor
 ///     verb — a skill-bound Doodad.Use draw, like the client cast).
+///   - the leg resolves the NEAREST perceived granting well (any of the set —
+///     the quest's 1784 alias accepts every well) with that template's own draw
+///     skill, and the travel resolver walks the nearest spawner across the set:
+///     at giver-A (21917,8003) the 3221 well 17.3 m away wins over 2306 3.9 km
+///     away; at giver-B (12556,15369) the 2306 well 28 m away wins.
 /// </summary>
 [NotInParallel]
 public class QuestGatherDoodadTests
@@ -50,6 +58,8 @@ public class QuestGatherDoodadTests
     private const uint Quest4415 = 4415;
     private const uint Water15694 = 15694;
     private const uint Well2306 = 2306;
+    private const uint Almighty3221 = 3221;
+    private const uint Almighty3220 = 3220;
     private const uint WellStartGroup4581 = 4581;
     private const uint WellFakeFunc3853 = 3853;
     private const uint WellFakeTemplate511 = 511;
@@ -58,6 +68,25 @@ public class QuestGatherDoodadTests
     private const uint WellFunc1256 = 1256;
     private const uint GatherAct26186 = 26186;
     private const int GatherNeed = 5;
+    // 3221's canonical loot chain (compact.sqlite3): group 7349's loot row
+    // (func key 6563 → template 1879) grants the water x1-5; group 7348's
+    // FakeUse row (func key 6562 → template 1306) carries fake_skill_id 13154.
+    private const uint Well3221StartGroup7348 = 7348;
+    private const uint Well3221FakeFunc6562 = 6562;
+    private const uint Well3221FakeTemplate1306 = 1306;
+    private const uint Well3221Group7349 = 7349;
+    private const uint Well3221Func6563 = 6563;
+    private const uint Well3221Loot1879 = 1879;
+    // 3220's canonical loot chain: group 7346's loot row (func key 6561 →
+    // template 1878) grants the water; group 7345's FakeUse row (func key 6560
+    // → template 1305) carries fake_skill_id 13154.
+    private const uint Well3220StartGroup7345 = 7345;
+    private const uint Well3220FakeFunc6560 = 6560;
+    private const uint Well3220FakeTemplate1305 = 1305;
+    private const uint Well3220Group7346 = 7346;
+    private const uint Well3220Func6561 = 6561;
+    private const uint Well3220Loot1878 = 1878;
+    private const uint GiverA9789 = 9789;
 
     [Before(Test)]
     public void SetUp()
@@ -88,14 +117,20 @@ public class QuestGatherDoodadTests
         await Assert.That(fixture.PreyItem).IsEqualTo(Water15694);
         await Assert.That(fixture.Need).IsEqualTo(GatherNeed);
         await Assert.That(fixture.GatherDoodadTemplate).IsEqualTo(Well2306);
-        // The draw skill comes off the well's OWN FakeUse row — never hard-coded.
+        // The SET carries every granting well (lowest id first): 2306 plus the
+        // 3215–3222 almighty wells and the further canonical granters. The
+        // draw skill comes off the well's OWN FakeUse row — never hard-coded.
+        await Assert.That(fixture.GatherDoodadTemplates.Count).IsGreaterThanOrEqualTo(3);
+        await Assert.That(fixture.GatherDoodadTemplates[0]).IsEqualTo(Well2306);
+        await Assert.That(fixture.GatherDoodadTemplates.Contains(Almighty3221)).IsTrue();
+        await Assert.That(fixture.GatherDoodadTemplates.Contains(Almighty3220)).IsTrue();
         await Assert.That(fixture.GatherUseSkill).IsEqualTo(DrawWater13154);
+        await Assert.That(QuestFixtureRow.ResolveDoodadUseSkill(Almighty3221)).IsEqualTo(DrawWater13154);
         await Assert.That(fixture.ObjectivePattern).IsEqualTo(QuestPattern.GatherDoodad);
         await Assert.That(fixture.ObjectiveActType).IsEqualTo(nameof(QuestActObjItemGather));
         // The water comes from no npc loot pack — the doodad chain is the only source.
         await Assert.That(fixture.PreyTemplate).IsEqualTo(0u);
     }
-
     [Test]
     public async Task Plan4415_ProductionRegistry_InteractGreen_BuildsGatherPlan()
     {
@@ -235,6 +270,83 @@ public class QuestGatherDoodadTests
     }
 
     [Test]
+    public async Task NearestGrantingWell_WinsOverLowestId_PerTemplateSkill()
+    {
+        // Local-grid mirror of the giver-A shape (the headless world is 2x2
+        // cells = 2048 m across, so canonical giver coords fall outside it): the
+        // 3221 well ~17 m away (inside, settled on wake 2 → Interact) vs the
+        // 2306 well ~24 m away (inside the census too, so the perceived count
+        // stays 2) — the NEAREST rule (not the lowest id) picks 3221 with that
+        // template's own draw skill (both carry 13154 off their own FakeUse rows).
+        var actorPos = new Vector3(0, 0, 0);
+        var nearPos = new Vector3(17.3f, 0, 0);
+        var farPos = new Vector3(24f, 0, 0);
+        var (actor, session) = CreateGatheringActor("gather-nearest-a", actorPos,
+            Almighty3221, Well3221StartGroup7348, Well3221FakeFunc6562, nearPos);
+        GameplayActorTestRig.SpawnGatherDoodad(
+            session, Well2306, WellStartGroup4581, WellFakeFunc3853, Water15694, farPos);
+        var nearObjId = session.World.GetAllDoodads().First(d => d.TemplateId == Almighty3221).ObjId;
+
+        var fixture = QuestFixtureRow.FromQuestData(Quest4415);
+        var intel = QuestBehavior.ReadGatherSourceIntel(
+            new QuestLegContext(actor, new QuestDecisionScenario.QuestOptions(), Quest4415, fixture, null)
+            {
+                Observation = BotObservedContext.Capture(actor)
+            }, fixture);
+        // Requirements → nearby → distance, frozen per wake: two perceived
+        // granters plus the surroundings census around them.
+        await Assert.That(intel.PerceivedGranting.Count).IsEqualTo(2);
+        await Assert.That(intel.PerceivedGranting[0].ObjId).IsEqualTo(nearObjId);
+        await Assert.That(intel.PerceivedGranting[0].TemplateId).IsEqualTo(Almighty3221);
+        await Assert.That(intel.NearbyDoodadCount).IsEqualTo(2);
+
+        var first = RunGather(actor, "gather-nearest-a-1");
+        await Assert.That(first.WorkSelected).IsTrue();
+        await Assert.That(first.SelectedAction).IsEqualTo(ActorActionType.Stop);
+        var second = RunGather(actor, "gather-nearest-a-2");
+        await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.Interact);
+        await Assert.That(second.Request!.TargetId).IsEqualTo(nearObjId);
+        await Assert.That(second.Request.SkillId).IsEqualTo(DrawWater13154);
+        var detail = second.LegEvidence.Single(e => e.Leg == QuestLegId.Gather).Detail;
+        await Assert.That(detail).Contains($"doodad={Almighty3221}");
+    }
+
+    [Test]
+    public async Task NearestGrantingWell_GiverB_Picks2306()
+    {
+        // Local-grid mirror of the giver-B shape (same headless-grid reason as
+        // above, preserving the original leg outcome): the 2306 well ~20 m away
+        // (inside the gate → settled Stop here would need a second wake; the
+        // far 3221 well co-perceives at ~24 m so the count stays honest) — the
+        // same nearest rule picks 2306 here.
+        var actorPos = new Vector3(0, 100, 0);
+        var nearPos = new Vector3(20, 100, 0);
+        var farPos = new Vector3(24, 100, 0);
+        var (actor, session) = CreateGatheringActor("gather-nearest-b", actorPos,
+            Well2306, WellStartGroup4581, WellFakeFunc3853, nearPos);
+        GameplayActorTestRig.SpawnGatherDoodad(
+            session, Almighty3221, Well3221StartGroup7348, Well3221FakeFunc6562, Water15694, farPos);
+        var nearObjId = session.World.GetAllDoodads().First(d => d.TemplateId == Well2306).ObjId;
+        var fixture = QuestFixtureRow.FromQuestData(Quest4415);
+        var intel = QuestBehavior.ReadGatherSourceIntel(
+            new QuestLegContext(actor, new QuestDecisionScenario.QuestOptions(), Quest4415, fixture, null)
+            {
+                Observation = BotObservedContext.Capture(actor)
+            }, fixture);
+        await Assert.That(intel.PerceivedGranting.Count).IsEqualTo(2);
+        await Assert.That(intel.PerceivedGranting[0].ObjId).IsEqualTo(nearObjId);
+        await Assert.That(intel.PerceivedGranting[0].TemplateId).IsEqualTo(Well2306);
+        await Assert.That(intel.NearbyDoodadCount).IsEqualTo(2);
+
+        var result = RunGather(actor, "gather-nearest-b-1");
+        await Assert.That(result.WorkSelected).IsTrue();
+        await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.Stop);
+        var detail = result.LegEvidence.Single(e => e.Leg == QuestLegId.Gather).Detail;
+        await Assert.That(detail).Contains($"doodad={Well2306}");
+        await Assert.That(detail).Contains($"target={nearObjId}");
+    }
+
+    [Test]
     public async Task InteractDeliversWater_AndCreditsObjective_NoSecondDraw()
     {
         GameplayActorTestRig.SeedItemTemplate(Water15694);
@@ -357,12 +469,20 @@ public class QuestGatherDoodadTests
     // ------------------------------------------------------------ fixture
 
     /// <summary>
-    /// Stages 4415 active/Progress through the real engine surfaces, spawns the
-    /// live well 2306, and poses actor/well so the wake's perception carries the
-    /// source. Returns the actor mid-gather.
+    /// Stages 4415 active/Progress with the live 2306 well (the pre-set-shape
+    /// convenience over the template-parameterized helper below).
     /// </summary>
     private static (GameplayActor Actor, HeadlessSession Session) CreateGatheringActor(
         string name, Vector3 actorPos, Vector3 wellPos)
+        => CreateGatheringActor(name, actorPos, Well2306, WellStartGroup4581, WellFakeFunc3853, wellPos);
+
+    /// <summary>
+    /// Stages 4415 active/Progress through the real engine surfaces, spawns the
+    /// live granting well of the given template, and poses actor/well so the
+    /// wake's perception carries the source. Returns the actor mid-gather.
+    /// </summary>
+    private static (GameplayActor Actor, HeadlessSession Session) CreateGatheringActor(
+        string name, Vector3 actorPos, uint wellTemplate, uint startGroup, uint fakeFunc, Vector3 wellPos)
     {
         PlayerbotPilotRig.SeedPilotSingletons();
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
@@ -388,11 +508,11 @@ public class QuestGatherDoodadTests
             staged.Objectives = [0, 0, 0, 0, 0];
 
         GameplayActorTestRig.SpawnGatherDoodad(
-            session, Well2306, WellStartGroup4581, WellFakeFunc3853, Water15694, wellPos);
-        var well = session.World.GetAllDoodads().First(d => d.TemplateId == Well2306);
-        well.FuncGroupId = WellStartGroup4581;
+            session, wellTemplate, startGroup, fakeFunc, Water15694, wellPos);
+        var well = session.World.GetAllDoodads().First(d => d.TemplateId == wellTemplate);
+        well.FuncGroupId = startGroup;
         if (well.ObjId == 0)
-            throw new InvalidOperationException("well 2306 not in world after spawn");
+            throw new InvalidOperationException($"well {wellTemplate} not in world after spawn");
         return (actor, session);
     }
 
@@ -459,7 +579,14 @@ public class QuestGatherDoodadTests
         }
         var templates = (Dictionary<uint, DoodadTemplate>)typeof(DoodadManager)
             .GetField("_templates", flags)!.GetValue(manager)!;
-
+        SeedAlmightyWell(funcsByGroups, funcsById, funcTemplates, templates,
+            Almighty3221, Well3221StartGroup7348, Well3221FakeFunc6562, Well3221FakeTemplate1306,
+            Well3221Group7349, Well3221Func6563, Well3221Loot1879);
+        SeedAlmightyWell(funcsByGroups, funcsById, funcTemplates, templates,
+            Almighty3220, Well3220StartGroup7345, Well3220FakeFunc6560, Well3220FakeTemplate1305,
+            Well3220Group7346, Well3220Func6561, Well3220Loot1878);
+        // Group 4583's loot row grants the water (the FakeUse NextPhase target
+        // — without this func row the 2306 chain has a template but no grant).
         if (!funcsById.ContainsKey(WellFunc1256))
             funcsById[WellFunc1256] = new DoodadFunc
             {
@@ -470,13 +597,13 @@ public class QuestGatherDoodadTests
                 NextPhase = -1,
                 SkillId = 0
             };
-        if (!funcsByGroups.TryGetValue(WellGroup4583, out var group))
+        if (!funcsByGroups.TryGetValue(WellGroup4583, out var lootGroup))
         {
-            group = [];
-            funcsByGroups[WellGroup4583] = group;
+            lootGroup = [];
+            funcsByGroups[WellGroup4583] = lootGroup;
         }
-        if (group.All(f => f.FuncId != WellFunc1256))
-            group.Add(funcsById[WellFunc1256]);
+        if (lootGroup.All(f => f.FuncId != WellFunc1256))
+            lootGroup.Add(funcsById[WellFunc1256]);
 
         if (!funcTemplates.TryGetValue("DoodadFuncLootItem", out var lootTemplates))
         {
@@ -494,7 +621,108 @@ public class QuestGatherDoodadTests
                 RemainTime = 0
             };
         }
+        SeedWell2306Template(templates);
 
+        // The 4415 row memo is derived from exactly these tables: a staged link
+        // must never be shadowed by a row memoized from the prior staging. The
+        // draw skill needs a template row for the Interact existence gate.
+        GameplayActorTestRig.SeedSkillTemplate(DrawWater13154);
+        QuestFixtureRow.InvalidateAll();
+    }
+    /// <summary>
+    /// Additive, missing-only seed of one almighty well's canonical chain
+    /// (start FakeUse carrying 13154 + loot group granting the water), so the
+    /// 4415 row's granting set includes it and its per-template draw skill
+    /// resolves off its OWN func tables. Same discipline as the 2306 seed.
+    /// </summary>
+    private static void SeedAlmightyWell(
+        Dictionary<uint, List<DoodadFunc>> funcsByGroups,
+        Dictionary<uint, DoodadFunc> funcsById,
+        Dictionary<string, Dictionary<uint, DoodadFuncTemplate>> funcTemplates,
+        Dictionary<uint, DoodadTemplate> templates,
+        uint almighty, uint startGroup, uint fakeFunc, uint fakeTemplate,
+        uint lootGroup, uint lootFunc, uint lootTemplate)
+    {
+        if (!funcsById.ContainsKey(fakeFunc))
+            funcsById[fakeFunc] = new DoodadFunc
+            {
+                GroupId = startGroup,
+                FuncId = fakeTemplate,
+                FuncKey = fakeFunc,
+                FuncType = "DoodadFuncFakeUse",
+                NextPhase = (int)lootGroup,
+                SkillId = 0
+            };
+        if (!funcsByGroups.TryGetValue(startGroup, out var start))
+        {
+            start = [];
+            funcsByGroups[startGroup] = start;
+        }
+        if (start.All(f => f.FuncId != fakeTemplate))
+            start.Add(funcsById[fakeFunc]);
+        if (!funcTemplates.TryGetValue("DoodadFuncFakeUse", out var fakeTemplates))
+        {
+            fakeTemplates = [];
+            funcTemplates["DoodadFuncFakeUse"] = fakeTemplates;
+        }
+        if (!fakeTemplates.ContainsKey(fakeTemplate))
+            fakeTemplates[fakeTemplate] = new DoodadFuncFakeUse { FakeSkillId = DrawWater13154 };
+        if (!funcsById.ContainsKey(lootFunc))
+            funcsById[lootFunc] = new DoodadFunc
+            {
+                GroupId = lootGroup,
+                FuncId = lootTemplate,
+                FuncKey = lootFunc,
+                FuncType = "DoodadFuncLootItem",
+                NextPhase = -1,
+                SkillId = 0
+            };
+        if (!funcsByGroups.TryGetValue(lootGroup, out var group))
+        {
+            group = [];
+            funcsByGroups[lootGroup] = group;
+        }
+        if (group.All(f => f.FuncId != lootTemplate))
+            group.Add(funcsById[lootFunc]);
+        if (!funcTemplates.TryGetValue("DoodadFuncLootItem", out var almLootTemplates))
+        {
+            almLootTemplates = [];
+            funcTemplates["DoodadFuncLootItem"] = almLootTemplates;
+        }
+        if (!almLootTemplates.ContainsKey(lootTemplate))
+        {
+            almLootTemplates[lootTemplate] = new DoodadFuncLootItem
+            {
+                ItemId = Water15694,
+                CountMin = 1,
+                CountMax = 5,
+                Percent = 10_000,
+                RemainTime = 100000
+            };
+        }
+        if (!templates.TryGetValue(almighty, out var almTemplate))
+        {
+            almTemplate = new DoodadTemplate { Id = almighty, FuncGroups = [] };
+            templates[almighty] = almTemplate;
+        }
+        if (almTemplate.FuncGroups.All(g => g.Id != startGroup))
+            almTemplate.FuncGroups.Add(new DoodadFuncGroups
+            {
+                Id = startGroup,
+                Almighty = almighty,
+                GroupKindId = DoodadFuncGroups.DoodadFuncGroupKind.Start
+            });
+        if (almTemplate.FuncGroups.All(g => g.Id != lootGroup))
+            almTemplate.FuncGroups.Add(new DoodadFuncGroups
+            {
+                Id = lootGroup,
+                Almighty = almighty,
+                GroupKindId = DoodadFuncGroups.DoodadFuncGroupKind.Start
+            });
+    }
+
+    private static void SeedWell2306Template(Dictionary<uint, DoodadTemplate> templates)
+    {
         if (!templates.TryGetValue(Well2306, out var template))
         {
             template = new DoodadTemplate { Id = Well2306, FuncGroups = [] };

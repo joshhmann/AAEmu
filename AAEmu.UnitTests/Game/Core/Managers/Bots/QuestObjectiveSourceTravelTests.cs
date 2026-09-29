@@ -104,7 +104,7 @@ public class QuestObjectiveSourceTravelTests
 
         var state = executor.GetBotState(runtime.CharacterId)!;
         var expectedReason =
-            $"walking to quest objective source (doodad {GatherDoodad}) at (30,0) from (0,0)";
+            $"walking to quest objective source (doodad {GatherDoodad} 30.0m) at (30,0) from (0,0)";
         await Assert.That(state.QuestTravelReason).IsEqualTo(expectedReason);
         await Assert.That(state.QuestTravelTarget).IsNotNull();
         await Assert.That(state.QuestTravelTarget!.Value.X).IsEqualTo(30f);
