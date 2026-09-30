@@ -3338,6 +3338,8 @@ public static class QuestBehavior
             // G7c loot: the quest-owned corpse take rides the live actor's
             // Loot verb only (the exact CSLootOpenBagPacket lootAll call).
             // Goal-guarded so no other Loot proposal can ever route here.
+            ActorActionType.Loot when proposal.Goal == LootGoal => DispatchLoot(gameplayActor, proposal),
+            ActorActionType.Move when proposal.Goal == LootGoal => DispatchLootApproachMove(gameplayActor, proposal),
             // Gather-from-doodad: the quest-owned well draw rides MoveTo on the
             // doodad's live POSITION (a doodad is BaseUnit, never Unit — the
             // position leg is the roam butcher-approach shape), the audited Stop
