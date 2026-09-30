@@ -594,6 +594,96 @@ public class BotRoamStepExecutorTests
     }
 
 
+    // Link-1d teleport-jump detection: the harness teleports the bot AFTER a
+    // branch-2 quest-travel route is armed. The stale live QUEST_TRAVEL Move
+    // would starve StepQuestLeg via the 0a busy-actor guard forever — the jump
+    // detector drops the stale route (and resets the objective-source arm
+    // counters) so the next quest wake re-decides.
+    [Test]
+    public async Task Step_TeleportJumpDuringQuestTravel_SupersedesRouteAndResetsArmCounters()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("teleport-quest-1");
+
+        // Arm a quest-travel-shaped route (the exact state ArmQuestTravel leaves).
+        executor.SetRoamRoute(runtime.Character, BotPath.PathTo(new Vector3(100, 0, 0)));
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        state.PendingMoveOwner = "QUEST_TRAVEL";
+        state.QuestObjectiveSourcePos = new Vector3(100, 0, 0);
+        state.QuestObjectiveSourceTemplate = 42;
+        state.QuestObjectiveSourceArms = 2;
+        state.QuestObjectiveSourceQuestKey = "12,34";
+        state.QuestTravelTarget = new Vector3(100, 0, 0);
+
+        // Wake 1: stores the last-tick position and issues the travel leg.
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move }).IsTrue();
+
+        // Harness teleports the bot >500m after the route was armed.
+        GameplayActorTestRig.SetPosition(actor, new Vector3(5000, 0, 0));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        // The stale quest-travel route is dropped and the arm counters reset.
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull();
+        await Assert.That(state.QuestTravelTarget).IsNull();
+        await Assert.That(state.QuestTravelReason.Contains("teleport")).IsTrue();
+        await Assert.That(state.QuestObjectiveSourceArms).IsEqualTo(0);
+        await Assert.That(state.QuestObjectiveSourcePos).IsNull();
+        await Assert.That(state.QuestObjectiveSourceTemplate).IsEqualTo(0u);
+        await Assert.That(state.QuestObjectiveSourceQuestKey).IsEqualTo("");
+        // The stale live Move is preempted — the 0a guard no longer starves.
+        await Assert.That(actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move }).IsFalse();
+    }
+
+    [Test]
+    public async Task Step_TeleportJumpDuringNonQuestLeg_LeavesRouteUntouched()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("teleport-nonquest-1");
+
+        // Patrol (ROAM) route with an issued live leg.
+        executor.SetRoamRoute(runtime.Character, new BotPath([new Vector3(100, 0, 0)], BotPath.LoopMode.Loop));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move }).IsTrue();
+
+        // Same >500m jump — but NOT a quest-travel leg, so never preempted here.
+        GameplayActorTestRig.SetPosition(actor, new Vector3(5000, 0, 0));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId) is { IsFinished: false }).IsTrue();
+        await Assert.That(executor.GetBotState(runtime.CharacterId)!.PendingMoveOwner).IsEqualTo("ROAM");
+        // The route may reissue/resume against the patrol — but the patrol is intact.
+    }
+
+    [Test]
+    public async Task Step_SmallMoveDuringQuestTravel_DoesNotTriggerTeleportReset()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("teleport-small-1");
+
+        executor.SetRoamRoute(runtime.Character, BotPath.PathTo(new Vector3(100, 0, 0)));
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        state.PendingMoveOwner = "QUEST_TRAVEL";
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move }).IsTrue();
+
+        // Sub-500m move: ordinary walking — no teleport reset.
+        GameplayActorTestRig.SetPosition(actor, new Vector3(10, 0, 0));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId) is { IsFinished: false }).IsTrue();
+        await Assert.That(state.PendingMoveOwner).IsEqualTo("QUEST_TRAVEL");
+        await Assert.That(state.QuestTravelReason.Contains("teleport")).IsFalse();
+    }
+
     [Test]
     public async Task IsForeignRouteInterruption_ClassifiesLegTermination()
     {
