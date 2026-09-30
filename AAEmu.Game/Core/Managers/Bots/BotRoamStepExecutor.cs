@@ -144,6 +144,16 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// (and held rather than restarted) on the next wake.
     /// </summary>
     public const string SurvivalFleeMoveOwner = "SURVIVAL_FLEE";
+    /// <summary>
+    /// Link-1d teleport-jump threshold: the largest per-wake displacement any
+    /// single-wake travel can produce (far above a 60s roam leg's reach at
+    /// walk/chase speeds). Only harness/GM teleports move that far per tick —
+    /// production wakes are unaffected.
+    /// </summary>
+    public const float TeleportJumpThresholdMeters = 500f;
+
+    /// <summary>Movement-owner tag of quest-travel route legs (armed by ArmQuestTravel).</summary>
+    public const string QuestTravelMoveOwner = "QUEST_TRAVEL";
 
     /// <summary>Nearby NPC detection seam (null → WorldManager.GetAround&lt;Npc&gt;).</summary>
     public Func<Character, float, IEnumerable<Npc>>? NearbyNpcProvider { get; init; }
@@ -248,6 +258,15 @@ public enum NeedsFarmLoopPhase
         public long? LastBroadcastTicks { get; set; }
         public long? NextBroadcastTicks { get; set; }
         public Vector3? LastBroadcastPosition { get; set; }
+        /// <summary>
+        /// Link-1d teleport-jump detection: the bot's world position at the top of
+        /// the previous wake. When the per-tick displacement exceeds
+        /// <see cref="TeleportJumpThresholdMeters"/> while a QUEST_TRAVEL route is
+        /// armed, the harness/GM teleported the bot after the route was armed — the
+        /// stale live Move would starve the quest leg via the 0a busy-actor guard
+        /// forever. Null until the first wake stores it. Memory-only.
+        /// </summary>
+        public Vector3? LastTickPosition { get; set; }
         public float CurrentYawDegrees { get; set; }
         public bool HasInitializedYaw { get; set; }
         public bool WasMoving { get; set; }
@@ -604,8 +623,28 @@ public enum NeedsFarmLoopPhase
             state = new BotRoamState { Actor = ActorFactory(bot.Character) };
             _states[bot.CharacterId] = state;
         }
-
         var actor = state.Actor;
+
+        // Link-1d teleport-jump detection: the harness teleports the bot AFTER a
+        // branch-2 quest-travel route is armed, so the live QUEST_TRAVEL Move keeps
+        // the actor busy and the 0a busy-actor guard starves StepQuestLeg forever.
+        // A >500m per-wake jump exceeds any single-wake travel (only tests/GM
+        // teleports move that far per tick), so drop the stale route and let the
+        // next quest wake re-decide. Scoped to QUEST_TRAVEL exactly — live
+        // non-quest legs are never preempted here.
+        var currentTickPos = bot.Character.Transform.World.Position;
+        if (state.LastTickPosition is { } lastTickPos
+            && state.PendingMoveOwner == QuestTravelMoveOwner
+            && Vector3.Distance(lastTickPos, currentTickPos) > TeleportJumpThresholdMeters)
+        {
+            actor.PreemptCurrent("teleport jump during quest travel");
+            SupersedeQuestTravelRoute(state, "teleport");
+            state.QuestObjectiveSourceQuestKey = "";
+            state.QuestObjectiveSourcePos = null;
+            state.QuestObjectiveSourceTemplate = 0;
+            state.QuestObjectiveSourceArms = 0;
+        }
+        state.LastTickPosition = currentTickPos;
 
         // Soak finding (c): the roam executor owns the throttled (4-6 Hz)
         // movement broadcast in step 3b — the actor's own per-apply
