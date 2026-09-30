@@ -38,9 +38,9 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 [NotInParallel]
 public class QuestObjectiveSourceTravelTests
 {
-    private const uint GatherQuest = 91_401;
-    private const uint GatherComponent = 91_401_01;
-    private const uint GatherActId = 91_401_11;
+    private const uint GatherQuest = 91_441;
+    private const uint GatherComponent = 91_441_01;
+    private const uint GatherActId = 91_441_11;
     private const uint GatherItem = 91_501;
     private const uint GatherDoodad = 91_601;
     private const uint GatherGroup = 91_701;

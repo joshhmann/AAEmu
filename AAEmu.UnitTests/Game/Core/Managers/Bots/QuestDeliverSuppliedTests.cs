@@ -160,7 +160,7 @@ public class QuestDeliverSuppliedTests
             ObjectivePattern = QuestPattern.Deliver,
             ObjectiveActType = nameof(QuestActObjItemGather),
             SupplyActId = SupplyAct26226,
-            SupplyItem = 99999,
+            SupplyItem = 99998,
             SupplyCount = 1
         };
 
@@ -322,13 +322,13 @@ public class QuestDeliverSuppliedTests
         // Fail-closed: a quest whose gather item is NOT the supply grant never
         // fires the supply monitor — the emit withdraws naming unproven-source
         // instead of observing a delivery that is not there.
-        GameplayActorTestRig.RegisterPlainItemTemplate(99999);
+        GameplayActorTestRig.RegisterPlainItemTemplate(99998);
         var fixture = new QuestFixtureRow(Quest4424, GatherAct26227, Basil24376, GatherNeed, 0, 0, ReportNpc10857, 0)
         {
             ObjectivePattern = QuestPattern.Deliver,
             ObjectiveActType = nameof(QuestActObjItemGather),
             SupplyActId = SupplyAct26226,
-            SupplyItem = 99999,
+            SupplyItem = 99998,
             SupplyCount = 1
         };
         var (actor, _) = CreateDeliveryActor("deliver-unrelated");
