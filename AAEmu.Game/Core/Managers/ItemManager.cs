@@ -1929,11 +1929,19 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
 
                     if (containerId > 0 && _allPersistentContainers.TryGetValue(containerId, out var container))
                     {
-                        // Move item to its container (if defined)
-                        if (container.AddOrMoveExistingItem(ItemTaskType.Invalid, item, item.Slot))
+                        // Boot restore: place persisted state verbatim, deferring live legality
+                        // gates (CanAccept/ParentUnit) to runtime. Mates/owners aren't spawned yet.
+                        if (container.AddOrMoveExistingItem(ItemTaskType.Invalid, item, item.Slot, true))
                             item.IsDirty = false;
                         else
-                            Logger.Fatal($"Failed to add item {item} to existing container {container.ContainerId} !");
+                        {
+                            Logger.Fatal($"Failed to add item {item.Id} (template {item.TemplateId}, slot {thisItemSlot}) to existing container {container.ContainerId} !");
+                            // Fail closed without persisting: keep the item detached and clean so the
+                            // next Save skips it (no container_id 0 self-rewrite, no junk containers).
+                            item._holdingContainer = null;
+                            item.Slot = thisItemSlot;
+                            item.IsDirty = false;
+                        }
                     }
                     else
                     {
@@ -1944,14 +1952,15 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
                         {
                             // Item does have an owner, let's try to create a valid container for it
                             var cContainer = GetItemContainerForCharacter((uint)item.OwnerId, item.SlotType, null, 0);
-                            if (cContainer.AddOrMoveExistingItem(ItemTaskType.Invalid, item, item.Slot))
+                            if (cContainer.AddOrMoveExistingItem(ItemTaskType.Invalid, item, item.Slot, true))
                             {
                                 item.Slot = thisItemSlot;
                                 item.IsDirty = true;
                             }
                             else
                             {
-                                Logger.Fatal($"Failed to add owned item ({item.Id}){item} to new container (Id:{cContainer.ContainerId}) !");
+                                Logger.Fatal($"Failed to add owned item {item.Id} (template {item.TemplateId}, slot {thisItemSlot}) to new container (Id:{cContainer.ContainerId}) !");
+                                item._holdingContainer = null;
                                 item.Slot = thisItemSlot;
                                 item.IsDirty = false;
                             }

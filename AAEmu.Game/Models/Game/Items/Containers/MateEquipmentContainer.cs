@@ -72,7 +72,7 @@ public class MateEquipmentContainer : EquipmentContainer
         var petItem = new ItemAndLocation
         {
             Item = item,
-            SlotType = lastContainer.ContainerType, // ContainerType,
+            SlotType = lastContainer?.ContainerType ?? ContainerType,
             SlotNumber = previousSlot,
         };
         var inventoryItem = new ItemAndLocation
@@ -82,7 +82,8 @@ public class MateEquipmentContainer : EquipmentContainer
             SlotNumber = (byte)item.Slot,
         };
         // Owner.SendMessage($"MateEquipmentContainer - {petItem} -> {inventoryItem}, MateTl: {mate.TlId}");
-        Owner.SendPacket(new SCMateEquipmentChangedPacket(petItem, inventoryItem, mate.TlId, Owner.Id, 0, false, true));
+        var enterOwner = Owner;
+        enterOwner?.SendPacket(new SCMateEquipmentChangedPacket(petItem, inventoryItem, mate.TlId, enterOwner.Id, 0, false, true));
     }
 
     public override void OnLeaveContainer(Item item, ItemContainer newContainer, byte previousSlot)
@@ -108,6 +109,7 @@ public class MateEquipmentContainer : EquipmentContainer
             SlotNumber = previousSlot,
         };
         // Owner.SendMessage($"MateEquipmentContainer - {petItem} -> {inventoryItem}, MateTl: {mate.TlId}");
-        Owner.SendPacket(new SCMateEquipmentChangedPacket(petItem, inventoryItem, mate.TlId, Owner.Id, 0, false, true));
+        var leaveOwner = Owner;
+        leaveOwner?.SendPacket(new SCMateEquipmentChangedPacket(petItem, inventoryItem, mate.TlId, leaveOwner.Id, 0, false, true));
     }
 }

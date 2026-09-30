@@ -357,8 +357,9 @@ public class ItemContainer
     /// <param name="taskType"></param>
     /// <param name="item">Item Object to add/move to this container</param>
     /// <param name="preferredSlot">preferred slot to place this item in</param>
+    /// <param name="skipValidation">Boot restore only (LoadUserItems): places persisted state verbatim, deferring live legality gates (CanAccept/ParentUnit) to runtime. Runtime paths MUST leave this false (fail-closed).</param>
     /// <returns>Fails on Full Inventory or if target slot is invalid</returns>
-    public bool AddOrMoveExistingItem(ItemTaskType taskType, Item item, int preferredSlot = -1)
+    public bool AddOrMoveExistingItem(ItemTaskType taskType, Item item, int preferredSlot = -1, bool skipValidation = false)
     {
         if (item == null)
         {
@@ -411,8 +412,8 @@ public class ItemContainer
             }
         }
 
-        // Check if the newSlot fits
-        if (!CanAccept(item, newSlot))
+        // Check if the newSlot fits (skipped for boot restore: persisted state is placed verbatim)
+        if (!skipValidation && !CanAccept(item, newSlot))
         {
             return false;
         }
