@@ -2,13 +2,20 @@ using System.Numerics;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Faction;
+using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Quests;
+using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
 using Microsoft.Extensions.Time.Testing;
@@ -72,6 +79,151 @@ public class QuestBootstrapModuleTests
         }
         return npc.ObjId;
     }
+    // ------------------------------------------------------------ quest-251 advance drive
+    // The advance-leg tests drive staged quest 251 (KillX, Progress, 0/3
+    // credited): its plan resolves and its advance genuinely lands. Quest 254
+    // (the old drive) goes Ready on accept — the AdvanceEnter gate deliberately
+    // withholds advance on Ready quests, so 254 can no longer prove the
+    // advance path. Seeders mirror QuestAdvanceWithdrawTests (idempotent).
+    private const uint AdvanceQuestId = 251;
+    private const uint AdvanceQuestGatherActId = 10473;
+    private const uint BoarTemplateId = 3475;
+    private const uint BoarLootPackId = 4530;
+    private const uint BoarMeatItemId = 4058;
+
+    private static void SeedAdvanceQuestShape()
+    {
+        const System.Reflection.BindingFlags flags =
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)typeof(QuestManager)
+            .GetField("_questTemplates", flags)!.GetValue(manager)!;
+        if (!questTemplates.TryGetValue(AdvanceQuestId, out var template))
+        {
+            template = new QuestTemplate { Id = AdvanceQuestId, Level = 2 };
+            questTemplates[AdvanceQuestId] = template;
+        }
+        if (template.GetComponents(QuestComponentKind.Progress)
+            .SelectMany(c => c.ActTemplates)
+            .OfType<QuestActObjItemGather>()
+            .Any(a => a.ItemId == BoarMeatItemId))
+        {
+            SeedAdvanceQuestLootLink();
+            return;
+        }
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)typeof(QuestManager)
+            .GetField("_componentTemplates", flags)!.GetValue(manager)!;
+        const uint progressComponentId = 2510901;
+        if (!componentTemplates.TryGetValue(progressComponentId, out var component))
+        {
+            component = new QuestComponentTemplate(template) { Id = progressComponentId, KindId = QuestComponentKind.Progress };
+            componentTemplates[progressComponentId] = component;
+        }
+        if (!template.Components.ContainsKey(progressComponentId))
+            template.Components[progressComponentId] = component;
+        if (!component.ActTemplates.OfType<QuestActObjItemGather>().Any(a => a.ItemId == BoarMeatItemId))
+        {
+            var act = new QuestActObjItemGather(component)
+            {
+                ActId = AdvanceQuestGatherActId,
+                DetailId = 616,
+                DetailType = nameof(QuestActObjItemGather),
+                Count = 3,
+                ItemId = BoarMeatItemId,
+            };
+            component.ActTemplates.Add(act);
+            var actsByType = (Dictionary<string, Dictionary<uint, QuestActTemplate>>)typeof(QuestManager)
+                .GetField("_actTemplatesByDetailType", flags)!.GetValue(manager)!;
+            if (!actsByType.TryGetValue(nameof(QuestActObjItemGather), out var acts))
+            {
+                acts = [];
+                actsByType[nameof(QuestActObjItemGather)] = acts;
+            }
+            acts[616] = act;
+        }
+        SeedAdvanceQuestLootLink();
+    }
+
+    private static void SeedAdvanceQuestLootLink()
+    {
+        const System.Reflection.BindingFlags flags =
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        var mapField = typeof(ItemManager).GetField("_lootPackDroppingNpc", flags)!;
+        if (mapField.GetValue(ItemManager.Instance) is not Dictionary<uint, List<LootPackDroppingNpc>> map)
+        {
+            map = [];
+            mapField.SetValue(ItemManager.Instance, map);
+        }
+        if (!map.TryGetValue(BoarTemplateId, out var rows) || rows.All(r => r.LootPackId != BoarLootPackId))
+        {
+            rows ??= [];
+            rows.Add(new LootPackDroppingNpc
+            {
+                Id = BoarTemplateId,
+                NpcId = BoarTemplateId,
+                LootPackId = BoarLootPackId,
+                DefaultPack = true,
+            });
+            map[BoarTemplateId] = rows;
+        }
+        var packField = typeof(LootGameData).GetField("_lootPacks", flags)!;
+        if (packField.GetValue(LootGameData.Instance) is not Dictionary<uint, LootPack> packs)
+        {
+            packs = [];
+            packField.SetValue(LootGameData.Instance, packs);
+        }
+        if (!packs.TryGetValue(BoarLootPackId, out var pack) || pack.Loots.All(l => l.ItemId != BoarMeatItemId))
+        {
+            var loot = new Loot
+            {
+                Id = BoarLootPackId,
+                Group = 0,
+                ItemId = BoarMeatItemId,
+                DropRate = 10_000_000,
+                MinAmount = 1,
+                MaxAmount = 1,
+                LootPackId = BoarLootPackId,
+                GradeId = 0,
+                AlwaysDrop = false,
+            };
+            if (pack == null)
+            {
+                packs[BoarLootPackId] = new LootPack
+                {
+                    Id = BoarLootPackId,
+                    Loots = [loot],
+                    LootsByGroupNo = new Dictionary<uint, List<Loot>> { [0] = [loot] },
+                    Groups = [],
+                    ActabilityGroups = [],
+                    GroupCount = 1,
+                };
+            }
+            else
+            {
+                pack.Loots.Add(loot);
+                if (pack.LootsByGroupNo.TryGetValue(0, out var group))
+                    group.Add(loot);
+                else
+                    pack.LootsByGroupNo[0] = [loot];
+            }
+        }
+        QuestFixtureRow.InvalidateAll();
+    }
+
+    private static void StageAdvanceQuest(GameplayActor actor)
+    {
+        SeedAdvanceQuestShape();
+        var template = QuestManager.Instance.GetTemplate(AdvanceQuestId)
+            ?? throw new InvalidOperationException($"quest template {AdvanceQuestId} not seeded");
+        var quest = new Quest(template, actor.Character);
+        quest.SkipUpdatePackets();
+        quest.Status = QuestStatus.Progress;
+        quest.Step = QuestComponentKind.Progress;
+        quest.Objectives = [0, 0, 0, 0, 0];
+        actor.Character.Quests.ActiveQuests[AdvanceQuestId] = quest;
+        QuestFixtureRow.InvalidateAll();
+    }
+
 
     // ------------------------------------------------------------ gate matrix
 
@@ -288,15 +440,16 @@ public class QuestBootstrapModuleTests
     [Test]
     public async Task Run_ActiveQuest_AdvancesStepMachine()
     {
+        // Quest 254 (the original drive) lands Ready on accept, and the
+        // AdvanceEnter gate withholds advance on Ready quests — so the
+        // advance path is driven on staged quest 251 (Progress, uncredited),
+        // whose advance genuinely lands.
         var (actor, session) = GameplayActorTestRig.CreateActor("qb-advance");
         var character = session.Character;
         character.Level = 3;
         character.Hp = character.MaxHp;
         JoinActorRegion(session);
-        var accept = actor.AcceptQuest(LevelingLoopScenario.SeedQuestDeliveryId,
-            QuestAcceptorType.Npc, LevelingLoopScenario.SeedOffererNpcTemplateId,
-            "qb-advance-accept");
-        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+        StageAdvanceQuest(actor);
 
         var result = QuestDecisionScenario.Run(actor, (_, _) => [],
             new QuestDecisionScenario.QuestOptions { CycleId = "qb-advance-1" });
@@ -389,16 +542,15 @@ public class QuestBootstrapModuleTests
     [Test]
     public async Task StepAsync_QuestActiveAndAdvanceLands_SetsQuestLegFlag()
     {
+        // Staged quest 251 (Progress, uncredited): its advance genuinely
+        // lands — quest 254 goes Ready on accept and can no longer drive this.
         var rigged = GameplayActorTestRig.CreateActor("qb-leg-advance");
         var (actor, session) = rigged;
         var character = session.Character;
         character.Level = 3;
         character.Hp = character.MaxHp;
         JoinActorRegion(session);
-        var accept = actor.AcceptQuest(LevelingLoopScenario.SeedQuestDeliveryId,
-            QuestAcceptorType.Npc, LevelingLoopScenario.SeedOffererNpcTemplateId,
-            "qb-leg-advance-accept");
-        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+        StageAdvanceQuest(actor);
         var (executor, _, runtime, clock) = CreateQuestLegRig(rigged, "quest.progress",
             nearbyNpcs: (_, _) => []);
 
@@ -413,6 +565,8 @@ public class QuestBootstrapModuleTests
     [Test]
     public async Task StepAsync_QuestActive_PreemptsWildlifeAcquisitionAndRoute()
     {
+        // Staged quest 251 (Progress, uncredited): its advance genuinely
+        // lands, so the quest leg owns the wake and preempts hunt + route.
         var rigged = GameplayActorTestRig.CreateActor("qb-leg-preempt");
         var (actor, session) = rigged;
         var character = session.Character;
@@ -420,10 +574,7 @@ public class QuestBootstrapModuleTests
         character.Hp = character.MaxHp;
         JoinActorRegion(session);
         GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
-        var accept = actor.AcceptQuest(LevelingLoopScenario.SeedQuestDeliveryId,
-            QuestAcceptorType.Npc, LevelingLoopScenario.SeedOffererNpcTemplateId,
-            "qb-leg-preempt-accept");
-        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+        StageAdvanceQuest(actor);
         var wildlife = new Npc
         {
             ObjId = 0x71001,

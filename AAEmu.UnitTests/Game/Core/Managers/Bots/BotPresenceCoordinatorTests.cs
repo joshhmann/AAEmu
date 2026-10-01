@@ -430,6 +430,14 @@ public class BotPresenceCoordinatorTests
         {
             var session = HeadlessSession.Create(901, name, level, race);
             character = session.Character;
+            // Living vitals (the production provision invariant:
+            // BuildProvisionedCharacter sets Hp = MaxHp). A fixture-fresh
+            // character defaults to Hp 0, which the survival elected-wake
+            // gate (1d8d1b30b) correctly reads as incapacitated and vetoes
+            // every wake of — so with suite-loaded formulas the patrol legs
+            // never issue (0 arrived moves). Hp > 0 skips the gate's
+            // CouldVeto precondition outright, with no formula dependence.
+            character.Hp = 100;
             // NOTE: no WorldInstance.AddObject here — it touches
             // WorldManager.Instance (unseeded in this fixture). The roam
             // executor's BroadcastPacket is safe without a Region
