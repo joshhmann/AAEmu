@@ -1536,7 +1536,6 @@ public enum NeedsFarmLoopPhase
         // Diagnostic only: mirror the quest-leg outcome (landed action or
         // fail stage + reason with sweep tallies) into observe state, plus a
         // bot-vs-actor identity probe (same Character reference? same pose?)
-        // so a lane log joins wake → sweep → travel with no behavior change.
         var botPos = bot.Character.Transform.World.Position;
         var actorPos = concreteActor.Character.Transform.World.Position;
         state.QuestDecideDetail = result == null
@@ -1544,6 +1543,13 @@ public enum NeedsFarmLoopPhase
             : result.WorkSelected
                 ? $"landed {result.SelectedAction} ({TruncateDecide(result.Request?.Detail)})"
                 : $"{result.FailStage}: {TruncateDecide(result.FailReason)}";
+        // Jev shadow (Stage 1, default OFF): frozen shadow-log row for the
+        // offline critic, emitted at this ALREADY-LOGGED point from the
+        // frozen CycleId + QuestDecideDetail + QuestRunResult only — no live
+        // reads. Flag-off = one static flag read, zero allocation, zero
+        // behavior change (args are never evaluated).
+        if (JevShadow.Enabled)
+            JevShadow.MaybeEmitQuest(bot.CharacterId, runtime.BehaviorInstanceId, state.QuestDecideDetail, result);
         Logger.Info(
             "QuestSweepDiag cycle={Cycle} char={CharId} botSameChar={Same} botCharId={BotChar} actorCharId={ActorChar} " +
             "botPos=({BX:F1},{BY:F1},{BZ:F1}) actorPos=({AX:F1},{AY:F1},{AZ:F1}) decide=[{Decide}]",
