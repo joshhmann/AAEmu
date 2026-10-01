@@ -23,30 +23,41 @@ public class JevShadowTests
         _prevEnabled = JevShadow.Enabled;
         _prevSample = JevShadow.SampleEvery;
         _prevPath = JevShadow.FilePath;
+        _prevMaxQueued = JevShadow.MaxQueuedLines;
         JevShadow.Enabled = true;
         JevShadow.SampleEvery = 1;
+        JevShadow.MaxQueuedLines = 1024;
         JevShadow.FilePath = Path.Combine(Path.GetTempPath(), "jev-shadow-tests-" + Guid.NewGuid().ToString("N"), "shadow.jsonl");
         JevShadow.ResetSamplingForTest();
+        JevShadow.ResetQueueForTest();
     }
 
     [After(Test)]
     public void TearDown()
     {
+        JevShadow.SetWriterPausedForTest(false);
+        var testPath = JevShadow.FilePath;
+        JevShadow.ResetQueueForTest();
+        JevShadow.MaxQueuedLines = _prevMaxQueued;
         JevShadow.Enabled = _prevEnabled;
         JevShadow.SampleEvery = _prevSample;
         JevShadow.FilePath = _prevPath;
         JevShadow.ResetSamplingForTest();
         try
         {
-            var dir = Path.GetDirectoryName(JevShadow.FilePath);
-            if (dir != null && Directory.Exists(dir))
-                Directory.Delete(dir, true);
+            if (testPath.EndsWith("shadow.jsonl", StringComparison.Ordinal))
+            {
+                var dir = Path.GetDirectoryName(testPath);
+                if (dir != null && Directory.Exists(dir))
+                    Directory.Delete(dir, true);
+            }
         }
         catch (Exception) { }
     }
 
     private bool _prevEnabled;
     private int _prevSample;
+    private int _prevMaxQueued;
     private string _prevPath = "";
 
     private static BotDecisionProposal Proposal(
@@ -129,6 +140,7 @@ public class JevShadowTests
         JevShadow.MaybeEmitQuest(7, "quest-7-1", "DECIDE: empty",
             FailResult(new BotProposalRejection(Proposal("quest.accept", 10, 0, "gate"), "nope")));
 
+        await Assert.That(JevShadow.WaitForDrainForTest(TimeSpan.FromSeconds(10))).IsTrue();
         var lines = await File.ReadAllLinesAsync(JevShadow.FilePath);
         await Assert.That(lines.Length).IsEqualTo(1);
         using var doc = JsonDocument.Parse(lines[0]);
@@ -167,6 +179,7 @@ public class JevShadowTests
             JevShadow.MaybeEmitQuest(7, $"quest-7-{wake}", "DECIDE: empty",
                 FailResult(new BotProposalRejection(Proposal("quest.accept", 10, 0, "gate"), "nope")));
 
+        await Assert.That(JevShadow.WaitForDrainForTest(TimeSpan.FromSeconds(10))).IsTrue();
         var lines = await File.ReadAllLinesAsync(JevShadow.FilePath);
         await Assert.That(lines.Length).IsEqualTo(2);
         await Assert.That(lines[0].Contains("quest-7-1")).IsTrue();
@@ -187,6 +200,7 @@ public class JevShadowTests
         JevShadow.MaybeEmitQuest(7, "quest-7-1", "DECIDE: empty",
             FailResult(new BotProposalRejection(Proposal("quest.accept", 10, 0, "gate"), "nope")));
 
+        await Assert.That(JevShadow.WaitForDrainForTest(TimeSpan.FromSeconds(10))).IsTrue();
         await Assert.That(true).IsTrue();
         Directory.Delete(blocker, true);
     }
@@ -391,6 +405,7 @@ public class JevShadowTests
             FailResult(new BotProposalRejection(Proposal("quest.accept", 10, 0, "gate"), "nope")),
             new JevShadowBrains(Survival: survival));
 
+        await Assert.That(JevShadow.WaitForDrainForTest(TimeSpan.FromSeconds(10))).IsTrue();
         var lines = await File.ReadAllLinesAsync(JevShadow.FilePath);
         await Assert.That(lines.Length).IsEqualTo(1);
         using var doc = JsonDocument.Parse(lines[0]);
@@ -399,6 +414,85 @@ public class JevShadowTests
         await Assert.That(root.GetProperty("survival").GetProperty("committed_target_obj_id").GetUInt32()).IsEqualTo(0u);
         await Assert.That(root.GetProperty("travel").ValueKind).IsEqualTo(JsonValueKind.Null);
         await Assert.That(root.GetProperty("combat").ValueKind).IsEqualTo(JsonValueKind.Null);
+    }
+
+    /// <summary>
+    /// The bounded queue drops the NEWEST line when full (never blocks the
+    /// tick, never evicts): with a one-slot queue and the writer paused, the
+    /// first wake is kept and the burst tail is dropped and counted.
+    /// </summary>
+    [Test]
+    public async Task Enqueue_PausedQueueFull_DropsNewestCountsDrops()
+    {
+        JevShadow.MaxQueuedLines = 1;
+        JevShadow.SetWriterPausedForTest(true);
+        try
+        {
+            JevShadow.MaybeEmitQuest(7, "quest-7-1", "DECIDE: empty",
+                FailResult(new BotProposalRejection(Proposal("quest.accept", 10, 0, "gate"), "nope")));
+            for (var wake = 2; wake <= 4; wake++)
+                JevShadow.MaybeEmitQuest(7, $"quest-7-{wake}", "DECIDE: empty",
+                    FailResult(new BotProposalRejection(Proposal("quest.accept", 10, 0, "gate"), "nope")));
+
+            await Assert.That(JevShadow.QueuedLineCount).IsEqualTo(1);
+            await Assert.That(JevShadow.DroppedLineCount).IsEqualTo(3);
+        }
+        finally
+        {
+            JevShadow.SetWriterPausedForTest(false);
+        }
+        await Assert.That(JevShadow.WaitForDrainForTest(TimeSpan.FromSeconds(10))).IsTrue();
+        var lines = await File.ReadAllLinesAsync(JevShadow.FilePath);
+        await Assert.That(lines.Length).IsEqualTo(1);
+        await Assert.That(lines[0].Contains("quest-7-1")).IsTrue();
+    }
+
+    /// <summary>
+    /// The background writer drains FIFO without tick-side I/O: a burst of
+    /// sampled wakes lands in emission order once the writer resumes.
+    /// </summary>
+    [Test]
+    public async Task BackgroundWriter_DrainsQueuedLinesInOrder()
+    {
+        JevShadow.MaxQueuedLines = 16;
+        JevShadow.SetWriterPausedForTest(true);
+        try
+        {
+            for (var wake = 1; wake <= 3; wake++)
+                JevShadow.MaybeEmitQuest(7, $"quest-7-{wake}", "DECIDE: empty",
+                    FailResult(new BotProposalRejection(Proposal("quest.accept", 10, 0, "gate"), "nope")));
+            await Assert.That(JevShadow.QueuedLineCount).IsEqualTo(3);
+            await Assert.That(File.Exists(JevShadow.FilePath)).IsFalse();
+        }
+        finally
+        {
+            JevShadow.SetWriterPausedForTest(false);
+        }
+
+        await Assert.That(JevShadow.WaitForDrainForTest(TimeSpan.FromSeconds(10))).IsTrue();
+        var lines = await File.ReadAllLinesAsync(JevShadow.FilePath);
+        await Assert.That(lines.Length).IsEqualTo(3);
+        await Assert.That(lines[0].Contains("quest-7-1")).IsTrue();
+        await Assert.That(lines[1].Contains("quest-7-2")).IsTrue();
+        await Assert.That(lines[2].Contains("quest-7-3")).IsTrue();
+    }
+
+    /// <summary>
+    /// Flag-off stays zero-alloc: a disabled wake performs a static flag
+    /// read + return without touching the record, JSON, or queue seam.
+    /// </summary>
+    [Test]
+    public async Task MaybeEmitQuest_Disabled_ZeroAlloc()
+    {
+        JevShadow.Enabled = false;
+        var result = FailResult(new BotProposalRejection(Proposal("quest.accept", 10, 0, "gate"), "nope"));
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 10_000; i++)
+            JevShadow.MaybeEmitQuest(7, "quest-7-1", "DECIDE: empty", result);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        await Assert.That(allocated).IsEqualTo(0);
     }
 
     private static string CaptureDecideDetail(string cycleId)
