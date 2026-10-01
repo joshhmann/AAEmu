@@ -1,7 +1,11 @@
+using System.Numerics;
 using System.Text.Json;
 
 using AAEmu.Game.Core.Managers.Bots;
-
+using AAEmu.Game.Core.Managers.Bots.Combat;
+using AAEmu.Game.Core.Managers.Bots.Needs;
+using AAEmu.Game.Core.Managers.Bots.Survival;
+using AAEmu.Game.Core.Managers.Bots.Travel;
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 /// <summary>
@@ -205,6 +209,196 @@ public class JevShadowTests
         JevShadow.MaybeEmitQuest(99, "quest-99-x", "DECIDE: empty", FailResult());
         var after = CaptureDecideDetail("shadow-off-1");
         await Assert.That(after).IsEqualTo(before);
+    }
+
+    /// <summary>
+    /// Absent brains stay null: a quest-only wake carries no per-brain rows,
+    /// and the v1 contract fields are unchanged.
+    /// </summary>
+    [Test]
+    public async Task BuildRecord_NoBrains_AllBrainRowsNull()
+    {
+        var record = JevShadow.BuildRecord(42, "quest-42-7", "DECIDE: empty", FailResult());
+
+        await Assert.That(record.Travel).IsNull();
+        await Assert.That(record.Survival).IsNull();
+        await Assert.That(record.Needs).IsNull();
+        await Assert.That(record.Combat).IsNull();
+        await Assert.That(record.Schema).IsEqualTo(JevShadow.SchemaVersion);
+        await Assert.That(record.Verdict).IsEqualTo("DECIDE");
+    }
+
+    /// <summary>
+    /// Present brains are value-copied into the row: travel + survival frozen
+    /// inputs land with their scalar facts intact.
+    /// </summary>
+    [Test]
+    public async Task BuildRecord_TravelAndSurvivalPresent_CarriesFrozenInputs()
+    {
+        var travel = new TravelBrainInputs(
+            ActorObjId: 9,
+            SelfPosition: new Vector3(1, 2, 3),
+            TargetKind: TravelTargetKind.Position,
+            TargetObjId: 0,
+            Destination: new Vector3(10, 20, 0),
+            DistanceM: 25.5f,
+            ArrivalRadiusM: 3,
+            LocalModeMaxM: 50,
+            FollowRequested: false,
+            DestWorldKnown: true,
+            ActorWorldId: 1,
+            ActorInstanceId: 0,
+            DestWorldId: 1,
+            DestInstanceId: 0,
+            TargetResolved: true,
+            PriorResolveAttempts: 0,
+            LegOutcome: TravelLegOutcome.Running,
+            LegLive: true,
+            LegTargetObjId: 0,
+            LegDestinationKnown: true,
+            LegDestination: new Vector3(10, 20, 0),
+            PriorRepathCount: 1,
+            RepathBudget: 3,
+            RouteAvailable: false,
+            RouteWaypoint: new Vector3(10, 20, 0),
+            RouteWaypointCount: 0,
+            PriorMode: TravelMode.Local,
+            RetreatRequested: false,
+            ThreatObjId: 0,
+            ThreatPosition: Vector3.Zero);
+        var survival = new SurvivalBrainInputs(
+            ActorObjId: 9,
+            SelfHpRatio: 0.2f,
+            CombatRetreatPublished: true,
+            CommittedTargetObjId: 77,
+            SelectedTargetObjId: 77,
+            SelfPosition: new Vector3(1, 2, 3),
+            ThreatPosition: new Vector3(4, 5, 6));
+        var brains = new JevShadowBrains(Travel: travel, Survival: survival);
+
+        var record = JevShadow.BuildRecord(9, "quest-9-1", "DECIDE: empty", FailResult(), brains);
+
+        await Assert.That(record.Travel).IsNotNull();
+        await Assert.That(record.Travel!.TargetKind).IsEqualTo("Position");
+        await Assert.That(record.Travel!.DistanceM).IsEqualTo(25.5f);
+        await Assert.That(record.Travel!.PriorRepathCount).IsEqualTo(1);
+        await Assert.That(record.Travel!.Destination.X).IsEqualTo(10f);
+        await Assert.That(record.Survival).IsNotNull();
+        await Assert.That(record.Survival!.SelfHpRatio).IsEqualTo(0.2f);
+        await Assert.That(record.Survival!.CommittedTargetObjId).IsEqualTo(77u);
+        await Assert.That(record.Needs).IsNull();
+        await Assert.That(record.Combat).IsNull();
+    }
+
+    /// <summary>
+    /// Present brains are value-copied into the row: needs + combat frozen
+    /// inputs land with their scalar and census facts intact.
+    /// </summary>
+    [Test]
+    public async Task BuildRecord_NeedsAndCombatPresent_CarriesFrozenInputs()
+    {
+        var needs = new NeedsBrainInputs(
+            ActorObjId: 9,
+            SelfPosition: new Vector3(1, 2, 3),
+            SoilReadable: true,
+            SeedReadable: true,
+            SeedCount: 5,
+            OnValidSoil: false,
+            CropState: NeedsCropState.Live,
+            CropMature: true,
+            CropDistanceM: 2.5f,
+            CropPosition: new Vector3(7, 8, 0),
+            CropEnRoute: false,
+            CropObjId: 123,
+            CropTemplateId: 456,
+            CropApproachAttempts: 1,
+            MaxCropApproachAttempts: 3,
+            HarvestJustLanded: false,
+            SoilEnRoute: false,
+            SoilResolved: true,
+            SoilDestination: new Vector3(11, 12, 0),
+            SoilAttempts: 0,
+            MaxSoilAttempts: 3,
+            HarvestRangeM: 3);
+        var combatInputs = new CombatBrainInputs(
+            ActorObjId: 9,
+            Role: CombatRole.Melee,
+            Alive: true,
+            SelfHpRatio: 0.9f,
+            SelfLevel: 10,
+            SelfPosition: new Vector3(1, 2, 3),
+            EnemyCount: 1,
+            NearestEnemyDistanceM: 5,
+            TookDamageThisFrame: false,
+            CrowdControlled: false,
+            CcAvailable: false,
+            IsAutoAttackLive: true,
+            HealItemTemplateId: 0,
+            SkillMinRangeM: 0,
+            SkillMaxRangeM: 3.5f,
+            SelectedSkillId: 0,
+            LastSkillUsed: 0,
+            IncumbentObjId: 55,
+            IncumbentValid: true,
+            IncumbentUnknown: false,
+            IncumbentScore: 42,
+            CommitmentInForce: true,
+            IncumbentPosition: new Vector3(6, 6, 0),
+            IncumbentDistanceM: 5,
+            IncumbentLeashDriftM: 1,
+            LeashBudgetM: 50,
+            Candidates:
+            [
+                new CombatCandidate(55, 10, 5, 10, 0.8f, true, 1)
+            ],
+            NowUtc: new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        var combat = new CombatBrainPlanner.Prepared(combatInputs, 55, 1, 0, 0);
+        var brains = new JevShadowBrains(Needs: needs, Combat: combat);
+
+        var record = JevShadow.BuildRecord(9, "quest-9-2", "DECIDE: empty", FailResult(), brains);
+
+        await Assert.That(record.Needs).IsNotNull();
+        await Assert.That(record.Needs!.SeedCount).IsEqualTo(5);
+        await Assert.That(record.Needs!.CropState).IsEqualTo("Live");
+        await Assert.That(record.Needs!.CropObjId).IsEqualTo(123u);
+        await Assert.That(record.Combat).IsNotNull();
+        await Assert.That(record.Combat!.IncumbentObjId).IsEqualTo(55u);
+        await Assert.That(record.Combat!.CandidateCount).IsEqualTo(1);
+        await Assert.That(record.Combat!.CommittedQuestTarget).IsEqualTo(55u);
+        await Assert.That(record.Combat!.Candidates.Count).IsEqualTo(1);
+        await Assert.That(record.Combat!.Candidates[0].ObjId).IsEqualTo(55u);
+        await Assert.That(record.Travel).IsNull();
+        await Assert.That(record.Survival).IsNull();
+    }
+
+    /// <summary>
+    /// The writer emits present brain rows as snake_case JSONL (the lane replay
+    /// feed) and omits absent ones as nulls.
+    /// </summary>
+    [Test]
+    public async Task MaybeEmitQuest_BrainsPresent_WritesBrainRows()
+    {
+        var survival = new SurvivalBrainInputs(
+            ActorObjId: 7,
+            SelfHpRatio: 0.5f,
+            CombatRetreatPublished: false,
+            CommittedTargetObjId: 0,
+            SelectedTargetObjId: 0,
+            SelfPosition: Vector3.Zero,
+            ThreatPosition: Vector3.Zero);
+
+        JevShadow.MaybeEmitQuest(7, "quest-7-9", "DECIDE: empty",
+            FailResult(new BotProposalRejection(Proposal("quest.accept", 10, 0, "gate"), "nope")),
+            new JevShadowBrains(Survival: survival));
+
+        var lines = await File.ReadAllLinesAsync(JevShadow.FilePath);
+        await Assert.That(lines.Length).IsEqualTo(1);
+        using var doc = JsonDocument.Parse(lines[0]);
+        var root = doc.RootElement;
+        await Assert.That(root.GetProperty("survival").ValueKind).IsNotEqualTo(JsonValueKind.Null);
+        await Assert.That(root.GetProperty("survival").GetProperty("committed_target_obj_id").GetUInt32()).IsEqualTo(0u);
+        await Assert.That(root.GetProperty("travel").ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(root.GetProperty("combat").ValueKind).IsEqualTo(JsonValueKind.Null);
     }
 
     private static string CaptureDecideDetail(string cycleId)
