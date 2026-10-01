@@ -20,11 +20,14 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// ~768B): <see cref="MaybeEmitQuest"/> reads NOTHING and allocates NOTHING
 /// while disabled (a static flag read, then return — ref args only), so a
 /// flag-off wake is byte-identical to the pre-shadow behavior. Everything
-/// expensive (candidate projection, hashing, JSON, file I/O) runs only when
-/// explicitly opted in AND the sampling gate passes. Every field below is a
-/// copy of an already-frozen buffer (the QuestRunResult, its rejection
-/// proposals, its dispatched request stamp, the QuestDecideDetail observe
-/// string) — never a fresh Character/world/dictionary read on a calm wake.
+/// expensive (candidate projection, hashing, JSON build) runs only when
+/// explicitly opted in AND the sampling gate passes — and file I/O never runs
+/// on the tick at all: sampled wakes enqueue the already-built JSON line for
+/// a single background writer (bounded queue, drop-newest when full, drops
+/// counted, writer faults swallowed). Every field below is a copy of an
+/// already-frozen buffer (the QuestRunResult, its rejection proposals, its
+/// dispatched request stamp, the QuestDecideDetail observe string) — never a
+/// fresh Character/world/dictionary read on a calm wake.
 /// </summary>
 public static class JevShadow
 {
@@ -46,7 +49,38 @@ public static class JevShadow
         NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals
     };
 
-    private static readonly object WriteLock = new();
+    /// <summary>
+    /// Bound for sampled lines awaiting the background writer. When full the
+    /// tick drops the NEWEST line (the incoming wake) and counts it in
+    /// <see cref="DroppedLineCount"/> — it never blocks and never evicts.
+    /// Drop-newest (not oldest): under burst the tick does the minimum work
+    /// (one count check, no dequeue churn) and the file stays a
+    /// prefix-contiguous FIFO (the first N sampled wakes are complete, with
+    /// no head gaps to explain). Test seam: lower it to observe drops.
+    /// </summary>
+    internal static int MaxQueuedLines { get; set; } = 1024;
+
+    /// <summary>Sampled lines dropped while the queue was full (drop-newest).</summary>
+    internal static long DroppedLineCount
+    {
+        get { lock (QueueLock) return _droppedLines; }
+    }
+
+    /// <summary>Lines queued but not yet written (test seam).</summary>
+    internal static int QueuedLineCount
+    {
+        get { lock (QueueLock) return _queue.Count; }
+    }
+
+    /// <summary>Lines enqueued but not yet drained, queued plus in-flight (test seam).</summary>
+    internal static long PendingLineCount => Volatile.Read(ref _pendingLines);
+
+    private static readonly object QueueLock = new();
+    private static readonly Queue<QueuedLine> _queue = new();
+    private static long _droppedLines;
+    private static Thread? _writerThread;
+    private static bool _writerPausedForTest;
+    private static long _pendingLines;
     private static long _eligibleWakes;
 
     /// <summary>
@@ -109,11 +143,13 @@ public static class JevShadow
             return;
         try
         {
-            WriteLine(BuildRecord(characterId, cycleId, decideDetail ?? "", result, brains));
+            var line = JsonSerializer.Serialize(
+                BuildRecord(characterId, cycleId, decideDetail ?? "", result, brains), JsonOptions);
+            EnqueueLine(line);
         }
         catch (Exception)
         {
-            // Lane-side sink only: a serialization or I/O fault must never
+            // Lane-side sink only: a serialization or enqueue fault must never
             // raise into the scheduler tick. (OSError swallow requirement.)
         }
     }
@@ -186,24 +222,171 @@ public static class JevShadow
     /// <summary>Resets the sampling counter (deterministic sampling tests).</summary>
     internal static void ResetSamplingForTest() => Interlocked.Exchange(ref _eligibleWakes, 0);
 
-    private static void WriteLine(JevShadowRecord record)
+    /// <summary>
+    /// One built JSONL line plus the lane path captured at enqueue time.
+    /// Capturing the path per line keeps a mid-flight <see cref="FilePath"/>
+    /// swap from rerouting already-queued lines.
+    /// </summary>
+    private readonly record struct QueuedLine(string Line, string Path);
+
+    /// <summary>
+    /// Enqueues a built JSON line for the background writer. Never blocks,
+    /// never throws: when the bounded queue is full the NEWEST line (the
+    /// incoming wake) is dropped and counted in <see cref="DroppedLineCount"/>.
+    /// </summary>
+    private static void EnqueueLine(string line)
     {
         try
         {
-            var line = JsonSerializer.Serialize(record, JsonOptions);
             var path = FilePath;
-            lock (WriteLock)
+            lock (QueueLock)
             {
-                var directory = Path.GetDirectoryName(path);
-                if (!string.IsNullOrEmpty(directory))
-                    Directory.CreateDirectory(directory);
-                File.AppendAllText(path, line + "\n");
+                if (_queue.Count >= Math.Max(1, MaxQueuedLines))
+                {
+                    _droppedLines++;
+                    return;
+                }
+                _queue.Enqueue(new QueuedLine(line, path));
+                Interlocked.Increment(ref _pendingLines);
+                EnsureWriterLocked();
+                Monitor.Pulse(QueueLock);
             }
+        }
+        catch (Exception)
+        {
+            // Lane-side sink only: an enqueue fault must never raise into
+            // the scheduler tick.
+        }
+    }
+
+    /// <summary>
+    /// Starts the single background writer on first enqueue (caller holds
+    /// <see cref="QueueLock"/>); recreates it if it ever died. One-time tick
+    /// cost only — steady-state wakes never touch thread startup.
+    /// </summary>
+    private static void EnsureWriterLocked()
+    {
+        if (_writerThread is { IsAlive: true })
+            return;
+        _writerThread = new Thread(WriterLoop)
+        {
+            IsBackground = true,
+            Name = "JevShadowWriter"
+        };
+        _writerThread.Start();
+    }
+
+    /// <summary>
+    /// Single background writer: drains queued lines to file in FIFO order,
+    /// one <c>AppendAllText</c> per line (no batching — crash-safe prefix,
+    /// byte-identical to the old inline write). Every fault is swallowed so a
+    /// lane sink fault can never raise anywhere. <c>IsBackground</c>, so the
+    /// lane process may exit at any time: queued-but-unwritten lines are
+    /// best-effort by design and shutdown is never blocked (no flush join on
+    /// any shutdown path — per-line appends leave nothing else to flush).
+    /// </summary>
+    private static void WriterLoop()
+    {
+        while (true)
+        {
+            QueuedLine item;
+            lock (QueueLock)
+            {
+                while (_queue.Count == 0 || _writerPausedForTest)
+                    Monitor.Wait(QueueLock);
+                item = _queue.Dequeue();
+            }
+            try
+            {
+                AppendLine(item);
+            }
+            catch (Exception)
+            {
+                // OSError swallow: an unwritable lane path (missing volume,
+                // directory-as-file, denied) must never raise out of the
+                // writer thread (which would kill it and spam restarts).
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _pendingLines);
+            }
+        }
+    }
+
+    private static void AppendLine(QueuedLine item)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(item.Path);
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
+            File.AppendAllText(item.Path, item.Line + "\n");
         }
         catch (Exception)
         {
             // OSError swallow: an unwritable lane path (missing volume,
             // directory-as-file, denied) must never raise into the tick.
+        }
+    }
+
+    /// <summary>
+    /// Waits (test only) until every enqueued line has been written or
+    /// dropped-fault swallowed. Returns false on timeout instead of throwing.
+    /// </summary>
+    internal static bool WaitForDrainForTest(TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (true)
+        {
+            lock (QueueLock)
+            {
+                if (_queue.Count == 0 && Volatile.Read(ref _pendingLines) <= 0)
+                    return true;
+            }
+            if (DateTime.UtcNow >= deadline)
+                return false;
+            Thread.Sleep(5);
+        }
+    }
+
+    /// <summary>Pauses (true) or resumes the background writer (test only).</summary>
+    internal static void SetWriterPausedForTest(bool paused)
+    {
+        lock (QueueLock)
+        {
+            _writerPausedForTest = paused;
+            Monitor.PulseAll(QueueLock);
+        }
+    }
+
+    /// <summary>
+    /// Resets writer state (test only): unpauses, drains what is drainable
+    /// without blocking, then clears leftovers and zeroes drops/pending plus
+    /// the sampling counter. Never throws.
+    /// </summary>
+    internal static void ResetQueueForTest()
+    {
+        try
+        {
+            lock (QueueLock)
+            {
+                _writerPausedForTest = false;
+                EnsureWriterLocked();
+                Monitor.PulseAll(QueueLock);
+            }
+            WaitForDrainForTest(TimeSpan.FromSeconds(10));
+            lock (QueueLock)
+            {
+                _queue.Clear();
+                _droppedLines = 0;
+                _writerPausedForTest = false;
+                Monitor.PulseAll(QueueLock);
+            }
+            Interlocked.Exchange(ref _pendingLines, 0);
+            Interlocked.Exchange(ref _eligibleWakes, 0);
+        }
+        catch (Exception)
+        {
         }
     }
 
