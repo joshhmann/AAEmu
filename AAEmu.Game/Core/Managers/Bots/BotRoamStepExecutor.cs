@@ -1768,10 +1768,15 @@ public enum NeedsFarmLoopPhase
         //    gated follow-up's offerer toward unrelated NPCs).
         if (quests.ActiveQuests.Count == 0)
         {
+            // Fail-closed like TrySpawnerPosition: no spawner tables, no walk
+            // target — the bot idles instead of crashing the wake.
+            var allSpawners = world.SpawnManager?.GetAllSpawners();
+            if (allSpawners == null)
+                return null;
             var here = character.Transform.World.Position;
             var best = (Vector3?)null;
             var bestDist = float.MaxValue;
-            foreach (var spawner in world.SpawnManager.GetAllSpawners().SelectMany(s => s.Value))
+            foreach (var spawner in allSpawners.SelectMany(s => s.Value))
             {
                 if (spawner.UnitId == 0)
                     continue;
@@ -1816,10 +1821,16 @@ public enum NeedsFarmLoopPhase
         return false;
     }
 
-    /// <summary>Spawner position for an NPC template, or null when unspawned/unknown.</summary>
+    /// <summary>Spawner position for an NPC template, or null when unspawned/unknown.
+    /// Fail-closed: a world without spawner tables (never seeded) reads
+    /// unknown rather than throwing — the travel arm then idles instead of
+    /// crashing the wake.</summary>
     private static Vector3? TrySpawnerPosition(WorldInstance world, uint npcTemplateId)
     {
-        var spawner = world.SpawnManager.GetAllSpawners()
+        var allSpawners = world.SpawnManager?.GetAllSpawners();
+        if (allSpawners == null)
+            return null;
+        var spawner = allSpawners
             .SelectMany(s => s.Value)
             .FirstOrDefault(s => s.UnitId == npcTemplateId);
         return spawner == null
