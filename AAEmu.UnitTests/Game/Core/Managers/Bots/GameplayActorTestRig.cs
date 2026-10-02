@@ -122,6 +122,55 @@ public static class GameplayActorTestRig
     /// <summary>Next unique actor objId (starts at <see cref="ActorObjId"/>).</summary>
     public static uint NextActorObjId() => _nextActorObjId++;
 
+    // Character ids for rig actors. NOT derived from the display name: the old
+    // `(uint)name.GetHashCode() & 0xFFFF` scheme aliased any two rig names that
+    // shared 16 bits onto the SAME Character.Id, and string.GetHashCode() is
+    // randomized per process, so WHICH names aliased changed every run.
+    //
+    // Character.Id is the production authority key: ItemManager's persistent
+    // container registry (GetItemContainerForCharacter), WorldManager._characters,
+    // the rig bank, MailManager and QuestManager all index by it. An alias makes
+    // the second actor silently SHARE the first actor's ItemContainer objects,
+    // and because CropHarvestLoopRig registers every headless world at instance
+    // id 1, they also share a WorldInstance -- so Doodad.Delete() on the first
+    // actor's crop removes the second actor's crop from the same world
+    // (WorldInstance.RemoveObject TryRemoves by ObjId).
+    //
+    // The observed failure: M3aExitScenarioTests' harvest found its crop already
+    // deleted, fell through to the mature-phase DoodadFuncHouseFarm, which re-armed
+    // the phase chain, and the next Use granted loot pack 6452 a SECOND time --
+    // 6 potatoes where the canonical loots row (id 65672, min 2 / max 4) allows 4.
+    private const uint ActorCharacterIdBase = 0x0040_0000;
+
+    private static uint _nextActorCharacterId = ActorCharacterIdBase;
+
+    /// <summary>Next unused rig character Id (see <see cref="CreateActor"/>).</summary>
+    public static uint NextActorCharacterId() => _nextActorCharacterId++;
+
+    /// <summary>Live rig character Id -> display name (aliasing forensics).</summary>
+    internal static readonly Dictionary<uint, string> CharacterIdOwners = [];
+
+    /// <summary>
+    /// Reserves the character Id for a new rig actor and fails closed if it is
+    /// already live. The counter makes a collision unreachable through this rig;
+    /// the guard exists so that any OTHER producer (a sibling rig calling
+    /// HeadlessSession.Create directly) surfaces here, naming the actor that owns
+    /// the id, instead of as a mystery double-loot hundreds of lines away.
+    /// </summary>
+    private static uint ReserveActorCharacterId(string name)
+    {
+        var id = NextActorCharacterId();
+        if (CharacterIdOwners.TryGetValue(id, out var owner))
+        {
+            throw new InvalidOperationException(
+                $"Rig character Id {id} is already live (owned by '{owner}', requested by '{name}'). " +
+                "Character Ids namespace ItemManager containers, WorldManager._characters, the rig bank, " +
+                "MailManager and QuestManager -- a colliding Id aliases inventories across actors.");
+        }
+        CharacterIdOwners[id] = name;
+        return id;
+    }
+
     // High base so rig worlds never collide with the small fixed instance
     // ids other test files register (e.g. SpecialtyManagerTests' 77,
     // M3bFurniturePersistenceTests' 7, HousingM3aConstructionTests' 1) —
@@ -436,9 +485,22 @@ public static class GameplayActorTestRig
     /// the actor touches dereference. The pilot rig's SkillManager is
     /// constructed without Load(), so its dictionaries start null; the
     /// scenario rig may not seed SkillManager at all.
+    ///
+    /// Cold-start guard: SkillManager is a DI singleton with no parameterless
+    /// ctor, so a bare `SkillManager.Instance` on an unseeded process throws
+    /// from Singleton.OnInit ("has no parameterless constructor"). The only
+    /// producer is SeedBaseSurface, reached solely through Seed() — so every
+    /// public entry point that reaches here WITHOUT an actor (SeedBuffTemplate,
+    /// SeedSkillTemplate, SeedSkillBoundDoodad, SeedPutDownSkill,
+    /// SeedCargoPutDownSkill, SeedPlantSkill, the craft skill seed) would
+    /// blow up on a cold process. Establish the DI-shaped instance first when
+    /// it is missing; established instances are never replaced.
     /// </summary>
     private static void SeedSkillManager()
     {
+        if (!SingletonSeeded(typeof(Singleton<SkillManager>)))
+            SeedSingleton(typeof(Singleton<SkillManager>),
+                new SkillManager(Mock.Of<IAnimationManager>().Object, Mock.Of<IPlotManager>().Object));
         var manager = SkillManager.Instance;
         var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
         var skillsField = typeof(SkillManager).GetField("_skills", flags);
@@ -713,7 +775,7 @@ public static class GameplayActorTestRig
     public static (GameplayActor Actor, HeadlessSession Session) CreateActor(string name = "actor-bot")
     {
         Seed();
-        var session = HeadlessSession.Create((uint)name.GetHashCode() & 0xFFFF, name, 1);
+        var session = HeadlessSession.Create(ReserveActorCharacterId(name), name, 1);
         var character = session.Character;
         // UNIQUE per actor: the engine's WorldManager._characters registry is
         // keyed by ObjId (first-wins TryAdd), so a fixed 0x1001 would make
@@ -1253,6 +1315,7 @@ public static class GameplayActorTestRig
     /// <summary>Seeds a minimal skill template (no effects, no reagents, instant, self-range).</summary>
     public static void SeedSkillTemplate(uint skillId)
     {
+        SeedSkillManager(); // cold-process guard: SkillManager is DI-only, SeedSkillManager establishes it missing-only
         var manager = SkillManager.Instance;
         var skills = (Dictionary<uint, SkillTemplate>)GetField(manager, "_skills");
         if (!skills.ContainsKey(skillId))
@@ -2071,6 +2134,11 @@ public static class GameplayActorTestRig
             SeedSingleton(typeof(Singleton<NpcManager>), npcManager);
         }
 
+        // Same primary-ctor staleness as AuctionManager/MailManager: NpcManager
+        // captures ItemManager.Instance (line 2132) for life. Heal the binding
+        // rather than relying on a sibling rig to install a fresh instance.
+        RePointItemManagerBinding(NpcManager.Instance);
+
         var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
         var goodsField = typeof(NpcManager).GetField("Goods", flags)
                          ?? typeof(NpcManager).GetField("<Goods>k__BackingField", flags);
@@ -2092,7 +2160,56 @@ public static class GameplayActorTestRig
                 Mock.Of<ILocalizationManager>().Object,
                 Mock.Of<ITaskManager>().Object);
             SeedSingleton(typeof(Singleton<AuctionManager>), auctionManager);
+            return;
         }
+
+        // STALE-BINDING HEAL — see RePointItemManagerBinding. AuctionManager
+        // captures IItemManager in a primary constructor, so an established
+        // instance can be wired to a superseded ItemManager after a sibling
+        // rig swaps the singleton. PostLotOnAuction then reads
+        // itemManager.GetItemByItemId (AuctionManager.cs:651) from a registry
+        // that no longer holds the created item, returns silently, and
+        // GameplayActor.PostAuction rejects at GameplayActor.cs:3111 with
+        // "auction listing did not take effect". Missing-only seeding cannot
+        // see this — the singleton IS present, just wired to the wrong graph.
+        RePointItemManagerBinding(AuctionManager.Instance);
+    }
+
+    /// <summary>
+    /// Re-points an established manager's captured primary-ctor IItemManager
+    /// at the CURRENT <see cref="ItemManager.Instance"/>.
+    ///
+    /// Managers that take IItemManager in a primary constructor
+    /// (AuctionManager.cs:22, MailManager) hold that ONE instance for life.
+    /// Sibling rigs swap the ItemManager singleton — QuestScenarioDriver
+    /// .SeedSingletons, several [Before(Test)] hooks, this rig's own
+    /// SeedBaseSurface — so an already-seeded manager can be left wired to a
+    /// superseded ItemManager whose _allItems no longer holds freshly created
+    /// items. The engine then reads itemManager.GetItemByItemId
+    /// (AuctionManager.cs:651) from the dead registry, returns silently, and
+    /// the caller sees "auction listing did not take effect". Missing-only
+    /// seeding cannot detect this: the singleton IS present, just wired to the
+    /// wrong object graph.
+    ///
+    /// Re-points the FIELD in place rather than replacing the instance, so any
+    /// seeded state on the manager (AuctionLots, _allPlayerMails) survives.
+    /// Same discipline as the SusManager/ModelManager heal in Seed(): heal on
+    /// EVERY call rather than depending on some other rig having installed a
+    /// fresh instance for us.
+    /// </summary>
+    private static void RePointItemManagerBinding<TManager>(TManager manager)
+        where TManager : class
+    {
+        var bindingField = typeof(TManager)
+            .GetFields(System.Reflection.BindingFlags.NonPublic
+                       | System.Reflection.BindingFlags.Instance
+                       | System.Reflection.BindingFlags.Public)
+            .FirstOrDefault(f => typeof(IItemManager).IsAssignableFrom(f.FieldType));
+        var currentItemManager = ItemManager.Instance;
+        if (bindingField != null
+            && bindingField.GetValue(manager) is IItemManager boundItemManager
+            && !ReferenceEquals(boundItemManager, currentItemManager))
+            bindingField.SetValue(manager, currentItemManager);
     }
 
     /// <summary>
@@ -2106,7 +2223,13 @@ public static class GameplayActorTestRig
     private static void SeedMailManager()
     {
         if (SingletonSeeded(typeof(Singleton<MailManager>)))
+        {
+            // Same stale-binding hazard as SeedAuctionManager: MailManager
+            // captures IItemManager in its primary constructor, so an
+            // established instance can be wired to a superseded ItemManager.
+            RePointItemManagerBinding(MailManager.Instance);
             return;
+        }
         var nameMock = Mock.Of<INameManager>();
         nameMock.GetCharacterName(Arg.Any<uint>()).Returns((string)null);
         nameMock.GetCharacterId(Arg.Any<string>()).Returns(1u); // != 0 → id verification fails → Send returns false
