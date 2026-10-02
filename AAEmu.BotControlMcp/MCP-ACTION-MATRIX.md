@@ -23,9 +23,9 @@ Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract
 | `ExpeditionInvite` | — | — | Deferred: no actor WebApi route |
 | `ExpeditionAccept` | — | — | Deferred: no actor WebApi route |
 | `ExpeditionLeave` | — | — | Deferred: no actor WebApi route |
-| `TradeOffer` | — | — | Deferred: no actor WebApi route |
-| `TradePutup` | — | — | Deferred: no actor WebApi route |
-| `TradeLockOk` | — | — | Deferred: no actor WebApi route |
+| `TradeOffer` | `POST /api/actors/trade_offer` | `trade_offer` | Route added 2026-09-13 with the 44-tool catalog; previously mis-recorded as deferred |
+| `TradePutup` | `POST /api/actors/trade_putup` | `trade_putup` | Route added 2026-09-13 with the 44-tool catalog; previously mis-recorded as deferred |
+| `TradeLockOk` | `POST /api/actors/trade_lock_ok` | `trade_lock_ok` | Route added 2026-09-13 with the 44-tool catalog; previously mis-recorded as deferred |
 | `Mount` | `POST /api/actors/mount` | `mount` | `Call_mount_PostsMate`; generic exact mapping |
 | `Dismount` | `POST /api/actors/dismount` | `dismount` | `Call_dismount_PostsOptionalMate`; generic exact mapping |
 | `BoardVehicle` | `POST /api/actors/board_vehicle` | `board_vehicle` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
@@ -52,6 +52,8 @@ Audit sources: `AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs` (actor contract
 | `DiscoverSelfQuests` | `POST /api/actors/discover_self_quests` | `discover_self_quests` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `Buy` | `POST /api/actors/buy` | `buy` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `Sell` | `POST /api/actors/sell` | `sell` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
+| `Repair` | `POST /api/actors/repair` | `repair` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
+| `SellSpecialty` | `POST /api/actors/sell_specialty` | `sell_specialty` | `CallTool_MapsEveryRegisteredToolToExactWireRequest`; queue dispatch regression |
 | `PostAuction` | — | — | Deferred: no actor WebApi route |
 | `BuyAuction` | — | — | Deferred: no actor WebApi route |
 | `Interrupt(Guid)` | `POST /api/actors/interrupt` | `interrupt` | `Call_interrupt_PostsTraceId`; generic exact mapping |
@@ -63,7 +65,15 @@ Lifecycle/audit reads are not `IGameplayActor` actions, but are part of the auth
 | `GET /api/actors/actions/{traceId}` | `action_status` | `Call_action_status_GetsTraceEndpoint`; generic exact mapping and escaped path argument |
 | `GET /api/actors/trace?bot=...&limit=...` | `trace` | `Call_trace_GetsTraceQueryWithLimit`, `Call_trace_WithoutLimit_GetsTraceQuery`; generic exact mapping and escaped bot argument |
 
-`Tick`, `FindByKey`, `ActorId`, `Character`, `ActiveRequest`, and `AuditTrace` are actor internals/engine scheduling or correlation surfaces, not standalone HTTP actions. The authenticated `BotActionController` routes listed above are the complete safe 39-tool MCP surface for this batch; only later Party, Expedition, Trade, Auction, and related actor expansion remains deferred, so no fake routes or management aliases are added.
+`Tick`, `FindByKey`, `ActorId`, `Character`, `ActiveRequest`, and `AuditTrace` are actor internals/engine scheduling or correlation surfaces, not standalone HTTP actions.
+
+**Correction 2026-10-01 (read-only source re-verification):** this paragraph previously said the routes above are "the complete safe **39-tool** MCP surface" and that "Trade" remained deferred. Both halves are STALE:
+
+- **The catalog is 44 tools, not 39.** `ActionMcpServer.cs` `ToolsList()` registers exactly 44 `Tool(...)` entries, and `Scripts/mcp-stdio-smoke.sh:27` asserts `len(tools) == 44` — an assertion that would fail the gate at 39. The committed fix is `d0e2d72d6` (2026-09-13, "fix(tests): expect 44 tools in MCP stdio smoke"). Each tool maps 1:1 onto one authenticated route in `AAEmu.Game/Services/WebApi/Controllers/BotActionController.cs`: 42 `WebApiPost("^/api/actors/<name>$")` routes plus the two `WebApiGet` lifecycle reads (`actions/{traceId}` → `action_status`, `trace` → `trace`) — 44 routes serving 44 tools, with no orphan on either side.
+- **Trade is no longer deferred.** `AAEmu.Game/Services/WebApi/Controllers/BotActionController.cs:713,742,772` implement `POST /api/actors/trade_offer`, `/trade_putup` and `/trade_lock_ok`; `ActionMcpServer.cs` exposes them as `trade_offer`, `trade_putup`, `trade_lock_ok`. The rows above are corrected below.
+- **This matrix was also missing five rows** that the controller already had: `Repair`, `SellSpecialty`, and the three Trade actions. They are now listed above.
+
+What remains deferred is unchanged and still accurate: `NavigateTo`, `CastAt`, `PartyInvite`/`PartyAccept`, the `Expedition*` family, `BuildHouse`, and `PostAuction`/`BuyAuction` genuinely have no authenticated actor route. No fake route or management alias is added.
 
 Other WebApi controllers do not widen this contract: for example,
 `ExpeditionController` exposes `GET /api/expedition/list` as a server-wide

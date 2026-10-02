@@ -94,14 +94,28 @@ deterministic CI smoke tests without a live game server.
 
 ## Deferred actor actions
 
-The current catalog contains 39 tools and includes the Flash routes for
+The current catalog contains 44 tools and includes the Flash routes for
 Deposit/Withdraw money and items, Plant/Harvest, Craft, Buy/Sell, and
 PackPickup/PutDown/LoadPackOntoVehicle plus Board/Unboard/DriveVehicle.
-Only later actor expansion remains deferred: Party, Expedition, Trade, Auction,
-and related actions still lack an authenticated `/api/actors/*` enqueue route.
-`NavigateTo`, `CastAt`, and `BuildHouse` also remain outside this MCP catalog
-where the matrix records no authenticated actor route; no fake route, hidden
-state, or management alias is exposed.
+
+**Correction 2026-10-01 (read-only source re-verification):** this paragraph previously
+said the catalog "contains 39 tools" and that "Party, Expedition, **Trade**, Auction" all
+lack an authenticated `/api/actors/*` enqueue route. Both are STALE:
+
+- **44 tools, not 39.** `ActionMcpServer.cs` `ToolsList()` registers exactly 44 `Tool(...)`
+  entries and `Scripts/mcp-stdio-smoke.sh:27` asserts `len(tools) == 44` — an assertion that
+  fails the gate at 39. See `d0e2d72d6` (2026-09-13, "fix(tests): expect 44 tools in MCP
+  stdio smoke"). The catalog also includes `repair` and `sell_specialty`, which this
+  paragraph never listed.
+- **Trade is no longer deferred.**
+  `AAEmu.Game/Services/WebApi/Controllers/BotActionController.cs:713,742,772`
+  implement `POST /api/actors/trade_offer`, `/trade_putup` and `/trade_lock_ok`, exposed as
+  `trade_offer`, `trade_putup`, `trade_lock_ok`.
+
+Still deferred, and still accurate: `PartyInvite`/`PartyAccept`, the `Expedition*` family,
+and Auction (`PostAuction`/`BuyAuction`). `NavigateTo`, `CastAt`, and `BuildHouse` also remain
+outside this MCP catalog where the matrix records no authenticated actor route; no fake
+route, hidden state, or management alias is exposed.
 
 
 ## Running
