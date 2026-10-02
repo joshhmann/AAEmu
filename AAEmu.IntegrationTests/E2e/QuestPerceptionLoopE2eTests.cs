@@ -8,8 +8,7 @@ using Xunit;
 namespace AAEmu.IntegrationTests.E2e;
 
 /// <summary>
-/// QUEST-PERCEPTION-LOOP-01 live-stack proof (Workstream E1 / converted
-/// scenario A1, the M1 spine): a REAL networked bot — provisioned through the
+/// QUEST-PERCEPTION-LOOP-01: a REAL networked bot — provisioned through the
 /// production path, in-world via the real login flow — is driven through the
 /// LIVE scheduler wake path with the quest-bootstrap activity arbitrating.
 /// No per-action commands after setup: every gameplay step (perceive →
@@ -17,52 +16,67 @@ namespace AAEmu.IntegrationTests.E2e;
 /// <c>QuestDecisionScenario</c> leg inside <c>BotRoamStepExecutor</c>, which
 /// the arbiter selects at rank 58 once <c>quest.progress</c> is eligible.
 ///
-/// The arc is the curated Solzreed chain <b>6198 → 330</b>:
-/// <list type="bullet">
-///   <item>6198 — accept at 3511 (treecutter Gallagher), report at 3512
-///     (elder Gott), reward item 18792. Objective-free.</item>
-///   <item>330 — accept at 3597, report at 3511. Objective-free, but its
-///     Reward component carries the <c>(36, 6198, 0)</c> requirement, so it
-///     is only a legal offer AFTER 6198 completes. That is what makes the
-///     pair a chain rather than two independent quests.</item>
-/// </list>
-/// Both quests are level 1, no level grant, no GM kit, no money grant.
+/// <para><b>Scope — one staged quest, NOT the A1 arc.</b> This belongs to the
+/// Wave One conversion backlog item <c>A1</c> ("M1 — Quest and progression
+/// spine"), filed in
+/// <c>scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md:57</c>.
+/// It proves a SINGLE accept → advance → turn-in → re-discover cycle, not the
+/// A1 acceptance criteria (level 1 → 10 by ordinary play, the whole curated
+/// route exhausted, death recovery). The previous report labelled this
+/// "E1 / M1 spine" with a two-id <c>arc</c>; no such two-quest chain was
+/// executed. See <c>questCoverage</c> in the report for what was and was not
+/// exercised.</para>
+///
+/// <para><b>What is actually proven:</b> quest <c>6198</c> (바라기 마을로,
+/// level 1, accept at NPC 3511, report at NPC 3512 — per the reference DB) is
+/// accepted through the real <c>AddQuest</c> gate, advanced to Ready, turned
+/// in at a real spawned reporter via <c>QuestManager.DoReportEvents</c>, and
+/// its <c>completed_quests</c> bit is read back from MySQL after a real
+/// <c>E2eStack.RestartGameServer()</c>. The bot then re-discovers and accepts
+/// whatever legal quest it picks next; the run records that id (observed:
+/// 251) as an ACTIVE row after restart. That follow-up is accepted — its
+/// completion is NOT observed or asserted.</para>
+///
+/// <para><b>Quest 330 is NOT exercised.</b> It is passed to the bridge as a
+/// tracked id so observe/wake responses report a second flag, but the bot never
+/// accepts it and it is never completed. Nothing here proves a 6198 → 330
+/// chain, and no such claim may be made from this artifact.</para>
 ///
 /// <para><b>Disclosed setup (never traversal proof):</b> the character is
-/// provisioned fresh and STAGED ONCE at the village hub ~(15524,15278) —
-/// inside the spawn radius of the four arc NPCs and within discover range of
-/// 3511/3597. This is labeled setup: the route/travel half of A1 is NOT what
-/// this artifact claims. What it proves is that the production perception loop
-/// perceives a legal offer, accepts it through the real AddQuest gate,
-/// advances it to Ready, turns it in at a real spawned reporter (the real
-/// <c>QuestManager.DoReportEvents</c> path), and then re-discovers and accepts
-/// the gated follow-up — with a negative leg and a restart checkpoint.</para>
+/// provisioned fresh and STAGED ONCE at the Solzreed village hub
+/// ~(15524,15278) — near the first offer. This is labeled setup: the
+/// route/travel half of A1 is NOT what this artifact claims.</para>
 ///
 /// <para><b>Negative leg:</b> the same wake loop run with the quest module
 /// DISABLED must accept nothing (the module's own gate), proving the accepts
 /// above came from the enabled production arbiter, not from ambient code.</para>
 ///
-/// <para><b>Restart checkpoint:</b> active/completed quest rows are read back
-/// from MySQL after a real <c>E2eStack.RestartGameServer()</c>.</para>
-///
 /// Report: <c>$E2E_ROOT/logs/quest-perception-loop-report.json</c> with the
 /// 7-field chain (actor → path → setup → execution → result → artifact →
-/// review-flag) plus per-action trace rows carrying the real character id.
-/// H stays UNKNOWN: proxy/bot-functional evidence only.
+/// review-flag) plus an explicit <c>questCoverage</c> map.
+/// H stays UNKNOWN: proxy/bot-functional evidence only. Evidence layer is
+/// Tier 2 (live isolated E2E lane) — NOT H, and NOT a full-route proof.
 /// </summary>
 [Collection("e2e")]
 public class QuestPerceptionLoopE2eTests
 {
     private static readonly string NetName = "QpLoop" + Guid.NewGuid().ToString("N")[..8].ToLowerInvariant();
     private static readonly string NetAccount = "e2eqploop" + Guid.NewGuid().ToString("N")[..8].ToLowerInvariant();
-
-    // Curated arc (order matters: 330 is gated on 6198 completion).
+    // The ONLY quest this scenario asserts completion of. Verified against the
+    // reference DB (compact.sqlite3): id 6198, name 바라기 마을로, LEVEL 1,
+    // offer NPC 3511, report NPC 3512.
     private const uint QuestFirst = 6198;
-    private const uint QuestSecond = 330;
 
-    // Staging hub: the Solzreed village cluster at (15524,15278). 3511 stands
-    // here; 3597 is 80 m away (within discover range once the route jitter
-    // walks the bot); 3512 is 169 m away (reporter for 6198).
+    // TRACKED-ONLY id, never an asserted outcome. The bot does not accept 330
+    // and it is never completed; it is passed alongside QuestFirst so the
+    // bridge's observe/wake responses carry a second tracked flag (reported
+    // as trackedCompletedFlags[1]) and the report can show it stayed false.
+    // The follow-up quest the bot ACTUALLY accepted is recorded at runtime
+    // (rediscoveredQuestId) and is not hard-coded.
+    private const uint QuestSecondTracked = 330;
+
+    // Staging hub: the Solzreed village cluster at (15524,15278), near
+    // the first quest offer. Placement is setup, not pathfinding evidence.
     private const float StageX = 15524.4f;
     private const float StageY = 15278.4f;
     private const float StageZ = 130f;
@@ -86,7 +100,6 @@ public class QuestPerceptionLoopE2eTests
         var logOffset = File.Exists(GameLogPath) ? new FileInfo(GameLogPath).Length : 0;
         BotNetworkSession? net = null;
         BotDriveClient? bridge = null;
-        var traceRows = new List<string>();
         var chain = new Dictionary<string, object>();
 
         Environment.SetEnvironmentVariable("AAEMU_QUEST_BOOTSTRAP_ENABLED", "1");
@@ -119,22 +132,22 @@ public class QuestPerceptionLoopE2eTests
 
             bridge = new BotDriveClient(E2eStack.BridgePort);
 
-            // Setup (disclosed): stage ONCE at the arc hub. Every gameplay
+            // Setup (disclosed): stage ONCE at the start hub. Every gameplay
             // step after this rides scheduler wakes only.
             var placed = bridge.Call(
                 $"{{\"cmd\":\"quest\",\"op2\":\"place\",\"bot\":\"{NetName}\",\"x\":{StageX},\"y\":{StageY},\"z\":{StageZ}}}",
                 timeoutMs: 30_000);
             var stageAt = $"({placed.GetProperty("x").GetSingle():F1},{placed.GetProperty("y").GetSingle():F1}," +
                           $"{placed.GetProperty("z").GetSingle():F1}) zone {placed.GetProperty("zoneId").GetUInt32()}";
-            Leg("stage-at-arc-hub", true, $"staged once at {stageAt} (disclosed setup, not traversal proof)");
+            Leg("stage-at-start-hub", true, $"staged once at {stageAt} (disclosed setup, not traversal proof)");
             chain["setup"] =
                 $"fresh provisioned level-1 Nuian staged ONCE at {stageAt} (disclosed, not traversal proof); " +
-                "boot flags AAEMU_QUEST_BOOTSTRAP_ENABLED=1 (+ presence hunt profile); " +
+                "boot flag AAEMU_QUEST_BOOTSTRAP_ENABLED=1; " +
                 "no level/money/item grant, no per-action commands after this point";
 
             // Observe the pre-state: fresh character, nothing active/completed.
             var pre = bridge.Call(
-                $"{{\"cmd\":\"quest\",\"op2\":\"observe\",\"bot\":\"{NetName}\",\"arc\":[{QuestFirst},{QuestSecond}]}}",
+                $"{{\"cmd\":\"quest\",\"op2\":\"observe\",\"bot\":\"{NetName}\",\"arc\":[{QuestFirst},{QuestSecondTracked}]}}",
                 timeoutMs: 30_000);
             var preActive = pre.GetProperty("activeCount").GetInt32();
             var preCompleted = pre.GetProperty("completedCount").GetInt32();
@@ -151,7 +164,7 @@ public class QuestPerceptionLoopE2eTests
             {
                 await Task.Delay(400);
                 var w = bridge.Call(
-                    $"{{\"cmd\":\"quest\",\"op2\":\"wake\",\"bot\":\"{NetName}\",\"waitMs\":20000,\"arc\":[{QuestFirst},{QuestSecond}]}}",
+                    $"{{\"cmd\":\"quest\",\"op2\":\"wake\",\"bot\":\"{NetName}\",\"waitMs\":20000,\"arc\":[{QuestFirst},{QuestSecondTracked}]}}",
                     timeoutMs: 60_000);
                 lastWake = w;
                 var activeIds = w.GetProperty("activeQuests").EnumerateArray()
@@ -187,7 +200,7 @@ public class QuestPerceptionLoopE2eTests
             {
                 await Task.Delay(800);
                 var w = bridge.Call(
-                    $"{{\"cmd\":\"quest\",\"op2\":\"wake\",\"bot\":\"{NetName}\",\"waitMs\":20000,\"arc\":[{QuestFirst},{QuestSecond}]}}",
+                    $"{{\"cmd\":\"quest\",\"op2\":\"wake\",\"bot\":\"{NetName}\",\"waitMs\":20000,\"arc\":[{QuestFirst},{QuestSecondTracked}]}}",
                     timeoutMs: 60_000);
                 lastWake = w;
                 var activeIds = w.GetProperty("activeQuests").EnumerateArray()
@@ -211,18 +224,18 @@ public class QuestPerceptionLoopE2eTests
 
             // ---- Leg: re-discover and accept fresh work --------------------
             // The perception loop must keep working after a completion: the
-            // bot re-discovers and accepts again. 330 is the curated
-            // follow-up, but the production loop may surface any legal offer
-            // it walks past — so this leg asserts "a new quest was accepted"
-            // (the re-discovery capability) and separately records whether it
-            // was the curated gated 330.
+            // bot re-discovers and accepts another legal offer. Record the id
+            // it ACTUALLY accepts — whatever the arbiter legally picks next
+            // (observed 251 in the 2026-10-02 run). The tracked-only id 330 is
+            // NOT excluded: if the arbiter picks it, trackedSecondId.accepted
+            // reports true and the report says so.
             var secondAccepted = false;
             uint secondQuestId = 0;
             for (var i = 0; i < 250 && !secondAccepted; i++)
             {
                 await Task.Delay(800);
                 var w = bridge.Call(
-                    $"{{\"cmd\":\"quest\",\"op2\":\"wake\",\"bot\":\"{NetName}\",\"waitMs\":20000,\"arc\":[{QuestFirst},{QuestSecond}]}}",
+                    $"{{\"cmd\":\"quest\",\"op2\":\"wake\",\"bot\":\"{NetName}\",\"waitMs\":20000,\"arc\":[{QuestFirst},{QuestSecondTracked}]}}",
                     timeoutMs: 60_000);
                 lastWake = w;
                 var activeIds = w.GetProperty("activeQuests").EnumerateArray()
@@ -242,12 +255,11 @@ public class QuestPerceptionLoopE2eTests
             else
             {
                 Leg("rediscover-next-quest", true,
-                    $"accepted follow-up quest {secondQuestId} after {QuestFirst} completed " +
-                    $"(curated gated follow-up was {QuestSecond})");
+                    $"accepted follow-up quest {secondQuestId} after {QuestFirst} completed");
             }
 
             var finalWake = bridge.Call(
-                $"{{\"cmd\":\"quest\",\"op2\":\"observe\",\"bot\":\"{NetName}\",\"arc\":[{QuestFirst},{QuestSecond}]}}",
+                $"{{\"cmd\":\"quest\",\"op2\":\"observe\",\"bot\":\"{NetName}\",\"arc\":[{QuestFirst},{QuestSecondTracked}]}}",
                 timeoutMs: 30_000);
             var arcFinal = finalWake.GetProperty("arcCompleted").EnumerateArray().Select(e => e.GetBoolean()).ToList();
             var completedFinal = finalWake.GetProperty("completedCount").GetInt32();
@@ -263,48 +275,76 @@ public class QuestPerceptionLoopE2eTests
                 $"perception → {QuestFirst} accept (GameplayActor.AcceptQuest → PlayerBotController.AcceptQuest → " +
                 "CharacterQuests.AddQuest) → advance to Ready (GameplayActor.AdvanceQuest → Quest.RunCurrentStep) → " +
                 $"turn-in at real spawned reporter (GameplayActor.TurnInQuest → PlayerBotController.ReportTurnIn → " +
-                "QuestManager.DoReportEvents) → re-discover + accept of the gate-dependent follow-up";
+                $"QuestManager.DoReportEvents) → re-discover + accept quest {secondQuestId}";
             chain["execution"] =
-                $"production PlayerBotScheduler wakes only; quest.{QuestFirst}/{QuestSecond} driven by the arbiter-selected " +
+                $"production PlayerBotScheduler wakes only; quest.{QuestFirst} then quest.{secondQuestId} driven by the arbiter-selected " +
                 "quest.progress activity (rank 58) → QuestDecisionScenario leg inside BotRoamStepExecutor (no per-action commands)";
             chain["result"] =
-                $"arc completed flags [{string.Join(",", arcFinal)}], completedCount={completedFinal}, " +
-                $"accepts={finalWake.GetProperty("accepts").GetInt32()}, advances={finalWake.GetProperty("advances").GetInt32()}, " +
+                $"quest {QuestFirst} completed flag [{string.Join(",", arcFinal)}], rediscoveredQuestId={secondQuestId} " +
+                $"(accepted; its completion is NOT asserted — this run never re-checked its flag. " +
+                $"tracked-only {QuestSecondTracked} flag " +
+                $"[{(arcFinal.Count > 1 ? arcFinal[1].ToString() : "not-reported")}]), " +
+                $"completedCount={completedFinal}, accepts={finalWake.GetProperty("accepts").GetInt32()}, " +
+                $"advances={finalWake.GetProperty("advances").GetInt32()}, " +
                 $"turnIns={finalWake.GetProperty("turnIns").GetInt32()}, level={finalWake.GetProperty("level").GetInt32()}";
             chain["reviewFlag"] =
                 "H UNKNOWN — bot-functional proxy evidence only; the route/feel half of A1 (Field Guide §5.1) stays human-owned";
 
             var passed = chainComplete;
-            var evidence = string.Join("\n", legs.Select(l =>
-                $"{(l.Passed ? "PASS" : "FAIL")} {l.Leg} ({l.Ms:F0}ms): {l.Detail}"));
 
-            // ---- Restart checkpoint: quest state survives to MySQL --------
-            // Quest rows do not reach MySQL synchronously with the action —
-            // trigger an explicit save pass first (the B2FarmRestart/B1
-            // restart-checkpoint convention), then a real PID-kill restart of
-            // ONLY this lane, then read the rows back. The DB read needs no
-            // session, so this leg never depends on a reconnect.
+            // Completed quest flags are stored in completed_quests as 64-bit
+            // blocks (questId / 64, bit questId % 64); quests holds only ACTIVE
+            // rows. Save, restart this lane's game PID, then check both stores.
             bridge.Call("{\"cmd\":\"save\"}", timeoutMs: 120_000);
             net.Dispose();
             var killedPid = E2eStack.RestartGameServer();
             var questRows = E2eStack.DumpQuestRows(NetAccount);
-            var completedRows = questRows.Where(r => r.QuestId == QuestFirst).ToList();
-            var checkpointPassed = completedRows.Count > 0;
-            Leg("restart-checkpoint-quest-rows", checkpointPassed,
-                $"killed pid {killedPid}, rebooted; MySQL rows for {NetAccount}: " +
-                $"[{string.Join(",", questRows.Select(r => $"{r.QuestId}:{r.Status}"))}] " +
-                $"— quest {QuestFirst} persisted (char {characterId})");
+            byte[]? completedBlock;
+            using (var conn = E2eStack.OpenDb("aaemu_game"))
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT data FROM completed_quests WHERE owner = @owner AND id = @block";
+                cmd.Parameters.AddWithValue("@owner", characterId);
+                cmd.Parameters.AddWithValue("@block", QuestFirst / 64);
+                completedBlock = cmd.ExecuteScalar() as byte[];
+            }
+            var bitIndex = (int)(QuestFirst % 64);
+            var completedPersisted = completedBlock is { Length: 8 } &&
+                                     (completedBlock[bitIndex / 8] & (1 << (bitIndex % 8))) != 0;
+            var checkpointPassed = killedPid > 0 && completedPersisted;
+            Leg("restart-checkpoint-completed-quest", checkpointPassed,
+                $"killed pid {killedPid}, rebooted; completed_quests block {QuestFirst / 64} " +
+                $"bit {bitIndex} for char {characterId} set={completedPersisted}");
+            var activeFollowUpPersisted = secondAccepted && questRows.Any(r => r.QuestId == secondQuestId);
+            Leg("restart-checkpoint-active-follow-up", activeFollowUpPersisted,
+                $"MySQL active quests for {NetAccount}: " +
+                $"[{string.Join(",", questRows.Select(r => $"{r.QuestId}:{r.Status}"))}]; " +
+                $"rediscovered quest {secondQuestId} active={activeFollowUpPersisted}");
 
-            passed = passed && checkpointPassed;
+            passed = passed && checkpointPassed && activeFollowUpPersisted;
             chain["artifact"] =
-                $"{(passed ? "PASS" : "FAIL")} — {ReportPath}; post-restart MySQL rows " +
+                $"{(passed ? "PASS" : "FAIL")} — {ReportPath}; post-restart completed {QuestFirst} " +
+                $"bit set={completedPersisted}, active rows " +
                 $"[{string.Join(",", questRows.Select(r => $"{r.QuestId}:{r.Status}"))}]; " +
                 $"game.log tail unhandled={CountLogTailMatches(logOffset, "Unhandled exception")} " +
                 $"fatals={CountLogTailMatches(logOffset, "|FATAL|")}";
 
-            await WriteReportAsync(passed, legs, chain, evidence, traceRows, wall.Elapsed.TotalSeconds,
+            var evidence = string.Join("\n", legs.Select(l =>
+                $"{(l.Passed ? "PASS" : "FAIL")} {l.Leg} ({l.Ms:F0}ms): {l.Detail}"));
+            await WriteReportAsync(passed, legs, chain, evidence, wall.Elapsed.TotalSeconds,
                 unhandled: CountLogTailMatches(logOffset, "Unhandled exception"),
-                fatals: CountLogTailMatches(logOffset, "|FATAL|"));
+                fatals: CountLogTailMatches(logOffset, "|FATAL|"),
+                rediscoveredQuestId: secondQuestId,
+                rediscoveredAccepted: secondAccepted,
+                activeRowPersisted: activeFollowUpPersisted,
+                firstQuestAccepted: accepted,
+                firstQuestReachedReady: reporterSpawned,
+                firstQuestCompletedFlag: arcFinal.Count > 0 ? arcFinal[0] : null,
+                completedBitPersisted: completedPersisted,
+                // 330 is TRACKED, not forbidden: report whether the engine
+                // actually has it active, measured from the final wake.
+                trackedAccepted: secondQuestId == QuestSecondTracked,
+                trackedQuestCompletedFlag: arcFinal.Count > 1 ? arcFinal[1] : null);
 
             Assert.True(passed,
                 $"quest perception loop FAIL.\nEvidence:\n{evidence}\nReport: {ReportPath}");
@@ -362,7 +402,7 @@ public class QuestPerceptionLoopE2eTests
             bridge.Call(
                 $"{{\"cmd\":\"quest\",\"op2\":\"place\",\"bot\":\"{negName}\",\"x\":{StageX},\"y\":{StageY},\"z\":{StageZ}}}",
                 timeoutMs: 30_000);
-            Leg("stage-at-arc-hub", true, $"staged once at ({StageX},{StageY}) (disclosed setup)");
+            Leg("stage-at-start-hub", true, $"staged once at ({StageX},{StageY}) (disclosed setup)");
 
             var legActive = false;
             var accepts = 0;
@@ -371,7 +411,7 @@ public class QuestPerceptionLoopE2eTests
             {
                 await Task.Delay(800);
                 var w = bridge.Call(
-                    $"{{\"cmd\":\"quest\",\"op2\":\"wake\",\"bot\":\"{negName}\",\"waitMs\":12000,\"arc\":[{QuestFirst},{QuestSecond}]}}",
+                    $"{{\"cmd\":\"quest\",\"op2\":\"wake\",\"bot\":\"{negName}\",\"waitMs\":12000,\"arc\":[{QuestFirst},{QuestSecondTracked}]}}",
                     timeoutMs: 60_000);
                 legActive |= w.GetProperty("questLegActive").GetBoolean();
                 accepts = w.GetProperty("accepts").GetInt32();
@@ -427,18 +467,77 @@ public class QuestPerceptionLoopE2eTests
     }
 
     private async Task WriteReportAsync(bool passed, List<(string Leg, bool Passed, string Detail, double Ms)> legs,
-        Dictionary<string, object> chain, string evidence, List<string> traceRows, double wallSeconds,
-        int unhandled, int fatals)
+        Dictionary<string, object> chain, string evidence, double wallSeconds,
+        int unhandled, int fatals, uint rediscoveredQuestId, bool rediscoveredAccepted,
+        bool activeRowPersisted, bool firstQuestAccepted, bool firstQuestReachedReady,
+        bool? firstQuestCompletedFlag, bool? completedBitPersisted,
+        bool trackedAccepted, bool? trackedQuestCompletedFlag)
     {
-        Directory.CreateDirectory(EvidenceDir);
+        // Every field below is an OBSERVED value from this run; `null` means
+        // "not observed" and never means "false". This report is written only
+        // after the run reaches the restart checkpoint — the two earlier exits
+        // (never accepted / never turned in) throw before this call, so NO
+        // report file exists for those failures. Read a missing report as
+        // "the run aborted before the checkpoint", not as a failed verdict.
+        var trackedIsFollowUp = rediscoveredQuestId == QuestSecondTracked;
+        // Provenance is MEASURED at report time, not asserted. lane.revision stays
+        // the bare HEAD (unchanged convention); sourceDirty is what tells a bare
+        // HEAD apart from a dirty build, and publishSourceIdentity is a separate,
+        // narrower question about the published Game/Login binaries.
+        var dirty = E2eStack.MeasuredSourceIdentity;
+
         var report = new
         {
             scenario = "quest-perception-loop",
-            workstream = "E1 (converted scenario A1 / M1 spine)",
             verdict = passed ? "PASS" : "FAIL",
+            // Conversion-backlog item A1 in wave1-scenario-conversion-2026-09-18.md.
+            // This run satisfies ONE accept→advance→turn-in→re-discover cycle,
+            // NOT the A1 acceptance criteria (level 1→10, whole curated route,
+            // death recovery). Label it by that smaller scope, not as "M1 spine".
+            backlogItem = "A1 (M1 quest/progression spine) — single-cycle proof only, not the A1 exit",
+            questCoverage = new
+            {
+                stagedQuest = new
+                {
+                    questId = QuestFirst,
+                    // observed from the wake loop: activeIds contained 6198
+                    accepted = (bool?)firstQuestAccepted,
+                    // observed: readyQuestIds contained 6198 at least once
+                    reachedReady = (bool?)firstQuestReachedReady,
+                    // observed: firstDone — arcCompleted[0] became true
+                    completedInSession = (bool?)firstQuestCompletedFlag,
+                    // observed: completed_quests block/bit read back after restart
+                    completedBitPersistedAfterRestart = (bool?)completedBitPersisted,
+                },
+                // One shape for both branches: no follow-up accepted leaves the
+                // measurements null rather than flipping them to false.
+                followUpQuest = new
+                {
+                    questId = (uint?)rediscoveredQuestId,
+                    accepted = (bool?)rediscoveredAccepted,
+                    activeRowPersistedAfterRestart = (bool?)activeRowPersisted,
+                    // null = not observed. This run never re-polled this quest's
+                    // completed flag, so absence of a completion is NOT evidence
+                    // — say so instead of asserting a value nobody measured.
+                    completed = (bool?)null,
+                    completionNote = "not observed — the test never re-checked this quest's completed flag",
+                    noneAccepted = rediscoveredQuestId == 0,
+                },
+                trackedSecondId = new
+                {
+                    questId = QuestSecondTracked,
+                    // MEASURED, not assumed. 330 is not forbidden — if the
+                    // arbiter legally picks it as the follow-up, this is true.
+                    accepted = (bool?)trackedAccepted,
+                    completed = (bool?)trackedQuestCompletedFlag,
+                    note = trackedIsFollowUp
+                        ? "the arbiter picked this id as the follow-up in this run"
+                        : "passed to the bridge only so a second tracked flag is reported; not the follow-up chosen here. No 6198→330 chain is claimed.",
+                },
+                noChainClaimed = "single-cycle only — no multi-quest chain, no A1 route exhaustion, no level 1→10 progression claim",
+            },
             pass = passed,
             wallSeconds = Math.Round(wallSeconds, 1),
-            arc = new[] { QuestFirst, QuestSecond },
             lane = new
             {
                 root = E2eStack.E2eRoot,
@@ -446,9 +545,38 @@ public class QuestPerceptionLoopE2eTests
                 loginPort = E2eStack.LoginPort,
                 gamePort = E2eStack.GamePort,
             },
+            provenance = new
+            {
+                // Bare HEAD, unchanged convention. On its own this cannot tell a
+                // clean checkout from a dirty one.
+                head = dirty.Head,
+                // MEASURED at report time: what the TEST ASSEMBLY was built from.
+                sourceDirty = new
+                {
+                    dirtyPathCount = dirty.DirtyPathCount,
+                    trackedChangedPathCount = dirty.TrackedChangedPathCount,
+                    untrackedPathCount = dirty.UntrackedPathCount,
+                    digest = dirty.Digest,
+                    trackedPaths = dirty.TrackedPathList,
+                    unavailable = dirty.Unavailable,
+                    scope = "whole working tree (tracked changes + untracked files)",
+                    digestCovers = "tracked: git diff HEAD text; untracked: path + file bytes, with a 1 MiB per-file content cap (larger files contribute size only)",
+                    doesNotProve = "that the built test DLL matches this digest, nor that the published Game/Login binaries match it",
+                },
+                // NARROWER and different: the stamp that decides whether the lane
+                // republishes. Covers only AAEmu.Commons, AAEmu.Commons.Network,
+                // AAEmu.Game, AAEmu.Login — NOT AAEmu.IntegrationTests, so it
+                // cannot witness this test file's own state.
+                publishSourceIdentity = new
+                {
+                    stamp = E2eStack.PublishSourceIdentity,
+                    scope = "AAEmu.Commons AAEmu.Commons.Network AAEmu.Game AAEmu.Login",
+                    excludesThisProject = true,
+                    stampPath = Path.Combine(E2eStack.E2eRoot, "runtime", ".publish-stamp"),
+                },
+            },
             chain,
             legs = legs.Select(l => new { leg = l.Leg, passed = l.Passed, detail = l.Detail, ms = Math.Round(l.Ms, 0) }),
-            trace = traceRows,
             logTail = new { unhandledExceptions = unhandled, fatals },
             evidence,
         };

@@ -46,6 +46,110 @@ public static class E2eStack
             }
         }
     }
+    /// <summary>
+    /// What the TEST ASSEMBLY was built from, measured at run time. <see cref=
+    /// "SourceRevision"/> alone is a bare <c>git rev-parse HEAD</c> and cannot
+    /// distinguish a clean checkout from a dirty one — the same 40-char SHA is
+    /// the identity of an arbitrarily modified tree. This property records the
+    /// measured working-tree state so a report never implies a clean build.
+    ///
+    /// <para><b>Scope, stated honestly:</b> this covers the whole working tree
+    /// (tracked modifications/deletions plus untracked files), which is what the
+    /// test runner was compiled against — it is a superset of
+    /// <see cref="PublishSourceIdentity"/>'s publish-scope. It is a
+    /// path-and-content digest: tracked entries hash their <c>git diff</c> text,
+    /// untracked entries hash their path plus file bytes. It does NOT prove the
+    /// built DLL corresponds to it — that is the publish stamp's job, over a
+    /// narrower set of source dirs.</para>
+    /// </summary>
+    public static SourceDirtyIdentity MeasuredSourceIdentity => ComputeSourceDirtyIdentity();
+
+    /// <summary>Publish-scope stamp identity — a NARROWER, different question.</summary>
+    public static string PublishSourceIdentity => ComputePublishStamp();
+
+    /// <param name="Head">Bare <c>git rev-parse HEAD</c>, or "unknown".</param>
+    /// <param name="DirtyPathCount">Measured count of tracked-modified/deleted plus untracked paths.</param>
+    /// <param name="TrackedChangedPathCount">Subset that is tracked-but-changed.</param>
+    /// <param name="UntrackedPathCount">Subset that is untracked.</param>
+    /// <param name="Digest">sha256 over HEAD + the sorted path list + each tracked entry's diff text + each untracked entry's path and bytes.</param>
+    /// <param name="TrackedPathList">Sorted tracked-changed paths, newline separated.</param>
+    /// <param name="Unavailable">Set when git could not be resolved; the other fields are then not trustworthy.</param>
+    public sealed record SourceDirtyIdentity(
+        string Head,
+        int DirtyPathCount,
+        int TrackedChangedPathCount,
+        int UntrackedPathCount,
+        string Digest,
+        string TrackedPathList,
+        bool Unavailable);
+
+    private static SourceDirtyIdentity ComputeSourceDirtyIdentity()
+    {
+        try
+        {
+            var headResult = RunCapture("git", "rev-parse HEAD", RepoRoot, timeoutMs: 10_000, check: false);
+            var head = headResult.ExitCode == 0 ? headResult.Stdout.Trim() : "unknown";
+
+            // -z would be safer for exotic paths, but these lists feed a digest
+            // and a display field; NUL-splitting avoids newline ambiguity.
+            var tracked = RunCapture("git", "diff --name-only HEAD", RepoRoot, timeoutMs: 30_000, check: false);
+            var untracked = RunCapture("git", "ls-files --others --exclude-standard", RepoRoot, timeoutMs: 30_000, check: false);
+            if (tracked.ExitCode != 0 || untracked.ExitCode != 0)
+                return new SourceDirtyIdentity(head, 0, 0, 0, "unavailable", "", true);
+
+            var trackedPaths = tracked.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).OrderBy(p => p, StringComparer.Ordinal).ToList();
+            var untrackedPaths = untracked.Stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).OrderBy(p => p, StringComparer.Ordinal).ToList();
+
+            using var sha = SHA256.Create();
+            var payload = new StringBuilder();
+            payload.Append(head).Append('\n');
+            // Tracked: hash the DIFF TEXT, so re-editing an already-dirty file
+            // changes the digest. Hashing the path list alone would not.
+            var diff = RunCapture("git", "diff HEAD", RepoRoot, timeoutMs: 60_000, check: false);
+            payload.Append(diff.Stdout);
+            // Untracked: path + bytes. Size-capped per file so a large artifact
+            // cannot make this unbounded; the cap is disclosed in the note.
+            foreach (var p in untrackedPaths)
+            {
+                payload.Append("U:").Append(p).Append(':');
+                try
+                {
+                    var full = Path.Combine(RepoRoot, p);
+                    if (File.Exists(full))
+                    {
+                        var info = new FileInfo(full);
+                        const long MaxBytes = 1 << 20;
+                        if (info.Length <= MaxBytes)
+                            payload.Append(Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(full))));
+                        else
+                            payload.Append($"size={info.Length}:content-hashed-above-1MiB-cap");
+                    }
+                    else
+                    {
+                        payload.Append("directory");
+                    }
+                }
+                catch (IOException)
+                {
+                    payload.Append("unreadable");
+                }
+                payload.Append('\n');
+            }
+
+            return new SourceDirtyIdentity(
+                head,
+                trackedPaths.Count + untrackedPaths.Count,
+                trackedPaths.Count,
+                untrackedPaths.Count,
+                Convert.ToHexString(sha.ComputeHash(Encoding.UTF8.GetBytes(payload.ToString()))).ToLowerInvariant(),
+                string.Join('\n', trackedPaths),
+                false);
+        }
+        catch
+        {
+            return new SourceDirtyIdentity("unknown", 0, 0, 0, "unavailable", "", true);
+        }
+    }
 
     // Ports are env-overridable so an isolated soak stack can run beside the
     // shared one on the same host (M6 soak pattern, t_1ed9881f): point

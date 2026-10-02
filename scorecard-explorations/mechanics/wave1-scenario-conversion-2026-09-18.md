@@ -88,18 +88,48 @@ and direct source/test reads listed per block.
   `LevelingLoopScenario.cs:366`) and a mid-route logout/restart checkpoint.
 - **Authoritative resulting state:** live `Character` — `Character.Quests.HasQuestCompleted`
   per arc quest, `Character.Level`, bag contents, `character.Transform.World.Position`
-  (region-joined), restart-persisted rows in MySQL (`characters`, `character_quests`) read
-  back after a real `E2eStack.RestartGameServer()` (`E2eStack.cs:661-690`).
-- **Captured evidence:** `$E2E_ROOT/logs/m1b-solzreed-route-report.json` (+ `-trace.jsonl`);
-  MySQL pre/post quest-state snapshot; wire frames for locomotion (`SCOneUnitMovementPacket`,
-  the `InterzoneLoopE2eTests.cs:384-398` capture pattern); `game.log` window.
+  (region-joined), restart-persisted MySQL state (`characters`, completed-quest
+  bitset in `completed_quests`, active quest rows in `quests`) read back after
+  a real `E2eStack.RestartGameServer()` (`E2eStack.cs:661-690`).
+- **Captured evidence:** PLANNED, NOT YET CAPTURED — the A1 exit run is unbuilt;
+  the driver does not exist (see delta 1). The planned outputs are
+  `$E2E_ROOT/logs/m1b-solzreed-route-report.json` (+ `-trace.jsonl`), a MySQL
+  pre/post quest-state snapshot, wire frames for locomotion
+  (`SCOneUnitMovementPacket`, the `InterzoneLoopE2eTests.cs:384-398` capture
+  pattern), and a `game.log` window. **No file named
+  `m1b-solzreed-route-report.json` exists in any lane root as of 2026-10-02** —
+  this row names what the run WILL emit, not evidence it has produced. The
+  narrower live evidence that does exist is cited in delta 1 below and in the
+  Already-bot-driven list.
 - **Human review required?** **No for the capability claim.** Review only if the operator
   wants to spot-check that the route matches the curated list. The H row (Field Guide §5.1)
   remains Josh-owned and unchanged: a bot run never moves H.
 - **Conversion deltas (what does NOT yet exist and must be built, in scope):**
-  1. The `leveling-loop-perception` template is registered (`BotScenarioTemplates.cs:410,439`)
-     but has **no live E2E driver** — only `LevelingLoopScenarioRigTests` (SYNTHETIC-RIG).
-     A live driver must run the *production* scheduler loop, not `RunAsScenario`.
+  1. The `leveling-loop-perception` template (`LevelingLoopScenario.ScenarioName`,
+     `LevelingLoopScenario.cs:156`) is registered (`BotScenarioTemplates.cs:410,439`) but the
+     TEMPLATE ITSELF has **no live E2E driver** — its own accept→pursue→auto-equip→turn-in
+     cycle is covered only by `LevelingLoopScenarioRigTests` (SYNTHETIC-RIG), which calls
+     `LevelingLoopScenario.Run`, not the production scheduler. The narrow gap: a live driver
+     must run the *production* scheduler loop over the curated route, not `RunAsScenario`.
+     **Do not read this as "quest acquisition has no live proof"** — the production
+     quest-bootstrap slice it would build on already has Tier-2 live evidence:
+     `AAEmu.IntegrationTests/E2e/G3AutonomousQuestAccept3512Tests.cs`
+     (`SchedulerWake_StagedAtTrueGiver_AcceptsViaLiveActor`) drives production-arbiter
+     acceptance of quest 251, and
+     `AAEmu.IntegrationTests/E2e/QuestPerceptionLoopE2eTests.cs`
+     (`QuestPerceptionLoop_PerceiveAcceptTurnIn_Rediscover_OnLiveServer`) drives one staged
+     6198 accept→advance→turn-in→completion plus one rediscovered 251 accept (t2sol, 2026-10-02,
+     1/1 PASS; `logs/quest-perception-loop-report.json`).
+     **Staging disclosed, and its geography is unverified:** both stage the character once next
+     to a mapped quest giver/start hub before START — G3 via `teleportToNpc(3512)`
+     (`G3AutonomousQuestAccept3512Tests.cs:402`), the quest test via one `op2":"place"` call
+     (reported at runtime as zone 179). Zone 179 is NOT one of the Solzreed zones 9/124/125, and
+     the coordinate→zone→settlement mapping behind these staging points is not established in the
+     record; do not read either position as a Solzreed coordinate until it is corroborated.
+     **Scope differs per test:** G3 covers *acceptance only* (quest 251 active); the quest-loop
+     test covers ONE full cycle (6198 through completion) plus one accept. Neither runs the
+     curated route, neither proves unassisted acquisition from natural spawn, and neither is
+     the A1 exit or any claim about H.
   2. Arc coverage beyond the bounded 254→255 leg is unproved (M1-a..M1-g arcs 250/251/265/266/354/
      2255→2266 are not driven end-to-end by any live test).
   3. `M1M2ReplayScenario` mount segment declares **NO REAL MOUNT** headless
