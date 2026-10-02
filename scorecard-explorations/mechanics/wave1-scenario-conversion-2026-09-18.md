@@ -175,7 +175,7 @@ and direct source/test reads listed per block.
 | **Parent** | A1 (`:57`), delta 1 (`:107-114`) — a live driver running the PRODUCTION scheduler, not `RunAsScenario`. |
 | **Outcome (one sentence)** | A fresh level-1 Nuian, left at its untouched `CharTemplates.json` natural spawn, discovers and accepts its first quest **with no placement, no teleport, no grant** — walking there itself. |
 | **Baseline / dirty** | HEAD `80b5715d4`; canonical DB md5 `78b3bdbf038db3b927056106efdf91af`; tree dirty from other workers (recorded, not owned). |
-| **Setup (disclosed)** | Real login/provision via `BotNetworkSession.ConnectAsync`; `AAEMU_QUEST_BOOTSTRAP_ENABLED=1` at game-process boot; bridge `observe`/`wake` reads only. **No** `op2:"place"`, no `teleportToNpc`, no GM kit, no money/level/item grant, no forced quest, no direct `AcceptQuest` call. |
+| **Setup (disclosed)** | Real login/provision via `BotNetworkSession.ConnectAsync`; `AAEMU_QUEST_BOOTSTRAP_ENABLED=1` at game-process boot. **The bridge is not read-only:** besides `observe` reads, the harness issues `op2:"wake"` every second for up to 5 minutes, and each call is a **driver, not a query** — `BotDriveBridge.cs:4452` calls `scheduler.Wake(character.Id)` and blocks until `TotalStepsRun` advances, so it *causes* a scheduler step and only then reads the outcome. **"Unprompted" here means no named target/quest supplied by the harness — NOT hands-off.** No `op2:"place"`, no `teleportToNpc`, no GM kit, no money/level/item grant, no forced quest, no direct `AcceptQuest` call. |
 | **Start coordinates** | `CharTemplates.json` template id=1 = `(15578.042, 15382.122, 126.484)`. Consumer: `CharacterManager.cs:389-418` recomputes `ZoneId` at boot. |
 | **Seam under test (EXISTING — no new gameplay)** | `BotRoamStepExecutor.StepQuestLeg` → `ArmQuestTravel` (`:1642`) → `ResolveQuestTravelTarget` (`:1764`), offerer branch (`:1798-1829`), generic over `SpawnManager.GetAllSpawners()` + `OffersWalkableQuest` (`:1844`). |
 | **Why NEW** | G3 `teleportToNpc(3512)` and `QuestPerceptionLoopE2eTests` `op2:"place"` both stage NEXT TO a giver — 116.8 m from natural spawn. This offerer branch had **zero** live coverage. |
@@ -240,12 +240,16 @@ and direct source/test reads listed per block.
 > Marianople route. **H is a separate track, not one of these legs**, and stays
 > UNKNOWN independently of the loop's completeness.
 >
-> **On autonomy:** within this leg the destination was chosen by the bot's own
-> production arbitration (`OffersWalkableQuest` band+legality rule over the
-> spawner index) with no human or scripted target — that local choice **is**
-> unassisted and is what this leg proves. **Full-journey autonomy is a
-> different claim** and remains unproved: no repetition, no survival across
-> restart, and no measured inventory/gold state.
+> **On autonomy — narrow claim only; do not read as hands-off.** Within this leg the
+> *destination* was chosen by the bot's own production arbitration
+> (`OffersWalkableQuest` band+legality rule over the spawner index) with no human and
+> no named target or quest supplied by the harness — the bot picked the target and the
+> `AcceptQuest` came out of its own scheduler sweep. That local choice **is** what this
+> leg proves. **It is not hands-off operation:** the harness *initiates* the stepping by
+> calling `op2:"wake"` every second for up to 5 minutes, and each call is a driver that
+> invokes `scheduler.Wake(...)`. Nothing here shows the bot would keep acting with no
+> external nudge. **Full-journey autonomy is a different claim** and remains unproved:
+> no repetition, no survival across restart, and no measured inventory/gold state.
 >
 > **Infra notes:** MTP swallows the test's stdout entirely, so every value above
 > is read from the lane artifact `/root/aaemu-e2e-t2-sol/logs/game-restart.log`
