@@ -1,12 +1,24 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
-Populated from implementation reality at local source/test HEAD
-`da0fdc61a72a15111fddc8ac627a164a5f050558`. M5 bounded decision proposal
-`263ecc66c474ca1c5f4b085e86ef3e47f49fd1` and M6 cancellation
-`950cfd279`, population isolation `c97909f4f`, and opt-in six-hour leg
-`155c82c66` are integrated. The six-hour test is default skipped and requires
-`A5_TIER3_SIX_HOUR=1`, minutes >=360, sample seconds 1..300, cooperative
-deadline propagation, and ID-bound `finally` cleanup.
+> **Provenance correction (2026-10-01).** The header previously read *"Populated from
+> implementation reality at local source/test HEAD
+> `da0fdc61a72a15111fddc8ac627a164a5f050558`"*, which was a **third** SHA that
+> disagreed with [`playerbot-blockers.md`](../playerbot-blockers.md) (`792774d7`).
+> Both are real commits dated 2026-08-28 and both predate current repo HEAD
+> `626548de92b8dca8af1f0f92e22d37c9fbe6074e`.
+>
+> **Nothing below was re-verified at `626548de`.** Every row, count, and gate record
+> in this document carries the SHA it was actually measured at. Per the evidence
+> rules ([`AGENTS.md`](../../AGENTS.md) evidence-honesty gate; a commit subject is not
+> evidence), rows must be cited **at their own proven SHA** and must not be read as
+> current-HEAD results. Re-verification at HEAD is an open task, not an assumption.
+>
+> **Documentation-record checkpoints referenced below (unchanged, each dated):**
+> M5 bounded decision proposal `263ecc66c474ca1c5f4b085e86ef3e47f49fd1` (2026-08-28);
+> M6 cancellation `950cfd279`, population isolation `c97909f4f`, and opt-in six-hour
+> leg `155c82c66` (2026-08-28) are integrated. The six-hour test is default skipped and
+> requires `A5_TIER3_SIX_HOUR=1`, minutes >=360, sample seconds 1..300, cooperative
+> deadline propagation, and ID-bound `finally` cleanup.
 
 Corrected bounded Tier3 readiness at source/test `4721cbd306cbf346bfe38b7373d5adf479b6231f`
 passed 1/1 in 15m20.984s: seeded 1000, embodied 50, dormant 950,
@@ -50,15 +62,61 @@ Operator command (requires Docker, read-only `/root/hl-cp-test` assets, and
   sustain (no mechanic missing, driver unproven), private placement (quest-4438 /
   design, placement choice, headed connection, upfront tax), and tax-sustained
   ownership (recurring income downstream of autonomous trade).
-- Shared progression acceptance objective: [ROADMAP current direction](../../ROADMAP.md#current-direction-and-acceptance-lanes-2026-09-12).
-  Formal H is not required to run that next bot acceptance path.
+- Shared progression acceptance objective: [ROADMAP current delivery direction](../../ROADMAP.md#current-delivery-direction).
+  Formal H is not required to run that next bot acceptance path. Anchor corrected
+  2026-10-01 — this previously pointed at `#current-direction-and-acceptance-lanes-2026-09-12`,
+  a heading that does not exist in [`ROADMAP.md`](../../ROADMAP.md).
 - A5 CLOSED and M8 QUALIFIED per the 2026-09-08 records ([STATUS](../../STATUS.md),
   [ledger](../../EVIDENCE-LEDGER.md#change-log-append-only)). The source/test block
   above and the September 5 addendum below are historical checkpoints, not present
   blockers.
 - **Farming Loop Diagnostics & PB-FARM-01 (2026-09-13):** Audit of live farming H-gate failures identified three code bottlenecks in `BotRoamStepExecutor.cs`: 3m merchant discovery range (`ResolveSeedMerchant`), 150m soil horizon (`ResolveSoilTarget`), and maturation patrol fallthrough (`WaitingMaturity` clearing `NeedsLegActive`). Recorded as `PB-FARM-01` in [playerbot-blockers](../playerbot-blockers.md); full architecture and testing analysis documented in [PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md](../../PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md).
 - **GOAP Rollout Policy (2026-09-13):** Full A* GOAP planning is postponed until core loops (Questing, Farming, Trade Packs) achieve verified `L = 2` closure. Loops are structured with explicit preconditions and effects (`BotProposalPrecondition`), routed via a simple priority arbiter.
-- **PlayerBot Architecture Realignment & EntryPath Contract (2026-09-14):** PlayerBots are backed by real `Character` records, but actions historically entered the stack below human player controllers, causing robotic presentation (e.g. 25m telekinetic harvesting, zero-cast doodad placement, missing interaction states). Adopted new scorecard dimension: `EntryPath: SHARED | PARTIAL | BOT-SPECIFIC | UNKNOWN`. Mandatory policy: Every capability must trace the human packet path and share the lowest common player semantic seam.
+- **PlayerBot Architecture Realignment & EntryPath Contract (2026-09-14):** PlayerBots are backed by real `Character` records, but actions historically entered the stack below human player controllers, causing robotic presentation (e.g. 25m telekinetic harvesting, zero-cast doodad placement, missing interaction states). **Corrected 2026-10-01 — this line previously read "Adopted new scorecard dimension", which was never true of the ledger.** `EntryPath: SHARED | PARTIAL | BOT-SPECIFIC | UNKNOWN` is a **PROPOSED, non-scoring** provenance label, recorded as an open decision in [`SCORECARD.md`](../../SCORECARD.md#open-dimension-proposal-entrypath-decision-required-not-adopted-2026-10-01) and **not added** to the C/W/H/A/R/S dimension set; no grade is affected and no cell carries it. Stated policy: every capability must trace the human packet path and share the lowest common player semantic seam. The value definitions are restated below as a definition only — see the status note there.
+
+#### EntryPath — definition of record (restated 2026-10-01 for self-containment)
+
+**What it measures — one thing only:** the layer at which a bot's action *enters* the
+gameplay stack relative to where a human player's action enters. It is **not** a
+capability grade, not a correctness verdict, and not a substitute for Perceive /
+Decide / Act / Verify. A capability can be functionally correct at the right
+evidence layer and still be graded `PARTIAL` here, and can be `SHARED` here while its
+autonomous loop is still unproved.
+
+**The test, in order.** Trace the human packet path end-to-end, find the *lowest
+common semantic seam* where a bot could enter without reimplementing the rule, and
+ask which side of that seam the bot actually enters on.
+
+| Value | Assertion |
+|---|---|
+| `SHARED` | The bot enters the **exact same semantic action/skill layer** the human packet handler enters. The rule is executed once, by the same code, for both actors. |
+| `PARTIAL` | The bot **uses real engine services** but enters **below human lifecycle semantics** — e.g. instant zero-cast execution, 25 m reach, missing interaction/cast states. The rule is real; the lifecycle is truncated. |
+| `BOT-SPECIFIC` | The bot has a **parallel or custom implementation** of game rules. This is the state rule #9/#10 prohibit (no parallel character/inventory/quest/property/economy path). |
+| `UNKNOWN` | The entry layer has **not been audited or evidenced**. `UNKNOWN` means unmeasured — it is not a pass and must not be read as `SHARED`. |
+
+**What each value does *not* assert.** None of these values prove an autonomous loop,
+an `L` (live) result, or `H` (human feel). `SHARED` asserts *entry-point equivalence
+only*; loop closure is still governed by the Autonomous Loop column and the loop
+completeness checklist. `PARTIAL` is not a defect report — it is a named, fixable
+entry-layer gap. `UNKNOWN` is never upgraded by inference.
+
+**Status of this dimension (corrected 2026-10-01).** `EntryPath` is **PROPOSED, not
+adopted, and not populated.** The Perceive/Decide/Act/Verify table below carries no
+EntryPath column and no capability row carries a value. The authoritative decision record
+is [`SCORECARD.md`](../../SCORECARD.md) §*"Open dimension proposal — EntryPath — DECISION
+REQUIRED, NOT ADOPTED"*, which states the label is **not** part of the C/W/H/A/R/S
+dimension set and that the decision owner is the user. **Correction to an earlier
+2026-10-01 draft of this file:** it claimed EntryPath "appears in neither SCORECARD.md nor
+STATUS.md". That was wrong — EntryPath appears **6 times** in `SCORECARD.md`, in that open
+proposal, which additionally observes that this matrix called the dimension "adopted"
+while the ledger never carried it. The two documents are now reconciled on that point: this
+matrix no longer claims adoption, and it does not claim ownership of the scorecard. Until
+rows are filled at a named SHA, this definition is a **definition only** and the whole of
+the claim.
+
+**Source of the original wording:**
+[`PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md`](../../PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md) §5.2
+"Scorecard Addition: EntryPath Metric".
 
 ## CURRENT ADDENDUM (2026-09-05 — historical sections below preserved verbatim)
 

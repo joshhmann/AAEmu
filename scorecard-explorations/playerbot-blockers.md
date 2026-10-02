@@ -8,8 +8,17 @@ Format: ID · scenario · intended action · observed vs expected · layer ·
 evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 
 
-## Current source/evidence checkpoint (2026-08-28)
-- Current source/test HEAD: `792774d7707b8b578b8d9975896e0a1ac719f361`
+## Current source/evidence checkpoint (superseded 2026-10-01)
+- **Authoritative current source/evidence checkpoint (recorded 2026-10-01,
+  read-only reconciliation, no build/test run):** current branch `develop`,
+  `git rev-parse HEAD` = **`626548de92b8dca8af1f0f92e22d37c9fbe6074e`**.
+  Working tree was **dirty** at that checkpoint (inherited uncommitted work, not
+  authored by this reconciliation; the path count is deliberately omitted as
+  volatile). **No evidence row
+  below has been re-verified at `626548de`.** Every grade and evidence cell in
+  this ledger stands on the revision at which it was actually measured.
+- **Historical checkpoint (2026-08-28) — preserved verbatim, do not read as
+  current:** Current source/test HEAD: `792774d7707b8b578b8d9975896e0a1ac719f361`
   (`origin/develop`). Per-run soak ownership hardening is `799b698ad`:
   A5/A5Tier3 snapshot named account/character rows and clean only newly owned
   IDs in `finally`; sibling-preservation tests pass 2/2. No broad wildcard
@@ -150,12 +159,46 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   4. **Unit & Gate Evidence**: `BotMountManagerTests` **4/4** green; `LevelingLoopScenarioRigTests` **37/37** green. Full `./scripts/gate.sh` passed with 0 compiler errors/warnings, **2,773 total tests (2,772 passed, 1 skipped)**, MCP BotControl 39 tools, MCP Archaeology 24 tools.
 - Status: IMPLEMENTATION LANDED / ADVANCED COMBAT MOUNT EXPANSION OPEN
 
-### PB-SOAK · Dormant-timer soak and cancellation blocker — HARNESS HARDENED / SOAK OPEN
+### PB-SOAK · Dormant-timer soak and cancellation blocker — HARNESS HARDENED / A5 CONJUNCTION CLOSED 2026-09-08 (evidence reconciled 2026-10-01)
 - Scenario: Tier-3 dormant bots and long-running scheduler validation.
-- Observed: no six-hour dormant-timer soak exists in current evidence; no soak
-  snapshots and ID-bound `finally` cleanup (`799b698ad`); sibling-preservation
-  tests pass 2/2, with no broad wildcard cleanup in those probes.
-- Harness blocker (RESOLVED): `SeedBox` synchronous bridge calls and native `Thread.Join`
+- **Correction (2026-10-01, evidence reconciliation — no grade promotion).** The
+  previous wording here read "no six-hour dormant-timer soak exists in current
+  evidence" and "6-hour soak remains open pending dedicated operational
+  environment soak validation". That wording was stale as of 2026-09-06 and is
+  withdrawn; the runs below exist. This correction records *evidence*, it does
+  not promote any PlayerBot capability, autonomy, population, or H claim, and
+  the tier-3 legs are evidenced at their own tested revisions — NOT at current
+  HEAD `626548de92b8dca8af1f0f92e22d37c9fbe6074e`.
+  - **G2-A5 FINAL Tier-3 exit conjunction** = (a) SHAPE + (b1) 6h quiescence-budget
+    leg + (b2) actual timer progression (ROADMAP "A5 Tier-3 contract
+    reconciliation", 2026-09-08).
+  - **(a) SHAPE re-shown 4/4**, engine `a23cdc33eef55af18bfb1535f32ca9fc3ed62834`:
+    `/root/aaemu-e2e-a5-shape/logs/g2-a5-tier3-report.json`, `runAtUtc`
+    `2026-09-08T08:43:32.8072192Z` — verified in this report: `passed` verdicts
+    `thousandDormantRegistered=true`, `embodiedWithin50=true`,
+    `rssWithin15PctOfBaseline=true` (`rssDeltaPct -12.9`, 6204.9 → 5404.7 MB
+    medians), `materializeP95Under3s=true` (`materializeP95Ms 256.2`); 50/50
+    dematerialized on human leave. Note the report's own
+    `sixHourDormantTimersLeg` field reads `PENDING — ... (out of scope for this
+    measurement)`, i.e. (a) does not itself evidence (b1).
+  - **(b1) 6h quiescence-budget leg PASS**, runAtUtc `2026-09-05T15:33:11.8271513Z`:
+    `passed=true`, `failures=[]`, `windowCompleted=true`, `windowStatus=FULL`,
+    window 360.0000879666667 min, `sampleCount=361`, `rssGrowthMb=6.7`
+    (budget 512), DB writes 0/min. **Tested binary `322390b32`**; the report's
+    `commit` field reads `ca7762d7daff9d0d7b6789ef43a7a00dff325626`, which is a
+    docs-only commit — the tested *source* revision is `322390b32`.
+  - **(b2) asserted soak PASS on .165**, runAtUtc `2026-09-06T02:49:08Z`,
+    run 6h16m05s 1/1: `passed=true`, `failures=[]`, FULL 360.00001-min window,
+    360 samples, RSS growth 25.4 MB (budget 512). **Tested binary `02903804b`.**
+    STATUS records its own scoping caveat: "b2 passed AT revision `02903804b`,
+    not at current HEAD ... the letter of the evidence is the tested revision."
+  - **(b2) bounded restart leg PASS**, `Probe_A5Tier3RestartConservesDormantTimers`
+    1/1 in 3m34s, HEAD `f2ef4b16f` (docs-only over b2 code `54f7e741a`),
+    isolated root `/root/aaemu-e2e-a5-restart` (62xx ports, DB 63306).
+  - All five revisions above are ancestors of current HEAD (262 / 194 / 82
+    commits back respectively), so the runs are on this line of development —
+    but **not re-verified at HEAD**.
+- Harness blocker (RESOLVED, retained): `SeedBox` synchronous bridge calls and native `Thread.Join`
   were replaced by asynchronous `BotDriveClient.CallAsync`, cooperative `CancellationToken`
   propagation, and `Task.WhenAll` (`950cfd279`). Furthermore, `WaitBoot`, `WaitEmbodied`,
   `WaitDormantDiscovered`, and `SampleWindow` in `A5Tier3AcceptanceProbeTests` were hardened
@@ -163,9 +206,14 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
   `cancellationToken.WaitHandle.WaitOne(...)`, aborting immediately on cancellation/timeout.
   Evidence: `BotDriveClientCancellationTests` 3/3 passed.
 - Layer: BOT + SERVER (harness lifecycle and cancellation).
-- Evidence: current source/test HEAD `origin/develop`; 6-hour soak remains open pending
-  dedicated operational environment soak validation; harness cancellation fully hardened.
-- Status: HARNESS HARDENED / SOAK OPEN
+- **Still open (unchanged by the reconciliation above):** per-run soak ownership
+  hardening is `799b698ad` (A5/A5Tier3 snapshot names account/character rows and
+  cleans only newly owned IDs in `finally`; sibling-preservation tests 2/2). No
+  tier-3 soak leg has been re-run at current HEAD `626548de`. The
+  "preferably 12-hour" soak remains a ROADMAP *recommendation*, never a gate.
+  Budgets were not relaxed and must not be.
+- Status: HARNESS HARDENED / A5 CONJUNCTION CLOSED 2026-09-08 — tier-3 legs
+  evidenced at their tested revisions, not re-verified at HEAD.
 
 
 ## FIXED (evidence retained)
@@ -178,7 +226,13 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 - Evidence: `scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md`; deterministic parser tests 2/2.
 - Status: FIXED / CLOSED for the narrow handshake requirement; WAR-HONOR separately deferred.
 
-### PB-006 · Ship sailing physics non-functional live (2026-08-25) — FIXED 2026-08-26
+### PB-006 (ship-sailing) · Ship sailing physics non-functional live (2026-08-25) — FIXED 2026-08-26
+- **⚠ Duplicate ID notice (added 2026-10-01).** The ID `PB-006` is used by TWO
+  distinct blockers in this ledger. This one is **"Ship sailing physics
+  non-functional live"** (FIXED 2026-08-26). The other is **"PlayerBot Reboot
+  Persistence & Restoration Gap (Position Wipe & Inactive State)"** (FIXED
+  2026-09-14). History is NOT renumbered. **Cite both by title, never by ID
+  alone.**
 - Layer: SERVER, but NOT where the original report pointed. Two findings:
 - Finding 1 — "hull spawns ~100 m in air" was a MISDIAGNOSIS (no engine change needed):
   the internal ocean surface of main_world IS z=100 — data-driven from client
@@ -256,7 +310,12 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 ### PB-F4 · Transfers could never be boarded (TlId shadowing)
 - Fixed 3a534b539; live ride E2E green
 
-### PB-006 · PlayerBot Reboot Persistence & Restoration Gap (Position Wipe & Inactive State)
+### PB-006 (reboot-persistence) · PlayerBot Reboot Persistence & Restoration Gap (Position Wipe & Inactive State) — FIXED 2026-09-14
+- **⚠ Duplicate ID notice (added 2026-10-01).** The ID `PB-006` is used by TWO
+  distinct blockers in this ledger. This one is **"PlayerBot Reboot Persistence
+  & Restoration Gap (Position Wipe & Inactive State)"** (FIXED 2026-09-14). The
+  other is **"Ship sailing physics non-functional live"** (FIXED 2026-08-26).
+  History is NOT renumbered. **Cite both by title, never by ID alone.**
 - Scenario: PlayerBots created via `/bot add`, `/bot here`, manifests, or scripts persist across server reboots without loss of level, XP, equipment, quest progress, or world position
 - Observed vs expected:
   1. Dormancy materialization unconditionally overwrote saved DB coordinates back to home/spawn (`<0, 0, 50>` / Nuian spawn) inside `RestoreHomePosition`

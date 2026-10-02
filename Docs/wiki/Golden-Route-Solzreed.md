@@ -3,7 +3,17 @@
 - Audience: Players, testers, contributors
 - Last verified against: `develop` on 2026-08-05 (canonical `compact.sqlite3` r208022, zones 9/124/125; M1-5 scenario-harness census)
 - Scope: M1 golden-route document — the curated opening progression for a new Nuian character in Solzreed, plus intentionally excluded quests
-- Sources: `../../scorecard-explorations/solzreed-zone-report.md` (97 quests, kind-31 chains, gates), `../../scorecard-explorations/runnability.md` (88/97 T1 pass), `tools/quest-graph/README.md`
+- Sources: `../../scorecard-explorations/solzreed-zone-report.md` (97 quests, kind-31 chains, gates), `../../scorecard-explorations/runnability.md` (T1 pass count — see correction below), `tools/quest-graph/README.md`
+
+**Correction 2026-10-01 (read-only source re-verification):** this line previously read
+"`runnability.md` (88/97 T1 pass)". **The 88/97 figure never appeared in `runnability.md`** — I
+checked every commit that has touched that file. Commit `cf63716a0` (2026-08-04,
+"census citation 86/97 -> 88/97 (harness fixes landed)") changed it while the source at both
+that commit and its parent still read **86 PASS / 11 FAIL / 0 SKIP**, so 88 was an unsourced
+intermediate. `runnability.md` has since moved twice: 97 PASS / 0 FAIL (`6e367585d`, 2026-08-04),
+then the current **96 PASS / 1 FAIL / 0 SKIP** (`dc81dcd53`, 2026-09-24). Use that; do not use 88.
+The route content below was curated against the 2026-08-05 census and is **not** re-verified here —
+this correction changes the citation only and asserts nothing about whether the route still works.
 
 Solzreed is the LOCKED golden zone (ROADMAP.md — locked-shape, Josh 2026-08-03). This page is the
 curated route: which quests a fresh Nuian character follows, in what order, what each
