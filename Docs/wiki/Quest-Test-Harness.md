@@ -51,6 +51,33 @@ Per-zone readiness pipeline → golden-path expansion. See tools/quest-graph/REA
 test suite. Local gate is the real gate (upstream CI on fork PRs is
 unreliable).
 
+## Correction — G7d failure attributed to the wrong cause (2026-10-02)
+
+Commit `dd8a23624` ("WIP corpse-START readback race arm in G7d credit gate —
+UNVERIFIED") states in its message that the G7d run failed because "the only
+enabled backend on :1280 belongs to the q0 lane, so the hashed route cannot
+resolve to an isolated lane". **That attribution is wrong.**
+
+What was actually observed on the isolated `t2sol` lane:
+
+- `E2E_WEBAPI_PORT=27360`, so `WebApiBase` was `http://127.0.0.1:27360` — not
+  a shared `:1280`. The lane's own `Config.Local.json` read
+  `"WebApiNetwork": {"Host":"*","Port":27360}` and `Server.log` logged
+  `WebApi server started on *:27360` on every boot.
+- `GET /api/bots` returned **HTTP 404** with
+  `{"Message":"Bot control API is disabled"}`, while `GET /status` returned
+  **HTTP 200** — the lane was reachable, only the bot-control gate was closed.
+- Cause: `BotControlSettings.IsEnabled` needs `AAEMU_BOT_CTRL=1` or
+  `Bots.EnableBotControl=true`; neither was set on that lane.
+- The phrase "the shared 1280 port" in the test's exception message was a
+  hardcoded string naming no port actually dialled. It has since been removed
+  so the message reports the configured `WebApiBase` and distinguishes an
+  observed disabled gate from a genuine connectivity failure.
+
+The failed run occurred before the changed branch executed, so the
+corpse-START race arm in `dd8a23624` **remains unverified**. No q0 or `.165`
+host was contacted.
+
 ## Related
 
 - Golden-Route-Solzreed · Project-Status · Developer-Notes · Home

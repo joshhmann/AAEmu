@@ -191,14 +191,19 @@ public class G7dQuestCreditGateTests
 
             AdoptLaneDbPassword();
             var bridge = new BotDriveClient(E2eStack.BridgePort);
-            // Shared-port routing: every lane game server binds *:1280
-            // (Kestrel SO_REUSEPORT), so each TCP connection hashes to ONE
-            // lane. A fresh HttpClient re-hashes; keep the first client whose
-            // backend answers enabled. Correct-lane delivery is proven later
-            // by the bridge-visible quest-prehold check on q0 (2260).
+            // Route selection has TWO regimes; see EnsureWebApiClientAsync.
+            //  - Legacy shared WebApi (WebApiPort = the default 1280): every
+            //    lane game server binds *:1280 via Kestrel SO_REUSEPORT, so each
+            //    TCP connection hashes to ONE lane and a fresh HttpClient really
+            //    can re-route. Keep the first client whose backend answers enabled.
+            //  - Isolated lane (E2E_WEBAPI_PORT overridden): WebApiBase is that
+            //    lane's OWN WebApi; retrying cannot change routing at all, so a
+            //    failure is the bot-control gate or a real connectivity fault.
+            // No lane host is assumed here — which lane answered is a runtime
+            // fact, checked below rather than assumed.
             var routeSw = Stopwatch.StartNew();
             using var http = await EnsureWebApiClientAsync(evidence);
-            Leg("webapi-route", true, "enabled WebApi backend reached (hashed route)", routeSw.Elapsed.TotalSeconds);
+            Leg("webapi-route", true, $"enabled WebApi backend reached at {WebApiBase}", routeSw.Elapsed.TotalSeconds);
             laneBridge = bridge;
 
             E2eStack.CleanupBotRows(BotAccount);
@@ -785,10 +790,10 @@ public class G7dQuestCreditGateTests
                 var corpseQs = E2eQuestDriver.QuestState(bridge, BotName, Quest251);
                 // Fixture proof (quest-side, read-only): the funnel loot arm must
                 // name OUR corpse lootable with a non-empty container. Loop-release
-                // seam (the token originates in Loot/LootBrain.cs, which maps
-                // LootReason.LoopLive to validate=loop-live; QuestBehavior invokes
-                // it and withholds validate=ok while character.IsAutoAttack): START
-                // re-taken mid-teardown otherwise sees only the withhold arm. Probe
+                // seam (the token is mapped in Loot/LootBrain.cs:279, which maps
+                // LootReason.LoopLive to validate=loop-live; LootBrain itself
+                // withholds at LootBrain.cs:168, and QuestBehavior — the emission
+                // site at :2704 — reports character.IsAutoAttack as that input): START
                 // g7d-probe-start-readback-race-20260925T192559Z: START reads empty
                 // at the first post-death tick for 59% of 58 corpses; the ok arm
                 // arrives +1 tick (~7.2s), and the discarded corpse looted 7.26s
@@ -1537,12 +1542,26 @@ public class G7dQuestCreditGateTests
         return out_;
     }
 
-    // ---- shared-port route selection: return the first HttpClient whose
-    // backend answers enabled (bounded re-hash; each fresh client hashes its
-    // new connection to one lane). Throws when no enabled backend answers —
+    // ---- Route selection, two regimes. LEGACY SHARED: with WebApiPort at its
+    // default 1280 every lane game server binds *:1280 (Kestrel SO_REUSEPORT),
+    // so each fresh HttpClient connection hashes to one lane and a bounded retry
+    // can genuinely re-route — keep the first client whose backend answers
+    // enabled. ISOLATED OVERRIDE: with E2E_WEBAPI_PORT set, WebApiBase is that
+    // lane's OWN WebApi and retrying CANNOT change routing, so every attempt
+    // hits the same backend. Throws when no enabled backend answers —
     // SETUP/webapi-route, never a loot verdict.
     private static async Task<HttpClient> EnsureWebApiClientAsync(StringBuilder evidence)
     {
+        // Two DISTINCT failures must never read alike. A reachable lane whose
+        // bot-control gate is off answers HTTP 404 "Bot control API is disabled";
+        // a lane that is down, mis-ported or unreachable throws. The old text
+        // conflated them ("disabled backend (re-hashing)") and the final exception
+        // hardcoded "the shared 1280 port" regardless of the port actually
+        // dialled — which is what produced a wrong diagnosis of a 2026-10-02
+        // isolated-lane failure. Report what was OBSERVED.
+        var observedDisabled = false;
+        var lastConnectivityError = "none";
+        var lastStatus = "n/a";
         for (var attempt = 1; attempt <= 12; attempt++)
         {
             var client = NewClient();
@@ -1550,24 +1569,42 @@ public class G7dQuestCreditGateTests
             {
                 using var response = await client.GetAsync("/api/bots");
                 var text = await response.Content.ReadAsStringAsync();
+                lastStatus = $"HTTP {(int)response.StatusCode}";
                 if (text.Contains("Bot control API is disabled", StringComparison.Ordinal))
                 {
-                    evidence.AppendLine($"- webapi route attempt {attempt}: disabled backend (re-hashing)");
+                    // Reachable and answering — just not armed. Retrying cannot
+                    // arm a gate; keep the count/timeout shape, record the fact.
+                    observedDisabled = true;
+                    evidence.AppendLine(
+                        $"- webapi route attempt {attempt}: {lastStatus} at {WebApiBase} — " +
+                        "bot control DISABLED (lane reachable; arming requires AAEMU_BOT_CTRL=1 " +
+                        "or Bots.EnableBotControl, not a retry)");
                     client.Dispose();
                     await Task.Delay(1000);
                     continue;
                 }
-                evidence.AppendLine($"- webapi route attempt {attempt}: enabled backend");
+                evidence.AppendLine($"- webapi route attempt {attempt}: enabled backend at {WebApiBase}");
                 return client;
             }
             catch (Exception ex)
             {
-                evidence.AppendLine($"- webapi route attempt {attempt}: {ex.GetType().Name} (retrying)");
+                lastConnectivityError = ex.GetType().Name;
+                evidence.AppendLine(
+                    $"- webapi route attempt {attempt}: connectivity failure at {WebApiBase} — " +
+                    $"{ex.GetType().Name} (retrying)");
                 client.Dispose();
                 await Task.Delay(1000);
             }
         }
-        throw new InvalidOperationException("no enabled WebApi backend reachable on the shared 1280 port after 12 hashed attempts");
+        throw new InvalidOperationException(observedDisabled
+            ? $"lane WebApi at {WebApiBase} answered {lastStatus} 'Bot control API is disabled' " +
+              $"after 12 attempts — the lane is REACHABLE but bot control is not armed. Arm it with " +
+              "AAEMU_BOT_CTRL=1 (plus AAEMU_BOT_CTRL_TOKEN matching the X-Auth-Token sent) on the " +
+              "lane game process, or Bots.EnableBotControl=true in its config. SETUP failure — not a " +
+              "loot verdict, and not a port or routing fault."
+            : $"no WebApi backend reachable at {WebApiBase} (configured E2E_WEBAPI_PORT=" +
+              $"{E2eStack.WebApiPort}) after 12 attempts; last connectivity error: {lastConnectivityError}. " +
+              "Connectivity failure — not a disabled-gate result.");
     }
 
     private static FunnelLine? ParseFunnel(string line)
