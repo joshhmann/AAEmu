@@ -1,8 +1,16 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
 Updated: 2026-09-18 · Wave One exit VERIFIED by independent second-session re-run (step-7 E2E 1/1, step-8 loop 1/1, fresh bots, restart + conservation confirmed); plant/harvest/tax/travel/H open
-Next dispatch source: the conversion backlog (8 missing actor/paths, §E) in `scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md`.
+Next dispatch source (owner-ratified 2026-10-01): the conversion backlog (8 missing actor/paths, §E) in `scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md`. **This file governs next-dispatch selection.** It supersedes `START-HERE.md` "Immediate dispatch priority" and the `ROADMAP.md#first-owned-small-plot-journey` slice table *as next-work selection*. `ROADMAP.md` remains authoritative for milestone requirements, boundaries, exit criteria and the standing freeze; `SCORECARD.md` for evidence dimensions. See the dispatch-source ruling immediately below for the rationale.
 PlayerBot API/E2E control-layer architecture audit: `scorecard-explorations/mechanics/playerbot-api-architecture-2026-09-18.md` (investigation-only, no production changes). Audit note: P12 (PlanTemplateCache flags-only key) is stale — worktree key is (Flags,Labor,Gold,GoalName) per step 4.
+
+**Dispatch source — RESOLVED 2026-10-01 (owner-ratified).** The three documents below each named a next dispatch source with none declaring the others superseded. That conflict was resolved by the owner on 2026-10-01: **line 4 of this file governs next-dispatch selection.** The three former claimants are retained as the history of the disagreement, not as a live conflict.
+  - this file, line 4 (2026-09-18): the conversion backlog, §E of `scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md`;
+  - `ROADMAP.md#current-delivery-direction` (2026-09-15 reconciliation, source checkpoint `d0d58e5848829b7a85da3847d03da00a90cb7c68`): "First owned small plot journey" + "High-priority corrective queue — 2026-09-16";
+  - `START-HERE.md` (last refreshed 2026-09-15): "Immediate dispatch priority — 2026-09-16" → "First product journey: ordinary starter → owned small plot → harvest/replant", and it points at `ROADMAP.md#first-owned-small-plot-journey`.
+ROADMAP's own journey table is the older of the three and lists most slices as **OPEN**; the conversion backlog is newer and claims to be the remaining gap. **Owner ruling (2026-10-01): this file, line 4, is the governing dispatch source** — it selects the next slice; `ROADMAP.md` keeps its authority over milestone requirements, boundaries, exit criteria and the standing freeze, and `SCORECARD.md` over evidence dimensions. Both documents are consistent with the standing freeze (see below); this ruling promotes no grade and establishes no new evidence.
+
+**Authoritative source/evidence checkpoint — 2026-10-01 (read-only; no build, no test, no gate.sh).** Branch `develop`, `git rev-parse HEAD` = `626548de92b8dca8af1f0f92e22d37c9fbe6074e`; working tree was dirty at that checkpoint (inherited uncommitted work; the path count is deliberately omitted as volatile). This names the current SHA only. **No claim recorded in this file has been re-verified at that SHA**; each retains the revision at which it was actually measured. Supersedes earlier "Branch of record"/"current source HEAD" lines **for SHA-naming only**, not for any verdict.
 
 ## 2026-09-18 — Wave One exit (VERIFIED by independent second-session re-run)
 
@@ -20,6 +28,44 @@ PlayerBot API/E2E control-layer architecture audit: `scorecard-explorations/mech
   Lane `/root/aaemu-e2e-b1housing`
   (DB 56306, login 7337, game 7339, bridge 7360, `aaemu_b1housing`) at source revision
   `533bfcae5becc0264946dbdd1ecde3141595b8b3`. `git diff --check` clean.
+- **Second-session re-run — artifacts located and read 2026-10-01 (verification of
+  the claim above, not a new claim).** Two distinct runs exist, at two distinct
+  revisions, and they are NOT byte-identical — that is expected, since frame
+  ObjIds are per-run:
+  - **Original run** — `/root/aaemu-e2e-b1housing/logs/step8-bot-loop-report.json`,
+    `sourceRevision 533bfcae5becc0264946dbdd1ecde3141595b8b3`,
+    `startedAtUtc 2026-09-18T05:54:39.8148100Z`, file mtime 2026-09-17 22:56
+    -0700, bots `Step8LoopA4e6e6d` (characterId 1) / `Step8LoopB64e26e`
+    (characterId 3), frame ObjId 9641, killed PID 1728433.
+  - **Independent re-run** — `soak-artifacts/deploy165-step8/20260918-010355/step8-bot-loop-report.json`,
+    `sourceRevision d0bea9e6a011d97d60157718996cfea7013ea7af`
+    (`git-head-sha.txt` in the same directory confirms it), `startedAtUtc
+    2026-09-18T08:06:12.9287786Z`, bot `Step8LoopA05e6f7` (characterId 1), frame
+    ObjId 44132, killed PID 3273829. Its own QA log
+    `qa-class-HomesteadBotLoopStep8E2eTests-20260918-010355.log` ends
+    "Test run summary: Passed! total: 1, failed: 0, succeeded: 1, skipped: 0,
+    duration: 3m 03s 365ms" — note this is **1/1 at 3m03s**, while the counts
+    bullet above records **1/1 in 2m51s** for the original lane run. Both are
+    single-test runs; the durations differ because the lanes differ.
+  - **Both runs reproduce the same 11-leg shape and the same verdicts:** kit
+    opt-in (designs 1, certs 15/15 required), labeled setup position
+    (`not a traversal proof`, 6 reported of 209 legal areas), claim-place-plot
+    `Completed` house 13 design 267, `hasLandPlot=true`, recovery A
+    `Rejected` "design item 15596 not found in inventory" with world unchanged,
+    recovery B no dispatch (`NoRequest`), construct `Completed` skill 18553
+    step `0→-1`, conservation `laborDelta 10` matching `engineChargeLp 10` and
+    `gold 0→0`, repeat second pass house 14, restart `pass1ByteEqual=true` /
+    `pass2ByteEqual=true`, post-restart re-read `ownedHouseObjId 256` /
+    `ownedHouseStep -1`. Both reports self-declare
+    `layer = "L (live authenticated server); H stays UNKNOWN"` and the same
+    `fixtureNote` (labeled kit opt-in + one `homestead move` setup positioning
+    BEFORE the loop; no in-run repair).
+  - **Scope unchanged by this verification:** the re-run confirms the *same*
+    claim→construct loop at a second revision. It does not verify the unit
+    107/107 split (that is a separate record above), does not add an autonomy,
+    population, breadth or H claim, and has not been re-run at current HEAD
+    `626548de92b8dca8af1f0f92e22d37c9fbe6074e`. The freeze stays lifted for the
+    claim→construct scope only.
 - **Carried over (PARTIAL / NOT PROVED / UNKNOWN):** ordinary acquisition (kit is a labeled grant);
   travel/reach by ordinary movement (disclosed setup, not traversed; 25 m vs 10 m reach-gate asymmetry
   recorded open); plant/grow/harvest/craft legs out of scope; ten-bot/population claims unsupported;
@@ -241,6 +287,38 @@ renumbered as M8. See the authoritative [scope map](PROJECT-CONTROL.md#scope-map
 - SHAPE re-show PASS at engine `a23cdc33e` (report `g2-a5-tier3-report.json` runAtUtc 2026-09-08T08:43:32Z, isolated lane `/root/aaemu-e2e-a5-shape`, 15m02s, probe 1/1): 1000/1000 dormant seeded (SQL-verified, 4.1 min sequential), exactly 50 embodied / 50 dematerialized on human leave (0 after), RSS Δ -12.9% (6204.9 → 5404.7 MB medians, within ±15%), wake-to-visible p95 256.2 ms (p50 221.4, max 277.8; window 33.0 s at default 3/sweep @ 2 s pacing). Steps/min parity 29956 vs 29965; tick p95 1.6 vs 1.7 ms.
 - Blocker found + fixed en route: scheduler DI deadlock (`b199e5d30` closed a BotRoamStepExecutor → BotGoalArbiter → SchedulePhase → BotScheduleService → BotRoamStepExecutor resolution cycle) wedged first-ever `GetService<IPlayerBotScheduler>` forever — bridge `{"cmd":"metrics"}` hung (2/2 probe WaitBoot timeouts pre-fix). Engine fix `a23cdc33e` (Lazy arbiter in the executor factory, no runtime changes): single metrics query returns tick.available=true on a fresh isolated boot. Harness stale-pid flaw also fixed `9b790f69f` (test-only: FindGamePid clears a dead cache → rescan; arm-T RSS had read -1/-1/-1).
 - Conjunction: (a) re-shown ✓ at `a23cdc33e`; (b1) soak #2 PASS 2026-09-05 (tested binary `322390b32`, FULL 360.00008-min window, `passed: true`) ✓ historical; (b2) asserted soak PASS 2026-09-06 at `02903804b` + bounded restart PASS 2026-09-05 ✓ historical. Per the roadmap letter (legs evidenced at their tested revisions), A5 is CLOSED. H separate, unchanged. "Preferably 12-hour" stays recommendation-only.
+- **Evidence re-verified 2026-10-01 (read-only; no gate re-run; no change to this
+  verdict).** The three legs above were re-read from their on-disk report
+  artifacts, not from these paragraphs, and each is confirmed:
+  (a) `/root/aaemu-e2e-a5-shape/logs/g2-a5-tier3-report.json` —
+  `commit a23cdc33eef55af18bfb1535f32ca9fc3ed62834`, `runAtUtc
+  2026-09-08T08:43:32.8072192Z`, verdicts `thousandDormantRegistered`,
+  `embodiedWithin50`, `rssWithin15PctOfBaseline` (`rssDeltaPct -12.9`) and
+  `materializeP95Under3s` (`materializeP95Ms 256.2`) all `true`, 50/50
+  dematerialized. Caveat now recorded: that report's own
+  `sixHourDormantTimersLeg` reads `PENDING — natural home: scheduled soak (out of
+  scope for this measurement)`, so (a) does not itself evidence (b1);
+  (b1) `/root/aaemu-e2e-a5-tier3-sixhour/logs/g2-a5-tier3-sixhour-report.json.bak-preb2`
+  — `runAtUtc 2026-09-05T15:33:11.8271513Z`, `passed true`, `failures []`,
+  `windowCompleted true`, `windowStatus FULL`, 360.0000879666667 min,
+  `sampleCount 361`, `rssGrowthMb 6.7`. Note the report's `commit` field reads
+  `ca7762d7daff9d0d7b6789ef43a7a00dff325626`, a docs-only commit — the tested
+  source revision is `322390b32` as this file already states;
+  (b2) the .165 asserted soak and bounded restart are reported at
+  `02903804b` / `f2ef4b16f` (over b2 code `54f7e741a`); their report files are
+  **not present on this machine's filesystem** (the .165 run wrote to the test
+  server), so those two legs rest on this file's dated record plus the ROADMAP
+  conjunction entry, not on a locally re-readable artifact. **Direction of the
+  reconciliation: evidence SUPPORTS `CLOSED`** — (a) and (b1) are directly
+  re-readable and pass; (b2) is uncorroborated locally but is recorded twice
+  (here and in ROADMAP) at a named tested revision and is not contradicted by any
+  artifact found. This is explicitly **not** a downgrade, and equally explicitly
+  **not** a re-run: no leg was re-executed at current HEAD `626548de`, and
+  `scorecard-explorations/playerbot-blockers.md` **PB-SOAK** — which still said
+  "no six-hour dormant-timer soak exists in current evidence" — has been
+  corrected on 2026-10-01 to match. **A5 closure is a population/scaling
+  acceptance gate and promotes no mechanic, autonomy, population or H
+  dimension.** H stays UNKNOWN.
 
 ## 2026-09-06 — Phase 1 evidence complete @ 61123ea88 (post-push): Tier 1 gate 2879/0/1 + MCP 39+24; archaeology-cycle 156/156 + 24-tool smoke, compact md5 unchanged. P1 registry hardening + audit-only telemetry covered. Phase 2 (writes) still needs second approval.
 

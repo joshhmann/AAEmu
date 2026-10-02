@@ -1,6 +1,10 @@
 # START HERE — Agent Onboarding & Domain Lane Dispatcher
 
-Last refreshed: 2026-09-15 · branch of record: `develop` (`joshhmann/AAEmu`) · planning baseline: `d0d58e5848829b7a85da3847d03da00a90cb7c68` (not a fresh gate)
+Last refreshed: 2026-10-01 · branch of record: `develop` (`joshhmann/AAEmu`) · planning baseline: `d0d58e5848829b7a85da3847d03da00a90cb7c68` (not a fresh gate) · repo HEAD at refresh: `626548de92b8dca8af1f0f92e22d37c9fbe6074e`
+
+**Newest checkpoint is `STATUS.md` (updated 2026-09-18), not this router's 2026-09-15 dispatch view.** Read [`STATUS.md`](STATUS.md) first for live pulse, then use the sections below. This refresh corrected the lane scopes and the blocker-ledger reference; it promoted no evidence grade. The dispatch-source question it raised was settled by the owner on 2026-10-01 — see below and [`STATUS.md`](STATUS.md).
+
+**Dispatch source — RESOLVED 2026-10-01 (owner-ratified).** Two records previously named different next-dispatch sources and neither declared the other superseded. The owner has ruled: **`STATUS.md` line 4 governs next-dispatch selection.** It names the conversion backlog (8 missing actor/paths, §E) in `scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md`. The "Immediate dispatch priority" section below is **superseded as next-work selection** and is kept as requirement context; [`ROADMAP.md`](ROADMAP.md#current-delivery-direction) remains authoritative for milestone requirements, boundaries, exit criteria and the standing freeze. Size the next card from [`STATUS.md`](STATUS.md), not from the queue below.
 
 This document is the **single authoritative router** for agents and developers entering this repository. It tells you what to read, what to ignore, which domain lane to enter, and where active backlogs and verification gates live.
 
@@ -15,9 +19,11 @@ dependencies; child cards prove bounded outcomes. For each next zone/variant, re
 proved shared mechanics and verify the local differences. Farm is the current
 application, not the limit of this process.
 
-## Immediate dispatch priority — 2026-09-16
+## Immediate dispatch priority — 2026-09-16 (SUPERSEDED as dispatch source by `STATUS.md`, 2026-10-01)
 
 First product journey: [ordinary starter → owned small plot → harvest/replant](ROADMAP.md#first-owned-small-plot-journey).
+Dispatch selection itself is governed by [`STATUS.md`](STATUS.md) line 4 (owner-ratified
+2026-10-01); the pointers below are **requirement context**, not the next-work choice.
 Use the [shared implementation template](.kanban-templates/implementation.md) for
 every implementation; fill it once in the existing card/dossier. The canonical route
 requires prerequisite quests and level-10 eligibility, not a direct level-7 shortcut.
@@ -27,6 +33,15 @@ before expanding homestead/GOAP work. Synthetic tests prove their simulated scop
 not real gameplay loops. The [mandatory reporting gate](AGENTS.md#evidence-honesty-and-anti-overclaim-gate-2026-09-16)
 requires explicit fixture/bypass disclosure, evidence layer and what remains unproved.
 Core reliability and independent human-playability work may continue.
+
+**Correction note (2026-10-01).** Both dates in this section were re-verified against
+the commits and are correct as written: the corrective queue is dated **2026-09-16**
+and the Wave One closeout exit is dated **2026-09-18** (`ROADMAP.md:90` program header,
+`ROADMAP.md:108` exit row, `ROADMAP.md:110` freeze note). The freeze is **lifted only
+for the verified claim→construct loop**; further GOAP actions, combat behavior, route
+content, homestead breadth (plant/harvest/tax), multi-bot scenarios, ordinary
+acquisition, and `H` remain **frozen/open**. See the dispatch-source ruling at the
+top of this file and in [`STATUS.md`](STATUS.md).
 
 ## 1. What This Repo Is
 
@@ -99,9 +114,17 @@ flowchart TD
 * **Code Scope:**
   * Inbound/Outbound Packets: `AAEmu.Game/Core/Packets/{C2G,G2C}/`
   * Managers: `AAEmu.Game/Core/Managers/` (must register in `Program.cs`)
+  * Netcode: `AAEmu.Game/Core/Network/`
   * Data Loaders: `AAEmu.Game/GameData/`
   * Domain Models: `AAEmu.Game/Models/Game/`
+  * Script Runtime, Math & Converters: `AAEmu.Game/Utils/`
+  * GM & Test Commands: `AAEmu.Game/Scripts/Commands/`, `AAEmu.Game/Scripts/SubCommands/` (carve-outs: `Commands/BotCmd.cs` + `SubCommands/Bots/` are Lane B; `Commands/PlayerTraceCmd.cs` + `SubCommands/PlayerTrace/` are Lane C; `SubCommands/Mapper/` feeds Lane B nav data)
+  * World Physics & Weather: `AAEmu.Game/Physics/`, `AAEmu.Game/Weather/`
+  * Client File IO: `AAEmu.Game/IO/`
+  * Host Composition: `AAEmu.Game/GameService.cs`, `AAEmu.Game/Program.cs`
+  * Login Service: `AAEmu.Login/Core/`, `AAEmu.Login/Utils/`
   * Schemas: `SQL/updates/` + base `SQL/aaemu_{login,game}.sql` (both required!)
+  * Shared Primitives (cross-lane): `AAEmu.Commons/` — this project holds primitives shared by Login, Game and the gate/tooling lanes (packet primitives, MySQL helpers, the AAPak reader, Gate/soak metric types), so ownership of an individual Commons file follows the *consumer* subsystem, not its location. Listing it here is a default home, not an exclusive claim.
 * **Verification Gate:**
   * `./scripts/gate.sh` (fast gate)
 
@@ -115,13 +138,16 @@ flowchart TD
   * Vision: [`LIVING-WORLD.md`](LIVING-WORLD.md)
   * **Rule #9 & #10:** PlayerBots compose around normal `Character` records and standard gameplay services. NEVER create parallel character, inventory, or quest implementations!
 * **Where Unfinished Work Lives:**
-  * [`scorecard-explorations/playerbot-blockers.md`](scorecard-explorations/playerbot-blockers.md) — Active and historical architectural blockers (PB-001 through PB-006).
+  * [`scorecard-explorations/playerbot-blockers.md`](scorecard-explorations/playerbot-blockers.md) — Active and historical architectural blockers. The ledger is **not** numbered PB-001…PB-006: it carries `PB-FARM-01`, `PB-005`, `PB-001`, `PB-002`, `PB-COMBAT`, `PB-BAG`, `PB-MOUNT`, `PB-SOAK` under OPEN, plus `PB-007`, `PB-006`, `PB-003`, `PB-004` and the found-and-fixed `PB-F1`…`PB-F4` under FIXED. **`PB-006` is used twice** — once for ship sailing physics and once for PlayerBot reboot persistence, both FIXED — so **cite a blocker by title, not by ID alone**.
   * [`scorecard-explorations/deferred-not-now.md`](scorecard-explorations/deferred-not-now.md) — Explicit backlog of parked features (Sections 12–18: Village errands, multi-objective quests, food/potion consumption, knockback recovery, mount riding, party assists, roster generation).
   * [`scorecard-explorations/mechanics/playerbot-capability-matrix.md`](scorecard-explorations/mechanics/playerbot-capability-matrix.md) — Full/Partial/Missing capability matrix.
 * **Code Scope:**
   * Bot Brain & Loop: `AAEmu.Game/Core/Managers/Bots/` (`CombatDecisionTree`, `GameplayActor`, `DormantBotRegistry`, `LevelingLoopScenario`)
   * GM Commands: `AAEmu.Game/Scripts/Commands/BotCmd.cs`, `AAEmu.Game/Scripts/SubCommands/Bots/`
-  * Unit Tests: `AAEmu.UnitTests/Game/Core/Managers/Bots/`
+  * Unit Tests: `AAEmu.UnitTests/Game/Core/Managers/Bots/`, `AAEmu.UnitTests/BotControl/`
+  * Bot Drive & Actuation Surface: `AAEmu.BotControl/`, `AAEmu.BotControlMcp/`, `AAEmu.Game/Services/WebApi/` (bot-driving controllers: `BotActionController`, `BotControlController`, `BotControlSettings`; the other WebApi controllers are Lane A)
+  * Nav & Route Data Tooling: `AAEmu.Game/Scripts/SubCommands/Mapper/`, `Tools/Mapper/`, `AAEmu.Game/Data/Routes/`, `AAEmu.Game/Data/Path/`
+  * Bot E2E Harness: `AAEmu.IntegrationTests/E2e/BotControl*.cs`, `AAEmu.IntegrationTests/E2e/BotDriveClient.cs`, `AAEmu.IntegrationTests/E2e/BotNetworkSession.cs`, `AAEmu.IntegrationTests/E2e/BotTcpLink.cs`
 * **Verification Gate:**
   * `./scripts/gate.sh BotActionControllerRouteTests` (targeted)
   * `./scripts/gate.sh` (full suite)
@@ -141,6 +167,12 @@ flowchart TD
   * In-Game: `/trace start <scenario>` → execute action → `/trace stop`
   * Trace Evaluator: `python3 Scripts/playertrace-coverage/task_evaluator.py --task-id <id>`
   * Coverage Analysis: `python3 Scripts/playertrace-coverage/playertrace_coverage.py traces/player-actions --out playertrace-coverage`
+* **Code Scope:**
+  * Trace Tooling Suite: `Scripts/playertrace-coverage/` (evaluator, coverage engine, trace parser, packet inventory, dashboard server + assets)
+  * In-Game Trace Command: `AAEmu.Game/Scripts/Commands/PlayerTraceCmd.cs`, `AAEmu.Game/Scripts/SubCommands/PlayerTrace/`
+  * Trace Emitter: `AAEmu.Game/Core/Managers/Bots/PlayerTraceService.cs` (emits the JSONL lines this lane analyses)
+  * Trace Output & Dashboards: `traces/player-actions/`, `traces/bot-trajectories/`, `playertrace-coverage/` (generated `dashboard.html`, `summary.{md,json}`, `*.csv`)
+  * Tests: `AAEmu.UnitTests/Game/Core/Managers/Bots/PlayerTraceStateTests.cs`, `AAEmu.UnitTests/Game/Core/Managers/Bots/PlayerTraceServiceTests.cs`
 * **Verification Gate:**
   * `python3 Scripts/playertrace-coverage/test_coverage_mapper.py`
 
@@ -156,6 +188,12 @@ flowchart TD
   1. Catalog first: `list_sources` / `list_tables` / `describe_table`
   2. Corroborate facts: `query_sql` / `lookup_row`
   3. Relationship trace: `trace_skill`, `trace_item`, `trace_quest`, `trace_npc`, `find_quest_objectives`
+* **Code Scope:**
+  * MCP Server: `AAEmu.ArchaeologyMcp/` (tool surface, SQL guard, source catalog, read-only `game_pak` reader)
+  * Dossier & Data-Source Inventory: `scorecard-explorations/mechanics/archaeology-mcp-acceptance.md`, `scorecard-explorations/mechanics/archaeology-data-source-inventory.md`
+  * Read-Only Reference DB Patches: `SQL/patches/compact/` (defect/patch SQL derived from `compact.sqlite3` findings; these target MySQL, they are not DB writes to `compact.sqlite3`)
+  * Unit Tests: `AAEmu.UnitTests/ArchaeologyMcp/`
+  * Read-Only Reference Probes (outside the MCP, but the same discipline — read `compact.sqlite3`/`game_pak` only, write nothing back): `Tools/SurveyGridBaker/`, `Tools/NavGCostProbe/`, `Tools/sit-pose-census/`. Other `Tools/*` entries are build/convert tools that write output, not archaeology probes.
 * **Verification Gate:**
   * `./scripts/archaeology-cycle.sh` (MCP build + 156 archaeology tests + 24-tool smoke)
 
@@ -169,6 +207,14 @@ flowchart TD
   * Deployment Playbook: [`WORKFLOW.md`](WORKFLOW.md)
   * Human Gate Field Guide: [`Docs/wiki/Human-Gate-Field-Guide.md`](Docs/wiki/Human-Gate-Field-Guide.md)
   * Soak Test Manual: [`Docs/wiki/Soak-Runs.md`](Docs/wiki/Soak-Runs.md)
+* **Code Scope:**
+  * Gate & Cycle Runners: `scripts/` (`gate.sh`, `archaeology-cycle.sh`, `run-a5-sixhour-soak.sh`, `aaemu-prod-intake`)
+  * Host Orchestration & Install Scripts: `AAEmu.Aspire.AppHost/`, `Scripts/` (start/publish/watch, `docker-install-local.*`, `docker-update-local.*`, `e2e/`), `.agents/skills/aaemu-setup/scripts/`
+  * Container & CI: `docker-compose.yaml`, `docker-compose.presence.yaml`, `Scripts/e2e/docker-compose.yaml`, `.github/workflows/`
+  * Test Suites: `AAEmu.UnitTests/`, `AAEmu.IntegrationTests/` (incl. soak/gate harness `AAEmu.IntegrationTests/E2e/Gate/`)
+  * Gate & Soak Metric Types: `AAEmu.Commons/Utils/Gate/` (shared with the gate harness, but consumed by Lane A/B as well — see the Lane A shared-primitives note)
+  * Deployment Records: `deployments/`, `soak-artifacts/`, `WORKFLOW.md`
+  * Other Repo Tools: `Tools/`, `tools/` (except the read-only archaeology probes listed under Lane D)
 * **Verification Gates:**
   * Fast Gate: `./scripts/gate.sh` (~1 min)
   * Targeted E2E: `dotnet test AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --treenode-filter "..."`
@@ -187,9 +233,8 @@ flowchart TD
 | **Roadmap & Progress** | [`scorecard-explorations/progression-board.md`](scorecard-explorations/progression-board.md) | Historical execution board; current dispatch is ROADMAP.md. |
 | **Backlog & Future Tasks**| [`scorecard-explorations/deferred-not-now.md`](scorecard-explorations/deferred-not-now.md) | Parked features & revisit triggers (Sections 1–18). |
 | **Backlog & Future Tasks**| [`playertrace-coverage/dashboard_tasks.json`](playertrace-coverage/dashboard_tasks.json) | 31 concrete in-game tasks with checklists and packet specs. |
-| **Gaps & Defects** | [`scorecard-explorations/playerbot-blockers.md`](scorecard-explorations/playerbot-blockers.md) | Architectural blockers (PB-001 through PB-006). |
+| **Gaps & Defects** | [`scorecard-explorations/playerbot-blockers.md`](scorecard-explorations/playerbot-blockers.md) | Architectural blockers — `PB-FARM-01`, `PB-001`…`PB-005`, `PB-COMBAT`/`PB-BAG`/`PB-MOUNT`/`PB-SOAK`, plus fixed `PB-F1`…`PB-F4` and a **duplicated `PB-006`**; cite by title. Corrected 2026-10-01 — this entry previously read "PB-001 through PB-006". |
 | **Gaps & Defects** | [`scorecard-explorations/zero-wired-domains.md`](scorecard-explorations/zero-wired-domains.md) | Catalog of unimplemented wire packets and missing systems. |
-| **Gaps & Defects** | [`scorecard-explorations/partial-domains.md`](scorecard-explorations/partial-domains.md) | Mechanics with incomplete logic or missing persistence. |
+| **World & Reference** | [`Docs/wiki/World-Continents-Races-and-Mirage-Isle.md`](Docs/wiki/World-Continents-Races-and-Mirage-Isle.md) | World zones, races, NPC distributions, islands & Mirage Isle architecture. |
 | **Vision & Concepts** | [`LIVING-WORLD.md`](LIVING-WORLD.md) | Blueprint for living bot societies, trade, and economy. |
 | **Vision & Concepts** | [`PROJECT-CONTROL.md`](PROJECT-CONTROL.md) / [`VISION.md`](VISION.md) | Target user experience, core pillars, and project scope. |
-| **World & Reference** | [`Docs/wiki/World-Continents-Races-and-Mirage-Isle.md`](Docs/wiki/World-Continents-Races-and-Mirage-Isle.md) | World zones, races, NPC distributions, islands & Mirage Isle architecture. |

@@ -507,7 +507,7 @@ bash ./Scripts/mcp-archaeology-smoke.sh
 ```
 
 **Gate note:** `./scripts/gate.sh` runs, as its 4/5 step, the existing
-**BotControl** MCP stdio smoke (`Scripts/mcp-stdio-smoke.sh`, 39 tools), and as
+**BotControl** MCP stdio smoke (`Scripts/mcp-stdio-smoke.sh`, 44 tools), and as
 its **5/5 step** the **lightweight archaeology gate smoke**
 (`Scripts/mcp-archaeology-gate-smoke.sh`, 24 tools) — so a lightweight
 archaeology availability/read-only check **IS wired into `gate.sh`**. That
