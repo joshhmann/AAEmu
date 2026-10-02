@@ -214,6 +214,32 @@ public static class QuestDecisionScenario
         public ActorRequest? Request { get; init; }
         /// <summary>Why each non-selected candidate was refused (legality-before-preference evidence).</summary>
         public IReadOnlyList<BotProposalRejection> Rejections { get; init; } = [];
+        /// <summary>
+        /// The proposal the deterministic selector actually chose, copied
+        /// verbatim. Additive: the shadow harvest reads its goal/priority/
+        /// personality weight so the incumbent is scored on the SAME fields as
+        /// every rejected candidate. Null when the run failed before selection.
+        /// </summary>
+        public BotDecisionProposal? SelectedProposal { get; init; }
+        /// <summary>
+        /// The proposals that were LEGAL on this wake but lost the selector's
+        /// preference order, copied verbatim. Additive and observer-only:
+        /// populated only when the JevShadow lane asks the selector for it, and
+        /// never re-evaluated here. Distinct from <see cref="Rejections"/>,
+        /// which holds only hard-precondition failures — a legal loser appears
+        /// in neither that list nor in the old candidate array, which is why a
+        /// challenger could not previously score it. Null when not collected.
+        /// </summary>
+        public IReadOnlyList<BotDecisionProposal>? LegalAlternatives { get; init; }
+        /// <summary>
+        /// The number of proposals the selector actually weighed on this wake
+        /// (hard rejections + every legal proposal, winner included), carried
+        /// from the selector itself. Additive and observer-only: null when the
+        /// lane did not collect it. Preferred over
+        /// <c>ActorRequest.DecisionCandidates</c>, which the quest leg stamps as
+        /// rejections + 1 and therefore under-reports a wake that had legal losers.
+        /// </summary>
+        public int? SelectionCandidateCount { get; init; }
         public string Explanation { get; init; } = "";
         /// <summary>Quest ids completed by this leg (left ActiveQuests during the wake).</summary>
         public IReadOnlyList<uint> CompletedQuestIds { get; init; } = [];

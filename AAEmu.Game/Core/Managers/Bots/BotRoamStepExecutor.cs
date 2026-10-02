@@ -646,6 +646,13 @@ public enum NeedsFarmLoopPhase
         }
         state.LastTickPosition = currentTickPos;
 
+        // Jev shadow (Stage 1, default OFF): reset this actor's frozen brain slots
+        // at the START of every wake, so a wake on which a brain did not run
+        // reports it absent instead of inheriting the previous wake's inputs. One
+        // static flag read; flag-off returns before any dictionary work.
+        if (JevShadow.Enabled)
+            JevShadow.BeginWake(actor.ActorId);
+
         // Soak finding (c): the roam executor owns the throttled (4-6 Hz)
         // movement broadcast in step 3b — the actor's own per-apply
         // broadcast would double-send every wake at ~10 Hz and was the
@@ -1299,6 +1306,16 @@ public enum NeedsFarmLoopPhase
         var routeActive = state.Path is { IsFinished: false };
         var hunting = state.TargetNpcObjId != 0;
         var butchering = state.TargetButcherDoodadObjId != 0;
+        // Jev shadow: last statement of the wake. A wake that captured brain
+        // inputs but reached no emit point (the arbiter elected another leg, or
+        // the run produced no decision record) would otherwise pin its slot until
+        // its next wake. This releases only a SEALED slot — an emit path already
+        // released it, so this is a no-op there — and never touches an actor
+        // whose wake is still in progress, because by construction this actor's
+        // wake is over.
+        if (JevShadow.Enabled)
+            JevShadow.ReleaseWakeIfUnemitted(actor.ActorId);
+
         var effectiveCadence = state.CadenceOverride ?? ActiveCadence;
         return live || routeActive || hunting || butchering
             ? (state.CadenceOverride.HasValue ? Task.FromResult<TimeSpan?>(effectiveCadence) : (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence)))
@@ -1402,6 +1419,11 @@ public enum NeedsFarmLoopPhase
         var frozen = SurvivalBrainPlanner.SnapshotInputs(
             actor.ActorId, hp, SafeMaxHp(character), selectedTargetObjId);
         SurvivalVetoState.Publish(actor.ActorId, frozen, out var decision);
+        // Jev shadow: freeze THIS wake's already-computed survival inputs + the
+        // verdict the gate just reached. No re-plan, no extra vitals read — the
+        // MaxHp read above is the only formula read and it already happened.
+        if (JevShadow.Enabled)
+            JevShadow.CaptureSurvival(actor.ActorId, frozen, decision);
 
         // A non-vetoing verdict (a non-critical fight the combat brain owns, the
         // recovery demand) leaves every downstream branch exactly as it was. The
@@ -1545,11 +1567,23 @@ public enum NeedsFarmLoopPhase
                 : $"{result.FailStage}: {TruncateDecide(result.FailReason)}";
         // Jev shadow (Stage 1, default OFF): frozen shadow-log row for the
         // offline critic, emitted at this ALREADY-LOGGED point from the
-        // frozen CycleId + QuestDecideDetail + QuestRunResult only — no live
-        // reads. Flag-off = one static flag read, zero allocation, zero
+        // frozen CycleId + QuestDecideDetail + QuestRunResult and this wake's
+        // already-captured brain inputs — no live reads, no re-plan.
+        // Flag-off = one static flag read, zero allocation, zero
         // behavior change (args are never evaluated).
+        // The brains carrier is what carries this wake's FROZEN per-brain inputs
+        // (Travel / Survival / Needs / Combat) into the row. Before this passed
+        // null, so all four blocks serialized null on every row and no brain
+        // outside the quest arbitration was harvestable at all.
         if (JevShadow.Enabled)
-            JevShadow.MaybeEmitQuest(bot.CharacterId, runtime.BehaviorInstanceId, state.QuestDecideDetail, result);
+        {
+            JevShadow.MaybeEmitQuest(bot.CharacterId, runtime.BehaviorInstanceId,
+                state.QuestDecideDetail, result, JevShadow.TakeBrains(concreteActor.ActorId));
+            // This wake is over: the carrier was consumed above, so release the
+            // actor's slot. Done in the CALLER because that is where the actor
+            // objId (the slot key) is known.
+            JevShadow.ReleaseWake(concreteActor.ActorId);
+        }
         Logger.Info(
             "QuestSweepDiag cycle={Cycle} char={CharId} botSameChar={Same} botCharId={BotChar} actorCharId={ActorChar} " +
             "botPos=({BX:F1},{BY:F1},{BZ:F1}) actorPos=({AX:F1},{AY:F1},{AZ:F1}) decide=[{Decide}]",
@@ -2368,8 +2402,8 @@ public enum NeedsFarmLoopPhase
     /// </summary>
     private NeedsBrainPlanner.Prepared PrepareNeedsFarmTravelBrain(
         BotRoamState state, IGameplayActor actor, Vector3 position, Npc? nearestMerchant)
-        => NeedsBrainPlanner.Prepare(actor, NeedsFarmBrainRequest(state, position, nearestMerchant,
-            soilSearch: true, cropArm: false));
+        => CaptureNeedsPrepared(NeedsBrainPlanner.Prepare(actor, NeedsFarmBrainRequest(state, position, nearestMerchant,
+            soilSearch: true, cropArm: false)));
 
     /// <summary>
     /// The leg's TWO ACTION ARMS through the brain (the second live caller): one
@@ -2388,9 +2422,23 @@ public enum NeedsFarmLoopPhase
         BotRoamState state, IGameplayActor actor, Vector3 position,
         NeedsFarmLegDispatch.NeedsFarmArm arm, Npc? nearestMerchant)
         => NeedsFarmLegDispatch.DecideNeedsFarmAction(
-            NeedsBrainPlanner.Prepare(actor, NeedsFarmBrainRequest(state, position, nearestMerchant,
-                soilSearch: arm == NeedsFarmLegDispatch.NeedsFarmArm.Plant, cropArm: true)),
+            CaptureNeedsPrepared(NeedsBrainPlanner.Prepare(actor, NeedsFarmBrainRequest(state, position, nearestMerchant,
+                soilSearch: arm == NeedsFarmLegDispatch.NeedsFarmArm.Plant, cropArm: true))),
             arm);
+
+    /// <summary>
+    /// Jev shadow: freezes one needs-brain <c>Prepared</c> this wake for the lane.
+    /// Returns the SAME prepared value the caller was about to use, so the
+    /// capture is observation only — the decision, its destination and its
+    /// dispatch are byte-identical whether the flag is on or off. Flag-off is a
+    /// static read and a return of the argument.
+    /// </summary>
+    private NeedsBrainPlanner.Prepared CaptureNeedsPrepared(NeedsBrainPlanner.Prepared prepared)
+    {
+        if (JevShadow.Enabled)
+            JevShadow.CaptureNeeds(prepared.Inputs.ActorObjId, prepared.Inputs, prepared.Decision);
+        return prepared;
+    }
 
     /// <summary>
     /// THE LEG'S ONE BRAIN REQUEST: every read this leg hands the planner is built
@@ -2500,6 +2548,16 @@ public enum NeedsFarmLoopPhase
         {
             SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle, "actor seam unavailable");
             return false;
+        }
+        // Jev shadow (Stage 1, default OFF): the NEEDS arbitration wake. The
+        // needs leg runs its own decision cycle, which the quest emit point never
+        // sees, so without this the needs class contributes zero rows. Emitted
+        // from the already-frozen NeedsRunResult + this wake's captured needs
+        // brain inputs — no extra read, no re-plan.
+        if (JevShadow.Enabled && state.Actor is { } emitActor)
+        {
+            JevShadow.MaybeEmitNeeds(emitActor.ActorId, result);
+            JevShadow.ReleaseWake(emitActor.ActorId);
         }
         var landed = result.WorkSelected && result.Request?.State == ActorLifecycleState.Completed;
         if (landed)

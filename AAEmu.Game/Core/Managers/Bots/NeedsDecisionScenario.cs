@@ -139,6 +139,29 @@ public static class NeedsDecisionScenario
         public ActorRequest? Request { get; init; }
         /// <summary>Why each non-selected candidate was refused (legality-before-preference evidence).</summary>
         public IReadOnlyList<BotProposalRejection> Rejections { get; init; } = [];
+        /// <summary>
+        /// The proposal the deterministic selector actually chose, copied verbatim
+        /// (goal/priority/personality weight). Additive: the shadow harvest scores
+        /// the incumbent on the SAME fields as every rejected candidate. Null when
+        /// the run failed before selection.
+        /// </summary>
+        public BotDecisionProposal? SelectedProposal { get; init; }
+        /// <summary>
+        /// The proposals that were LEGAL on this wake but lost the selector's
+        /// preference order, copied verbatim. Additive and observer-only,
+        /// mirroring <see cref="QuestDecisionScenario.QuestRunResult.LegalAlternatives"/>:
+        /// populated only when the shadow lane asks the selector for it, never
+        /// re-evaluated here. Distinct from <see cref="Rejections"/>, which holds
+        /// only hard-precondition failures. Null when not collected.
+        /// </summary>
+        public IReadOnlyList<BotDecisionProposal>? LegalAlternatives { get; init; }
+        /// <summary>
+        /// The number of proposals the selector actually weighed on this wake
+        /// (hard rejections + every legal proposal, winner included). Additive,
+        /// observer-only, null when not collected. Mirrors
+        /// <see cref="QuestDecisionScenario.QuestRunResult.SelectionCandidateCount"/>.
+        /// </summary>
+        public int? SelectionCandidateCount { get; init; }
         public string Explanation { get; init; } = "";
         /// <summary>Whether the selected proposal's terminal postcondition held.</summary>
         public bool ExpectedPostconditionSatisfied { get; init; }
@@ -193,7 +216,10 @@ public static class NeedsDecisionScenario
                 proposals.Add(HarvestProposal(actor, opts, foodBefore));
                 proposals.Add(SellProposal(actor, opts, moneyBefore));
             }
-            var decision = BotDecisionSelector.Select(context, proposals);
+            // Opt-in only: a flag-off wake pays nothing for the observer-only
+            // alternatives, and nothing is re-evaluated either way.
+            var decision = BotDecisionSelector.Select(context, proposals,
+                includeLegalAlternatives: JevShadow.Enabled);
             if (!decision.HasProposal)
             {
                 return Fail("DECIDE", ActorFailureReason.WrongDecision,
@@ -217,11 +243,14 @@ public static class NeedsDecisionScenario
                 Scenario = ScenarioName,
                 WorkSelected = workSelected,
                 DominantNeed = needs.DominantNeed,
+                SelectionCandidateCount = decision.SelectionCandidateCount,
                 Urgency = needs.Urgency,
                 Needs = needs,
                 SelectedAction = decision.Proposal.Action,
+                SelectedProposal = decision.Proposal,
                 Request = request,
                 Rejections = decision.Rejections,
+                LegalAlternatives = decision.LegalAlternatives,
                 Explanation = decision.Explanation,
                 ExpectedPostconditionSatisfied = execution.ExpectedPostconditionSatisfied,
                 TraceRecords = [.. actor.AuditTrace]

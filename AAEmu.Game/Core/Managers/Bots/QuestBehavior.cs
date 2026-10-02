@@ -817,7 +817,12 @@ public static class QuestBehavior
             }
 
             var decideContext = BotObservedContext.Capture(actor);
-            var decision = BotDecisionSelector.Select(decideContext, proposals);
+            // includeLegalAlternatives is armed ONLY by the opt-in shadow lane:
+            // a flag-off wake pays nothing for the observer-only alternatives,
+            // and no eligibility is re-evaluated either way — the selector's
+            // own single pass produced them.
+            var decision = BotDecisionSelector.Select(decideContext, proposals,
+                includeLegalAlternatives: JevShadow.Enabled);
             if (!decision.HasProposal)
             {
                 // Funnel tallies (counts only, feeds bridge lastDetail): where the
@@ -926,8 +931,11 @@ public static class QuestBehavior
                         Scenario = QuestDecisionScenario.ScenarioName,
                         WorkSelected = true,
                         SelectedAction = selected.Action,
+                        SelectedProposal = selected,
                         Request = request,
                         Rejections = decision.Rejections,
+                        LegalAlternatives = decision.LegalAlternatives,
+                        SelectionCandidateCount = decision.SelectionCandidateCount,
                         Explanation = decision.Explanation + $" [{legKind} leg running toward {selected.TargetId}]",
                         CompletedQuestIds = completedRunning,
                         LegEvidence = legEvidence,
@@ -936,9 +944,15 @@ public static class QuestBehavior
                         TraceRecords = [.. actor.AuditTrace]
                     };
                 }
+                // A selector DID run and DID pick before the dispatch starved,
+                // and the recorder emits this row (MaybeEmitQuest only guards
+                // result == null). Dropping the alternatives here would make the
+                // row claim a lone proposal it never had.
                 return Fail("EXECUTE", ActorFailureReason.Starvation,
                     $"{request.Action} left the terminal surface",
-                    actor, selected.Action, decision.Rejections, request, legEvidence, planFailures, giveUps);
+                    actor, selected.Action, decision.Rejections, request, legEvidence, planFailures, giveUps,
+                    legalAlternatives: decision.LegalAlternatives,
+                    selectionCandidateCount: decision.SelectionCandidateCount);
             }
 
             var after = BotObservedContext.Capture(actor).ActiveQuestIds.ToHashSet();
@@ -952,8 +966,11 @@ public static class QuestBehavior
                 Scenario = QuestDecisionScenario.ScenarioName,
                 WorkSelected = true,
                 SelectedAction = selected.Action,
+                SelectedProposal = selected,
                 Request = request,
                 Rejections = decision.Rejections,
+                LegalAlternatives = decision.LegalAlternatives,
+                SelectionCandidateCount = decision.SelectionCandidateCount,
                 Explanation = decision.Explanation,
                 CompletedQuestIds = completed,
                 LegEvidence = legEvidence,
@@ -2297,9 +2314,9 @@ public static class QuestBehavior
         var legOutcome = TravelLegDispatch.MapLegOutcome(
             actor, selected, TravelLegDispatch.PursuitMoveOwner);
         var (liveMove, legLive, driftText) = PursuitLegState(actor, selected, npcPos);
-        var brain = TravelLegDispatch.Prepare(
+        var brain = CaptureTravelPrepared(TravelLegDispatch.Prepare(
             actor, selected, npcPos, PursuitStopRadiusM, legLive, legOutcome,
-            legOwner: TravelLegDispatch.PursuitMoveOwner);
+            legOwner: TravelLegDispatch.PursuitMoveOwner));
         var verdict = TravelLegDispatch.DecidePursuitLeg(
             brain, dist <= PursuitStopRadiusM, legLive, liveMove ? "retrack" : driftText, driftText);
         // Flat, bracket-free additive fragment: the brain's own arm/verb/mode/
@@ -2509,7 +2526,7 @@ public static class QuestBehavior
         // engagement publication are the planner's. `allowSkillCasts` is false
         // while the engine's skill surface is not loaded (unit rigs), so no
         // fabricated Cast is ever proposed.
-        var combatBrain = CombatBrainPlanner.Prepare(
+        var combatBrain = CaptureCombatPrepared(CombatBrainPlanner.Prepare(
             actor, null, selected,
             // The rotation arm is a SEPARATE gate (see
             // QuestOptions.EnableCombatRotation): the frozen G6 lane dispatches
@@ -2517,7 +2534,7 @@ public static class QuestBehavior
             // skill casts is a behavior change with its own fixture, not a
             // side effect of building the brain.
             allowSkillCasts: opts.EnableCombatRotation && Core.Managers.SkillManager.Instance != null,
-            nowUtc: DateTime.UtcNow);
+            nowUtc: DateTime.UtcNow));
         var brainDecision = CombatBrainPlanner.Decide(combatBrain);
 
         // ------------------------------------------------------- KITE TRAVEL DECISION
@@ -2989,9 +3006,9 @@ public static class QuestBehavior
         // reads an actor request), then what the travel chain asks for this wake.
         var legOutcome = TravelLegDispatch.MapLegOutcome(actor, reporter.ObjId, TravelLegDispatch.ReturnMoveOwner);
         var (liveMove, legLive, driftText) = ReturnLegState(actor, reporter.ObjId, reporterPos);
-        var brain = TravelLegDispatch.Prepare(
+        var brain = CaptureTravelPrepared(TravelLegDispatch.Prepare(
             actor, reporter.ObjId, reporterPos, ReturnInteractRadiusM, legLive, legOutcome,
-            legOwner: TravelLegDispatch.ReturnMoveOwner);
+            legOwner: TravelLegDispatch.ReturnMoveOwner));
         var verdict = TravelLegDispatch.DecideReturnLeg(
             brain, flat <= ReturnInteractRadiusM,
             ReturnHoldConfirmed(actor, reporter.ObjId, actorPos.Value, reporterPos),
@@ -3574,6 +3591,32 @@ public static class QuestBehavior
             return;
         CombatBrainPlanner.PublishDispatched(gameplayActor, parameters.Decision, DateTime.UtcNow);
     }
+
+    /// <summary>
+    /// Jev shadow: freezes one travel-brain <c>Prepared</c> this wake for the lane.
+    /// Returns the SAME prepared value the caller was about to use, so the capture
+    /// is observation only — the arm, destination and dispatch are byte-identical
+    /// whether the flag is on or off. Flag-off is a static read and a return of
+    /// the argument; null (a journey that could not be armed) stays null.
+    /// </summary>
+    private static TravelBrainPlanner.Prepared? CaptureTravelPrepared(TravelBrainPlanner.Prepared? prepared)
+    {
+        if (JevShadow.Enabled && prepared is { } value)
+            JevShadow.CaptureTravel(value.Inputs.ActorObjId, value.Inputs, value.Decision);
+        return prepared;
+    }
+
+    /// <summary>
+    /// Jev shadow: freezes the combat-brain <c>Prepared</c> this wake for the lane
+    /// and returns the same value. Observation only — the planner already ran and
+    /// this adds no read, no plan, and no dispatch of its own.
+    /// </summary>
+    private static CombatBrainPlanner.Prepared CaptureCombatPrepared(CombatBrainPlanner.Prepared prepared)
+    {
+        if (JevShadow.Enabled)
+            JevShadow.CaptureCombat(prepared.Inputs.ActorObjId, prepared);
+        return prepared;
+    }
     /// <summary>
     /// G6/CombatBrain cast dispatch: one audited cast through the engine's own
     /// skill path. A LANDED cast records the skill on the engagement so the next
@@ -3817,7 +3860,9 @@ public static class QuestBehavior
         ActorRequest? request = null,
         IReadOnlyList<LegEvidence>? legEvidence = null,
         IReadOnlyList<QuestPlanFailure>? planFailures = null,
-        IReadOnlyList<QuestGiveUp>? giveUps = null)
+        IReadOnlyList<QuestGiveUp>? giveUps = null,
+        IReadOnlyList<BotDecisionProposal>? legalAlternatives = null,
+        int? selectionCandidateCount = null)
         => new()
         {
             Scenario = QuestDecisionScenario.ScenarioName,
@@ -3825,6 +3870,8 @@ public static class QuestBehavior
             SelectedAction = selected,
             Request = request,
             Rejections = rejections,
+            LegalAlternatives = legalAlternatives,
+            SelectionCandidateCount = selectionCandidateCount,
             Explanation = detail,
             FailStage = stage,
             Failure = reason,

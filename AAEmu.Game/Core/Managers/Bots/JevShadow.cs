@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -6,6 +7,8 @@ using AAEmu.Game.Core.Managers.Bots.Combat;
 using AAEmu.Game.Core.Managers.Bots.Needs;
 using AAEmu.Game.Core.Managers.Bots.Survival;
 using AAEmu.Game.Core.Managers.Bots.Travel;
+
+using NLog;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -17,22 +20,46 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// makes model calls, and has no runtime authority.
 ///
 /// Allocation discipline (HARD — BotRoamAllocationTests pins calm wakes to
-/// ~768B): <see cref="MaybeEmitQuest"/> reads NOTHING and allocates NOTHING
-/// while disabled (a static flag read, then return — ref args only), so a
-/// flag-off wake is byte-identical to the pre-shadow behavior. Everything
-/// expensive (candidate projection, hashing, JSON build) runs only when
-/// explicitly opted in AND the sampling gate passes — and file I/O never runs
-/// on the tick at all: sampled wakes enqueue the already-built JSON line for
-/// a single background writer (bounded queue, drop-newest when full, drops
-/// counted, writer faults swallowed). Every field below is a copy of an
-/// already-frozen buffer (the QuestRunResult, its rejection proposals, its
-/// dispatched request stamp, the QuestDecideDetail observe string) — never a
-/// fresh Character/world/dictionary read on a calm wake.
+/// ~768B): EVERY entry point here — <see cref="MaybeEmitQuest(uint,string?,string?,QuestDecisionScenario.QuestRunResult,JevShadowBrains?)"/>,
+/// <see cref="MaybeEmitNeeds"/>, and the whole wake-scoped capture surface
+/// (<see cref="BeginWake"/>, the four <c>Capture*</c> methods, <see cref="TakeBrains"/>)
+/// — reads NOTHING and allocates NOTHING while disabled: a static flag read,
+/// then return (ref args only). A flag-off wake is byte-identical to the
+/// pre-shadow behavior. Everything expensive (candidate projection, hashing,
+/// JSON build) runs only when explicitly opted in AND the sampling gate
+/// passes — and file I/O never runs on the tick at all: sampled wakes enqueue
+/// the already-built JSON line for a single background writer (bounded queue,
+/// drop-newest when full, drops counted, writer faults swallowed).
+///
+/// Frozen-input discipline: every field below is a COPY of a buffer the wake
+/// had already frozen (the run result, its rejection proposals, its selected
+/// proposal, its dispatched request stamp, the observe detail string, and each
+/// brain's own already-computed <c>Prepared.Inputs</c>) — never a fresh
+/// Character/world/dictionary read on a calm wake, and never a re-run planner.
+///
+/// Wake scoping: the per-brain inputs are captured per ACTOR for the CURRENT
+/// wake (<see cref="BeginWake"/> resets them before the legs run), so a row
+/// reports a brain as absent when it did not run rather than inheriting the
+/// previous wake's inputs.
 /// </summary>
 public static class JevShadow
 {
-    /// <summary>Dataset schema version carried on every row.</summary>
-    public const string SchemaVersion = "jev-shadow/v1";
+    private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
+
+    /// <summary>
+    /// Dataset schema version carried on every row.
+    /// <para>
+    /// v2 (2026-10-02) is a BEHAVIOURAL cutover, not an additive one: it adds
+    /// <c>legal_alternatives</c> (the proposals that were legal but lost the
+    /// preference order, previously invisible) and redefines
+    /// <c>candidate_count</c> as selector truth — hard rejections + every legal
+    /// proposal, the winner included — where v1 reported only
+    /// rejections + 1 and therefore under-reported any wake with legal losers.
+    /// A v1 reader must not consume a v2 row: the count means something
+    /// different. Rows already written as v1 are historical and stay v1.
+    /// </para>
+    /// </summary>
+    public const string SchemaVersion = "jev-shadow/v2";
 
     /// <summary>Bound for the frozen reason text copied into a row.</summary>
     public const int MaxReasonChars = 500;
@@ -152,6 +179,17 @@ public static class JevShadow
             // Lane-side sink only: a serialization or enqueue fault must never
             // raise into the scheduler tick. (OSError swallow requirement.)
         }
+        finally
+        {
+            // The row was built from the carrier we were handed, so this wake can
+            // never capture again: seal the id (which makes it evictable under
+            // the cap) so the caller may release the slot. Without this a bot
+            // whose wake never emits would pin its slot until its next wake, and
+            // the table would grow toward "every actor ever seen" rather than
+            // "mid-wake bots".
+            EndWake(characterId);
+            ReportEvictionsIfAny();
+        }
     }
 
     /// <summary>
@@ -167,10 +205,62 @@ public static class JevShadow
         string decideDetail,
         QuestDecisionScenario.QuestRunResult result,
         JevShadowBrains? brains = null)
+        => BuildRow(
+            characterId, cycleId, decideDetail, brains,
+            result.Scenario, result.WorkSelected, result.SelectedAction,
+            result.FailStage, result.Explanation, result.FailReason,
+            result.Rejections, result.SelectedProposal, result.Request,
+            result.CompletedQuestIds, result.TraceRecords.Count, result.LegalAlternatives,
+            result.SelectionCandidateCount);
+
+    /// <summary>
+    /// The NEEDS arbitration wake's row. Same shape as the quest row, built from
+    /// the needs leg's OWN already-frozen <see cref="NeedsDecisionScenario.NeedsRunResult"/>
+    /// — the needs cycle is a separate decision run the quest emit point never
+    /// observes, so it needs its own entry point to be harvestable at all.
+    /// </summary>
+    internal static JevShadowRecord BuildNeedsRecord(
+        uint actorObjId,
+        NeedsDecisionScenario.NeedsRunResult result,
+        JevShadowBrains? brains)
+        => BuildRow(
+            actorObjId,
+            $"needs-{actorObjId}-{result.Request?.TraceId:N}",
+            result.Explanation,
+            brains,
+            result.Scenario, result.WorkSelected, result.SelectedAction,
+            result.FailStage, result.Explanation, result.FailReason,
+            result.Rejections, result.SelectedProposal, result.Request,
+            [], result.TraceRecords.Count, result.LegalAlternatives, result.SelectionCandidateCount);
+
+    /// <summary>
+    /// The ONE row builder every class shares, so a challenger and the incumbent
+    /// are always scored on identical fields. Pure over its arguments: the
+    /// candidate list, the incumbent's own score row, and the per-brain snapshots
+    /// are all COPIES of buffers the wake already froze — nothing here re-selects,
+    /// re-scores, re-plans, or reads the world.
+    /// </summary>
+    private static JevShadowRecord BuildRow(
+        uint characterId,
+        string cycleId,
+        string decideDetail,
+        JevShadowBrains? brains,
+        string scenario,
+        bool workSelected,
+        ActorActionType? selectedAction,
+        string failStage,
+        string explanation,
+        string failReason,
+        IReadOnlyList<BotProposalRejection> rejections,
+        BotDecisionProposal? selectedProposal,
+        ActorRequest? request,
+        IReadOnlyList<uint> completedQuestIds,
+        int auditRowCount,
+        IReadOnlyList<BotDecisionProposal>? legalAlternatives,
+        int? selectionCandidateCount)
     {
-        var request = result.Request;
-        var candidates = new List<JevShadowCandidate>(result.Rejections.Count);
-        foreach (var rejection in result.Rejections)
+        var candidates = new List<JevShadowCandidate>(rejections.Count);
+        foreach (var rejection in rejections)
         {
             var proposal = rejection.Proposal;
             candidates.Add(new JevShadowCandidate(
@@ -181,16 +271,57 @@ public static class JevShadow
                 Truncate(rejection.Reason, MaxCandidateReasonChars)));
         }
 
-        var candidateCount = request is { DecisionCandidates: > 0 }
-            ? request.DecisionCandidates
-            : result.Rejections.Count + (result.WorkSelected ? 1 : 0);
-        var verdict = result.WorkSelected
-            ? $"landed:{result.SelectedAction}"
-            : result.FailStage;
+        // The LEGAL-but-unselected proposals, kept in their own array so the
+        // schema tells the three kinds apart without inference:
+        //   candidates[]       -> hard-precondition REJECTIONS (illegal)
+        //   legal_alternatives[] -> legal, lost the preference order
+        //   selected_candidate  -> the incumbent the game actually took
+        // Bounded by the selector's own MaxCandidates and by the reason cap, so
+        // a row can never grow without bound. NULL means the lane did not ask
+        // (flag off); a COLLECTED wake always serializes an array, empty when
+        // the winner was the only legal proposal — so "collected, and there
+        // were none" never reads the same as "not collected".
+        JevShadowCandidate[]? alternatives = null;
+        if (legalAlternatives is not null)
+        {
+            alternatives = new JevShadowCandidate[legalAlternatives.Count];
+            for (var i = 0; i < legalAlternatives.Count; i++)
+            {
+                var proposal = legalAlternatives[i];
+                alternatives[i] = new JevShadowCandidate(
+                    proposal.Goal,
+                    proposal.Action.ToString(),
+                    proposal.Priority,
+                    proposal.PersonalityWeight,
+                    "legal; not selected");
+            }
+        }
+
+        // candidate_count is SELECTOR TRUTH: how many proposals the selector
+        // actually weighed = hard rejections + every legal proposal (winner
+        // included). The selector's own SelectionCandidateCount is authoritative
+        // when the lane collected it, because ActorRequest.DecisionCandidates is
+        // stamped by the quest leg as rejections + 1 (QuestBehavior.cs
+        // SetPendingDecision) and cannot see a legal loser — trusting it
+        // under-reported a live wake that had two legal choices as 1.
+        // Falls back to the stamp, then to the computed form, so a row that
+        // never selected (or never captured) is left alone rather than guessed:
+        //   - no selection ran            -> 0
+        //   - selected, nothing collected -> the old rejections+1 behaviour
+        var computed = rejections.Count + (alternatives?.Length ?? 0) +
+                       ((selectedProposal != null || workSelected) ? 1 : 0);
+        var candidateCount = selectionCandidateCount
+            ?? (request is { DecisionCandidates: > 0 } stamped
+                ? stamped.DecisionCandidates
+                : computed);
+
+        var verdict = workSelected
+            ? $"landed:{selectedAction}"
+            : failStage;
 
         return new JevShadowRecord(
             SchemaVersion,
-            result.Scenario,
+            scenario,
             cycleId,
             request?.WakeSequence,
             characterId,
@@ -198,11 +329,11 @@ public static class JevShadow
             decideDetail,
             candidates,
             candidateCount,
-            result.Rejections.Count,
+            rejections.Count,
             request?.DecisionGoal,
-            result.SelectedAction?.ToString(),
+            selectedAction?.ToString(),
             verdict,
-            Truncate(string.IsNullOrEmpty(result.Explanation) ? result.FailReason : result.Explanation, MaxReasonChars),
+            Truncate(string.IsNullOrEmpty(explanation) ? failReason : explanation, MaxReasonChars),
             request?.DecisionPolicy,
             request == null
                 ? null
@@ -210,13 +341,70 @@ public static class JevShadow
                     request.TraceId.ToString(),
                     request.Action.ToString(),
                     request.State.ToString()),
-            result.CompletedQuestIds,
-            result.TraceRecords.Count,
+            completedQuestIds,
+            auditRowCount,
             brains?.Travel is { } travel ? JevShadowTravel.FromInputs(travel) : null,
             brains?.Survival is { } survival ? JevShadowSurvival.FromInputs(survival) : null,
             brains?.Needs is { } needs ? JevShadowNeeds.FromInputs(needs) : null,
             brains?.Combat is { } combat ? JevShadowCombat.FromPrepared(combat) : null,
-            DateTime.UtcNow);
+            DateTime.UtcNow,
+            // ---- v1 additive scoring surface ----
+            // The incumbent's OWN score row. Before v1.1 the selected proposal was
+            // invisible here (only rejections carried priority/weight), so a
+            // challenger re-ranking the set could not score the option the game
+            // brain actually took. Copied from the already-frozen result — never
+            // re-selected, never re-scored.
+            selectedProposal is { } incumbent
+                ? new JevShadowCandidate(
+                    incumbent.Goal,
+                    incumbent.Action.ToString(),
+                    incumbent.Priority,
+                    incumbent.PersonalityWeight,
+                    "selected")
+                : null,
+            brains?.TravelDecision ?? null,
+            brains?.SurvivalDecision ?? null,
+            brains?.NeedsDecision ?? null,
+            alternatives);
+    }
+
+    /// <summary>
+    /// Emits the NEEDS arbitration wake's row. Same contract as
+    /// <see cref="MaybeEmitQuest(uint,string?,string?,QuestDecisionScenario.QuestRunResult,JevShadowBrains?)"/>:
+    /// flag read, sampling gate, already-frozen inputs only, never throws. The
+    /// needs cycle is its own decision run, so without this entry point the needs
+    /// class contributes no rows to the dataset.
+    /// </summary>
+    public static void MaybeEmitNeeds(uint actorObjId, NeedsDecisionScenario.NeedsRunResult? result)
+    {
+        if (!Enabled || result == null)
+            return;
+        var cycleId = $"needs-{actorObjId}-{result.Request?.TraceId:N}";
+        var seen = Interlocked.Increment(ref _eligibleWakes);
+        if ((seen - 1) % Math.Max(1, SampleEvery) != 0)
+            return;
+        try
+        {
+            var line = JsonSerializer.Serialize(
+                BuildNeedsRecord(actorObjId, result, TakeBrains(actorObjId)), JsonOptions);
+            EnqueueLine(line);
+        }
+        catch (Exception)
+        {
+            // Lane-side sink only: a serialization or enqueue fault must never
+            // raise into the scheduler tick. (OSError swallow requirement.)
+        }
+        finally
+        {
+            // The row was built from the carrier we were handed, so this wake can
+            // never capture again: seal the id (which makes it evictable under
+            // the cap) so the caller may release the slot. Without this a bot
+            // whose wake never emits would pin its slot until its next wake, and
+            // the table would grow toward "every actor ever seen" rather than
+            // "mid-wake bots".
+            EndWake(actorObjId);
+            ReportEvictionsIfAny();
+        }
     }
 
     /// <summary>Resets the sampling counter (deterministic sampling tests).</summary>
@@ -425,21 +613,381 @@ public static class JevShadow
             return configured;
         return Path.Combine(AppContext.BaseDirectory, "Logs", "jev-shadow.jsonl");
     }
+
+    // ------------------------------------------------------------------
+    // Wake-scoped frozen-input capture (the multi-brain harvest surface).
+    //
+    // The per-brain <see cref="JevShadowBrains"/> slots are populated from
+    // ALREADY-COMPUTED inputs — the same <c>Prepared.Inputs</c> the leg that ran
+    // this wake already resolved. Capture is a struct copy into per-actor slots:
+    // no Planner is re-run, no Character/world read happens here, and nothing
+    // allocates while <see cref="Enabled"/> is false (the capture methods are
+    // only ever CALLED from a caller's own <c>if (JevShadow.Enabled)</c> guard,
+    // and each body re-checks the flag so a caller that forgets cannot regress
+    // the calm-wake budget either).
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// One actor's frozen brain-input slots for the CURRENT wake. A struct with
+    /// no managed heap footprint: capture is an overwrite of these fields, never
+    /// an append, so a bot's slot is bounded at one wake's worth of inputs.
+    /// </summary>
+    internal sealed class WakeSlots
+    {
+        public TravelBrainInputs? Travel;
+        public TravelDecision TravelDecision;
+        public SurvivalBrainInputs? Survival;
+        public SurvivalBrainDecision SurvivalDecision;
+        public NeedsBrainInputs? Needs;
+        public NeedsBrainDecision NeedsDecision;
+        public CombatBrainPlanner.Prepared? Combat;
+
+        /// <summary>No brain froze inputs on the wake in progress.</summary>
+        public bool IsEmpty =>
+            Travel is null && Survival is null && Needs is null && Combat is null;
+
+        /// <summary>Drops every brain's inputs (the start-of-wake freshness rule).</summary>
+        public void Reset()
+        {
+            Travel = null;
+            TravelDecision = default;
+            Survival = null;
+            SurvivalDecision = default;
+            Needs = null;
+            NeedsDecision = default;
+            Combat = null;
+        }
+    }
+
+
+    /// <summary>
+    /// Wake-scoped slots, keyed by the actor objId.
+    ///
+    /// BOUNDING DISCIPLINE — deliberately NOT the full-clear pattern the sibling
+    /// stores (<c>TravelIntentStore</c>, <c>SurvivalVetoState</c>,
+    /// <c>CombatBrainEngagement</c>) use. Their key IS the wake: an entry lives
+    /// exactly as long as its journey/engagement, so clearing the table drops only
+    /// DEAD state. This table is keyed per-BOT and must survive across a bot's
+    /// own legs (BeginWake resets it, the legs fill it, emit reads it), so a
+    /// table-wide <c>Clear()</c> would destroy the in-flight captures of every
+    /// OTHER bot mid-wake — silently, with no counter and no log, producing rows
+    /// with null brain blocks for no visible reason. At 512 bots (an ordinary
+    /// soak size here) that is not a theoretical bound.
+    ///
+    /// Instead an actor's entry is RELEASED the moment its wake has emitted
+    /// (<see cref="EndWake"/>), so the steady-state population tracks bots that
+    /// are mid-wake rather than every actor ever seen. The hard cap is a
+    /// backstop only: a slot is never evicted while its actor is in the middle of
+    /// a wake (a sealed wake is finished by construction), so exceeding the cap
+    /// costs a missed row for the NEW actor and is counted, never a corrupt row
+    /// for someone else.
+    /// </summary>
+    private const int WakeSlotMemoryBound = 4096;
+
+    private static readonly ConcurrentDictionary<uint, WakeSlots> WakeInputs = new();
+
+    /// <summary>Actor ids whose wake is sealed (every capture complete, emit pending).</summary>
+    private static readonly HashSet<uint> SealedWakes = [];
+
+    /// <summary>Slots refused because the cap was hit while the actor was already mid-wake.</summary>
+    private static long _forcedEvictions;
+
+    /// <summary>Highest eviction total already surfaced, so the warning is not spammed per wake.</summary>
+    private static long _reportedEvictions;
+
+    /// <summary>
+    /// Cap refusals: a capture dropped because the wake-slot cap was reached.
+    /// SURFACED: a refusal means that wake's row carries null brain blocks, so a
+    /// harvest must be able to tell "the brains had nothing to say" from "the cap
+    /// ate the data". Read this before trusting a dataset.
+    /// </summary>
+    internal static long ForcedEvictionCount => Interlocked.Read(ref _forcedEvictions);
+
+    /// <summary>
+    /// The lane-side signal for a harvest operator: a one-line warning when any
+    /// capture was refused, and whenever new ones have accrued since the last
+    /// call. This is what turns the counter from "nobody reads it" into
+    /// something a run can actually notice. Called only on the opt-in harvest
+    /// path, never on a disabled wake.
+    /// </summary>
+    internal static void ReportEvictionsIfAny()
+    {
+        if (!Enabled)
+            return;
+        var total = ForcedEvictionCount;
+        if (total <= Interlocked.Read(ref _reportedEvictions))
+            return;
+        Interlocked.Exchange(ref _reportedEvictions, total);
+        Logger.Warn("JevShadow: {Count} wake-slot capture(s) refused at the cap " +
+                    "(bound {Bound}); those rows have null brain blocks",
+            total, WakeSlotMemoryBound);
+    }
+
+    /// <summary>Test-only diagnostic: the number of wake slots currently held.</summary>
+    internal static int WakeSlotCount => WakeInputs.Count;
+
+    /// <summary>
+    /// Test-only diagnostic: how many wake ids are currently sealed (finished,
+    /// emit read, awaiting release). A sealed id is the ONLY kind that may be
+    /// evicted under the cap, so this counter is what shows whether the table can
+    /// actually reclaim space.
+    /// </summary>
+    internal static int SealedWakeCount
+    {
+        get { lock (SealedWakes) { return SealedWakes.Count; } }
+    }
+
+    /// <summary>
+    /// Marks this actor's wake finished: no further capture belongs to it, so
+    /// the slot may be released and its id is safe to evict under the cap. Called
+    /// at the emit points, which run at the END of the legs that captured.
+    /// </summary>
+    internal static void EndWake(uint actorObjId)
+    {
+        if (!Enabled || actorObjId == 0)
+            return;
+        lock (SealedWakes)
+        {
+            SealedWakes.Add(actorObjId);
+        }
+    }
+
+    /// <summary>
+    /// Releases one actor's slot AFTER its row has been built. Idempotent, and
+    /// a no-op when the actor never captured anything. This is the only place a
+    /// live entry leaves the table, which is what makes the population track
+    /// mid-wake bots instead of growing to every actor ever seen.
+    /// </summary>
+    internal static void ReleaseWake(uint actorObjId)
+    {
+        if (actorObjId == 0)
+            return;
+        WakeInputs.TryRemove(actorObjId, out _);
+        lock (SealedWakes)
+        {
+            SealedWakes.Remove(actorObjId);
+        }
+    }
+
+    /// <summary>
+    /// Releases the slot of a wake that captured but never emitted (a sampling
+    /// gate skip, a run with no decision record, or a wake that returned before
+    /// its emit point). Without this, such a bot's slot would be pinned until the
+    /// next wake's <see cref="BeginWake"/> — correct, but the release is what
+    /// keeps the population proportional to live bots.
+    /// </summary>
+    internal static void ReleaseWakeIfUnemitted(uint actorObjId)
+    {
+        if (!Enabled || actorObjId == 0)
+            return;
+        if (!WakeInputs.ContainsKey(actorObjId))
+            return;
+        lock (SealedWakes)
+        {
+            if (!SealedWakes.Contains(actorObjId))
+                return;
+        }
+        ReleaseWake(actorObjId);
+    }
+
+    /// <summary>
+    /// True when a caller must capture this wake's frozen inputs. Read once by a
+    /// caller that already holds the <c>Prepared</c> it would copy; the guard
+    /// itself allocates nothing.
+    /// </summary>
+    internal static bool CaptureEnabled => Enabled;
+
+    /// <summary>
+    /// Clears one actor's captured slots. Called at the START of a scheduler wake
+    /// (before any leg runs) so a wake on which a brain did NOT run reports that
+    /// brain as absent rather than inheriting the previous wake's inputs — the
+    /// staleness rule that keeps every emitted row self-contained.
+    /// </summary>
+    internal static void BeginWake(uint actorObjId)
+    {
+        if (!Enabled || actorObjId == 0)
+            return;
+
+        // A previous wake that was never released (its leg threw, so the
+        // end-of-wake release never ran) is dropped HERE, not merely reset.
+        // Reset alone would keep the id in the table forever if that wake never
+        // recurs, and would keep it permanently un-evictable, because only a
+        // SEALED wake may be evicted. Dropping is the reclaim point that makes
+        // the exception path self-healing: this actor's wake is provably over,
+        // so anything still under its key is stale by definition.
+        WakeInputs.TryRemove(actorObjId, out _);
+        lock (SealedWakes)
+        {
+            SealedWakes.Remove(actorObjId);
+        }
+
+        Bind(actorObjId);
+    }
+
+    /// <summary>
+    /// Freezes the travel inputs a leg already resolved this wake. Copies the
+    /// caller's own <c>Prepared.Inputs</c> in place — no Planner re-run, no world
+    /// read. Each body re-checks <see cref="Enabled"/> so a caller that forgets
+    /// its own guard still cannot regress the calm-wake budget.
+    /// </summary>
+    /// <remarks>
+    /// The slot key is <c>inputs.ActorObjId</c> — the SAME value
+    /// <see cref="BeginWake"/> and <see cref="TakeBrains"/> use
+    /// (<c>actor.ActorId</c>). Every planner stamps <c>ActorObjId: actor.ActorId</c>
+    /// (TravelBrainPlanner:169, CombatBrainPlanner:205, NeedsBrainPlanner:293), so
+    /// the two keys are identical by construction. A capture taken from a
+    /// DIFFERENT actor's prepared value would land in that actor's slot and
+    /// produce a cross-actor row; the wake-slot test defends that identity.
+    /// </remarks>
+    internal static void CaptureTravel(uint actorObjId, in TravelBrainInputs inputs, TravelDecision decision)
+    {
+        if (!Enabled || actorObjId == 0)
+            return;
+        if (Bind(actorObjId) is not { } slot)
+            return;   // cap refused: counted in ForcedEvictionCount, this wake's row loses the block
+        slot.Travel = inputs;
+        slot.TravelDecision = decision;
+    }
+
+    /// <summary>Freezes the survival inputs the elected-wake gate already resolved.</summary>
+    internal static void CaptureSurvival(uint actorObjId, in SurvivalBrainInputs inputs, SurvivalBrainDecision decision)
+    {
+        if (!Enabled || actorObjId == 0)
+            return;
+        if (Bind(actorObjId) is not { } slot)
+            return;
+        slot.Survival = inputs;
+        slot.SurvivalDecision = decision;
+    }
+
+    /// <summary>Freezes the needs inputs a farm/decision leg already resolved.</summary>
+    internal static void CaptureNeeds(uint actorObjId, in NeedsBrainInputs inputs, NeedsBrainDecision decision)
+    {
+        if (!Enabled || actorObjId == 0)
+            return;
+        if (Bind(actorObjId) is not { } slot)
+            return;
+        slot.Needs = inputs;
+        slot.NeedsDecision = decision;
+    }
+
+    /// <summary>Freezes the combat inputs the rotation arm already prepared.</summary>
+    internal static void CaptureCombat(uint actorObjId, in CombatBrainPlanner.Prepared prepared)
+    {
+        if (!Enabled || actorObjId == 0)
+            return;
+        if (Bind(actorObjId) is { } slot)
+            slot.Combat = prepared;
+    }
+
+    /// <summary>
+    /// The actor's slots for this wake as the emit-time carrier, or null when the
+    /// flag is off / the actor captured nothing. Called ONLY from an
+    /// <c>if (JevShadow.Enabled)</c> arm, so allocating the carrier is off the
+    /// calm-wake path by construction.
+    /// </summary>
+    internal static JevShadowBrains? TakeBrains(uint actorObjId)
+    {
+        if (!Enabled || actorObjId == 0)
+            return null;
+        if (!WakeInputs.TryGetValue(actorObjId, out var slots) || slots.IsEmpty)
+            return null;
+        return new JevShadowBrains(
+            slots.Travel, slots.Survival, slots.Needs, slots.Combat,
+            slots.TravelDecision == default ? null : slots.TravelDecision.ToString(),
+            slots.SurvivalDecision == default ? null : slots.SurvivalDecision.ToString(),
+            slots.NeedsDecision == default ? null : slots.NeedsDecision.ToString());
+    }
+
+    /// <summary>
+    /// The actor's slot, or <c>null</c> when the cap is reached and no finished
+    /// wake can be evicted in its place.
+    ///
+    /// NEVER a table-wide clear: that would wipe every OTHER actor's in-flight
+    /// captures. When the cap is hit, exactly ONE finished (sealed, emit
+    /// already-read) wake is evicted — that entry is dead by construction, so
+    /// nothing live is lost. If no such entry exists (more simultaneous
+    /// mid-wake actors than the cap), the new actor's capture is REFUSED and
+    /// counted: its row loses the brain blocks, but no already-capturing actor
+    /// is corrupted, and the counter names the condition.
+    /// </summary>
+    private static WakeSlots? Bind(uint actorObjId)
+    {
+        if (WakeInputs.TryGetValue(actorObjId, out var existing))
+            return existing;
+
+        if (WakeInputs.Count >= WakeSlotMemoryBound && !TryEvictOneSealed())
+        {
+            Interlocked.Increment(ref _forcedEvictions);
+            return null;
+        }
+
+        return WakeInputs.GetOrAdd(actorObjId, static _ => new WakeSlots());
+    }
+
+    /// <summary>Evicts exactly one finished wake's slot. False when none is finished.</summary>
+    private static bool TryEvictOneSealed()
+    {
+        uint victim = 0;
+        lock (SealedWakes)
+        {
+            foreach (var id in SealedWakes)
+            {
+                victim = id;
+                break;
+            }
+            if (victim != 0)
+                SealedWakes.Remove(victim);
+        }
+        return victim != 0 && WakeInputs.TryRemove(victim, out _);
+    }
+
+    /// <summary>
+    /// TEST SEAM ONLY: drops every captured slot and sealed id. Not on any
+    /// runtime path — the live table is bounded by per-wake release plus
+    /// single-entry eviction, never by clearing it.
+    /// </summary>
+    internal static void ClearWakeInputsForTest()
+    {
+        WakeInputs.Clear();
+        lock (SealedWakes)
+        {
+            SealedWakes.Clear();
+        }
+    }
 }
 /// <summary>
 /// One frozen shadow-log row (Jev teacher/critic Stage 1 disagreement
-/// dataset, schema <c>jev-shadow/v1</c>): scenario/wake ids, a frozen-inputs
+/// dataset, schema <c>jev-shadow/v2</c>): scenario/wake ids, a frozen-inputs
 /// hash plus the frozen decide-detail ref, the brain's candidates + scores,
 /// the brain decision + verdict/reason, and outcome-delta refs. Every field
 /// is copied from the wake's already-frozen buffers (QuestRunResult +
 /// QuestDecideDetail); nothing here is a live read and nothing here drives
 /// runtime behavior. Serialized as one JSONL line (snake_case).
 ///
+/// Since v2 the row also carries <see cref="LegalAlternatives"/>, and
+/// <c>candidate_count</c> is SELECTOR TRUTH (hard rejections + every legal
+/// proposal, the winner included) rather than the v1 rejections+1 stamp. Rows
+/// written before the cutover are v1 and are NOT relabelled.
+///
 /// The four optional brain snapshots (<see cref="Travel"/>,
 /// <see cref="Survival"/>, <see cref="Needs"/>, <see cref="Combat"/>) carry
-/// the quest leg's already-computed per-brain frozen Decide inputs for this
-/// wake (null when that brain did not run), so the offline replay for those
-/// brains can be fed from the lane. Additive: old readers ignore them.
+/// THIS WAKE's already-computed per-brain frozen Decide inputs (null when that
+/// brain did not run), so the offline replay for those brains can be fed from
+/// the lane. They are populated from the wake-scoped capture
+/// (<see cref="BeginWake"/> + the <c>Capture*</c> methods), NOT from the quest
+/// leg's own run — a brain that ran on a different leg of the same wake (the
+/// survival gate, the needs farm leg, the combat rotation arm) still appears.
+///
+/// <see cref="SelectedCandidate"/> is the INCUMBENT's own score row: the
+/// selected proposal's goal/action/priority/weight, copied from the frozen
+/// result. <see cref="Candidates"/> holds every REJECTED proposal. Together
+/// they are the complete candidate set scored on identical fields, which is
+/// what makes a challenger re-rank comparable to the incumbent.
+///
+/// All of the above are ADDITIVE v1 fields: they are appended after the v1
+/// positional parameters with defaults, so an old reader ignores them and an
+/// old row simply reads as absent. No existing field name or meaning changed.
 /// </summary>
 public sealed record JevShadowRecord(
     string Schema,
@@ -464,20 +1012,58 @@ public sealed record JevShadowRecord(
     JevShadowSurvival? Survival = null,
     JevShadowNeeds? Needs = null,
     JevShadowCombat? Combat = null,
-    DateTime EmittedAtUtc = default);
+    DateTime EmittedAtUtc = default,
+    // ---- v1 ADDITIVE (backward-compatible): the scoring surface ----
+    //
+    // Every field below is OPTIONAL and appended after the v1 positional
+    // parameters, so an old reader deserializing the row ignores them and a new
+    // reader sees them as absent-on-parse when reading an old row. No existing
+    // field name or meaning changed.
+    //
+    // SelectedCandidate is THE INCUMBENT'S OWN SCORE ROW. Before v1.1 only the
+    // non-selected candidates carried priority/weight (they were built from the
+    // rejection list), which made the incumbent invisible to a challenger
+    // re-ranking the same candidate set: it could not score the option the game
+    // brain actually took. It is the same candidate SET — the selected proposal
+    // the selector returned, copied from the already-frozen result — so a
+    // challenger and the incumbent are scored on identical fields.
+    JevShadowCandidate? SelectedCandidate = null,
+    // The per-brain verdicts, copied from each brain's already-computed decision
+    // (never re-run). Lets the replay join inputs → verdict per brain.
+    string? TravelDecision = null,
+    string? SurvivalDecision = null,
+    string? NeedsDecision = null,
+    // v1 ADDITIVE: the proposals that were LEGAL this wake but LOST the
+    // selector's preference order. Kept in their own array, never merged into
+    // Candidates, so a reader can tell the three kinds apart without inference:
+    //   Candidates         -> hard-precondition REJECTIONS (illegal this wake)
+    //   LegalAlternatives  -> legal, passed every gate, not chosen
+    //   SelectedCandidate  -> the incumbent the game actually took
+    // Null when the shadow lane did not collect them (flag off), so absent
+    // never reads as "there were none". Appended last, so an old reader that
+    // ignores unknown fields is unaffected.
+    IReadOnlyList<JevShadowCandidate>? LegalAlternatives = null);
 
 /// <summary>
 /// Carrier for one wake's optional per-brain frozen Decide inputs. Each slot
-/// holds the already-computed inputs object the quest leg ran this wake (a
+/// holds the already-computed inputs object the leg ran this wake (a
 /// <c>Prepared</c>'s <c>Inputs</c>, or a combat <c>Prepared</c>); null when
 /// that brain did not run. The shadow surface copies by value/ref-copy only —
-/// never a fresh world read, never a new Planner run.
+/// never a fresh world read, never a new Planner run. The trailing decision
+/// tokens are additive v1 fields: already-computed verdicts copied as
+/// space-free strings so the replay can join inputs → verdict per brain.
 /// </summary>
 public sealed record JevShadowBrains(
     TravelBrainInputs? Travel = null,
     SurvivalBrainInputs? Survival = null,
     NeedsBrainInputs? Needs = null,
-    CombatBrainPlanner.Prepared? Combat = null);
+    CombatBrainPlanner.Prepared? Combat = null,
+    // v1 ADDITIVE: the per-brain verdicts, already computed by the leg that ran
+    // this wake and copied as space-free tokens. Appending optional parameters
+    // keeps every existing 4-slot construction (and its positional order) valid.
+    string? TravelDecision = null,
+    string? SurvivalDecision = null,
+    string? NeedsDecision = null);
 
 /// <summary>
 /// Frozen travel Decide inputs for one wake — value-copied from the quest

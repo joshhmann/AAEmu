@@ -220,6 +220,28 @@ public sealed record BotDecisionSelection(
     IReadOnlyList<BotProposalRejection> Rejections,
     string Explanation)
 {
+    /// <summary>
+    /// The proposals that were LEGAL this selection but lost the preference
+    /// order — copied verbatim, in the selector's own key order. Null when the
+    /// caller never asked for them (default: no allocation on the production
+    /// path), which is every caller except the opt-in JevShadow lane. Distinct
+    /// from <see cref="Rejections"/>, which carries ONLY hard-precondition
+    /// failures: a proposal here satisfied every precondition and was still not
+    /// taken, so it is the row a challenger needs to score against the
+    /// incumbent and is invisible in <see cref="Rejections"/>.
+    /// </summary>
+    public IReadOnlyList<BotDecisionProposal>? LegalAlternatives { get; init; }
+    /// <summary>
+    /// The number of proposals THIS selection actually weighed: hard-precondition
+    /// rejections plus every LEGAL proposal (the winner included), counted at the
+    /// moment legality was decided. Set only when the caller asked for the
+    /// alternatives (opt-in), so the disabled path stays allocation-free. This is
+    /// the selector's own truth and is deliberately independent of
+    /// <c>ActorRequest.DecisionCandidates</c>, which the quest leg stamps as
+    /// rejections + 1 and therefore cannot see a legal loser. Null means "not
+    /// collected", never "zero candidates".
+    /// </summary>
+    public int? SelectionCandidateCount { get; init; }
     public bool HasProposal => Proposal != null;
 }
 
@@ -235,7 +257,8 @@ public static class BotDecisionSelector
     public static BotDecisionSelection Select(
         BotObservedContext context,
         IEnumerable<BotDecisionProposal> proposals,
-        int maxCandidates = MaxCandidates)
+        int maxCandidates = MaxCandidates,
+        bool includeLegalAlternatives = false)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(proposals);
@@ -277,17 +300,52 @@ public static class BotDecisionSelector
         }
 
         if (legal.Count == 0)
+        {
             return new BotDecisionSelection(null, Array.AsReadOnly(rejections.ToArray()),
-                rejections.Count == 0 ? "no proposals" : "no legal proposal");
+                rejections.Count == 0 ? "no proposals" : "no legal proposal")
+            // Opt-in: the collection ran and legitimately found none, so this
+            // is the EMPTY set, not "not collected".
+            { LegalAlternatives = includeLegalAlternatives ? Array.Empty<BotDecisionProposal>() : null,
+              SelectionCandidateCount = includeLegalAlternatives ? rejections.Count : null };
+        }
+        // The flag-off path is byte-for-byte the pre-existing behaviour: the
+        // ordered sequence is walked straight to .First(), so it allocates no
+        // List the old code did not allocate. Only the opt-in lane pays to
+        // materialize the full ranking, which is what lets the incumbent and
+        // every legal loser come out of ONE ordering and never disagree.
+        if (!includeLegalAlternatives)
+        {
+            var firstChoice = legal
+                .OrderByDescending(x => x.Proposal.Priority)
+                .ThenByDescending(x => Math.Clamp(x.Proposal.PersonalityWeight, -BotDecisionProposal.MaxPersonalityWeight, BotDecisionProposal.MaxPersonalityWeight))
+                .ThenBy(x => x.Proposal.TieBreakKey, StringComparer.Ordinal)
+                .ThenBy(x => x.Index)
+                .First().Proposal;
+            return new BotDecisionSelection(firstChoice, Array.AsReadOnly(rejections.ToArray()),
+                $"selected {firstChoice.Goal}/{firstChoice.Action}: {firstChoice.Rationale} (policy {firstChoice.PolicyVersion})");
+        }
 
-        var winner = legal
+        var rejectionsView = Array.AsReadOnly(rejections.ToArray());
+
+        // Opt-in only: ONE materialized ranking serves both the winner and the
+        // legal losers, so they are ordered by the same key by construction.
+        var ranked = legal
             .OrderByDescending(x => x.Proposal.Priority)
             .ThenByDescending(x => Math.Clamp(x.Proposal.PersonalityWeight, -BotDecisionProposal.MaxPersonalityWeight, BotDecisionProposal.MaxPersonalityWeight))
             .ThenBy(x => x.Proposal.TieBreakKey, StringComparer.Ordinal)
             .ThenBy(x => x.Index)
-            .First().Proposal;
-        return new BotDecisionSelection(winner, Array.AsReadOnly(rejections.ToArray()),
-            $"selected {winner.Goal}/{winner.Action}: {winner.Rationale} (policy {winner.PolicyVersion})");
+            .ToList();
+        var winner = ranked[0].Proposal;
+
+        // The legal losers: rank 1..n, winner excluded. They satisfied every
+        // hard precondition and still lost the preference order, which is a
+        // different fact from a precondition rejection and must be told apart.
+        var alternatives = new List<BotDecisionProposal>(ranked.Count - 1);
+        for (var i = 1; i < ranked.Count; i++)
+            alternatives.Add(ranked[i].Proposal);
+        return new BotDecisionSelection(winner, rejectionsView,
+            $"selected {winner.Goal}/{winner.Action}: {winner.Rationale} (policy {winner.PolicyVersion})")
+        { LegalAlternatives = alternatives, SelectionCandidateCount = rejections.Count + ranked.Count };
     }
 }
 
