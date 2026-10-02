@@ -36,13 +36,14 @@ PUBLISH_STAMP="$RUNTIME_DIR/.publish-stamp"   # rebuild-skip marker (see e2e_pub
 # shell-prepared lane and a probe run can share one isolated stack:
 #   COMPOSE_PROJECT_NAME (default e2e), DB_HOST_PORT/E2E_DB_PORT,
 #   E2E_INTERNAL_PORT, E2E_LOGIN_PORT, E2E_GAME_PORT, E2E_STREAM_PORT,
-#   E2E_BRIDGE_PORT.
+#   E2E_WEBAPI_PORT, E2E_BRIDGE_PORT.
 COMPOSE_PROJECT="${COMPOSE_PROJECT_NAME:-e2e}"
 
 PORT_LOGIN="${E2E_LOGIN_PORT:-1237}"         # login client-facing
 PORT_LOGIN_INT="${E2E_INTERNAL_PORT:-1234}"  # login <-> game internal
 PORT_GAME="${E2E_GAME_PORT:-1239}"
 PORT_STREAM="${E2E_STREAM_PORT:-1250}"
+PORT_WEBAPI="${E2E_WEBAPI_PORT:-1280}"
 PORT_DB="${DB_HOST_PORT:-${E2E_DB_PORT:-3306}}"
 PORT_BRIDGE="${E2E_BRIDGE_PORT:-1260}"    # BotDriveBridge (game process, E2E-2 scope — OFF by default)
 
@@ -103,13 +104,14 @@ e2e_db_up() {
 
 # ---------------------------------------------------------------- processes
 
-# Pids of e2e server processes (cmdline matches the dll AND cwd under runtime/).
+# Pids of lane server processes (dotnet DLL or native apphost, cwd under runtime/).
 e2e_find_proc() {
     local name="$1" pid cwd
     for d in /proc/[0-9]*; do
         pid="${d#/proc/}"
         [ -r "/proc/$pid/cmdline" ] || continue
-        if tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q "AAEmu\.${name}\.dll"; then
+        if tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null |
+            grep -Eq "AAEmu\.${name}(\.dll|[[:space:]])"; then
             cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null || true)"
             case "$cwd" in "$RUNTIME_DIR"/*) echo "$pid" ;; esac
         fi
@@ -121,8 +123,13 @@ e2e_port_owner() {
     local port="$1"
     ss -ltnp 2>/dev/null | awk -v p="$port" '
         $4 ~ (":" p "$") {
-            for (i = 1; i <= NF; i++)
-                if ($i ~ /pid=/) { split($i, a, "pid="); sub(/[^0-9].*$/, "", a[2]); print a[2] }
+            for (i = 1; i <= NF; i++) {
+                field = $i
+                while (match(field, /pid=[0-9]+/)) {
+                    print substr(field, RSTART + 4, RLENGTH - 4)
+                    field = substr(field, RSTART + RLENGTH)
+                }
+            }
         }'
 }
 
@@ -130,11 +137,15 @@ e2e_port_owner() {
 e2e_require_port() {
     local port="$1" name="$2" owner pid
     owner="$(e2e_port_owner "$port")"
-    [ -z "$owner" ] && return 0
+    if [ -z "$owner" ]; then
+        [ -z "$(ss -H -ltn "( sport = :$port )")" ] && return 0
+        e2e_fail "port :$port has a listener without a visible owner; refusing to adopt it"
+    fi
     for pid in $owner; do
-        e2e_find_proc "$name" | grep -qx "$pid" && { e2e_log "port :$port owned by our $name (pid $pid) — adopting"; return 0; }
+        e2e_find_proc "$name" | grep -qx "$pid" ||
+            e2e_fail "port :$port is held by foreign pid(s): $owner. Free it first (or run e2e-reset.sh). See README for the port table."
     done
-    e2e_fail "port :$port is held by foreign pid(s): $owner. Free it first (or run e2e-reset.sh). See README for the port table."
+    e2e_log "port :$port owned by our $name (pid(s) $owner) — adopting"
 }
 
 # Server is up AND owns its expected ports (stale procs fail this).
@@ -217,6 +228,7 @@ e2e_write_game_config() {
 {
   "Network": { "Host": "*", "Port": ${PORT_GAME}, "NumConnections": 10 },
   "StreamNetwork": { "Host": "*", "Port": ${PORT_STREAM} },
+  "WebApiNetwork": { "Host": "*", "Port": ${PORT_WEBAPI} },
   "LoginNetwork": { "Host": "127.0.0.1", "Port": "${PORT_LOGIN_INT}" },
   "Connections": {
     "MySQLProvider": {
@@ -348,6 +360,16 @@ e2e_mysql_dump_hash() {
 # Idempotent — safe to re-run; no processes started.
 e2e_prepare() {
     local created=0
+    # Refuse collisions before creating .env or touching the lane. Check every
+    # listener, not just the first owner: SO_REUSEPORT can double-bind WebAPI.
+    e2e_require_port "$PORT_LOGIN_INT" Login
+    e2e_require_port "$PORT_LOGIN"     Login
+    e2e_require_port "$PORT_GAME"      Game
+    e2e_require_port "$PORT_STREAM"    Game
+    e2e_require_port "$PORT_WEBAPI"    Game
+    if [ "$E2E_BRIDGE" = 1 ]; then
+        e2e_require_port "$PORT_BRIDGE" Game
+    fi
     if e2e_ensure_env; then created=1; fi
 
     # canonical data must exist (rsync from the box once)
@@ -355,23 +377,15 @@ e2e_prepare() {
         e2e_fail "canonical data missing at $CANONICAL_SQLITE — provision once with:" \
             "rsync -a root@192.168.0.165:/root/AAEmu/.server_files/AAEmu.Game/ $GAME_DATA_DIR/  (or e2e-boot.sh --provision-data)"
     fi
+    # Check the DB listener before any volume operation or publish.
+    if ! e2e_db_running && [ -n "$(ss -H -ltn "( sport = :$PORT_DB )")" ]; then
+        e2e_fail "port :$PORT_DB is held outside the $COMPOSE_PROJECT db container ($(e2e_port_owner "$PORT_DB"))"
+    fi
 
     # a freshly generated .env invalidates any stale MySQL volume's password
     if [ "$created" = 1 ] && e2e_db_volume_exists; then
         e2e_log "new DB_PASSWORD — wiping stale e2e MySQL volume"
         e2e_compose down -v
-    fi
-
-    # port conflicts: foreign holders hard-fail; our own procs are adopted
-    if ! e2e_db_running && [ -n "$(e2e_port_owner "$PORT_DB")" ]; then
-        e2e_fail "port :$PORT_DB is held by a process outside the e2e db container ($(e2e_port_owner "$PORT_DB"))"
-    fi
-    e2e_require_port "$PORT_LOGIN_INT" Login
-    e2e_require_port "$PORT_LOGIN"     Login
-    e2e_require_port "$PORT_GAME"      Game
-    e2e_require_port "$PORT_STREAM"    Game
-    if [ "$E2E_BRIDGE" = 1 ]; then
-        e2e_require_port "$PORT_BRIDGE" Game
     fi
 
     # Binaries: first boot publishes; afterwards a publish runs only when the
@@ -436,11 +450,12 @@ e2e_boot_servers() {
         e2e_find_proc Login | head -1 > "$PID_DIR/login.pid"
     fi
 
-    if ! e2e_server_ready Game "$PORT_GAME" "$PORT_STREAM" $([ "$E2E_BRIDGE" = 1 ] && echo "$PORT_BRIDGE"); then
+    if ! e2e_server_ready Game "$PORT_GAME" "$PORT_STREAM" "$PORT_WEBAPI" $([ "$E2E_BRIDGE" = 1 ] && echo "$PORT_BRIDGE"); then
         e2e_kill_server Game
         e2e_start_server game "$GAME_DIR" AAEmu.Game.dll "$LOG_DIR/game.log"
         e2e_wait_tcp "$PORT_GAME"   300 "game"            "$LOG_DIR/game.log"
         e2e_wait_tcp "$PORT_STREAM" 300 "game stream"     "$LOG_DIR/game.log"
+        e2e_wait_tcp "$PORT_WEBAPI" 60 "game web API" "$LOG_DIR/game.log"
         if [ "$E2E_BRIDGE" = 1 ]; then
             e2e_wait_tcp "$PORT_BRIDGE" 60 "bot drive bridge" "$LOG_DIR/game.log"
         fi
@@ -450,9 +465,9 @@ e2e_boot_servers() {
     fi
 
     if [ "$E2E_BRIDGE" = 1 ]; then
-        e2e_log "stack up: login :1237 :1234 | game :1239 :1250 | bridge :1260 | MySQL :3306 (e2e db)"
+        e2e_log "stack up: login :$PORT_LOGIN :$PORT_LOGIN_INT | game :$PORT_GAME :$PORT_STREAM | web API :$PORT_WEBAPI | bridge :$PORT_BRIDGE | MySQL :$PORT_DB ($COMPOSE_PROJECT db)"
     else
-        e2e_log "stack up: login :1237 :1234 | game :1239 :1250 | MySQL :3306 (e2e db)"
+        e2e_log "stack up: login :$PORT_LOGIN :$PORT_LOGIN_INT | game :$PORT_GAME :$PORT_STREAM | web API :$PORT_WEBAPI | MySQL :$PORT_DB ($COMPOSE_PROJECT db)"
     fi
 }
 
