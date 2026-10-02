@@ -126,6 +126,38 @@ and direct source/test reads listed per block.
      (reported at runtime as zone 179). Zone 179 is NOT one of the Solzreed zones 9/124/125, and
      the coordinate→zone→settlement mapping behind these staging points is not established in the
      record; do not read either position as a Solzreed coordinate until it is corroborated.
+
+    > **SUPERSEDED 2026-10-02 — factual correction. The warning above compared two
+    > different identifiers and does not hold.** The staging coordinate IS
+    > authentic Solzreed.
+    >
+    > **What was wrong:** the harvest row logs `zone=179` from
+    > `actor.Character?.Transform?.ZoneId` (`QuestBehavior.cs:709`), which is a
+    > **zone KEY**. The warning compared that key against `zones.id`. The
+    > canonical data resolves them: `zones` row **id 125** (`w_solzreed_3`) has
+    > **`zone_key = 179`**. So zoneKey 179 ⇒ `zones.id` 125 ⇒ `w_solzreed_3`.
+    >
+    > **Query provenance (read-only):** archaeology MCP, `source_id=compact.sqlite3`,
+    > `version=1.2 r208022`, md5 `78b3bdbf038db3b927056106efdf91af`, 679 tables,
+    > `truncated=false`.
+    > Input: `SELECT id,name,zone_key,group_id,closed FROM zones WHERE id IN (9,124,125,179)`
+    > (`limit 10`). Rows returned: `9 w_solzreed_1 key 142`, `124 w_solzreed_2 key 178`,
+    > `125 w_solzreed_3 key 179`, `179 e_tiger_spine_mountains_2 key 258`.
+    >
+    > **Corroboration (two identifiers agreeing):** quest 251 is `zone_id 125`
+    > (`w_solzreed_3`) and its accept giver NPC 2425 spawns at `(14536.6, 11117.1)`;
+    > NPC 3511 spawns at `(15524.4, 15278.4, 130.7)` — the exact staging coordinate.
+    > Source: `AAEmu.Game/Data/Worlds/main_world/npc_spawns.json`.
+    >
+    > **Source baseline:** HEAD `80b5715d4`, canonical DB md5 as above.
+    > **Residual gap (still true):** the per-region zone grid is NOT in SQLite —
+    > `ZoneKeyByRegions` is populated from world XML at boot (`XmlWorld.cs:62`,
+    > `XmlWorldSector.cs:24`) inside the encrypted `game_pak`, and `npc_spawns.json`
+    > entries carry no `ZoneId`. So a coordinate→zone assignment cannot be
+    > reproduced offline; it rests on the two agreeing identifiers plus the
+    > runtime log field. **The original warning's other claim — that neither
+    > position is the A1 exit, that neither test proves unassisted acquisition,
+    > and that neither is an H claim — is unaffected and stands.**
      **Scope differs per test:** G3 covers *acceptance only* (quest 251 active); the quest-loop
      test covers ONE full cycle (6198 through completion) plus one accept. Neither runs the
      curated route, neither proves unassisted acquisition from natural spawn, and neither is
@@ -135,6 +167,92 @@ and direct source/test reads listed per block.
   3. `M1M2ReplayScenario` mount segment declares **NO REAL MOUNT** headless
      (`M1M2ReplayScenario.cs:668-700`, `NoMateMaterialized`); a real mount leg needs a
      materialized mate, or the criterion stays explicitly not-proved.
+
+### A1.1 CHILD CARD — natural-spawn giver discovery (first genuinely NEW Tier-2 outcome)
+
+| field | value |
+|---|---|
+| **Parent** | A1 (`:57`), delta 1 (`:107-114`) — a live driver running the PRODUCTION scheduler, not `RunAsScenario`. |
+| **Outcome (one sentence)** | A fresh level-1 Nuian, left at its untouched `CharTemplates.json` natural spawn, discovers and accepts its first quest **with no placement, no teleport, no grant** — walking there itself. |
+| **Baseline / dirty** | HEAD `80b5715d4`; canonical DB md5 `78b3bdbf038db3b927056106efdf91af`; tree dirty from other workers (recorded, not owned). |
+| **Setup (disclosed)** | Real login/provision via `BotNetworkSession.ConnectAsync`; `AAEMU_QUEST_BOOTSTRAP_ENABLED=1` at game-process boot; bridge `observe`/`wake` reads only. **No** `op2:"place"`, no `teleportToNpc`, no GM kit, no money/level/item grant, no forced quest, no direct `AcceptQuest` call. |
+| **Start coordinates** | `CharTemplates.json` template id=1 = `(15578.042, 15382.122, 126.484)`. Consumer: `CharacterManager.cs:389-418` recomputes `ZoneId` at boot. |
+| **Seam under test (EXISTING — no new gameplay)** | `BotRoamStepExecutor.StepQuestLeg` → `ArmQuestTravel` (`:1642`) → `ResolveQuestTravelTarget` (`:1764`), offerer branch (`:1798-1829`), generic over `SpawnManager.GetAllSpawners()` + `OffersWalkableQuest` (`:1844`). |
+| **Why NEW** | G3 `teleportToNpc(3512)` and `QuestPerceptionLoopE2eTests` `op2:"place"` both stage NEXT TO a giver — 116.8 m from natural spawn. This offerer branch had **zero** live coverage. |
+| **Acceptance AS VERIFIED (first leg)** | (a) FAIL-FAST `Assert.True` that the bot starts within 5 m of `CharTemplates` id=1; (b) FAIL-FAST `Assert.True` that it is level 1 with `activeCount == 0`; (c) **net planar displacement from spawn > 25 m** (`MaxInteractRange`), so no accepter was in range at spawn — displacement between logged positions, NOT route length; (d) engine-reported `accepts > 0` (completed `AcceptQuest` requests); (e) final `Assert.True(moved > 25 && accepts > 0)`. |
+| **Acceptance NOT verified (do not read as PASS)** | — *exactly one* active quest (`activeQuests.Count > 0` was asserted, never `== 1`); `QuestTravelReason`/`PendingMoveOwner == QUEST_TRAVEL` (telemetry captured, **not** asserted — pinning diagnostic wording was deliberately rejected); the negative "no eligible spawner ⇒ refuse" case (**no test written — outside this first leg**); restart-conservation (**not run**). |
+| **Evidence layer** | Tier-2 rig-tier bot evidence on an isolated lane. Local arbitration within this leg only — **not** full-journey autonomy, **not** H, **not** the A1 exit. |
+| **Non-goals** | curated arc; `LevelingLoopScenario`/template execution; restart-conservation; multi-cycle; any H claim. |
+| **Dependencies** | existing seam + bridge control used by the passing quest-loop test (no extra bot-control flag); isolated `t2sol` lane. |
+| **Verifier** | **Independent signoff PENDING** — not yet reviewed by a second party. |
+>
+> **Known gap (do not fill by assumption):** whether any spawner near natural spawn
+> satisfies `OffersWalkableQuest` is UNKNOWN offline — `GetQuestsOfferedByNpc`'s
+> accept-act links are ABSENT from `compact.sqlite3` (proven for quest 6198, which
+> has no accept row yet was accepted live at 3511). Resolve by the run's own log,
+> never by hardcoding a corridor.
+>
+> **RESULT 2026-10-02 — PASS, Tier-2 rig-tier bot evidence (isolated `t2sol`).**
+> `QuestPerceptionLoop_NaturalSpawn_WalksToGiverAndAcceptsWithoutStaging` — 1/1
+> passed, 2m43s. Observed from the lane's own `logs/game-restart.log`
+> (`QuestSweepDiag`, real networked bot char 44110):
+>
+> | time | actor position | zoneKey | sweep |
+> |---|---|---|---|
+> | 13:46:43 | `(15578.0, 15382.1, 126.5)` | 179 | `raw=0 … firstZero=sweep-empty` (natural spawn, nothing in range) |
+> | 13:46:56 | `(15562.7, 15354.7, 127.9)` | 179 | `raw=2 … 44119:3597 offers=330 (L1); 44130:10688 offers=0` |
+> | 13:46:56 | same | 179 | `decide=[landed AcceptQuest (quest 330 accepted (Npc/3597))]` |
+>
+> **Net planar displacement ≈31.4 m**, computed from the two logged positions
+> (below); **route length and on-wire locomotion frames were NOT measured**, and no
+> `SCOneUnitMovementPacket` capture exists for this leg. The test asserts only
+> `> 25 m` displacement, which bounds "the accepter was not in range at spawn" —
+> it does not prove path length or packet-level travel. There were **zero**
+> `place`/`teleport` calls. `accepts>0` from the engine's completed
+> `AcceptQuest` requests. Start
+> matched `CharTemplates.json` id=1 `(15578.042, 15382.122)` within the 5 m
+> tolerance; level 1; `activeCount` 0. The quest accepted was **330**
+> (`나를 찾는 사람`, LEVEL 1, zone_id 125 `w_solzreed_3`), confirmed read-only
+> via archaeology MCP, `source_id=compact.sqlite3`, `version=1.2 r208022`, md5
+> `78b3bdbf038db3b927056106efdf91af`. **330 is NOT globally banned** — it is the
+> *tracked-only* id of the OTHER (staged) test in this file, where it is passed
+> to the bridge purely as a second completion flag and its completion is never
+> asserted. This leg records whichever quest it observed and asserts no id.
+>
+> **Why this is NEW:** G3 and the quest-loop test both stage next to a giver;
+> neither proves the bot reaches one.
+>
+> **Loop completeness (AGENTS evidence-honesty gate), scope = this leg only:**
+>
+> | leg | status |
+> |---|---|
+> | Initial state / acquire prerequisites | **PARTIAL** — fresh character provisioned by the production path with **no grant performed by this test** (source fact: no GM kit / money / level / item mutation call exists in the test). Level 1 and `activeCount == 0` are **measured and asserted**. Bag contents and gold were **NOT measured** — do not read this as a conservation claim. |
+> | Discover and bind an eligible target | **IMPLEMENTED + VERIFIED** — sweep found NPC 3597 offering quest 330 (`44119:3597 offers=330(L1)`). |
+> | Legal reach | **PARTIAL** — net planar displacement **≈31.4 m** between the two logged positions, and **no** `place`/`teleport`. Route length and on-wire movement frames were **not** measured; the test asserts only `> 25 m`. |
+> | Ordinary action | **IMPLEMENTED + VERIFIED** — engine completed `AcceptQuest` (`accepts>0`). |
+> | Verify consequence / authoritative state | **PARTIAL** — `activeQuests.Count > 0` observed live; **exactly one** was NOT asserted. |
+> | Refusal when nothing eligible | **N/A for this leg** — the observed `raw=0 … firstZero=sweep-empty` at natural spawn IS the genuine no-in-range outcome, but it is incidental (sweep at spawn), not a purpose-built negative test. **No negative test was written.** |
+> | Recovery / repeat / persistence | **N/A for a first accept** — no death, no restart, no second cycle. **UNPROVED**, not passed. No DB read/persistence check was performed by this test. |
+> | Client / H observation | **UNKNOWN** — no human played; no client rendering evidence. Not a bot-loop leg; recorded separately. |
+>
+> **LOOP INCOMPLETE (bot loop) — full A1 remains open.** Unproved legs: restart
+> persistence, multi-cycle repetition, and the curated Solzreed→Dewstone→
+> Marianople route. **H is a separate track, not one of these legs**, and stays
+> UNKNOWN independently of the loop's completeness.
+>
+> **On autonomy:** within this leg the destination was chosen by the bot's own
+> production arbitration (`OffersWalkableQuest` band+legality rule over the
+> spawner index) with no human or scripted target — that local choice **is**
+> unassisted and is what this leg proves. **Full-journey autonomy is a
+> different claim** and remains unproved: no repetition, no survival across
+> restart, and no measured inventory/gold state.
+>
+> **Infra notes:** MTP swallows the test's stdout entirely, so every value above
+> is read from the lane artifact `/root/aaemu-e2e-t2-sol/logs/game-restart.log`
+> (`QuestSweepDiag`, real networked bot char 44110) — that log, not the runner
+> output, is the credible evidence path. The test's own printed summary is not
+> recoverable. The seam armed without any source change — **no reproduction
+> defect was found; nothing needed fixing in production code.**
 - **Already bot-driven (confirm, do not re-invent):** `AdventurerSpikeE2eTests`
   (`:50` `AdventurerSpike_OnLiveServer_ClearsFoxCullEndToEnd`) proves one quest (250)
   end-to-end with **REAL damage** (`Npc.DoDie` → `QuestManager.DoOnMonsterHuntEvents`);

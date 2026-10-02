@@ -81,6 +81,187 @@ public class QuestPerceptionLoopE2eTests
     private const float StageY = 15278.4f;
     private const float StageZ = 130f;
 
+    // The UNTOUCHED natural spawn (CharTemplates.json template id=1) — NOT a
+    // staging point. This test deliberately places nothing: the bot must walk
+    // from here to any giver itself, via the production quest-travel seam.
+    private const float NaturalSpawnX = 15578.042f;
+    private const float NaturalSpawnY = 15382.122f;
+    private const float NaturalSpawnZ = 126.484f;
+
+    /// <summary>
+    /// A1.1 — the first genuinely NEW Tier-2 outcome in this file: quest-giver
+    /// DISCOVERY from an untouched natural spawn.
+    ///
+    /// Every other test here (and G3AutonomousQuestAccept3512Tests) stages the
+    /// character NEXT TO a known giver, so none of them proves the bot can find
+    /// work on its own. This one places nothing at all: the character is created
+    /// at <c>CharTemplates.json</c> template id=1 and the production
+    /// <c>ArmQuestTravel</c> → <c>ResolveQuestTravelTarget</c> seam must pick a
+    /// lawful offerer spawner by its generic band+legality rule, the bot must
+    /// walk there via the ordinary route layer, and the acceptance must come
+    /// from that sweep.
+    ///
+    /// The observable is NOT a copy of recorded fields: it is the character
+    /// having MOVED to a position it was never placed at, plus an active quest
+    /// row that appeared without any direct accept. Which quest it accepts is
+    /// recorded, never asserted — a hardcoded expectation would re-introduce
+    /// exactly the staging-dependence this test exists to remove.
+    /// </summary>
+    [Fact]
+    [Trait("Category", "e2e")]
+    public async Task QuestPerceptionLoop_NaturalSpawn_WalksToGiverAndAcceptsWithoutStaging()
+    {
+        var wall = Stopwatch.StartNew();
+        var legs = new List<(string Leg, bool Passed, string Detail, double Ms)>();
+        void Leg(string leg, bool passed, string detail)
+        {
+            legs.Add((leg, passed, detail, wall.Elapsed.TotalMilliseconds));
+            Console.WriteLine($"[quest-natural-spawn] {(passed ? "PASS" : "FAIL")} {leg}: {detail}");
+        }
+
+        var name = "QpNat" + Guid.NewGuid().ToString("N")[..8].ToLowerInvariant();
+        var account = "e2eqpnat" + Guid.NewGuid().ToString("N")[..8].ToLowerInvariant();
+        BotNetworkSession? net = null;
+        BotDriveClient? bridge = null;
+
+        Environment.SetEnvironmentVariable("AAEMU_QUEST_BOOTSTRAP_ENABLED", "1");
+        try
+        {
+            E2eStack.EnsureUp();
+            E2eStack.RestartGameServer();
+            E2eStack.EnsureUp();
+            await Task.Delay(3000);
+
+            net = await ConnectWithRetryAsync(name, account);
+            if (!net.InWorld)
+            {
+                Leg("provision-networked", false, "bot never reached in-world");
+                throw new Xunit.Sdk.XunitException("bot must be in-world");
+            }
+            Leg("provision-networked", true,
+                $"REAL-BOT '{name}' (char {net.CharacterId}) in-world via real login; NOT staged");
+
+            bridge = new BotDriveClient(E2eStack.BridgePort);
+
+            // PRECONDITIONS ARE ASSERTED, NOT LOGGED. If the bot is not actually
+            // at the untouched natural spawn, or is not level 1 with no active
+            // quest, every later claim is meaningless — so each is a real gate.
+            var pre = bridge.Call(
+                $"{{\"cmd\":\"quest\",\"op2\":\"observe\",\"bot\":\"{name}\",\"arc\":[]}}", timeoutMs: 30_000);
+            var startX = pre.GetProperty("x").GetSingle();
+            var startY = pre.GetProperty("y").GetSingle();
+            var startZone = pre.GetProperty("zoneId").GetUInt32();
+            var startLevel = pre.GetProperty("level").GetInt32();
+            var startActive = pre.GetProperty("activeCount").GetInt32();
+            var spawnDx = startX - NaturalSpawnX;
+            var spawnDy = startY - NaturalSpawnY;
+            var spawnDist = Math.Sqrt(spawnDx * spawnDx + spawnDy * spawnDy);
+            Leg("starts-at-untouched-natural-spawn", spawnDist <= 5.0,
+                $"observed ({startX:F3},{startY:F3}) vs CharTemplates id=1 ({NaturalSpawnX:F3},{NaturalSpawnY:F3}) " +
+                $"= {spawnDist:F2}m (tolerance 5m); zoneKey={startZone}");
+            Leg("fresh-level-one-no-active-quest", startLevel == 1 && startActive == 0,
+                $"level={startLevel} activeCount={startActive}");
+            // FAIL FAST: the whole claim is about starting from the untouched
+            // natural spawn as a fresh level-1 with no quest. If either is false
+            // the later movement/accept evidence would be meaningless, so these
+            // are hard assertions BEFORE the loop, not logged lines.
+            Assert.True(spawnDist <= 5.0,
+                $"bot did NOT start at the natural spawn: observed ({startX:F3},{startY:F3}) " +
+                $"is {spawnDist:F2}m from CharTemplates id=1 ({NaturalSpawnX:F3},{NaturalSpawnY:F3})");
+            Assert.True(startLevel == 1 && startActive == 0,
+                $"bot is not a fresh level-1 with no active quest: level={startLevel} activeCount={startActive}");
+
+            // NO place / teleport call is issued anywhere in this test body.
+            // That is a property of THIS SOURCE, verifiable by reading it — it
+            // is deliberately NOT asserted through a self-set flag, which would
+            // be tautological. The runtime proof that nothing moved us is the
+            // movement itself, asserted below.
+            var accepted = false;
+            var moved = 0.0;
+            var acceptedQuestIds = new List<uint>();
+            var travelReason = "";
+            var travelTargetX = 0.0;
+            var travelTargetY = 0.0;
+            var finalX = startX;
+            var finalY = startY;
+            var finalZone = startZone;
+            var accepts = 0;
+            var wakeTrace = new List<string>();
+            // Bounded by WALL CLOCK (5 min), not wake count: the walk is
+            // distance-driven, so a fixed iteration budget would be a magic
+            // number standing in for patience.
+            var deadline = DateTime.UtcNow.AddMinutes(5);
+            for (var i = 0; !accepted && DateTime.UtcNow < deadline; i++)
+            {
+                await Task.Delay(1000);
+                var w = bridge.Call($"{{\"cmd\":\"quest\",\"op2\":\"wake\",\"bot\":\"{name}\",\"waitMs\":15000,\"arc\":[]}}",
+                    timeoutMs: 60_000);
+                finalX = w.GetProperty("x").GetSingle();
+                finalY = w.GetProperty("y").GetSingle();
+                finalZone = w.GetProperty("zoneId").GetUInt32();
+                accepts = w.GetProperty("accepts").GetInt32();
+                var reason = w.GetProperty("questTravelReason").GetString() ?? "";
+                if (reason.Length > 0) travelReason = reason;
+                if (w.GetProperty("questTravelTargetX").ValueKind == JsonValueKind.Number)
+                {
+                    travelTargetX = w.GetProperty("questTravelTargetX").GetSingle();
+                    travelTargetY = w.GetProperty("questTravelTargetY").GetSingle();
+                }
+                moved = Math.Max(moved,
+                    Math.Sqrt((finalX - startX) * (finalX - startX) + (finalY - startY) * (finalY - startY)));
+                var activeIds = w.GetProperty("activeQuests").EnumerateArray()
+                    .Select(e => e.GetProperty("questId").GetUInt32()).ToList();
+                if (activeIds.Count > 0)
+                {
+                    accepted = true;
+                    acceptedQuestIds = activeIds;
+                }
+                if (i % 10 == 0)
+                    wakeTrace.Add(
+                        $"w{i}:active=[{string.Join(",", activeIds)}] at=({finalX:F1},{finalY:F1}) moved={moved:F1}m " +
+                        $"accepts={accepts} travel='{reason}'");
+            }
+
+            if (!accepted)
+            {
+                Leg("walk-to-giver-and-accept", false,
+                    $"no quest accepted within the 5-minute window from natural spawn; max movement {moved:F1}m; " +
+                    $"last travel reason '{travelReason}'\n" + string.Join("\n", wakeTrace.TakeLast(12)));
+                throw new Xunit.Sdk.XunitException(
+                    "production quest-travel never delivered the bot to a lawful offerer from natural spawn");
+            }
+
+            // The NEW observable: it WALKED there (never placed), and the accept
+            // came out of the scheduler's own sweep.
+            Leg("walked-beyond-discover-radius", moved > 25.0,
+                $"travelled {moved:F1}m from spawn — beyond MaxInteractRange 25m, so the " +
+                $"accepter could not have been in range at spawn");
+            // OPTIONAL telemetry only. The travel reason string is diagnostic
+            // wording and is deliberately NOT asserted — pinning it would make
+            // the test brittle against a harmless log rewording. The real
+            // evidence is the movement plus the accepted quest, asserted below.
+            if (travelReason.Length > 0)
+                Console.WriteLine($"[quest-natural-spawn] travel telemetry: '{travelReason}' " +
+                                  $"target=({travelTargetX:F1},{travelTargetY:F1})");
+
+            var evidence =
+                $"start=({startX:F3},{startY:F3}) zoneKey={startZone} level={startLevel} active={startActive} " +
+                $"spawnDist={spawnDist:F2}m; final=({finalX:F3},{finalY:F3}) zoneKey={finalZone}; " +
+                $"moved={moved:F1}m; accepts={accepts}; accepted=[{string.Join(",", acceptedQuestIds)}]; " +
+                $"travel='{travelReason}'; " +
+                $"legs={string.Join(" | ", legs.Select(l => $"{l.Leg}={(l.Passed ? "PASS" : "FAIL")}"))}";
+            Console.WriteLine($"[quest-natural-spawn] {evidence}");
+            Assert.True(moved > 25.0 && accepts > 0,
+                $"natural-spawn discovery FAIL.\nEvidence:\n{evidence}");
+        }
+        finally
+        {
+            bridge?.Dispose();
+            net?.Dispose();
+            Environment.SetEnvironmentVariable("AAEMU_QUEST_BOOTSTRAP_ENABLED", null);
+        }
+    }
+
     private static string EvidenceDir => Path.Combine(E2eStack.E2eRoot, "logs");
     private static string ReportPath => Path.Combine(EvidenceDir, "quest-perception-loop-report.json");
     private static string GameLogPath => Path.Combine(EvidenceDir, "game.log");
