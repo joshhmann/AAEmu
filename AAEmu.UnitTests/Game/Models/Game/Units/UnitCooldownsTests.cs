@@ -103,14 +103,38 @@ public class UnitCooldownsTests
     }
 
     [Test]
-    public void RemoveCooldown_ShouldNotThrow_WhenSkillNotExists()
+    public async Task RemoveCooldown_RemovesTheTargetAndLeavesOthersIntact()
     {
-        // Arrange
+        // The old test asserted nothing ("should not throw") and passed with
+        // RemoveCooldown gutted to `{ }`. The absent-key case on its own cannot
+        // detect that either: TryRemove on a missing key is a no-op whether the
+        // method runs or not.
+        //
+        // The contract that IS observable is selective removal: the named skill
+        // goes, every other cooldown survives, and an absent key is ignored.
         var cooldowns = new UnitCooldowns();
-        var skillId = 100u;
+        var targetId = 100u;
+        var otherId = 200u;
+        var missingId = 300u;
+        var expiry = DateTime.UtcNow.AddMinutes(1);
+        cooldowns.Cooldowns.TryAdd(targetId, expiry);
+        cooldowns.Cooldowns.TryAdd(otherId, expiry);
 
-        // Act & Assert - should not throw
-        cooldowns.RemoveCooldown(skillId);
+        // Act
+        cooldowns.RemoveCooldown(targetId);
+        cooldowns.RemoveCooldown(missingId);
+
+        // Assert
+        await Assert.That(cooldowns.Cooldowns.ContainsKey(targetId)).IsFalse()
+            .Because("the named skill's cooldown must actually be removed");
+        await Assert.That(cooldowns.Cooldowns.ContainsKey(otherId)).IsTrue()
+            .Because("removal must be selective: other cooldowns survive");
+        await Assert.That(cooldowns.Cooldowns.ContainsKey(missingId)).IsFalse()
+            .Because("removing an absent skill is a no-op, not an error");
+        await Assert.That(cooldowns.Cooldowns.Count).IsEqualTo(1)
+            .Because("exactly one of the two seeded cooldowns remains");
+        await Assert.That(cooldowns.Cooldowns[otherId]).IsEqualTo(expiry)
+            .Because("the surviving cooldown must keep its original expiry");
     }
 
     [Test]

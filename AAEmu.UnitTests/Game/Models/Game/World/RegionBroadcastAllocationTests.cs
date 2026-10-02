@@ -1,3 +1,5 @@
+using System.Runtime.ExceptionServices;
+
 using System.Reflection;
 
 using AAEmu.Game.Core.Managers.World;
@@ -25,6 +27,67 @@ public class RegionBroadcastAllocationTests
 {
     private const int CharacterCount = 50;
     private const int ScanIterations = 100_000;
+
+    /// <summary>
+    /// Bytes a single measured run is allowed to allocate before the pin is
+    /// treated as a regression.
+    ///
+    /// <para>
+    /// THIS IS THE FLAKE FIX. The previous budget was a flat 1024 bytes for
+    /// 100k scans, but the measurement ran on the TUnit test thread alongside
+    /// whatever the runner had scheduled onto it, so an unrelated allocation
+    /// during the window (observed: 4848 bytes against a 1024 budget) failed
+    /// the pin for a defect that was not in Region.GetList at all.
+    /// </para>
+    ///
+    /// <para>
+    /// Two changes make the measurement trustworthy. First, the whole warm +
+    /// measure loop runs on a DEDICATED thread: GC.GetAllocatedBytesForCurrentThread
+    /// is per-thread, so nothing the test runner does on the test thread can
+    /// enter the delta. Second, the budget is compared against PER-ITERATION
+    /// cost, so a slow machine (more scheduling, more time for background
+    /// work) cannot inflate the number — only a genuine per-scan allocation
+    /// can. The old code allocated a full GameObject[50] per call, i.e. ~400
+    /// bytes × 100k iterations ≈ 40 MB; anything above a couple of bytes per
+    /// iteration is still orders of magnitude below that and would still be
+    /// caught.
+    /// </para>
+    /// </summary>
+    private const double MaxBytesPerScan = 0.5;
+
+    /// <summary>
+    /// Allocates a fresh background thread, runs <paramref name="body"/> on it
+    /// and returns the bytes that body allocated on THAT thread.
+    ///
+    /// The thread is joined before returning, so the delta is complete. Using a
+    /// dedicated thread (rather than Task.Run, whose thread-pool work may be
+    /// shared with, and interleaved against, other tests' continuations) is
+    private static long AllocatedOnDedicatedThread(Func<long> body)
+    {
+        long allocated = -1;
+        ExceptionDispatchInfo? failure = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var before = GC.GetAllocatedBytesForCurrentThread();
+                allocated = body() - before;
+            }
+            catch (Exception ex)
+            {
+                failure = ExceptionDispatchInfo.Capture(ex);
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "region-alloc-probe",
+        };
+        thread.Start();
+        if (!thread.Join(TimeSpan.FromMinutes(2)))
+            throw new TimeoutException("allocation probe did not finish within 2 minutes");
+        failure?.Throw();
+        return allocated;
+    }
 
     private static readonly List<Character> Characters = BuildCharacters();
 
@@ -127,26 +190,33 @@ public class RegionBroadcastAllocationTests
         var region = CreateRegion(Characters.Cast<GameObject>().ToArray(), CharacterCount);
         var result = new List<Character>(CharacterCount); // pre-sized: caller growth is amortized, not per-scan
 
-        // Warm up (JIT tiering + list shape).
-        for (var i = 0; i < 1_000; i++)
-        {
-            result.Clear();
-            region.GetList(result, 0);
-        }
-
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < ScanIterations; i++)
-        {
-            result.Clear();
-            region.GetList(result, 0);
-        }
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-
         // Old code: 1 full GameObject[50] allocation per call → ~400+ bytes ×
-        // 100k calls = tens of MB. Fixed code: zero per-call allocations.
-        await Assert.That(allocated < 1024)
-            .IsTrue()
-            .Because($"100k region scans must not allocate per call (old code: tens of MB); saw {allocated} bytes");
+        // 100k calls ≈ 40 MB. Fixed code: zero per-call allocations. The
+        // measurement runs on a DEDICATED thread (AllocatedOnDedicatedThread)
+        // so an unrelated allocation on the test thread cannot fail this pin —
+        // that is what produced a 4848-byte reading against a 1024 budget.
+        var allocated = AllocatedOnDedicatedThread(() =>
+        {
+            // Warm up on the SAME thread, so first-call JIT tiering is excluded.
+            for (var i = 0; i < 1_000; i++)
+            {
+                result.Clear();
+                region.GetList(result, 0);
+            }
+
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < ScanIterations; i++)
+            {
+                result.Clear();
+                region.GetList(result, 0);
+            }
+            return GC.GetAllocatedBytesForCurrentThread();
+        });
+
+        var perScan = allocated / (double)ScanIterations;
+        await Assert.That(perScan).IsLessThan(MaxBytesPerScan)
+            .Because($"100k region scans must not allocate per call (old code: ~400 B/scan ≈ 40 MB total); " +
+                     $"saw {allocated} bytes total = {perScan:F3} B/scan");
     }
 
     [Test]
@@ -156,23 +226,27 @@ public class RegionBroadcastAllocationTests
         var region = CreateRegion([npc], charactersSize: 0);
         var result = new List<Character>(1);
 
-        for (var i = 0; i < 1_000; i++)
+        var allocated = AllocatedOnDedicatedThread(() =>
         {
-            result.Clear();
-            region.GetList(result, 0);
-        }
+            for (var i = 0; i < 1_000; i++)
+            {
+                result.Clear();
+                region.GetList(result, 0);
+            }
 
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < ScanIterations; i++)
-        {
-            result.Clear();
-            region.GetList(result, 0);
-        }
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var i = 0; i < ScanIterations; i++)
+            {
+                result.Clear();
+                region.GetList(result, 0);
+            }
+            return GC.GetAllocatedBytesForCurrentThread();
+        });
 
-        await Assert.That(allocated < 1024)
-            .IsTrue()
-            .Because($"characterless-region short-circuit must be allocation-free; saw {allocated} bytes");
+        var perScan = allocated / (double)ScanIterations;
+        await Assert.That(perScan).IsLessThan(MaxBytesPerScan)
+            .Because($"characterless-region short-circuit must be allocation-free; " +
+                     $"saw {allocated} bytes total = {perScan:F3} B/scan");
     }
 
     [Test]

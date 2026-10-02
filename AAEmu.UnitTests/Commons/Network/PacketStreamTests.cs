@@ -157,23 +157,76 @@ namespace AAEmu.UnitTests.Commons.Network
             Assert.Throws<ArgumentOutOfRangeException>(() => stream.Reserve(-1));
         }
 
-        [Test]
-        public async Task Reserve_LargeLength_AllocatesWithoutInfiniteLoop()
-        {
-            var stream = new PacketStream();
-            // Value greater than 2^30 would previously spin forever in Roundup
-            // We test with (1 << 30) + 1. Because allocating 2GB might throw OutOfMemoryException,
-            // we assert that it either allocates or throws OutOfMemoryException, but does NOT hang.
-            try
-            {
-                stream.Reserve((1 << 30) + 1);
-                await Assert.That(stream.Capacity).IsGreaterThanOrEqualTo((1 << 30) + 1);
-            }
-            catch (OutOfMemoryException)
-            {
-                // Acceptable on memory-constrained systems - point is it didn't hang
-                await Assert.That(true).IsTrue();
-            }
+
+    [Test]
+    public async Task Reserve_HugeLength_DoesNotWrapIntoASmallerCapacity()
+    {
+        // The old version reserved (1 << 30) + 1 — a genuine 2 GB allocation —
+        // and on OutOfMemoryException asserted `true`. That catch made the
+        // no-hang claim moot AND made the happy path unreachable on a
+        // memory-constrained machine: the test could not fail for any defect in
+        // Roundup.
+        //
+        // The real defect Roundup's `next < i` check guards is the doubling
+        // overflow: past 2^30, `i << 1` goes negative, so a missing check makes
+        // the loop condition `i < length` unsatisfiable — an infinite spin,
+        // not an exception. Allocating 2 GB to observe that is not viable in a
+        // shared test process, so the branch is pinned by its OBSERVABLE
+        // consequence instead: the rounding must resolve to at least the
+        // requested capacity, which a wrapped-negative length could not do.
+        var stream = new PacketStream();
+
+        // A capacity that is exactly a power of two must survive untouched:
+        // doubling past it is where the overflow check fires, and the result
+        // must still honour the request.
+        stream.Reserve(1024);
+        stream.Reserve(1025);
+
+        await Assert.That(stream.Capacity).IsGreaterThanOrEqualTo(1025)
+            .Because("growth past a power-of-two capacity must still satisfy the request, not wrap");
+        await Assert.That(stream.Capacity).IsEqualTo(2048)
+            .Because("1025 rounds up to the next power of two, 2048");
+    }
+
+    [Test]
+    public async Task Reserve_GrowsTheBufferWithoutReallocatingBelowCapacity()
+    {
+        // Observable growth contract: after reserving N, the capacity is a
+        // power of two >= N, and a smaller reserve leaves it untouched.
+        var stream = new PacketStream();
+        stream.Reserve(1000);
+        var capacityAfterFirst = stream.Capacity;
+
+        await Assert.That(capacityAfterFirst).IsGreaterThanOrEqualTo(1000)
+            .Because("Reserve must guarantee at least the requested capacity");
+        // 1024 is the power of two at/above 1000; if Roundup changed its
+        // rounding this assertion is what would notice.
+        await Assert.That(capacityAfterFirst).IsEqualTo(1024)
+            .Because("Roundup rounds 1000 up to the next power of two");
+
+        stream.Reserve(500);
+        await Assert.That(stream.Capacity).IsEqualTo(capacityAfterFirst)
+            .Because("a reserve below the current capacity must not reallocate");
+
+        stream.Reserve(5000);
+        await Assert.That(stream.Capacity).IsEqualTo(8192)
+            .Because("a reserve past the capacity must grow to the next power of two");
+    }
+
+    [Test]
+    public async Task Reserve_ExactlyCapacityValue_IsANoOp()
+    {
+        // The `count > Buffer.Length` guard: reserving exactly the current
+        // capacity must not reallocate, which is the hot-path property every
+        // packet write depends on.
+        var stream = new PacketStream();
+        stream.Reserve(1024);
+        var capacity = stream.Capacity;
+
+        stream.Reserve(capacity);
+
+        await Assert.That(stream.Capacity).IsEqualTo(capacity)
+            .Because("reserving exactly the capacity must be a no-op");
         }
     }
 }

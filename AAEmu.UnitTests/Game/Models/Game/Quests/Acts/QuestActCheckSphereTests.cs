@@ -247,11 +247,23 @@ public class QuestActCheckSphereTests
     [Test]
     public async Task OnEnterSphere_WrongComponent_DoesNotRequestEvaluation()
     {
-        // Arrange — sphere event for a different component of the same quest
+        // The act's sphere handler is subscribed to the character's OWN event,
+        // so a mismatched sphere descriptor is the real filter that keeps an
+        // unrelated quest's sphere entry from re-evaluating this quest.
+        //
+        // The assertion only means something if the act would otherwise have
+        // fired: the previous rig built the act with ActId = 0 while the live
+        // QuestAct also had Id = 0, so the FIRST clause of the guard was
+        // vacuously false and the component clause was never exercised. ActId
+        // is set to a distinct value below so ONLY the component clause can
+        // reject — flip the production comparison and this test goes red.
         var (act, questAct, _, questManagerMock, _, _) = Setup();
+        act.ActId = 999;
+        questAct.Template = act;
+
         var args = new OnEnterSphereArgs
         {
-            SphereQuest = new SphereQuest { QuestId = QuestId, ComponentId = 9999 },
+            SphereQuest = new SphereQuest { QuestId = QuestId, ComponentId = ComponentId + 1 },
             OldPosition = Vector3.Zero,
             NewPosition = SphereCenter
         };
@@ -260,6 +272,8 @@ public class QuestActCheckSphereTests
         act.OnEnterSphere(questAct, null, args);
 
         // Assert
+        // Because: a sphere belonging to a different component must not
+        // re-evaluate this quest.
         questManagerMock.EnqueueEvaluation(Any<Quest>()).WasCalled(Times.Never);
     }
 

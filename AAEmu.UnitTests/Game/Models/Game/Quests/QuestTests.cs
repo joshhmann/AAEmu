@@ -30,33 +30,173 @@ public class QuestTests
         mockOwner.SendPacket(Any<GamePacket>()).WasCalled(Times.Once);
     }
 
+    /// <summary>
+    /// QuestInitialized is the gate that lets a quest's parked evaluation
+    /// request reach the quest manager. While the quest is UNinitialized,
+    /// RequestEvaluation only latches a flag (the setter's
+    /// `value &amp;&amp; _questInitializationFinished` guard); once initialized,
+    /// both the latch and the direct call reach EnqueueEvaluation.
+    ///
+    /// Both directions are observable through IQuestManager, so no reflection
+    /// and no production seam is needed. The old version ended in
+    /// `Assert.That(true).IsTrue()` — it stayed GREEN with QuestInitialized()
+    /// gutted to `{ }`.
+    /// </summary>
     [Test]
-    public async Task QuestInitialized_SetsInitializationFinished()
+    public async Task QuestInitialized_WithAPendingRequest_FlushesItToTheQuestManager()
     {
-        // Arrange
-        var quest = SetupQuest(out var mockOwner, out var mockQuestTemplate, out _, out _, out _, out _, out _);
+        // Arrange: RequestEvaluation on an UNINITIALIZED quest parks the
+        // request instead of enqueuing it (the constructor does not initialize).
+        var quest = SetupQuest(out _, out _, out var mockQuestManager, out _, out _, out _, out _);
+        quest.RequestEvaluation();
+
+        mockQuestManager.EnqueueEvaluation(quest).WasCalled(Times.Never);
+        // Because: an uninitialized quest must not evaluate; the request is parked.
+
+        // Act
+        quest.QuestInitialized();
+
+        // Assert: initialization drains the parked request exactly once.
+        mockQuestManager.EnqueueEvaluation(quest).WasCalled(Times.Once);
+        // Because: QuestInitialized must flush the parked request exactly once.
+    }
+
+    [Test]
+    public async Task QuestInitialized_WithNoPendingRequest_QueuesNothing()
+    {
+        // The negative half of the contract: initialization is not itself an
+        // evaluation request. Without it, a body that enqueued unconditionally
+        // would still satisfy the Times.Once assertion above.
+        var quest = SetupQuest(out _, out _, out var mockQuestManager, out _, out _, out _, out _);
 
         // Act
         quest.QuestInitialized();
 
         // Assert
-        // Note: _questInitializationFinished is private, test indirectly
-        await Assert.That(true).IsTrue(); // If no exception, it's fine
+        mockQuestManager.EnqueueEvaluation(quest).WasCalled(Times.Never);
+        // Because: initialization only flushes an existing pending request; it never creates one.
     }
 
     [Test]
-    public async Task FinalizeQuestActs_CallsFinalizeOnActs()
+    public async Task RequestEvaluation_AfterInitialization_EnqueuesImmediately()
     {
-        // Arrange
-        var quest = SetupQuest(out var mockOwner, out var mockQuestTemplate, out _, out _, out _, out _, out _);
-        // Mock quest steps and components
+        // The mirror of the first test: once initialized, a later
+        // RequestEvaluation goes straight through the latch's setter rather
+        // than needing QuestInitialized to flush it. This is what every
+        // objective change after load depends on.
+        var quest = SetupQuest(out _, out _, out var mockQuestManager, out _, out _, out _, out _);
+        quest.QuestInitialized();
+        quest.StartingEvaluation(); // consume the initialization flush
+
+        // Act
+        quest.RequestEvaluation();
+
+        // Assert
+        mockQuestManager.EnqueueEvaluation(quest).WasCalled(Times.Once);
+        // Because: on an initialized quest a request must reach the manager at once.
+    }
+
+    [Test]
+    public async Task FinalizeQuestActs_CallsFinalizeQuestOnEveryActOfEveryStep()
+    {
+        // Arrange: a real two-step act graph, so the triple-nested loop has
+        // something to walk and a short-circuited loop cannot pass.
+        var quest = SetupQuest(out _, out _, out _, out _, out _, out _, out _);
+        var (stepA, _, actA, _) = BuildStepWithOneAct(QuestComponentKind.Progress, 1);
+        var (stepB, _, actB, _) = BuildStepWithOneAct(QuestComponentKind.Reward, 2);
+        AddStepTo(quest, stepA, 1);
+        AddStepTo(quest, stepB, 2);
 
         // Act
         quest.FinalizeQuestActs();
 
-        // Assert
-        await Assert.That(true).IsTrue();
+        // Assert: BOTH acts are finalized, each with its own live QuestAct.
+        var spyA = (SpyActTemplate)actA.Template;
+        var spyB = (SpyActTemplate)actB.Template;
+        await Assert.That(spyA.Finalized.Count).IsEqualTo(1)
+            .Because("step Progress's act must be finalized exactly once");
+        await Assert.That(spyB.Finalized.Count).IsEqualTo(1)
+            .Because("step Reward's act must be finalized exactly once");
+        await Assert.That(spyA.Finalized[0]).IsSameReferenceAs(actA)
+            .Because("the finalize call must carry the act it belongs to");
+        await Assert.That(spyA.FinalizedQuest).IsSameReferenceAs(quest);
     }
+
+    /// <summary>
+    /// InitializeQuestActs is the twin of FinalizeQuestActs and had no coverage
+    /// at all; the same spy pins that initialization reaches every act.
+    /// </summary>
+    [Test]
+    public async Task InitializeQuestActs_CallsInitializeQuestOnEveryActOfEveryStep()
+    {
+        var quest = SetupQuest(out _, out _, out _, out _, out _, out _, out _);
+        var (stepA, _, actA, _) = BuildStepWithOneAct(QuestComponentKind.Progress, 1);
+        var (stepB, _, actB, _) = BuildStepWithOneAct(QuestComponentKind.Reward, 2);
+        AddStepTo(quest, stepA, 1);
+        AddStepTo(quest, stepB, 2);
+
+        quest.InitializeQuestActs();
+
+        var spyA = (SpyActTemplate)actA.Template;
+        var spyB = (SpyActTemplate)actB.Template;
+        await Assert.That(spyA.Initialized.Count).IsEqualTo(1);
+        await Assert.That(spyB.Initialized.Count).IsEqualTo(1);
+        await Assert.That(spyA.Initialized[0]).IsSameReferenceAs(actA);
+    }
+
+    /// <summary>
+    /// QuestActTemplate whose InitializeQuest/FinalizeQuest record the exact
+    /// QuestAct they were handed. Both are virtual on the production base, so
+    /// this is a spy over the real call seam — no production change required.
+    /// </summary>
+    private sealed class SpyActTemplate(QuestComponentTemplate parent) : QuestActTemplate(parent)
+    {
+        public List<QuestAct> Initialized { get; } = [];
+        public List<QuestAct> Finalized { get; } = [];
+        public Quest FinalizedQuest { get; private set; }
+
+        public override void InitializeQuest(Quest quest, QuestAct questAct) => Initialized.Add(questAct);
+        public override void FinalizeQuest(Quest quest, QuestAct questAct)
+        {
+            Finalized.Add(questAct);
+            FinalizedQuest = quest;
+        }
+    }
+
+    /// <summary>
+    /// One QuestStep holding one QuestComponent holding one spy act, plus the
+    /// component template needed to graft it onto a quest. Built by hand rather
+    /// than through CreateQuestSteps, which reads the global
+    /// QuestManager.Instance act table and would make the graph under test
+    /// depend on unrelated suite state.
+    /// </summary>
+    private static (QuestStep Step, QuestComponent Component, QuestAct Act, QuestTemplate Template)
+        BuildStepWithOneAct(QuestComponentKind kind, uint detailId)
+    {
+        var template = new QuestTemplate { Id = detailId };
+        var step = new QuestStep(kind, null!);
+        var componentTemplate = new QuestComponentTemplate(template) { Id = detailId, KindId = kind };
+        // QuestComponent's ctor resolves acts through QuestManager.Instance,
+        // which is DI-only and throws on an unseeded process. This rig owns its
+        // act list, so the component is created uninitialized (FormatterServices
+        // keeps the runtime type) and its fields are set directly — the loops
+        // under test only read Template / Parent / Acts.
+        var component = (QuestComponent)System.Runtime.Serialization.FormatterServices
+            .GetUninitializedObject(typeof(QuestComponent));
+        component.Template = componentTemplate;
+        component.Parent = step;
+        component.Acts = [];
+        var act = new QuestAct(component, new SpyActTemplate(componentTemplate) { DetailId = detailId });
+        component.Acts.Add(act);
+        step.Components[detailId] = component;
+        return (step, component, act, template);
+    }
+    /// Installs a hand-built step into the quest's own QuestSteps dictionary.
+    /// The loops under test iterate QuestSteps.Values, so populating that
+    /// dictionary directly is the seam they actually read.
+    /// </summary>
+    private static void AddStepTo(Quest quest, QuestStep step, uint componentId) =>
+        quest.QuestSteps[step.ThisStep] = step;
 
     [Test]
     public async Task WriteData_ReturnsByteArray()

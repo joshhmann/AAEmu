@@ -14,6 +14,8 @@ using System.Reflection;
 using AAEmu.Commons.Network.Core;
 using AAEmu.Game.Core.Network.Connections;
 using AAEmu.Game.Core.Packets.G2C;
+using AAEmu.Game.Core.Network.Game;
+using AAEmu.Commons.Network;
 using AAEmu.Game.Models.Game.Skills;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.UnitManagers;
@@ -474,32 +476,95 @@ public class CharacterManagerTests
 
     #region PlayerRoll Tests
 
-    [Test]
-    public void PlayerRoll_ValidMax_SendsRollMessage()
+    /// <summary>
+    /// Captures the dice broadcast instead of needing a live connection.
+    /// GameObject.BroadcastPacket is virtual, and SCDiceValuePacket exposes no
+    /// public fields — only its own Write(PacketStream) — so the observable is
+    /// the packet as it was serialized on the way out.
+    /// </summary>
+    private sealed class DiceCharacter : Character
     {
-        // Arrange
-        var manager = CreateCharacterManager();
-        var character = new Character(new UnitCustomModelParams())
-        {
-            Name = "TestPlayer"
-        };
+        public List<SCDiceValuePacket> Broadcasts { get; } = [];
 
-        // Act & Assert - No exception should be thrown
-        manager.PlayerRoll(character, 100);
+        public DiceCharacter(UnitCustomModelParams modelParams, string name) : base(modelParams)
+        {
+            Name = name;
+        }
+
+        public override void BroadcastPacket(GamePacket packet, bool self)
+        {
+            if (packet is SCDiceValuePacket dice)
+                Broadcasts.Add(dice);
+            base.BroadcastPacket(packet, self);
+        }
+    }
+
+    /// <summary>Decodes a dice packet's own serialized body: name, max, value.</summary>
+    private static (string Name, int Max, int Value) DecodeDice(SCDiceValuePacket dice)
+    {
+        var ps = dice.Write(new PacketStream());
+        var bytes = ps.GetBytes();
+        var reader = new PacketStream(bytes, 0, bytes.Length);
+        return (reader.ReadString(), reader.ReadInt32(), reader.ReadInt32());
     }
 
     [Test]
-    public void PlayerRoll_MaxValueOne_SendsRollOne()
+    public async Task PlayerRoll_ValidMax_BroadcastsOneDicePacketWithinRange()
     {
         // Arrange
         var manager = CreateCharacterManager();
-        var character = new Character(new UnitCustomModelParams())
-        {
-            Name = "TestPlayer"
-        };
+        var character = new DiceCharacter(new UnitCustomModelParams(), "TestPlayer");
 
-        // Act & Assert - No exception should be thrown
+        // Act
+        manager.PlayerRoll(character, 100);
+
+        // Assert — exactly one dice packet, carrying the roller's name and the
+        // die maximum, with the value inside the inclusive 1..max range.
+        await Assert.That(character.Broadcasts.Count).IsEqualTo(1)
+            .Because("PlayerRoll must broadcast exactly one SCDiceValuePacket");
+        var (name, max, value) = DecodeDice(character.Broadcasts[0]);
+        await Assert.That(name).IsEqualTo("TestPlayer")
+            .Because("the packet must name the player who rolled");
+        await Assert.That(max).IsEqualTo(100)
+            .Because("the packet must carry the die maximum the player asked for");
+        await Assert.That(value).IsGreaterThanOrEqualTo(1)
+            .Because("Random.Shared.Next(0, max) + 1 is the documented 1..max inclusive contract");
+        await Assert.That(value).IsLessThanOrEqualTo(100);
+    }
+
+    [Test]
+    public async Task PlayerRoll_MaxValueOne_RollsExactlyOne()
+    {
+        // Arrange
+        var manager = CreateCharacterManager();
+        var character = new DiceCharacter(new UnitCustomModelParams(), "TestPlayer");
+
+        // Act
         manager.PlayerRoll(character, 1);
+
+        // Assert — a d1 can only roll 1. This is the boundary an off-by-one in
+        // Next(0, max) would break: Next(0, 1) is 0, +1 = 1.
+        await Assert.That(character.Broadcasts.Count).IsEqualTo(1);
+        var (_, max, value) = DecodeDice(character.Broadcasts[0]);
+        await Assert.That(value).IsEqualTo(1)
+            .Because("a one-sided die must always roll exactly 1");
+        await Assert.That(max).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task PlayerRoll_InvalidMax_BroadcastsNothing()
+    {
+        // The negative half of the guard: max < 1 must be refused BEFORE rolling
+        // and broadcasting. Without this, a guard that logged and fell through
+        // would still satisfy the two tests above.
+        var manager = CreateCharacterManager();
+        var character = new DiceCharacter(new UnitCustomModelParams(), "TestPlayer");
+
+        manager.PlayerRoll(character, 0);
+        manager.PlayerRoll(character, -5);
+
+        await Assert.That(character.Broadcasts.Count).IsEqualTo(0)
+            .Because("Random.Shared.Next(0, 0) throws; a max below 1 must be refused outright");
     }
 
     #endregion
