@@ -8,5 +8,6 @@ public interface IMusicManager : ILoadable
 {
     bool Save(SongData songData);
     void UploadSong(uint charId, string title, string song, ulong itemId);
+    bool TryGetInstrumentMidi(uint itemId, out uint midi);
     bool CreateSheetMusic(Character player, Item sourceItem);
 }

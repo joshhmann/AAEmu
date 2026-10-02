@@ -6,6 +6,7 @@ using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Music;
+using AAEmu.Game.Utils.DB;
 using NLog;
 
 namespace AAEmu.Game.Core.Managers;
@@ -17,12 +18,15 @@ public class MusicManager(IMusicIdManager musicIdManager, IItemManager itemManag
     private Dictionary<uint, SongData> _uploadQueue; // playerId, song
     private Dictionary<uint, SongData> _allSongs; // songId, song
     private Dictionary<uint, byte[]> _midiCache; // playerId, midi data
+    private Dictionary<uint, uint> _instrumentSounds; // itemId → MIDI program (instrument_sounds)
 
     public void Load()
     {
         _uploadQueue = [];
         _allSongs = [];
         _midiCache = [];
+
+        LoadInstrumentSounds();
 
         using (var connection = MySQL.CreateConnection())
         {
@@ -46,6 +50,51 @@ public class MusicManager(IMusicIdManager musicIdManager, IItemManager itemManag
             }
         }
     }
+
+    /// <summary>
+    /// Loads the instrument → MIDI program mapping from the read-only
+    /// reference data (compact.sqlite3 instrument_sounds(item_id, midi)).
+    /// Corroborated via archaeology MCP query_sql against the canonical DB
+    /// (md5 78b3bdbf038db3b927056106efdf91af): 199 rows; every mapped item
+    /// sits in an instrument category and the MIDI families agree exactly
+    /// with those categories (strings → Lute, winds → Flute). Called by
+    /// <see cref="Load"/>; public so tests can drive the production loader
+    /// path without the MySQL song table.
+    /// </summary>
+    public void LoadInstrumentSounds()
+    {
+        _instrumentSounds = [];
+
+        using (var connection = SQLite.CreateConnection())
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT * FROM instrument_sounds";
+                command.Prepare();
+                using (var reader = new SQLiteWrapperReader(command.ExecuteReader()))
+                {
+                    while (reader.Read())
+                    {
+                        _instrumentSounds[reader.GetUInt32("item_id")] = reader.GetUInt32("midi");
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Looks up the MIDI program for an instrument item. Returns false when
+    /// the mapping is not loaded or the item is not a listed instrument —
+    /// callers keep the legacy item-category switch as fallback.
+    /// </summary>
+    public bool TryGetInstrumentMidi(uint itemId, out uint midi)
+    {
+        midi = 0;
+        return _instrumentSounds != null && _instrumentSounds.TryGetValue(itemId, out midi);
+    }
+
+    /// <summary>Number of loaded instrument_sounds rows (diagnostics/tests).</summary>
+    public int InstrumentSoundCount => _instrumentSounds?.Count ?? 0;
 
     public bool Save(SongData songData)
     {
