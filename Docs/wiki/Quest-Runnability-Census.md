@@ -10,10 +10,34 @@ Verdict semantics: **PASS** = full lifecycle driven (start→progress→ready→
 
 ## Headline
 
-- **T1 golden zone (Solzreed)**: 97 PASS / 0 FAIL / 0 SKIP
+- **T1 golden zone (Solzreed)**: 96 PASS / 1 FAIL / 0 SKIP
 - **T2 families (kill-accept/guard/item-group)**: 29 PASS / 0 FAIL / 6 SKIP
-- **T3 stratified act-family census**: 27 PASS / 0 FAIL / 27 SKIP
-- **ALL TIERS (M1-5 census)**: 153 PASS / 0 FAIL / 33 SKIP over 186 quests — **153/153 quests runnable** (33 SKIP not driven, reasons below)
+- **T3 stratified act-family census (frozen M1-5c sample)**: 47 PASS / 4 FAIL / 2 SKIP
+- **ALL TIERS (census)**: 4463 PASS / 110 FAIL / 14 SKIP over 4587 quests — **4463/4573 quests runnable** (14 SKIP not driven, reasons below)
+
+> **2026-10-01 correction — the figures below were accurate when this page was published on 2026-08-04
+> (`da4d2ca7e`) but are STALE.** They were a verbatim copy of the `scorecard-explorations/runnability.md` headline
+> as it stood at `6e367585d` (2026-08-04). That file is **regenerated** by `QuestScenarioTierTests` and its headline
+> has since changed several times. Verified against the current `runnability.md` (last regenerated `dc81dcd53`,
+> 2026-09-24):
+>
+> | tier | this page said (2026-08-04) | `runnability.md` now says | changed |
+> |---|---|---|---|
+> | T1 golden zone | 97 PASS / 0 FAIL | 96 PASS / 1 FAIL | `734cb0fa0` → `6e367585d`, 2026-08-04 |
+> | T2 families | 29 PASS / 0 FAIL / 6 SKIP | 29 PASS / 0 FAIL / 6 SKIP | unchanged |
+> | T3 stratified | 27 PASS / 0 FAIL / 27 SKIP | 47 PASS / 4 FAIL / 2 SKIP | drifted repeatedly 2026-08-06 → 2026-08-24 (`cab6e4dc9`) |
+> | ALL TIERS | 153 PASS / 0 FAIL / 33 SKIP over 186 — "153/153 runnable" | 4463 PASS / 110 FAIL / 14 SKIP over 4587 — "4463/4573 runnable" | scope grew from 186 to 4587 quests |
+>
+> **Every one of these four errors flattered the result** — each over-reports PASS and under-reports FAIL/SKIP.
+> The "153/153 quests runnable" headline in particular reads as "every quest works"; the current census is
+> **4463/4573 with 110 FAIL and 14 SKIP**. Two sibling pages carry the same drift, corrected separately:
+> `Quest-Test-Harness.md` cites "86/97 PASS (11 FAIL)" (a 2026-08-04 `30c2b6895` reading, superseded the same day)
+> and `Golden-Route-Solzreed.md` cites "88/97 T1 pass" — a figure that **never appeared in `runnability.md`**;
+> commit `cf63716a0` changed it from 86/97 on 2026-08-04 while the source still read 86/11/0.
+>
+> The per-quest T1 table below is the 2026-08-04 snapshot and is **likewise stale** — it is preserved as the
+> historical record of that run rather than rewritten. Re-read `scorecard-explorations/runnability.md` for the
+> current numbers before making any decision about quest test coverage.
 
 ## T1 — per-quest verdicts
 
