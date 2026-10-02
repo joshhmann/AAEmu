@@ -98,6 +98,24 @@ public sealed class SQLiteWrapperReader(SqliteDataReader reader) : IDisposable
         return (uint)GetInt32(column);
     }
 
+    /// <summary>
+    /// Reads a uint column, returning <paramref name="defaultValue"/> when the
+    /// column is NULL <b>or absent from the result set</b>.
+    ///
+    /// The absent case is what makes an optional column on canonical read-only
+    /// data safe: a stripped/custom compact.sqlite3 simply yields the default
+    /// instead of aborting the whole load. Use this only for genuinely optional
+    /// columns; the strict <see cref="GetUInt32(string, uint)"/> remains the
+    /// default choice so a genuinely missing REQUIRED column is still loud.
+    /// </summary>
+    public uint GetUInt32OrDefault(string column, uint defaultValue)
+    {
+        var ordinal = TryGetOrdinal(column);
+        if (ordinal is not { } o)
+            return defaultValue;
+        return reader.IsDBNull(o) ? defaultValue : (uint)reader.GetInt64(o);
+    }
+
     public long GetInt64(string column)
     {
         return reader.GetInt64(GetOrdinal(column));
@@ -157,6 +175,36 @@ public sealed class SQLiteWrapperReader(SqliteDataReader reader) : IDisposable
             return ordinal1;
 
         var ordinal = reader.GetOrdinal(column);
+        _ordinal.Add(column, ordinal);
+        return ordinal;
+    }
+
+    /// <summary>
+    /// The ordinal of <paramref name="column"/>, or <c>null</c> when the current
+    /// result set has no such column. Read-only, and it does NOT cache the miss.
+    ///
+    /// <see cref="GetOrdinal(string"/> keeps its existing strict behaviour (it
+    /// throws for an unknown column) because callers rely on a missing column
+    /// being a hard error. This overload exists for OPTIONAL reference columns
+    /// on canonical read-only data: compact.sqlite3 is never mutated at runtime,
+    /// so a stripped/custom database that lacks a column must degrade to a
+    /// default rather than abort the load.
+    /// </summary>
+    public int? TryGetOrdinal(string column)
+    {
+        if (_ordinal.TryGetValue(column, out var known))
+            return known;
+
+        int ordinal;
+        try
+        {
+            ordinal = reader.GetOrdinal(column);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
+
         _ordinal.Add(column, ordinal);
         return ordinal;
     }

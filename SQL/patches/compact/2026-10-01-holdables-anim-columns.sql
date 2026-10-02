@@ -1,0 +1,114 @@
+-- ============================================================================
+-- Fix: restore the six attack-animation columns on `holdables`.
+-- Author: compact-patch agent run - 2026/10/01
+-- Source: AAEmu.Game/Utils/DB/HoldablesSchemaCheck.cs (boot-time read-only probe)
+--         + AAEmu.Game/Core/Managers/ItemManager.cs:663-668 (Auto-Attack load)
+--         + AAEmu.UnitTests/Utils/DB/HoldablesSchemaCheckTests.cs
+--
+-- Problem:
+--   ItemManager loads holdables with `SELECT * FROM holdables` and reads six
+--   animation columns by NAME through the missing-tolerant accessor
+--   SQLiteWrapperReader.GetUInt32OrDefault(col, 0). A holdables table that lacks
+--   any of them therefore does not crash -- it silently yields 0, so Auto-Attack
+--   plays the fist animations on every weapon. HoldablesSchemaCheck names the
+--   defect at boot and points at SQL/patches/compact/ for the fix; before this
+--   file existed, that promise pointed at nothing. This patch is that fix.
+--
+--   Missing columns: anim_r1_id, anim_l1_id, anim_r2_id, anim_l2_id,
+--                    anim_r3_id, anim_l3_id   (all declared INT).
+--
+-- SCOPE -- additive migration for STRIPPED or CUSTOM compact.sqlite3 ONLY.
+--   The canonical shipped AAEmu.Game/Data/compact.sqlite3
+--   (md5 78b3bdbf038db3b927056106efdf91af, 679 tables) ALREADY carries all six
+--   columns and MUST NOT be patched. Running this against it fails on the very
+--   first statement ("duplicate column name: anim_r1_id") and changes nothing --
+--   which is the intended outcome, not a bug. Only apply this to a runtime copy
+--   of the database after backing it up.
+--
+--   Per AGENTS.md ("Prefer SQL/patches/compact/ only for intentional
+--   compact.sqlite3 fixups"): this is an intentional fixup, reviewed and applied
+--   deliberately by whoever owns that database. It is never run at server boot
+--   -- the boot check stays read-only and only reports.
+--
+-- How to apply (BACK UP FIRST -- back up, then apply, in that order):
+--
+--   1. cp <Data>/compact.sqlite3 <Data>/compact.sqlite3.bak-$(date +%Y%m%d-%H%M%S)
+--   2. sqlite3 <Data>/compact.sqlite3 \
+--        < SQL/patches/compact/2026-10-01-holdables-anim-columns.sql
+--
+--   where <Data> is the Data directory of the compact.sqlite3 you own (for the
+--   e2e stack: /root/aaemu-e2e/runtime/game/Data). Apply to the RUNTIME copy,
+--   never to the canonical file in the repository.
+--
+-- Pre-check (run before step 2; only continue if it prints the anim_*_id
+-- columns you are missing, which is exactly what HoldablesSchemaCheck logged):
+--
+--   sqlite3 <Data>/compact.sqlite3 "PRAGMA table_info(holdables);" \
+--     | grep -E 'anim_[rl][0-9]_id'
+--
+-- NOT IDEMPOTENT -- apply exactly once.
+--   SQLite has no `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`; that form is a
+--   syntax error (verified against sqlite3 3.45.1, both the
+--   `ADD COLUMN IF NOT EXISTS <col>` and the trailing `<col> ... IF NOT EXISTS`
+--   placements). Re-running against an already-patched database, or against one
+--   that is only partially stripped, reports "duplicate column name" for every
+--   column that already exists and adds nothing. The sqlite3 CLI does NOT stop
+--   on error by default and still exits non-zero, so a careless re-run prints a
+--   wall of errors after having changed nothing; `sqlite3 -bail` stops at the
+--   first one if you want a re-run to be loud and immediate.
+--
+-- Column shape -- why `INT DEFAULT 0` and not `INTEGER NOT NULL DEFAULT 0`:
+--   * INT, not INTEGER: INTEGER is an alias of INT with identical affinity, but
+--     PRAGMA table_info reports the declared text verbatim and the canonical
+--     table declares these six as plain `INT`, so matching it keeps the patched
+--     schema textually comparable with the canonical one.
+--   * nullable, NOT NOT NULL: all six canonical columns are nullable and hold
+--     NULLs in the shipped data (77 NULL cells across 27 rows). Declaring NOT
+--     NULL would make a repaired custom database structurally unlike the
+--     canonical one and would reject the NULLs the reader already treats as "no
+--     animation" -- GetUInt32OrDefault maps a NULL to its default exactly as it
+--     maps an absent column, so NOT NULL buys nothing.
+--   * DEFAULT 0: the default is what the 27 pre-existing rows read back as
+--     until their real animation ids are set, so a patched weapon plays the
+--     fist animations rather than being unreadable. Adding the columns is a
+--     schema-only change: the existing rows are not rewritten and every
+--     pre-existing column value is unchanged.
+-- ============================================================================
+
+ALTER TABLE holdables ADD COLUMN anim_r1_id INT DEFAULT 0;
+ALTER TABLE holdables ADD COLUMN anim_l1_id INT DEFAULT 0;
+ALTER TABLE holdables ADD COLUMN anim_r2_id INT DEFAULT 0;
+ALTER TABLE holdables ADD COLUMN anim_l2_id INT DEFAULT 0;
+ALTER TABLE holdables ADD COLUMN anim_r3_id INT DEFAULT 0;
+ALTER TABLE holdables ADD COLUMN anim_l3_id INT DEFAULT 0;
+
+-- ============================================================================
+-- Verification
+-- ============================================================================
+-- BEFORE (on the stripped copy): holdables has 30 columns and none of the six.
+--   sqlite3 <Data>/compact.sqlite3 "PRAGMA table_info(holdables);"
+--   sqlite3 <Data>/compact.sqlite3 "SELECT COUNT(*) FROM holdables;"
+--     -> 30 columns, no anim_* rows in table_info
+--     -> 27
+--
+-- AFTER (on the patched copy): holdables has 36 columns -- the six new ones
+-- declared `INT`, notnull=0, default 0 -- and the row count is unchanged.
+--   sqlite3 <Data>/compact.sqlite3 "PRAGMA table_info(holdables);" \
+--     | grep -E 'anim_[rl][0-9]_id'
+--     -> 30|anim_r1_id|INT|0|0|0
+--     -> 31|anim_l1_id|INT|0|0|0
+--     -> 32|anim_r2_id|INT|0|0|0
+--     -> 33|anim_l2_id|INT|0|0|0
+--     -> 34|anim_r3_id|INT|0|0|0
+--     -> 35|anim_l3_id|INT|0|0|0
+--   sqlite3 <Data>/compact.sqlite3 "SELECT COUNT(*) FROM holdables;"
+--     -> 27
+--   The six land at the END of the column list, not at their canonical
+--   positions (8, 9, 13, 14, 15, 16) -- SQLite can only append. That is
+--   harmless: the item load selects `SELECT * FROM holdables` and reads the
+--   columns by name, never by ordinal.
+--
+-- Re-run HoldablesSchemaCheck after applying: it must log
+--   "all 6 anim columns present, no action needed"
+-- and no MISSING-column error. Reload the game item data afterwards so the
+-- Auto-Attack animations come back.

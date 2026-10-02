@@ -654,12 +654,18 @@ public class ItemManager(ISkillManager skillManager, IItemIdManager itemIdManage
                             ItemProcId = reader.GetInt32("item_proc_id"),
                             StatMultiplier = reader.GetInt32("stat_multiplier"),
                             FormulaHDps = new Formula(reader.GetString("formula_hdps")),
-                            AnimR1Id = reader.GetUInt32("anim_r1_id", 0),
-                            AnimL1Id = reader.GetUInt32("anim_l1_id", 0),
-                            AnimR2Id = reader.GetUInt32("anim_r2_id", 0),
-                            AnimL2Id = reader.GetUInt32("anim_l2_id", 0),
-                            AnimR3Id = reader.GetUInt32("anim_r3_id", 0),
-                            AnimL3Id = reader.GetUInt32("anim_l3_id", 0)
+                            // Optional animation columns on canonical read-only
+                            // compact.sqlite3. Read through the missing-tolerant
+                            // accessor: a stripped/custom database must degrade
+                            // to 0 (fist animations), not abort the item load —
+                            // HoldablesSchemaCheck reports the gap at boot
+                            // instead of mutating the reference file.
+                            AnimR1Id = reader.GetUInt32OrDefault("anim_r1_id", 0),
+                            AnimL1Id = reader.GetUInt32OrDefault("anim_l1_id", 0),
+                            AnimR2Id = reader.GetUInt32OrDefault("anim_r2_id", 0),
+                            AnimL2Id = reader.GetUInt32OrDefault("anim_l2_id", 0),
+                            AnimR3Id = reader.GetUInt32OrDefault("anim_r3_id", 0),
+                            AnimL3Id = reader.GetUInt32OrDefault("anim_l3_id", 0)
                         };
 
                         _holdables.Add(template.Id, template);
