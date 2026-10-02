@@ -783,7 +783,92 @@ public class G7dQuestCreditGateTests
                     continue;
                 }
                 var corpseQs = E2eQuestDriver.QuestState(bridge, BotName, Quest251);
+                // Fixture proof (quest-side, read-only): the funnel loot arm must
+                // name OUR corpse lootable with a non-empty container. Loop-release
+                // seam (the token originates in Loot/LootBrain.cs, which maps
+                // LootReason.LoopLive to validate=loop-live; QuestBehavior invokes
+                // it and withholds validate=ok while character.IsAutoAttack): START
+                // re-taken mid-teardown otherwise sees only the withhold arm. Probe
+                // g7d-probe-start-readback-race-20260925T192559Z: START reads empty
+                // at the first post-death tick for 59% of 58 corpses; the ok arm
+                // arrives +1 tick (~7.2s), and the discarded corpse looted 7.26s
+                // later. A loop-live arm naming OUR corpse with container>=1 is
+                // provisional START recognition (corpse named + non-empty container
+                // proven, release pending teardown); then wait bounded (existing
+                // WakeWaitMs, no new budget) for the validate=ok release arm before
+                // opening the loot watch. containerBefore below always reads the
+                // release arm. G7c precedent: identical tolerance in
+                // G7cLootGrantGateTests.cs CORPSE START passes 7 consecutive.
+                // Timeout leaves lootOk empty -> the existing containerBefore<1
+                // check yields CORPSE/empty-or-unobserved unchanged (no new
+                // boundary names).
                 var lootOk = ScanLootOk(gameLogOffset, gameRestartLogOffset, ourCharacterId, drive.Selected);
+                if (lootOk.Count == 0)
+                {
+                    var loopLiveDiags = ScanLootLoopLive(gameLogOffset, gameRestartLogOffset, ourCharacterId, drive.Selected);
+                    if (loopLiveDiags.Any(d => d.Container >= 1))
+                    {
+                        evidence.AppendLine($"- c{cycle} CORPSE START: loop-live provisional (validate=ok withheld pre-teardown): {loopLiveDiags.Count} loop-live arm(s), maxContainer={loopLiveDiags.Max(d => d.Container)}; waiting <=WakeWaitMs for the ok release");
+                        var okWaitUntil = Environment.TickCount64 + WakeWaitMs;
+                        JsonElement observe = default;
+                        // One scheduler wake releases the quest-owned loop
+                        // teardown. Sleeping alone never schedules a fresh quest
+                        // decision here.
+                        try
+                        {
+                            // Do not spend the only release wake before the engine
+                            // has cleared the loop-live guard. Bridge observe is a
+                            // read-only projection, unlike queued actor Observe.
+                            do
+                            {
+                                var probeBudgetMs = (int)Math.Max(1, okWaitUntil - Environment.TickCount64);
+                                observe = bridge.Call(
+                                    $"{{\"cmd\":\"quest\",\"bot\":\"{BotName}\",\"sub\":\"observe\"}}", probeBudgetMs);
+                                if (!GetBool(observe, "isAutoAttack"))
+                                    break;
+                                Thread.Sleep(100);
+                            } while (Environment.TickCount64 < okWaitUntil);
+                            var remainingMs = (int)Math.Max(1, okWaitUntil - Environment.TickCount64);
+                            observe = bridge.Call(
+                                $"{{\"cmd\":\"quest\",\"bot\":\"{BotName}\",\"sub\":\"wake\",\"waitMs\":{remainingMs}}}", remainingMs);
+                            wakeCount++;
+                            // Readback: feed the release tick's decide into
+                            // decideHistory (the same call the kill loop makes).
+                            // The validate=ok release and the same-tick landed
+                            // Loot arrive together on this wake, and LootPhase's
+                            // recount reads `landed` from decideHistory — without
+                            // this the watch opens after the take and reports
+                            // LOOT/dispatch for an already-granted corpse. Guards
+                            // the default JsonElement a thrown Call leaves behind.
+                            if (observe.ValueKind == JsonValueKind.Object)
+                                NoteDecide(GetStr(observe, "questDecideDetail"));
+                            evidence.AppendLine($"- c{cycle} CORPSE START: issued one release wake (wake={wakeCount})");
+                        }
+                        catch { /* bounded wait is best-effort: the re-scan below still runs; on timeout the existing containerBefore<1 check refuses unchanged */ }
+                        lootOk = ScanLootOk(gameLogOffset, gameRestartLogOffset, ourCharacterId, drive.Selected);
+                        while (lootOk.Count == 0 && Environment.TickCount64 < okWaitUntil)
+                        {
+                            // Teardown already happened (auto-attack cleared above), so the next quest tick releases validate=ok by construction (loop-release seam). Production only ticks on wake — sleeping here watches a log nobody writes to — so wake once per poll (first wake fires immediately, no pre-sleep), then re-scan.
+                            var remainingMs = (int)Math.Max(1, okWaitUntil - Environment.TickCount64);
+                            var pollWaitMs = Math.Min(WakeWaitMs, remainingMs);
+                            try
+                            {
+                                observe = bridge.Call(
+                                    $"{{\"cmd\":\"quest\",\"bot\":\"{BotName}\",\"sub\":\"wake\",\"waitMs\":{pollWaitMs}}}", Math.Min(120_000, remainingMs));
+                            }
+                            catch { /* keep last observe; the re-scan below still runs */ }
+                            wakeCount++;
+                            // Readback: same feed as the release wake — the poll
+                            // wake that carries the validate=ok release can also
+                            // land the take in the same tick, and LootPhase
+                            // recounts `landed` from decideHistory.
+                            if (observe.ValueKind == JsonValueKind.Object)
+                                NoteDecide(GetStr(observe, "questDecideDetail"));
+                            lootOk = ScanLootOk(gameLogOffset, gameRestartLogOffset, ourCharacterId, drive.Selected);
+                        }
+                        evidence.AppendLine($"- c{cycle} CORPSE START: ok-release wait done: lootOkDiags={lootOk.Count}");
+                    }
+                }
                 var containerBefore = lootOk.Count == 0 ? -1 : lootOk.Max(d => d.Container);
                 var corpseMeat = E2eQuestDriver.InvCount(bridge, BotName, BoarMeat4058);
                 evidence.AppendLine($"- c{cycle} CORPSE START: objId={drive.Selected} hp={corpseHp} quest={corpseQs.Status} meat={corpseMeat} container(quest-side)={containerBefore} lootOkDiags={lootOk.Count}");
@@ -1040,6 +1125,33 @@ public class G7dQuestCreditGateTests
                 wake.Success ? int.Parse(wake.Groups[1].Value, CultureInfo.InvariantCulture) : 0,
                 cm.Success ? int.Parse(cm.Groups[1].Value, CultureInfo.InvariantCulture) : -1,
                 loot.Length > 200 ? loot[..200] : loot));
+        }
+        return out_;
+    }
+
+    // ---- quest-side loop-live scan (provisional START recognition): funnel
+    // loot arms naming OUR corpse with validate=loop-live + lootable=true,
+    // carrying the container count. Same loop-release seam as above: the quest
+    // leg withholds the validate=ok release while character.IsAutoAttack is
+    // still true, so the withhold arm is the only funnel recognition until
+    // teardown completes. Probe evidence: START reads empty at the first
+    // post-death tick for 59% of corpses while this withhold arm is present.
+    // Read-only log scan; the container is never touched.
+    private static List<LootOkDiag> ScanLootLoopLive(long gameLogOffset, long gameRestartLogOffset, uint charId, uint corpseObjId)
+    {
+        var out_ = new List<LootOkDiag>();
+        var id = corpseObjId.ToString(CultureInfo.InvariantCulture);
+        foreach (var line in ReadQuestLines(gameLogOffset, gameRestartLogOffset, charId, "QuestObjectiveTargetDiag"))
+        {
+            var loot = Regex.Match(line, @"\bloot=\[(.*?)\]").Success
+                ? Regex.Match(line, @"\bloot=\[(.*?)\]").Groups[1].Value : "";
+            if (!loot.Contains(id, StringComparison.Ordinal) || !loot.Contains("validate=loop-live", StringComparison.Ordinal)
+                || !loot.Contains("lootable=true", StringComparison.Ordinal))
+                continue;
+            var cm = Regex.Match(loot, @"container=(\d+)");
+            var container = cm.Success ? int.Parse(cm.Groups[1].Value, CultureInfo.InvariantCulture) : -1;
+            if (container >= 0)
+                out_.Add(new LootOkDiag(0, container, loot.Length > 200 ? loot[..200] : loot));
         }
         return out_;
     }
