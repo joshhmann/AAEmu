@@ -84,8 +84,15 @@ candidate set (`goal`/`action`/`priority`/`personality_weight`/`reason`), the
 incumbent's own pick (`selected_goal`/`selected_action`/`selected_candidate`),
 and the optional per-brain frozen inputs (`travel`/`survival`/`needs`/`combat`).
 It is a **copy** surface: it never decides, never mutates a `Character` or the
-world, and has no runtime authority. Design + experiment spec:
-[`scorecard-explorations/mechanics/bot-brain-wiring-audit.md`](../../scorecard-explorations/mechanics/bot-brain-wiring-audit.md).
+world, and has no runtime authority. The design rationale and the copy-surface
+discipline are stated in the committed source itself —
+[`JevShadow.cs`](../../AAEmu.Game/Core/Managers/Bots/JevShadow.cs) class and
+`JevShadowRecord` documentation comments — and the recorded datasets are the
+lane artifacts named below. *(An earlier revision of this page cited
+`scorecard-explorations/mechanics/bot-brain-wiring-audit.md` for the design and
+experiment spec. That file is a local-only historical audit and is **not tracked
+in this repository**, so the link is withdrawn rather than presented as
+published.)*
 
 ### Env vars (read by the game process, default OFF)
 
@@ -182,15 +189,33 @@ lane and is the artifact to feed a v2 replay:
 
 `/root/aaemu-e2e-t2-sol/runtime/game/Logs/jev-shadow-v2-quest-perception-01.jsonl`
 — SHA256 `3aa299631b08af1103126ece71fcd9b9406241e5f85eb1f9dd7b16d1721ed514`,
-source/test HEAD `626548de92b8dca8af1f0f92e22d37c9fbe6074e` (dirty working tree,
-81 paths — inherited uncommitted work, so the SHA names the base revision only),
-scenario `quest-bootstrap-decision`, `AAEMU_JEV_SHADOW_SAMPLE=1`, output path as
-above. **4 rows, all carrying `"schema": "jev-shadow/v2"`** — no mixed-schema
-content, so this is a genuine v2 dataset and not another mislabeled v1.
+source/test HEAD `626548de92b8dca8af1f0f92e22d37c9fbe6074e` (working tree **dirty**
+at capture — `git status --porcelain=v1 -uall` reported **81** paths, inherited
+uncommitted work; the SHA names the base revision only and nothing below was
+re-verified at it), scenario `quest-bootstrap-decision`,
+`AAEMU_JEV_SHADOW_SAMPLE=1`, output path as above. **4 rows, all carrying
+`"schema": "jev-shadow/v2"`** — no mixed-schema content, so this is a genuine v2
+dataset and not another mislabeled v1.
 
 Row 3 is the two-legal-proposal shape: `TurnInQuest` at priority **30** selected,
 with `AcceptQuest` at priority **17** as the legal loser. The quest-perception
 test itself passed **1/1**.
+
+Two fields in this dataset are empty **by design**, not by loss:
+
+- **`candidates[]` is `[]` on all 4 rows.** `JevShadow.cs` builds that array in a
+  loop over `rejections` only — it is populated from hard-precondition refusals.
+  Nothing was illegal in these wakes, so it is legitimately empty; the legal
+  proposals live in `legal_alternatives[]`, and the winner in `selected_candidate`.
+  This is the shape the worked v1 row above illustrates too, for the same reason.
+- **`wake_sequence` is `null` on all 4 rows.** It is staged only by
+  `BotGoalArbiterStepExecutor.StageWakeSequence`, which guards on its inner
+  executor being a `BotRoamStepExecutor` (`if (_inner is not BotRoamStepExecutor
+  roam) return;`). Under that two-layer composition — arbiter decorator wrapping
+  the roam step — the stamp is staged onto the inner actor and read back on the
+  next request; where the inner executor is not the roam surface, or the wake was
+  never staged, the field stays `null`. A `null` is the not-attributed case the
+  field exists to identify, **not a defect**.
 
 **Caveats — what this capture does not establish:**
 
@@ -278,6 +303,12 @@ The script verifies and prints; it never asserts a success it did not measure:
    then carries v1 rows is rejected as mixed-schema,
 5. it reports any torn trailing line and any malformed rows.
 
+Anything it cannot verify it prints as `UNVERIFIED` and exits non-zero. **Row
+count is a lower bound**, not proof of completeness: the writer is a background
+thread draining a bounded 1024-line queue, drop-newest when full, and there is
+no flush join on any shutdown path — lines queued at exit are lost by design and
+drops are not recorded in the file.
+
 ### Schema versions: `jev-shadow/v1` vs `jev-shadow/v2`
 
 `v2` is a **behavioural** cutover (2026-10-02), not an additive one:
@@ -295,12 +326,6 @@ outright and refuses a mixed v1/v2 file, rather than accepting a first line that
 happens to be current. Existing v1 datasets under lane `runtime/game/Logs/` are
 **historical and stay v1** — they are never rewritten or relabelled; re-harvest to
 a fresh `--out` path instead of appending to one.
-
-Anything it cannot verify it prints as `UNVERIFIED` and exits non-zero. **Row
-count is a lower bound**, not proof of completeness: the writer is a background
-thread draining a bounded 1024-line queue, drop-newest when full, and there is
-no flush join on any shutdown path — lines queued at exit are lost by design and
-drops are not recorded in the file.
 
 ### Evidence honesty — read before quoting a harvest
 
