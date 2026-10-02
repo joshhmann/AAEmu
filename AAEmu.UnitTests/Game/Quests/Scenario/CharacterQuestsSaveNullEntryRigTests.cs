@@ -81,22 +81,55 @@ public class CharacterQuestsSaveNullEntryRigTests
     }
 
     /// <summary>
-    /// The null entry must not swallow the REAL completed blocks around it: after
-    /// the skip, the loop must still process the non-null block (here: reach
-    /// ExecuteNonQuery, which throws the connection-not-open error on a hermetic
-    /// connection — proving the loop continued past the null).
-    /// Pre-fix: NRE at the FIRST entry (null inserted first, insertion order).
-    /// Post-fix: no NRE; the only throw is the connection-state error.
+    /// The null entry must not swallow the REAL completed blocks around it:
+    /// after the skip, the loop must still process every non-null block. The
+    /// observable proof is the THROW SITE, not the exception type.
+    ///
+    /// <para>
+    /// ORDERING (this revision corrects the previous one). The old version
+    /// injected the null at block 5 and created the "real" block with
+    /// <c>SetCompletedQuestFlag(64, true)</c> — which lands in block **1** —
+    /// then asserted the thrown exception was "not something else". Two things
+    /// were wrong with that:
+    /// </para>
+    /// <list type="number">
+    /// <item>
+    /// <c>CompletedQuests</c> is a <c>ConcurrentDictionary</c>, so
+    /// <c>Values</c> enumerates in BUCKET order, not insertion order. Block 1
+    /// sits in an earlier bucket than block 5, so the loop NREd on the REAL
+    /// block and never reached the null at all. The documented "null inserted
+    /// first ⇒ deterministic fail-before" was false: this test stayed GREEN
+    /// with both null-skip guards deleted.
+    /// </item>
+    /// <item>
+    /// <c>SetCompletedQuestFlag(64, true)</c> was dead setup. The save loop
+    /// reads <c>quest.Id</c>, never <c>quest.Body</c> — the completion bit it
+    /// set is not what the REPLACE writes, so it pinned nothing about the
+    /// loop continuing.
+    /// </item>
+    /// </list>
+    ///
+    /// <para>
+    /// What is pinned now, on the REAL hermetic-connection error (the throw
+    /// every non-null block provokes, since the connection is never opened):
+    /// pre-fix the loop dies on the FIRST enumerated block; post-fix the null
+    /// is skipped and the real block is still reached and written.
+    /// </para>
     /// </summary>
     [Test]
     public async Task Save_NullCompletedBlockEntry_RealBlockStillWritten()
     {
         var quests = BuildQuests();
-        // Null FIRST (insertion order ⇒ the pre-fix code NREs before reaching the
-        // real block — deterministic fail-before).
-        InjectNullCompletedBlock(quests, blockId: 5);
-        quests.SetCompletedQuestFlag(64, true); // real block 1
+        // Bucket 0 enumerates ahead of bucket 8, so the null is seen FIRST:
+        // pre-fix the loop NREs at quest.Id before it ever reaches the real
+        // block — a real fail-before that does not depend on ConcurrentDictionary
+        // enumeration-order luck.
+        InjectNullCompletedBlock(quests, blockId: 0);
+        var realBlock = quests.SetCompletedQuestFlag(8 * 64, true);
 
+        // The hermetic connection is never opened, so the real block's REPLACE
+        // throws MySqlException at ExecuteNonQuery — the observable that proves
+        // the loop walked past the null onto live data.
         using var connection = new MySqlConnection(HermeticConnStr);
         Exception thrown = null;
         try
@@ -107,8 +140,16 @@ public class CharacterQuestsSaveNullEntryRigTests
         {
             thrown = ex;
         }
-
-        await Assert.That(thrown is null or InvalidOperationException or MySqlException).IsTrue();
+        // The precise observable: the hermetic connection is never opened, so
+        // ExecuteNonQuery on a real block throws InvalidOperationException
+        // ("Connection not open"). Reaching THAT throw proves the loop walked
+        // past the null onto live data. Pre-fix it is a NullReferenceException
+        // at quest.Id instead, so the two are cleanly distinguished — the
+        // previous `is null or InvalidOperationException or MySqlException`
+        // accepted both the success path and the crash.
+        await Assert.That(thrown).IsTypeOf<InvalidOperationException>()
+            .Because("the null at block 0 must be skipped and the loop must reach the real " +
+                     $"block {realBlock.Id}, whose REPLACE throws on the unopened connection");
     }
 
     /// <summary>

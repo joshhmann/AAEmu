@@ -52,6 +52,17 @@ public class ExecutionBoundaryScopeTests
         // Control: documents the .NET mechanism behind the live violation —
         // a bare Task.Run (the pre-fix Skill.cs dispatch shape) carries the
         // step scope onto the worker and the write assertion fires there.
+        //
+        // The worker is pinned to a DEDICATED thread (not the pool) on purpose.
+        // TUnit runs test bodies on pool threads, and a Task.Run dispatched from
+        // a pool thread lands back on that SAME pool thread ~72-91% of the time
+        // (measured: 273/300, 234/300, 216/300, 232/300 across four processes).
+        // When it does, the worker IS the boundary, so AssertTransformWrite
+        // correctly no-ops and the violation counter does not move — the
+        // assertion below was a coin flip on runtime thread scheduling, not on
+        // the scope-flow behaviour it claims to pin. A dedicated thread makes
+        // "the worker is not the boundary" a fact rather than a hope, so the
+        // test fails only when scope flow genuinely breaks.
         ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
         try
         {
@@ -59,15 +70,23 @@ public class ExecutionBoundaryScopeTests
             var before = ExecutionBoundary.ViolationCount;
 
             var workerSawStep = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-            _ = Task.Run(() =>
+            var workerThread = new Thread(() =>
             {
+                // Explicit flow: a bare Task.Run flows ExecutionContext by
+                // default, and so does a new Thread — that IS the mechanism
+                // under test, so the control keeps it.
                 ExecutionBoundary.AssertTransformWrite();
                 workerSawStep.TrySetResult(ExecutionBoundary.IsInsideBotStep);
-            });
+            })
+            { IsBackground = true };
+            workerThread.Start();
 
             var sawStep = await workerSawStep.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            await Assert.That(sawStep).IsTrue();
-            await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(before + 1);
+            await Assert.That(sawStep).IsTrue()
+                .Because("a bare off-pool dispatch must carry the bot-step scope onto the worker");
+            await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(before + 1)
+                .Because("a Transform write inside the flowed bot step, on a thread that is not the " +
+                         "execution boundary, must register exactly one violation");
         }
         finally
         {

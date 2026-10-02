@@ -31,10 +31,46 @@ public class AuctionHouseScenarioRigTests
     private const int RigSeedMoney = 10_000;
     private const int RigBuyout = 1_000;
 
+    /// <summary>
+    /// Captured pre-replacement singletons, restored by
+    /// <see cref="RestoreAuctionMailSingletons"/> after EVERY test.
+    /// [NotInParallel] serialises this class against itself, NOT against other
+    /// classes — without this pair, whichever class runs last leaves its
+    /// MailManager/AuctionManager mocks bound process-wide and every later
+    /// reader of MailManager.Instance / AuctionManager.Instance inherits them.
+    /// </summary>
+    private static object _priorMailManager;
+    private static object _priorAuctionManager;
+
     private void SeedSurfaceAndReset()
     {
         GameplayActorTestRig.Seed(); // full bootstrap (DI + singletons + trade surface)
         AuctionManager.Instance.AuctionLots.Clear();
+    }
+
+    /// <summary>
+    /// Restores the process-wide singletons this class force-replaces. Mirrors
+    /// GameplayActorDriveVehicleTests.RestoreSingletons and
+    /// BotBodyPartEquipmentTests.InstallFixtureItemManager (capture at swap,
+    /// restore in [After(Test)]) — never leave a rig's mocks installed.
+    /// </summary>
+    [After(Test)]
+    public void RestoreAuctionMailSingletons()
+    {
+        if (_priorMailManager != null)
+        {
+            typeof(Singleton<MailManager>).GetField("s_instance",
+                    BindingFlags.NonPublic | BindingFlags.Static)!
+                .SetValue(null, _priorMailManager);
+            _priorMailManager = null;
+        }
+        if (_priorAuctionManager != null)
+        {
+            typeof(Singleton<AuctionManager>).GetField("s_instance",
+                    BindingFlags.NonPublic | BindingFlags.Static)!
+                .SetValue(null, _priorAuctionManager);
+            _priorAuctionManager = null;
+        }
     }
 
     /// <summary>
@@ -99,13 +135,17 @@ public class AuctionHouseScenarioRigTests
             Mock.Of<ITaskManager>().Object);
 
         // Force-replace both singletons (the rig's seeds are missing-only;
-        // the working surfaces must win for this suite).
+        // the working surfaces must win for this suite). CAPTURE FIRST —
+        // RestoreAuctionMailSingletons puts the prior instances back after
+        // this test so the replacement never outlives the class.
         var mailField = typeof(Singleton<MailManager>).GetField("s_instance",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        mailField?.SetValue(null, mailManager);
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+        _priorMailManager = mailField.GetValue(null);
+        mailField.SetValue(null, mailManager);
         var auctionField = typeof(Singleton<AuctionManager>).GetField("s_instance",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        auctionField?.SetValue(null, auctionManager);
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+        _priorAuctionManager = auctionField.GetValue(null);
+        auctionField.SetValue(null, auctionManager);
     }
 
     /// <summary>Fixtures: one primary + N-1 provisioned extras on the rig world.</summary>
@@ -296,5 +336,50 @@ public class AuctionHouseScenarioRigTests
 
         await Assert.That(result.Passed).IsFalse();
         await Assert.That(result.FailReason).Contains("provisioning failed");
+    }
+
+    /// <summary>
+    /// MECHANISM TEST (order dependency, not suite luck): this class
+    /// force-replaces the process-wide MailManager/AuctionManager singletons
+    /// and must put the prior instances back in its teardown. [NotInParallel]
+    /// only serialises the class against ITSELF — it does not sequence it
+    /// against other classes — so a missing restore left THIS rig's mocks
+    /// bound process-wide and every later reader of MailManager.Instance /
+    /// AuctionManager.Instance (any class, any ordering) inherited them. The
+    /// archived 2026-09-16 full-suite failure of
+    /// AuctionHouse_ProvisionerFailure_FailsWithReason ("actor 1 rig incomplete"
+    /// instead of "provisioning failed") is that leak reaching a sibling.
+    ///
+    /// Both tests read this class's static capture slots directly, which is
+    /// the observable the teardown owns: after the swap ran, the prior
+    /// instances are still held, and they are the ones the singleton fields
+    /// were restored to. A regression that drops the capture/restore leaves
+    /// both slots null and this fails.
+    /// </summary>
+    [Test]
+    public async Task AuctionHouse_WorkingMailSurfaces_AreRestoredAfterEachTest()
+    {
+        SeedSurfaceAndReset();
+        var (_, fleet) = RigFleet(2);
+
+        var mailBefore = MailManager.Instance;
+        var auctionBefore = AuctionManager.Instance;
+
+        SeedWorkingAuctionMail(fleet); // installs this rig's working surfaces
+
+        // The swap happened and both priors were captured for restoration.
+        await Assert.That(_priorMailManager).IsSameReferenceAs(mailBefore)
+            .Because("SeedWorkingAuctionMail must capture the instance it displaces");
+        await Assert.That(_priorAuctionManager).IsSameReferenceAs(auctionBefore)
+            .Because("SeedWorkingAuctionMail must capture the instance it displaces");
+
+        // The restore hook is what puts them back — call it exactly as the
+        // framework does at test end, then read through the public singleton.
+        RestoreAuctionMailSingletons();
+
+        await Assert.That(MailManager.Instance).IsSameReferenceAs(mailBefore)
+            .Because("teardown must restore the pre-swap MailManager, not leave the rig's mock bound");
+        await Assert.That(AuctionManager.Instance).IsSameReferenceAs(auctionBefore)
+            .Because("teardown must restore the pre-swap AuctionManager, not leave the rig's mock bound");
     }
 }
