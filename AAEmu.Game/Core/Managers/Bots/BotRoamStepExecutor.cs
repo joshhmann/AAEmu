@@ -63,6 +63,13 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// production IBotStepExecutor wiring in Program.cs. Bots WITHOUT a roam
 /// route behave exactly like the plain actor executor (tick-only); the roam
 /// drive + visibility is additive per-route.
+///
+/// Dormancy: a wake with no live request, no route, no hunt and no butcher
+/// returns null, which drops the bot from the scheduler's step-driven re-arm
+/// (it wakes only on an external request). <see cref="EnableIdleWake"/>
+/// (AAEMU_PRESENCE_IDLE_WAKE, default OFF) replaces that null with a low
+/// bounded <see cref="IdleWakeInterval"/> so a provisioned citizen keeps
+/// re-arming itself and the world can run unattended.
 /// </summary>
 public sealed class BotRoamStepExecutor : IBotStepExecutor
 {
@@ -82,6 +89,150 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
         int.TryParse(Environment.GetEnvironmentVariable("AAEMU_PRESENCE_BROADCAST_HZ"), out var bhz) && bhz > 0
             ? TimeSpan.FromSeconds(1.0 / bhz)
             : TimeSpan.FromSeconds(1.0 / 15);
+    /// <summary>
+    /// Idle-wake gate (default OFF). When OFF a bot with no live request, no
+    /// route, no hunt and no butcher returns the shared cached
+    /// <see cref="DormantTask"/> (null) exactly as before, and the scheduler's
+    /// step-driven re-arm drops the bot permanently (only an external wake —
+    /// command, event, director — brings it back). Same env style as the
+    /// cadence flags above and <see cref="EnableWildlifeHunt"/>:
+    /// AAEMU_PRESENCE_IDLE_WAKE=1 / true / True.
+    ///
+    /// When ON the dormant step instead reports <see cref="IdleWakeInterval"/>,
+    /// so the SAME wake source (the executor's own return value) keeps a
+    /// provisioned bot self-re-arming at a low bounded rate and the world can
+    /// run unattended — no new scheduler, no second wake source, no scheduler
+    /// change. Set as a property so a test can drive the flag deterministically
+    /// without mutating process environment; production reads the env at
+    /// construction. While OFF the calm path is a static flag read and a
+    /// return: no field read, no allocation (the JevShadow calm-wake pin).
+    /// </summary>
+    public bool EnableIdleWake { get; set; } =
+        Environment.GetEnvironmentVariable("AAEMU_PRESENCE_IDLE_WAKE") is "1" or "true" or "True";
+
+    /// <summary>
+    /// Whether the quest-offer band tracks the CHARACTER's level instead of
+    /// staying pinned at the frozen 1..9 starter band. Defaults to true only
+    /// when AAEMU_BOT_LEVEL_BAND is set to "1", "true", or "True". OFF (the
+    /// default) = byte-identical 1..9 behaviour, zero behavior change.
+    ///
+    /// WHY a gate: the band is the single biggest cap on autonomous
+    /// progression (the filter compares the QUEST's level and never the
+    /// character's, so 1..9 confines the bot to starter content for life), but
+    /// widening it changes which quests a production bot walks to. Off keeps
+    /// every existing green test and the documented A1.1 evidence unchanged;
+    /// the widened policy is opt-in and reversible by unsetting the variable.
+    /// </summary>
+    public bool EnableLevelBand { get; set; } =
+        Environment.GetEnvironmentVariable("AAEMU_BOT_LEVEL_BAND") is "1" or "true" or "True";
+
+    /// <summary>
+    /// Levels of headroom added above the character's level when
+    /// <see cref="EnableLevelBand"/> is on (AAEMU_BOT_LEVEL_BAND_HEADROOM,
+    /// integer &gt;= 1; an unparsable, zero or negative value keeps the default).
+    /// Read once at construction, like <see cref="DefaultIdleWakeInterval"/>.
+    /// </summary>
+    public byte LevelBandHeadroom { get; init; } = DefaultLevelBandHeadroom();
+
+    /// <summary>
+    /// Default <see cref="LevelBandHeadroom"/> — 5 levels.
+    ///
+    /// WHY 5 and not "as high as the data goes": the honest ceiling on offer
+    /// content is ZONE, not band. 81 of 96 zones carry no quest below level 10
+    /// and 53 zones are 30+-only, so a band opened past ~level+5 mostly widens
+    /// the candidate set with offers the bot cannot reach in its own region,
+    /// not with content it can now take. Five levels of headroom keeps the
+    /// accept ranking meaningful (it still prefers the LOWEST in-band level)
+    /// and covers the 10-19 gap a level-10 bot has (zone 1 starts there).
+    /// </summary>
+    private static byte DefaultLevelBandHeadroom()
+        => byte.TryParse(Environment.GetEnvironmentVariable("AAEMU_BOT_LEVEL_BAND_HEADROOM"), out var h) && h > 0
+            ? h
+            : (byte)5;
+
+    /// <summary>
+    /// Resolves the inclusive offer band for a character under the current
+    /// policy, in the same shape <see cref="QuestDecisionScenario.QuestOptions"/>
+    /// carries it so BOTH consumers (the travel pre-filter and the accept
+    /// sweep) read one policy value.
+    ///
+    /// Policy (gate OFF — the default): the frozen 1..9 starter band, returned
+    /// verbatim.
+    ///
+    /// Policy (gate ON):
+    ///   BandMin = 1 always — a floor that never rises. Still-completable
+    ///   one-time content below the character must stay visible: the 20-29
+    ///   band holds ZERO repeatables and 10-19 holds three, so a band that
+    ///   rose with the character would present only already-completed
+    ///   non-repeatables (which <c>GameplayActor.DiscoverRejectReason</c>
+    ///   already hides as COMPLETED_NON_REPEATABLE) and would go structurally
+    ///   dead on a second pass.
+    ///   BandMax = clamp(character.Level + headroom, BandMin, 49).
+    ///
+    /// The 49 clamp is the DELIBERATE <c>LEVEL = 50</c> sentinel decision:
+    /// quest_contexts.LEVEL is display data, not the requirement, and 50 means
+    /// "ungated" rather than "level 50" — 1086 rows sit there, 642 of them
+    /// carrying no requirement row at all. A window that simply followed the
+    /// character would clamp itself onto that sentinel and admit all ~1086 at
+    /// character level 45 by accident. This policy treats them as a separate,
+    /// explicitly-excluded set: out of the band, so they are reachable only if
+    /// someone deliberately widens the clamp. They remain discoverable through
+    /// <c>GameplayActor.IsDiscoverable</c> and the non-banded engine paths.
+    ///
+    /// FAIL-CLOSED: an unreadable level returns the 1..9 band rather than
+    /// guessing a wider one. Deterministic — pure arithmetic on the
+    /// character's own level, no clock, no randomness.
+    /// </summary>
+    internal static QuestDecisionScenario.QuestOptions ResolveOfferBand(bool levelBand, byte headroom, byte? characterLevel)
+    {
+        var options = new QuestDecisionScenario.QuestOptions();
+        if (!levelBand || characterLevel is not { } level)
+            return options;
+        options = options with
+        {
+            BandMin = 1,
+            BandMax = (byte)Math.Clamp(level + headroom, options.BandMin, LevelBandSentinelExclusiveCeiling)
+        };
+        return options;
+    }
+
+    /// <summary>
+    /// Highest band value the level-relative policy will ever emit: 49, one
+    /// below the <c>quest_contexts.LEVEL = 50</c> "ungated" sentinel, which is
+    /// never treated as a real level.
+    /// </summary>
+    internal const byte LevelBandSentinelExclusiveCeiling = 49;
+
+    /// <summary>
+    /// Per-character offer band for this wake. The character's level is read
+    /// once here and reused by both consumers, so the travel pre-filter and
+    /// the accept sweep can never disagree within a wake.
+    /// </summary>
+    private QuestDecisionScenario.QuestOptions OfferBandFor(GameplayActor actor)
+        => ResolveOfferBand(EnableLevelBand, LevelBandHeadroom, actor.Character?.Level);
+
+    /// <summary>
+    /// Re-arm interval reported by an otherwise-dormant wake while
+    /// <see cref="EnableIdleWake"/> is on. Default 5s, overridable via
+    /// AAEMU_PRESENCE_IDLE_WAKE_SECONDS (integer seconds &gt; 0).
+    ///
+    /// WHY 5s: an idle wake does no world work — the executor's legs are all
+    /// absent (that is what makes the step dormant), so the cost per wake is
+    /// one arbitration pass plus one cached no-op actor tick. The budget the
+    /// cadence has to respect is therefore the BUDGET-DRIVER cost per embodied
+    /// char (DB writes &lt;= 500/min), not the region's per-tick work: 5s = 12
+    /// wakes/min/char, three orders of magnitude below any world write rate,
+    /// and ~75x below <see cref="ActiveCadence"/>. It is also the same 2s-class
+    /// granularity the proximity sweep already runs at
+    /// (<c>PopulationDirectorOptions.ProximitySweepIntervalMs</c> = 2000ms),
+    /// so an idle bot is re-evaluated on a cadence comparable to the world's own
+    /// re-arm cadence rather than at a rate that only adds scheduler queue
+    /// depth. A non-positive override falls back to the default rather than
+    /// reporting a zero delay (the scheduler clamps &lt;=0 to its scan
+    /// interval, which would silently turn an idle cadence into a 100 Hz spin).
+    /// </summary>
+    public TimeSpan IdleWakeInterval { get; init; } = DefaultIdleWakeInterval();
+
 
     /// <summary>Clock for elapsed accounting + broadcast throttle (tests inject FakeTimeProvider).</summary>
     public TimeProvider TimeProvider { get; init; } = TimeProvider.System;
@@ -102,6 +253,49 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
 
     /// <summary>Per-leg navigation budget (longer than the actor default so a full route leg never times out mid-walk).</summary>
     public TimeSpan RoamLegTimeout { get; init; } = TimeSpan.FromSeconds(60);
+
+    /// <summary>
+    /// The distance one quest-travel leg can HONESTLY walk: the leg's own
+    /// constants (<see cref="RoamSpeed"/> m/s x <see cref="RoamLegTimeout"/>
+    /// seconds) cut by <see cref="BotPath.TravelChunkEnvelopeMargin"/>. At the
+    /// production defaults that is 2.5 x 60 x 0.5 = 75 m of leg.
+    ///
+    /// WHY THE MARGIN IS 0.5. The raw product (150 m) is the reach of a leg
+    /// that walks in a straight line at full speed from a standing start and
+    /// arrives exactly as the budget expires. A real leg never does: the bot
+    /// re-arms, turns and accelerates from rest on every waypoint, and the
+    /// navigation budget can also be consumed by the actor's own
+    /// no-progress/stuck detection. So the raw product is an OPTIMISTIC
+    /// figure, and sizing chunks at it would reproduce the defect one leg
+    /// earlier. Halving it buys a 2x margin against that loss, which
+    /// comfortably covers the observed 25.9-31.8 m legs that completed plus
+    /// acceleration ramp-up, while costing only more waypoints on a long
+    /// trek (the route is the same straight line, so extra waypoints are
+    /// extra cheap Stop/turn events, not detours). Deliberately derived from
+    /// RoamSpeed/RoamLegTimeout rather than hardcoded, so retuning either
+    /// constant retunes the chunking automatically.
+    ///
+    /// This is a DISTANCE, not a policy change: the budget itself is
+    /// untouched and still correctly halts a leg mid-flight.
+    /// </summary>
+    internal float QuestTravelChunkMeters => (float)(
+        RoamSpeed * (RoamLegTimeout > TimeSpan.Zero ? RoamLegTimeout.TotalSeconds : 0d)
+        * BotPath.TravelChunkEnvelopeMargin);
+
+    /// <summary>
+    /// Builds a quest-travel ROUTE from <paramref name="from"/> (the bot's live
+    /// world position) to <paramref name="target"/>, subdivided into legs of
+    /// <see cref="QuestTravelChunkMeters"/> (see <see cref="BotPath.PathTo(Vector3, Vector3, float, float, float, float)"/>
+    /// for why, and for the measured defect this fixes). Inside one leg it is
+    /// the ordinary single-leg <c>PathTo</c> — unchanged behaviour.
+    ///
+    /// Scope: this is how a quest-travel ROUTE is CONSTRUCTED. It does not
+    /// touch <c>MoveTo</c>, <see cref="RoamLegTimeout"/>, <c>GameplayActor</c>,
+    /// or the movement integration, and it adds no pathfinding — an obstacle
+    /// between the bot and the target is still an obstacle.
+    /// </summary>
+    private BotPath QuestTravelRouteTo(Vector3 from, Vector3 target)
+        => BotPath.PathTo(from, target, QuestTravelChunkMeters, QuestTravelChunkMeters);
 
     /// <summary>
     /// Whether opportunistic wildlife hunting is enabled. Defaults to true when
@@ -310,13 +504,16 @@ public enum NeedsFarmLoopPhase
         /// Branch-1b re-arm bound: the last armed objective-source spawner
         /// position + template, consecutive arms to it, and the active-quest
         /// id key those arms were counted against. Caps 3 consecutive arms to
-        /// the same spawner (1.0 m tolerance); further arms withhold with the
-        /// objective-source-unreachable reason until the active-quest set
-        /// changes. Memory-only like the rest of the state.
+        /// the same spawner (1.0 m tolerance) — a DOODAD source only; further
+        /// arms withhold with the objective-source-unreachable reason until the
+        /// active-quest set changes. A PREY source is exempt: the funnel's
+        /// 25 m census is exactly what walking has to fix, so nothing else can
+        /// materialize it (see <see cref="ArmQuestTravel"/>). Memory-only like
+        /// the rest of the state.
         /// </summary>
         public Vector3? QuestObjectiveSourcePos { get; set; }
 
-        /// <summary>Last armed objective-source doodad template (0 = none).</summary>
+        /// <summary>Last armed objective-source template (0 = none).</summary>
         public uint QuestObjectiveSourceTemplate { get; set; }
 
         /// <summary>Consecutive arms to <see cref="QuestObjectiveSourcePos"/>.</summary>
@@ -455,6 +652,11 @@ public enum NeedsFarmLoopPhase
     // ~10 wakes/sec/bot. Tasks are immutable once completed — safe to reuse.
     private static readonly Task<TimeSpan?> DormantTask = Task.FromResult<TimeSpan?>(null);
     private Task<TimeSpan?>? _cadenceTask;
+    // The one bounded idle interval, decided ONCE at construction (the flag
+    // itself is a settable per-instance test seam, so the interval must not
+    // depend on a mutable property). Cached like DormantTask/_cadenceTask so a
+    // re-arming idle wake allocates no Task at all.
+    private Task<TimeSpan?>? _idleWakeTask;
 
     /// <summary>
     /// Resolves the actor instance for a bot character — the SAME actor the
@@ -639,10 +841,7 @@ public enum NeedsFarmLoopPhase
         {
             actor.PreemptCurrent("teleport jump during quest travel");
             SupersedeQuestTravelRoute(state, "teleport");
-            state.QuestObjectiveSourceQuestKey = "";
-            state.QuestObjectiveSourcePos = null;
-            state.QuestObjectiveSourceTemplate = 0;
-            state.QuestObjectiveSourceArms = 0;
+            ResetObjectiveSourceArms(state, "");
         }
         state.LastTickPosition = currentTickPos;
 
@@ -1317,10 +1516,38 @@ public enum NeedsFarmLoopPhase
             JevShadow.ReleaseWakeIfUnemitted(actor.ActorId);
 
         var effectiveCadence = state.CadenceOverride ?? ActiveCadence;
-        return live || routeActive || hunting || butchering
-            ? (state.CadenceOverride.HasValue ? Task.FromResult<TimeSpan?>(effectiveCadence) : (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence)))
+
+        // Dormant with the idle-wake gate on: report the bounded idle interval
+        // instead of null, so PlayerBotScheduler's step-driven re-arm keeps
+        // this bot waking (the arbiter runs every wake, so a newly available
+        // module claim is picked up within one idle interval). With the gate OFF
+        // this is a static-flag read and a return of the shared DormantTask —
+        // byte-identical to today's calm path, allocation included.
+        // state.CadenceOverride is deliberately NOT honored here: it is a
+        // per-bot present/broadcast-rate seam, and an idle wake must stay low
+        // and bounded no matter what rate the bot was set to roam at.
+        if (live || routeActive || hunting || butchering)
+        {
+            return state.CadenceOverride.HasValue
+                ? Task.FromResult<TimeSpan?>(effectiveCadence)
+                : (_cadenceTask ??= Task.FromResult<TimeSpan?>(ActiveCadence));
+        }
+
+        return EnableIdleWake
+            ? (_idleWakeTask ??= Task.FromResult<TimeSpan?>(IdleWakeInterval))
             : DormantTask;
     }
+
+    /// <summary>
+    /// Default <see cref="IdleWakeInterval"/> — 5 seconds unless
+    /// AAEMU_PRESENCE_IDLE_WAKE_SECONDS names a positive integer. Read once at
+    /// construction; an unparsable or non-positive value keeps the default
+    /// rather than degrading into the scheduler's scan-interval clamp.
+    /// </summary>
+    private static TimeSpan DefaultIdleWakeInterval()
+        => int.TryParse(Environment.GetEnvironmentVariable("AAEMU_PRESENCE_IDLE_WAKE_SECONDS"), out var s) && s > 0
+            ? TimeSpan.FromSeconds(s)
+            : TimeSpan.FromSeconds(5);
 
     /// <summary>
     /// Tier 0 canonical ids (real 1.2 rows): potato seed 15659 → crop 2259 →
@@ -1547,8 +1774,13 @@ public enum NeedsFarmLoopPhase
             NearbyNpcProvider ?? DefaultNearbyNpcs;
         var runtime = _questRuntimes.GetOrAdd(bot.CharacterId,
             _ => new BotBehaviorRuntime(() => TimeProvider.GetUtcNow()));
+        // ONE band value for the whole wake: the accept sweep (QuestBehavior's
+        // in-band filter) and the travel pre-filter (OffersWalkableQuest) must
+        // never disagree — a bot that walks to an offerer whose only offers
+        // its own accept path discards just paces.
+        var band = OfferBandFor(concreteActor);
         var landed = runtime.Tick(concreteActor, nearbyNpcs,
-            new QuestDecisionScenario.QuestOptions
+            band with
             {
                 CycleId = $"quest-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}",
                 WithholdTurnIn = IsQuestTurnInWithheld(bot.CharacterId)
@@ -1641,12 +1873,25 @@ public enum NeedsFarmLoopPhase
     /// </summary>
     private bool ArmQuestTravel(PlayerBotRuntime bot, GameplayActor actor, BotRoamState state)
     {
-        // A live route is already walking — never re-arm (keeps progress).
-        if (state.Path is { IsFinished: false })
+        // A live route is already walking — never re-arm (keeps progress) —
+        // but only for a route that carries QUEST progress. The owner-blind
+        // guard starved the quest leg forever against a patrol ring: a
+        // Loop-mode route never sets IsFinished (BotPath.Arrive wraps
+        // CurrentIndex modulo the waypoint count), so `state.Path is
+        // { IsFinished: false }` is permanently true for a "look alive" ring
+        // and every quest wake returned here before the target resolver ran.
+        // ROAM is the presence/patrol owner SetRoamRoute stamps (and the only
+        // owner that can be Loop-mode forever), so exempting it exactly
+        // re-admits the quest leg: quest travel outranks patrol by arbitration
+        // (quest.progress 58 > presence.roam 50) and the patrol is re-armed by
+        // PresenceRoam's own route-less ResumeRoam once quest work is done.
+        // Every other owner (QUEST_TRAVEL progress, OTHER:needs-farm-travel)
+        // keeps the original protect-the-walk behaviour, byte-identical.
+        if (state.Path is { IsFinished: false } && state.PendingMoveOwner != "ROAM")
             return false;
 
         var character = bot.Character;
-        var target = ResolveQuestTravelTarget(actor);
+        var target = ResolveQuestTravelTarget(actor, OfferBandFor(actor));
         if (target == null)
         {
             state.QuestTravelReason = "no walkable quest target (nothing ready-unspawned, nothing in-band to discover)";
@@ -1657,47 +1902,83 @@ public enum NeedsFarmLoopPhase
         // objective source, then an offerer — when the armed target IS the
         // objective source, count consecutive arms to the same spawner (1.0 m
         // tolerance) and withhold past 3 until the active-quest set changes.
+        //
+        // PREY EXEMPTION — the bound does NOT apply to a PREY source. Measured
+        // on a 30-minute 4-bot run: 7 quests active, quest 251's objective
+        // (item 4058 x3) blocked on prey 3475 sitting ~330 m out, so
+        // ResolveQuestObjectiveSource resolved it EVERY wake — and the cap then
+        // withheld travel from the 4th arm on for the rest of the run: 0
+        // BotMoveStart for the final 8 minutes while the quest funnel logged
+        // 700+ lines, the bots parked at (15566.9, 14790.8) ~330 m short, and
+        // have= stayed at 1. That is the cap double-penalising the ONE
+        // objective travel exists to unblock: a prey outside the funnel's 25 m
+        // perception census is by definition not yet spawnable-by-sighting, and
+        // walking to its spawner is the only thing that can bring it in.
+        //
+        // Why the prey's OWN guards already bound this, so an exemption cannot
+        // run away. The prey arm answers only when the objective is live and the
+        // prey is absent (ResolveQuestObjectiveSource :2386-2394): a credited
+        // objective, a Deliver shape, or a PERCEIVED prey all make it return
+        // false, so arm 1b has no prey source to arm and the walk simply ends.
+        // PerceivedPrey re-reads the census EVERY call, so a prey that spawned
+        // mid-trek withdraws travel on the very next wake — the exemption is
+        // self-cancelling exactly when the walk has done its job. What remains
+        // bounded is the same as what the cap bounded: a bot that keeps
+        // re-resolving the same prey spawner. It still walks (bounded by the
+        // navigation budget per leg), and a genuine obstacle or a route the
+        // legs cannot complete still costs exactly what it cost before.
+        //
+        // A DOODAD source keeps the cap byte for byte: its source is a world
+        // object the spawn path materialises in place, so "3 arms and no kill"
+        // genuinely does mean unreachable, and that is the behaviour this bound
+        // was written for.
         if (character.Quests != null
-            && ResolveQuestObjectiveSource(actor, out var source, out var sourceTemplate)
+            && ResolveQuestObjectiveSource(actor, out var source, out var sourceTemplate, out var sourceIsPrey)
             && target.Value.Equals(source))
         {
-            var questKey = string.Join(",", character.Quests.ActiveQuests.Keys.OrderBy(k => k));
-            if (!string.Equals(questKey, state.QuestObjectiveSourceQuestKey, StringComparison.Ordinal))
-            {
-                state.QuestObjectiveSourceQuestKey = questKey;
-                state.QuestObjectiveSourcePos = null;
-                state.QuestObjectiveSourceTemplate = 0;
-                state.QuestObjectiveSourceArms = 0;
-            }
+            var sourceDist = Vector3.Distance(character.Transform.World.Position, source);
             var sameSpawner = state.QuestObjectiveSourcePos.HasValue
                 && Vector3.Distance(state.QuestObjectiveSourcePos.Value, source) <= 1.0f
                 && state.QuestObjectiveSourceTemplate == sourceTemplate;
-            if (sameSpawner && state.QuestObjectiveSourceArms >= 3)
+
+            // Reset-on-quest-set-change, byte for byte as before.
+            var questKey = string.Join(",", character.Quests.ActiveQuests.Keys.OrderBy(k => k));
+            if (!string.Equals(questKey, state.QuestObjectiveSourceQuestKey, StringComparison.Ordinal))
+            {
+                ResetObjectiveSourceArms(state, questKey);
+            }
+            var kind = sourceIsPrey ? "prey" : "doodad";
+            // `!sourceIsPrey` is the whole change: a prey source is the one
+            // case where the same spawner can be unreachable for three arms and
+            // still be worth walking — the prey is outside the census by
+            // definition, so nothing else can materialize it.
+            if (sameSpawner && !sourceIsPrey && state.QuestObjectiveSourceArms >= 3)
             {
                 state.QuestTravelTarget = null;
-                state.QuestTravelReason = $"objective-source-unreachable (doodad {sourceTemplate})";
+                state.QuestTravelReason = $"objective-source-unreachable ({kind} {sourceTemplate})";
                 return false;
             }
             state.QuestTravelTarget = source;
-            var sourceDist = Vector3.Distance(character.Transform.World.Position, source);
             state.QuestTravelReason =
-                $"walking to quest objective source (doodad {sourceTemplate} {sourceDist:F1}m) at ({source.X:F0},{source.Y:F0}) " +
+                $"walking to quest objective source ({kind} {sourceTemplate} {sourceDist:F1}m) at ({source.X:F0},{source.Y:F0}) " +
                 $"from ({character.Transform.World.Position.X:F0},{character.Transform.World.Position.Y:F0})";
 
-            state.Path = BotPath.PathTo(source);
+            state.Path = QuestTravelRouteTo(character.Transform.World.Position, source);
             state.PendingLeg = null;
             // Telemetry: the route layer's next legs own as QUEST_TRAVEL.
             state.PendingMoveOwner = "QUEST_TRAVEL";
             if (sameSpawner)
+            {
                 state.QuestObjectiveSourceArms++;
+            }
             else
             {
                 state.QuestObjectiveSourcePos = source;
                 state.QuestObjectiveSourceTemplate = sourceTemplate;
                 state.QuestObjectiveSourceArms = 1;
             }
-            Logger.Debug("Roam quest travel armed for bot {CharacterId}: walking to quest objective source (doodad {Template}) at ({X:F0},{Y:F0})",
-                bot.CharacterId, sourceTemplate, source.X, source.Y);
+            Logger.Debug("Roam quest travel armed for bot {CharacterId}: walking to quest objective source ({Kind} {Template}) at ({X:F0},{Y:F0})",
+                bot.CharacterId, kind, sourceTemplate, source.X, source.Y);
             return true;
         }
 
@@ -1706,13 +1987,27 @@ public enum NeedsFarmLoopPhase
             $"walking to quest target at ({target.Value.X:F0},{target.Value.Y:F0}) " +
             $"from ({character.Transform.World.Position.X:F0},{character.Transform.World.Position.Y:F0})";
 
-        state.Path = BotPath.PathTo(target.Value);
+        state.Path = QuestTravelRouteTo(character.Transform.World.Position, target.Value);
         state.PendingLeg = null;
         // Telemetry: the route layer's next legs own as QUEST_TRAVEL.
         state.PendingMoveOwner = "QUEST_TRAVEL";
         Logger.Debug("Roam quest travel armed for bot {CharacterId}: walking toward pending quest target at ({X:F0},{Y:F0})",
             bot.CharacterId, target.Value.X, target.Value.Y);
         return true;
+    }
+
+    /// <summary>
+    /// Clears every objective-source arm counter and re-seeds the quest key.
+    /// One place for both reset sites (the quest-set-change clause and the
+    /// teleport-jump sweep), so neither can leave a counter behind that the
+    /// other would have cleared.
+    /// </summary>
+    private static void ResetObjectiveSourceArms(BotRoamState state, string questKey)
+    {
+        state.QuestObjectiveSourceQuestKey = questKey;
+        state.QuestObjectiveSourcePos = null;
+        state.QuestObjectiveSourceTemplate = 0;
+        state.QuestObjectiveSourceArms = 0;
     }
 
     /// <summary>
@@ -1758,10 +2053,13 @@ public enum NeedsFarmLoopPhase
     /// <summary>
     /// The world position the quest leg should walk toward: the spawner of a
     /// Ready quest's report NPC when that NPC is not spawned, otherwise the
-    /// spawner of an in-band quest offerer when nothing is active. Null when
-    /// there is nothing to walk to (the bot then idles rather than pacing).
+    /// NEAREST of the active quest's uncredited gather/interact objective's
+    /// doodad source and the nearest in-band quest offerer spawner — EXCEPT an
+    /// objective whose source is a PREY NPC, which wins outright (see the
+    /// tail). Null when there is nothing to walk to (the bot then idles rather
+    /// than pacing).
     /// </summary>
-    private static Vector3? ResolveQuestTravelTarget(GameplayActor actor)
+    private static Vector3? ResolveQuestTravelTarget(GameplayActor actor, QuestDecisionScenario.QuestOptions band)
     {
         var character = actor.Character;
         var world = character.ParentWorld;
@@ -1792,63 +2090,163 @@ public enum NeedsFarmLoopPhase
         //     objective's doodad source — walk to the nearest spawner for that
         //     source so the world's normal spawn path materializes it. Quest-id
         //     order; gather before interact within a quest.
-        if (ResolveQuestObjectiveSource(actor, out var objectiveSource, out _))
+        //
+        //     NOT AN ABSOLUTE PRIORITY. This arm used to `return` the instant
+        //     it resolved, which made arm 2 unreachable on every wake carrying
+        //     an unsatisfied objective. Measured on two real 30-minute 4-bot
+        //     unattended runs: the bots spent their runs walking ~572-592 m
+        //     toward DOODAD/objective-source spawners, exhausting the 60 s
+        //     navigation budget (~150 m of travel per leg) over ~4 legs per
+        //     destination, while real quest givers sat 32 m (npc 3597, quest
+        //     330), 117 m (npc 3511, quest 6198) and 224 m (npc 3512, quest
+        //     251) from the bot's position — 456-490 m from where the bots
+        //     actually walked, and never visited at all.
+        //
+        //     SO: the arm DEFERRS. Its source is kept as the default answer and
+        //     compared against arm 2's nearest in-band offerer by DISTANCE FROM
+        //     THE BOT — nearer offerer wins, nearer source keeps today's
+        //     behaviour byte-for-byte. The comparison reads the two positions
+        //     this method ALREADY resolves (arm 2's scan simply runs first when
+        //     it is needed, so nothing is resolved twice): no new scan, no new
+        //     resolver, no counter, no cooldown, no blacklist. A reachability
+        //     filter was tried here once and REGRESSED progression by rejecting
+        //     every candidate; this admits both candidates by construction, so
+        //     it cannot reject anything.
+        //
+        //     ONE EXCEPTION, the PREY source (an objective whose source is a
+        //     PREY NPC, not a doodad). That is the one source travel can act on
+        //     END TO END — walking to it is what brings the prey into the
+        //     funnel's census — so it does not compete on distance at all. See
+        //     the tail below.
+        //
+        //     The flag below is set ONLY by the prey arm: both doodad arms
+        //     return before it, so it reads true for a prey-NPC source and for
+        //     nothing else.
+        var objectiveSource = (Vector3?)null;
+        var objectiveSourceIsPrey = false;
+        if (ResolveQuestObjectiveSource(actor, out var resolvedSource, out _, out objectiveSourceIsPrey))
+            objectiveSource = resolvedSource;
+
+        // 2. Nearest offerer spawner whose offers are actually worth walking
+        //    to — in band and not already completed (a spawner whose only
+        //    offers are done would send the bot on a pointless trek;
+        //    observed live: it walked away from the gated follow-up's offerer
+        //    toward unrelated NPCs). THIS SCAN RUNS EVEN WHEN ARM 1b
+        //    RESOLVED — that is the fix, and the tail below decides between
+        //    the two.
+        //
+        //    HISTORY. This arm was gated on "no quest at all"
+        //    (ActiveQuests.Count == 0), which made a quest this world cannot
+        //    serve STRUCTURALLY permanent: measured on a 30-minute 4-bot run,
+        //    quest 251's gather objective rejects all 12 candidate NPCs
+        //    (rejects=[template=12]), so ActiveQuests stayed at 1 forever and
+        //    the bot could never walk toward ANY quest giver — it circled its
+        //    27 m presence ring instead, while the nearest real spawned
+        //    offerer sat 1331 m away. The wrapper came off; arm 1b then took
+        //    the same shape one indirection further out, returning
+        //    unconditionally so this scan never ran on an arm-1b wake.
+        //
+        //    COST. SpawnManager.GetAllSpawners copies the whole table under a
+        //    lock, so this scan costs at most ONE copy per wake no matter
+        //    which arm wins: arm 1's early return is untouched and arm 1b's
+        //    resolver is invoked exactly once, with its answer threaded into
+        //    the tail rather than recomputed. The only wake this genuinely
+        //    adds work to is the arm-1b-resolves one, which previously
+        //    stopped before the scan — that is the unavoidable price of
+        //    letting an offerer win at all, and it is one pass over a
+        //    dictionary this same walk already copies on every arm-2 wake.
+        //    No ordering, short-circuit or memo could avoid it: the winner is
+        //    the NEARER of the two, so the nearer one cannot be known before
+        //    both are read.
+        //
+        //    Fail-closed like TrySpawnerPosition: no spawner tables, no walk
+        //    target — the bot idles instead of crashing the wake. The tail
+        //    also still returns null when nothing in band is walkable.
+        var allSpawners = world.SpawnManager?.GetAllSpawners();
+        if (allSpawners == null)
+            return objectiveSource; // no spawner tables: arm 1b's source if any, else fail closed
+        var here = character.Transform.World.Position;
+        var best = (Vector3?)null;
+        var bestDist = float.MaxValue;
+        foreach (var spawner in allSpawners.SelectMany(s => s.Value))
+        {
+            if (spawner.UnitId == 0)
+                continue;
+            if (!OffersWalkableQuest(actor, spawner.UnitId, band))
+                continue;
+            var p = spawner.Position;
+            var position = new Vector3(p.X, p.Y, p.Z);
+            var d = Vector3.Distance(here, position);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = position;
+            }
+        }
+        // Arm 2 found nothing walkable. Keep arm 1b's source if it had one —
+        // today's behaviour exactly — otherwise decline fail-closed, same
+        // null and the same caller's reason string as before.
+        if (best == null)
             return objectiveSource;
 
-        // 2. Nothing active: walk to the nearest offerer spawner whose offers
-        //    are actually worth walking to — in band and not already
-        //    completed (a spawner whose only offers are done would send the
-        //    bot on a pointless trek; observed live: it walked away from the
-        //    gated follow-up's offerer toward unrelated NPCs).
-        if (quests.ActiveQuests.Count == 0)
-        {
-            // Fail-closed like TrySpawnerPosition: no spawner tables, no walk
-            // target — the bot idles instead of crashing the wake.
-            var allSpawners = world.SpawnManager?.GetAllSpawners();
-            if (allSpawners == null)
-                return null;
-            var here = character.Transform.World.Position;
-            var best = (Vector3?)null;
-            var bestDist = float.MaxValue;
-            foreach (var spawner in allSpawners.SelectMany(s => s.Value))
-            {
-                if (spawner.UnitId == 0)
-                    continue;
-                if (!OffersWalkableQuest(actor, spawner.UnitId))
-                    continue;
-                var p = spawner.Position;
-                var position = new Vector3(p.X, p.Y, p.Z);
-                var d = Vector3.Distance(here, position);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    best = position;
-                }
-            }
-            return best;
-        }
+        // Both arms resolved.
+        //
+        // A PREY source OUTRANKS the offerer outright. Measured on a 30-minute
+        // 4-bot run: quest 251's prey arm resolved a real spawner 265-465 m out
+        // on every wake, while nearer quest givers sat 32 m / 117 m / 224 m away,
+        // so the nearer-offerer vote buried the prey source 436/436 times; the
+        // funnel then rejected its whole candidate pool on template mismatch
+        // (have=0) and 324 AdvanceQuest attempts were declined with one
+        // byte-identical reason. Worse, the two proximities DISAGREE: the
+        // funnel's 25 m perception census is measured at arbitration time,
+        // while travel happens over many wakes — the bots did stand 16.1 m from
+        // the (15586.5,15117.3) spawner, yet 3475 never entered the census
+        // (closest approach to any boar was 59.7 m), so an objective that only
+        // walking can unblock is exactly the one a nearer giver out-votes. The
+        // prey's OWN guards already withhold when it is perceived or credited,
+        // and the 3-arm cap above still bounds the walk, so this is a
+        // displacement of the destination, not an abandonment of the quest.
+        if (objectiveSource != null && objectiveSourceIsPrey)
+            return objectiveSource;
 
-        return null;
+        // Any other source (a DOODAD) keeps the nearer-wins comparison byte for
+        // byte: `bestDist` is already the offerer's distance from the bot — arm
+        // 2's own ranking metric, not a second measurement — and strict `<`
+        // means an exactly-equal objective source still wins, so no doodad
+        // fixture that resolves both arms can change behaviour.
+        if (objectiveSource != null && Vector3.Distance(here, objectiveSource.Value) < bestDist)
+            return objectiveSource; // the source is nearer than the offerer
+        return best;                  // the offerer is nearer (or exactly equal is not)
     }
 
     /// <summary>
     /// True when this NPC template offers at least one quest the bot could
     /// still legally take AND that the decision policy would actually accept.
     /// Legality rides the SAME <see cref="GameplayActor.IsDiscoverable"/> gate
-    /// discovery itself applies, and the band check mirrors the decision
-    /// scenario's default offer band — without it the bot walks to an offerer
-    /// whose only quests are out of band, discovery surfaces nothing, and the
-    /// loop paces between useless targets (observed live: 0 discovered at
-    /// Npc 7137 while the gated in-band offerer sat 85 m away).
+    /// discovery itself applies; the band is a PRE-FILTER ON TOP of it, never
+    /// a replacement — without it the bot walks to an offerer whose only
+    /// quests are out of band, discovery surfaces nothing, and the loop paces
+    /// between useless targets (observed live: 0 discovered at Npc 7137 while
+    /// the gated in-band offerer sat 85 m away).
+    ///
+    /// The band arrives from the caller (<see cref="OfferBandFor"/>) so this
+    /// travel pre-filter and the accept sweep read ONE policy value per wake.
     /// </summary>
-    private static bool OffersWalkableQuest(GameplayActor actor, uint npcTemplateId)
+    private static bool OffersWalkableQuest(GameplayActor actor, uint npcTemplateId,
+        QuestDecisionScenario.QuestOptions band)
     {
-        var band = new QuestDecisionScenario.QuestOptions();
         foreach (var questId in QuestManager.Instance.GetQuestsOfferedByNpc(npcTemplateId))
         {
             var template = QuestManager.Instance.GetTemplate(questId);
+            // The template == null guard is load-bearing: 116 quest_components
+            // rows have no matching quest_contexts row, and this pre-filter
+            // must not dereference what IsDiscoverable has not yet seen.
             if (template == null || template.Level < band.BandMin || template.Level > band.BandMax)
                 continue;
+            // IsDiscoverable still owns every REAL requirement (Start
+            // component unit_reqs — including the MaxLevel kind, which vetoes
+            // an offer from ABOVE the character's level — plus the completed
+            // non-repeatable rule). The band never substitutes for it.
             if (actor.IsDiscoverable(questId))
                 return true;
         }
@@ -1887,17 +2285,55 @@ public enum NeedsFarmLoopPhase
     /// through the character's own world SpawnManager (same discipline as
     /// TrySpawnerPosition). False when no active quest names an uncredited
     /// source (or its source has no spawner).
+    ///
+    /// PRECEDENCE, unchanged in that order: (a) a DOODAD source — the gather
+    /// arm above, then the interact arm — resolves first and returns, so every
+    /// doodad-backed objective walks exactly as before; (b) only an objective
+    /// with NO doodad source reaches the prey-NPC arm (see below), which
+    /// walks to the spawner of the row's derived <c>PreyTemplate</c> so the
+    /// prey enters perception range for the funnel to select; (c) otherwise
+    /// false, exactly as before.
+    ///
+    /// <paramref name="sourceIsPrey"/> reports which arm answered — true ONLY
+    /// for (b), the prey-NPC source. It is a derivation of (b)'s existing
+    /// guards, not a second decision: no arm is added, no guard relaxed, and
+    /// both doodad arms keep reporting false.
     /// </summary>
-    private static bool ResolveQuestObjectiveSource(GameplayActor actor, out Vector3 source, out uint sourceTemplate)
+    private static bool ResolveQuestObjectiveSource(GameplayActor actor, out Vector3 source,
+        out uint sourceTemplate, out bool sourceIsPrey)
     {
         source = default;
         sourceTemplate = 0;
+        // Prey arm only. Each arm above returns BEFORE this is set, so a
+        // gather/interact DOODAD source never reports true — the caller's
+        // tie-break therefore reads true for the prey-NPC source and for
+        // nothing else.
+        sourceIsPrey = false;
         var character = actor.Character;
         var world = character.ParentWorld;
         var quests = character.Quests;
         if (world?.SpawnManager == null || quests == null)
             return false;
         var here = character.Transform.World.Position;
+
+        // True when a prey template is already inside the perception census —
+        // i.e. QuestObjectiveTargetSelector would already consider it a
+        // candidate, so the funnel owns this wake and travel must not preempt it.
+        // LIVENESS, not identity: a DEAD prey-template NPC is not a candidate
+        // the selector would take (QuestObjectiveTargetSelector.cs:181-186
+        // rejects `Hp <= 0` as `dead`), so it must not suppress this arm
+        // either — a corpse standing in the census is what suppressed it and
+        // sent the bot to an offerer instead of back to the prey spawner.
+        bool PerceivedPrey(BotObservedContext snapshot, uint preyTemplate)
+        {
+            foreach (var objId in snapshot.NearbyNpcObjIds)
+            {
+                if (world.GetNpc(objId) is { Hp: > 0 } live && live.TemplateId == preyTemplate)
+                    return true;
+            }
+            return false;
+        }
+
         foreach (var (questId, quest) in quests.ActiveQuests.OrderBy(kv => kv.Key))
         {
             if (quest is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
@@ -1937,6 +2373,49 @@ public enum NeedsFarmLoopPhase
                     sourceTemplate = row.InteractDoodadTemplate;
                     return true;
                 }
+            }
+            // (c) The objective's source is the PREY NPC itself, not a doodad:
+            //     a QuestActObjItemGather with no highlight_doodad_id derives a
+            //     PreyTemplate through the loot chain (npc>pack>item), and no
+            //     doodad template can ever match such an act — so both doodad
+            //     arms above no-op and the resolver used to return false, never
+            //     carrying the bot to the prey. Left that way the prey stays
+            //     outside the 25 m perception census, QuestObjectiveTargetSelector
+            //     rejects the whole candidate pool on template mismatch, and the
+            //     objective can never advance.
+            //
+            //     ORDER — why LAST. Any objective that DOES have a doodad source
+            //     has already returned from the arm above, so every doodad-backed
+            //     objective walks to the very same spawner at the very same
+            //     template with byte-identical reasons. Only an objective with no
+            //     doodad source at all reaches this arm, which is precisely the
+            //     shape the doodad arms cannot serve.
+            //
+            //     DELIVER EXCLUDED, and that exclusion IS the "source is an NPC"
+            //     condition: a quest whose own Supply act grants the gather item
+            //     (the basil-delivery shape) has no prey at all — its source is
+            //     the grant — so walking it to a mob spawner would be the exact
+            //     pointless trek the arm-1b comment above documents (bots burning
+            //     the navigation budget on spawners they have no reason to visit).
+            //
+            //     Same two disciplines as the arms above: a perceived prey means
+            //     the funnel owns this wake — travel never preempts it (its own
+            //     capture, exactly as each arm above takes its own); and the
+            //     spawner lookup is the SAME helper arm 1 uses
+            //     (TrySpawnerPosition), not a second scan. Fail-closed: no
+            //     gather act, a credited objective, no prey template, a Deliver
+            //     shape, or a prey with no spawner all fall through to the same
+            //     `false` as before.
+            if (row.GatherActId != 0 && row.PreyTemplate != 0
+                && row.ObjectivePattern != AAEmu.Game.Models.Game.Quests.Director.QuestPattern.Deliver
+                && !QuestBehavior.GatherCredited(questId, quest, row)
+                && !PerceivedPrey(BotObservedContext.Capture(actor), row.PreyTemplate)
+                && TrySpawnerPosition(world, row.PreyTemplate) is { } preyPos)
+            {
+                source = preyPos;
+                sourceTemplate = row.PreyTemplate;
+                sourceIsPrey = true;
+                return true;
             }
         }
         return false;
