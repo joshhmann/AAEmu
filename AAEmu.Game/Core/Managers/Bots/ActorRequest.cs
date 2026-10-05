@@ -68,6 +68,54 @@ public sealed class ActorRequest
     /// <summary>Elapsed running time accumulated by Tick().</summary>
     public TimeSpan Elapsed { get; private set; }
 
+    /// <summary>
+    /// Clock that owns this request's BUDGET accounting (the injectable
+    /// monotonic source; production is <see cref="TimeProvider.System"/>).
+    ///
+    /// WHY A CLOCK AND NOT JUST THE TICK DELTA. <see cref="Elapsed"/> only grows
+    /// when the caller's <c>Tick</c> hands this request a delta, so a stalled
+    /// scheduler — one that stops calling <c>Tick</c> — freezes a timeout budget
+    /// that wall-clock has already blown through. The request therefore measures
+    /// its budget against <see cref="BudgetElapsed"/>, which is the GREATER of the
+    /// accumulated tick deltas and this clock's own reading since the request
+    /// started. Taking the greater of the two is what keeps both callers honest:
+    /// a stalled scheduler still expires (the clock kept running), and a test
+    /// that drives synthetic tick deltas faster than real time still expires on
+    /// its deltas. Neither source is ever fabricated — a clock that has not been
+    /// stamped yet contributes zero, exactly like a request that never started.
+    ///
+    /// The lifecycle TIMESTAMPS (<see cref="RequestedAtUtc"/> /
+    /// <see cref="StartedAtUtc"/> / <see cref="CompletedAtUtc"/>) stay on the
+    /// wall clock on purpose: they are audit FACTS about when the dispatch
+    /// happened in the world, not budget arithmetic, so an injected clock never
+    /// rewrites recorded history.
+    /// </summary>
+    public TimeProvider Clock { get; init; } = TimeProvider.System;
+
+    /// <summary>
+    /// The elapsed time this request's timeout budget is measured against: the
+    /// greater of the caller's accumulated tick deltas (<see cref="Elapsed"/>)
+    /// and this request's own clock reading. See <see cref="Clock"/> for why both
+    /// sources exist and why the greater wins.
+    /// </summary>
+    public TimeSpan BudgetElapsed
+    {
+        get
+        {
+            if (_startedOnClock is not { } started)
+                return Elapsed;
+            var onClock = Clock.GetUtcNow().UtcDateTime - started;
+            return onClock > Elapsed ? onClock : Elapsed;
+        }
+    }
+
+    /// <summary>Clock reading stamped when execution began (Accept/Start), or null before that.</summary>
+    private DateTime? _startedOnClock;
+
+    /// <summary>Stamps the budget clock exactly once, alongside <see cref="StartedAtUtc"/>.</summary>
+    private void StampBudgetClock()
+        => _startedOnClock ??= Clock.GetUtcNow().UtcDateTime;
+
     /// <summary>Result payload of a Completed request (e.g. SkillResult for Cast).</summary>
     public object? Result { get; private set; }
 
@@ -189,6 +237,7 @@ public sealed class ActorRequest
         if (State != ActorLifecycleState.Requested)
             return false;
         StartedAtUtc ??= DateTime.UtcNow; // instant actions never call Start; accept marks execution begin
+        StampBudgetClock(); // ...and the budget clock starts at the same instant
         Transition(ActorLifecycleState.Accepted, detail);
         return true;
     }
@@ -198,6 +247,7 @@ public sealed class ActorRequest
         if (State != ActorLifecycleState.Accepted)
             return false;
         StartedAtUtc ??= DateTime.UtcNow;
+        StampBudgetClock();
         Transition(ActorLifecycleState.Running, detail);
         return true;
     }

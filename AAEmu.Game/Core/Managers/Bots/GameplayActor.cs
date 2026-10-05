@@ -239,6 +239,18 @@ public class GameplayActor : IGameplayActor
 
     public IReadOnlyList<ActorAuditRecord> AuditTrace => _trace;
 
+    /// <summary>
+    /// Clock stamped onto every request this actor creates, so a request's
+    /// timeout budget can expire on MONOTONIC time instead of only on the
+    /// caller's tick deltas (a stalled scheduler hands out no delta, which used
+    /// to freeze a budget wall-clock had already blown). Production default is
+    /// the system clock; tests inject a manual provider, exactly like the
+    /// executors' own clock seams (<c>BotRoamStepExecutor.TimeProvider</c>,
+    /// <c>GameplayActorStepExecutor.TimeProvider</c>).
+    /// </summary>
+    public TimeProvider TimeProvider { get; init; } = TimeProvider.System;
+
+
     public GameplayActor(Character character)
     {
         Character = character ?? throw new ArgumentNullException(nameof(character));
@@ -837,6 +849,23 @@ public class GameplayActor : IGameplayActor
         sct.ObjId = target.ObjId;
 
         var skillObject = SkillObject.GetByType(SkillObjectType.None);
+        // Auto-attack is a cast like any other, and it had the SAME blind spot
+        // this log ran into: the initial strike lands on an attack-delay tick,
+        // so a synchronous before/after read sees no change and the swing looks
+        // like it dealt nothing. Sample the PRE-STRIKE HP and join the existing
+        // bounded post-cast observation (drained by Tick, enriched onto the
+        // audit record with TargetHpBefore/TargetHpAfter/EffectObserved)
+        // exactly as Cast does, so the record carries the engine's own
+        // before/after for a landed ranged swing instead of only a pre-tick
+        // delta.
+        //
+        // Ordering mirrors Cast deliberately: the sample must happen BEFORE
+        // skill.Use so it is the pre-strike value (reading it afterwards would
+        // capture post-strike HP and make a landed swing look like no change).
+        // Observation is skipped for an unobservable target (dead, or window
+        // disabled) — never a fabricated measurement.
+        var observeTargetHp = IsObservableEffectTarget(target);
+        var targetHpBefore = observeTargetHp ? target.Hp : 0;
 
         // Execute initial strike through engine (bypassGcd=false to respect attack timing)
         var result = skill.Use(Character, caster, sct, skillObject, false, out _);
@@ -845,7 +874,31 @@ public class GameplayActor : IGameplayActor
         Character.IsAutoAttack = true;
         Character.StartAutoSkill(skill);
 
-        return Complete(request, result, $"auto-attack started ({autoAttackSkillId}) on {target.ObjId}");
+        // The engine's verdict is part of the record: `skill.Use` returns the
+        // SkillResult, and a REFUSED cast (TooFarRange / CooldownTime / …)
+        // produced the same detail as one that fired, so a consumer reading
+        // `detail=[auto-attack_started_(4)_on_44327] … delta=0` could not tell
+        // "the engine let the swing happen and it dealt nothing" from "the
+        // engine never allowed the swing at all". Same wording as Cast's
+        // refusal detail (`skill {id} refused: {result}`) so one token
+        // ("refused") reads the same way across the actor surface.
+        //
+        // Control flow is deliberately unchanged — the auto-attack loop starts
+        // either way and the request still resolves Completed; only the
+        // reported evidence changes. `result` is still handed to Complete so
+        // the audit record's Result payload keeps carrying the SkillResult.
+        var detail = result == SkillResult.Success
+            ? $"auto-attack started ({autoAttackSkillId}) on {target.ObjId}"
+            : $"auto-attack refused: {result} (skill {autoAttackSkillId} on {target.ObjId})";
+
+        // Register while the request is still non-terminal so the drain can
+        // find its trace row (Finish appends it at Complete). A REFUSED swing
+        // registers nothing: there is no effect to observe, and its detail
+        // already names the engine's reason.
+        if (result == SkillResult.Success && observeTargetHp)
+            RegisterCastEffectObservation(request.TraceId, target, targetHpBefore);
+
+        return Complete(request, result, detail);
     }
 
     public ActorRequest StopAutoAttack(string? idempotencyKey = null)
@@ -948,9 +1001,40 @@ public class GameplayActor : IGameplayActor
                 $"quest {questId} not active (cannot advance)");
 
         request.Start($"advancing quest {questId} (step {quest.Step}, status {quest.Status})");
-        _ = quest.RunCurrentStep();
+
+        // One wake, one attempt: RunCurrentStep is called exactly once and its
+        // bool is read. The TERMINAL is unchanged and deliberately so:
+        // Completed here means "the step machine ran to completion for this
+        // wake", NOT "the world advanced". A quest whose objective cannot be
+        // credited still ran, and callers (the scenario harness, the executor's
+        // landed-work flag) depend on that stable contract. What was dishonest
+        // is the WORDING: the row interpolated step/status AFTER the call into
+        // "advanced", so a byte-identical no-op read as a success. The fix is
+        // message-only — the dataset stops claiming advancement that did not
+        // happen, with no behavioural blast radius.
+        var stepBefore = quest.Step;
+        var statusBefore = quest.Status;
+        var ran = quest.RunCurrentStep();
+        // Read the post-state off the live quest, not off the possibly-dropped
+        // reference: Reward completes and drops the quest out of ActiveQuests.
+        var questAfter = Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        var stepAfter = questAfter?.Step ?? stepBefore;
+        var statusAfter = questAfter?.Status ?? statusBefore;
+        var progressed = questAfter == null || stepAfter != stepBefore || statusAfter != statusBefore;
+
+        // The TWO facts this wake proved, named apart: Accepted is the step
+        // machine having run (the terminal below), Applied is the verified
+        // world-state change. The token rides the row so a lane or an audit
+        // reader can tell a landed advance from a declined one without
+        // inferring it from prose — the terminal alone says Completed for both.
+        if (!ran && !progressed)
+            return Complete(request, true,
+                $"quest {questId} did not advance — step machine declined current step (step {stepAfter}, status {statusAfter})" +
+                $" [{QuestAdvanceOutcome.From(accepted: true, applied: false).Token}]");
+
         return Complete(request, true,
-            $"quest {questId} advanced (step {quest.Step}, status {quest.Status})");
+            $"quest {questId} advanced (step {stepBefore}, status {statusBefore} -> step {stepAfter}, status {statusAfter})" +
+            $" [{QuestAdvanceOutcome.From(accepted: true, applied: true).Token}]");
     }
 
     public ActorRequest TurnInQuest(uint questId, uint npcObjId, int selectedReward = -1, string? idempotencyKey = null)
@@ -4171,7 +4255,7 @@ public class GameplayActor : IGameplayActor
         // Timeout enforcement on EVERY action that carries a budget — not
         // just movement. The §17 reason maps per action kind (Move/Drive →
         // Navigation; everything else → Starvation, budget exhaustion).
-        if (request.Timeout is { } budget && request.Elapsed > budget)
+        if (request.Timeout is { } budget && request.BudgetElapsed > budget)
         {
             // A Move that exhausts its budget halts mid-leg — observers
             // must see the standstill (dossier §1.6).
@@ -4708,6 +4792,20 @@ public class GameplayActor : IGameplayActor
             EffectObserved = observed,
             EffectWait = pending.Elapsed
         };
+
+        // Telemetry (M7 hardening #4 surfacing): the audit ring is in-memory
+        // only, so the engine's OWN before/after for a swing was written and
+        // never read by anything. A dispatch-time log cannot carry it — the
+        // damage of a ranged (EffectSpeed>0) swing lands on a scheduled
+        // ApplySkillTask AFTER the request is terminal — so this is the only
+        // point where the number exists. One Info line per RESOLVED
+        // observation; joins to the dispatch line on the trace id.
+        Logger.Info(
+            "BotCastEffectResolved trace={TraceId} actor={ActorId} target={TargetId} action={Action} " +
+            "hpBefore={HpBefore} hpAfter={HpAfter} delta={Delta} observed={Observed} waitMs={WaitMs:F0}",
+            pending.TraceId, ActorId, pending.Target.ObjId, _trace[index].Action,
+            pending.HpBefore, hpAfter, hpAfter - pending.HpBefore, observed,
+            pending.Elapsed.TotalMilliseconds);
     }
 
     #endregion
@@ -4718,7 +4816,10 @@ public class GameplayActor : IGameplayActor
         Vector3? destination = null, uint skillId = 0, TimeSpan? timeout = null, object? payload = null,
         string? idempotencyKey = null)
     {
-        var request = new ActorRequest(action, targetId, destination, skillId, timeout, payload, idempotencyKey);
+        var request = new ActorRequest(action, targetId, destination, skillId, timeout, payload, idempotencyKey)
+        {
+            Clock = TimeProvider
+        };
         if (_pendingDecision is { } pending)
         {
             request.AnnotateDecision(pending.Goal, pending.Policy, pending.Candidates, pending.Rejections, pending.Seed);
@@ -4854,6 +4955,39 @@ public class GameplayActor : IGameplayActor
         => _ledger.TryGetOutcome(idempotencyKey, out var entry)
             ? _trace.LastOrDefault(r => r.TraceId == entry.TraceId)
             : null;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Three states, all readable synchronously because they are derived from
+    /// the registry itself rather than from a clock:
+    /// <list type="bullet">
+    /// <item><c>None</c> — the trace row is absent, OR carries no cast-effect
+    /// keys at all. A refused swing, a non-cast action, or an unobservable
+    /// target. Distinct from a closed observation that saw no change.</item>
+    /// <item><c>Pending</c> — the row exists and is STILL listed in
+    /// <c>_pendingCastEffects</c>: the engine accepted the cast and its damage
+    /// is scheduled but has not landed. This is the ranged-swing state.</item>
+    /// <item><c>Resolved</c> — the window closed and the additive triple is on
+    /// the row.</item>
+    /// </list>
+    /// An in-flight observation is matched from the pending list first, so an
+    /// open window can never be misread as a resolved zero.
+    /// </remarks>
+    public CastEffectObservation GetCastEffectObservation(Guid traceId)
+    {
+        foreach (var pending in _pendingCastEffects)
+        {
+            if (pending.TraceId == traceId)
+                return new CastEffectObservation(CastEffectResolution.Pending, pending.HpBefore);
+        }
+
+        var record = _trace.LastOrDefault(r => r.TraceId == traceId);
+        if (record is null || (record.TargetHpBefore is null && record.TargetHpAfter is null && record.EffectObserved is null))
+            return default;
+
+        return new CastEffectObservation(CastEffectResolution.Resolved,
+            record.TargetHpBefore, record.TargetHpAfter, record.EffectObserved, record.EffectWait);
+    }
     /// <inheritdoc />
     public bool RecordBackstopTimeout(ActorRequest request)
     {
