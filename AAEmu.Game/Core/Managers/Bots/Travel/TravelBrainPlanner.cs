@@ -217,6 +217,55 @@ public static class TravelBrainPlanner
             float.NaN, 0, 0);
 
     /// <summary>
+    /// The decision shape a SETTLED intent re-reads: the same named terminal and
+    /// reason the store banked, carried on the arm that REACHED it, so the
+    /// diagnostic names the real arm instead of a fabricated one.
+    ///
+    /// This is the ONE re-read every caller shares. A journey's terminal is
+    /// sticky (<see cref="TravelIntentStore.Intent.IsSettled"/>), so the travel
+    /// return/pursuit legs, the combat kite leg and the loot approach leg all
+    /// re-read the banked verdict on the next wake — and a consumer can then
+    /// never observe one caller's vocabulary differing from another's for the
+    /// same journey. The three call sites are
+    /// <c>TravelLegDispatch</c>, <c>CombatTravelDispatch</c> and
+    /// <c>LootTravelDispatch</c>.
+    ///
+    /// THE MEASUREMENTS ARE NOT RE-MEASURED. The re-read carries the banked
+    /// mode, target and repath count, a <c>Hold</c> verb (a settled journey asks
+    /// the actor for nothing), NO destination (the journey is over — nothing is
+    /// dispatched, so nothing is claimed), a NaN distance and zero waypoints:
+    /// an unreadable measurement stays unreadable rather than being fabricated as
+    /// zero. Only the ARM is decided here, and it is decided from the terminal
+    /// — the arm that establishes each verdict:
+    ///   <see cref="TravelTerminal.WrongWorld"/> → <see cref="TravelArm.PreFlight"/>,
+    ///   the one dispatch pre-flight;
+    ///   <see cref="TravelTerminal.TargetGone"/> → <see cref="TravelArm.TargetProbe"/>,
+    ///   the live re-resolve that found the target provably absent;
+    ///   <see cref="TravelTerminal.Arrived"/> → <see cref="TravelArm.Arrival"/>,
+    ///   the destination reached;
+    ///   <see cref="TravelTerminal.Unreachable"/> → <see cref="TravelArm.Repath"/>,
+    ///   the repath budget spent.
+    /// <see cref="TravelTerminal.None"/> is not reachable here — an unsettled
+    /// intent is re-decided, not re-read — and falls to
+    /// <see cref="TravelArm.Repath"/>, the same terminal this helper is reached
+    /// for. Nothing reads this arm but the diagnostic: every consumer reads the
+    /// terminal and verb, so the mapping names a wake without steering one.
+    /// </summary>
+    public static TravelDecision SettledTerminal(in TravelIntentStore.Intent intent)
+    {
+        var arm = intent.Terminal switch
+        {
+            TravelTerminal.WrongWorld => TravelArm.PreFlight,
+            TravelTerminal.TargetGone => TravelArm.TargetProbe,
+            TravelTerminal.Arrived => TravelArm.Arrival,
+            _ => TravelArm.Repath
+        };
+        return new TravelDecision(
+            arm, TravelVerb.Hold, intent.Mode, intent.Terminal, intent.Reason,
+            intent.TargetObjId, null, float.NaN, 0, intent.RepathCount);
+    }
+
+    /// <summary>
     /// Banks a wake's DECISION facts: the terminal verdict (sticky), a moving
     /// target's consecutive miss or its clearing, and the road route the wake
     /// resolved. Called by the caller immediately after <see cref="Prepare"/>.

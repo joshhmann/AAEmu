@@ -269,7 +269,7 @@ internal static class LootTravelDispatch
         // an abandoned or arrived corpse can never be re-derived as a bare failure (or
         // silently resumed) later in the same journey.
         if (TravelIntentStore.TryGet(actor.ActorId, out var armed, ApproachMoveOwner) && armed.IsSettled)
-            prepared = prepared with { Decision = SettledTerminal(armed) };
+            prepared = prepared with { Decision = TravelBrainPlanner.SettledTerminal(armed) };
 
         // THE RECYCLE OVERRIDE — applied AFTER the sticky re-read, because it is the
         // one fact about the destination that a banked verdict may not outlive: the
@@ -463,24 +463,6 @@ internal static class LootTravelDispatch
             : new ApproachVerdict(ApproachVerb.MoveToUnit, "move", moveReason, null, null);
     }
 
-    /// <summary>
-    /// The decision shape a SETTLED intent re-reads: the same named terminal and
-    /// reason the store banked, carried on the arm that reached it (so the diagnostic
-    /// names the real arm rather than a fabricated one).
-    /// </summary>
-    private static TravelDecision SettledTerminal(in TravelIntentStore.Intent intent)
-    {
-        var arm = intent.Terminal switch
-        {
-            TravelTerminal.WrongWorld => TravelArm.PreFlight,
-            TravelTerminal.TargetGone => TravelArm.TargetProbe,
-            TravelTerminal.Arrived => TravelArm.Arrival,
-            _ => TravelArm.Repath
-        };
-        return new TravelDecision(
-            arm, TravelVerb.Hold, intent.Mode, intent.Terminal, intent.Reason,
-            intent.TargetObjId, null, float.NaN, 0, intent.RepathCount);
-    }
 
     /// <summary>
     /// The decision a RECYCLED corpse's journey names: the travel layer's terminal

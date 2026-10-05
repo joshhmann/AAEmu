@@ -214,7 +214,7 @@ internal static class TravelLegDispatch
         // so an abandoned destination can never be re-derived as a bare failure (or
         // silently resumed) later in the same journey.
         if (TravelIntentStore.TryGet(actor.ActorId, out var armed, legOwner) && armed.IsSettled)
-            prepared = prepared with { Decision = SettledTerminal(armed) };
+            prepared = prepared with { Decision = TravelBrainPlanner.SettledTerminal(armed) };
 
         TravelBrainPlanner.Publish(actor.ActorId, prepared, legOwner);
         return prepared;
@@ -424,23 +424,6 @@ internal static class TravelLegDispatch
             : new ReturnLegVerdict(ReturnLegVerb.MoveToUnit, "move", moveReason, null, null);
     }
 
-    /// <summary>
-    /// The decision shape a SETTLED intent re-reads: the same named terminal and
-    /// reason the store banked, carried on the arm that reached it (so the
-    /// diagnostic names the real arm rather than a fabricated one).
-    /// </summary>
-    private static TravelDecision SettledTerminal(in TravelIntentStore.Intent intent)
-    {
-        var arm = intent.Terminal switch
-        {
-            TravelTerminal.WrongWorld => TravelArm.PreFlight,
-            TravelTerminal.TargetGone => TravelArm.TargetProbe,
-            _ => TravelArm.Repath
-        };
-        return new TravelDecision(
-            arm, TravelVerb.Hold, intent.Mode, intent.Terminal, intent.Reason,
-            intent.TargetObjId, null, float.NaN, 0, intent.RepathCount);
-    }
 
     // ---------------------------------------------------------------- dispatch
 

@@ -189,7 +189,7 @@ internal static class CombatTravelDispatch
         // a terminated destination can never be re-derived as a bare failure (or
         // silently resumed) later in the same journey.
         if (TravelIntentStore.TryGet(actor.ActorId, out var armed, KiteMoveOwner) && armed.IsSettled)
-            prepared = prepared with { Decision = SettledTerminal(armed) };
+            prepared = prepared with { Decision = TravelBrainPlanner.SettledTerminal(armed) };
 
         TravelBrainPlanner.Publish(actor.ActorId, prepared, KiteMoveOwner);
         return prepared;
@@ -418,22 +418,4 @@ internal static class CombatTravelDispatch
     private static string? TerminalOf(in TravelDecision decision)
         => decision.Terminal == TravelTerminal.None ? null : TravelBrain.Token(decision.Terminal);
 
-    /// <summary>
-    /// The decision shape a SETTLED intent re-reads: the same named terminal and reason
-    /// the store banked, carried on the arm that reached it (so the diagnostic names
-    /// the real arm rather than a fabricated one). Mirrors
-    /// <c>TravelLegDispatch</c>'s own settled re-read, which is private to that caller.
-    /// </summary>
-    private static TravelDecision SettledTerminal(in TravelIntentStore.Intent intent)
-    {
-        var arm = intent.Terminal switch
-        {
-            TravelTerminal.WrongWorld => TravelArm.PreFlight,
-            TravelTerminal.TargetGone => TravelArm.TargetProbe,
-            _ => TravelArm.Repath
-        };
-        return new TravelDecision(
-            arm, TravelVerb.Hold, intent.Mode, intent.Terminal, intent.Reason,
-            intent.TargetObjId, null, float.NaN, 0, intent.RepathCount);
-    }
 }
