@@ -606,8 +606,12 @@ public class NpcSpawner : Spawner<Npc>
             // Проверяем, есть ли NPC в этом спавнере
             if (SpawnedNpcs.TryGetValue(spawnerId, out var npcs) && npcs?.Count > 0)
             {
-                //Logger.Debug($"spawn count={_spawnCount + _scheduledCount} for SpawnerId: {UnitId}:{SpawnerId}");
-                count += CurrentSpawnCount + _scheduledCount;
+                // Вклад даёт ИМЕННО этот спавнер: у каждого ключа SpawnedNpcs своя
+                // численность. Раньше здесь складывалось CurrentSpawnCount + _scheduledCount
+                // ТЕКУЩЕГО спавнера — то есть собственный счётчик повторялся по числу
+                // соседних спавнеров, и зона раздувалась в N раз.
+                //Logger.Debug($"other spawn count={npcs.Count} for SpawnerId={spawnerId}");
+                count += npcs.Count;
                 areOtherNpcsInZone = npcs.Count > 0; // В другом спавнере есть NPC
             }
         }
