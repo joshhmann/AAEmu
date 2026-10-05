@@ -8,6 +8,7 @@ using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
@@ -116,6 +117,16 @@ public static class QuestBehavior
     private const string InteractGoal = "quest.objective-interact";
     /// <summary>Goal key routing the supplied-gather monitor through the leg loop. Never dispatched.</summary>
     private const string DeliverGoal = "quest.objective-deliver";
+    /// <summary>Goal key routing the talk objective's Talk through Dispatch.</summary>
+    private const string TalkGoal = "quest.objective-talk";
+    /// <summary>
+    /// Talk arrival radius: the SAME engine gate the Talk verb itself enforces
+    /// (GameplayActor.MaxInteractRange, 25 m flat — a conversation outside
+    /// interaction range is refused by the actor, not merely wasted). Inside →
+    /// audited Stop, then Talk; outside → drift-gated MoveTo. Same discipline
+    /// the gather/interact/return legs hold at 25 m.
+    /// </summary>
+    private const float TalkRadiusM = GameplayActor.MaxInteractRange;
     /// Gather arrival radius: the Interact engine gate itself
     /// (GameplayActor.MaxInteractRange, 25 m flat). Inside → audited Stop,
     /// then Interact; outside → drift-gated MoveTo. The return leg's own
@@ -223,6 +234,88 @@ public static class QuestBehavior
     {
         lock (PursuitSync)
             GiveUpStreaks.Clear();
+    }
+    /// <summary>
+    /// No-progress stall streaks per (actor, target): consecutive hold-wakes with no HP
+    /// decrease while the pursuit leg yields <c>inside-combat-band</c> or the combat leg
+    /// yields <c>already-live</c>. Memory-only wake cache, same discipline as
+    /// <c>GiveUpStreaks</c>: keyed by (actor, target), bounded by full clear.
+    /// Reset on any HP decrease (the hold is working), on target switch/loss/death
+    /// (a different fight), and on unreadable HP — fail-closed, never forces motion
+    /// on unknown state.
+    /// </summary>
+    private static readonly Dictionary<(uint ActorId, uint TargetObjId), CombatStallStreak> CombatStallStreaks = new();
+    /// <summary>One target's stall streak: last seen HP, consecutive no-progress hold-wakes, and the cycle that last counted.</summary>
+    private sealed record CombatStallStreak(int Hp, int Wakes, string CycleId);
+    /// <summary>
+    /// Stall-trip threshold: consecutive no-progress hold-wakes before the pursuit leg stops
+    /// yielding and closes to contact. Matches the <c>QuestOptions.GiveUpAfterUnresolvedWakes</c>
+    /// default (10): the same "ten stagnant wakes means stuck" convention the give-up rule uses.
+    /// </summary>
+    internal const int CombatStallWakes = 10;
+    /// <summary>Bound for the stall streak map (one entry per actor+target; full clear when exceeded).</summary>
+    private const int CombatStallMemoryBound = 512;
+    /// <summary>Clears all stall streaks (test seam, mirroring <c>ClearGiveUpMemory</c>).</summary>
+    internal static void ClearCombatStallMemory()
+    {
+        lock (PursuitSync)
+            CombatStallStreaks.Clear();
+    }
+    /// <summary>
+    /// Counts one no-progress hold-wake for (actor, target); reports true once the streak
+    /// reaches <see cref="CombatStallWakes"/>. Both the pursuit <c>inside-combat-band</c> yield
+    /// and the combat <c>already-live</c> gates feed this one streak, deduped by
+    /// <paramref name="cycleId"/> so a wake both legs hold counts once — the count is
+    /// wakes, not legs. A null/empty cycle skips dedup and counts (only test rigs omit
+    /// it; counting is the honest record of the hold observed).
+    /// Fail-closed: target 0 or unreadable HP (negative) drops the actor's streaks and
+    /// never trips. Any HP decrease clears the streak (damage landed = progress).
+    /// A different target for the same actor drops the old streak (a different fight).
+    /// </summary>
+    internal static bool CountCombatStallWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
+    {
+        wakes = 0;
+        if (targetObjId == 0 || hp < 0)
+        {
+            ClearCombatStallActor(actorId);
+            return false;
+        }
+        lock (PursuitSync)
+        {
+            if (CombatStallStreaks.Count >= CombatStallMemoryBound)
+                CombatStallStreaks.Clear();
+            foreach (var key in CombatStallStreaks.Keys.Where(k => k.ActorId == actorId && k.TargetObjId != targetObjId).ToList())
+                CombatStallStreaks.Remove(key);
+            if (CombatStallStreaks.TryGetValue((actorId, targetObjId), out var prior))
+            {
+                if (!string.IsNullOrEmpty(cycleId) && cycleId == prior.CycleId)
+                {
+                    wakes = prior.Wakes;
+                    return wakes >= CombatStallWakes;
+                }
+                if (hp < prior.Hp)
+                {
+                    CombatStallStreaks.Remove((actorId, targetObjId));
+                    return false;
+                }
+                wakes = prior.Wakes + 1;
+            }
+            else
+            {
+                wakes = 1;
+            }
+            CombatStallStreaks[(actorId, targetObjId)] = new CombatStallStreak(hp, wakes, cycleId ?? "");
+            return wakes >= CombatStallWakes;
+        }
+    }
+    /// <summary>Drops every stall streak for one actor: its target identity is gone (lost/dead/unselected), so no streak may survive onto the next fight.</summary>
+    private static void ClearCombatStallActor(uint actorId)
+    {
+        lock (PursuitSync)
+        {
+            foreach (var key in CombatStallStreaks.Keys.Where(k => k.ActorId == actorId).ToList())
+                CombatStallStreaks.Remove(key);
+        }
     }
 
     /// <summary>
@@ -451,28 +544,60 @@ public static class QuestBehavior
     /// (<c>LastStopHold</c> / <c>LastPursuitIssue</c>, both fixture-quest-owned
     /// by construction) or the recorded corpse itself. Resolves ONLY that pinned
     /// objId (a direct resolve, never a scan): dead prey → record + probe
-    /// fragment; recorded objId resolving live → drop as recycled; recorded
-    /// objId gone from the world → gone fragment (no container claim).
+    /// objId gone from the world → gone fragment AND the record released (the
+    /// departure is reported for this wake; the stale slot is not persisted).
     /// Death-wake re-pin: a newly dead quest-relevant pinned target shadows
     /// any stale record — the fresh corpse is pinned (old released) so
     /// <c>LootEmit</c> evaluates the fresh container. Same-ObjId pins
     /// keep continuity through the record path; irrelevant dead units never
     /// re-pin. Dispatches nothing.
+    /// Fresh-prey pre-emption: a dead-and-present RECORD is not the end of the
+    /// arm. The record is a single slot, so a kill that lands while the slot
+    /// names an EARLIER corpse has nothing to say for itself until that corpse
+    /// resolves live or leaves the world — and until then the loot arm
+    /// evaluates the OLD container on every wake. So before probing the record
+    /// this arm asks the census for a nearer dead prey, and takes the slot when
+    /// one exists and the PIN does not still name the record (a pin that does
+    /// name it is a corpse this leg is genuinely still owed, and keeps it).
     /// </summary>
     private static string ObservePinnedCorpse(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts,
-        QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel)
+        QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel, BotObservedContext? observation)
     {
         var character = actor.Character;
         uint pin = 0;
+        uint holdPin = 0;
         QuestCorpseRecord? stale = null;
         lock (PursuitSync)
         {
             LastCorpse.TryGetValue(actor.ActorId, out stale);
+            // Both candidates are lifted here and RANKED outside the lock: ranking
+            // needs a world read, and this file keeps every world read out of the
+            // critical section.
             if (LastStopHold.TryGetValue(actor.ActorId, out var hold))
-                pin = hold.TargetObjId;
-            else if (LastPursuitIssue.TryGetValue(actor.ActorId, out var last))
+                holdPin = hold.TargetObjId;
+            if (LastPursuitIssue.TryGetValue(actor.ActorId, out var last))
                 pin = last.TargetObjId;
         }
+        // A hold is only ABANDONED in favour of a pursuit issue record that has
+        // something to say: the hold memory is SHARED by all five Stop legs
+        // (pursuit, return, gather, interact, talk), so "the last Stop landed" is
+        // not by itself "the last Stop landed on prey" — a reporter, a talk npc, a
+        // well and a seedling are all one entry — and nothing ever removes an
+        // entry. A hold naming a boar that was killed and despawned minutes ago
+        // therefore used to pin this leg to that dead objId for the rest of the
+        // actor's life: with the pin frozen, the re-pin arm's own
+        // <c>pin != stale.ObjId</c> guard was blocked, a corpse standing 0.2 m
+        // away was never recognised, and the issue record — written on every
+        // pursuit move toward the prey actually being hunted, and read by nothing
+        // at all — could not even be consulted.
+        //
+        // Precedence, in order: a live-prey hold keeps the pin it always had; with
+        // no issue record to fall back to (pin still 0) the hold is used exactly as
+        // before, so the corpse a Stop landed on is still recognised with no
+        // change; otherwise the issue record wins, which is that record's own
+        // meaning — "the prey this actor is hunting".
+        if (holdPin != 0 && (HoldPinsLivePrey(character, holdPin, funnel.Fixture.PreyTemplate) || pin == 0))
+            pin = holdPin;
         if (pin != 0 && (stale == null || pin != stale.ObjId))
         {
             var fresh = character?.ParentWorld?.GetNpc(pin);
@@ -499,22 +624,181 @@ public static class QuestBehavior
             }
             else if (cur == null)
             {
+                // The recorded objId no longer RESOLVES: the corpse despawned or left
+                // the world. This wake still reports the departure truthfully — the
+                // fragment is built from the record snapshot already read, and this
+                // wake's observation of a departed corpse is a real observation.
+                //
+                // What must NOT survive is the RECORD. The single-slot record was
+                // only ever a pointer at "the corpse this actor's loot leg is owed",
+                // and the thing it points at is gone: keeping it made every later
+                // kill shadow its own corpse fragment behind a stale objId and left
+                // the loot chain re-evaluating a container that cannot resolve
+                // (the chain reads this record as its ONLY corpse pin). The slot is
+                // released the same owner-scoped way the recycled arm above releases
+                // it — never another actor's record, never another leg's journey —
+                // so a later corpse can be recognised and pinned again.
+                lock (PursuitSync)
+                    LastCorpse.Remove(actor.ActorId);
                 return $":corpse={stale.ObjId}:gone=true";
             }
             else
             {
+                // THE FRESH-PREY PRE-EMPION. A dead-and-present record is not the
+                // only corpse this leg may be owed: the actor's own kill can land
+                // while the record still names an EARLIER corpse — one this actor
+                // never pinned, inherited through a shared hold, or pinned
+                // before its own last kill — and the probe below then reports
+                // THAT corpse, and the loot arm evaluates it, on every wake
+                // until it despawns. That window spans the actor's next several
+                // kills (measured 15-381 s in a 30-minute run), so the fresh prey
+                // this leg just made is never the corpse it is handed.
+                //
+                // Two guards, both over values already in hand — no new world read
+                // and no new scan: the census this wake already carries is the
+                // only candidate source, and `cur` is already resolved.
+                //  - STILL OWED: while the PIN names the record, this leg is
+                //    genuinely owed THIS corpse and keeps the slot. That is the
+                //    precedence the two arms above have always had, and the pin
+                //    re-pin arm has already had its chance to move it.
+                //  - NEARER: the census corpse must be strictly nearer than the
+                //    record, so a corpse this actor is already closing on is
+                //    never traded away for one further out.
+                //
+                // The re-pin itself runs through NotePinnedCorpse, so the handoff
+                // is the ordinary one: a DIFFERENT objId ends the approach journey
+                // armed on the old corpse (owner-scoped — this actor's only leg),
+                // and the fresh corpse never inherits the old one's repath budget.
+                var here = character?.Transform.World.Position;
+                var recordDistanceM = here.HasValue
+                    ? MathUtil.CalculateDistance(here.Value, cur.Transform.World.Position, false)
+                    : double.MaxValue;
+                if (pin != stale.ObjId && !double.IsNaN(recordDistanceM))
+                {
+                    var fresh = NoteCensusCorpse(actor, opts, funnel, observation,
+                        excludeObjId: stale.ObjId, nearerThanM: recordDistanceM);
+                    if (fresh.Length > 0)
+                        return fresh;
+                }
                 var probe = ProbeCorpse(character, cur);
                 return FormatCorpseFragment(stale.ObjId, probe.ItemCount, probe.Lootable);
             }
         }
-        if (pin == 0)
+        // The pinned objId's own resolve: a pin that names a dead fixture prey
+        // is our corpse even with no record yet (first post-death wake).
+        if (pin != 0)
+        {
+            var npc = character?.ParentWorld?.GetNpc(pin);
+            if (npc != null && npc.Hp <= 0 && npc.TemplateId == funnel.Fixture.PreyTemplate)
+            {
+                NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId);
+                var probeNow = ProbeCorpse(character, npc);
+                return FormatCorpseFragment(npc.ObjId, probeNow.ItemCount, probeNow.Lootable);
+            }
+        }
+        // Neither arm above answered: no record survived, and the pin (if any)
+        // is not a corpse. Only here may the census name one — so a live record
+        // and a live pin keep the precedence they have always had.
+        return NoteCensusCorpse(actor, opts, funnel, observation);
+    }
+
+    /// <summary>
+    /// G7b recognition arm 3 (census): the pin-free case the two arms above
+    /// cannot reach. <c>LastCorpse</c> is written ONLY from a pin, and a pin is
+    /// written only by the pursuit Stop/Move dispatches — so an actor that kills
+    /// its prey from inside the combat brain's own commitment (which withdraws
+    /// the pursuit leg before that Stop lands) never records its own kill. The
+    /// corpse is then standing in the wake's own census, at contact range, and
+    /// <c>LootEmit</c> is handed <c>CorpseObjId: 0</c> — which
+    /// <c>LootBrainPlanner</c> reads as "no claim found, not our corpse"
+    /// (<c>corpseIsOurPinnedCorpse: false</c>), so ownership is
+    /// <c>Unresolved</c> and the brain withholds on every wake of every kill.
+    ///
+    /// Resolves the nearest DEAD prey of the fixture template from the wake's
+    /// OWN census (<c>NearbyNpcObjIds</c> — the same snapshot and the same 25 m
+    /// radius <see cref="QuestObjectiveTargetSelector"/> reads; no second
+    /// perception, no widened census, no world scan beyond it). Nearest-first
+    /// with the selector's own ObjId tiebreak, so the choice is deterministic.
+    ///
+    /// A stale record does not fence this arm off either: it runs ahead of the
+    /// pinned resolve too, and there a fresh census corpse pre-empts the stale
+    /// pin only when the pin names a different objId AND the fresh corpse is
+    /// strictly nearer than the record. A live record and a live pin keep the
+    /// precedence they have always had. Every gate the
+    /// pinned arms already apply is applied here identically: the fixture's own
+    /// prey template (inside <see cref="NotePinnedCorpse"/> and again before it)
+    /// and dead-or-nothing. It is NOT loot rights, NOT a range grant and NOT an
+    /// unconditional take — the pinned record it writes is the only thing that
+    /// changes, and the loot brain's own ownership, safety, loot-once, worth and
+    /// probe gates then read exactly what they read for a Stop-pinned corpse.
+    ///
+    /// Owner-scoped: the record is written under <c>actor.ActorId</c>, like every
+    /// other memory here. Every world read runs OUTSIDE <see cref="PursuitSync"/>.
+    /// </summary>
+    private static string NoteCensusCorpse(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts,
+        QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel, BotObservedContext? observation)
+        => NoteCensusCorpse(actor, opts, funnel, observation, excludeObjId: 0, nearerThanM: double.MaxValue);
+
+    /// <summary>
+    /// The same census resolution under an existing record's two guards.
+    /// <paramref name="excludeObjId"/> drops a candidate the caller has already
+    /// ruled on (the record it is deciding about), and
+    /// <paramref name="nearerThanM"/> admits only a corpse strictly nearer than
+    /// that. Both are the caller's own already-read facts, so the arbitration
+    /// adds no perception of its own. Defaults reproduce the pin-free arm
+    /// exactly: nothing excluded, nothing distance-bounded.
+    /// </summary>
+    private static string NoteCensusCorpse(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts,
+        QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel, BotObservedContext? observation,
+        uint excludeObjId, double nearerThanM)
+    {
+        var character = actor.Character;
+        var preyTemplate = funnel.Fixture.PreyTemplate;
+        if (preyTemplate == 0 || observation == null || character?.ParentWorld == null)
             return "";
-        var npc = character?.ParentWorld?.GetNpc(pin);
-        if (npc == null || npc.Hp > 0 || npc.TemplateId != funnel.Fixture.PreyTemplate)
+
+        var here = character.Transform.World.Position;
+        Npc? corpse = null;
+        var bestDistance = double.MaxValue;
+        var bestObjId = uint.MaxValue;
+        foreach (var objId in observation.NearbyNpcObjIds)
+        {
+            if (objId == excludeObjId)
+                continue;
+            var npc = character.ParentWorld.GetNpc(objId);
+            if (npc == null || npc.Hp > 0 || npc.TemplateId != preyTemplate)
+                continue;
+            var distance = MathUtil.CalculateDistance(here, npc.Transform.World.Position, false);
+            if (double.IsNaN(distance)
+                || !(distance < bestDistance || (distance == bestDistance && objId < bestObjId)))
+                continue;
+            corpse = npc;
+            bestDistance = distance;
+            bestObjId = objId;
+        }
+
+        if (corpse == null || bestDistance >= nearerThanM)
             return "";
-        NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId);
-        var probeNow = ProbeCorpse(character, npc);
-        return FormatCorpseFragment(npc.ObjId, probeNow.ItemCount, probeNow.Lootable);
+        NotePinnedCorpse(actor.ActorId, corpse.ObjId, corpse.TemplateId, funnel.Fixture, opts.CycleId);
+        var probe = ProbeCorpse(character, corpse);
+        return FormatCorpseFragment(corpse.ObjId, probe.ItemCount, probe.Lootable);
+    }
+
+    /// <summary>
+    /// Whether the actor's last Stop hold still names LIVE quest prey — the only
+    /// reading under which a hold may own this leg's corpse pin. Same legality
+    /// rule the re-pin arm and <see cref="NotePinnedCorpse"/> already apply to a
+    /// pin (fixture prey template, and a corpse is a corpse only while dead), so
+    /// the hold is validated by the file's own standard rather than a new one.
+    /// Read-only, and called OUTSIDE <see cref="PursuitSync"/> so the world read
+    /// never runs under the lock.
+    /// </summary>
+    private static bool HoldPinsLivePrey(Character? character, uint holdPin, uint preyTemplate)
+    {
+        if (character?.ParentWorld == null || preyTemplate == 0)
+            return false;
+        var held = character.ParentWorld.GetNpc(holdPin);
+        return held != null && held.Hp > 0 && held.TemplateId == preyTemplate;
     }
     /// <summary>Diagnostic-only raw sweep objId census bound (objId:templateId:flatM, no spaces).</summary>
     private const int SweepDiagRawIdsShown = 12;
@@ -839,7 +1123,7 @@ public static class QuestBehavior
                 // QuestDecideDetail cut) so the observe payload names OUR
                 // corpse quest-side. Parser-safe keys (parser ignores unknown
                 // keys); zero behavior input, zero dispatch.
-                var corpseKeys = objectiveFunnel == null ? "" : ObservePinnedCorpse(actor, opts, objectiveFunnel).Replace(":", " ");
+                var corpseKeys = objectiveFunnel == null ? "" : ObservePinnedCorpse(actor, opts, objectiveFunnel, context).Replace(":", " ");
                 var sweepKeys =
                     $" raw={rawCount} trunc={Math.Max(0, rawCount - discoverTargets.Count)}" +
                     $" actor={actorPosText} zone={actorZone} region={actorRegion}" +
@@ -1785,6 +2069,235 @@ public static class QuestBehavior
     }
 
     /// <summary>
+    /// True when the quest's talk objective already carries its required count.
+    /// The item-use credit helper's twin for the talk family: reads the act's
+    /// live objective counter off the SAME quest object the leg already holds
+    /// (<c>QuestActTemplate.GetObjective</c>), resolving the
+    /// <c>QuestActObjTalk</c> / <c>QuestActObjTalkNpcGroup</c> act by the row's
+    /// own act id off the static template tables — game data, never a
+    /// world/perception read. Fail-closed: an unreadable template or a missing
+    /// act reads NOT credited, so the leg keeps working rather than silently
+    /// declaring victory.
+    /// </summary>
+    internal static bool TalkCredited(uint questId, Quest quest, QuestFixtureRow fixture)
+    {
+        var talk = QuestManager.Instance?.GetTemplate(questId)?
+            .GetComponents(QuestComponentKind.Progress)
+            .SelectMany(c => c.ActTemplates)
+            .FirstOrDefault(a => a.ActId == fixture.TalkActId
+                && a is QuestActObjTalk or QuestActObjTalkNpcGroup);
+        if (talk == null)
+            return false;
+        return talk.GetObjective(quest) >= Math.Max(1, talk.Count);
+    }
+
+    /// <summary>
+    /// Talk-objective leg entry gate: the step machine has work only for an
+    /// active, non-Ready quest, and the objective leg has work only while the
+    /// talk objective is not yet credited. The gate owns both reasons so the
+    /// loop's evidence names the real cause of the withdraw. Never dispatches;
+    /// the credit check is a read off the static template tables and the live
+    /// quest object.
+    /// </summary>
+    internal static string? TalkEnter(QuestLegContext context, QuestLegWake wake)
+    {
+        var quest = context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId);
+        if (quest is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
+            return "quest-not-usable";
+        var fixture = context.Fixture!;
+        return TalkCredited(context.QuestId, quest, fixture)
+            ? "objective-credited"
+            : null;
+    }
+
+    /// <summary>
+    /// The talk leg's settled-halt memory: a Stop already landed for this npc at
+    /// (nearly) these poses. Read-only over the shared hold memory — the same
+    /// discipline the gather/interact legs hold, so a settled actor yields its
+    /// wake to the Talk proposal instead of re-issuing Stop forever.
+    /// </summary>
+    private static bool TalkHoldConfirmed(IGameplayActor actor, uint npcObjId, Vector3 actorPos, Vector3 npcPos)
+    {
+        lock (PursuitSync)
+        {
+            return LastStopHold.TryGetValue(actor.ActorId, out var hold)
+                   && hold.TargetObjId == npcObjId
+                   && Vector3.Distance(hold.ActorPos, actorPos) <= 0.5f
+                   && Vector3.Distance(hold.TargetPos, npcPos) <= 0.5f;
+        }
+    }
+
+    /// <summary>
+    /// The npc the talk objective names, resolved from the wake's OWN perception
+    /// snapshot only — never a world scan. A single-npc talk matches the act's
+    /// npc template exactly; a group talk matches any perceived npc whose
+    /// template passes the engine's own group membership test
+    /// (<c>QuestManager.CheckGroupNpc</c> — the same predicate
+    /// <c>QuestActObjTalkNpcGroup.OnTalkNpcGroupMade</c> and
+    /// <c>IGameplayActor.Talk</c> gate on, so the leg can never select an npc
+    /// the engine would refuse to credit). Nearest-first with an ObjId
+    /// tiebreak (the deterministic-before-any-cut ordering the selector uses).
+    /// Returns 0 when nothing perceived matches; the caller withdraws by name.
+    /// </summary>
+    private static uint ResolveTalkNpc(IGameplayActor actor, QuestFixtureRow fixture, BotObservedContext? observation)
+    {
+        var character = actor.Character;
+        var world = character?.ParentWorld;
+        if (world == null || observation == null)
+            return 0;
+
+        var actorPos = character!.Transform.World.Position;
+        var bestObjId = 0u;
+        var bestDistance = double.MaxValue;
+        foreach (var objId in observation.NearbyNpcObjIds)
+        {
+            var npc = world.GetNpc(objId);
+            if (npc == null || !TalkTargetMatches(fixture, npc.TemplateId))
+                continue;
+            var distance = MathUtil.CalculateDistance(actorPos, npc.Transform.World.Position, false);
+            if (distance < bestDistance || (distance == bestDistance && objId < bestObjId))
+            {
+                bestObjId = objId;
+                bestDistance = distance;
+            }
+        }
+        return bestObjId;
+    }
+
+    /// <summary>
+    /// Whether an npc template is one this quest's talk objective credits: the
+    /// single-npc act matches its own npc template, the group act matches any
+    /// template the engine's own group membership test accepts. An objective
+    /// that names neither matches nothing — the director's source gate refuses
+    /// such a plan before this leg ever runs.
+    /// </summary>
+    private static bool TalkTargetMatches(QuestFixtureRow fixture, uint npcTemplateId)
+        => fixture.TalkNpcTemplate != 0
+            ? npcTemplateId == fixture.TalkNpcTemplate
+            : fixture.TalkNpcGroup != 0 && QuestManager.Instance.CheckGroupNpc(fixture.TalkNpcGroup, npcTemplateId);
+
+    /// <summary>
+    /// Talk-objective leg: hold the conversation with the npc the objective
+    /// names, through the real <c>Talk</c> contract — the same registry-green
+    /// verb (FROZEN G2) the return leg's dialogue fallback rides, and the exact
+    /// request that fires the <c>CSQuestTalkMadePacket</c> whose
+    /// <c>QuestManager.DoTalkMadeEvents</c> raises the objective's own
+    /// <c>OnTalkMade</c> / <c>OnTalkNpcGroupMade</c> from. Per wake: the target
+    /// is resolved from the wake's own perception snapshot (never a world scan);
+    /// outside the 25 m Talk engine gate → Move (drift-gated retrack only after
+    /// &gt; <see cref="PursuitRetrackDriftM"/> of target motion since the last
+    /// issue); inside but unsettled → Stop (audited halt); settled → Talk.
+    /// Credit is the engine's own objective counter (never a world re-scan, never
+    /// a synthetic credit). Never advances, never turns in — those legs stay
+    /// separate competitors.
+    /// </summary>
+    internal static BotDecisionProposal? TalkEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+    {
+        var actor = context.Actor;
+        var opts = context.Options;
+        var fixture = context.Fixture!;
+        var questId = context.QuestId;
+        static string M(double value)
+            => double.IsNaN(value) ? "NA" : value.ToString("F1", CultureInfo.InvariantCulture);
+
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        if (quest == null)
+        {
+            diag = $"validate=quest-not-active:npc={fixture.TalkNpcTemplate}:group={fixture.TalkNpcGroup}:act={fixture.TalkActId}:target=-:rangeM=NA:dispatch=withdrawn:reason=quest-not-active";
+            return null;
+        }
+
+        var selected = ResolveTalkNpc(actor, fixture, context.Observation);
+        var npc = selected == 0 ? null : actor.Character.ParentWorld?.GetNpc(selected);
+        if (npc == null)
+        {
+            diag = $"validate=no-target:npc={fixture.TalkNpcTemplate}:group={fixture.TalkNpcGroup}:act={fixture.TalkActId}:target=-:rangeM=NA:dispatch=withdrawn:reason=no-target";
+            return null;
+        }
+        // The objId is re-read every wake from the snapshot; a recycled npc (an
+        // objId that came back carrying a different template) is refused by name
+        // rather than talked to, exactly as the gather/interact legs refuse a
+        // recycled source.
+        if (!TalkTargetMatches(fixture, npc.TemplateId))
+        {
+            diag = $"validate=FAIL-target-recycled:npc={fixture.TalkNpcTemplate}:group={fixture.TalkNpcGroup}:act={fixture.TalkActId}:target={selected}:template={npc.TemplateId}:rangeM=NA:dispatch=withdrawn:reason=target-recycled";
+            return null;
+        }
+
+        var actorPos = actor.Character.Transform.World.Position;
+        var npcPos = npc.Transform.World.Position;
+        var dist = MathUtil.CalculateDistance(actorPos, npcPos, false);
+        var prefix = $"validate=ok:npc={fixture.TalkNpcTemplate}:group={fixture.TalkNpcGroup}:act={fixture.TalkActId}:target={selected}:rangeM={M(dist)}";
+
+        // NO APPROACH BRANCH, BY DESIGN. The Talk engine gate and the
+        // perception window are the SAME radius: the gate is
+        // GameplayActor.MaxInteractRange (25 m) and ResolveTalkNpc selects only
+        // from observation.NearbyNpcObjIds, which GameplayActor.Observe reads
+        // as WorldManager.GetAround<Npc>(Character, 25f). So every target this
+        // leg can resolve is by construction already inside the gate, and an
+        // out-of-range branch here would be unreachable — you cannot approach a
+        // target you cannot perceive. Widening the approach radius would not fix
+        // that either; it would only hide the fact until target resolution was
+        // re-plumbed off the spawner table, which is a separate change and not
+        // this leg's business. ARRIVAL IS THE TRAVEL RESOLVER'S JOB — see
+        // ResolveQuestTravelTarget / ResolveQuestObjectiveSource, which already
+        // walk to spawners. Do not re-add a Move leg here without first changing
+        // how the leg finds its target.
+        if (dist > TalkRadiusM)
+        {
+            // Defensive only: unreachable while the two radii stay equal. A
+            // guard rather than a branch, so a future divergence refuses by name
+            // instead of dispatching a conversation the actor would reject.
+            diag = $"{prefix}:dispatch=withdrawn:reason=out-of-gate";
+            return null;
+        }
+        if (!TalkHoldConfirmed(actor, selected, actorPos, npcPos))
+        {
+            diag = $"{prefix}:dispatch=stop:reason=in-range";
+            return new BotDecisionProposal(
+                goal: TalkGoal,
+                action: ActorActionType.Stop,
+                targetId: selected,
+                expectedPostcondition: new BotProposalPostcondition(
+                    $"holding at {M(dist)}m off quest {questId} npc {selected} (stop-before-talk)",
+                    _ => true),
+                idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:talk-stop:{questId}:{selected}",
+                timeout: TimeSpan.FromSeconds(30),
+                rationale: $"quest {questId} talk: npc {npc.TemplateId} ({selected}) at {M(dist)}m flat (inside {TalkRadiusM:F1}m gate) — hold, no talk yet",
+                policyVersion: opts.PolicyVersion,
+                priority: opts.ObjectiveTalkPriority,
+                tieBreakKey: $"talk:{questId}:{selected:D10}",
+                hardPreconditions:
+                [
+                    new BotProposalPrecondition($"quest-{questId}-relevant",
+                        observed => observed.ActiveQuestIds.Contains(questId)),
+                    SurvivalVetoClear(actor)
+                ]);
+        }
+
+        diag = $"{prefix}:dispatch=talk:reason=settled";
+        return new BotDecisionProposal(
+            goal: TalkGoal,
+            action: ActorActionType.Talk,
+            targetId: selected,
+            expectedPostcondition: new BotProposalPostcondition(
+                $"quest {questId} talk objective credited (npc {selected})",
+                _ => true),
+            idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:talk-verb:{questId}:{selected}",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: $"quest {questId} talk: npc {npc.TemplateId} ({selected}) at {M(dist)}m flat (inside {TalkRadiusM:F1}m gate), settled — Talk",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.ObjectiveTalkPriority,
+            tieBreakKey: $"talk:{questId}:{selected:D10}",
+            hardPreconditions:
+            [
+                new BotProposalPrecondition($"quest-{questId}-relevant",
+                    observed => observed.ActiveQuestIds.Contains(questId)),
+                SurvivalVetoClear(actor)
+            ]);
+    }
+
+    /// <summary>
     /// Advance leg entry gate: the step machine has work only for an active,
     /// non-Ready quest (a Ready quest's only legal work is turn-in). The gate
     /// owns this reason, so the loop's evidence names the real cause of the
@@ -1798,14 +2311,35 @@ public static class QuestBehavior
     /// withdraw fires only when a known spawner sits outside perception range,
     /// never on credited objectives, unknown spawners, or sources already in
     /// range. The gate owns this reason too.
+    ///
+    /// Give-up arm: a quest whose objective slice has resolved NO target for
+    /// <see cref="QuestDecisionScenario.QuestOptions.GiveUpAfterUnresolvedWakes"/>
+    /// consecutive wakes is one this world cannot serve, so the advance leg stops
+    /// re-issuing the same no-op AdvanceQuest on every remaining wake — the
+    /// observed stall was 36 543 landed AdvanceQuest requests for quest 251,
+    /// byte-identical apart from cycle_id, step and status unchanged. The count is
+    /// the SAME per-(actor, quest) streak the funnel already increments and gives
+    /// up at, read through <see cref="TryGetGiveUpStreak"/>: no second counter,
+    /// no second threshold, no backoff. A threshold of 0 disables the arm, exactly
+    /// as it disables the give-up verdict itself. The streak's own NAMED reason
+    /// stays where the funnel already publishes it (the give-up diag and the run
+    /// result's GiveUps); this reason carries the wake count, so the DECIDE
+    /// bracket stays short. Resolution clears the streak, so the arm is
+    /// recoverable, never permanent.
     /// </summary>
     internal static string? AdvanceEnter(QuestLegContext context, QuestLegWake wake)
     {
         if (context.Actor.Character.Quests?.ActiveQuests.GetValueOrDefault(context.QuestId) is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
             return "quest-not-advanceable";
-        return HasUncreditedSourceOutsidePerception(context, context.Fixture)
-            ? "steady-progress-uncredited-source"
-            : null;
+        if (HasUncreditedSourceOutsidePerception(context, context.Fixture))
+            return "steady-progress-uncredited-source";
+        var threshold = context.Options.GiveUpAfterUnresolvedWakes;
+        if (threshold > 0
+            && TryGetGiveUpStreak(context.Actor.ActorId, context.QuestId, out var streak)
+            && streak is { } counted
+            && counted.Wakes >= threshold)
+            return $"give-up-threshold (funnel unresolved {counted.Wakes} wakes)";
+        return null;
     }
 
     /// <summary>
@@ -2260,6 +2794,9 @@ public static class QuestBehavior
         }
         if (selected == 0 || !funnel.Relevance)
         {
+            // No selection, no fight: any streak for this actor belongs to a target
+            // the funnel no longer serves, so it must not survive onto the next one.
+            ClearCombatStallActor(actor.ActorId);
             // G7b (observe-only): the funnel drops dead candidates, so the
             // post-death wake withdraws here — re-resolve ONLY the quest-pinned
             // objId (never a scan) and name the corpse with its probe.
@@ -2267,7 +2804,7 @@ public static class QuestBehavior
             // over, so a banked verdict must not outlive it and a LATER prey must
             // not inherit its repath budget (the return leg's own rule).
             TravelLegDispatch.EndJourney(actor, TravelLegDispatch.PursuitMoveOwner);
-            var corpseFrag = ObservePinnedCorpse(actor, opts, funnel);
+            var corpseFrag = ObservePinnedCorpse(actor, opts, funnel, context.Observation);
             diag = $"validate={(selected == 0 ? "no-selection" : "not-relevant")}:rangeM=NA:dispatch=withdrawn:reason=" +
                 (selected == 0 ? "no-selection" : "not-relevant") + corpseFrag;
             return null;
@@ -2293,18 +2830,36 @@ public static class QuestBehavior
             invalidReason = "";
         if (invalidReason != "")
         {
+            // The stall streak keys on the LIVE target identity: any wake the pinned target
+            // resolves lost/dead/illegal ends the fight, so the streak must end with it —
+            // otherwise the next target would inherit wakes it never held.
+            ClearCombatStallActor(actor.ActorId);
             // G7b (observe-only): the pinned-target dead transition names the
             // corpse with its read-only probe (all context known here: funnel
             // quest/objective, pinned objId/template/dead-state). A lost
             // target re-resolves ONLY the quest-pinned objId (never a scan).
             var corpseFrag = invalidReason == "target-dead" && npc != null
                 ? NoteDeadSelection(actor, opts, funnel, npc)
-                : ObservePinnedCorpse(actor, opts, funnel);
+                : ObservePinnedCorpse(actor, opts, funnel, context.Observation);
             diag = $"validate=FAIL-{invalidReason}:rangeM=NA:dispatch=withdrawn:reason={invalidReason}{corpseFrag}";
             return null;
         }
         npcPos = npc!.Transform.World.Position;
-        var dist = MathUtil.CalculateDistance(actorPos!.Value, npcPos, false);
+        // THE AUTHORITATIVE METRIC. `MathUtil.CalculateDistance(pos, pos, false)` is a
+        // 2-D XZ reading with no radius subtraction, and it is the metric the ENGINE
+        // refuses casts against is NOT taken on: `Skill.Use` judges the same pair with
+        // `unit.GetDistanceTo(target, true)` — 3-D, less the target's model radius
+        // (`BaseUnit.cs:229`) and the caster's own (`:232`). Comparing a 2-D band
+        // against a 3-D-minus-radii gate makes the band systematically OPTIMISTIC by
+        // the two radii plus the elevation drop, so an actor is told it is inside its
+        // own band — and stands its closing leg down — while the engine measures it out
+        // of range of every verb it has.
+        //
+        // So the band and the admission gate read the ENGINE'S OWN number, through the
+        // very accessor the engine calls. Same method, same `includeZAxis: true`, same
+        // radius arithmetic, same float rounding — there is no second metric left to
+        // disagree, and no radius arithmetic reimplemented here.
+        var dist = character!.GetDistanceTo(npc, true);
 
         // ------------------------------------------------------- TRAVEL DECISION
         // What this leg dispatched (its own reading of its own leg — the brain never
@@ -2400,6 +2955,65 @@ public static class QuestBehavior
             diag = $"validate=ok:rangeM={M(dist)}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
             return null;
         }
+
+        // THE IN-BAND YIELD. Closing is the work of a role that is not yet
+        // standing where it can attack. Once the actor IS inside its own combat
+        // band, re-issuing a Move costs this wake the one thing it was for: the
+        // combat leg (priority 23) below has already consulted the brain at this
+        // exact distance and been handed a verb that reaches, so the closing leg
+        // stands down and the attack dispatches instead.
+        //
+        // This is the Move branch's twin of the Stop branch's
+        // <see cref="CombatBrainEngagement.ShouldYieldPursuit"/> yield above —
+        // same seam, same vocabulary, one settled and one closing arm. It cannot
+        // be read from the published engagement, because that fact is written
+        // only when a proposal WINS selection and the pursuit leg runs first, so
+        // it is read from the ONE band the admission radius above already reads
+        // (no second scan, no fitted constant, no role-specific branch).
+        //
+        // The journey ends with the arm that withdraws: the closing leg's own
+        // boundary, so a commitment to walk toward a prey this actor no longer
+        // needs to walk toward cannot outlive the wake.
+        if (CombatOwnsInsideBand(character, dist))
+        {
+            // NO-PROGRESS STALL TRIP. The yield above is open-ended: when the live
+            // AutoAttack loop deals no damage (refused at the range edge, mob regen
+            // outpaces DPS), both legs yield null every wake forever. After
+            // CombatStallWakes consecutive hold-wakes with no HP decrease, this leg
+            // stops yielding and closes to PursuitStopRadiusM contact — where the
+            // melee auto-attack verb always reaches — instead of holding at range.
+            // Chosen over a combat-side Stop+restart: one re-dispatch path (the
+            // existing Move below), no new verb, no loop-lifecycle meddling, and
+            // the contact pose is the same one melee roles already fight from.
+            // Fail-closed: unreadable HP (npc null here is impossible — validated
+            // above — but Hp is still read live) resets inside the counter.
+            if (CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out var stallWakes))
+            {
+                diag = $"validate=ok:rangeM={M(dist)}:dispatch=move:reason=stall-close-in(stall={stallWakes}wakes_hp={npc.Hp}){travelFrag}";
+                return new BotDecisionProposal(
+                    goal: PursuitGoal,
+                    action: ActorActionType.Move,
+                    targetId: selected,
+                    expectedPostcondition: new BotProposalPostcondition(
+                        $"pursuit leg toward quest {fixture.QuestId} target {selected} dispatched",
+                        _ => true),
+                    idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:pursuit-stall:{fixture.QuestId}:{selected}",
+                    timeout: TimeSpan.FromSeconds(30),
+                    rationale: $"quest {fixture.QuestId} pursuit: live {fixture.PreyTemplate} {selected} at {M(dist)}m with no HP progress for {stallWakes} wakes — closing to contact",
+                    policyVersion: opts.PolicyVersion,
+                    priority: opts.ObjectivePursuitPriority,
+                    tieBreakKey: $"pursuit:{fixture.QuestId}:{selected:D10}",
+                    payload: payload,
+                    hardPreconditions:
+                    [
+                        new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
+                            observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+                    ]);
+            }
+            TravelLegDispatch.EndJourney(actor, TravelLegDispatch.PursuitMoveOwner);
+            diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=inside-combat-band{travelFrag}";
+            return null;
+        }
         diag = $"validate=ok:rangeM={M(dist)}:dispatch=move:reason={(liveMove ? "retrack" : driftText)}{travelFrag}";
         return new BotDecisionProposal(
             goal: PursuitGoal,
@@ -2421,10 +3035,136 @@ public static class QuestBehavior
                     observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
             ]);
     }
+
+    /// <summary>
+    /// THE COMBAT BRAIN'S ADMISSION RADIUS: the distance from which this actor's
+    /// combat brain is consulted at all.
+    ///
+    /// It is the actor's OWN band ceiling (<see cref="CombatBrain.RoleBand"/> read
+    /// through the engine's own <see cref="CombatDecisionTree.InferRole"/>), floored
+    /// at <see cref="PursuitStopRadiusM"/>. It is deliberately NOT the pursuit stop
+    /// radius reused as a combat gate: a flat, role-blind admission radius is what
+    /// left the brain permanently inside a ranged role's weapon FLOOR, where no
+    /// ranged verb exists, so CloseRange/Sustain could never run and the only
+    /// reachable verdict was BackOff. Derived from the band, the brain is consulted
+    /// from the distance where its own arms are legal.
+    ///
+    /// A melee role keeps the stop radius and gains only its own reach
+    /// (max(3.0, 3.5) = 3.5 m, and with an unarmed rig the engine's own fist
+    /// reach of 3.0 m), so it still closes to contact — and because the
+    /// pursuit Stop is emitted for everything at or inside 3.0 m at the HIGHER
+    /// priority, no melee wake changes owner.
+    ///
+    /// The ceiling is the band BOUNDED BY THE ACTOR'S REAL REACH (see
+    /// <see cref="AutoAttackReachM"/>). An archer holding a 20 m bow is
+    /// admitted to 20 m, not to the 22 m its role band would allow: past its own
+    /// reach there is no verb the engine will accept, so admitting the actor
+    /// there strands it between a closing leg that has stood down and an attack
+    /// the engine refuses.
+    ///
+    /// This decides only whether the brain is ASKED; the engine's own range refusal
+    /// (<c>Skill.Use</c> TooClose/TooFar) still owns legality at dispatch.
+    /// </summary>
+    internal static float CombatAdmissionRadiusM(Character? character)
+    {
+        var (bandMin, bandMax) = CombatBrain.RoleBand(
+            character != null ? CombatDecisionTree.InferRole(character) : CombatRole.Melee);
+
+        // A ceiling the actor's own weapon cannot reach is not a ceiling, it is a
+        // parking spot: the actor is admitted, the closing leg stands down, and
+        // the only verb the brain can name is an attack the engine refuses. So
+        // the band ceiling is bounded by the REACH the engine will enforce for
+        // the auto-attack this role actually fires, read through the engine's own
+        // overwrite rule (never the union in
+        // <see cref="CombatDecisionTree.GetSkillEffectiveRange"/>, which would
+        // widen a 20 m bow back out to the template's 25 m and restore the very
+        // gap this narrows).
+        var reachMax = AutoAttackReachM(character);
+        if (reachMax <= 0f)
+        {
+            // Unreadable skill surface: the role band stands rather than the
+            // actor being admitted nowhere, or everywhere.
+            return MathF.Max(PursuitStopRadiusM, bandMax);
+        }
+
+        // A reach BELOW the role's own floor is not a spacing constraint, it is an
+        // unreachable band: nothing this actor can fire reaches from inside the
+        // interval the role wants, so narrowing the ceiling to it would collapse a
+        // ranged role onto its contact range — telling an unarmed caster to walk to
+        // 3 m, which is the "make every bot melee" failure, not a fix. The band
+        // stays the authority there; the brain's own DesiredBand conflict rule
+        // already decides which of two unattainable bounds yields.
+        var ceiling = reachMax < bandMin ? bandMax : MathF.Min(bandMax, reachMax);
+        return MathF.Max(PursuitStopRadiusM, ceiling);
+    }
+
+    /// <summary>
+    /// THE AUTO-ATTACK'S REAL REACH: the max range the engine will enforce for the
+    /// auto-attack skill this actor would fire, or 0 when that cannot be read.
+    ///
+    /// This is the exact skill <c>GameplayActor.AutoAttack</c> picks, and the exact
+    /// range rule it will be judged by — so the answer is read from the engine's
+    /// own tables through <see cref="CombatDecisionTree.GetSkillEnforcedRange"/>,
+    /// not fitted to any run. The 4.0 m / ranged-weapon branch of the skill choice
+    /// is reproduced here only to answer "which skill fires at a SPACING distance",
+    /// where a role that cannot reach with its weapon falls back to melee.
+    /// </summary>
+    private static float AutoAttackReachM(Character? character)
+    {
+        if (character == null)
+            return 0f;
+
+        // PeekInstance, never Instance: SkillManager is DI-only (no
+        // parameterless ctor), so `Instance` THROWS in a headless rig that never
+        // seeded it. A spacing decision must degrade to "reach unreadable"
+        // (the role band stands), never take the whole wake down with it.
+        var skillManager = Core.Managers.SkillManager.PeekInstance;
+        if (skillManager == null)
+            return 0f;
+
+        var role = CombatDecisionTree.InferRole(character);
+        var hasRangedWeapon = character.Equipment?.GetItemBySlot((int)EquipmentItemSlot.Ranged) != null;
+
+        var skillId = role == CombatRole.RangedPhysical || hasRangedWeapon
+            ? CombatDecisionTree.BasicRangedAutoAttackSkillId
+            : CombatDecisionTree.BasicMeleeAutoAttackSkillId;
+
+        var template = skillManager.GetSkillTemplate(skillId);
+        return template == null ? 0f : CombatDecisionTree.GetSkillEnforcedRange(template, character).MaxRange;
+    }
+
+    /// <summary>
+    /// True while this actor stands INSIDE its own combat band — the interval
+    /// the role wants, below its ceiling — so its brain's own spacing arms
+    /// (<see cref="CombatArm.CloseRange"/> and <see cref="CombatArm.BackOff"/>)
+    /// cannot apply and its next verdict is a verb that acts from here.
+    ///
+    /// It reads the SAME band ceiling <see cref="CombatAdmissionRadiusM"/> reads,
+    /// through the same <see cref="CombatDecisionTree.InferRole"/>, so "the
+    /// distance the brain is consulted from" and "the distance the closing leg
+    /// stands down at" are one number derived from one rule and can never drift
+    /// apart. No second scan, no per-role branch, no fitted constant.
+    ///
+    /// The floor is deliberately NOT part of this test: a role below its own
+    /// floor still needs the closing leg, because a ranged role that cannot
+    /// reach has no verb to fire — which is exactly the state the brain's
+    /// BackOff arm exists to fix, and it fixes it with its own Move.
+    ///
+    /// This decides only whether the CLOSING leg still has work; the engine's
+    /// own range refusal (<c>Skill.Use</c> TooClose/TooFar) still owns legality
+    /// at dispatch.
+    /// </summary>
+    internal static bool CombatOwnsInsideBand(Character? character, float distanceM)
+        => distanceM <= CombatAdmissionRadiusM(character);
+
     /// <summary>
     /// G6 combat proposal (the wired quest only): AutoAttack for the G4-selected
-    /// prey objId at <c>ObjectiveCombatPriority</c> (just below pursuit 24,
-    /// so range-hold always wins while closing or holding). Target
+    /// prey objId at <c>ObjectiveCombatPriority</c>, just below pursuit 24 — so
+    /// the closing leg wins while the actor is still OUTSIDE its band, and the
+    /// attack wins from the moment it stands inside (see
+    /// <see cref="CombatOwnsInsideBand"/>: the pursuit Move arm stands down
+    /// there, so the pair can no longer deadlock a ranged role inside its own
+    /// band). Target
     /// commitment: the funnel's selection is taken as committed — NO second
     /// candidate competition runs here (same-target-no-recompetition); only
     /// the committed unit is revalidated live every wake (ParentWorld
@@ -2454,6 +3194,7 @@ public static class QuestBehavior
         }
         if (selected == 0 || !funnel.Relevance)
         {
+            ClearCombatStallActor(actor.ActorId);
             // G7b (observe-only): post-death funnel withdrawal — re-resolve ONLY
             // the quest-pinned objId (never a scan), name the corpse + probe.
             // The kite's journey boundary: a threat identity the funnel no longer
@@ -2461,7 +3202,7 @@ public static class QuestBehavior
             // threat must not inherit its repath budget (the pursuit leg's own
             // rule, from the same seam).
             CombatTravelDispatch.EndJourney(actor);
-            var corpseFrag = ObservePinnedCorpse(actor, opts, funnel);
+            var corpseFrag = ObservePinnedCorpse(actor, opts, funnel, context.Observation);
             diag = $"validate={(selected == 0 ? "no-selection" : "not-relevant")}:target=-:template=-:alive=NA:visible=NA:hostile=NA:legal=NA:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
             return null;
         }
@@ -2470,11 +3211,12 @@ public static class QuestBehavior
         var npc = character?.ParentWorld?.GetNpc(selected);
         if (character == null || !actorPos.HasValue || character.ParentWorld == null || npc == null)
         {
+            ClearCombatStallActor(actor.ActorId);
             // The threat identity is gone: the journey it armed is over (a fresh
             // resolve next wake arms a clean one) — never a banked verdict or a
             // spent budget carried onto an identity that no longer exists.
             CombatTravelDispatch.EndJourney(actor);
-            var corpseFrag = ObservePinnedCorpse(actor, opts, funnel);
+            var corpseFrag = ObservePinnedCorpse(actor, opts, funnel, context.Observation);
             diag = $"validate=target-lost:target={selected}:template={fixture.PreyTemplate}:alive=NA:visible=NA:hostile=NA:legal=NA:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
             return null;
         }
@@ -2484,6 +3226,7 @@ public static class QuestBehavior
         var visible = character.CanSeeTarget(npc);
         if (!alive)
         {
+            ClearCombatStallActor(actor.ActorId);
             // G7b (observe-only): THE pinned-target dead transition — questId /
             // objective-context (funnel) + target objId / template / dead-state
             // (live npc) all known here; recognition runs on this resolve, no
@@ -2507,11 +3250,22 @@ public static class QuestBehavior
         }
         if (character.IsAutoAttack)
         {
+            // Same streak the pursuit in-band yield feeds (cycle-deduped there): an
+            // already-live loop that deals no damage is the same stall from the
+            // combat side. Counting here lets a wake the pursuit leg never reaches
+            // (Stop branch inside 3 m) still accrue — the trip itself always fires
+            // from pursuit, so there is exactly one re-dispatch path.
+            CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _);
             diag = $"validate=already-live:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false))}:verb=none:hpBefore={npc.Hp}";
             return null;
         }
-        var dist = MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false);
-        if (dist > PursuitStopRadiusM)
+        // THE AUTHORITATIVE METRIC, the same accessor and the same
+        // `includeZAxis: true` the pursuit leg reads and the very one
+        // `Skill.Use` refuses on — so "admitted" and "the engine will let the
+        // cast run" are judged by ONE number instead of two that disagree by
+        // the two model radii and the elevation drop.
+        var dist = character.GetDistanceTo(npc, true);
+        if (dist > CombatAdmissionRadiusM(character))
         {
             diag = $"validate=out-of-range:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(dist)}:verb=none:hpBefore={npc.Hp}";
             return null;
@@ -2536,6 +3290,25 @@ public static class QuestBehavior
             allowSkillCasts: opts.EnableCombatRotation && Core.Managers.SkillManager.Instance != null,
             nowUtc: DateTime.UtcNow));
         var brainDecision = CombatBrainPlanner.Decide(combatBrain);
+
+        // THE LEASH TELEMETRY. `driftM` is the committed target's ANCHOR→TARGET
+        // drift this wake — NOT the actor's contact distance already rendered
+        // above as `distM`, which can read ~2 m while the leash fires — measured
+        // against `leashM`, the budget it is measured by; the edge sits at
+        // `leashM × CombatBrainEngagement.LeashEdgeFraction`, so one line says
+        // whether the leash was just tripped or overshot by a wide margin. It is
+        // a pure read of the wake's OWN already-prepared inputs (`Decide` is a
+        // pass-through of `combatBrain.Inputs`), so it costs no second `Prepare`,
+        // reaches no arm, and cannot move a verdict.
+        //
+        // TWO SAME-NAMED `already-live` GATES reach this leg and must not be
+        // conflated: the pre-brain one near the top of this method
+        // (`character.IsAutoAttack`) returns BEFORE `Prepare`, so it has no
+        // inputs and cannot carry drift; the one below is the brain's own `Hold`
+        // verdict, downstream of `Prepare`, and is the line a repeated leash
+        // disengage actually logs.
+        var leashFrag = $":driftM={M(combatBrain.Inputs.IncumbentLeashDriftM)}"
+                        + $":leashM={M(combatBrain.Inputs.LeashBudgetM)}";
 
         // ------------------------------------------------------- KITE TRAVEL DECISION
         // The brain's own Move arm is this leg's SPACING leg, and the sub-critical
@@ -2564,7 +3337,7 @@ public static class QuestBehavior
         if (brainDecision.Arm is CombatArm.SurvivalVeto or CombatArm.Disengage or CombatArm.CrowdControl)
         {
             diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
-                   $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}";
+                   $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{leashFrag}";
             return null; // a survival/CC/retreat condition owns the wake
         }
 
@@ -2578,8 +3351,11 @@ public static class QuestBehavior
         };
         if (brainVerb == CombatVerb.Hold)
         {
+            // Same streak as the pre-brain gate above (cycle-deduped): the brain's
+            // own Hold is the third name for "loop live, no new dispatch".
+            CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _);
             diag = $"validate=already-live:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
-                   $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}";
+                   $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{leashFrag}";
             return null;
         }
         // The travel chain's own withholds on the spacing arm: a live kite leg that
@@ -2597,7 +3373,7 @@ public static class QuestBehavior
             && kite.Verb is CombatTravelDispatch.KiteLegVerb.Held or CombatTravelDispatch.KiteLegVerb.Withdraw)
         {
             diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
-                   $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{kiteFrag}";
+                   $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{leashFrag}{kiteFrag}";
             return null;
         }
         var verbText = brainVerb == CombatVerb.Cast
@@ -2611,7 +3387,7 @@ public static class QuestBehavior
         // own destination is authoritative); the fallback keeps the brain's own.
         var destination = kite.Destination ?? brainDecision.Destination;
         diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
-               $":distM={M(dist)}:verb={verbText}:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{kiteFrag}";
+               $":distM={M(dist)}:verb={verbText}:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{leashFrag}{kiteFrag}";
         return new BotDecisionProposal(
             goal: CombatGoal,
             action: action,
@@ -2701,7 +3477,18 @@ public static class QuestBehavior
                 PreyTemplateId: fixture.PreyTemplate,
                 MinContainerValueCopper: opts.MinContainerValueCopper,
                 AlreadyLooted: already,
-                LoopLive: character?.IsAutoAttack == true,
+                // LOOP RELEASE is the CORPSE's loop, never the actor's: the kill leg
+                // owns the corpse it is still killing until that kill's own teardown
+                // runs, and a take dispatched inside THAT loop would race it. A live
+                // loop on any other target (the measured shape: the corpse died, then
+                // the actor engaged an unrelated mob) owns no teardown on this corpse
+                // and must never withhold it — so the reading is the one identity
+                // comparison the arm was written about. `candidate` is non-null by
+                // construction: a null pin (no corpse of ours at all) resolves
+                // CorpseObjId 0, and the planner reads that as an unreadable corpse
+                // which the probe arm withholds before this gate is ever consulted.
+                LoopLive: candidate != null && character?.IsAutoAttack == true
+                          && character.CurrentTarget?.ObjId == candidate.ObjId,
                 SafeRadiusM: opts.LootSafeRadiusM,
                 NowUtc: DateTime.UtcNow));
 
@@ -3380,6 +4167,17 @@ public static class QuestBehavior
             ActorActionType.Move when proposal.Goal == InteractGoal => DispatchInteractMove(gameplayActor, proposal),
             ActorActionType.Stop when proposal.Goal == InteractGoal => DispatchInteractStop(gameplayActor, proposal),
             ActorActionType.InteractWith when proposal.Goal == InteractGoal => gameplayActor.InteractWith(proposal.TargetId, proposal.IdempotencyKey),
+            // Talk objective: the quest-owned conversation rides the audited Stop
+            // halt inside the Talk engine gate, then Talk once settled — the
+            // same registry-green verb the return leg's dialogue fallback rides,
+            // on the packet path that raises this objective's own credit event.
+            // NO Move arm by design: the talk gate and the perception window are
+            // the same radius, so the leg only ever resolves an already-in-range
+            // npc (see the NO APPROACH BRANCH record in TalkEmit). Arrival is the
+            // travel resolver's job. Goal-guarded so no other Stop/Talk proposal
+            // can ever route here.
+            ActorActionType.Stop when proposal.Goal == TalkGoal => DispatchTalkStop(gameplayActor, proposal),
+            ActorActionType.Talk when proposal.Goal == TalkGoal => gameplayActor.Talk(proposal.TargetId, proposal.IdempotencyKey),
         };
     }
 
@@ -3779,6 +4577,32 @@ public static class QuestBehavior
         return request;
     }
     /// <summary>
+    /// Talk Stop dispatch: issue the audited Stop halt, then record both poses in
+    /// the shared hold memory so the next wake's talk proposal can confirm the
+    /// hold and yield to Talk (without it, Stop would win every in-range wake and
+    /// the conversation could never start). Shares <c>LastStopHold</c> with the
+    /// other legs — entries are (actor, target) keyed by check, and the talk
+    /// npc objId never equals a prey/reporter/corpse/well target. Never touches
+    /// _move state or queue kinds — public actor verbs only.
+    /// </summary>
+    private static ActorRequest DispatchTalkStop(IGameplayActor gameplayActor, BotDecisionProposal proposal)
+    {
+        var request = gameplayActor.Stop();
+        var character = gameplayActor.Character;
+        var actorPos = character?.Transform.World.Position;
+        var npcPos = character?.ParentWorld?.GetNpc(proposal.TargetId)?.Transform.World.Position;
+        if (actorPos.HasValue && npcPos.HasValue)
+        {
+            lock (PursuitSync)
+            {
+                if (LastStopHold.Count >= 256)
+                    LastStopHold.Clear();
+                LastStopHold[gameplayActor.ActorId] = (proposal.TargetId, actorPos.Value, npcPos.Value);
+            }
+        }
+        return request;
+    }
+    /// <summary>
     /// G7c loot outcome diagnostics (additive, bounded): one Info line when
     /// the loot proposal wins a wake — quest/CycleId/target/template/verb,
     /// the dispatch trace + terminal state + grant (container entries taken)
@@ -3799,24 +4623,73 @@ public static class QuestBehavior
     /// <summary>
     /// G6 combat outcome diagnostics (additive, bounded): one Info line when
     /// the combat proposal wins a wake — quest/CycleId/target/template/verb,
-    /// the dispatch trace + terminal state + detail, and the authoritative
-    /// target HP before (proposal time) → after (post-dispatch) with delta.
-    /// Damage lands on attack-delay ticks after the terminal, so hpAfter
-    /// usually equals hpBefore here; the gate observes the trailing fall on
-    /// later wakes. No behavior input; Info so the lane file target records.
+    /// the dispatch trace + terminal state + detail, and the target HP the
+    /// engine itself observed for this swing.
+    ///
+    /// <b>Why delta is not a dispatch-time HP difference.</b> A swing whose
+    /// skill template carries an effect delay/speed (ranged auto-attack) does
+    /// NOT reduce HP when it is dispatched: the engine schedules the effects
+    /// and the damage lands hundreds of milliseconds later. Re-reading
+    /// <c>npc.Hp</c> at dispatch therefore samples BEFORE the damage exists,
+    /// and rendering that as <c>delta=0</c> is what made a working ranged
+    /// weapon look like it dealt nothing. This line reports what is knowable
+    /// at dispatch time and marks the rest as pending rather than inventing
+    /// a number — the resolved figure arrives on the actor's
+    /// <c>BotCastEffectResolved</c> line for the same trace id.
+    ///
+    /// No behavior input; Info so the lane file target records it. The line
+    /// reports the verb that ACTUALLY dispatched, read off the request the
+    /// engine returned. <c>hpBefore</c> is only observed on the attack arm,
+    /// so the HP fields and the delta are <c>NA</c> for any other verb
+    /// rather than a fabricated <c>0</c>.
     /// </summary>
     private static void LogCombatOutcome(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts, BotDecisionProposal selected, ActorRequest request, int hpBefore, QuestFixtureRow fixture)
     {
         var npc = actor.Character?.ParentWorld?.GetNpc(selected.TargetId);
         var hpAfter = npc?.Hp ?? -1;
-        var delta = hpBefore >= 0 && hpAfter >= 0 ? hpAfter - hpBefore : 0;
+        var hpBeforeText = hpBefore >= 0 ? hpBefore.ToString(CultureInfo.InvariantCulture) : "NA";
+
+        // The engine's own observation for this exact swing. Resolved only
+        // after the bounded window closes; while it is open the damage is
+        // scheduled and NOT yet observable, which is exactly the ranged case.
+        var effect = actor.GetCastEffectObservation(request.TraceId);
+
+        // A swing with NO delay lands inline, so by the time this line runs
+        // the damage is already in npc.Hp and the post-dispatch read IS the
+        // real delta. Prefer that number: reporting "pending" for damage we
+        // can already see would trade a true figure for an unmeasured one.
+        var inlineDelta = hpBefore >= 0 && hpAfter >= 0 && hpBefore - hpAfter > 0
+            ? (hpBefore - hpAfter).ToString(CultureInfo.InvariantCulture)
+            : null;
+
+        string deltaText;
+        string hpAfterText;
+        if (effect.State == CastEffectResolution.Resolved)
+        {
+            deltaText = effect.Describe();
+            hpAfterText = effect.HpAfter?.ToString(CultureInfo.InvariantCulture) ?? "NA";
+        }
+        else if (effect.State == CastEffectResolution.Pending)
+        {
+            // Deferred: the engine scheduled the effects, the target's HP is
+            // still the pre-strike value, and any difference here would be
+            // another source's damage, not this swing's. Say so.
+            deltaText = inlineDelta ?? "pending";
+            hpAfterText = "pending";
+        }
+        else
+        {
+            deltaText = inlineDelta ?? "NA";
+            hpAfterText = hpAfter >= 0 ? hpAfter.ToString(CultureInfo.InvariantCulture) : "NA";
+        }
         var detail = (request.Detail ?? "").Replace(' ', '_');
         SweepDiagLog.Info(
-            "QuestObjectiveCombatDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} target={Target} template={Template} verb=AutoAttack " +
-            "trace={Trace} state={State} detail=[{Detail}] hpBefore={HpBefore} hpAfter={HpAfter} delta={Delta} targetAlive={Alive}",
+            "QuestObjectiveCombatDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} target={Target} template={Template} verb={Verb} " +
+            "trace={Trace} state={State} detail=[{Detail}] hpBefore={HpBefore} hpAfter={HpAfter} delta={Delta} targetAlive={Alive} damage={Damage}",
             opts.CycleId, actor.Character?.Id ?? 0, actor.ActorId, fixture.QuestId, selected.TargetId,
-            npc?.TemplateId ?? 0, request.TraceId, request.State,
-            TruncateSweep(detail, 200), hpBefore, hpAfter, delta, npc != null && npc.Hp > 0);
+            npc?.TemplateId ?? 0, request.Action, request.TraceId, request.State,
+            TruncateSweep(detail, 200), hpBeforeText, hpAfterText, deltaText,
+            npc != null && npc.Hp > 0, effect.State.ToString().ToLowerInvariant());
     }
     /// <summary>
     /// Diagnostic-only one-token summary of a per-target DiscoverQuests call:
