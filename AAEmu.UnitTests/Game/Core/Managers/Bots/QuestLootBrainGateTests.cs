@@ -53,6 +53,7 @@ public class QuestLootBrainGateTests
         QuestBehavior.ClearCorpseMemory();
         QuestBehavior.ClearLootMemory();
         LootLedger.ClearAll();
+        LootBrainPlanner.CohortResolverForTests = null;
     }
 
     /// <summary>
@@ -99,50 +100,182 @@ public class QuestLootBrainGateTests
     }
 
     /// <summary>
-    /// The brain's SAFETY arm withholds a take the frozen funnel would have made:
-    /// a live hostile inside the safe radius holds the corpse undecided (it
-    /// releases when the hostile leaves), and nothing is banked.
+    /// THE FIX, on the live stack: a corpse the actor is ALREADY STANDING ON is
+    /// taken even with live hostiles on the same tile. The take lands and the item
+    /// is granted — the grant the 30-minute run never produced.
     /// </summary>
     [Test]
-    public async Task HostileInsideSafeRadius_HoldsTheTakeAndBanksNothing()
+    public async Task CorpseAtContactRangeWithHostilesOnTheSameTile_TakesTheLoot()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("lootb-safe");
-        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        var (actor, session) = GameplayActorTestRig.CreateActor("lootb-camp");
+        // The corpse spawns ON the actor's tile (0,0,0) — the melee-adjacent shape.
+        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
         Activate251(actor.Character);
         actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
         _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-safe-1" });
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-camp-1" });
+
+        var npc = session.World.GetNpc(npcObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
+        npc.Hp = 0;
+        var bagBefore = GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId);
+
+        // Live hostiles inside the old 15 m safe radius, on the actor's own tile.
+        _ = SpawnHostile(session, actor, 91_701, new Vector3(2, 0, 0));
+        _ = SpawnHostile(session, actor, 91_702, new Vector3(4, 0, 0));
+
+        var taken = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-camp-2" });
+
+        await Assert.That(taken.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(taken.Request?.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId) - bagBefore).IsEqualTo(1);
+        var lootArm = LootArmOf(taken);
+        await Assert.That(lootArm).Contains("arm=Emit");
+        await Assert.That(lootArm).Contains("validate=ok");
+        await Assert.That(LootLedger.Read(actor.ActorId, npcObjId).Disposition)
+            .IsEqualTo(LootDisposition.Take);
+    }
+
+    /// <summary>
+    /// THE FIX: a LIVE, UNRELATED fight must not withhold the take on a corpse
+    /// that died minutes ago. This is the measured kill10 shape verbatim — Abby
+    /// killed boar 44432, then engaged an unrelated live target, and the actor-
+    /// global loop-live guard withheld 44432 on every later wake (the lane read
+    /// <c>validate=loop-live … arm=LoopRelease</c> twice for the same corpse while
+    /// the fight that caused it was on a different objId entirely). The take now
+    /// lands and the grant lands with it.
+    /// </summary>
+    [Test]
+    public async Task LiveUnrelatedFight_DoesNotWithholdTheTakeOnADeadCorpse()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("lootb-unrelated");
+        var here = new Vector3(0, 0, 0);
+        var corpseObjId = SpawnBoar(session, actor, here, here + new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(corpseObjId);
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-unrelated-1" });
+
+        var corpse = session.World.GetNpc(corpseObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(corpse, (ProbeItemTemplateId, 1));
+        corpse.Hp = 0;
+
+        // The actor dropped the corpse as its target and engaged an UNRELATED
+        // live target; the auto-attack loop is live, but on a different objId.
+        var otherObjId = SpawnHostile(session, actor, 91_811, here + new Vector3(3, 0, 0));
+        actor.Character.CurrentTarget = session.World.GetNpc(otherObjId);
+        actor.Character.IsAutoAttack = true;
+        var bagBefore = GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId);
+
+        var taken = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-unrelated-2" });
+
+        await Assert.That(taken.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(taken.Request?.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId) - bagBefore).IsEqualTo(1);
+        var lootArm = LootArmOf(taken);
+        await Assert.That(lootArm).Contains("arm=Emit");
+        await Assert.That(lootArm).DoesNotContain("loop-live");
+        await Assert.That(LootLedger.Read(actor.ActorId, corpseObjId).Disposition)
+            .IsEqualTo(LootDisposition.Take);
+    }
+
+    /// <summary>
+    /// THE HAZARD INVARIANT, pinned by name: while the actor is STILL
+    /// auto-attacking the very corpse it is trying to loot, the withhold must
+    /// still fire. This is the safety property the arm exists for — the kill leg
+    /// owns that corpse until it tears itself down, and a take dispatched inside
+    /// the loop would race that teardown. Scoping the guard to the corpse must
+    /// not weaken it into a no-op.
+    /// </summary>
+    [Test]
+    public async Task AutoAttackingTheCorpseItself_StillWithholdsOnLoopLive()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("lootb-ownloop");
+        var here = new Vector3(0, 0, 0);
+        var corpseObjId = SpawnBoar(session, actor, here, here + new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(corpseObjId);
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-ownloop-1" });
+
+        var corpse = session.World.GetNpc(corpseObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(corpse, (ProbeItemTemplateId, 1));
+        corpse.Hp = 0;
+        var bagBefore = GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId);
+
+        // The target is STILL the corpse itself and the loop is still live — the
+        // exact state the arm was written for.
+        actor.Character.CurrentTarget = corpse;
+        actor.Character.IsAutoAttack = true;
+
+        var held = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-ownloop-2" });
+
+        await Assert.That(held.SelectedAction == ActorActionType.Loot).IsFalse();
+        var lootArm = LootArmOf(held);
+        await Assert.That(lootArm).Contains("validate=loop-live");
+        await Assert.That(lootArm).Contains("arm=LoopRelease");
+        await Assert.That(GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId) - bagBefore).IsEqualTo(0);
+        await Assert.That(LootLedger.Read(actor.ActorId, corpseObjId).Disposition)
+            .IsEqualTo(LootDisposition.Undecided);
+    }
+
+    /// <summary>
+    /// INVARIANT, live: an unreadable wake census still withholds with its OWN
+    /// reason at contact range. Driving the leg with no observation snapshot is
+    /// what the planner reads UNRESOLVED from, so the fix cannot launder an
+    /// unreadable perception into a take.
+    /// </summary>
+    [Test]
+    public async Task UnreadableCensusAtContactRange_HoldsTheTakeWithSafetyUnresolved()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("lootb-failclosed");
+        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(0, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-fc-1" });
 
         var npc = session.World.GetNpc(npcObjId)!;
         GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
         GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
         npc.Hp = 0;
 
-        // A second hostile stands 3 m from the corpse's looter: inside the 15 m
-        // safe radius, so the loot is withheld.
-        var guard = SpawnHostile(session, actor, 91_700, new Vector3(3, 0, 0));
+        // No observation snapshot: the planner's census reads UNRESOLVED.
+        var (resolved, safe, _, corpseDistance) = LootBrainPlanner.ReadSafety(
+            actor.Character, null, LootBrain.DefaultSafeRadiusM, npcObjId);
 
-        var held = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-safe-2" });
+        await Assert.That(resolved).IsFalse();
+        await Assert.That(safe).IsFalse();
 
-        await Assert.That(held.SelectedAction == ActorActionType.Loot).IsFalse();
-        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Loot)).IsFalse();
-        var lootArm = LootArmOf(held);
-        await Assert.That(lootArm).Contains("validate=unsafe");
-        await Assert.That(lootArm).Contains("arm=Safety");
-        await Assert.That(LootLedger.Read(actor.ActorId, npcObjId).Disposition)
-            .IsEqualTo(LootDisposition.Undecided);
-        await Assert.That(session.World.GetNpc(npcObjId)!.LootingContainer.Items.Count).IsEqualTo(1);
-
-        // The hostile leaves (it dies): the safety arm releases on the next wake
-        // by construction — no timer, no state — and the take lands.
-        session.World.GetNpc(guard)!.Hp = 0;
-
-        var released = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-safe-3" });
-
-        await Assert.That(released.SelectedAction).IsEqualTo(ActorActionType.Loot);
-        await Assert.That(session.World.GetNpc(npcObjId)!.LootingContainer.Items.Count).IsEqualTo(0);
+        // And the chain still names SafetyUnresolved for that verdict, in place.
+        var decision = LootBrain.Decide(new LootBrainInputs(
+            ActorObjId: actor.ActorId,
+            CorpseObjId: npcObjId,
+            SurvivalVetoed: false,
+            CorpseState: LootCorpseState.Dead,
+            Ownership: LootOwnership.Self,
+            ContainerReadable: true,
+            ContainerItemCount: 1,
+            ContainerInRange: true,
+            LoopLive: false,
+            AlreadyLooted: false,
+            SafetyResolved: resolved,
+            Safe: safe,
+            NearestHostileDistanceM: float.NaN,
+            CorpseDistanceM: corpseDistance,
+            Worth: LootWorth.Worthwhile,
+            Space: LootSpace.Room,
+            PriorDisposition: LootDisposition.Undecided,
+            PriorReason: LootReason.None,
+            NowUtc: DateTime.UtcNow));
+        await Assert.That(decision.Arm).IsEqualTo(LootArm.Safety);
+        await Assert.That(decision.Reason).IsEqualTo(LootReason.SafetyUnresolved);
     }
 
     /// <summary>
@@ -237,6 +370,61 @@ public class QuestLootBrainGateTests
     }
 
     /// <summary>
+    /// A CORPSE THAT WAS LOOTED IS NEVER RE-DECIDED AS AN EMPTY CONTAINER.
+    ///
+    /// This is the live shape of the defect the fix removes: the take EMPTIES the
+    /// container, and the very next wake reads that emptiness through the probe arm
+    /// — which precedes loot-once in the chain order — so the corpse withheld as an
+    /// undecided <c>not-lootable</c>, the terminal take was masked by the tally it
+    /// caused, and the same corpse was re-decided on every later wake forever.
+    ///
+    /// The observable contract: after the take, every later wake reports the
+    /// loot-once terminal (<c>already-looted</c>), never <c>not-lootable</c>, and
+    /// dispatches no second Loot however many wakes pass.
+    /// </summary>
+    [Test]
+    public async Task LootedCorpse_NeverReadsNotLootableOnALaterWake()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("lootb-reloot");
+        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-reloot-1" });
+
+        var npc = session.World.GetNpc(npcObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
+        npc.Hp = 0;
+
+        var taken = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-reloot-2" });
+        await Assert.That(taken.SelectedAction).IsEqualTo(ActorActionType.Loot);
+
+        // The take really emptied the container: this is the state the probe reads.
+        await Assert.That(npc.LootingContainer.Items.Count).IsEqualTo(0);
+        var lootsBefore = actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot);
+
+        // Three further wakes on the same corpse: the terminal fact must hold on
+        // every one of them rather than decaying back into a probe withhold.
+        for (var wake = 3; wake <= 5; wake++)
+        {
+            var later = QuestDecisionScenario.Run(actor, (_, _) => [],
+                new QuestDecisionScenario.QuestOptions { CycleId = $"lootb-reloot-{wake}" });
+
+            var lootArm = LootArmOf(later);
+            await Assert.That(later.SelectedAction == ActorActionType.Loot).IsFalse();
+            await Assert.That(lootArm).Contains("validate=already-looted");
+            await Assert.That(lootArm).DoesNotContain("validate=not-lootable");
+            await Assert.That(lootArm).Contains("arm=LootOnce");
+        }
+
+        // No wake dispatched a second take of a corpse already emptied.
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(lootsBefore);
+        await Assert.That(LootLedger.Read(actor.ActorId, npcObjId).Disposition).IsEqualTo(LootDisposition.Take);
+    }
+
+    /// <summary>
     /// The worth arm never fabricates a skip from an unreadable container: an
     /// entry whose item could not be resolved reads WORTH unresolved and the take
     /// proceeds, exactly as the frozen probe did.
@@ -272,7 +460,77 @@ public class QuestLootBrainGateTests
 
         await Assert.That(prepared.Inputs.Worth).IsEqualTo(LootWorth.Unresolved);
         await Assert.That(prepared.Decision.Arm).IsEqualTo(LootArm.Emit);
+    }
+
+    /// <summary>
+    /// THE FIX, live: a corpse tagged by a fellow managed bot (no engine party,
+    /// so TagTeam is 0) resolves Party — the take proceeds. A corpse tagged by
+    /// a stranger still withholds as foreign-claim. The cohort resolver names
+    /// the bot/stranger split without a login DB.
+    /// </summary>
+    [Test]
+    public async Task FellowBotTagger_ResolvesPartyAndTakesWhileStrangerWithholds()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("lootb-cohort");
+        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "lootb-cohort-1" });
+
+        var npc = session.World.GetNpc(npcObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
+        npc.Hp = 0;
+
+        // A second rig actor is the tagger: AddTagger records it as the claim.
+        var (taggerActor, _) = GameplayActorTestRig.CreateActor("lootb-tagger");
+        npc.CharacterTagging.AddTagger(taggerActor.Character, 10);
+        await Assert.That(npc.CharacterTagging.Tagger).IsNotNull();
+
+        // Fellow managed bot (both accounts are cohort bots): Party → take.
+        const uint botAccount = 7001;
+        const uint strangerAccount = 7002;
+        actor.Character.AccountId = botAccount;
+        taggerActor.Character.AccountId = botAccount;
+        LootBrainPlanner.CohortResolverForTests = accountId => accountId == botAccount;
+
+        var prepared = LootBrainPlanner.Prepare(
+            actor, BotObservedContext.Capture(actor),
+            new LootBrainPlanner.Request(
+                CorpseObjId: npcObjId,
+                PreyTemplateId: Boar3475,
+                MinContainerValueCopper: 0,
+                AlreadyLooted: false,
+                LoopLive: false,
+                SafeRadiusM: LootBrain.DefaultSafeRadiusM,
+                NowUtc: DateTime.UtcNow));
+
+        await Assert.That(prepared.Evidence.TaggerSharesActorTeam).IsTrue();
+        await Assert.That(prepared.Inputs.Ownership).IsEqualTo(LootOwnership.Party);
+        await Assert.That(LootBrain.MayLoot(prepared.Inputs.Ownership)).IsTrue();
+        await Assert.That(prepared.Decision.Arm).IsEqualTo(LootArm.Emit);
         await Assert.That(prepared.Decision.Verb).IsEqualTo(LootVerb.Loot);
+
+        // Stranger tagger (actor is a bot, tagger is not): Foreign → withhold.
+        taggerActor.Character.AccountId = strangerAccount;
+        var foreign = LootBrainPlanner.Prepare(
+            actor, BotObservedContext.Capture(actor),
+            new LootBrainPlanner.Request(
+                CorpseObjId: npcObjId,
+                PreyTemplateId: Boar3475,
+                MinContainerValueCopper: 0,
+                AlreadyLooted: false,
+                LoopLive: false,
+                SafeRadiusM: LootBrain.DefaultSafeRadiusM,
+                NowUtc: DateTime.UtcNow));
+
+        await Assert.That(foreign.Evidence.TaggerSharesActorTeam).IsFalse();
+        await Assert.That(foreign.Inputs.Ownership).IsEqualTo(LootOwnership.Foreign);
+        await Assert.That(LootBrain.MayLoot(foreign.Inputs.Ownership)).IsFalse();
+        await Assert.That(foreign.Decision.Arm).IsEqualTo(LootArm.Ownership);
+        await Assert.That(foreign.Decision.Reason).IsEqualTo(LootReason.OwnershipForeign);
+        LootBrainPlanner.CohortResolverForTests = null;
     }
 
     /// <summary>

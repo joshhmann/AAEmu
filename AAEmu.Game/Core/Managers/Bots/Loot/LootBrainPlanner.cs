@@ -1,5 +1,6 @@
 #nullable enable
 
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
@@ -122,7 +123,8 @@ public static class LootBrainPlanner
         var evidence = ReadClaimEvidence(character, corpse, actor.ActorId);
 
         // ------------------------------------------------------------ safety
-        var (safetyResolved, safe, nearestHostile) = ReadSafety(character, observation, request.SafeRadiusM);
+        var (safetyResolved, safe, nearestHostile, corpseDistance) =
+            ReadSafety(character, observation, request.SafeRadiusM, corpseObjId);
 
         // ------------------------------------------------------------- space
         var space = ReadSpace(character);
@@ -143,6 +145,7 @@ public static class LootBrainPlanner
             AlreadyLooted: request.AlreadyLooted,
             SafetyResolved: safetyResolved,
             Safe: safe,
+            CorpseDistanceM: corpseDistance,
             NearestHostileDistanceM: nearestHostile,
             Worth: worth,
             Space: space,
@@ -237,6 +240,26 @@ public static class LootBrainPlanner
     /// of the engine's own memory, and an unreadable surface leaves the evidence
     /// empty (which the classifier resolves through the corpse's provenance).
     /// </summary>
+
+    /// <summary>
+    /// Cohort-membership resolver seam (tests only): when set, the fellow-bot
+    /// fallback reads this instead of the provisioning service's DB lookup, so
+    /// unit tests can name bot/bot and bot/stranger pairs without a login DB.
+    /// Null (production default) means the live service answers.
+    /// </summary>
+    internal static Func<uint, bool>? CohortResolverForTests { get; set; }
+
+    private static bool IsCohortBot(uint accountId)
+    {
+        var resolver = CohortResolverForTests;
+        if (resolver != null)
+        {
+            try { return resolver(accountId); }
+            catch { return false; }
+        }
+        return BotAccountProvisioningService.Instance.IsBotAccount(accountId);
+    }
+
     private static LootClaimEvidence ReadClaimEvidence(Character? character, Npc? corpse, uint actorObjId)
     {
         if (character == null || corpse == null)
@@ -278,6 +301,25 @@ public static class LootBrainPlanner
         var taggerSharesTeam = false;
         if (tagger != null && actorTeam != null)
             taggerSharesTeam = actorTeam.Members.Any(m => m?.Character != null && m.Character.Id == tagger.Id);
+        if (!taggerSharesTeam && tagger != null && tagger.Id != character.Id)
+        {
+            // No engine party links the actor to the tagger (the kill21 shape:
+            // four cooperating bots, never partied, so TagTeam stays 0 and the
+            // claim reads Foreign). A fellow MANAGED bot is still the actor's
+            // own cohort, not a stranger: both characters run on bot accounts
+            // (BotAccountProvisioningService.IsBotAccount over AccountId), so
+            // the claim resolves Party — the same verdict a real party yields
+            // through the branch above. Fail-closed: any lookup failure leaves
+            // the evidence untouched (Foreign), never a fabricated Party.
+            try
+            {
+                taggerSharesTeam = IsCohortBot(character.AccountId) && IsCohortBot(tagger.AccountId);
+            }
+            catch
+            {
+                taggerSharesTeam = false;
+            }
+        }
 
         var contributorsReadable = false;
         var contributorCount = 0;
@@ -299,6 +341,16 @@ public static class LootBrainPlanner
                 }
                 if (actorTeam != null && actorTeam.Members.Any(m => m?.Character != null && m.Character.Id == contributor.Id))
                     continue;
+                // Same cohort rule as the tagger branch: a fellow managed bot
+                // is not a rival claim even with no engine party in place.
+                try
+                {
+                    if (IsCohortBot(character.AccountId) && IsCohortBot(contributor.AccountId))
+                        continue;
+                }
+                catch
+                {
+                }
                 foreignContributors++;
             }
         }
@@ -322,24 +374,58 @@ public static class LootBrainPlanner
     }
 
     /// <summary>
-    /// The safety census: is a live hostile inside <paramref name="safeRadiusM"/>
-    /// of the actor? Candidates come from the wake's OWN
-    /// <c>ObservedContext.NearbyNpcObjIds</c> (never a world scan), each resolved
-    /// live and checked with the engine's own hostility rule
+    /// The safety census: must the actor STEP TOWARD the corpse through hostiles?
+    /// The question the arm exists for is not "is a hostile near" but "does taking
+    /// this corpse require walking into a fight" — taking a corpse is a zero-step,
+    /// in-place verb (the take's own gate is <c>GameplayActor.Loot</c>'s own
+    /// <c>LootingContainer.MaxLootingRange</c> check), so an actor already within
+    /// reach of the corpse is never "walking into a fight".
+    /// <para>
+    /// The census therefore measures the CORPSE-RELATIVE approach corridor: the
+    /// nearest hostile to the CORPSE, not to the actor. Candidates still come from
+    /// the wake's OWN <c>ObservedContext.NearbyNpcObjIds</c> (never a world scan),
+    /// each resolved live and checked with the combat layer's own hostility rule
     /// (<see cref="CombatDecisionTree.IsHostileTarget"/>).
-    ///
-    /// Fail-closed: no observation at all reads UNRESOLVED (which withholds), and
-    /// a candidate the world cannot resolve is counted as UNRESOLVED too — the
-    /// census is a bounded perception, so an unreadable row is not proof of
-    /// safety. An empty resolved census is resolved-and-safe.
+    /// </para>
+    /// <para>
+    /// Fail-closed, unchanged: no observation at all reads UNRESOLVED (which
+    /// withholds), and a candidate the world cannot resolve is counted as
+    /// UNRESOLVED too — the census is a bounded perception, so an unreadable row
+    /// is not proof of safety. An empty resolved census is resolved-and-safe.
+    /// </para>
     /// </summary>
-    private static (bool Resolved, bool Safe, float NearestHostileM) ReadSafety(
-        Character? character, BotObservedContext? observation, float safeRadiusM)
+    internal static (bool Resolved, bool Safe, float NearestHostileM, float CorpseDistanceM) ReadSafety(
+        Character? character, BotObservedContext? observation, float safeRadiusM,
+        uint corpseObjId)
     {
         if (character == null || observation == null)
-            return (false, false, float.NaN);
+            return (false, false, float.NaN, float.NaN);
 
         var selfPosition = character.Transform.World.Position;
+
+        // How far the actor still has to move for this take. A Loot verb is an
+        // in-place action — the take's own gate is `GameplayActor.Loot`'s
+        // `LootingContainer.MaxLootingRange` check, which is a REACH band, not a
+        // contact band — so this is the distance the safety question is about:
+        // zero means the corpse is already under the actor and there is no
+        // approach left to refuse.
+        // The corridor is measured FROM THE CORPSE, not from the actor: a hostile
+        // crowding the corpse the actor is already standing on is beside the take,
+        // not in the actor's way, and the actor-relative distance said nothing
+        // about whether the corpse was reachable at all. An unresolvable pin keeps
+        // the actor's own position as the anchor, so it can never fabricate safety.
+        var anchor = selfPosition;
+        var corpseDistance = float.NaN;
+        if (corpseObjId != 0)
+        {
+            var corpse = character.ParentWorld?.GetNpc(corpseObjId);
+            if (corpse != null)
+            {
+                anchor = corpse.Transform.World.Position;
+                corpseDistance = MathUtil.CalculateDistance(selfPosition, anchor, false);
+            }
+        }
+
         var nearest = float.NaN;
         var unresolved = 0;
         foreach (var objId in observation.NearbyNpcObjIds)
@@ -354,16 +440,16 @@ public static class LootBrainPlanner
             }
             if (!CombatDecisionTree.IsHostileTarget(character, npc))
                 continue;
-            var distance = MathUtil.CalculateDistance(selfPosition, npc.Transform.World.Position, false);
+            var distance = MathUtil.CalculateDistance(anchor, npc.Transform.World.Position, false);
             if (float.IsNaN(nearest) || distance < nearest)
                 nearest = distance;
         }
 
         if (unresolved > 0)
-            return (false, false, nearest);
+            return (false, false, nearest, corpseDistance);
         if (float.IsNaN(nearest))
-            return (true, true, float.NaN);
-        return (true, nearest > safeRadiusM, nearest);
+            return (true, true, float.NaN, corpseDistance);
+        return (true, nearest > safeRadiusM, nearest, corpseDistance);
     }
 
     /// <summary>
