@@ -55,6 +55,24 @@ public static class Program
         _launchArgs = args;
         Initialization();
 
+        // OFFLINE brain-module graph validation (fail-fast, no runtime effect).
+        // The declared decision-layer module edges are validated before anything
+        // is built, so an unknown module name, a duplicate declaration or a
+        // dependency cycle refuses the boot with a named error instead of
+        // surfacing later as a behavior difference on a live lane. Same spirit as
+        // agent-wow's moddisc.Load manifest check. Runs ahead of the compiler-check
+        // branch on purpose — the gate exercises it on every build.
+        try
+        {
+            BotBrainModuleGraph.Validate();
+        }
+        catch (BotBrainModuleGraphException ex)
+        {
+            Logger.Fatal(ex, $"Bot brain module graph is invalid: {ex.Error}");
+            LogManager.Flush();
+            return 1;
+        }
+
         if (args.Length > 0 && args[0] == "compiler-check")
         {
             Logger.Info("Check compilation");
