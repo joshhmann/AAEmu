@@ -173,6 +173,47 @@ public class QuestCorpseRepinTests
         await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var rec)).IsFalse();
     }
 
+    /// <summary>
+    /// NEGATIVE GUARD for the spent-corpse exclusion (kill25): only a corpse
+    /// THIS actor terminally looted is skipped. An unlooted corpse nearer than
+    /// a spent one is still the corpse this leg is owed — the record names it,
+    /// its container is probed, and its take is proposed — so the exclusion
+    /// steps past the spent corpse in the scan instead of ending the scan.
+    /// </summary>
+    [Test]
+    public async Task UnlootedNearerCorpse_StillPreemptsTheSpentOne()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("g7d-unlootednearer");
+        var spent = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(8, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(spent);
+
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-unlooted-1" });
+        var spentNpc = session.World.GetNpc(spent)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(spentNpc, (ProbeItemTemplateId, 1));
+        spentNpc.Hp = 0;
+        var take = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-unlooted-2" });
+        await Assert.That(take.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, spent)).IsTrue();
+
+        // A dead, never-taken boar lands NEARER than the spent corpse.
+        var fresh = SpawnSecondBoar(session, new Vector3(3, 0, 0));
+        var freshNpc = session.World.GetNpc(fresh)!;
+        GameplayActorTestRig.SeedLootContainer(freshNpc, (ProbeItemTemplateId, 1));
+        freshNpc.Hp = 0;
+
+        var next = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-unlooted-3" });
+
+        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse)).IsTrue();
+        await Assert.That(corpse!.ObjId).IsEqualTo(fresh);
+        await Assert.That(next.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(actor.AuditTrace.Last(r => r.Action == ActorActionType.Loot).TargetId).IsEqualTo(fresh);
+    }
+
     [Test]
     public async Task RepinnedCorpse_PreservesIdentityAcrossWakes()
     {

@@ -370,7 +370,7 @@ public class QuestLootBrainGateTests
     }
 
     /// <summary>
-    /// A CORPSE THAT WAS LOOTED IS NEVER RE-DECIDED AS AN EMPTY CONTAINER.
+    /// A CORPSE THAT WAS LOOTED IS NEVER RE-DECIDED — AND NEVER NAMED AGAIN.
     ///
     /// This is the live shape of the defect the fix removes: the take EMPTIES the
     /// container, and the very next wake reads that emptiness through the probe arm
@@ -378,9 +378,13 @@ public class QuestLootBrainGateTests
     /// undecided <c>not-lootable</c>, the terminal take was masked by the tally it
     /// caused, and the same corpse was re-decided on every later wake forever.
     ///
-    /// The observable contract: after the take, every later wake reports the
-    /// loot-once terminal (<c>already-looted</c>), never <c>not-lootable</c>, and
-    /// dispatches no second Loot however many wakes pass.
+    /// kill25 closed the remaining half: naming the spent corpse on every wake is
+    /// itself the defect (39 already-looted verdicts on one corpse, the bot
+    /// standing on it), so a corpse this actor terminally looted is no longer a
+    /// corpse-recognition candidate at all. The observable contract: after the
+    /// take, every later wake dispatches no second Loot, never reports
+    /// <c>not-lootable</c>, and no longer names the emptied corpse — the terminal
+    /// take stays in the ledger where the next corpse can be found.
     /// </summary>
     [Test]
     public async Task LootedCorpse_NeverReadsNotLootableOnALaterWake()
@@ -414,9 +418,9 @@ public class QuestLootBrainGateTests
 
             var lootArm = LootArmOf(later);
             await Assert.That(later.SelectedAction == ActorActionType.Loot).IsFalse();
-            await Assert.That(lootArm).Contains("validate=already-looted");
             await Assert.That(lootArm).DoesNotContain("validate=not-lootable");
-            await Assert.That(lootArm).Contains("arm=LootOnce");
+            await Assert.That(lootArm).Contains("target=-");
+            await Assert.That(lootArm).DoesNotContain($"target={npcObjId}");
         }
 
         // No wake dispatched a second take of a corpse already emptied.

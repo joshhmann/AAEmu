@@ -559,6 +559,12 @@ public static class QuestBehavior
     /// this arm asks the census for a nearer dead prey, and takes the slot when
     /// one exists and the PIN does not still name the record (a pin that does
     /// name it is a corpse this leg is genuinely still owed, and keeps it).
+    ///
+    /// Spent corpses: a corpse THIS actor terminally looted is not a corpse this
+    /// arm reports, from any of its three entry points (the death-wake re-pin,
+    /// the record probe, the pin's own resolve) — naming it every wake was the
+    /// kill25 stall (39 already-looted verdicts on one corpse), and the release
+    /// in <c>LootEmit</c> ran a wake too late to stop it.
     /// </summary>
     private static string ObservePinnedCorpse(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts,
         QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel, BotObservedContext? observation)
@@ -598,7 +604,13 @@ public static class QuestBehavior
         // meaning — "the prey this actor is hunting".
         if (holdPin != 0 && (HoldPinsLivePrey(character, holdPin, funnel.Fixture.PreyTemplate) || pin == 0))
             pin = holdPin;
-        if (pin != 0 && (stale == null || pin != stale.ObjId))
+        // A pin naming a corpse this actor already terminally looted is spent
+        // (kill25): the loot-once arm withholds it on every later wake, so
+        // re-pinning it here hands the leg back a corpse nothing will ever take
+        // and the fresh-corpse arms below never run. Same owner-scoped fact as
+        // the pin-resolve arm and the census scan — the pin falls through.
+        if (pin != 0 && (stale == null || pin != stale.ObjId)
+            && !IsLootDispatched(actor.ActorId, pin))
         {
             var fresh = character?.ParentWorld?.GetNpc(pin);
             if (fresh != null && fresh.Hp <= 0 && fresh.TemplateId == funnel.Fixture.PreyTemplate)
@@ -669,6 +681,23 @@ public static class QuestBehavior
                 // is the ordinary one: a DIFFERENT objId ends the approach journey
                 // armed on the old corpse (owner-scoped — this actor's only leg),
                 // and the fresh corpse never inherits the old one's repath budget.
+                //
+                // SPENT RECORD (kill25: 39 already-looted verdicts on one corpse).
+                // A record naming a corpse THIS actor terminally looted is done —
+                // the loot-once arm withholds it on every later wake — so probing
+                // it here re-reports the spent corpse on every wake and, because
+                // it is usually the nearest, the census pre-emption below never
+                // gets to look past it. Released exactly the way the recycled and
+                // gone arms release it (this actor's record only, approach journey
+                // ended with it), so this wake continues into the ordinary fresh-
+                // corpse resolution instead of reporting the corpse already taken.
+                if (IsLootDispatched(actor.ActorId, stale.ObjId))
+                {
+                    lock (PursuitSync)
+                        LastCorpse.Remove(actor.ActorId);
+                    LootTravelDispatch.EndJourneyForPin(actor.ActorId);
+                    return NoteCensusCorpse(actor, opts, funnel, observation);
+                }
                 var here = character?.Transform.World.Position;
                 var recordDistanceM = here.HasValue
                     ? MathUtil.CalculateDistance(here.Value, cur.Transform.World.Position, false)
@@ -689,7 +718,14 @@ public static class QuestBehavior
         if (pin != 0)
         {
             var npc = character?.ParentWorld?.GetNpc(pin);
-            if (npc != null && npc.Hp <= 0 && npc.TemplateId == funnel.Fixture.PreyTemplate)
+            // A pin that names a corpse this actor already terminally looted is
+            // spent (kill25): the loot-once arm withholds it on every later wake,
+            // so reporting it re-probes a corpse nothing will ever take and the
+            // fresh-prey arms below are never reached. Same owner-scoped fact,
+            // same exclusion as the census scan — the pin falls through to the
+            // ordinary arms instead of shadowing them.
+            if (npc != null && npc.Hp <= 0 && npc.TemplateId == funnel.Fixture.PreyTemplate
+                && !IsLootDispatched(actor.ActorId, npc.ObjId))
             {
                 NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId);
                 var probeNow = ProbeCorpse(character, npc);
@@ -727,7 +763,17 @@ public static class QuestBehavior
     /// precedence they have always had. Every gate the
     /// pinned arms already apply is applied here identically: the fixture's own
     /// prey template (inside <see cref="NotePinnedCorpse"/> and again before it)
-    /// and dead-or-nothing. It is NOT loot rights, NOT a range grant and NOT an
+    /// and dead-or-nothing.
+    ///
+    /// A corpse this actor has already terminally looted is not a candidate here
+    /// or in the pin-resolve arm: it is dead prey of the right template, so
+    /// without that gate it simply wins the nearest-first scan every wake
+    /// (kill25: 39 already-looted verdicts on one corpse) and the pin release
+    /// has nothing fresh to fall through to. The exclusion reads this actor's
+    /// own loot-once memory — a terminal fact it established — so no new state
+    /// and no extra perception enter the scan.
+    ///
+    /// It is NOT loot rights, NOT a range grant and NOT an
     /// unconditional take — the pinned record it writes is the only thing that
     /// changes, and the loot brain's own ownership, safety, loot-once, worth and
     /// probe gates then read exactly what they read for a Stop-pinned corpse.
@@ -767,6 +813,21 @@ public static class QuestBehavior
                 continue;
             var npc = character.ParentWorld.GetNpc(objId);
             if (npc == null || npc.Hp > 0 || npc.TemplateId != preyTemplate)
+                continue;
+            // SPENT-CORPSE EXCLUSION (kill25: the same looted corpse re-resolved
+            // every wake — 39 already-looted verdicts, one per wake, while the
+            // actor stood on it). The pin release above owns the RECORD, but the
+            // scan's own nearest-first pick had no such fact: a corpse this actor
+            // terminally looted is still dead prey of the fixture template and is
+            // still the NEAREST one, so it won the scan again the moment the
+            // release dropped the slot — release, re-pin, re-probe, forever, and
+            // no fresh corpse was ever considered. The loot-once memory is the
+            // actor's own terminal fact about this corpse (the same one
+            // `LootEmit`'s release reads), so it belongs beside the template and
+            // dead gates here: an already-taken corpse is not a candidate. A
+            // corpse anyone ELSE took is untouched — this is owner-scoped, and
+            // the engine's own ownership gates still decide such a corpse.
+            if (IsLootDispatched(actor.ActorId, objId))
                 continue;
             var distance = MathUtil.CalculateDistance(here, npc.Transform.World.Position, false);
             if (double.IsNaN(distance)

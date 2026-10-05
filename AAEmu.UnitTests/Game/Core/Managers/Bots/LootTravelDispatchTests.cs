@@ -568,19 +568,25 @@ public class LootTravelDispatchTests
         await Assert.That(LootLedger.Read(actor.ActorId, corpseObjId).Disposition)
             .IsEqualTo(LootDisposition.Take);
 
-        // Wake 3 through the real stack: the corpse's container is REFILLED, so the
-        // wake cannot withhold merely because the corpse emptied — the loot-once
-        // memory is what withholds, with the frozen vocabulary every lane scanner
-        // keys on.
+        // Wake 3 through the real stack: the corpse's container is REFILLED and the
+        // actor is NOT walked back to it. A corpse this actor terminally looted is
+        // no longer a recognition candidate (kill25: naming it every wake was the
+        // stall), so the leg names no corpse at all — the take stays terminal in
+        // the loot-once memory and the ledger, and the wake simply has no corpse
+        // work left rather than re-deciding this one forever.
         GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
         var after = QuestDecisionScenario.Run(actor, (_, _) => [],
             new QuestDecisionScenario.QuestOptions { CycleId = "loot-approach-once-3" });
         await Assert.That(after.SelectedAction == ActorActionType.Loot).IsFalse();
         await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(1);
         await Assert.That(npc.LootingContainer.Items.Count).IsEqualTo(1);
+        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, corpseObjId)).IsTrue();
+        await Assert.That(LootLedger.Read(actor.ActorId, corpseObjId).Disposition)
+            .IsEqualTo(LootDisposition.Take);
         var lootArm = after.LegEvidence.FirstOrDefault(e => e.Leg == QuestLegId.Loot).Detail ?? "";
-        await Assert.That(lootArm).Contains("validate=already-looted");
-        await Assert.That(lootArm).Contains("arm=LootOnce");
+        await Assert.That(lootArm).DoesNotContain("validate=not-lootable");
+        await Assert.That(lootArm).DoesNotContain($"target={corpseObjId}");
+        await Assert.That(lootArm.Contains(":dispatch=move")).IsFalse();
     }
 
     // ------------------------------------------------- live caller (G7c leg)
@@ -671,7 +677,7 @@ public class LootTravelDispatchTests
 
         // The take ended the approach journey (a later re-pin of this corpse arms clean
         // instead of inheriting a banked terminal), and the loot-once memory is the
-        // take's own: the NEXT wake still withholds with the frozen token.
+        // take's own: the NEXT wake names no corpse and takes nothing.
         await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, corpseObjId)).IsTrue();
         await Assert.That(LootLedger.Read(actor.ActorId, corpseObjId).Disposition)
             .IsEqualTo(LootDisposition.Take);
@@ -684,7 +690,7 @@ public class LootTravelDispatchTests
         await Assert.That(after.SelectedAction == ActorActionType.Loot).IsFalse();
         await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(1);
         var lootArm = after.LegEvidence.Single(e => e.Leg == QuestLegId.Loot).Detail;
-        await Assert.That(lootArm).Contains("validate=already-looted");
+        await Assert.That(lootArm).DoesNotContain($"target={corpseObjId}");
         // The loot-once withhold is NOT a reachability withhold: no approach leg.
         await Assert.That(lootArm.Contains(":dispatch=move")).IsFalse();
     }

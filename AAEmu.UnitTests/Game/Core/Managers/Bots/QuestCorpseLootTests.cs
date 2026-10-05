@@ -36,6 +36,8 @@ public class QuestCorpseLootTests
     private const uint GatherActId = 10473;
     private const int GatherNeed = 3;
 
+    private static uint s_secondObjId = 0x79000;
+
     [Before(Test)]
     public void SetUp()
     {
@@ -155,6 +157,92 @@ public class QuestCorpseLootTests
     }
 
     /// <summary>
+    /// SPENT-CORPSE EXCLUSION (kill25: 1 ok + 39 already-looted on one corpse,
+    /// re-resolved every wake while the actor stood on it). The spent-corpse
+    /// release above owns the RECORD, but recognition had no such fact: a
+    /// corpse this actor terminally looted is still dead prey of the fixture
+    /// template, so it won the nearest-first scan again the moment the release
+    /// dropped the slot. A FRESH corpse behind it must be what the next wake
+    /// recognizes and takes — the spent one is not a candidate at all, so the
+    /// scan steps past it instead of stalling on it.
+    /// </summary>
+    [Test]
+    public async Task SpentNearCorpse_Excluded_CensusTakesTheFreshOne()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("g7c-spent-census");
+        var spentObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(spentObjId);
+
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-spentcensus-1" });
+        var spent = session.World.GetNpc(spentObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(spent, (ProbeItemTemplateId, 1));
+        spent.Hp = 0;
+
+        var take = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-spentcensus-2" });
+        await Assert.That(take.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, spentObjId)).IsTrue();
+
+        // A fresh corpse lands FARTHER out than the spent one, so nearest-first
+        // alone would keep handing back the corpse already taken.
+        var freshObjId = SpawnSecondBoar(session, new Vector3(8, 0, 0));
+        var fresh = session.World.GetNpc(freshObjId)!;
+        GameplayActorTestRig.SeedLootContainer(fresh, (ProbeItemTemplateId, 1));
+        fresh.Hp = 0;
+
+        var next = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-spentcensus-3" });
+
+        await Assert.That(next.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(actor.AuditTrace.Last(r => r.Action == ActorActionType.Loot).TargetId).IsEqualTo(freshObjId);
+        // The spent corpse is never taken a second time — and never chosen
+        // again either, so this wake's whole corpse leg belongs to the fresh one.
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot && r.TargetId == spentObjId)).IsEqualTo(1);
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(2);
+    }
+
+    /// <summary>
+    /// The same exclusion with nothing fresh behind it: a spent corpse is the
+    /// only dead prey in the census, so recognition yields NOTHING — no record,
+    /// no corpse fragment, no re-dispatch — rather than re-pinning the corpse
+    /// the loot-once arm will never take. Two consecutive wakes, because the
+    /// first is the one the pin release would have cleaned up anyway.
+    /// </summary>
+    [Test]
+    public async Task SpentCorpse_OnlyDeadPrey_NeverRepinned()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("g7c-spent-only");
+        var spentObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(spentObjId);
+
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-spentonly-1" });
+        var spent = session.World.GetNpc(spentObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(spent, (ProbeItemTemplateId, 1));
+        spent.Hp = 0;
+
+        var take = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-spentonly-2" });
+        await Assert.That(take.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, spentObjId)).IsTrue();
+
+        var third = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-spentonly-3" });
+        var fourth = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-spentonly-4" });
+
+        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out _)).IsFalse();
+        await Assert.That(third.SelectedAction == ActorActionType.Loot).IsFalse();
+        await Assert.That(fourth.SelectedAction == ActorActionType.Loot).IsFalse();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot && r.TargetId == spentObjId)).IsEqualTo(1);
+    }
+
+    /// <summary>
     /// The release is scoped to the actor's OWN loot-once verdict: a corpse that
     /// withholds for any other reason (ownership unresolved here — no take ever
     /// ran) keeps its pin, so unknown state never drops identity.
@@ -263,6 +351,34 @@ public class QuestCorpseLootTests
         region.AddObject(npc);
         npc.Region = region;
         return npcObjId;
+    }
+
+    /// <summary>
+    /// A second 3475 beside the first corpse: <c>HeadlessSession.SpawnNpc</c>
+    /// dedups by template, so the fresh-corpse candidate is built directly and
+    /// lands in the same region the actor is standing in.
+    /// </summary>
+    private static uint SpawnSecondBoar(HeadlessSession session, Vector3 npcPos)
+    {
+        var objId = s_secondObjId++;
+        var npc = new Npc
+        {
+            ObjId = objId,
+            TemplateId = Boar3475,
+            Template = new NpcTemplate { Id = Boar3475, Scale = 1f },
+            Hp = 100,
+            MaxHp = 100,
+            IsVisible = true,
+        };
+        npc.Transform.Local.SetPosition(npcPos);
+        session.World.AddObject(npc);
+        var region = session.World.GetRegionByPos(npcPos);
+        if (region != null)
+        {
+            region.AddObject(npc);
+            npc.Region = region;
+        }
+        return objId;
     }
 
     /// <summary>
