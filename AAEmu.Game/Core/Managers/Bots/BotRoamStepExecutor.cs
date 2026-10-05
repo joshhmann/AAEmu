@@ -2315,7 +2315,6 @@ public enum NeedsFarmLoopPhase
         if (world?.SpawnManager == null || quests == null)
             return false;
         var here = character.Transform.World.Position;
-
         // True when a prey template is already inside the perception census —
         // i.e. QuestObjectiveTargetSelector would already consider it a
         // candidate, so the funnel owns this wake and travel must not preempt it.
@@ -2347,6 +2346,14 @@ public enum NeedsFarmLoopPhase
             {
                 continue;
             }
+            // The gather arm's answer for THIS row, held back when the row also
+            // names a prey so the prey arm below gets its turn; read only when
+            // that same row's prey arm declines. Scoped to the iteration, so one
+            // quest's fallback can never answer another quest's walk.
+            var hasGatherFallback = false;
+            var gatherFallbackPos = default(Vector3);
+            uint gatherFallbackTemplate = 0;
+
             if (QuestBehavior.HasGatherTemplates(row) && !QuestBehavior.GatherCredited(questId, quest, row))
             {
                 // Nearby first: a perceived granting source means the gather leg
@@ -2360,12 +2367,39 @@ public enum NeedsFarmLoopPhase
                     continue;
                 if (QuestBehavior.TryNearestGatherSpawnerPosition(world, row, here, out var gatherTemplate, out var gatherPos))
                 {
-                    source = gatherPos;
-                    sourceTemplate = gatherTemplate;
-                    return true;
+                    // A row that ALSO derives a PreyTemplate through the loot
+                    // chain is the END-TO-END shape: the prey arm below is the
+                    // only source travel can complete (kill -> loot -> credit),
+                    // so this arm must not claim the wake first. Measured on a
+                    // 36-minute 4-bot run: quest 251's gather item reaches both
+                    // doodad wells and an npc loot pack, this arm returned the
+                    // nearest well on every wake, and all four bots walked
+                    // ~600 m off-cluster to non-prey spawners while the prey
+                    // spawner stood 666 m out and the 25 m census stayed empty.
+                    //
+                    // Fail-closed and byte-identical otherwise: the position is
+                    // remembered, not discarded, so a hybrid row whose prey has
+                    // no spawner (or whose prey is already perceived) still
+                    // travels exactly where it did before. A PURE-doodad row
+                    // derives PreyTemplate == 0, so it returns here unchanged.
+                    if (row.PreyTemplate == 0)
+                    {
+                        source = gatherPos;
+                        sourceTemplate = gatherTemplate;
+                        return true;
+                    }
+
+                    gatherFallbackPos = gatherPos;
+                    gatherFallbackTemplate = gatherTemplate;
+                    hasGatherFallback = true;
                 }
             }
-            if (row.InteractDoodadTemplate != 0 && !QuestBehavior.InteractCredited(questId, quest, row))
+            // Ordering guard, byte-identical to before: a row whose gather arm
+            // already produced a source (held back above, or returned outright)
+            // keeps it, so the interact objective never used to out-rank a live
+            // gather source and still does not on a hybrid row.
+            if (!hasGatherFallback
+                && row.InteractDoodadTemplate != 0 && !QuestBehavior.InteractCredited(questId, quest, row))
             {
                 if (QuestBehavior.TryNearestDoodadSpawnerPosition(world, row.InteractDoodadTemplate, here, out var interactPos))
                 {
@@ -2384,12 +2418,16 @@ public enum NeedsFarmLoopPhase
             //     rejects the whole candidate pool on template mismatch, and the
             //     objective can never advance.
             //
-            //     ORDER — why LAST. Any objective that DOES have a doodad source
-            //     has already returned from the arm above, so every doodad-backed
-            //     objective walks to the very same spawner at the very same
-            //     template with byte-identical reasons. Only an objective with no
-            //     doodad source at all reaches this arm, which is precisely the
-            //     shape the doodad arms cannot serve.
+            //     ORDER — why LAST, and the ONE exception. A PURE-doodad
+            //     objective has already returned from the arm above, so every
+            //     doodad-backed objective walks to the very same spawner at the
+            //     very same template with byte-identical reasons. The exception
+            //     is the HYBRID row: an item that reaches BOTH a doodad well and
+            //     an npc loot pack. Its gather arm is held back (see above) and
+            //     this arm gets its turn, because only this source completes the
+            //     objective end to end. If this arm declines, the held answer is
+            //     returned in its place, so a hybrid row can never end up with
+            //     no source at all.
             //
             //     DELIVER EXCLUDED, and that exclusion IS the "source is an NPC"
             //     condition: a quest whose own Supply act grants the gather item
@@ -2415,6 +2453,19 @@ public enum NeedsFarmLoopPhase
                 source = preyPos;
                 sourceTemplate = row.PreyTemplate;
                 sourceIsPrey = true;
+                return true;
+            }
+
+            // The gather arm held an answer back for THIS row and the prey arm
+            // could not use it (no spawner, Deliver shape, or the prey already
+            // perceived). Nothing is lost: the held answer is returned exactly
+            // where the gather arm used to return it, with sourceIsPrey still
+            // false, so the caller's distance tie-break and the 3-arm doodad cap
+            // keep treating it as the doodad source it is.
+            if (hasGatherFallback)
+            {
+                source = gatherFallbackPos;
+                sourceTemplate = gatherFallbackTemplate;
                 return true;
             }
         }
