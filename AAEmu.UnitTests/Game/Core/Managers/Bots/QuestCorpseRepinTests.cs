@@ -168,8 +168,9 @@ public class QuestCorpseRepinTests
         await Assert.That(fifth.SelectedAction == ActorActionType.Loot).IsFalse();
         await Assert.That(sixth.SelectedAction == ActorActionType.Loot).IsFalse();
         await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(2);
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var rec)).IsTrue();
-        await Assert.That(rec!.ObjId).IsEqualTo(boar2);
+        // The second take spent its pin (spent-corpse release): loot-once still
+        // holds off both re-dispatches, but the LastCorpse record is gone.
+        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var rec)).IsFalse();
     }
 
     [Test]

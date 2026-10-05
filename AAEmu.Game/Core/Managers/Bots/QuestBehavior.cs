@@ -3508,6 +3508,27 @@ public static class QuestBehavior
 
         if (!decision.IsEmit)
         {
+            // SPENT-CORPSE PIN RELEASE (kill23: same corpse re-pinned 30x). A corpse
+            // this actor's own Loot verb already ran its terminal course on is DONE:
+            // the loot-once arm withholds it on every later wake, so keeping the
+            // LastCorpse pin makes ObservePinnedCorpse re-report it (and LootEmit
+            // re-evaluate it) forever instead of moving on to the next corpse.
+            // Released the same owner-scoped way the gone=true path releases it —
+            // this actor's record only, approach journey ended with it — so the
+            // next wake re-resolves (fresh-prey pre-emption, pin resolve, census).
+            // Fail-closed: only on the actor's OWN confirmed loot-once verdict for
+            // the PINNED corpse (AlreadyLooted input read from this actor's memory
+            // for this corpse, planner reason AlreadyLooted, corpse resolved and
+            // ObjId-equal). A foreign take, a skip, an unreadable corpse, or any
+            // other withhold keeps the pin — unknown state never drops identity.
+            if (decision.Reason == LootReason.AlreadyLooted && already
+                && prepared.CorpseResolved && candidate != null
+                && decision.CorpseObjId == candidate.ObjId)
+            {
+                lock (PursuitSync)
+                    LastCorpse.Remove(actor.ActorId);
+                LootTravelDispatch.EndJourneyForPin(actor.ActorId);
+            }
             // The banked skip is final, so it is recorded here — a terminal skip
             // never lags an act the way a take would.
             LootBrainPlanner.PublishSkip(prepared, DateTime.UtcNow);

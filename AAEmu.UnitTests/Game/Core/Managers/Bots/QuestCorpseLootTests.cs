@@ -109,6 +109,73 @@ public class QuestCorpseLootTests
         await Assert.That(third.SelectedAction == ActorActionType.Loot).IsFalse();
         await Assert.That(fourth.SelectedAction == ActorActionType.Loot).IsFalse();
         await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(1);
+        // The spent pin is RELEASED (kill23 fix): loot-once still withholds the
+        // corpse itself, but the LastCorpse record is gone so the next wake
+        // re-resolves instead of camping it.
+        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse)).IsFalse();
+    }
+    /// <summary>
+    /// SPENT-CORPSE PIN RELEASE (kill23: same corpse re-pinned 30x — 1 ok + 29
+    /// already-looted on target 44425). Once this actor's own Loot verb ran its
+    /// terminal course, the LastCorpse pin is released the same owner-scoped way
+    /// the gone=true path releases it — so later wakes stop re-probing the spent
+    /// corpse. Loot-once still withholds any re-dispatch; only the pin moves.
+    /// </summary>
+    [Test]
+    public async Task SpentCorpse_PinReleased_AfterOwnTake()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("g7c-pinrelease");
+        var firstObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(firstObjId);
+
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-rel-1" });
+        var first = session.World.GetNpc(firstObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(first, (ProbeItemTemplateId, 1));
+        first.Hp = 0;
+
+        var take = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-rel-2" });
+        await Assert.That(take.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, firstObjId)).IsTrue();
+        // Sanity: the take pinned the corpse it took.
+        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var taken)).IsTrue();
+        await Assert.That(taken!.ObjId).IsEqualTo(firstObjId);
+
+        // Next wake with no new corpse: the spent pin is GONE (pre-fix this still
+        // named the first corpse — the 29x re-probe), and loot-once still holds
+        // off any re-dispatch of the spent take.
+        var next = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-rel-3" });
+        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out _)).IsFalse();
+        await Assert.That(next.SelectedAction == ActorActionType.Loot).IsFalse();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot && r.TargetId == firstObjId)).IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// The release is scoped to the actor's OWN loot-once verdict: a corpse that
+    /// withholds for any other reason (ownership unresolved here — no take ever
+    /// ran) keeps its pin, so unknown state never drops identity.
+    /// </summary>
+    [Test]
+    public async Task UnresolvedCorpse_PinKept_NoRelease()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("g7c-pinkept");
+        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
+
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-kept-1" });
+        var npc = session.World.GetNpc(npcObjId)!;
+        npc.Hp = 0;
+        // Empty container, never taken: withholds as not-lootable (probe), not
+        // already-looted — the pin must survive.
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-kept-2" });
+        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, npcObjId)).IsFalse();
         await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse)).IsTrue();
         await Assert.That(corpse!.ObjId).IsEqualTo(npcObjId);
     }
