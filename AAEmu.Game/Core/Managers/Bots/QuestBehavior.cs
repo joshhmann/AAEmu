@@ -3565,6 +3565,17 @@ public static class QuestBehavior
             diag = $"validate=target-unassigned:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false))}:verb=none:hpBefore=NA";
             return null;
         }
+        // STALE-LOOP REDISPATCH. A live loop aimed at a target the funnel no
+        // longer serves (selection switched after the Target leg re-pointed
+        // CurrentTarget — the loop's struck target still names the old prey),
+        // or a loop the stall trip already condemned (CombatStallWakes
+        // no-progress hold-wakes), is torn down and re-dispatched on the
+        // current selection instead of withdrawn. The loop's target is the
+        // engine's own struck target (the auto-attack task's skill), read off
+        // the same live character surface this gate already reads — never a
+        // memory. Fail-closed: an unreadable loop target keeps the historical
+        // withdraw (covers hand-raised test flags with no task behind them).
+        var redispatchStaleLoop = false;
         if (character.IsAutoAttack)
         {
             // Same streak the pursuit in-band yield feeds (cycle-deduped there): an
@@ -3572,9 +3583,23 @@ public static class QuestBehavior
             // combat side. Counting here lets a wake the pursuit leg never reaches
             // (Stop branch inside 3 m) still accrue — the trip itself always fires
             // from pursuit, so there is exactly one re-dispatch path.
-            CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _, ReadSelfDamageAttribution(character, npc, actor.ActorId));
-            diag = $"validate=already-live:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false))}:verb=none:hpBefore={npc.Hp}";
-            return null;
+            var stallTripped = CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _, ReadSelfDamageAttribution(character, npc, actor.ActorId));
+            var loopTarget = ReadLiveLoopTarget(character);
+            if (loopTarget.HasValue && (loopTarget.Value != selected || stallTripped))
+            {
+                // Armed: fall through to the dispatch below (range + brain), and
+                // the brain-Hold gate below re-checks this flag. The re-point
+                // rides the Target leg's SetTarget plus this leg's AutoAttack
+                // re-affirm (the engine sets CurrentTarget when it differs and
+                // the loop task strikes CurrentTarget every tick) — Emit builds
+                // proposals, never mutates.
+                redispatchStaleLoop = true;
+            }
+            else
+            {
+                diag = $"validate=already-live:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false))}:verb=none:hpBefore={npc.Hp}";
+                return null;
+            }
         }
         // THE AUTHORITATIVE METRIC, the same accessor and the same
         // `includeZAxis: true` the pursuit leg reads and the very one
@@ -3678,6 +3703,15 @@ public static class QuestBehavior
             CombatVerb.Move => ActorActionType.Move,
             _ => ActorActionType.AutoAttack
         };
+        if (brainVerb == CombatVerb.Hold && redispatchStaleLoop)
+        {
+            // The pre-brain gate already condemned this loop (wrong target or
+            // stall trip): the brain's own Hold names the same stale loop, so
+            // fall through to re-dispatch on the current selection instead of
+            // withdrawing (brainVerb rewritten, never re-decided).
+            brainVerb = CombatVerb.AutoAttack;
+            action = ActorActionType.AutoAttack;
+        }
         if (brainVerb == CombatVerb.Hold)
         {
             // Same streak as the pre-brain gate above (cycle-deduped): the brain's
@@ -4715,6 +4749,25 @@ public static class QuestBehavior
         CombatTravelDispatch.PublishDispatched(gameplayActor, kiteDecision);
         PublishCombatEngagement(gameplayActor, proposal);
         return request;
+    }
+
+    /// <summary>
+    /// The engine's own struck target of the live auto-attack loop: the
+    /// <c>InitialTarget</c> the loop's skill struck when <c>GameplayActor.AutoAttack</c>
+    /// fired it (the same wake that raised <c>IsAutoAttack</c>). Null when no task
+    /// runs, the skill is unreadable, or the struck target is gone — every one of
+    /// those is "unknown", and the caller fails closed to the historical withdraw.
+    /// </summary>
+    private static uint? ReadLiveLoopTarget(Character character)
+    {
+        try
+        {
+            return character.AutoAttackTask?.Skill?.InitialTarget?.ObjId;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
