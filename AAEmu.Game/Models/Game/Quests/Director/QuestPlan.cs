@@ -60,7 +60,8 @@ public enum QuestLegId
     UseItem,
     Gather,
     Interact,
-    Deliver
+    Deliver,
+    Talk
 }
 
 /// <summary>

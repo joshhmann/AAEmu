@@ -563,6 +563,125 @@ public class TravelBrainTests
         }
     }
 
+    /// <summary>
+    /// A retreat is a GROUND-PLANE walk, not a 3D displacement. The measured live
+    /// defect: a bot at (15588.6, 15115.1, 130.7) fleeing a threat on the ground
+    /// ~25 m below resolved a 3D bearing of almost pure −Z, so the destination kept
+    /// the actor's exact X/Y and sat 25 m straight DOWN — a point in the floor the
+    /// navigation budget burned and the arrival arm then reported.
+    /// </summary>
+    [Test]
+    public async Task SafeAnchor_RetreatsHorizontally_NotStraightDownFromAThreatBelow()
+    {
+        var self = new Vector3(15588.6f, 15115.1f, 130.7f);
+        // 8 m away to the south-west, 25 m below: with the actor's X/Y held fixed,
+        // the 3D bearing was almost pure −Z and the anchor landed 25 m under it.
+        var threat = new Vector3(15580.5f, 15110.1f, 105.7f);
+        var anchor = TravelBrain.SafeAnchor(self, threat, TravelBrain.RetreatAnchorDistanceM);
+
+        // The escape leaves the actor's own height: never down, never up.
+        await Assert.That(anchor.Z).IsEqualTo(self.Z);
+
+        // It moves AWAY on the ground plane by the whole 25 m, on the threat's
+        // bearing: the threat is south-west and 25 m below, so the escape is
+        // north-east — both coordinates run further from the threat, not closer.
+        await Assert.That(anchor.X).IsGreaterThan(self.X);
+        await Assert.That(anchor.Y).IsGreaterThan(self.Y);
+        await Assert.That(anchor.X).IsGreaterThan(threat.X);
+        await Assert.That(anchor.Y).IsGreaterThan(threat.Y);
+        await Assert.That(HorizontalDistance(self, anchor)).IsCloseTo(25f, 0.001f);
+
+        // Horizontal distance from the THREAT strictly increases: the anchor is
+        // room, not a shortcut through the threat.
+        await Assert.That(HorizontalDistance(threat, anchor))
+            .IsGreaterThan(HorizontalDistance(threat, self) + 1f);
+
+        // The escape away from a lower threat tilts UP in a 3D distance, which is
+        // precisely what a 3D normalize turned into a fall through the floor.
+        await Assert.That(Vector3.Distance(self, anchor)).IsGreaterThan(25f);
+        await Assert.That(anchor).IsNotEqualTo(new Vector3(self.X, self.Y, self.Z - 25f));
+    }
+
+    /// <summary>
+    /// The height difference must not eat the step either: a threat almost
+    /// directly BELOW (or above) the actor is exactly the case where the 3D bearing
+    /// carried no ground plane at all. With no usable X/Y bearing the anchor still
+    /// walks the full distance due east, on the actor's own level — and never onto
+    /// the threat below it.
+    /// </summary>
+    [Test]
+    public async Task SafeAnchor_WithNoGroundPlaneBearing_StillWalksAwayAtTheActorsHeight()
+    {
+        var self = new Vector3(200f, 200f, 90f);
+        foreach (var threat in (Vector3[])[new Vector3(200f, 200f, 60f), new Vector3(200f, 200f, 120f)])
+        {
+            var anchor = TravelBrain.SafeAnchor(self, threat, TravelBrain.RetreatAnchorDistanceM);
+            await Assert.That(TravelBrainInputs.IsFinite(anchor)).IsTrue();
+            await Assert.That(anchor.Z).IsEqualTo(self.Z);
+            await Assert.That(HorizontalDistance(self, anchor)).IsCloseTo(25f, 0.001f);
+            await Assert.That(HorizontalDistance(threat, anchor)).IsGreaterThan(20f);
+        }
+    }
+
+    [Test]
+    public async Task SafeAnchor_HorizontalThreatRetreat_IsUnchanged()
+    {
+        // Same height: the retreat is byte-identical to the pre-fix 3D result —
+        // the ray is due north, 25 m out, at the actor's own height.
+        var self = new Vector3(300f, 300f, 42f);
+        var threat = new Vector3(300f, 250f, 42f); // 50 m due south
+        var anchor = TravelBrain.SafeAnchor(self, threat, TravelBrain.RetreatAnchorDistanceM);
+
+        await Assert.That(MathF.Abs(anchor.X - self.X)).IsLessThan(0.001f);
+        await Assert.That(anchor.Y).IsCloseTo(self.Y + 25f, 0.001f);
+        await Assert.That(anchor.Z).IsEqualTo(self.Z);
+        await Assert.That(Vector3.Distance(self, anchor)).IsCloseTo(25f, 0.001f);
+        await Assert.That(Vector3.Distance(threat, anchor)).IsCloseTo(75f, 0.001f);
+
+        // A bearing with a modest slope still spends the whole step on the ground
+        // plane rather than spending part of it on the height difference.
+        var uphill = TravelBrain.SafeAnchor(self, new Vector3(280f, 260f, 57f), 10f);
+        await Assert.That(HorizontalDistance(self, uphill)).IsCloseTo(10f, 0.001f);
+        await Assert.That(uphill.Z).IsEqualTo(self.Z);
+    }
+
+    [Test]
+    public async Task SafeAnchor_UnreadableThreat_StillYieldsAUsableHorizontalAnchor()
+    {
+        var self = new Vector3(1000f, 1000f, 55f);
+        foreach (var unusable in (Vector3[])[Vector3.Zero, self, new Vector3(float.NaN, 0f, 0f)])
+        {
+            var anchor = TravelBrain.SafeAnchor(self, unusable, TravelBrain.RetreatAnchorDistanceM);
+            await Assert.That(TravelBrainInputs.IsFinite(anchor)).IsTrue();
+            await Assert.That(anchor.Z).IsEqualTo(self.Z);
+            await Assert.That(HorizontalDistance(self, anchor)).IsCloseTo(25f, 0.001f);
+            // Never on the threat (and, for the zero-length bearing, never the
+            // actor's own point).
+            await Assert.That(anchor).IsNotEqualTo(self);
+            await Assert.That(anchor).IsNotEqualTo(unusable);
+        }
+    }
+
+    [Test]
+    public async Task SafeAnchor_BadDistance_FallsBackAndStaysHorizontal()
+    {
+        // A threat 25 m BELOW and 20 m west: the fallback distance must still be
+        // spent horizontally, at the actor's own height.
+        var self = new Vector3(15000f, 14900f, 130.7f);
+        var threat = new Vector3(14980f, 14900f, 105.7f);
+        foreach (var bad in (float[])[float.NaN, 0f, -5f, float.PositiveInfinity, float.NegativeInfinity])
+        {
+            var anchor = TravelBrain.SafeAnchor(self, threat, bad);
+            await Assert.That(anchor.Z).IsEqualTo(self.Z);
+            await Assert.That(HorizontalDistance(self, anchor)).IsCloseTo(25f, 0.001f);
+            await Assert.That(anchor.X).IsCloseTo(self.X + 25f, 0.001f);
+        }
+    }
+
+    /// <summary>The ground-plane distance: X/Y only, which is what an actor walks.</summary>
+    private static float HorizontalDistance(Vector3 a, Vector3 b)
+        => Vector2.Distance(new Vector2(a.X, a.Y), new Vector2(b.X, b.Y));
+
     [Test]
     public async Task RetreatArm_WalksTheSafeAnchor_BeforeTheDistanceRead()
     {

@@ -9,14 +9,24 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 ///
 /// One entry per pattern the director can classify from a derived
 /// <see cref="QuestFixtureRow"/> (the row's <c>ObjectivePattern</c>): the
-/// kill-to-gather shape, the item-use shape, the gather-from-doodad shape, and
-/// the interact-with-doodad shape (both doodad shapes ride the SAME
+/// kill-to-gather shape, the item-use shape, the gather-from-doodad shape, the
+/// interact-with-doodad shape (both doodad shapes ride the SAME
 /// <c>Interact</c> key the G9a skill-bound draw graduated into
-/// <see cref="VerifiedVerbRegistry"/>).
+/// <see cref="VerifiedVerbRegistry"/>), the supplied-gather shape, and the
+/// talk-chain shape.
 /// A pattern with no proven verb set maps to EMPTY, so the plan-time gate
 /// checks nothing for it and classification (not this catalog) is what refuses
 /// it. That keeps the fail-closed direction explicit: an unrecognized pattern
 /// fails as UNPROVEN-PATTERN, never as a guessed verb list.
+///
+/// EVERY SET IS A SUBSET OF ALREADY-PROVED KEYS. The talk-chain set added the
+/// shape without adding a proof: every key it lists — MoveTo (G1), Stop and
+/// Observe (G5), AcceptQuest (G3), Talk (G2), TurnInQuest (G8c) — is a row the
+/// kill-to-gather set already carried and the registry already proves, and the
+/// objective leg they serve is the SAME Talk request G2 proved, on the SAME
+/// <c>CSQuestTalkMadePacket</c> path the talk objectives listen to. The
+/// kill-to-gather set itself now also serves the hunt objectives, which reach
+/// the same AutoAttack + loot chain through the engine's one kill fan-out.
 ///
 /// VERBS UNGATED BY DECLARATION. A plan's legs dispatch three verbs that no
 /// gate owns yet, so they are deliberately absent from every list below —
@@ -139,6 +149,29 @@ public static class PatternCatalog
         "AcceptQuest",
         "TurnInQuest"
     });
+
+    /// <summary>
+    /// The talk-chain verb set — the registry-green verbs a talk objective
+    /// needs: travel to the npc (<c>MoveTo</c>), stop in range (<c>Stop</c>),
+    /// observe it (<c>Observe</c>), accept the quest (<c>AcceptQuest</c>), talk
+    /// to it through the real <c>Talk</c> contract, and hand the turn-in to the
+    /// NPC reporter (<c>TurnInQuest</c>). Every key is a row the kill-to-gather
+    /// set already proved — <c>Talk</c> included (FROZEN G2), which is the same
+    /// verb <c>IGameplayActor.Talk</c> drives on the real
+    /// <c>CSQuestTalkMadePacket</c> path that
+    /// <c>QuestActObjTalk.OnTalkMade</c> listens to. So a talk objective is
+    /// gate-checked on a strictly smaller, already-proved set: the talk family
+    /// needs no new proof to be served.
+    /// </summary>
+    private static readonly IReadOnlyList<string> TalkChainVerbs = Array.AsReadOnly(new[]
+    {
+        "MoveTo",
+        "Stop",
+        "Observe",
+        "AcceptQuest",
+        "Talk",
+        "TurnInQuest"
+    });
     private static readonly IReadOnlyList<string> NoVerbs = Array.AsReadOnly(Array.Empty<string>());
     public static IReadOnlyList<string> VerbsFor(QuestPattern pattern)
         => pattern switch
@@ -148,6 +181,7 @@ public static class PatternCatalog
             QuestPattern.GatherDoodad => GatherDoodadVerbs,
             QuestPattern.InteractDoodad => InteractDoodadVerbs,
             QuestPattern.Deliver => DeliverVerbs,
+            QuestPattern.TalkChain => TalkChainVerbs,
             _ => NoVerbs
         };
 }

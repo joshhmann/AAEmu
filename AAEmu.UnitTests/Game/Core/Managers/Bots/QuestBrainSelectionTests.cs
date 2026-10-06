@@ -319,7 +319,169 @@ public class QuestBrainSelectionTests
         await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.UseItem)).IsFalse();
     }
 
+    // -------------------------------------- give-up: advance-leg suppression
+
+    /// <summary>
+    /// The give-up STREAK SUPPRESSES the advance leg. A quest whose slice has
+    /// resolved no target for N wakes made the step machine no-op, yet the
+    /// Advance leg kept ENTERING on every wake, so the engine reported a
+    /// Completed AdvanceQuest forever (observed live: 36 543 in a row for quest
+    /// 251, step and status identical before and after).
+    ///
+    /// The streak crosses the threshold at the END of the give-up wake — the
+    /// loop evaluates the legs first and counts the wake afterwards — so the
+    /// gate reads it on the wake after the verdict. Everything before that
+    /// still enters exactly as it did.
+    /// </summary>
+    [Test]
+    public async Task GiveUp_UnresolvedStreakAtThreshold_SuppressesAdvanceDispatch()
+    {
+        const int threshold = 2;
+        var (actor, session) = GameplayActorTestRig.CreateActor("giveup-suppress");
+        var character = session.Character;
+        character.Level = 3;
+        character.Hp = character.MaxHp;
+        StageQuest251Progress(actor);
+        var opts = new QuestDecisionScenario.QuestOptions { GiveUpAfterUnresolvedWakes = threshold };
+
+        // Below the threshold: the leg enters and its advance dispatches, as before.
+        var early = QuestDecisionScenario.Run(actor, (_, _) => [], opts with { CycleId = "suppress-1" });
+        await Assert.That(early.GiveUps.Count).IsEqualTo(0);
+        await Assert.That(early.LegEvidence.Single(e => e.Leg == QuestLegId.Advance).Entered).IsTrue();
+        var advancesBefore = actor.AuditTrace.Count(r => r.Action == ActorActionType.AdvanceQuest);
+        await Assert.That(advancesBefore).IsGreaterThan(0);
+
+        // The wake the verdict is decided on still ran the leg (the count lands
+        // after the loop), so the streak reaches the threshold here.
+        var given = QuestDecisionScenario.Run(actor, (_, _) => [], opts with { CycleId = "suppress-2" });
+        await Assert.That(given.GiveUps.Count).IsEqualTo(1);
+        await Assert.That(QuestBehavior.TryGetGiveUpStreak(actor.ActorId, Quest251, out var earned))
+            .IsTrue();
+        await Assert.That(earned!.Wakes).IsEqualTo(threshold);
+        var advancesAtVerdict = actor.AuditTrace.Count(r => r.Action == ActorActionType.AdvanceQuest);
+
+        // Past the threshold the leg withdraws NAMED and dispatches NOTHING: the
+        // wake stops reporting landed work.
+        var suppressed = QuestDecisionScenario.Run(actor, (_, _) => [], opts with { CycleId = "suppress-3" });
+        var advance = suppressed.LegEvidence.Single(e => e.Leg == QuestLegId.Advance);
+        await Assert.That(advance.Entered).IsFalse();
+        await Assert.That(advance.Detail).IsEqualTo($"give-up-threshold (funnel unresolved {threshold} wakes)");
+        await Assert.That(suppressed.WorkSelected).IsFalse();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.AdvanceQuest))
+            .IsEqualTo(advancesAtVerdict);
+
+        // Every later wake stays suppressed: this is the loop's end, not one wake.
+        // The streak keeps growing, so the count in the reason moves with it.
+        var again = QuestDecisionScenario.Run(actor, (_, _) => [], opts with { CycleId = "suppress-4" });
+        var later = again.LegEvidence.Single(e => e.Leg == QuestLegId.Advance);
+        await Assert.That(later.Entered).IsFalse();
+        await Assert.That(later.Detail).IsEqualTo($"give-up-threshold (funnel unresolved {threshold + 1} wakes)");
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.AdvanceQuest))
+            .IsEqualTo(advancesAtVerdict);
+    }
+
+    /// <summary>
+    /// The suppression is keyed per (actor, quest): a streak earned on one
+    /// quest withholds neither another quest nor another actor's copy of the
+    /// same quest.
+    /// </summary>
+    [Test]
+    public async Task GiveUp_SuppressionIsKeyedPerActorAndQuest()
+    {
+        const int threshold = 1;
+        var (strained, strainedSession) = GameplayActorTestRig.CreateActor("giveup-key-strained");
+        strainedSession.Character.Level = 3;
+        strainedSession.Character.Hp = strainedSession.Character.MaxHp;
+        StageQuest251Progress(strained);
+        var strainedOpts = new QuestDecisionScenario.QuestOptions { GiveUpAfterUnresolvedWakes = threshold };
+
+        // Wake 1 earns the streak; wake 2 is the one the gate reads it on.
+        var priming = QuestDecisionScenario.Run(strained, (_, _) => [],
+            strainedOpts with { CycleId = "key-prime-1" });
+        await Assert.That(priming.GiveUps.Count).IsEqualTo(1);
+        var suppressed = QuestDecisionScenario.Run(strained, (_, _) => [],
+            strainedOpts with { CycleId = "key-prime-2" });
+        await Assert.That(suppressed.LegEvidence.Single(e => e.Leg == QuestLegId.Advance).Detail)
+            .IsEqualTo($"give-up-threshold (funnel unresolved {threshold} wakes)");
+
+        // A DIFFERENT actor, same quest 251, nothing earned: its advance enters.
+        var (bystander, bystanderSession) = GameplayActorTestRig.CreateActor("giveup-key-bystander");
+        bystanderSession.Character.Level = 3;
+        bystanderSession.Character.Hp = bystanderSession.Character.MaxHp;
+        StageQuest251Progress(bystander);
+        await Assert.That(QuestBehavior.TryGetGiveUpStreak(bystander.ActorId, Quest251, out _)).IsFalse();
+        await Assert.That(QuestBehavior.AdvanceEnter(AdvanceContext(bystander, Quest251), new QuestLegWake())).IsNull();
+
+        // A DIFFERENT quest on the SAME strained actor: the 251 streak withholds
+        // only its own quest. 252 is the item-use shape, staged Progress.
+        var character = strainedSession.Character;
+        character.Quests.ActiveQuests[Quest252] = new Quest(character)
+        {
+            TemplateId = Quest252,
+            Status = QuestStatus.Progress,
+            Step = QuestComponentKind.Progress,
+            Objectives = [0, 0, 0, 0, 0]
+        };
+        await Assert.That(QuestBehavior.TryGetGiveUpStreak(strained.ActorId, Quest252, out _)).IsFalse();
+        await Assert.That(QuestBehavior.AdvanceEnter(AdvanceContext(strained, Quest252), new QuestLegWake())).IsNull();
+    }
+
+    /// <summary>
+    /// The loop is recoverable, not permanent: the streak is the SAME one the
+    /// funnel clears when the slice resolves a target again (the funnel holds no
+    /// other memory to restore), so normal advance entry comes back on the next
+    /// wake.
+    /// </summary>
+    [Test]
+    public async Task GiveUp_SuppressionLiftsWhenTheSliceResolvesAgain()
+    {
+        const int threshold = 2;
+        var (actor, session) = GameplayActorTestRig.CreateActor("giveup-suppress-clear");
+        var character = session.Character;
+        character.Level = 3;
+        character.Hp = character.MaxHp;
+        StageQuest251Progress(actor);
+        JoinActorRegion(session);
+        var opts = new QuestDecisionScenario.QuestOptions { GiveUpAfterUnresolvedWakes = threshold };
+
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [], opts with { CycleId = "restore-1" });
+        var given = QuestDecisionScenario.Run(actor, (_, _) => [], opts with { CycleId = "restore-2" });
+        await Assert.That(given.GiveUps.Count).IsEqualTo(1);
+        var closed = QuestDecisionScenario.Run(actor, (_, _) => [], opts with { CycleId = "restore-3" });
+        await Assert.That(closed.LegEvidence.Single(e => e.Leg == QuestLegId.Advance).Entered).IsFalse();
+
+        // A live prey of the quest's own template inside perception: the funnel
+        // SELECTS, and the SELECTION is the event the funnel clears the streak
+        // on (CountGiveUpWake's own contract, already proved at the verdict
+        // surface by GiveUp_UnresolvedStreakClearedWhenTargetResolves).
+        StagePerceivedBoar(actor, session);
+        var resolved = QuestDecisionScenario.Run(actor,
+            (_, _) => session.World.GetAllNpcs(), opts with { CycleId = "restore-4" });
+        await Assert.That(resolved.LegEvidence.Single(e => e.Leg == QuestLegId.Target).Emitted).IsTrue();
+        await Assert.That(QuestBehavior.TryGetGiveUpStreak(actor.ActorId, Quest251, out _)).IsFalse();
+
+        // The gate — the surface this arm lives in — lets the advance back in.
+        var back = QuestBehavior.AdvanceEnter(AdvanceContext(actor, Quest251), new QuestLegWake());
+        await Assert.That(back).IsNull();
+        await Assert.That(back ?? "").DoesNotStartWith("give-up-threshold");
+    }
+
     // ------------------------------------------------------------ fixtures
+
+    /// <summary>
+    /// One leg context bound to the actor's own frozen perception — the shape the
+    /// wake loop builds per quest (see <c>QuestBehavior.Run</c>), so a direct
+    /// <see cref="QuestBehavior.AdvanceEnter"/> read sees exactly what the leg
+    /// sees on a real wake.
+    /// </summary>
+    private static QuestLegContext AdvanceContext(GameplayActor actor, uint questId)
+    {
+        var snapshot = BotObservedContext.Capture(actor);
+        return new QuestLegContext(actor, new QuestDecisionScenario.QuestOptions(), questId, null, null)
+        {
+            Observation = snapshot
+        };
+    }
 
     /// <summary>Stages 251 active/Progress, so its plan derives and its funnel runs.</summary>
     private static void StageQuest251Progress(GameplayActor actor)

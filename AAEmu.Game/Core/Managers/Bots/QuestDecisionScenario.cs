@@ -155,6 +155,14 @@ public static class QuestDecisionScenario
         /// </summary>
         public int ObjectiveDeliverPriority { get; init; } = 29;
 
+        /// <summary>
+        /// Talk-objective priority: above advance (20) so a live conversation
+        /// outranks step-machine work, below turn-in (30) so a Ready quest still
+        /// reports first, and below every other objective leg (26-29) so the
+        /// shape with the most expensive work in flight keeps the wake.
+        /// </summary>
+        public int ObjectiveTalkPriority { get; init; } = 25;
+
         // ---- offering rank policy (the selection hook) ----
         /// <summary>
         /// Personality weight added to EVERY accept proposal's rank, so a

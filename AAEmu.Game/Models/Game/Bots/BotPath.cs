@@ -197,6 +197,77 @@ public class BotPath
     public static BotPath PathTo(Vector3 target, float maxStepPerTick = 5f, float arrivalRadius = ArrivalRadiusDefault)
         => new([target], LoopMode.Once, arrivalRadius, maxStepPerTick);
 
+    /// <summary>Safety margin a chunked leg leaves on the envelope (see <see cref="PathTo(Vector3, Vector3, float, float, float, float)"/>).</summary>
+    internal const double TravelChunkEnvelopeMargin = 0.5d;
+
+    /// <summary>
+    /// Route from <paramref name="from"/> to <paramref name="target"/> as a
+    /// MULTI-WAYPOINT walk whenever the two lie further apart than
+    /// <paramref name="chunkMeters"/>. Intermediate waypoints sit exactly
+    /// <paramref name="chunkMeters"/> from their predecessor and the LAST
+    /// waypoint is <paramref name="target"/> itself, so the route's total
+    /// length is the straight-line distance with no rounding drift. The
+    /// ordinary multi-waypoint machinery then does the rest: the route layer
+    /// issues one <c>MoveTo</c> leg per waypoint and <see cref="Arrive"/>
+    /// advances the index under <see cref="LoopMode.Once"/> until the last one,
+    /// which sets <see cref="IsFinished"/>.
+    ///
+    /// Inside one chunk this returns the SAME single-leg route
+    /// <see cref="PathTo(Vector3, float, float)"/> builds — the near case is
+    /// byte-identical to the unwalkable-leg behaviour, not merely equivalent.
+    ///
+    /// WHY THIS EXISTS (quest travel). Measured on a 30-minute 4-bot
+    /// unattended run: 57 of 101 travel legs (56%) died
+    /// <c>result=TimedOut failure=Navigation elapsed=60.1s detail=navigation
+    /// budget exceeded</c>, each re-dispatching the identical destination every
+    /// 60 s, while destinations ranged 25.9-904.0 m from the bot's LIVE
+    /// position and the single leg inside 31.8 m completed. The budget was
+    /// never the bug — the budget correctly halted a leg that was asked to
+    /// walk further than one leg can walk. The fix is in ROUTE CONSTRUCTION,
+    /// not in movement: nothing here touches <c>MoveTo</c>, the leg timeout,
+    /// or the movement integration, and NO PATHFINDING is implied — the route
+    /// is still the straight line to the target, only subdivided. Chunking
+    /// does NOT route around terrain, obstacles or water; a blocked straight
+    /// line stays blocked, it now fails in bounded legs.
+    /// </summary>
+    /// <param name="from">Where the route starts — the bot's position at arm time.</param>
+    /// <param name="target">Final destination — always preserved exactly.</param>
+    /// <param name="chunkMeters">
+    /// Leg length to subdivide at: the honest reach of ONE navigation leg.
+    /// Values outside [arrivalRadius, envelopeMeters] are clamped into that
+    /// range, so a zero or absurd chunk yields a finite, non-empty route.
+    /// </param>
+    /// <param name="envelopeMeters">Hard bound on any emitted leg length; non-positive disables chunking (single-leg route).</param>
+    /// <param name="maxStepPerTick">Bounded movement step, unchanged from <see cref="PathTo(Vector3, float, float)"/>.</param>
+    /// <param name="arrivalRadius">Waypoint arrival radius, unchanged from <see cref="PathTo(Vector3, float, float)"/>.</param>
+    public static BotPath PathTo(Vector3 from, Vector3 target, float chunkMeters, float envelopeMeters,
+        float maxStepPerTick = 5f, float arrivalRadius = ArrivalRadiusDefault)
+    {
+        var total = MathUtil.CalculateDistance(from, target, true);
+        // A zero-length or sub-arrival destination has nothing to walk, and a
+        // non-positive envelope cannot bound a leg: both are the single-leg
+        // route, which lands inside one ArrivalRadius on the first Move.
+        if (!(envelopeMeters > 0f) || !(chunkMeters > 0f) || total < arrivalRadius)
+            return PathTo(target, maxStepPerTick, arrivalRadius);
+
+        var chunk = Math.Clamp(chunkMeters, arrivalRadius, envelopeMeters);
+        if (total <= chunk)
+            return PathTo(target, maxStepPerTick, arrivalRadius);
+
+        // Uniform subdivision along the straight line. `walked` accumulates
+        // the exact same chunk the loop bound is tested against, so every
+        // emitted leg is <= chunk by construction — no epsilon fudging.
+        var waypoints = new List<Vector3>();
+        var walked = 0f;
+        while (walked + chunk < total)
+        {
+            walked += chunk;
+            waypoints.Add(from + (target - from) * (walked / total));
+        }
+        waypoints.Add(target);
+        return new BotPath(waypoints, LoopMode.Once, arrivalRadius, maxStepPerTick);
+    }
+
     /// <summary>
     /// Builds an analytical smooth circle route around center with dense waypoints for continuous curvature.
     /// </summary>

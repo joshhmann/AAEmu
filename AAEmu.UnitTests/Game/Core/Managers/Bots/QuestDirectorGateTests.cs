@@ -7,6 +7,7 @@ using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.Quests;
+using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
 
@@ -33,6 +34,19 @@ public class QuestDirectorGateTests
     private const uint Quest252 = 252;
     private const uint Boar3475 = 3475;
     private const uint Pack4530 = 4530;
+
+    // --- Real objective data read off AAEmu.Game/Data/compact.sqlite3 (md5
+    // 78b3bdbf038db3b927056106efdf91af) — the canonical tables the game server
+    // itself loads, not invented fixtures.
+    private const uint Quest60 = 60;   // Progress: QuestActObjMonsterHunt act 807 -> npc 611, count 1
+    private const uint Quest10 = 10;   // Progress: QuestActObjMonsterGroupHunt act 13979 -> group 84, count 3
+    private const uint Quest532 = 532; // Progress: QuestActObjTalk act 3230 -> npc 2426 (first objective act)
+    private const uint HuntAct807 = 807u;
+    private const uint HuntPrey611 = 611u;
+    private const uint GroupHuntAct13979 = 13979u;
+    private const uint GroupHuntGroup84 = 84u;
+    private const uint TalkAct3230 = 3230u;
+    private const uint TalkNpc2426 = 2426u;
     private const uint Meat4058 = 4058;
 
     [Before(Test)]
@@ -379,6 +393,339 @@ public class QuestDirectorGateTests
         // classification, never by a guessed verb list).
         await Assert.That(PatternCatalog.VerbsFor(QuestPattern.Unknown).Count).IsEqualTo(0);
         await Assert.That(PatternCatalog.VerbsFor(QuestPattern.Craft).Count).IsEqualTo(0);
+    }
+
+    // ------------------------------- hunt + talk objective classification
+
+    /// <summary>
+    /// Quest 60's Progress component carries exactly one objective act —
+    /// <c>QuestActObjMonsterHunt</c> (act 807, npc template 611, count 1) — so
+    /// it is a pure hunt shape straight off the canonical quest data, with no
+    /// gather act and therefore no loot chain to invert. Before this shape was
+    /// classified the row resolved <see cref="QuestPattern.Unknown"/> and the
+    /// quest sat on the bootstrap floor; now it derives the kill-to-gather
+    /// shape and builds the real objective leg set.
+    /// </summary>
+    [Test]
+    public async Task Plan_HuntObjective_MonsterHunt_DerivesKillShapeWithRealLegs()
+    {
+        var fixture = QuestFixtureRow.FromQuestData(Quest60);
+
+        // The classification and the identity facts are read off the act itself.
+        await Assert.That(fixture.ObjectiveActType).IsEqualTo("QuestActObjMonsterHunt");
+        await Assert.That(fixture.ObjectivePattern).IsEqualTo(QuestPattern.KillX);
+        await Assert.That(fixture.HuntActId).IsEqualTo(HuntAct807);
+        await Assert.That(fixture.HuntNpcTemplate).IsEqualTo(HuntPrey611);
+        await Assert.That(fixture.HuntNeed).IsEqualTo(1);
+        // A kill objective carries no gather act at all — the row's gather facts
+        // stay zero, which is exactly why the loot-chain source gate must not
+        // apply to this shape.
+        await Assert.That(fixture.GatherActId).IsEqualTo(0u);
+        await Assert.That(fixture.PreyItem).IsEqualTo(0u);
+
+        var plan = QuestDirector.Plan(Quest60, fixture);
+
+        await Assert.That(plan.HasFailed).IsFalse();
+        await Assert.That(plan.Unserved).IsEqualTo("");
+        await Assert.That(plan.Pattern).IsEqualTo(QuestPattern.KillX);
+        // Real legs, not the bootstrap floor.
+        await Assert.That(plan.Legs.Count).IsEqualTo(7);
+        await Assert.That(plan.Leg(QuestLegId.Combat)).IsNotNull();
+        await Assert.That(plan.Leg(QuestLegId.TurnIn)).IsNotNull();
+    }
+
+    /// <summary>
+    /// The group hunt reads its target from the act's OWN group id, never a
+    /// membership dump and never a hand-typed template. Quest 10's objective is
+    /// <c>QuestActObjMonsterGroupHunt</c> (act 13979, group 84, count 3).
+    /// </summary>
+    [Test]
+    public async Task Plan_HuntObjective_MonsterGroupHunt_CarriesItsOwnGroup()
+    {
+        var fixture = QuestFixtureRow.FromQuestData(Quest10);
+
+        await Assert.That(fixture.ObjectiveActType).IsEqualTo("QuestActObjMonsterGroupHunt");
+        await Assert.That(fixture.ObjectivePattern).IsEqualTo(QuestPattern.KillX);
+        await Assert.That(fixture.HuntActId).IsEqualTo(GroupHuntAct13979);
+        await Assert.That(fixture.HuntNpcGroup).IsEqualTo(GroupHuntGroup84);
+        await Assert.That(fixture.HuntNpcTemplate).IsEqualTo(0u);
+
+        var plan = QuestDirector.Plan(Quest10, fixture);
+
+        await Assert.That(plan.HasFailed).IsFalse();
+        await Assert.That(plan.Pattern).IsEqualTo(QuestPattern.KillX);
+    }
+
+    /// <summary>
+    /// Quest 532's Progress component's FIRST objective act (by component id,
+    /// act id) is <c>QuestActObjTalk</c> (act 3230, npc template 2426) — it
+    /// also carries a second talk act (3584) and a check-complete act, so the
+    /// ordering rule is exercised by real data, not a hand-built row. The shape
+    /// derives the talk chain and builds real legs where the quest used to sit
+    /// on the bootstrap floor.
+    /// </summary>
+    [Test]
+    public async Task Plan_TalkObjective_Talk_DerivesTalkChainWithRealLegs()
+    {
+        var fixture = QuestFixtureRow.FromQuestData(Quest532);
+
+        await Assert.That(fixture.ObjectiveActType).IsEqualTo("QuestActObjTalk");
+        await Assert.That(fixture.ObjectivePattern).IsEqualTo(QuestPattern.TalkChain);
+        // The FIRST objective act wins — the same (component id, act id) order
+        // the gather/use/interact shapes use.
+        await Assert.That(fixture.TalkActId).IsEqualTo(TalkAct3230);
+        await Assert.That(fixture.TalkNpcTemplate).IsEqualTo(TalkNpc2426);
+        await Assert.That(fixture.TalkNpcGroup).IsEqualTo(0u);
+
+        var plan = QuestDirector.Plan(Quest532, fixture);
+
+        await Assert.That(plan.HasFailed).IsFalse();
+        await Assert.That(plan.Unserved).IsEqualTo("");
+        await Assert.That(plan.Pattern).IsEqualTo(QuestPattern.TalkChain);
+        await Assert.That(plan.Legs.Select(l => l.Id)).IsEquivalentTo(new[]
+        {
+            QuestLegId.Advance, QuestLegId.Talk, QuestLegId.TurnIn
+        });
+        await Assert.That(plan.Leg(QuestLegId.Talk)).IsNotNull();
+        await Assert.That(plan.Leg(QuestLegId.TurnIn)).IsNotNull();
+    }
+
+    /// <summary>
+    /// The talk chain's verb set is a STRICT SUBSET of keys the production
+    /// registry already proves — every one of them resolves green with a real
+    /// gate id and a real evidence artifact, so serving the talk family added
+    /// no ungated verb. <c>Talk</c> itself is the FROZEN G2 row, the same verb
+    /// the return leg's dialogue fallback rides.
+    /// </summary>
+    [Test]
+    public async Task PatternCatalog_TalkChainIsGreenOnEveryVerbItLists()
+    {
+        await Assert.That(PatternCatalog.VerbsFor(QuestPattern.TalkChain)).IsEquivalentTo(new[]
+        {
+            "MoveTo", "Stop", "Observe", "AcceptQuest", "Talk", "TurnInQuest"
+        });
+
+        foreach (var verbKey in PatternCatalog.VerbsFor(QuestPattern.TalkChain))
+        {
+            var gate = VerifiedVerbRegistry.Instance.Resolve(verbKey);
+            await Assert.That(gate.IsGreen).IsTrue();
+            await Assert.That(gate.GateId.Length).IsGreaterThan(0);
+            await Assert.That(gate.EvidencePath.Length).IsGreaterThan(0);
+        }
+
+        var talk = VerifiedVerbRegistry.Instance.Resolve("Talk");
+        await Assert.That(talk.GateId).IsEqualTo("G2");
+        await Assert.That(talk.EvidencePath).IsEqualTo("g2-talk-capability-report.json");
+
+        // No catalog key anywhere may name a verb the registry does not carry —
+        // an absent key would fail every plan that lists it, closed, at plan
+        // time rather than at dispatch.
+        foreach (var pattern in Enum.GetValues<QuestPattern>())
+        foreach (var verbKey in PatternCatalog.VerbsFor(pattern))
+            await Assert.That(VerifiedVerbRegistry.Instance.Resolve(verbKey).IsGreen).IsTrue();
+    }
+
+    /// <summary>
+    /// A talk objective that names neither an npc nor a group has no
+    /// conversation the engine could ever credit, so the plan fails closed by
+    /// name with zero legs — the same fail-closed shape every other source
+    /// gate uses.
+    /// </summary>
+    [Test]
+    public async Task Plan_TalkObjectiveWithoutTarget_FailsUnprovenSource()
+    {
+        var fixture = new QuestFixtureRow(Quest532, 0, 0, 0, 0, 0, 2425, 0)
+        {
+            ObjectivePattern = QuestPattern.TalkChain,
+            ObjectiveActType = "QuestActObjTalk",
+            TalkActId = 3230
+        };
+
+        var plan = QuestDirector.Plan(Quest532, fixture);
+
+        await Assert.That(plan.HasFailed).IsTrue();
+        await Assert.That(plan.FailStage).IsEqualTo("FIXTURE");
+        await Assert.That(plan.FailReason)
+            .IsEqualTo("HARNESS/UNPROVEN-SOURCE quest=532 act=3230 npc=0 group=0");
+        await AssertNoLegs(plan);
+    }
+
+    /// <summary>
+    /// A hunt objective that names neither a template nor a group fails closed
+    /// the same way. This is the guard that keeps a zone-scoped kill — which
+    /// deliberately stays unserved — from being served as "attack the nearest
+    /// arbitrary hostile".
+    /// </summary>
+    [Test]
+    public async Task Plan_HuntObjectiveWithoutTarget_FailsUnprovenSource()
+    {
+        var fixture = new QuestFixtureRow(Quest60, 0, 0, 0, 0, 0, 6490, 0)
+        {
+            ObjectivePattern = QuestPattern.KillX,
+            ObjectiveActType = "QuestActObjMonsterHunt",
+            HuntActId = HuntAct807
+        };
+
+        var plan = QuestDirector.Plan(Quest60, fixture);
+
+        await Assert.That(plan.HasFailed).IsTrue();
+        await Assert.That(plan.FailStage).IsEqualTo("FIXTURE");
+        await Assert.That(plan.FailReason)
+            .IsEqualTo("HARNESS/UNPROVEN-SOURCE quest=60 act=807 prey=0 group=0");
+        await AssertNoLegs(plan);
+    }
+
+    /// <summary>
+    /// THE FAIL-CLOSED PATH MUST NOT HAVE LOOSENED. An objective shape this
+    /// change does not serve — <c>QuestActObjCraft</c> (104 real quests) and
+    /// <c>QuestActObjZoneKill</c> (106) among them — must still keep the
+    /// bootstrap floor, still name its act type, and still build no objective
+    /// leg. A zone kill is the sharp case: it shares the kill engine fan-out,
+    /// so mapping it was possible; it is left unmapped deliberately because it
+    /// names no template and no group.
+    /// </summary>
+    [Test]
+    [Arguments("QuestActObjCraft")]
+    [Arguments("QuestActObjZoneKill")]
+    [Arguments("QuestActObjZoneMonsterHunt")]
+    [Arguments("QuestActObjSphere")]
+    [Arguments("QuestActObjAggro")]
+    [Arguments("QuestActObjDistance")]
+    [Arguments("QuestActObjExpressFire")]
+    [Arguments("QuestActObjCompleteQuest")]
+    public async Task Plan_StillUnservedAct_KeepsBootstrapFloor_NamesTheGap(string actType)
+    {
+        var fixture = new QuestFixtureRow(Quest251, 0, 0, 0, 0, 0, 0, 0)
+        {
+            ObjectiveActType = actType
+        };
+
+        var plan = QuestDirector.Plan(Quest251, fixture);
+
+        await Assert.That(plan.HasFailed).IsFalse();
+        await Assert.That(plan.Unserved)
+            .IsEqualTo($"HARNESS/UNPROVEN-PATTERN quest=251 act={actType}");
+        await Assert.That(plan.Pattern).IsEqualTo(QuestPattern.Unknown);
+        await Assert.That(plan.Legs.Count).IsEqualTo(2);
+        await Assert.That(plan.Leg(QuestLegId.Advance)).IsNotNull();
+        await Assert.That(plan.Leg(QuestLegId.TurnIn)).IsNotNull();
+        // No objective leg may exist on an unserved plan.
+        await Assert.That(plan.Leg(QuestLegId.Talk)).IsNull();
+        await Assert.That(plan.Leg(QuestLegId.Combat)).IsNull();
+    }
+
+    // ------------------------------------------------- dispatch routing
+
+    /// <summary>
+    /// THE SILENT NO-OP GUARD. A proposal whose goal has no route in
+    /// <c>QuestBehavior.Dispatch</c> returns null and drops the whole wake
+    /// without a single error — a green build, a correctly classified quest, and
+    /// zero behavior. So this pins the ROUTE, not just the plan: a live talk
+    /// quest with its npc in reach must actually reach the actor's Talk audit
+    /// trail. Quest 532's row and npc 2426 are the real canonical ones.
+    ///
+    /// Two wakes by design: the leg holds the stop-before-talk discipline every
+    /// other travelling leg holds, so the first in-range wake settles with an
+    /// audited Stop and the second — now that the hold is confirmed — talks.
+    /// </summary>
+    [Test]
+    public async Task Run_TalkObjectiveInRange_ReachesTheActorTalkVerb()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("talk-routing");
+        var npcObjId = GameplayActorTestRig.SpawnNpc(session, TalkNpc2426);
+        var npc = session.World.GetNpc(npcObjId)!;
+        npc.Hp = 100;
+        // Place the actor + npc into the region grid the way the ENGINE does
+        // (AddVisibleObject → Region.AddObject), so the nearby-list query has
+        // real data to read — the established mechanism
+        // GameplayActorM53CoreSurfaceTests.Observe_SnapshotEqualsDirectWorldManagerQueries
+        // uses. The actor must be joined too, or the query reads an empty region.
+        var region = session.World.GetRegionByPos(actor.Character.Transform.World.Position);
+        if (region == null)
+            Assert.Fail("rig world has no region at the actor position");
+        region.AddObject(actor.Character);
+        actor.Character.Region = region;
+        // Well inside the 25 m Talk engine gate, so the leg is in the
+        // stop-then-talk branch from the very first wake.
+        JoinNpcRegion(session, npcObjId,
+            actor.Character.Transform.World.Position + new System.Numerics.Vector3(3f, 0f, 0f));
+        actor.Character.Quests.ActiveQuests[Quest532] = new Quest(actor.Character)
+        {
+            TemplateId = Quest532,
+            Status = QuestStatus.Progress,
+            Step = QuestComponentKind.Progress,
+            Objectives = [0, 0, 0, 0, 0],
+        };
+
+        QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "talk-routing-1" });
+        QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "talk-routing-2" });
+
+        // The wake reached the Talk verb. Whatever else it did, a Talk proposal
+        // with no executor route could not leave this record — that is the exact
+        // failure this pins.
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Talk)).IsTrue();
+    }
+
+    /// <summary>
+    /// THE FAIL-CLOSED PROOF for the talk leg, and the one case the headless rig
+    /// supports natively. With NOTHING perceived the leg must withdraw by name
+    /// (<c>no-target</c>) and emit no proposal at all — it must never reach for a
+    /// conversation the engine cannot credit, and never dispatch an unguarded
+    /// verb. This is the mirror of the routing test: one proves it acts when it
+    /// can see its target, this proves it refuses when it cannot.
+    /// </summary>
+    [Test]
+    public async Task TalkEmit_NoPerceivedNpc_WithdrawsByName_EmitsNoProposal()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("talk-no-target");
+        actor.Character.Quests.ActiveQuests[Quest532] = new Quest(actor.Character)
+        {
+    TemplateId = Quest532,
+      Status = QuestStatus.Progress,
+    Step = QuestComponentKind.Progress,
+            Objectives = [0, 0, 0, 0, 0],
+        };
+
+        var fixture = QuestFixtureRow.FromQuestData(Quest532);
+        // The wake's OWN perception, which sees no npc at all in this stage.
+     var observation = BotObservedContext.Capture(actor);
+        await Assert.That(observation.NearbyNpcObjIds).IsEmpty();
+
+        var legCtx = new QuestLegContext(actor,
+            new QuestDecisionScenario.QuestOptions { CycleId = "talk-no-target" },
+ Quest532, fixture, null)
+        {
+     Observation = observation
+        };
+
+  var diag = QuestLegWake.NoProposal;
+        var hpBefore = -1;
+ var proposal = QuestBehavior.TalkEmit(legCtx, ref diag, ref hpBefore);
+
+      await Assert.That(proposal).IsNull();
+        await Assert.That(diag).Contains("dispatch=withdrawn");
+        await Assert.That(diag).Contains("reason=no-target");
+  }
+
+    /// <summary>
+    /// Joins a spawned npc to its world region so the wake's OWN perception
+    /// snapshot can see it — the same registration the perception-stack rigs
+    /// use. Without it the region graph reports no nearby npc and the talk leg
+    /// correctly (but unobservably) withdraws for want of a target.
+    /// </summary>
+    private static void JoinNpcRegion(HeadlessSession session, uint npcObjId, System.Numerics.Vector3 position)
+    {
+        var npc = session.World.GetNpc(npcObjId);
+        if (npc == null)
+            return;
+        npc.Transform.Local.SetPosition(position);
+        var region = session.World.GetRegionByPos(position);
+        if (region == null)
+            return;
+        region.AddObject(npc);
+        npc.Region = region;
     }
 
     // ------------------------------------------------- 252 second proof

@@ -214,6 +214,63 @@ public sealed record QuestFixtureRow(
     public int SupplyCount { get; init; }
 
     /// <summary>
+    /// The kill-family objective's act id (0 when the quest carries no kill
+    /// objective). The credit check resolves the act by this id off the static
+    /// template tables, exactly as the gather/interact/item-use credit helpers
+    /// do for their own shapes — the act's live counter, never a bag count (a
+    /// kill objective has no item).
+    /// </summary>
+    public uint HuntActId { get; init; }
+
+    /// <summary>
+    /// The kill-family objective's required count (0 when the quest carries no
+    /// kill objective). Read off the act's own <c>Count</c>.
+    /// </summary>
+    public int HuntNeed { get; init; }
+
+    /// <summary>
+    /// The npc template a single-template hunt objective names (0 when the act
+    /// names a group instead, or names nothing at all). Read off the act's own
+    /// npc id — never hand-typed, never a quest id. This is the hunt leg's SOLE
+    /// accept criterion: the fight is named, and the engine credits it by
+    /// template through <c>OnMonsterHunt</c>.
+    /// </summary>
+    public uint HuntNpcTemplate { get; init; }
+
+    /// <summary>
+    /// The npc group a group-hunt objective names (0 for a single-template
+    /// hunt, or for an objective that names no group at all). Read off the
+    /// act's own group id; membership is tested live through the engine's own
+    /// <c>QuestManager.CheckGroupNpc</c>, so this needs no membership dump.
+    /// </summary>
+    public uint HuntNpcGroup { get; init; }
+
+    /// <summary>
+    /// The talk-family objective's act id (0 when the quest carries no talk
+    /// objective). The credit check resolves the act by this id off the static
+    /// template tables, exactly as the gather/interact/item-use credit helpers
+    /// do for their own shapes.
+    /// </summary>
+    public uint TalkActId { get; init; }
+
+    /// <summary>
+    /// The npc template a single-npc talk objective names (0 when the act names
+    /// a group instead, or names none). Read off the act's own npc id — never
+    /// hand-typed, never a quest id. This is the talk leg's SOLE accept
+    /// criterion: the conversation is named, and the engine credits it by
+    /// template through <c>OnTalkMade</c>.
+    /// </summary>
+    public uint TalkNpcTemplate { get; init; }
+
+    /// <summary>
+    /// The npc group a group-talk objective names (0 for a single-npc talk, or
+    /// for an objective that names no group). Read off the act's own group id;
+    /// membership is tested live through the engine's own
+    /// <c>QuestManager.CheckGroupNpc</c>.
+    /// </summary>
+    public uint TalkNpcGroup { get; init; }
+
+    /// <summary>
     /// Memo of derived rows, one per quest id. Concurrent: the wake path can
     /// derive different quests from different bot threads.
     /// </summary>
@@ -318,6 +375,9 @@ public sealed record QuestFixtureRow(
         uint useItemActId = 0;
         uint useItemTemplateId = 0;
         var useItemNeed = 0;
+        uint talkActId = 0;
+        uint talkNpcTemplate = 0;
+        uint talkNpcGroup = 0;
         uint interactActId = 0;
         uint interactDoodad = 0;
         var interactNeed = 0;
@@ -327,6 +387,10 @@ public sealed record QuestFixtureRow(
         var autoComplete = false;
         var objectivePattern = QuestPattern.Unknown;
         var objectiveActType = "";
+        uint huntActId = 0;
+        var huntNeed = 0;
+        uint huntNpcTemplate = 0;
+        uint huntNpcGroup = 0;
         try
         {
             var template = QuestManager.Instance?.GetTemplate(questId);
@@ -377,13 +441,34 @@ public sealed record QuestFixtureRow(
             if (objective != null)
             {
                 objectiveActType = objective.GetType().Name;
-                objectivePattern = objective switch
+                objectivePattern = ClassifyObjective(objective);
+            }
+
+            // The kill-family objective's own identity facts, read off the act
+            // that classified as the kill-to-gather shape. A KILL objective has
+            // no gather act, so the row's gather facts stay zero and the hunt
+            // leg resolves its own target instead of the loot chain.
+            if (objectivePattern == QuestPattern.KillX && objective is not QuestActObjItemGather)
+            {
+                huntActId = objective.ActId;
+                huntNeed = objective.Count;
+                (huntNpcTemplate, huntNpcGroup) = HuntIdentity(objective);
+            }
+
+            // The talk-family objective's own identity facts, read off the act
+            // that classified as the talk-chain shape.
+            if (objectivePattern == QuestPattern.TalkChain)
+            {
+                talkActId = objective!.ActId;
+                switch (objective)
                 {
-                    QuestActObjItemGather => QuestPattern.KillX,
-                    QuestActObjItemUse => QuestPattern.UseItem,
-                    QuestActObjInteraction => QuestPattern.InteractDoodad,
-                    _ => QuestPattern.Unknown
-                };
+                    case QuestActObjTalk talk:
+                        talkNpcTemplate = talk.NpcId;
+                        break;
+                    case QuestActObjTalkNpcGroup groupTalk:
+                        talkNpcGroup = groupTalk.NpcGroupId;
+                        break;
+                }
             }
 
             // Auto-complete: the engine's own completion act, on the Ready or
@@ -411,12 +496,14 @@ public sealed record QuestFixtureRow(
         var gatherDoodads = ResolveDoodadSources(preyItem);
         var gatherDoodad = gatherDoodads.Count == 0 ? 0 : gatherDoodads[0];
 
-        // A gather whose item comes from no npc loot pack but from a doodad loot
-        // func is the gather-from-doodad shape (the well-draw path), not prey.
-        // The director's own fallback already reads hand-built rows this way, so
-        // both paths agree; a quest whose item resolves neither source keeps the
-        // prey shape and fails on the prey precondition as before.
-        if (objectivePattern == QuestPattern.KillX && preyItem != 0 && preyTemplate == 0 && gatherDoodad != 0)
+        // The item-chain refinements below read the quest's GATHER item, so they
+        // apply to the gather shape alone. A hunt objective carries no gather
+        // act at all (its item is 0), and its source is the fight itself — the
+        // act's own npc template or group, not a loot pack — so it keeps the
+        // kill-to-gather shape and is never rewritten into a doodad/deliver
+        // shape it has no item for.
+        if (preyItem != 0 && objectivePattern == QuestPattern.KillX
+            && preyTemplate == 0 && gatherDoodad != 0)
             objectivePattern = QuestPattern.GatherDoodad;
         // A gather whose item rides the quest's OWN Supply act is the
         // supplied-gather shape (the basil-delivery path): the step machine
@@ -425,8 +512,8 @@ public sealed record QuestFixtureRow(
         // over the doodad chain (both may name the item; the engine grant is
         // the authoritative source), and a gather for any OTHER item keeps its
         // prior shape.
-        if (objectivePattern is QuestPattern.KillX or QuestPattern.GatherDoodad
-            && preyItem != 0 && supplyItem != 0 && preyItem == supplyItem)
+        if (preyItem != 0 && objectivePattern is QuestPattern.KillX or QuestPattern.GatherDoodad
+            && supplyItem != 0 && preyItem == supplyItem)
             objectivePattern = QuestPattern.Deliver;
 
         return new QuestFixtureRow(
@@ -447,9 +534,95 @@ public sealed record QuestFixtureRow(
             GatherUseSkill = ResolveDoodadUseSkill(gatherDoodad),
             SupplyActId = supplyActId,
             SupplyItem = supplyItem,
-            SupplyCount = supplyCount
+            SupplyCount = supplyCount,
+            HuntActId = huntActId,
+            HuntNeed = huntNeed,
+            HuntNpcTemplate = huntNpcTemplate,
+            HuntNpcGroup = huntNpcGroup,
+            TalkActId = talkActId,
+            TalkNpcTemplate = talkNpcTemplate,
+            TalkNpcGroup = talkNpcGroup
         };
     }
+    /// <summary>
+    /// A kill-family objective act's own (npc template, npc group) identity,
+    /// read off the act's own fields — never hand-typed, never a quest id. A
+    /// single-template hunt names an npc template; a group hunt names a quest
+    /// monster group and no template (its membership is tested live through
+    /// <c>QuestManager.CheckGroupNpc</c>, the engine's own test the talk-group
+    /// and express-fire acts already gate on — no enumeration needed here).
+    ///
+    /// A zone-scoped kill names a zone group and NO npc template and NO group
+    /// at all, so it resolves to (0, 0) and stays unserved: the only behavior
+    /// it would admit is "attack the nearest arbitrary hostile", which is a
+    /// wider capability than any gate has proven, not a reuse of one.
+    /// </summary>
+    private static (uint NpcTemplate, uint NpcGroup) HuntIdentity(QuestActTemplate act) => act switch
+    {
+        QuestActObjMonsterHunt hunt => (hunt.NpcId, 0u),
+        QuestActObjMonsterGroupHunt groupHunt => (0u, groupHunt.QuestMonsterGroupId),
+        _ => (0u, 0u)
+    };
+    /// <summary>
+    /// The objective act's SHAPE, read off the act's own CLR type. The three
+    /// shapes the vocabulary has always served (the item gather, the item use,
+    /// the doodad interaction) derive directly; the hunt family derives the
+    /// kill-to-gather shape and the talk family the talk-chain shape. Anything
+    /// else — craft, escort, sphere, express-fire, aggro, level, cinema,
+    /// complete-quest, item-group — derives <see cref="QuestPattern.Unknown"/>,
+    /// which is the caller's fail-closed trigger: an unserved shape keeps the
+    /// bootstrap floor with its act type NAMED, never a guessed verb list.
+    ///
+    /// THE HUNT FAMILY. <see cref="QuestActObjMonsterHunt"/> (kill N of one npc
+    /// template) and <see cref="QuestActObjMonsterGroupHunt"/> (kill N of any
+    /// npc template in a quest monster group) are satisfied by ONE engine
+    /// fan-out: a single npc death runs
+    /// <c>QuestManager.DoOnMonsterHuntEvents</c>, which emits
+    /// <c>OnMonsterHunt</c> by victim template AND <c>OnMonsterGroupHunt</c>
+    /// for every group that template belongs to
+    /// (QuestManagerEvents.cs:187-212). So both shapes ride the AutoAttack +
+    /// loot chain the registry already proves; neither needs a verb the
+    /// registry does not already carry.
+    ///
+    /// THE TALK FAMILY. <see cref="QuestActObjTalk"/> (talk to npc template N)
+    /// and <see cref="QuestActObjTalkNpcGroup"/> (talk to any member of an npc
+    /// group) credit from <c>QuestActObjTalk.OnTalkMade</c> /
+    /// <c>QuestActObjTalkNpcGroup.OnTalkNpcGroupMade</c>, both raised by
+    /// <c>QuestManager.DoTalkMadeEvents</c> from the real
+    /// <c>CSQuestTalkMadePacket</c> path — which is exactly the request
+    /// <c>IGameplayActor.Talk</c> drives (GameplayActor.cs:1083-1106). So both
+    /// shapes ride the one registry-green <c>Talk</c> verb.
+    ///
+    /// WHAT IS DELIBERATELY NOT MAPPED.
+    /// <see cref="QuestActObjZoneKill"/> and
+    /// <see cref="QuestActObjZoneMonsterHunt"/> name a zone group and no npc
+    /// template and no group, so a plan could satisfy one only by attacking
+    /// arbitrary nearby hostiles — a WIDER behavior than any gate has proven,
+    /// not a reuse of a proved one. <see cref="QuestActObjAggro"/> scores kills
+    /// by aggro rank, a different criterion from a count. Neither is guessed
+    /// at. <see cref="QuestActObjDistance"/> and
+    /// <see cref="QuestActObjSphere"/> are the reason
+    /// <see cref="QuestPattern.ReachPos"/> stays unserved: distance resolves no
+    /// destination at all (its RunAct re-reads a live radius census around the
+    /// OWNER and holds no position), and a sphere's centre lives in the
+    /// client's <c>quest_sign_sphere.g</c> level-design files, which this fork
+    /// does not ship — so there is no reachable coordinate for MoveTo to aim
+    /// at. A guess here would be worse than the bootstrap floor it replaces.
+    /// </summary>
+    private static QuestPattern ClassifyObjective(QuestActTemplate act) => act switch
+    {
+        QuestActObjItemGather => QuestPattern.KillX,
+        QuestActObjItemUse => QuestPattern.UseItem,
+        QuestActObjInteraction => QuestPattern.InteractDoodad,
+
+        // Hunt family — one engine fan-out credits both (see above).
+        QuestActObjMonsterHunt or QuestActObjMonsterGroupHunt => QuestPattern.KillX,
+
+        // Talk family — the one registry-green Talk verb credits both.
+        QuestActObjTalk or QuestActObjTalkNpcGroup => QuestPattern.TalkChain,
+
+        _ => QuestPattern.Unknown
+    };
 
     private static QuestFixtureRow Empty(uint questId)
         => new(questId, 0, 0, 0, 0, 0, 0, 0);

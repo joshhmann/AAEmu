@@ -161,6 +161,17 @@ public partial class Quest
                         });
                     }
 
+                    // Run measurement (progress capability): the Reward branch
+                    // is the engine's terminal completion step — it is where
+                    // SetCompletedQuestFlag(true) and the drop that removes the
+                    // quest from ActiveQuests both happen, so no other site can
+                    // claim a completion. Exactly-once because the branch
+                    // returns immediately and the drop removes the quest, so a
+                    // second RunCurrentStep / evaluation pass has nothing left
+                    // to run. Counted AFTER the flag write so the counter can
+                    // only ever be >= the quests the DB now shows completed.
+                    QuestProgressCounters.RecordCompleted();
+
                     Owner.Quests.DropQuest(TemplateId, false, false);
                     Owner.SendPacket(new SCQuestContextCompletedPacket(TemplateId, body, 0));
 

@@ -119,22 +119,39 @@ public static class TravelBrain
     /// makes the two retreat legs the same shape by construction rather than by
     /// coincidence.
     ///
+    /// The ray is GROUND-PLANE HORIZONTAL: the bearing is the actor's <c>(X, Y)</c>
+    /// offset from the threat and the anchor keeps the actor's OWN height. A 3D
+    /// normalize let a pure height difference dominate the bearing — a bot on a
+    /// ledge above its target, or a target on a cliff below it, resolved an escape
+    /// ray that was almost pure ±Z, so a 25 m retreat became 25 m STRAIGHT DOWN
+    /// into the floor (measured: a live run issued a destination with the actor's
+    /// exact X/Y and Z 25 m lower, and those legs never walked anywhere). The
+    /// actor's own height is the only one that can be walked to: the destination
+    /// is a point in the same vertical column the actor already occupies, and the
+    /// ground under it is whatever that column is. A horizontal retreat's length is
+    /// therefore the whole <paramref name="distanceM"/>, and a 3D distance to the
+    /// anchor measures the same as before when — as combat and travel always are —
+    /// the threat shares the actor's height.
+    ///
     /// Fail-closed on unreadable input, exactly as the combat brain's flee leg is:
     /// an unset threat position falls back to a fixed reference point one meter to
     /// the actor's west (so the escape direction is still defined), and a
-    /// degenerate/NaN direction — the actor standing on the threat — degrades to
-    /// due east rather than producing a NaN destination the Move verb would refuse.
-    /// A non-finite or non-positive distance falls back to
-    /// <see cref="RetreatAnchorDistanceM"/>; it never lands the actor on the threat.
+    /// degenerate/NaN bearing — the actor standing on the threat, or the threat
+    /// directly above or below it — degrades to due east rather than producing a
+    /// NaN destination the Move verb would refuse. A non-finite or non-positive
+    /// distance falls back to <see cref="RetreatAnchorDistanceM"/>; it never lands
+    /// the actor on the threat, and it never sinks below the actor.
     /// </summary>
     public static Vector3 SafeAnchor(Vector3 self, Vector3 threat, float distanceM)
     {
-        var from = threat != Vector3.Zero ? threat : self - new Vector3(1f, 0f, 0f);
-        var direction = Vector3.Normalize(self - from);
+        var bearing = self - threat;
+        if (!IsUsableDirection(bearing))
+            bearing = self - (threat - new Vector3(1f, 0f, 0f));
+        var direction = Vector3.Normalize(new Vector3(bearing.X, bearing.Y, 0f));
         if (!IsUsableDirection(direction))
             direction = new Vector3(1f, 0f, 0f);
         var distance = float.IsFinite(distanceM) && distanceM > 0f ? distanceM : RetreatAnchorDistanceM;
-        return self + direction * distance;
+        return new Vector3(self.X + direction.X * distance, self.Y + direction.Y * distance, self.Z);
     }
 
     /// <summary>

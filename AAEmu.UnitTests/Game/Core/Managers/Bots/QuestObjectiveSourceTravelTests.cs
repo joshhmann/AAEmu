@@ -47,6 +47,16 @@ public class QuestObjectiveSourceTravelTests
     private const uint GatherFunc = 91_801;
     private const int GatherNeed = 3;
 
+    /// <summary>
+    /// A second quest used only to change the active-quest SET the arm counters
+    /// are keyed on. Its gather item deliberately reaches no source at all, so
+    /// adding it can only change the key.
+    /// </summary>
+    private const uint OtherQuest = 91_442;
+    private const uint OtherComponent = 91_442_01;
+    private const uint OtherActId = 91_442_11;
+    private const uint OtherItem = 91_502;
+
     private static readonly MethodInfo ArmQuestTravel = typeof(BotRoamStepExecutor)
         .GetMethod("ArmQuestTravel", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
@@ -84,6 +94,54 @@ public class QuestObjectiveSourceTravelTests
         GameplayActorTestRig.SeedDoodadLootInteraction(99_101, 99_301, 91_002);
         TravelIntentStore.ClearAll();
         SeedGatherQuestShape();
+        SeedOtherQuestShape();
+    }
+
+    /// <summary>
+    /// A second quest whose own source never resolves (its gather item reaches
+    /// no doodad), so adding it to the active set changes ONLY the quest key
+    /// the arm counters are counted against — never the resolved source.
+    /// </summary>
+    private static void SeedOtherQuestShape()
+    {
+        const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        var manager = QuestManager.Instance;
+
+        var questTemplates = (Dictionary<uint, QuestTemplate>)typeof(QuestManager)
+            .GetField("_questTemplates", flags)!.GetValue(manager)!;
+        if (!questTemplates.TryGetValue(OtherQuest, out var template))
+        {
+            template = new QuestTemplate { Id = OtherQuest, Level = 10 };
+            questTemplates[OtherQuest] = template;
+        }
+
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)typeof(QuestManager)
+            .GetField("_componentTemplates", flags)!.GetValue(manager)!;
+        if (!componentTemplates.TryGetValue(OtherComponent, out var component))
+        {
+            component = new QuestComponentTemplate(template)
+            {
+                Id = OtherComponent,
+                KindId = QuestComponentKind.Progress,
+            };
+            componentTemplates[OtherComponent] = component;
+        }
+        if (!template.Components.ContainsKey(OtherComponent))
+            template.Components[OtherComponent] = component;
+
+        if (!component.ActTemplates.OfType<QuestActObjItemGather>().Any(a => a.ActId == OtherActId))
+        {
+            component.ActTemplates.Add(new QuestActObjItemGather(component)
+            {
+                ActId = OtherActId,
+                DetailId = OtherComponent,
+                DetailType = nameof(QuestActObjItemGather),
+                Count = GatherNeed,
+                ItemId = OtherItem,
+                ThisComponentObjectiveIndex = 0,
+            });
+        }
+        QuestFixtureRow.InvalidateAll();
     }
 
     private static bool Arm(BotRoamStepExecutor executor, PlayerBotRuntime runtime, GameplayActor actor)
@@ -160,6 +218,91 @@ public class QuestObjectiveSourceTravelTests
         await Assert.That(second.QuestTravelReason).IsEqualTo(first.QuestTravelReason);
     }
 
+    /// <summary>
+    /// The live patrol ring must NOT starve the quest leg. BotPresenceCoordinator
+    /// arms every provisioned bot with an 8-waypoint Loop route owned ROAM, and
+    /// BotPath.Arrive never sets IsFinished under LoopMode.Loop — so an
+    /// owner-blind "any live route" guard returned false forever and the bot
+    /// circled its ring instead of walking to the quest giver.
+    /// </summary>
+    [Test]
+    public async Task PatrolLoopRoute_DoesNotBlockQuestTravel()
+    {
+        var (executor, actor, runtime, _) = CreateRig("objective-patrol-1");
+        StageActiveQuest(actor, GatherQuest, objective: 0);
+        SeedDoodadSpawner(actor, GatherDoodad, new Vector3(30, 0, 0));
+
+        // The presence patrol ring, exactly as the coordinator builds it.
+        var patrol = new BotPath(
+        [
+            new Vector3(27, 0, 0), new Vector3(19, 19, 0), new Vector3(0, 27, 0), new Vector3(-19, 19, 0),
+            new Vector3(-27, 0, 0), new Vector3(-19, -19, 0), new Vector3(0, -27, 0), new Vector3(19, -19, 0)
+        ], BotPath.LoopMode.Loop);
+        executor.SetRoamRoute(actor.Character, patrol);
+        var before = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(before.PendingMoveOwner).IsEqualTo("ROAM");
+        await Assert.That(before.Path!.IsFinished).IsFalse();
+
+        // The quest leg proceeds to the target resolver and arms over the patrol.
+        await Assert.That(Arm(executor, runtime, actor)).IsTrue();
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.PendingMoveOwner).IsEqualTo("QUEST_TRAVEL");
+        await Assert.That(state.QuestTravelReason.StartsWith("walking to quest objective source")).IsTrue();
+        await Assert.That(state.QuestTravelTarget!.Value.X).IsEqualTo(30f);
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNotSameReferenceAs(patrol);
+    }
+
+    /// <summary>
+    /// The guard is scoped to PATROL, not to "any live route": a live route
+    /// carrying a non-patrol owner keeps the original protect-the-walk
+    /// behaviour (byte-identical reason, same route reference, no re-arm).
+    /// </summary>
+    [Test]
+    public async Task LiveNonPatrolRoute_IsStillNeverRearmed()
+    {
+        var (executor, actor, runtime, _) = CreateRig("objective-nonguard-1");
+        StageActiveQuest(actor, GatherQuest, objective: 0);
+        SeedDoodadSpawner(actor, GatherDoodad, new Vector3(30, 0, 0));
+
+        await Assert.That(Arm(executor, runtime, actor)).IsTrue();
+        var first = executor.GetBotState(runtime.CharacterId)!;
+        var armedRoute = executor.GetRoamRoute(runtime.CharacterId)!;
+
+        // Same progress the farm-travel owner carries: re-stamping the owner
+        // must not unlock the guard.
+        first.PendingMoveOwner = "OTHER:needs-farm-travel";
+
+        await Assert.That(Arm(executor, runtime, actor)).IsFalse();
+        var second = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsSameReferenceAs(armedRoute);
+        await Assert.That(second.QuestTravelReason).IsEqualTo(first.QuestTravelReason);
+    }
+
+    /// <summary>
+    /// A spent Once route (IsFinished) was never blocked and must stay
+    /// unblocked — the guard's condition change must not reach finished paths.
+    /// </summary>
+    [Test]
+    public async Task FinishedOnceRoute_StillArmsQuestTravel()
+    {
+        var (executor, actor, runtime, _) = CreateRig("objective-finished-1");
+        StageActiveQuest(actor, GatherQuest, objective: 0);
+        SeedDoodadSpawner(actor, GatherDoodad, new Vector3(30, 0, 0));
+
+        var spent = BotPath.PathTo(new Vector3(0.2f, 0, 0));
+        _ = spent.Move(new Vector3(0, 0, 0));
+        await Assert.That(spent.IsFinished).IsTrue();
+        executor.SetRoamRoute(actor.Character, spent);
+
+        await Assert.That(Arm(executor, runtime, actor)).IsTrue();
+
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.PendingMoveOwner).IsEqualTo("QUEST_TRAVEL");
+        await Assert.That(state.QuestTravelReason.StartsWith("walking to quest objective source")).IsTrue();
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNotSameReferenceAs(spent);
+    }
+
     [Test]
     public async Task SameSpawner_ArmedThrice_ThenWithholdsUnreachable()
     {
@@ -186,6 +329,79 @@ public class QuestObjectiveSourceTravelTests
             $"objective-source-unreachable (doodad {GatherDoodad})");
         await Assert.That(state.QuestTravelTarget).IsNull();
         await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull();
+    }
+
+    /// <summary>
+    /// THE CAP'S ORIGINAL PURPOSE, pinned. Four arms to the same DOODAD
+    /// spawner with the bot standing still: the 4th withholds. The prey
+    /// exemption must never reach a doodad source — the spawn path
+    /// materialises a doodad in place, so three arms without a kill really
+    /// does mean unreachable.
+    /// </summary>
+    [Test]
+    public async Task SameDoodadSource_ArmedFourTimes_StillWithholdsUnreachable()
+    {
+        var (executor, actor, runtime, _) = CreateRig("objective-bound-2");
+        StageActiveQuest(actor, GatherQuest, objective: 0);
+        SeedDoodadSpawner(actor, GatherDoodad, new Vector3(30, 0, 0));
+
+        for (var i = 0; i < 3; i++)
+        {
+            await Assert.That(Arm(executor, runtime, actor)).IsTrue();
+            var armed = executor.GetBotState(runtime.CharacterId)!;
+            await Assert.That(armed.QuestObjectiveSourceArms).IsEqualTo(i + 1);
+            DropRoute(executor, runtime);
+        }
+
+        await Assert.That(Arm(executor, runtime, actor)).IsFalse();
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.QuestTravelReason).IsEqualTo(
+            $"objective-source-unreachable (doodad {GatherDoodad})");
+        await Assert.That(state.QuestTravelTarget).IsNull();
+    }
+
+    /// <summary>
+    /// Reset-on-quest-set-change still governs: a withheld doodad source is
+    /// re-armed as soon as a DIFFERENT quest is in the active set, because the
+    /// counter was counted against a key that no longer applies.
+    /// </summary>
+    [Test]
+    public async Task WithheldDoodadSource_ResetsWhenActiveQuestSetChanges()
+    {
+        var (executor, actor, runtime, _) = CreateRig("objective-reset-1");
+        StageActiveQuest(actor, GatherQuest, objective: 0);
+        SeedDoodadSpawner(actor, GatherDoodad, new Vector3(30, 0, 0));
+
+        for (var i = 0; i < 3; i++)
+        {
+            await Assert.That(Arm(executor, runtime, actor)).IsTrue();
+            DropRoute(executor, runtime);
+        }
+        await Assert.That(Arm(executor, runtime, actor)).IsFalse();
+
+        // A DIFFERENT quest joins the active set alongside the first, so the
+        // sorted key the arms were counted against no longer matches. The
+        // gather objective still resolves the same doodad source, so the arm
+        // must fire again from a reset counter.
+        StageActiveQuest(actor, OtherQuest, objective: 0);
+
+        await Assert.That(Arm(executor, runtime, actor)).IsTrue();
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.QuestTravelTarget!.Value.X).IsEqualTo(30f);
+        await Assert.That(state.QuestObjectiveSourceArms).IsEqualTo(1);
+    }
+
+    /// <summary>
+    /// Drops the armed route without changing the active-quest set — the
+    /// shape a wake that finished or lost its route leaves behind.
+    /// </summary>
+    private static void DropRoute(BotRoamStepExecutor executor, PlayerBotRuntime runtime)
+    {
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        state.Path = null;
+        state.PendingLeg = null;
+        state.QuestTravelTarget = null;
+        state.PendingMoveOwner = null;
     }
 
     // ------------------------------------------------------------ fixture

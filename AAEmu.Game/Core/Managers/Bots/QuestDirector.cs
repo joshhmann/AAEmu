@@ -171,6 +171,25 @@ public static class QuestDirector
         new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
             Enter: QuestBehavior.TurnInEnter)
     });
+    /// <summary>
+    /// The talk-chain leg set: Advance, the talk objective leg, then TurnIn.
+    /// The ordinary TurnIn leg serves the Ready step against the row's
+    /// <see cref="QuestFixtureRow.ReporterTemplate"/> (falling back to the
+    /// Start-step acceptor, exactly as the row derives it); Advance serves the
+    /// step machine as always. No funnel legs: the objective's target is an npc
+    /// resolved per wake from the perception snapshot, never the gather funnel
+    /// (which is built around the item-gather loot chain this shape has no
+    /// item for).
+    /// </summary>
+    private static readonly IReadOnlyList<QuestLeg> TalkChainLegs = Array.AsReadOnly(new QuestLeg[]
+    {
+        new(QuestLegId.Advance, QuestBehavior.AdvanceEmit,
+            Enter: QuestBehavior.AdvanceEnter),
+        new(QuestLegId.Talk, QuestBehavior.TalkEmit,
+            Enter: QuestBehavior.TalkEnter),
+        new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
+            Enter: QuestBehavior.TurnInEnter)
+    });
     private static readonly IReadOnlyList<QuestLeg> NoLegs = Array.AsReadOnly(Array.Empty<QuestLeg>());
 
     /// <summary>
@@ -269,14 +288,35 @@ public static class QuestDirector
                 : $"HARNESS/UNPROVEN-PATTERN quest={fixture.QuestId} act={fixture.ObjectiveActType}";
             return new QuestPlan(questId, pattern, fixture, BootstrapLegs, Unserved: unserved);
         }
-        // A gather-shaped act whose loot chain did not resolve has no prey to
+        // A GATHER-shaped act whose loot chain did not resolve has no prey to
         // pursue: the source is the missing piece, named as such, and the plan
         // fails closed with zero legs rather than reaching the leg loop with no
         // target to find. (This is the shape's own precondition — the loot
         // chain is what makes the objective completable at all.)
-        if (pattern == QuestPattern.KillX && fixture.PreyTemplate == 0)
+        //
+        // The gate is on the GATHER facts, not the pattern: a hunt objective
+        // classifies into the same kill-to-gather shape but has no gather act
+        // and no loot chain at all — its source is the fight the act names,
+        // gated immediately below. Testing the pattern here would refuse every
+        // hunt objective as an unresolvable source.
+        if (pattern == QuestPattern.KillX && fixture.GatherActId != 0 && fixture.PreyTemplate == 0)
             return Failed(questId, pattern, fixture,
-                $"HARNESS/UNPROVEN-SOURCE quest={fixture.QuestId} act={fixture.GatherActId} item={fixture.PreyItem}");
+                $"HARNESS/UNPROVEN-SOURCE quest={questId} act={fixture.GatherActId} item={fixture.PreyItem}");
+
+        // A hunt objective names no prey unless its act names one. A
+        // single-template hunt must resolve its npc template, a group hunt its
+        // npc group; an act that resolved neither has no target the engine
+        // could ever credit, so it fails closed here naming its own act.
+        if (pattern == QuestPattern.KillX && fixture.HuntActId != 0
+            && fixture.HuntNpcTemplate == 0 && fixture.HuntNpcGroup == 0)
+            return Failed(questId, pattern, fixture,
+                $"HARNESS/UNPROVEN-SOURCE quest={questId} act={fixture.HuntActId} prey=0 group=0");
+
+        // A talk objective names the npc to talk to; without one there is no
+        // conversation to have and nothing the engine could credit.
+        if (pattern == QuestPattern.TalkChain && fixture.TalkNpcTemplate == 0 && fixture.TalkNpcGroup == 0)
+            return Failed(questId, pattern, fixture,
+                $"HARNESS/UNPROVEN-SOURCE quest={questId} act={fixture.TalkActId} npc=0 group=0");
 
         // A gather-from-doodad act whose doodad func chain did not resolve has
         // no well to draw from: same fail-closed shape as the prey path, naming
@@ -342,6 +382,7 @@ public static class QuestDirector
             QuestPattern.GatherDoodad => GatherDoodadLegs,
             QuestPattern.InteractDoodad => InteractDoodadLegs,
             QuestPattern.Deliver => DeliverLegs,
+            QuestPattern.TalkChain => TalkChainLegs,
             _ => NoLegs
         });
     }
