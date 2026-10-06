@@ -242,11 +242,27 @@ public static class QuestBehavior
     /// <c>GiveUpStreaks</c>: keyed by (actor, target), bounded by full clear.
     /// Reset on any HP decrease (the hold is working), on target switch/loss/death
     /// (a different fight), and on unreadable HP — fail-closed, never forces motion
-    /// on unknown state.
+    /// on unknown state. The per-target streak is the primary signal; the
+    /// actor-wide backstop below (<see cref="CombatStallActorWakes"/>) is what
+    /// survives a target switch.
     /// </summary>
     private static readonly Dictionary<(uint ActorId, uint TargetObjId), CombatStallStreak> CombatStallStreaks = new();
     /// <summary>One target's stall streak: last seen HP, consecutive no-progress hold-wakes, and the cycle that last counted.</summary>
     private sealed record CombatStallStreak(int Hp, int Wakes, string CycleId);
+    /// <summary>
+    /// Actor-wide consecutive hold-wakes with no HP decrease: the target-agnostic
+    /// backstop behind the per-target stall streak. Every consecutive hold-wake
+    /// counts no matter which live target it held on (pure sum across switches),
+    /// so rotating N live targets without dealing damage trips the contact
+    /// close-in at the same threshold. Reset on any same-target HP decrease
+    /// (damage landed = progress), on target loss/death (a gone target ends the
+    /// fight), and on unreadable HP — fail-closed, never forces motion on unknown
+    /// state. Deduped by cycle so one wake counts once. No quest key: the stall
+    /// is an actor property, never a quest one.
+    /// </summary>
+    private static readonly Dictionary<uint, CombatStallActorStreak> CombatStallActorWakes = new();
+    /// <summary>One actor's stall backstop: the target and HP of the last counted wake, consecutive hold-wakes, and the cycle that last counted.</summary>
+    private sealed record CombatStallActorStreak(uint TargetObjId, int Hp, int Wakes, string CycleId);
     /// <summary>
     /// Stall-trip threshold: consecutive no-progress hold-wakes before the pursuit leg stops
     /// yielding and closes to contact. Matches the <c>QuestOptions.GiveUpAfterUnresolvedWakes</c>
@@ -255,25 +271,37 @@ public static class QuestBehavior
     internal const int CombatStallWakes = 10;
     /// <summary>Bound for the stall streak map (one entry per actor+target; full clear when exceeded).</summary>
     private const int CombatStallMemoryBound = 512;
-    /// <summary>Clears all stall streaks (test seam, mirroring <c>ClearGiveUpMemory</c>).</summary>
+    /// <summary>Clears all stall streaks (test seam, mirroring <c>ClearGiveUpMemory</c>). Clears the per-target streaks AND the actor-wide backstop.</summary>
     internal static void ClearCombatStallMemory()
     {
         lock (PursuitSync)
+        {
             CombatStallStreaks.Clear();
+            CombatStallActorWakes.Clear();
+        }
     }
     /// <summary>
-    /// Counts one no-progress hold-wake for (actor, target); reports true once the streak
-    /// reaches <see cref="CombatStallWakes"/>. Both the pursuit <c>inside-combat-band</c> yield
+    /// Counts one no-progress hold-wake for (actor, target); reports true once the
+    /// per-target streak OR the actor-wide backstop reaches <see cref="CombatStallWakes"/>.
+    /// Both the pursuit <c>inside-combat-band</c> yield
     /// and the combat <c>already-live</c> gates feed this one streak, deduped by
     /// <paramref name="cycleId"/> so a wake both legs hold counts once — the count is
     /// wakes, not legs. A null/empty cycle skips dedup and counts (only test rigs omit
     /// it; counting is the honest record of the hold observed).
     /// Fail-closed: target 0 or unreadable HP (negative) drops the actor's streaks and
     /// never trips. Any HP decrease clears the streak (damage landed = progress).
-    /// A different target for the same actor drops the old streak (a different fight).
+    /// A different target for the same actor drops the old per-target streak (a
+    /// different fight) but never the actor-wide backstop — consecutive hold-wakes
+    /// sum across the switch, so rotating live targets without dealing damage
+    /// still trips the close-in.
     /// </summary>
     internal static bool CountCombatStallWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
-        => CountNoProgressWake(CombatStallStreaks, actorId, targetObjId, hp, cycleId, out wakes);
+    {
+        var perTargetTripped = CountNoProgressWake(CombatStallStreaks, actorId, targetObjId, hp, cycleId, out wakes);
+        var actorTripped = CountCombatStallActorWake(actorId, targetObjId, hp, cycleId, out var actorWakes);
+        wakes = Math.Max(wakes, actorWakes);
+        return perTargetTripped || actorTripped;
+    }
     /// <summary>
     /// Counts one stale-pin wake for (actor, target): a Disengaged-at-LeashEdge
     /// wake with unchanged HP. Reports true once the streak reaches
@@ -332,10 +360,57 @@ public static class QuestBehavior
             return wakes >= threshold;
         }
     }
+    /// <summary>
+    /// The actor-wide stall backstop: consecutive hold-wakes with no HP decrease
+    /// across target switches (pure sum — every consecutive hold-wake counts no
+    /// matter which live target it held on); deduped by <paramref name="cycleId"/>
+    /// so one wake counts once. Fail-closed: target 0 or unreadable HP (negative)
+    /// drops the backstop and never trips. Any HP decrease on the CURRENT target
+    /// clears (damage landed = progress); an HP reading on a NEW target never
+    /// clears (different HP pool, not progress).
+    /// </summary>
+    private static bool CountCombatStallActorWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
+    {
+        var threshold = BotBrainTuningStore.ResolveCombatStallWakes();
+        wakes = 0;
+        if (targetObjId == 0 || hp < 0)
+        {
+            lock (PursuitSync)
+                CombatStallActorWakes.Remove(actorId);
+            return false;
+        }
+        lock (PursuitSync)
+        {
+            if (CombatStallActorWakes.Count >= CombatStallMemoryBound)
+                CombatStallActorWakes.Clear();
+            if (CombatStallActorWakes.TryGetValue(actorId, out var prior))
+            {
+                if (!string.IsNullOrEmpty(cycleId) && cycleId == prior.CycleId)
+                {
+                    wakes = prior.Wakes;
+                    return wakes >= threshold;
+                }
+                if (targetObjId == prior.TargetObjId && hp < prior.Hp)
+                {
+                    CombatStallActorWakes.Remove(actorId);
+                    return false;
+                }
+                wakes = prior.Wakes + 1;
+            }
+            else
+            {
+                wakes = 1;
+            }
+            CombatStallActorWakes[actorId] = new CombatStallActorStreak(targetObjId, hp, wakes, cycleId ?? "");
+            return wakes >= threshold;
+        }
+    }
     /// <summary>Drops every stall streak for one actor: its target identity is gone (lost/dead/unselected), so no streak may survive onto the next fight.</summary>
     private static void ClearCombatStallActor(uint actorId)
     {
         ClearNoProgressActor(CombatStallStreaks, actorId);
+        lock (PursuitSync)
+            CombatStallActorWakes.Remove(actorId);
         // The stale-pin watchdog keys on the same live identity: a gone target
         // ends its fight, so the leash streak ends here too — one fused release,
         // never a streak surviving onto the next fight.

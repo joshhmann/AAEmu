@@ -246,11 +246,13 @@ public class QuestObjectiveCombatTests
     }
 
     /// <summary>
-    /// Fail-closed on target switch: a streak accrued on one target never trips the
-    /// close-in on a different target — the new fight starts its count at one.
+    /// Sum (not reset) on target switch: consecutive hold-wakes carry across the
+    /// switch actor-wide, so a short run (8 + 1 = 9) still holds while a full
+    /// run (9 + 1 = 10) trips — rotating live targets without dealing damage
+    /// still closes to contact at the same threshold.
     /// </summary>
     [Test]
-    public async Task InBandHold_TargetSwitch_ResetsTheStreak()
+    public async Task InBandHold_TargetSwitch_SumsAcrossTheSwitch()
     {
         var (actor, session) = GameplayActorTestRig.CreateActor("g6-stall-switch");
         actor.Character.Ability1 = AbilityType.Wild;
@@ -263,14 +265,14 @@ public class QuestObjectiveCombatTests
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
-        for (var wake = 1; wake < QuestBehavior.CombatStallWakes; wake++)
+        for (var wake = 1; wake < QuestBehavior.CombatStallWakes - 1; wake++)
         {
             _ = QuestDecisionScenario.Run(actor, (_, _) => [],
                 new QuestDecisionScenario.QuestOptions { CycleId = $"g6-stall-sw-{wake}" });
             actor.Character.IsAutoAttack = true;
         }
 
-        // Fresh fight on a different target: counts from one, never trips.
+        // Short carry (8 + 1 = 9): still holds, never trips.
         var second = session.World.GetNpc(secondObjId)!;
         actor.Character.CurrentTarget = second;
         var result = QuestDecisionScenario.Run(actor, (_, _) => [],
@@ -283,6 +285,85 @@ public class QuestObjectiveCombatTests
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
         actor.StopAutoAttack();
+    }
+
+    /// <summary>
+    /// ROTATION TRIP: alternating two live targets with flat HP trips the contact
+    /// close-in at the same threshold — the actor-wide backstop sums consecutive
+    /// hold-wakes across the switch instead of restarting per target.
+    /// </summary>
+    [Test]
+    public async Task InBandHold_RotatingTargets_WithNoHpProgress_TripsToCloseInMove()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("g6-stall-rotate");
+        actor.Character.Ability1 = AbilityType.Wild;
+        actor.Character.Hp = actor.Character.MaxHp;
+        var firstObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(18, 0, 0));
+        var secondObjId = SpawnExtraBoar(session, new Vector3(18.5f, 0, 0));
+        Activate251(actor.Character);
+        QuestBehavior.ClearCombatStallMemory();
+        CombatBrainEngagement.ClearAll();
+
+        QuestDecisionScenario.QuestRunResult? last = null;
+        var first = session.World.GetNpc(firstObjId)!;
+        var second = session.World.GetNpc(secondObjId)!;
+        for (var wake = 1; wake <= QuestBehavior.CombatStallWakes; wake++)
+        {
+            // Alternate every wake; HP pinned on both, flag stays live.
+            actor.Character.CurrentTarget = wake % 2 == 1 ? first : second;
+            first.Hp = 100;
+            second.Hp = 100;
+            actor.Character.IsAutoAttack = true;
+            last = QuestDecisionScenario.Run(actor, (_, _) => [],
+                new QuestDecisionScenario.QuestOptions { CycleId = $"g6-stall-rot-{wake}" });
+        }
+
+        await Assert.That(last!.SelectedAction).IsEqualTo(ActorActionType.Move);
+        await Assert.That(last.LegEvidence.Single(e => e.Leg == QuestLegId.Pursuit).Detail)
+            .Contains("reason=stall-close-in");
+
+        QuestBehavior.ClearCombatStallMemory();
+        CombatBrainEngagement.ClearAll();
+        actor.StopAutoAttack();
+    }
+
+    /// <summary>
+    /// SPLIT-RUN TRIP: 8 flat hold-wakes on A then 8 on B trips (8 + 8 = 16
+    /// actor-wide) — the kill28 shape that motivated the backstop.
+    /// </summary>
+    [Test]
+    public async Task StallCounter_SplitAcrossTargets_TripsAtSameThreshold()
+    {
+        const uint actorId = 0x6E31u;
+        const uint first = 0x6E32u;
+        const uint second = 0x6E33u;
+        QuestBehavior.ClearCombatStallMemory();
+        for (var i = 0; i < 8; i++)
+            await Assert.That(QuestBehavior.CountCombatStallWake(actorId, first, 100, $"split-a-{i}", out _)).IsFalse();
+        var tripped = false;
+        for (var i = 0; i < 8; i++)
+            tripped |= QuestBehavior.CountCombatStallWake(actorId, second, 100, $"split-b-{i}", out _);
+        await Assert.That(tripped).IsTrue();
+        QuestBehavior.ClearCombatStallMemory();
+    }
+
+    /// <summary>
+    /// The backstop is progress-gated per target: HP falling on the current target
+    /// clears the actor-wide count too, so a working loop never trips.
+    /// </summary>
+    [Test]
+    public async Task StallCounter_HpDecreaseOnCurrentTarget_ClearsBackstop()
+    {
+        const uint actorId = 0x6E41u;
+        const uint target = 0x6E42u;
+        QuestBehavior.ClearCombatStallMemory();
+        for (var i = 0; i < QuestBehavior.CombatStallWakes - 1; i++)
+            await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 100, $"prog-{i}", out _)).IsFalse();
+        await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 90, "prog-dmg", out var wakes)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(0);
+        await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 90, "prog-restart", out wakes)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(1);
+        QuestBehavior.ClearCombatStallMemory();
     }
 
     /// <summary>
