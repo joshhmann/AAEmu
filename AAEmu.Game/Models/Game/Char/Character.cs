@@ -1551,6 +1551,36 @@ public partial class Character : Unit, ICharacter
         }
     }
 
+    /// <summary>
+    /// Sets <see cref="Level"/> and seeds <see cref="Experience"/> with the
+    /// cumulative XP the level table requires to REACH that level, so a
+    /// provisioned unit is internally consistent from the moment it exists
+    /// (its private-setter Experience would otherwise stay at the CLR default 0).
+    ///
+    /// Create-time and provisioning-time only — this REPLACES the experience of
+    /// a unit that already carries some, so it is not the ordinary XP-grant path
+    /// (<see cref="AddExp"/>) and never the DB-load path (<see cref="ValidateAndFixExpAndLevel"/>,
+    /// which only raises exp and may additionally promote the level).
+    ///
+    /// <paramref name="level"/> beyond the loaded level table has no total_exp
+    /// row to honor, so it seeds at the table's floor (level 1) instead of
+    /// staying an unlevel 0. Level 0 seeds 0 (GetExpForLevel(0) is 0 by
+    /// contract). <see cref="Level"/> is always set as given.
+    /// </summary>
+    internal void InitializeLevelAndExperience(byte level)
+    {
+        Level = level;
+
+        // GetExpForLevel is 0 for level 0 and for any level past the last
+        // loaded row (no template → 0), so an unlevelable level would seed an
+        // unlevel 0; floor it at the level-1 total to keep the pair consistent.
+        var expForLevel = ExperienceManager.Instance.GetExpForLevel(level);
+        if (level > ExperienceManager.Instance.MaxPlayerLevel)
+            expForLevel = ExperienceManager.Instance.GetExpForLevel(1);
+
+        Experience = expForLevel;
+    }
+
     private void ValidateAndFixExpAndLevel()
     {
         // Check if player has too little exp to be at their current level, and give them enough to maintain it

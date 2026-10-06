@@ -411,7 +411,19 @@ public sealed class BotDriveBridge
                     // G2-A3: synchronized-cadence exposure — bots popped per
                     // wake-scan cycle (last) and worst cycle ever seen.
                     lastCycleDue = m.LastCycleDue,
-                    maxCycleDue = m.MaxCycleDue
+                    maxCycleDue = m.MaxCycleDue,
+
+                    // Quest-lifecycle run measurement. Whole-process counts
+                    // projected from the same snapshot (NOT bot-scoped): the
+                    // engine seams increment them, so a human, a GM command or
+                    // a bot all land in the same number. Read them as "the
+                    // server completed N quests", never as "the bot did".
+                    // totalQuestsCompleted is the progression signal;
+                    // totalQuestTurnInsRequested - totalQuestsCompleted is the
+                    // stuck-turn-in gap.
+                    totalQuestsAccepted = m.TotalQuestsAccepted,
+                    totalQuestTurnInsRequested = m.TotalQuestTurnInsRequested,
+                    totalQuestsCompleted = m.TotalQuestsCompleted
                 };
             }
         }

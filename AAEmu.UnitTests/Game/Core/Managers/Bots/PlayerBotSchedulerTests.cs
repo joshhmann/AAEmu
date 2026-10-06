@@ -437,6 +437,147 @@ public class PlayerBotSchedulerTests
         await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 2);
     }
 
+    /// <summary>
+    /// REGRESSION for the permanent-drop dormancy: the pre-flag executor
+    /// returned null whenever a bot had nothing live, and the scheduler has no
+    /// else-branch on a null delay — so one idle wake dropped that citizen for
+    /// the rest of the process. With the executor's idle-wake gate ON the very
+    /// same scheduler re-arms the bot on its own, with NO external wake and NO
+    /// scheduler change. Driven entirely by the fake clock: no wall-clock
+    /// sleeping stands in for the re-arm.
+    /// </summary>
+    [Test]
+    public async Task RoamExecutor_IdleWakeEnabled_ReArmsItself_WithoutExternalWake()
+    {
+        var idleInterval = TimeSpan.FromSeconds(5);
+
+        // A module-free arbiter keeps the rig to the executor path (no world).
+        var manager = new PlayerBotManager(new RecordingLifecycle());
+        var roam = new BotRoamStepExecutor { EnableIdleWake = true, IdleWakeInterval = idleInterval };
+        var executor = new IdleAwareExecutor(roam);
+        var scheduler = new PlayerBotScheduler(manager, executor,
+            new PlayerBotSchedulerOptions
+            {
+                ScanInterval = TimeSpan.FromHours(1), // background loop inert; cycles pumped manually
+                SubscribeToTickManager = false,
+            },
+            rigTime);
+        scheduler.Start();
+
+        try
+        {
+            manager.Spawn(new Character(new UnitCustomModelParams())
+            {
+                Id = 7, Name = "idle-citizen", MaxHp = 100, Hp = 100,
+            }, "rig");
+            manager.Activate(7, null, "rig");
+
+            scheduler.Wake(7);
+            scheduler.RunScanCycle();
+            await WaitUntilAsync(scheduler, () => executor.CountStarts(7) == 1);
+            await WaitUntilAsync(scheduler, () => !scheduler.IsLeased(7));
+
+            // No external wake from here on. Only the fake clock moves.
+            rigTime.Advance(idleInterval);
+            scheduler.RunScanCycle();
+            await WaitUntilAsync(scheduler, () => executor.CountStarts(7) == 2);
+
+            // And again — the bot keeps re-arming itself, indefinitely.
+            rigTime.Advance(idleInterval);
+            scheduler.RunScanCycle();
+            await WaitUntilAsync(scheduler, () => executor.CountStarts(7) == 3);
+        }
+        finally
+        {
+            await scheduler.StopAsync();
+        }
+    }
+
+    /// <summary>
+    /// The default-off arm: the SAME real roam executor through the SAME real
+    /// scheduler still drops an idle citizen permanently, so the re-arm above
+    /// is the flag and nothing else. (The scheduler's own null-delay contract
+    /// is pinned separately by <c>ExecutorReturningNull_GoesDormant_*</c>.)
+    /// </summary>
+    [Test]
+    public async Task RoamExecutor_IdleWakeDisabled_StaysDormant_WithoutExternalWake()
+    {
+        var manager = new PlayerBotManager(new RecordingLifecycle());
+        var roam = new BotRoamStepExecutor { EnableIdleWake = false };
+        var executor = new IdleAwareExecutor(roam);
+        var scheduler = new PlayerBotScheduler(manager, executor,
+            new PlayerBotSchedulerOptions
+            {
+                ScanInterval = TimeSpan.FromHours(1),
+                SubscribeToTickManager = false,
+            },
+            rigTime);
+        scheduler.Start();
+
+        try
+        {
+            manager.Spawn(new Character(new UnitCustomModelParams())
+            {
+                Id = 8, Name = "dormant-citizen", MaxHp = 100, Hp = 100,
+            }, "rig");
+            manager.Activate(8, null, "rig");
+
+            scheduler.Wake(8);
+            scheduler.RunScanCycle();
+            await WaitUntilAsync(scheduler, () => executor.CountStarts(8) == 1);
+            await WaitUntilAsync(scheduler, () => !scheduler.IsLeased(8));
+
+            // Five idle intervals with no external wake: still exactly one wake.
+            rigTime.Advance(TimeSpan.FromSeconds(5));
+            scheduler.RunScanCycle();
+            await Task.Delay(50);
+            await Assert.That(executor.CountStarts(8)).IsEqualTo(1);
+        }
+        finally
+        {
+            await scheduler.StopAsync();
+        }
+    }
+
+    /// <summary>
+    /// Counts the wakes the scheduler delivers to one bot and delegates the
+    /// step itself, so a test can drive the REAL roam executor (the surface
+    /// that owns the dormancy decision) through the REAL scheduler.
+    /// </summary>
+    private sealed class IdleAwareExecutor(BotRoamStepExecutor inner) : IBotStepExecutor
+    {
+        private readonly ConcurrentQueue<uint> _starts = [];
+
+        public int CountStarts(uint botId) => _starts.Count(id => id == botId);
+
+        public Task<TimeSpan?> StepAsync(PlayerBotRuntime bot, CancellationToken cancellationToken)
+        {
+            _starts.Enqueue(bot.CharacterId);
+            return inner.StepAsync(bot, cancellationToken);
+        }
+    }
+
+    // Shared fake clock for the two executor-driven regression rigs above (the
+    // Rig owns its own clock; these construct the scheduler by hand).
+    private static readonly FakeTimeProvider rigTime = new(DateTime.UtcNow);
+
+    /// <summary>
+    /// The Rig wait loop's M5 A1 discipline: worker threads only marshal a step
+    /// onto the execution-boundary queue, so the wait pumps the drain (running
+    /// on this thread — the simulated game loop) or no step ever executes.
+    /// </summary>
+    private static async Task WaitUntilAsync(PlayerBotScheduler scheduler, Func<bool> condition)
+    {
+        var deadline = Stopwatch.StartNew();
+        while (!condition())
+        {
+            scheduler.DrainTickQueue();
+            if (deadline.Elapsed > TimeSpan.FromSeconds(5))
+                throw new TimeoutException("rig wait condition not met");
+            await Task.Delay(5);
+        }
+    }
+
     #endregion
 
     #region Registry consumption + failures

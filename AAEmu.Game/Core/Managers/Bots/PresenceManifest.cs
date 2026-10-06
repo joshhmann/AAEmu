@@ -47,7 +47,7 @@ public sealed record PresenceManifestEntry(
 /// <code>
 /// [
 ///   {
-///     "name": "Citizen01",
+///     "name": "Hugo",
 ///     "race": "Nuian",
 ///     "gender": "Male",
 ///     "level": 5,

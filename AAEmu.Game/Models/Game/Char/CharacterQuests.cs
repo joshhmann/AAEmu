@@ -185,6 +185,15 @@ public class CharacterQuests(Character owner)
         quest.Owner.SendDebugMessage($"[Quest] {Owner.Name}, quest {questId} added.");
         Owner.MarkDirty();
 
+        // Run measurement (progress capability): the accept funnel ends here —
+        // every AddQuestFrom{Npc,Doodad,Sphere,Item,Skill,Buff} wrapper, the
+        // bare CSStartQuestContextPacket call, and DoOnKillEvents /
+        // DoOnLevelUpEvents' auto-start all delegate to THIS method, so one
+        // increment per real acceptance and none for a refused one. Placed on
+        // the success path only (after the ActiveQuests.TryAdd below proves
+        // the quest is active), which is what makes it exactly-once.
+        QuestProgressCounters.RecordAccepted();
+
         // Execute the first Step
         _ = quest.RunCurrentStep(); // We don't need the return value here
 

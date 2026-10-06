@@ -83,6 +83,12 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     private long _busyTicks;
     private long _totalResurrections;
 
+    // Quest-lifecycle run measurement lives in QuestProgressCounters (the
+    // engine seams that increment it never see a bot). The scheduler does not
+    // own those counters — GetMetrics only PROJECTS them, so there is no
+    // second source of truth to drift and Start()/StopAsync() cannot reset a
+    // count the quest engine produced.
+
     // M6.2 death watch: per-bot first-seen-dead timestamp (UTC). An entry is
     // added when a dead bot's step is skipped and removed on resurrection or
     // when the bot is seen alive again.
@@ -239,7 +245,10 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                 MaxWakeLatencyMs: Volatile.Read(ref _maxWakeLatencyMs),
                 WorkerUtilization: utilization,
                 ElapsedMs: (long)elapsed,
-                TotalResurrections: Volatile.Read(ref _totalResurrections));
+                TotalResurrections: Volatile.Read(ref _totalResurrections),
+                TotalQuestsAccepted: QuestProgressCounters.Accepted,
+                TotalQuestTurnInsRequested: QuestProgressCounters.TurnInsRequested,
+                TotalQuestsCompleted: QuestProgressCounters.Completed);
         }
     }
 

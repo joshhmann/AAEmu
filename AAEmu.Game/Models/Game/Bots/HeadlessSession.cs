@@ -437,7 +437,6 @@ public class HeadlessSession
             Name = name,
             Race = race,
             Gender = gender,
-            Level = level,
             AccessLevel = AppConfiguration.Instance.Account.AccessLevelDefault,
             NumInventorySlots = template.NumInventorySlot,
             NumBankSlots = template.NumBankSlot,
@@ -456,6 +455,15 @@ public class HeadlessSession
             // while serializing bots to a real client).
             VisualOptions = new CharacterVisualOptions()
         };
+
+        // Level AND its cumulative XP together: an object-initializer Level
+        // alone leaves Experience at the CLR default 0, and AddExp resolves the
+        // level with GetLevelFromExp(newExperience, Level /* minLevel */) —
+        // whose binary search starts at the NEXT level's total, so an
+        // unseeded bot needs a single 10,000-EXP grant to move at all.
+        // Experience has a private setter (the XP-grant path owns it), so the
+        // level/XP pair is written through the provisioning initializer.
+        character.InitializeLevelAndExperience(level);
 
         character.Transform.ApplyWorldSpawnPosition(template.SpawnPosition);
 
@@ -503,7 +511,6 @@ public class HeadlessSession
         {
             Id = characterId,
             Name = name,
-            Level = level,
             Race = race,
             Gender = Gender.Male,
             // Ordinary creation-time defaults (normally read from the character
@@ -512,6 +519,10 @@ public class HeadlessSession
             NumInventorySlots = 50,
             NumBankSlots = 50
         };
+
+        // Experience has a private setter (the XP-grant path owns it), so the
+        // level/XP pair is written through the provisioning initializer.
+        character.InitializeLevelAndExperience(level);
 
         character.Inventory = new Inventory(character);
         character.Appellations = new CharacterAppellations(character);

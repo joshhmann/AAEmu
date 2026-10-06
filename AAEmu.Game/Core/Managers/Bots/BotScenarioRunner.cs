@@ -444,6 +444,10 @@ public static class BotScenarioRunner
             if (active)
             {
                 var advanceRequest = actor.AdvanceQuest(questId);
+                // A declined advance is not a failure here: the terminal stays
+                // Completed (the step machine ran to completion for this wake),
+                // so this guard only fires on a genuinely non-Completed
+                // terminal — unchanged original semantics.
                 if (advanceRequest.State != ActorLifecycleState.Completed)
                     return (stage.Name, advanceRequest.Failure ?? ActorFailureReason.StateTransition,
                         $"advance refused: {advanceRequest.Detail}");

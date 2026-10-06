@@ -92,7 +92,10 @@ internal static class BotPresenceBootstrap
                         RoamRadius: 30f,
                         RoamSpeed: 2.5f,
                         Level: 5,
-                        NamePrefix: "Citizen",
+                        // No prefix: names are generated in-world from
+                        // Data/Bots/bot_names.json (BotNameGenerator). Set
+                        // NamePrefix to pin the historical {prefix}{NN} shape.
+                        NamePrefix: null,
                         AccountPrefix: "presence",
                         MaxPresenceBots: BotPresenceCoordinator.ReadMaxPresenceBots()));
                 }

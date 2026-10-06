@@ -250,29 +250,54 @@ public class BotPresenceManifestTests
     }
 
     [Test]
-    public async Task Start_NoManifest_LegacyHardcodedCitizenPath()
+    public async Task Start_NoManifest_LegacyPath_GeneratesInWorldNames()
     {
         SeedFixtureSingletons();
 
         // Legacy path (G2-A6 contract): provider yields null/empty → the
-        // hardcoded 3-citizen loop runs exactly as before.
+        // hardcoded 3-bot loop runs exactly as before, except the display names
+        // now come from the in-world pool instead of CitizenNN.
         var rig = ManifestRig();
         rig.Coordinator = withProvider(rig, () => null);
 
-        var result = rig.Coordinator.Start(Config(botCount: 3));
+        var result = rig.Coordinator.Start(Config(botCount: 3, namePrefix: null));
 
         await Assert.That(result).IsTrue();
         await Assert.That(rig.Provisioned.Count).IsEqualTo(3);
+        var names = rig.Provisioned.Select(p => p.Name).ToList();
+        await Assert.That(names.Distinct().Count()).IsEqualTo(3); // distinct names
+        foreach (var name in names)
+        {
+            // Real people names, drawn from the committed pool — never CitizenNN.
+            await Assert.That(name.StartsWith("Citizen")).IsFalse();
+            await Assert.That(BotNameGenerator.Pool.Contains(name)).IsTrue();
+        }
         for (var i = 0; i < 3; i++)
         {
             var bot = rig.Provisioned[i];
-            await Assert.That(bot.Name).IsEqualTo($"Citizen{i + 1:D2}"); // NamePrefix + index, not manifest names
-            await Assert.That(bot.Race).IsEqualTo(Race.Nuian);           // hardcoded demo race/gender
+            await Assert.That(bot.Race).IsEqualTo(Race.Nuian); // hardcoded demo race/gender
             await Assert.That(bot.Gender).IsEqualTo(Gender.Male);
             await Assert.That(bot.Level).IsEqualTo((byte)5);
         }
         await Assert.That(rig.Manager.SpawnCalls).IsEqualTo(3);
         await Assert.That(rig.Scheduler.Wakes.Count).IsEqualTo(3);
+    }
+
+    [Test]
+    public async Task Start_NoManifest_ConfiguredNamePrefix_KeepsLegacyCitizenShape()
+    {
+        SeedFixtureSingletons();
+
+        // A caller that pins NamePrefix keeps today's behaviour verbatim.
+        var rig = ManifestRig();
+        rig.Coordinator = withProvider(rig, () => null);
+
+        var result = rig.Coordinator.Start(Config(botCount: 3, namePrefix: "Citizen"));
+
+        await Assert.That(result).IsTrue();
+        var prefixed = rig.Provisioned.Select(p => p.Name).ToList();
+        for (var i = 0; i < 3; i++)
+            await Assert.That(prefixed[i]).IsEqualTo($"Citizen{i + 1:D2}");
     }
 
     [Test]
@@ -458,10 +483,11 @@ public class BotPresenceManifestTests
         return rig.Coordinator;
     }
 
-    private static BotPresenceCoordinator.BotPresenceConfig Config(int botCount = 3, int maxPresenceBots = 10)
+    private static BotPresenceCoordinator.BotPresenceConfig Config(int botCount = 3, int maxPresenceBots = 10,
+        string? namePrefix = "Citizen")
         => new(
             BotCount: botCount, ZoneId: 9, HomePosition: default, RoamRadius: 30f,
-            RoamSpeed: 2.5f, Level: 5, NamePrefix: "Citizen", AccountPrefix: "presence",
+            RoamSpeed: 2.5f, Level: 5, NamePrefix: namePrefix, AccountPrefix: "presence",
             MaxPresenceBots: maxPresenceBots);
 
     private static string WriteTempManifest(string content)

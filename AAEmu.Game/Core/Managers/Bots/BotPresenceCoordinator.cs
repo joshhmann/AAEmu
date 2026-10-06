@@ -455,7 +455,11 @@ public sealed class BotPresenceCoordinator
         for (var i = 0; i < config.BotCount; i++)
         {
             var accountName = $"{BotAccountProvisioningService.ManagedUsernamePrefix}{config.AccountPrefix}_{i + 1:D3}";
-            var name = $"{config.NamePrefix}{i + 1:D2}";
+            // In-world names, not CitizenNN: with no prefix configured the name
+            // comes from the data-backed pool (deterministic in the roster index,
+            // stepped past any name already registered in NameManager). A caller
+            // that pins NamePrefix keeps the historical {prefix}{NN} shape.
+            var name = BotNameGenerator.NameFor(i, config.NamePrefix, ProductionNameProbe);
 
             try
             {
@@ -544,6 +548,15 @@ public sealed class BotPresenceCoordinator
             spawned, config.BotCount);
         return spawned > 0;
     }
+
+    /// <summary>
+    /// Production "is this character name already taken?" probe — the live
+    /// NameManager registry, which is loaded from the characters table at boot.
+    /// Injected into <see cref="BotNameGenerator.NameFor"/> so name assignment
+    /// itself stays a pure, hermetic function of the roster index.
+    /// </summary>
+    private static bool ProductionNameProbe(string name)
+        => NameManager.Instance.GetCharacterId(name) != 0;
 
     /// <summary>
     /// Builds a bounded patrol route (Loop) around home: a rounded square with
