@@ -9,6 +9,7 @@ using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Items;
+using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
@@ -240,8 +241,9 @@ public static class QuestBehavior
     /// decrease while the pursuit leg yields <c>inside-combat-band</c> or the combat leg
     /// yields <c>already-live</c>. Memory-only wake cache, same discipline as
     /// <c>GiveUpStreaks</c>: keyed by (actor, target), bounded by full clear.
-    /// Reset on any HP decrease (the hold is working), on target switch/loss/death
-    /// (a different fight), and on unreadable HP — fail-closed, never forces motion
+    /// Reset on a self-attributed HP decrease (the actor's own damage landed, so the
+    /// hold is working), on target switch/loss/death (a different fight), and on
+    /// unreadable HP or unreadable attribution — fail-closed, never forces motion
     /// on unknown state. The per-target streak is the primary signal; the
     /// actor-wide backstop below (<see cref="CombatStallActorWakes"/>) is what
     /// survives a target switch.
@@ -254,11 +256,11 @@ public static class QuestBehavior
     /// backstop behind the per-target stall streak. Every consecutive hold-wake
     /// counts no matter which live target it held on (pure sum across switches),
     /// so rotating N live targets without dealing damage trips the contact
-    /// close-in at the same threshold. Reset on any same-target HP decrease
-    /// (damage landed = progress), on target loss/death (a gone target ends the
-    /// fight), and on unreadable HP — fail-closed, never forces motion on unknown
-    /// state. Deduped by cycle so one wake counts once. No quest key: the stall
-    /// is an actor property, never a quest one.
+    /// close-in at the same threshold. Reset on a self-attributed same-target HP
+    /// decrease (the actor's own damage landed = progress), on target loss/death
+    /// (a gone target ends the fight), and on unreadable HP — fail-closed, never
+    /// forces motion on unknown state. Deduped by cycle so one wake counts once. No
+    /// quest key: the stall is an actor property, never a quest one.
     /// </summary>
     private static readonly Dictionary<uint, CombatStallActorStreak> CombatStallActorWakes = new();
     /// <summary>One actor's stall backstop: the target and HP of the last counted wake, consecutive hold-wakes, and the cycle that last counted.</summary>
@@ -289,16 +291,29 @@ public static class QuestBehavior
     /// wakes, not legs. A null/empty cycle skips dedup and counts (only test rigs omit
     /// it; counting is the honest record of the hold observed).
     /// Fail-closed: target 0 or unreadable HP (negative) drops the actor's streaks and
-    /// never trips. Any HP decrease clears the streak (damage landed = progress).
+    /// never trips. A self-attributed HP decrease clears the streak (the actor's own
+    /// damage landed = progress); a foreign-only delta keeps counting toward the trip.
+    /// Unreadable attribution keeps the historical behavior and clears (never a trip
+    /// on unknown state).
     /// A different target for the same actor drops the old per-target streak (a
     /// different fight) but never the actor-wide backstop — consecutive hold-wakes
     /// sum across the switch, so rotating live targets without dealing damage
     /// still trips the close-in.
     /// </summary>
     internal static bool CountCombatStallWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
+        => CountCombatStallWake(actorId, targetObjId, hp, cycleId, out wakes, selfAttributed: null);
+    /// <summary>
+    /// Attributed stall-wake count: <paramref name="selfAttributed"/> names whether the
+    /// observed HP delta carries the actor's own damage (the tagger/contributor read at
+    /// the call site — the same evidence <see cref="LootBrain.ClassifyOwnership"/> reads).
+    /// True (actor is tagger/contributor) resets on an HP decrease; false (foreign-only
+    /// damage) keeps counting toward the trip; null (unreadable attribution) keeps the
+    /// historical behavior and resets — fail-closed, never a trip on unknown state.
+    /// </summary>
+    internal static bool CountCombatStallWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes, bool? selfAttributed)
     {
-        var perTargetTripped = CountNoProgressWake(CombatStallStreaks, actorId, targetObjId, hp, cycleId, out wakes);
-        var actorTripped = CountCombatStallActorWake(actorId, targetObjId, hp, cycleId, out var actorWakes);
+        var perTargetTripped = CountNoProgressWake(CombatStallStreaks, actorId, targetObjId, hp, cycleId, out wakes, selfAttributed);
+        var actorTripped = CountCombatStallActorWake(actorId, targetObjId, hp, cycleId, out var actorWakes, selfAttributed);
         wakes = Math.Max(wakes, actorWakes);
         return perTargetTripped || actorTripped;
     }
@@ -311,16 +326,28 @@ public static class QuestBehavior
     /// state); shared fail-closed body with <see cref="CountCombatStallWake"/>.
     /// </summary>
     internal static bool CountLeashStaleWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
-        => CountNoProgressWake(LeashStaleStreaks, actorId, targetObjId, hp, cycleId, out wakes);
+        => CountLeashStaleWake(actorId, targetObjId, hp, cycleId, out wakes, selfAttributed: null);
+    /// <summary>
+    /// Attributed stale-pin wake count: a foreign-only HP delta keeps counting toward
+    /// the trip; unreadable attribution keeps the historical behavior and clears —
+    /// fail-closed, never a trip on unknown state. See the attributed
+    /// <see cref="CountCombatStallWake(uint, uint, int, string?, out int, bool?)"/>
+    /// overload for the <paramref name="selfAttributed"/> contract.
+    /// </summary>
+    internal static bool CountLeashStaleWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes, bool? selfAttributed)
+        => CountNoProgressWake(LeashStaleStreaks, actorId, targetObjId, hp, cycleId, out wakes, selfAttributed);
     /// <summary>
     /// The shared no-progress streak body behind the stall trip and the stale-pin
     /// watchdog: consecutive same-HP wakes for one (actor, target), deduped by
     /// <paramref name="cycleId"/> so one wake counts once. Fail-closed: target 0
-    /// or unreadable HP (negative) drops the actor's streaks and never trips; any
-    /// HP decrease clears (damage landed = progress); a different target for the
-    /// same actor drops the old streak (a different fight).
+    /// or unreadable HP (negative) drops the actor's streaks and never trips; a
+    /// self-attributed HP decrease clears (the actor's own damage landed = progress)
+    /// while a foreign-only delta keeps counting; unreadable attribution
+    /// (<paramref name="selfAttributed"/> null) clears like before — never a trip
+    /// on unknown state. A different target for the same actor drops the old streak
+    /// (a different fight).
     /// </summary>
-    private static bool CountNoProgressWake(Dictionary<(uint ActorId, uint TargetObjId), CombatStallStreak> streaks, uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
+    private static bool CountNoProgressWake(Dictionary<(uint ActorId, uint TargetObjId), CombatStallStreak> streaks, uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes, bool? selfAttributed)
     {
         // Runtime tuning seam: the stall-trip threshold reads the live snapshot
         // (override) or the canonical CombatStallWakes default — next-wake
@@ -345,7 +372,10 @@ public static class QuestBehavior
                     wakes = prior.Wakes;
                     return wakes >= threshold;
                 }
-                if (hp < prior.Hp)
+                // Self/foreign attribution: only the actor's own damage (or unreadable
+                // attribution — fail-closed to the historical reset) clears the streak;
+                // a foreign-only HP delta keeps counting toward the trip.
+                if (hp < prior.Hp && selfAttributed != false)
                 {
                     streaks.Remove((actorId, targetObjId));
                     return false;
@@ -365,11 +395,14 @@ public static class QuestBehavior
     /// across target switches (pure sum — every consecutive hold-wake counts no
     /// matter which live target it held on); deduped by <paramref name="cycleId"/>
     /// so one wake counts once. Fail-closed: target 0 or unreadable HP (negative)
-    /// drops the backstop and never trips. Any HP decrease on the CURRENT target
-    /// clears (damage landed = progress); an HP reading on a NEW target never
-    /// clears (different HP pool, not progress).
+    /// drops the backstop and never trips. A self-attributed HP decrease on the
+    /// CURRENT target clears (the actor's own damage landed = progress) while a
+    /// foreign-only delta keeps counting; unreadable attribution
+    /// (<paramref name="selfAttributed"/> null) clears like before — never a trip
+    /// on unknown state. An HP reading on a NEW target never clears (different HP
+    /// pool, not progress).
     /// </summary>
-    private static bool CountCombatStallActorWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
+    private static bool CountCombatStallActorWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes, bool? selfAttributed)
     {
         var threshold = BotBrainTuningStore.ResolveCombatStallWakes();
         wakes = 0;
@@ -390,7 +423,9 @@ public static class QuestBehavior
                     wakes = prior.Wakes;
                     return wakes >= threshold;
                 }
-                if (targetObjId == prior.TargetObjId && hp < prior.Hp)
+                // Same self/foreign contract as the per-target body above: only the
+                // actor's own damage (or unreadable attribution) clears the backstop.
+                if (targetObjId == prior.TargetObjId && hp < prior.Hp && selfAttributed != false)
                 {
                     CombatStallActorWakes.Remove(actorId);
                     return false;
@@ -403,6 +438,50 @@ public static class QuestBehavior
             }
             CombatStallActorWakes[actorId] = new CombatStallActorStreak(targetObjId, hp, wakes, cycleId ?? "");
             return wakes >= threshold;
+        }
+    }
+    /// <summary>
+    /// Reads whether the actor itself dealt damage to this target from the engine's own
+    /// tagging surface — the same tag/contributor evidence
+    /// <see cref="LootBrain.ClassifyOwnership"/> reads: true when the actor is the tagger
+    /// or appears in the contributor census, false when a readable claim names only
+    /// foreign damage (a foreign tagger, or a contributor census with no self entry),
+    /// null when no claim was found or the surface is unreadable (fail-closed: the
+    /// counters treat null as "reset", never a trip on unknown state).
+    /// </summary>
+    private static bool? ReadSelfDamageAttribution(Character? character, Npc? npc, uint actorObjId)
+    {
+        if (character == null || npc == null)
+            return null;
+        try
+        {
+            var tagging = npc.CharacterTagging;
+            if (tagging == null)
+                return null;
+            var tagger = tagging.Tagger;
+            // Any tagger at all is a readable claim: self when it is the actor,
+            // foreign when it is anyone else (the kill29 shape — tagger=44112 on
+            // 44324 while char 4 only holds). No tagger is no claim found, which
+            // is unreadable attribution (fail-closed reset), not a foreign verdict.
+            if (tagger != null)
+                return tagger.Id == character.Id || tagger.ObjId == actorObjId;
+            if (tagging.TagTeam != 0)
+                return null;
+            var contributors = tagging.GetAllContributors(LootingContainer.MaxLootingRange);
+            if (contributors.Count == 0)
+                return null;
+            foreach (var contributor in contributors)
+            {
+                if (contributor == null)
+                    continue;
+                if (contributor.Id == character.Id || contributor.ObjId == actorObjId)
+                    return true;
+            }
+            return false;
+        }
+        catch
+        {
+            return null;
         }
     }
     /// <summary>Drops every stall streak for one actor: its target identity is gone (lost/dead/unselected), so no streak may survive onto the next fight.</summary>
@@ -3187,7 +3266,7 @@ public static class QuestBehavior
             // the contact pose is the same one melee roles already fight from.
             // Fail-closed: unreadable HP (npc null here is impossible — validated
             // above — but Hp is still read live) resets inside the counter.
-            if (CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out var stallWakes))
+            if (CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out var stallWakes, ReadSelfDamageAttribution(character, npc, actor.ActorId)))
             {
                 diag = $"validate=ok:rangeM={M(dist)}:dispatch=move:reason=stall-close-in(stall={stallWakes}wakes_hp={npc.Hp}){travelFrag}";
                 return new BotDecisionProposal(
@@ -3455,7 +3534,7 @@ public static class QuestBehavior
             // combat side. Counting here lets a wake the pursuit leg never reaches
             // (Stop branch inside 3 m) still accrue — the trip itself always fires
             // from pursuit, so there is exactly one re-dispatch path.
-            CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _);
+            CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _, ReadSelfDamageAttribution(character, npc, actor.ActorId));
             diag = $"validate=already-live:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false))}:verb=none:hpBefore={npc.Hp}";
             return null;
         }
@@ -3547,7 +3626,7 @@ public static class QuestBehavior
             // a critical-hp retreat never does); any HP decrease resets inside
             // the counter; a gone target clears through ClearCombatStallActor.
             if (brainDecision is { Arm: CombatArm.Disengage, DisengageReason: CombatDisengageReason.LeashEdge })
-                CountLeashStaleWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _);
+                CountLeashStaleWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _, ReadSelfDamageAttribution(character, npc, actor.ActorId));
             diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
                    $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{leashFrag}";
             return null; // a survival/CC/retreat condition owns the wake
@@ -3565,7 +3644,7 @@ public static class QuestBehavior
         {
             // Same streak as the pre-brain gate above (cycle-deduped): the brain's
             // own Hold is the third name for "loop live, no new dispatch".
-            CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _);
+            CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _, ReadSelfDamageAttribution(character, npc, actor.ActorId));
             diag = $"validate=already-live:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
                    $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{leashFrag}";
             return null;

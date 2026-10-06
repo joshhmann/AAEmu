@@ -365,6 +365,59 @@ public class QuestObjectiveCombatTests
         await Assert.That(wakes).IsEqualTo(1);
         QuestBehavior.ClearCombatStallMemory();
     }
+    /// <summary>
+    /// FOREIGN-ONLY PROGRESS: an HP drop with no self attribution keeps counting
+    /// toward the trip — the kill29 shape (bystander damage resets nothing).
+    /// </summary>
+    [Test]
+    public async Task StallCounter_ForeignOnlyHpDecrease_KeepsCounting()
+    {
+        const uint actorId = 0x6E51u;
+        const uint target = 0x6E52u;
+        QuestBehavior.ClearCombatStallMemory();
+        for (var i = 0; i < QuestBehavior.CombatStallWakes - 1; i++)
+            await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 100, $"fgn-{i}", out _, selfAttributed: false)).IsFalse();
+        // Foreign damage drops HP but the streak keeps counting: the 10th wake trips.
+        await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 90, "fgn-dmg", out var wakes, selfAttributed: false)).IsTrue();
+        await Assert.That(wakes).IsEqualTo(QuestBehavior.CombatStallWakes);
+        QuestBehavior.ClearCombatStallMemory();
+    }
+
+    /// <summary>
+    /// SELF-ATTRIBUTED PROGRESS: an HP drop carrying the actor's own damage resets
+    /// the streak (and the actor-wide backstop), so a working loop never trips.
+    /// </summary>
+    [Test]
+    public async Task StallCounter_SelfAttributedHpDecrease_ResetsStreak()
+    {
+        const uint actorId = 0x6E61u;
+        const uint target = 0x6E62u;
+        QuestBehavior.ClearCombatStallMemory();
+        for (var i = 0; i < QuestBehavior.CombatStallWakes - 1; i++)
+            await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 100, $"self-{i}", out _, selfAttributed: true)).IsFalse();
+        await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 90, "self-dmg", out var wakes, selfAttributed: true)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(0);
+        await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 90, "self-restart", out wakes, selfAttributed: true)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(1);
+        QuestBehavior.ClearCombatStallMemory();
+    }
+
+    /// <summary>
+    /// FAIL-CLOSED: unreadable attribution (null) keeps the historical behavior and
+    /// resets — unknown state never forces motion.
+    /// </summary>
+    [Test]
+    public async Task StallCounter_UnreadableAttribution_ResetsLikeBefore()
+    {
+        const uint actorId = 0x6E71u;
+        const uint target = 0x6E72u;
+        QuestBehavior.ClearCombatStallMemory();
+        for (var i = 0; i < QuestBehavior.CombatStallWakes - 1; i++)
+            await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 100, $"unk-{i}", out _, selfAttributed: null)).IsFalse();
+        await Assert.That(QuestBehavior.CountCombatStallWake(actorId, target, 90, "unk-dmg", out var wakes, selfAttributed: null)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(0);
+        QuestBehavior.ClearCombatStallMemory();
+    }
 
     /// <summary>
     /// Melee contact is untouched: inside the 3 m stop radius the Stop/hold-confirm
