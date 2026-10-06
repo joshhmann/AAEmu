@@ -143,10 +143,11 @@ public static class BotBrainProjection
         string FailStage,
         string? Failure,
         string FailReason,
-        IReadOnlyList<uint> CompletedQuestIds,
-        int RejectionCount,
-        IReadOnlyList<string> Rejections,
         string? LastFailure,
+        // Runtime brain-tuning revision the last tick decided under (0 =
+        // canonical defaults). Cheap decision-inspection field off the
+        // run result the runtime already owns — no second lookup.
+        long TuningRevision,
         // One-line recorded-fact summary (never a bare status word).
         string StatusLine,
         DateTimeOffset? StartedAt,
@@ -236,10 +237,8 @@ public static class BotBrainProjection
             result?.FailStage ?? "",
             result?.Failure?.ToString(),
             result?.FailReason ?? "",
-            result?.CompletedQuestIds ?? [],
-            result?.Rejections.Count ?? 0,
-            rejections,
             runtime?.LastFailure,
+            result?.TuningRevision ?? 0,
             statusLine,
             runtime?.StartedAt,
             runtime?.LastProgressAt,

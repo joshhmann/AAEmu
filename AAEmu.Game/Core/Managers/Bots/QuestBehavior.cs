@@ -294,6 +294,10 @@ public static class QuestBehavior
     /// </summary>
     private static bool CountNoProgressWake(Dictionary<(uint ActorId, uint TargetObjId), CombatStallStreak> streaks, uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
     {
+        // Runtime tuning seam: the stall-trip threshold reads the live snapshot
+        // (override) or the canonical CombatStallWakes default — next-wake
+        // visible, byte-identical when no override is set.
+        var threshold = BotBrainTuningStore.ResolveCombatStallWakes();
         wakes = 0;
         if (targetObjId == 0 || hp < 0)
         {
@@ -311,7 +315,7 @@ public static class QuestBehavior
                 if (!string.IsNullOrEmpty(cycleId) && cycleId == prior.CycleId)
                 {
                     wakes = prior.Wakes;
-                    return wakes >= CombatStallWakes;
+                    return wakes >= threshold;
                 }
                 if (hp < prior.Hp)
                 {
@@ -325,7 +329,7 @@ public static class QuestBehavior
                 wakes = 1;
             }
             streaks[(actorId, targetObjId)] = new CombatStallStreak(hp, wakes, cycleId ?? "");
-            return wakes >= CombatStallWakes;
+            return wakes >= threshold;
         }
     }
     /// <summary>Drops every stall streak for one actor: its target identity is gone (lost/dead/unselected), so no streak may survive onto the next fight.</summary>
@@ -363,8 +367,10 @@ public static class QuestBehavior
     {
         if (targetObjId == 0)
             return false;
+        // Runtime tuning seam: same live threshold the counter trips at.
+        var threshold = BotBrainTuningStore.ResolveCombatStallWakes();
         lock (PursuitSync)
-            return LeashStaleStreaks.TryGetValue((actorId, targetObjId), out var streak) && streak.Wakes >= CombatStallWakes;
+            return LeashStaleStreaks.TryGetValue((actorId, targetObjId), out var streak) && streak.Wakes >= threshold;
     }
     /// <summary>Clears all stale-pin streaks (test seam, mirroring <c>ClearCombatStallMemory</c>).</summary>
     internal static void ClearLeashStaleMemory()
@@ -1343,6 +1349,7 @@ public static class QuestBehavior
                         LegEvidence = legEvidence,
                         PlanFailures = planFailures,
                         GiveUps = giveUps,
+                        TuningRevision = BotBrainTuningStore.Revision,
                         TraceRecords = [.. actor.AuditTrace]
                     };
                 }
@@ -1372,12 +1379,12 @@ public static class QuestBehavior
                 Request = request,
                 Rejections = decision.Rejections,
                 LegalAlternatives = decision.LegalAlternatives,
-                SelectionCandidateCount = decision.SelectionCandidateCount,
                 Explanation = decision.Explanation,
                 CompletedQuestIds = completed,
                 LegEvidence = legEvidence,
                 PlanFailures = planFailures,
                 GiveUps = giveUps,
+                TuningRevision = BotBrainTuningStore.Revision,
                 TraceRecords = [.. actor.AuditTrace]
             };
         }
@@ -4903,6 +4910,7 @@ public static class QuestBehavior
             LegEvidence = legEvidence ?? [],
             PlanFailures = planFailures ?? [],
             GiveUps = giveUps ?? [],
+            TuningRevision = BotBrainTuningStore.Revision,
             TraceRecords = [.. actor.AuditTrace]
         };
 }

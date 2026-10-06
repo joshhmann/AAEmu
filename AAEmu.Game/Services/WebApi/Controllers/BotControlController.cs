@@ -251,6 +251,69 @@ internal class BotControlController : BaseController
         }
     }
 
+    /// Brain tuning read (GET /api/bots/tuning): every tunable with its
+    /// canonical default, current effective value, override (null = default
+    /// wins), previous value, revision, and when last observed. Read-only:
+    /// no wakes, no mutations. Same gate as the rest of this surface.
+    /// </summary>
+    [WebApiGet("^/api/bots/tuning$")]
+    public HttpResponse BrainTuningGet(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            return OkJson(BotBrainTuningStore.Snapshot());
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "BotControl: brain tuning get failed");
+        }
+    }
+
+    /// <summary>
+    /// Brain tuning write (POST /api/bots/tuning): partial update — only the
+    /// JSON body's present fields change; explicit null clears that override
+    /// back to default. Invalid values → 400 with the bound, never silently
+    /// accepted. Applies next-wake; Login/Game/bot/quest state untouched.
+    /// </summary>
+    [WebApiPost("^/api/bots/tuning$")]
+    public HttpResponse BrainTuningPost(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            BotBrainTuningPatch patch;
+            try
+            {
+                patch = BotBrainTuningStore.ParsePatch(request.Body ?? "{}");
+            }
+            catch (JsonException)
+            {
+                return BadRequestJson(new ErrorModel("Invalid JSON body"));
+            }
+            var error = BotBrainTuning.Validate(patch);
+            if (error != null)
+                return BadRequestJson(new ErrorModel(error));
+            var (tuning, revision, changed) = BotBrainTuningStore.Apply(patch);
+            Logger.Info("BotControl: brain tuning {Changed} to revision {Revision} (safe={Safe}, unresolved={Unresolved}, planFail={PlanFail}, stall={Stall}, leash={Leash})",
+                changed ? "updated" : "no-op", revision,
+                tuning.LootSafeRadiusM?.ToString() ?? "default",
+                tuning.GiveUpAfterUnresolvedWakes?.ToString() ?? "default",
+                tuning.GiveUpAfterPlanFailures?.ToString() ?? "default",
+                tuning.CombatStallWakes?.ToString() ?? "default",
+                tuning.LeashEdgeFraction?.ToString() ?? "default");
+            return OkJson(BotBrainTuningStore.Snapshot());
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "BotControl: brain tuning post failed");
+        }
+    }
+
     /// <summary>Resolves a bot by numeric id or case-insensitive name (the BotAdminService precedent).</summary>
     private static bool TryResolveBot(IPlayerBotManager manager, string nameOrId, out PlayerBotRuntime? runtime)
     {

@@ -1779,13 +1779,14 @@ public enum NeedsFarmLoopPhase
         // never disagree — a bot that walks to an offerer whose only offers
         // its own accept path discards just paces.
         var band = OfferBandFor(concreteActor);
-        var landed = runtime.Tick(concreteActor, nearbyNpcs,
-            band with
-            {
-                CycleId = $"quest-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}",
-                WithholdTurnIn = IsQuestTurnInWithheld(bot.CharacterId)
-            },
-            questActivity);
+        // Runtime brain-tuning seam: live overrides layered over the canonical
+        // defaults — next-wake visible, byte-identical when no override is set.
+        var wakeOptions = BotBrainTuningStore.ApplyTo(band) with
+        {
+            CycleId = $"quest-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}",
+            WithholdTurnIn = IsQuestTurnInWithheld(bot.CharacterId)
+        };
+        var landed = runtime.Tick(concreteActor, nearbyNpcs, wakeOptions, questActivity);
         var result = runtime.LastResult;
         // Diagnostic only: mirror the quest-leg outcome (landed action or
         // fail stage + reason with sweep tallies) into observe state, plus a

@@ -274,6 +274,12 @@ public static class QuestDecisionScenario
         /// and never a dispatch (no abandon verb exists on the actor contract).
         /// </summary>
         public IReadOnlyList<QuestGiveUp> GiveUps { get; init; } = [];
+        /// <summary>
+        /// Runtime brain-tuning revision this wake decided under (0 = canonical
+        /// defaults, no override). Cheap decision-inspection field: lets a lane
+        /// join a wake's verdict to the tuning snapshot that produced it.
+        /// </summary>
+        public long TuningRevision { get; init; }
         /// <summary>The actor's full audit trace, in execution order.</summary>
         public List<ActorAuditRecord> TraceRecords { get; init; } = [];
     }

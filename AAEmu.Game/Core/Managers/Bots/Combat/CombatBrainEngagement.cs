@@ -68,7 +68,8 @@ public static class CombatBrainEngagement
             if (LeashBudgetM <= 0f)
                 return false;
             var drift = MathUtil.CalculateDistance(LeashAnchor, targetPosition, false);
-            return drift >= LeashBudgetM * LeashEdgeFraction;
+            // Runtime tuning seam: live fraction or the canonical default.
+            return drift >= LeashBudgetM * BotBrainTuningStore.ResolveLeashEdgeFraction();
         }
     }
 

@@ -201,7 +201,7 @@ public static class CombatBrain
 
         if (inputs.IncumbentObjId != 0 && inputs.IncumbentValid && inputs.LeashBudgetM > 0f
             && !float.IsNaN(inputs.IncumbentLeashDriftM)
-            && inputs.IncumbentLeashDriftM >= inputs.LeashBudgetM * CombatBrainEngagement.LeashEdgeFraction)
+            && inputs.IncumbentLeashDriftM >= inputs.LeashBudgetM * BotBrainTuningStore.ResolveLeashEdgeFraction())
             return CombatDisengageReason.LeashEdge;
 
         return CombatDisengageReason.None;
