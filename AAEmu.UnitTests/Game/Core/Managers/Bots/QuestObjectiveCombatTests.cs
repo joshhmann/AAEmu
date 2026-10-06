@@ -340,6 +340,87 @@ public class QuestObjectiveCombatTests
         await Assert.That(wakes).IsEqualTo(0);
         QuestBehavior.ClearCombatStallMemory();
     }
+    /// <summary>
+    /// STALE-PIN WATCHDOG TRIP (kill27 char 1): LeashEdge + static HP for N
+    /// wakes trips the demotion so the next wake re-selects a killable target
+    /// instead of holding the leash-dead pin.
+    /// </summary>
+    [Test]
+    public async Task LeashStalePin_TripsAfterNStaticWakes()
+    {
+        var actorId = 0x6F11u;
+        var staleTarget = 0x6F12u;
+        var liveTarget = 0x6F13u;
+        QuestBehavior.ClearLeashStaleMemory();
+        for (var i = 0; i < QuestBehavior.CombatStallWakes - 1; i++)
+            await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, staleTarget, 100, $"leash-{i}", out _)).IsFalse();
+        await Assert.That(QuestBehavior.IsLeashStaleTarget(actorId, staleTarget)).IsFalse();
+        await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, staleTarget, 100, "leash-trip", out var wakes)).IsTrue();
+        await Assert.That(wakes).IsEqualTo(QuestBehavior.CombatStallWakes);
+        await Assert.That(QuestBehavior.IsLeashStaleTarget(actorId, staleTarget)).IsTrue();
+        await Assert.That(QuestBehavior.IsLeashStaleTarget(actorId, liveTarget)).IsFalse();
+        QuestBehavior.ClearLeashStaleMemory();
+        await Assert.That(QuestBehavior.IsLeashStaleTarget(actorId, staleTarget)).IsFalse();
+    }
+
+    /// <summary>
+    /// The watchdog is progress-gated: any HP decrease clears the streak, so a
+    /// fight dealing damage never demotes — the char-2-style healthy take.
+    /// </summary>
+    [Test]
+    public async Task LeashStalePin_HpDecrease_ClearsAndNeverTrips()
+    {
+        var actorId = 0x6F21u;
+        var target = 0x6F22u;
+        QuestBehavior.ClearLeashStaleMemory();
+        for (var i = 0; i < QuestBehavior.CombatStallWakes - 1; i++)
+            await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, target, 100, $"leash-ok-{i}", out _)).IsFalse();
+        await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, target, 90, "leash-dmg", out var wakes)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(0);
+        await Assert.That(QuestBehavior.IsLeashStaleTarget(actorId, target)).IsFalse();
+        await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, target, 90, "leash-restart", out wakes)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(1);
+        QuestBehavior.ClearLeashStaleMemory();
+    }
+
+    /// <summary>
+    /// Fail-closed: a short LeashEdge run (below N wakes) never trips, and
+    /// unreadable HP or a gone identity clears instead of tripping.
+    /// </summary>
+    [Test]
+    public async Task LeashStalePin_ShortRunOrUnknownState_NeverTrips()
+    {
+        var actorId = 0x6F31u;
+        var target = 0x6F32u;
+        QuestBehavior.ClearLeashStaleMemory();
+        for (var i = 0; i < QuestBehavior.CombatStallWakes - 2; i++)
+            await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, target, 100, $"leash-short-{i}", out _)).IsFalse();
+        await Assert.That(QuestBehavior.IsLeashStaleTarget(actorId, target)).IsFalse();
+        await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, target, -1, "leash-bad", out var wakes)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(0);
+        await Assert.That(QuestBehavior.IsLeashStaleTarget(actorId, target)).IsFalse();
+        await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, 0, 100, "leash-gone", out wakes)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(0);
+        QuestBehavior.ClearLeashStaleMemory();
+    }
+
+    /// <summary>
+    /// Fail-closed on target switch: a streak accrued on one target never trips
+    /// a different target — the new fight counts from one.
+    /// </summary>
+    [Test]
+    public async Task LeashStalePin_TargetSwitch_ResetsTheStreak()
+    {
+        var actorId = 0x6F41u;
+        QuestBehavior.ClearLeashStaleMemory();
+        for (var i = 0; i < QuestBehavior.CombatStallWakes - 1; i++)
+            await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, 0x6F42u, 100, $"leash-sw-{i}", out _)).IsFalse();
+        await Assert.That(QuestBehavior.CountLeashStaleWake(actorId, 0x6F43u, 100, "leash-sw-next", out var wakes)).IsFalse();
+        await Assert.That(wakes).IsEqualTo(1);
+        await Assert.That(QuestBehavior.IsLeashStaleTarget(actorId, 0x6F43u)).IsFalse();
+        QuestBehavior.ClearLeashStaleMemory();
+    }
+
 
     /// <summary>
     /// The CombatBrain increment's LIVE wiring, end to end on the real headless

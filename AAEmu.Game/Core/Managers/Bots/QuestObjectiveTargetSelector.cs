@@ -24,7 +24,12 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// are projected separately. Legality reuses
 /// <see cref="CombatDecisionTree.IsHostileTarget"/> — never a copy.
 /// Ordering is nearest-first flat with an ObjId tiebreak (G3 doctrine:
-/// deterministic before any cut).
+/// deterministic before any cut), raised ONE tier: a candidate no sibling has
+/// already committed to outranks a nearer one a sibling is already on, so a
+/// converged group spreads across the census instead of piling onto one boar.
+/// The rule is a pure read of live world state — it stores no claim, mints no
+/// id, and cannot go stale; with no contention it reduces to the flat ordering
+/// exactly.
 ///
 /// The quest's static facts (gather act, item, need, prey template, loot pack,
 /// reporter, reward) arrive as ONE derived <see cref="QuestFixtureRow"/> per
@@ -33,6 +38,11 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// identity is the template. This selector carries the template→objId
 /// resolution explicitly and STOPS at selection — no travel, no combat, no
 /// credit, no turn-in.
+///
+/// Prey deconfliction reads SIBLING commitment from the wake's own census
+/// (<c>NearbyCharacterObjIds</c> → each character's live <c>CurrentTarget</c>),
+/// never a claim registry: no state outlives the wake that read it, and a
+/// departing sibling's target is released the moment the next census drops it.
 /// </summary>
 public static class QuestObjectiveTargetSelector
 {
@@ -126,8 +136,23 @@ public static class QuestObjectiveTargetSelector
         Npc? best = null;
         var bestDistance = double.MaxValue;
         uint bestObjId = 0;
+        var bestTier = byte.MaxValue;
 
         var actorPos = character?.Transform.World.Position;
+        var selfTargetObjId = character?.CurrentTarget?.ObjId ?? 0u;
+        var contested = ContestedPreyObjIds(character, observation);
+        // Three tiers, in order: 0 the actor's OWN committed prey, 1 prey no
+        // sibling is committed to, 2 prey a sibling is already on — plus one
+        // DEMOTED lane for a stale pin: a target the stale-pin watchdog tripped
+        // ((actor, target) held Disengaged-at-LeashEdge with unchanged HP for
+        // CombatStallWakes wakes) is treated as currently unkillable and sinks
+        // BELOW every un-tripped candidate, so the next wake re-selects a
+        // killable target instead of holding the leash-dead pin. Demotion is
+        // never a filter: with nothing else legal the demoted target still
+        // wins, exactly like the all-contested tier-2 rule. Fail-closed the
+        // other way too — HP damage resets the watchdog inside its counter,
+        // so a target being killed is never demoted.
+        const byte staleTier = 3;
         foreach (var objId in observation?.NearbyNpcObjIds ?? [])
         {
             rawCount++;
@@ -196,16 +221,41 @@ public static class QuestObjectiveTargetSelector
                 legalCount++;
             if (candidates.Count < CandidatesShown)
                 candidates.Add(new CandidateFunnel(objId, npc.TemplateId, questRelevant, combatLegal, distance, reject));
-
-            // Nearest-first flat with an ObjId tiebreak. Relevance gates the
-            // selection: a legal non-fixture-template NPC is never the
-            // objective target.
-            if (questRelevant && combatLegal && !double.IsNaN(distance)
-                && (distance < bestDistance || (distance == bestDistance && objId < bestObjId)))
+            // Nearest-first flat with an ObjId tiebreak (G3 doctrine:
+            // deterministic before any cut), raised to tiers:
+            //   0  the actor's OWN committed prey — never diverted;
+            //   1  prey no sibling is committed to;
+            //   2  prey a sibling is already on.
+            // A converged group therefore spreads across the census instead of
+            // piling onto one boar, while a lone bot — or any bot with nothing
+            // contested to avoid — still takes the nearest legal prey exactly
+            // as before. Within a tier the order is the old flat one.
+            //
+            // Relevance still gates: a legal non-fixture-template NPC is never
+            // the objective target. Deconfliction is a TIE-BREAK among relevant
+            // legal prey, never a filter — when every candidate is contested the
+            // nearest still wins, so a bot is never left with no target.
+            if (questRelevant && combatLegal && !double.IsNaN(distance))
             {
-                best = npc;
-                bestDistance = distance;
-                bestObjId = objId;
+                // A tripped stale pin sinks below every un-tripped candidate
+                // (own-commitment included: tier 0 defers to it), yet stays a
+                // candidate — never filtered, never skipped. The self id comes
+                // from the actor's own live CurrentTarget read above (the
+                // actor id is its objId), so the demotion is owner-scoped to
+                // this actor's own pin and no other actor's watchdog can move it.
+                var tier = objId == selfTargetObjId
+                    ? (byte)(QuestBehavior.IsLeashStaleTarget(character?.ObjId ?? 0, objId) ? staleTier : 0)
+                    : (byte)(QuestBehavior.IsLeashStaleTarget(character?.ObjId ?? 0, objId) ? staleTier
+                        : contested.Contains(objId) ? 2 : 1);
+                if (tier < bestTier
+                    || (tier == bestTier && (distance < bestDistance
+                        || (distance == bestDistance && objId < bestObjId))))
+                {
+                    best = npc;
+                    bestDistance = distance;
+                    bestObjId = objId;
+                    bestTier = tier;
+                }
             }
         }
 
@@ -219,6 +269,50 @@ public static class QuestObjectiveTargetSelector
             candidates,
             fixture);
 
+    }
+
+    /// <summary>
+    /// The prey objIds at least one SIBLING character has already committed to.
+    ///
+    /// Read live from the wake's own census (<c>NearbyCharacterObjIds</c>),
+    /// which <c>GameplayActor.Observe</c> fills from the same 25 m band as the
+    /// NPC list — so this reads nothing the wake could not already see, and
+    /// never a world scan. The self entry is skipped, so an actor's own live
+    /// commitment never counts against it: a bot ALREADY on a boar keeps it, and
+    /// only a bot choosing afresh is diverted. A sibling holding some other
+    /// target contributes nothing here.
+    ///
+    /// This is an OBSERVATION, not a claim: no id is minted, nothing is
+    /// reserved, and there is no registry to leak or expire — a departing
+    /// sibling's target is released the moment the census drops it. It is
+    /// deliberately blind to whether that sibling can actually kill: an actor's
+    /// committed prey is committed, and second-guessing that is not this
+    /// selector's business.
+    ///
+    /// Cost: one dictionary lookup per nearby character (the census is already
+    /// materialised per wake), zero world scans, zero allocations.
+    /// </summary>
+    private static HashSet<uint> ContestedPreyObjIds(Character? character, BotObservedContext? observation)
+    {
+        var world = character?.ParentWorld;
+        if (world == null || observation == null)
+            return [];
+
+        var siblings = observation.NearbyCharacterObjIds;
+        if (siblings.Count == 0)
+            return [];
+
+        var selfObjId = character!.ObjId;
+        var contested = new HashSet<uint>();
+        foreach (var siblingObjId in siblings)
+        {
+            if (siblingObjId == selfObjId)
+                continue;
+            var targetObjId = world.GetCharacterByObjId(siblingObjId)?.CurrentTarget?.ObjId ?? 0u;
+            if (targetObjId != 0)
+                contested.Add(targetObjId);
+        }
+        return contested;
     }
 
     /// <summary>

@@ -273,20 +273,40 @@ public static class QuestBehavior
     /// A different target for the same actor drops the old streak (a different fight).
     /// </summary>
     internal static bool CountCombatStallWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
+        => CountNoProgressWake(CombatStallStreaks, actorId, targetObjId, hp, cycleId, out wakes);
+    /// <summary>
+    /// Counts one stale-pin wake for (actor, target): a Disengaged-at-LeashEdge
+    /// wake with unchanged HP. Reports true once the streak reaches
+    /// <see cref="CombatStallWakes"/> — the same "ten stagnant wakes means stuck"
+    /// convention the stall trip and the give-up rule share. Fed ONLY from the
+    /// combat leg's true LeashEdge verdict (never a target switch, never unknown
+    /// state); shared fail-closed body with <see cref="CountCombatStallWake"/>.
+    /// </summary>
+    internal static bool CountLeashStaleWake(uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
+        => CountNoProgressWake(LeashStaleStreaks, actorId, targetObjId, hp, cycleId, out wakes);
+    /// <summary>
+    /// The shared no-progress streak body behind the stall trip and the stale-pin
+    /// watchdog: consecutive same-HP wakes for one (actor, target), deduped by
+    /// <paramref name="cycleId"/> so one wake counts once. Fail-closed: target 0
+    /// or unreadable HP (negative) drops the actor's streaks and never trips; any
+    /// HP decrease clears (damage landed = progress); a different target for the
+    /// same actor drops the old streak (a different fight).
+    /// </summary>
+    private static bool CountNoProgressWake(Dictionary<(uint ActorId, uint TargetObjId), CombatStallStreak> streaks, uint actorId, uint targetObjId, int hp, string? cycleId, out int wakes)
     {
         wakes = 0;
         if (targetObjId == 0 || hp < 0)
         {
-            ClearCombatStallActor(actorId);
+            ClearNoProgressActor(streaks, actorId);
             return false;
         }
         lock (PursuitSync)
         {
-            if (CombatStallStreaks.Count >= CombatStallMemoryBound)
-                CombatStallStreaks.Clear();
-            foreach (var key in CombatStallStreaks.Keys.Where(k => k.ActorId == actorId && k.TargetObjId != targetObjId).ToList())
-                CombatStallStreaks.Remove(key);
-            if (CombatStallStreaks.TryGetValue((actorId, targetObjId), out var prior))
+            if (streaks.Count >= CombatStallMemoryBound)
+                streaks.Clear();
+            foreach (var key in streaks.Keys.Where(k => k.ActorId == actorId && k.TargetObjId != targetObjId).ToList())
+                streaks.Remove(key);
+            if (streaks.TryGetValue((actorId, targetObjId), out var prior))
             {
                 if (!string.IsNullOrEmpty(cycleId) && cycleId == prior.CycleId)
                 {
@@ -295,7 +315,7 @@ public static class QuestBehavior
                 }
                 if (hp < prior.Hp)
                 {
-                    CombatStallStreaks.Remove((actorId, targetObjId));
+                    streaks.Remove((actorId, targetObjId));
                     return false;
                 }
                 wakes = prior.Wakes + 1;
@@ -304,19 +324,56 @@ public static class QuestBehavior
             {
                 wakes = 1;
             }
-            CombatStallStreaks[(actorId, targetObjId)] = new CombatStallStreak(hp, wakes, cycleId ?? "");
+            streaks[(actorId, targetObjId)] = new CombatStallStreak(hp, wakes, cycleId ?? "");
             return wakes >= CombatStallWakes;
         }
     }
     /// <summary>Drops every stall streak for one actor: its target identity is gone (lost/dead/unselected), so no streak may survive onto the next fight.</summary>
     private static void ClearCombatStallActor(uint actorId)
     {
+        ClearNoProgressActor(CombatStallStreaks, actorId);
+        // The stale-pin watchdog keys on the same live identity: a gone target
+        // ends its fight, so the leash streak ends here too — one fused release,
+        // never a streak surviving onto the next fight.
+        ClearLeashStaleActor(actorId);
+    }
+    /// <summary>Drops every no-progress streak in one map for one actor.</summary>
+    private static void ClearNoProgressActor(Dictionary<(uint ActorId, uint TargetObjId), CombatStallStreak> streaks, uint actorId)
+    {
         lock (PursuitSync)
         {
-            foreach (var key in CombatStallStreaks.Keys.Where(k => k.ActorId == actorId).ToList())
-                CombatStallStreaks.Remove(key);
+            foreach (var key in streaks.Keys.Where(k => k.ActorId == actorId).ToList())
+                streaks.Remove(key);
         }
     }
+    /// <summary>
+    /// Stale-pin watchdog memory per (actor, target): consecutive
+    /// Disengaged-at-LeashEdge wakes with unchanged HP while in position (the
+    /// combat leg only consults the brain inside its admission radius, so a
+    /// counted wake is already an in-position one). Same discipline as
+    /// <c>CombatStallStreaks</c>: memory-only wake cache, keyed by
+    /// (actor, target), bounded by full clear. The streak feeds only from the
+    /// combat leg's true LeashEdge verdict and trips into the selector's
+    /// demotion, so the next wake re-selects a killable target instead of
+    /// holding the leash-dead pin.
+    /// </summary>
+    private static readonly Dictionary<(uint ActorId, uint TargetObjId), CombatStallStreak> LeashStaleStreaks = new();
+    /// <summary>Reads whether (actor, target) tripped the stale-pin watchdog (selector + test seam).</summary>
+    internal static bool IsLeashStaleTarget(uint actorId, uint targetObjId)
+    {
+        if (targetObjId == 0)
+            return false;
+        lock (PursuitSync)
+            return LeashStaleStreaks.TryGetValue((actorId, targetObjId), out var streak) && streak.Wakes >= CombatStallWakes;
+    }
+    /// <summary>Clears all stale-pin streaks (test seam, mirroring <c>ClearCombatStallMemory</c>).</summary>
+    internal static void ClearLeashStaleMemory()
+    {
+        lock (PursuitSync)
+            LeashStaleStreaks.Clear();
+    }
+    /// <summary>Drops every stale-pin streak for one actor.</summary>
+    private static void ClearLeashStaleActor(uint actorId) => ClearNoProgressActor(LeashStaleStreaks, actorId);
 
     /// <summary>
     /// Counts one failed wake for (actor, quest) and reports whether the streak
@@ -3397,6 +3454,18 @@ public static class QuestBehavior
 
         if (brainDecision.Arm is CombatArm.SurvivalVeto or CombatArm.Disengage or CombatArm.CrowdControl)
         {
+            // STALE-PIN WATCHDOG FEED. A Disengaged-at-LeashEdge verdict with
+            // unchanged HP is the stuck pin's own signature: the mob sits past
+            // its leash budget (the brain correctly refuses), the actor stands
+            // in position (this leg only consults the brain inside the
+            // admission radius), and no damage lands. N such wakes trip the
+            // selector demotion, so the next wake re-selects a killable target
+            // instead of holding Follow for thousands of wakes. Fail-closed:
+            // ONLY the true LeashEdge verdict counts (a crowd-control hold or
+            // a critical-hp retreat never does); any HP decrease resets inside
+            // the counter; a gone target clears through ClearCombatStallActor.
+            if (brainDecision is { Arm: CombatArm.Disengage, DisengageReason: CombatDisengageReason.LeashEdge })
+                CountLeashStaleWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _);
             diag = $"validate=ok:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
                    $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{leashFrag}";
             return null; // a survival/CC/retreat condition owns the wake
