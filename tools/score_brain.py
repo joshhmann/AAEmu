@@ -16,11 +16,12 @@ MARGIN = 0.20
 
 def collect(args):
     text = open(args.log, errors="replace").read()
-    m = re.search(r"total:\s*(\d+)\s*\n\s*failed:\s*(\d+)", text)
-    if not m:
+    blocks = re.findall(r"total:\s*(\d+)\s*\n\s*failed:\s*(\d+)", text)
+    if not blocks:
         print("INVALID: no test summary found", file=sys.stderr)
         return 2
-    total, failed = int(m.group(1)), int(m.group(2))
+    total = sum(int(t) for t, _ in blocks)
+    failed = sum(int(f) for _, f in blocks)
     passed = total - failed
     # Each passing scenario test = one completed held-out scenario; each failure = a wedge.
     # Frozen regressions come from a separate frozen-suite log when supplied
