@@ -192,6 +192,11 @@ public class UnitReqs
                 return RetWithValue(SkillResultKeys.skill_urk_faction_match, Value1, (uint)(unit?.Faction?.Id ?? 0) == Value1);
 
             case UnitReqsKindType.Tod:
+                // (0,0) is the data's "no time-of-day window" sentinel (31 of 51 Tod rows in
+                // compact.sqlite3), not the midnight instant — reading it as a hard [0,0] range
+                // makes every such skill unusable for all but ~6 game-seconds a day.
+                if (Value1 == 0 && Value2 == 0)
+                    return Ret(SkillResultKeys.skill_urk_tod, true);
                 var currentTime = (uint)Math.Floor(TimeManager.Instance.GetTime * 100f);
                 return Ret(SkillResultKeys.skill_urk_tod, currentTime >= Value1 && currentTime <= Value2);
 

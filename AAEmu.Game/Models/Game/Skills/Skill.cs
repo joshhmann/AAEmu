@@ -1028,7 +1028,15 @@ public class Skill
                             break;
                     }
                 }
-                HitTypes.TryAdd(targetUnit.ObjId, diceResult);
+                // Overwrite, never TryAdd: a combat-dice roll belongs to ONE swing.
+                // TryAdd froze the first swing's result for the whole engagement, so a
+                // single dodge/block/miss was re-applied to every later swing against the
+                // same target and that target could never be damaged (DamageEffect reads
+                // this back via SkillMissed). The roll above and the read in the effect's
+                // Apply happen synchronously inside this call, so last-write-wins here
+                // still lets the current swing see its own result. Matches the
+                // PlotCondition combat-dice writer.
+                HitTypes[targetUnit.ObjId] = diceResult;
                 
                 // There's probably a better place to handle parry/block durability, but let's put it here for now
                 if (targetUnit is Character targetPlayer)

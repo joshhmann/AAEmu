@@ -186,6 +186,17 @@ public class LootingContainer(IBaseUnit owner)
 
                 lootDropRate = maxDropRateMul;
                 lootGoldRate = maxLootGoldMul;
+
+                // Kill observability: the loot path only logged the kill on the
+                // branch BELOW (no eligible participants), so the headline
+                // "Unit killed without aggro:" grep measured kills by a killer
+                // OUTSIDE the eligible set rather than kills — a real kill whose
+                // looter had tag rights logged nothing at all. The same fact is
+                // recorded here so a kill is observable regardless of who was
+                // eligible. Observability only: no rate, eligibility, or
+                // distribution behavior changes.
+                if (killer is Character eligibleKiller)
+                    Logger.Info($"Unit killed with aggro: {npc.ObjId} ({npc.TemplateId}) by {eligibleKiller.Name}");
             }
             else if (killer is Character player)
             {
