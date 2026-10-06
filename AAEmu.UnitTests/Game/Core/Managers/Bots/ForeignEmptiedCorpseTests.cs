@@ -143,6 +143,79 @@ public class ForeignEmptiedCorpseTests
         await Assert.That(retargeted).IsTrue();
     }
 
+    [Test]
+    public async Task SecondActor_IgnoresCohortEmptiedCorpse_RetargetsLivePrey()
+    {
+        var (first, session) = GameplayActorTestRig.CreateActor("ce-first");
+        var (second, _) = GameplayActorTestRig.CreateActor("ce-second");
+        GameplayActorTestRig.JoinActorWorld(session, second);
+        // Same shape as the foreign variant, except the tagger is a FELLOW
+        // cohort bot: the cohort seam names both accounts bots, so the
+        // tagger-shares-team fallback fires and B reads Party (not Foreign)
+        // for the emptied corpse. The ownership-free terminal-empty exclusion
+        // must still step past it — an empty corpse never refills regardless
+        // of who emptied it. Without the generalization B camps the corpse
+        // pin; with it B closes on live prey instead.
+        GameplayActorTestRig.SetPosition(second, new Vector3(8, 0, 0));
+        var guestRegion = session.World.GetRegionByPos(second.Character.Transform.World.Position)!;
+        guestRegion.AddObject(second.Character);
+        second.Character.Region = guestRegion;
+        var corpseObjId = SpawnBoar(session, first, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        var corpse = session.World.GetNpc(corpseObjId)!;
+        corpse.Hp = 0;
+        GameplayActorTestRig.SeedLootContainer(corpse, (ProbeItemTemplateId, 1));
+
+        Activate251(first.Character);
+        first.Character.CurrentTarget = corpse;
+        const uint botAccount = 91_501;
+        const uint fellowBotAccount = 91_503;
+        second.Character.AccountId = botAccount;
+        first.Character.AccountId = fellowBotAccount;
+        LootBrainPlanner.CohortResolverForTests = accountId => accountId == botAccount || accountId == fellowBotAccount;
+        corpse.CharacterTagging.AddTagger(first.Character, 10);
+        _ = QuestDecisionScenario.Run(first, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "ce-take-1" });
+        GameplayActorTestRig.SeedLootContainer(corpse);
+        // Cohort seam STAYS active through B's wakes (unlike the foreign
+        // variant): the tagger-shares-team fallback then fires on B's own
+        // reads, so B classifies the emptied corpse Party — the shape the
+        // ownership-gated exclusion misses.
+
+        Activate251(second.Character);
+        string? lootDetail = null;
+        for (var wake = 1; wake <= 2; wake++)
+        {
+            var run = QuestDecisionScenario.Run(second, (_, _) => [],
+                new QuestDecisionScenario.QuestOptions { CycleId = $"ce-second-{wake}" });
+            lootDetail = run.LegEvidence.Single(e => e.Leg == QuestLegId.Loot).Detail;
+            second.PreemptCurrent("unit-test wake settled");
+            Activate251(second.Character);
+        }
+
+        var pinned = QuestBehavior.TryGetCorpse(second.ActorId, out var corpseRec);
+        LootBrainPlanner.CohortResolverForTests = null;
+        await Assert.That(pinned).IsFalse();
+        await Assert.That(lootDetail!).Contains("target=-");
+
+        var liveObjId = SpawnSecondBoar(session, new Vector3(18, 0, 0));
+        var live = session.World.GetNpc(liveObjId)!;
+        var retargeted = false;
+        for (var wake = 1; wake <= 5; wake++)
+        {
+            _ = QuestDecisionScenario.Run(second, (_, _) => [],
+                new QuestDecisionScenario.QuestOptions { CycleId = $"ce-live-{wake}" });
+            if (second.Character.CurrentTarget == live)
+            {
+                retargeted = true;
+                break;
+            }
+            second.PreemptCurrent("unit-test wake settled");
+            Activate251(second.Character);
+        }
+
+        await Assert.That(retargeted).IsTrue();
+    }
+
     // ------------------------------------------------------------ fixture
 
     private static void Activate251(Character character)
