@@ -489,6 +489,206 @@ public class ArchaeologyDomainTests : IDisposable
     }
 
     [Test]
+    public async Task TraceWorldSpawn_SpawnFileLargerThanOldReadCap_IsParsed()
+    {
+        // The old 1 MiB read cap silently skipped every per-world
+        // npc_spawns.json, which is the only file carrying NPC coordinates.
+        // A fixture well past that cap must still be scanned, and its entries
+        // returned.
+        var worldsDir = Path.Combine(_dataRoot, "Worlds");
+        var mainWorldDir = Path.Combine(worldsDir, "main_world");
+        Directory.CreateDirectory(mainWorldDir);
+
+        // ~1.3 MiB of well-formed but low-value entries, with the interesting
+        // entry last so the whole file must be walked to reach it.
+        const int fillerCount = 30_000;
+        var builder = new System.Text.StringBuilder("[");
+        for (var i = 0; i < fillerCount; i++)
+            builder.Append("{\"UnitId\":").Append(100_000 + i).Append(",\"Position\":{\"X\":1.5,\"Y\":2.5,\"Z\":3.5}},");
+
+        builder.Append("{\"UnitId\":3597,\"Position\":{\"X\":15562.45,\"Y\":15354.32,\"Z\":127.98633}}");
+        builder.Append(']');
+        var text = builder.ToString();
+        var path = Path.Combine(mainWorldDir, "npc_spawns.json");
+        await File.WriteAllTextAsync(path, text);
+
+        // The fixture must actually exceed the retired cap, or the test proves
+        // nothing.
+        await Assert.That(new FileInfo(path).Length).IsGreaterThan(1_000_000);
+
+        var result = _service.TraceWorldSpawn(null, null, null, 3597);
+
+        var data = result["data"]!;
+        var spawns = data["spawns"]!.AsArray();
+        await Assert.That(spawns).Count().IsEqualTo(1);
+        await Assert.That(spawns[0]!["unit_id"]?.GetValue<long>()).IsEqualTo(3597);
+        await Assert.That(spawns[0]!["file"]?.GetValue<string>()).EndsWith("main_world/npc_spawns.json");
+        await Assert.That(spawns[0]!["position"]?["X"]?.GetValue<double>()).IsEqualTo(15562.45);
+        // A file that was scanned must not also be reported as skipped.
+        await Assert.That(data["files_skipped"]!.AsArray()).Count().IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task TraceWorldSpawn_UnscannableFile_IsReportedWithSizeAndReason()
+    {
+        // A silent omission is the defect: a caller must be able to tell
+        // "no spawns exist" from "the file holding them was not scanned".
+        var worldsDir = Path.Combine(_dataRoot, "Worlds");
+        Directory.CreateDirectory(worldsDir);
+        var broken = Path.Combine(worldsDir, "npc_spawns.json");
+        await File.WriteAllTextAsync(broken, "[{\"UnitId\": 1, \"Position\": {");
+        var brokenLength = new FileInfo(broken).Length;
+
+        var result = _service.TraceWorldSpawn(null, null, null, 1);
+
+        var data = result["data"]!;
+        var skipped = data["files_skipped"]!.AsArray();
+        await Assert.That(skipped).Count().IsEqualTo(1);
+        var entry = skipped[0]!;
+        await Assert.That(entry["file"]?.GetValue<string>()).EndsWith("npc_spawns.json");
+        await Assert.That(entry["bytes"]?.GetValue<long>()).IsEqualTo(brokenLength);
+        await Assert.That(entry["reason"]?.GetValue<string>()).Contains("malformed");
+        // The untrustworthy file contributed nothing, and that is visible.
+        await Assert.That(data["spawns"]!.AsArray()).Count().IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task TraceWorldSpawn_OversizedFile_IsReportedWithSizeAndReason()
+    {
+        // Oversized is a refusal, not a silent drop: the file is named with
+        // its size and the budget that rejected it.
+        var worldsDir = Path.Combine(_dataRoot, "Worlds");
+        Directory.CreateDirectory(worldsDir);
+        var huge = Path.Combine(worldsDir, "huge_spawns.json");
+        var budget = (long)_service.TraceWorldSpawn(null, null, null, 1)
+            ["data"]!["spawn_scan_byte_budget"]!.GetValue<long>();
+        await File.WriteAllTextAsync(huge, "[" + new string(' ', (int)budget + 1024) + "]");
+        var hugeLength = new FileInfo(huge).Length;
+
+        var result = _service.TraceWorldSpawn(null, null, null, 1);
+
+        var skipped = result["data"]!["files_skipped"]!.AsArray();
+        await Assert.That(skipped).Count().IsEqualTo(1);
+        await Assert.That(skipped[0]!["file"]?.GetValue<string>()).EndsWith("huge_spawns.json");
+        await Assert.That(skipped[0]!["bytes"]?.GetValue<long>()).IsEqualTo(hugeLength);
+        await Assert.That(skipped[0]!["reason"]?.GetValue<string>()).Contains("byte");
+    }
+
+    [Test]
+    public async Task TraceWorldSpawn_CommentBearingDisabledBlocks_AreParsed()
+    {
+        // The canonical files annotate entries with "//" comments and disable
+        // whole entries by commenting them out, including ones that leave an
+        // object with no properties at all. Both must survive the parse.
+        var worldsDir = Path.Combine(_dataRoot, "Worlds");
+        var mainWorldDir = Path.Combine(worldsDir, "main_world");
+        Directory.CreateDirectory(mainWorldDir);
+        await File.WriteAllTextAsync(Path.Combine(mainWorldDir, "npc_spawns.json"),
+            """
+            [
+                {
+                    // entirely disabled entry
+                    //     "UnitId": 12007,
+                    //     "Position": { "X": 1.0, "Y": 2.0, "Z": 3.0 }
+                },
+                {
+                    "UnitId": 3511, // Woodcutter Gallagher
+                    "Position": {
+                        "X": 15524.4, // TODO уточнить координаты
+                        "Y": 15278.43,
+                        "Z": 130.73637
+                    }
+                },
+            ]
+            """);
+
+        var result = _service.TraceWorldSpawn(null, null, null, 3511);
+
+        var data = result["data"]!;
+        var spawns = data["spawns"]!.AsArray();
+        await Assert.That(spawns).Count().IsEqualTo(1);
+        await Assert.That(spawns[0]!["unit_id"]?.GetValue<long>()).IsEqualTo(3511);
+        await Assert.That(spawns[0]!["position"]?["Z"]?.GetValue<double>()).IsEqualTo(130.73637);
+        // Commented-out entries must not surface as skips, and the live one
+        // must not be dropped.
+        await Assert.That(data["files_skipped"]!.AsArray()).Count().IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task TraceWorldSpawn_UnitId_IsNotCrowdedOutByAnotherFile()
+    {
+        // The id namespace is shared: on the canonical data unit 3511 occurs
+        // 515 times in main_world/doodad_spawns.json and once in
+        // main_world/npc_spawns.json, and the doodad file sorts first. The NPC
+        // row must survive the other file's rows consuming the result limit.
+        var worldsDir = Path.Combine(_dataRoot, "Worlds");
+        var mainWorldDir = Path.Combine(worldsDir, "main_world");
+        Directory.CreateDirectory(mainWorldDir);
+
+        var doodads = new System.Text.StringBuilder("[");
+        for (var i = 0; i < 200; i++)
+            doodads.Append("{\"UnitId\":3511,\"Position\":{\"X\":1.0,\"Y\":2.0,\"Z\":3.0}},");
+        doodads.Append(']');
+        await File.WriteAllTextAsync(Path.Combine(mainWorldDir, "doodad_spawns.json"), doodads.ToString());
+        await File.WriteAllTextAsync(Path.Combine(mainWorldDir, "npc_spawns.json"),
+            """[{"UnitId":3511,"Position":{"X":15524.4,"Y":15278.43,"Z":130.73637}}]""");
+
+        var result = _service.TraceWorldSpawn(null, null, 100, 3511);
+
+        var data = result["data"]!;
+        var spawns = data["spawns"]!.AsArray();
+        // Every contributing file is represented, so the NPC row is present.
+        var fromNpcFile = spawns.Where(s => s!["file"]!.GetValue<string>().EndsWith("main_world/npc_spawns.json", StringComparison.Ordinal)).ToArray();
+        await Assert.That(fromNpcFile).Count().IsEqualTo(1);
+        await Assert.That(fromNpcFile[0]!["position"]?["X"]?.GetValue<double>()).IsEqualTo(15524.4);
+        // The doodad file exceeded the per-file cap, and that is stated.
+        await Assert.That(data["unit_id_files_capped"]!.AsArray()).Count().IsEqualTo(1);
+        await Assert.That(data["truncated"]?.GetValue<bool>()).IsTrue();
+    }
+
+    [Test]
+    public async Task TraceWorldSpawn_UnknownUnitId_ReturnsEmptyWithNoUnrelatedRows()
+    {
+        // An id that exists nowhere must yield an explicit empty result, not a
+        // page of unrelated rows, and npc_spawners (named, not unit-addressed)
+        // must not pad the answer.
+        var worldsDir = Path.Combine(_dataRoot, "Worlds");
+        Directory.CreateDirectory(worldsDir);
+        await File.WriteAllTextAsync(Path.Combine(worldsDir, "npc_spawns.json"),
+            """[{"UnitId":3511,"Position":{"X":1.0,"Y":2.0,"Z":3.0}}]""");
+
+        var result = _service.TraceWorldSpawn(null, null, null, 999999999);
+
+        var data = result["data"]!;
+        await Assert.That(data["spawns"]!.AsArray()).Count().IsEqualTo(0);
+        await Assert.That(data["npc_spawners"]!.AsArray()).Count().IsEqualTo(0);
+        await Assert.That(data["row_count"]?.GetValue<int>()).IsEqualTo(0);
+        await Assert.That(data["no_match"]?.GetValue<bool>()).IsTrue();
+        await Assert.That(data["unit_id_match_found"]?.GetValue<bool>()).IsFalse();
+        await Assert.That(data["truncated"]?.GetValue<bool>()).IsFalse();
+        // The whole tree was swept, so an empty result is a real negative.
+        await Assert.That(data["files_scanned"]?.GetValue<int>()).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task TraceWorldSpawn_UnitIdMatchesExactly_NotBySubstring()
+    {
+        // A numeric id must never match by substring: 3511 must not match
+        // 13511 or 35110.
+        var worldsDir = Path.Combine(_dataRoot, "Worlds");
+        var mainWorldDir = Path.Combine(worldsDir, "main_world");
+        Directory.CreateDirectory(mainWorldDir);
+        await File.WriteAllTextAsync(Path.Combine(mainWorldDir, "npc_spawns.json"),
+            """[{"UnitId":13511,"Position":{"X":1.0,"Y":2.0,"Z":3.0}},{"UnitId":35110,"Position":{"X":4.0,"Y":5.0,"Z":6.0}}]""");
+
+        var result = _service.TraceWorldSpawn(null, null, null, 3511);
+
+        var data = result["data"]!;
+        await Assert.That(data["spawns"]!.AsArray()).Count().IsEqualTo(0);
+        await Assert.That(data["no_match"]?.GetValue<bool>()).IsTrue();
+    }
+
+    [Test]
     public async Task TraceWorldSpawn_NpcSpawnerNumericName_DoesNotOvermatch()
     {
         // A numeric name filter must not overmatch via raw substring: the

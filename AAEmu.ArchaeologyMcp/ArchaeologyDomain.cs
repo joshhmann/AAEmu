@@ -26,9 +26,31 @@ public sealed partial class ArchaeologyService
     private const int MaxTraceSeedTables = 100;
     private const int MaxFileScan = 1000;
 
+    /// <summary>
+    /// Per-file byte budget for the world-spawn scan. This is deliberately a
+    /// separate, larger budget than <see cref="ArchaeologyService.MaxReadBytes"/>
+    /// (1 MiB, the human-facing <c>read_file</c> cap): the coordinate-bearing
+    /// spawn files are multi-megabyte JSON documents and are never returned to
+    /// the model as text — only a handful of filtered entries are. 8 MiB admits
+    /// the largest canonical spawn file (main_world/npc_spawns.json, 3.79 MiB)
+    /// with roughly 2x headroom. Bounded on purpose: an unbounded budget would
+    /// let a single oversized file turn into an unbounded allocation.
+    /// </summary>
+    private const long MaxSpawnScanBytes = 8_000_000;
+
+    /// <summary>
+    /// Upper bound on the per-request skip list, so a pathological data root
+    /// cannot inflate the response without limit.
+    /// </summary>
+    private const int MaxReportedSkippedFiles = 50;
+
+    /// <summary>A spawn file that was not scanned, and why. Reported to the caller verbatim.</summary>
+    private sealed record SkippedSpawnFile(string File, long Bytes, string Reason);
+
     private sealed record ColumnInfo(string Name, string Type, bool IsPk);
 
     private sealed record ForeignKey(string FromCol, string ToTable, string ToCol);
+
 
     /// <summary>
     /// A deterministic domain-tool failure (SQLite error, timeout, or
@@ -595,24 +617,30 @@ public sealed partial class ArchaeologyService
         }, sourceId: "compact.sqlite3", path: dbPath, version: _catalog.DbVersion, truncated: truncated);
     }
 
-    public JsonObject TraceWorldSpawn(string? name, int? zoneId, int? limit)
-        => RunDomain("trace_world_spawn", () => TraceWorldSpawnCore(name, zoneId, limit));
+    public JsonObject TraceWorldSpawn(string? name, int? zoneId, int? limit, long? unitId = null)
+        => RunDomain("trace_world_spawn", () => TraceWorldSpawnCore(name, zoneId, limit, unitId));
 
-    private JsonObject TraceWorldSpawnCore(string? name, int? zoneId, int? limit)
+    private JsonObject TraceWorldSpawnCore(string? name, int? zoneId, int? limit, long? unitId)
     {
         var dbPath = _catalog.DbPath;
         var resultLimit = Math.Clamp(limit ?? 20, 1, 100);
         var spawns = new JsonArray();
         var filesMatched = new List<string>();
+        var skipped = new List<SkippedSpawnFile>();
         var filesScanned = 0;
+        var perFileCappedFiles = new List<string>();
+        var scanCapReached = false;
         var worldsDir = Path.Combine(_catalog.DataRoot, "Worlds");
         var nameFilter = string.IsNullOrWhiteSpace(name) ? null : name.Trim();
         var nameLower = nameFilter?.ToLowerInvariant();
+        var reachedLimit = false;
 
         if (Directory.Exists(worldsDir))
         {
             // The aggregate named-spawn list is the primary source; scan it
-            // first, then the per-world spawn files.
+            // first, then the per-world spawn files. The per-world
+            // npc_spawns.json files carry the actual NPC coordinates, so they
+            // are streamed rather than read wholesale.
             var aggregate = Path.Combine(worldsDir, "world_spawns.json");
             var files = new List<string>();
             if (File.Exists(aggregate))
@@ -622,86 +650,134 @@ public sealed partial class ArchaeologyService
 
             foreach (var file in files)
             {
-                if (spawns.Count >= resultLimit)
-                    break;
                 if (!file.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
                     continue;
+                if (reachedLimit)
+                    break;
                 if (filesScanned >= MaxFileScan)
-                    break; // deterministic scan cap
+                {
+                    // Deterministic scan cap: say so rather than dropping the
+                    // remaining files without explanation.
+                    scanCapReached = true;
+                    skipped.Add(new SkippedSpawnFile(
+                        "(remaining files)",
+                        0,
+                        $"file scan cap of {MaxFileScan} files reached; {files.Count - filesScanned} file(s) not examined"));
+                    break;
+                }
 
                 filesScanned++;
+                long fileBytes;
                 try
                 {
-                    var info = new FileInfo(file);
-                    if (info.Length > MaxReadBytes)
-                        continue; // skip oversized spawn files
+                    fileBytes = new FileInfo(file).Length;
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    skipped.Add(new SkippedSpawnFile(file, 0, $"unreadable: {ex.Message}"));
+                    continue;
+                }
 
-                    var array = ParseJsonTolerant(File.ReadAllText(file))?.AsArray();
-                    if (array is null)
-                        continue; // not an array document — skip
-
-                    var fileMatched = false;
-                    foreach (var item in array)
+                if (fileBytes > MaxSpawnScanBytes)
+                {
+                    skipped.Add(new SkippedSpawnFile(
+                        file,
+                        fileBytes,
+                        $"exceeds the {MaxSpawnScanBytes}-byte spawn-scan budget"));
+                    continue;
+                }
+                var fileMatched = false;
+                var perFileCount = 0;
+                var perFileCapped = false;
+                SpawnParseOutcome outcome;
+                try
+                {
+                    outcome = ReadJsonArrayEntries(file, element =>
                     {
-                        if (spawns.Count >= resultLimit)
-                            break;
-
-                        // Schema-tolerant: aggregate entries carry Name +
-                        // SpawnPosition; per-world entries carry UnitId +
-                        // Position. Extract whatever is present.
-                        var itemName = item?["Name"]?.GetValue<string>()
-                                       ?? item?["name"]?.GetValue<string>()
-                                       ?? string.Empty;
-                        var unitId = item?["UnitId"]?.GetValue<long>()
-                                     ?? item?["unit_id"]?.GetValue<long>();
-                        var position = item?["SpawnPosition"] ?? item?["spawn_position"]
-                                       ?? item?["Position"] ?? item?["position"];
-                        var itemZone = position?["ZoneId"]?.GetValue<int>()
-                                       ?? position?["zone_id"]?.GetValue<int>();
-
-                        // Skip entries with no identifier at all.
-                        if (itemName.Length == 0 && !unitId.HasValue)
-                            continue;
-
-                        if (nameLower is not null)
+                        // An exact unit_id query names one entity, but that id is
+                        // not unique across files: unit 3511 appears 515 times in
+                        // main_world/doodad_spawns.json and once in
+                        // main_world/npc_spawns.json, and the doodad file sorts
+                        // first. Stopping at the first match would answer with
+                        // the wrong row, and a per-call cap would let the
+                        // doodad file consume it. So the cap is per file: each
+                        // file contributes at most resultLimit rows and the scan
+                        // always continues, so every file holding the id gets
+                        // to contribute.
+                        if (unitId.HasValue)
                         {
-                            if (itemName.Length == 0)
-                                continue; // unnamed entry cannot match a name
-                            if (!MatchesNameFilter(itemName, nameLower))
-                                continue;
+                            if (!MatchesUnitId(element, unitId.Value))
+                                return true;
+
+                            if (perFileCount >= resultLimit)
+                            {
+                                perFileCapped = true;
+                                return true;
+                            }
+
+                            AddSpawnEntry(element, file, null, null, unitId, spawns);
+                            perFileCount++;
+                            fileMatched = true;
+                            return true;
                         }
 
-                        if (zoneId.HasValue && itemZone != zoneId)
-                            continue;
-
-                        var entry = new JsonObject
+                        if (spawns.Count >= resultLimit)
                         {
-                            ["name"] = itemName,
-                            ["file"] = file,
-                        };
-                        if (unitId.HasValue)
-                            entry["unit_id"] = unitId.Value;
-                        if (itemZone.HasValue)
-                            entry["zone_id"] = itemZone.Value;
-                        if (position is not null)
-                            entry["position"] = position?.DeepClone();
-                        spawns.Add(entry);
-                        fileMatched = true;
-                    }
+                            reachedLimit = true;
+                            return false;
+                        }
 
-                    if (fileMatched)
-                        filesMatched.Add(file);
+                        var before = spawns.Count;
+                        AddSpawnEntry(element, file, nameLower, zoneId, null, spawns);
+                        fileMatched |= spawns.Count > before;
+                        return true;
+                    });
                 }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 {
-                    // Malformed/unreadable spawn file: skip it, keep scanning.
+                    skipped.Add(new SkippedSpawnFile(file, fileBytes, $"unreadable: {ex.Message}"));
+                    continue;
                 }
+
+                switch (outcome)
+                {
+                    case SpawnParseOutcome.NotAnArray:
+                        skipped.Add(new SkippedSpawnFile(file, fileBytes, "not a JSON array document"));
+                        continue;
+                    case SpawnParseOutcome.Malformed:
+                        skipped.Add(new SkippedSpawnFile(file, fileBytes, "malformed JSON (comment-tolerant parse failed)"));
+                        continue;
+                    case SpawnParseOutcome.TooLarge:
+                        skipped.Add(new SkippedSpawnFile(file, fileBytes, $"exceeds the {MaxSpawnScanBytes}-byte spawn-scan budget"));
+                        continue;
+                }
+
+                if (perFileCapped)
+                {
+                    // Each file may contribute at most resultLimit rows for a
+                    // unit_id query. Say so per file rather than silently
+                    // returning a partial page for that file.
+                    perFileCappedFiles.Add(file);
+                    skipped.Add(new SkippedSpawnFile(
+                        file,
+                        fileBytes,
+                        $"more than {resultLimit} entries for unit_id={unitId}; further entries in this file were not read"));
+                }
+
+                if (reachedLimit)
+                    break;
+
+                if (fileMatched)
+                    filesMatched.Add(file);
             }
         }
 
         var dbSpawns = new JsonArray();
         var dbTruncated = false;
-        if (TableExists(dbPath, "npc_spawners"))
+        // npc_spawners rows are named, not unit-addressed, so they cannot answer
+        // a unit_id query and would only pad it with unrelated rows.
+        if (!unitId.HasValue && TableExists(dbPath, "npc_spawners"))
         {
             // Fetch a bounded candidate set (all rows when no name filter,
             // else a broad LIKE superset) and apply the same exact /
@@ -739,13 +815,28 @@ public sealed partial class ArchaeologyService
             dbTruncated |= candidatesTruncated;
         }
 
-        var truncated = spawns.Count >= resultLimit || dbTruncated || filesScanned >= MaxFileScan;
+        // A per-file cap on a unit_id query means that file held more rows for
+        // the id than were returned, which is a truncation and is reported as
+        // one (per file, in files_skipped).
+        var truncated = reachedLimit || scanCapReached || dbTruncated || perFileCappedFiles.Count > 0;
         return Result("trace_world_spawn", new JsonObject
         {
             ["worlds_dir"] = Directory.Exists(worldsDir) ? worldsDir : null,
             ["spawns"] = spawns,
             ["files_matched"] = new JsonArray(filesMatched.Select(f => JsonValue.Create(f)).ToArray()),
             ["files_scanned"] = filesScanned,
+            ["files_skipped"] = BuildSkippedArray(skipped),
+            ["files_skipped_count"] = skipped.Count,
+            ["files_skipped_truncated"] = skipped.Count > MaxReportedSkippedFiles,
+            ["spawn_scan_byte_budget"] = MaxSpawnScanBytes,
+            ["unit_id_filter"] = unitId,
+            // True when a unit_id query found at least one row: with the scan
+            // continued to the end and no per-call cap, the result for that id
+            // is complete.
+            ["unit_id_match_found"] = unitId.HasValue && spawns.Count > 0,
+            // Files whose contribution hit the per-file cap, so a caller can
+            // tell "that is all of it" from "that file had more".
+            ["unit_id_files_capped"] = new JsonArray(perFileCappedFiles.Select(f => JsonValue.Create(f)).ToArray()),
             ["npc_spawners"] = dbSpawns,
             ["npc_spawners_truncated"] = dbTruncated,
             ["row_count"] = spawns.Count + dbSpawns.Count,
@@ -753,6 +844,28 @@ public sealed partial class ArchaeologyService
             ["truncated"] = truncated,
             ["limit"] = resultLimit,
         }, sourceId: "compact.sqlite3", path: dbPath, version: _catalog.DbVersion, truncated: truncated);
+    }
+
+    /// <summary>
+    /// Renders the skip list. Never empty-and-silent: an oversized, unreadable
+    /// or malformed spawn file is named with its size and the reason it was not
+    /// scanned, so a caller can tell "no spawns exist" from "the file that
+    /// holds them was skipped".
+    /// </summary>
+    private static JsonArray BuildSkippedArray(List<SkippedSpawnFile> skipped)
+    {
+        var array = new JsonArray();
+        foreach (var entry in skipped.Take(MaxReportedSkippedFiles))
+        {
+            array.Add(new JsonObject
+            {
+                ["file"] = entry.File,
+                ["bytes"] = entry.Bytes,
+                ["reason"] = entry.Reason,
+            });
+        }
+
+        return array;
     }
 
     public JsonObject SearchPhysics(string? term, int? limit)
@@ -1289,6 +1402,216 @@ public sealed partial class ArchaeologyService
         {
             return null;
         }
+    }
+
+    /// <summary>Buffer size for the incremental spawn-file reader. 64 KiB.</summary>
+    private const int SpawnReadBufferBytes = 64 * 1024;
+
+    /// <summary>Why <see cref="ReadJsonArrayEntries"/> stopped.</summary>
+    private enum SpawnParseOutcome
+    {
+        /// <summary>The top-level array was read to its closing bracket.</summary>
+        Complete,
+        /// <summary>The document root was not a JSON array.</summary>
+        NotAnArray,
+        /// <summary>The document ended mid-value or was not well-formed JSON.</summary>
+        Malformed,
+        /// <summary>The file exceeded the spawn-scan byte budget.</summary>
+        TooLarge,
+    }
+
+    /// <summary>
+    /// Reads the top-level JSON array of <paramref name="path"/> and invokes
+    /// <paramref name="onEntry"/> once per element; returning <c>false</c> from
+    /// it stops the scan early.
+    ///
+    /// Tolerances match the canonical data and are native to
+    /// <see cref="JsonDocument"/>: "//" comments outside string literals are
+    /// skipped (the <see cref="ParseJsonTolerant"/> behaviour these files
+    /// depend on — main_world/npc_spawns.json carries 8261 of them) and a
+    /// trailing comma before a closing bracket is accepted (every canonical
+    /// spawn file ends with one; main_world/npc_spawns.json has 8).
+    ///
+    /// Read-only: the file is opened with <see cref="FileMode.Open"/>,
+    /// <see cref="FileAccess.Read"/> and <see cref="FileShare.Read"/>, and
+    /// closed deterministically by the <c>using</c>. Callers must have already
+    /// checked the file against <see cref="MaxSpawnScanBytes"/>.
+    /// </summary>
+    private static SpawnParseOutcome ReadJsonArrayEntries(string path, Func<JsonElement, bool> onEntry)
+    {
+        byte[] bytes;
+        using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, SpawnReadBufferBytes))
+        {
+            if (stream.Length > MaxSpawnScanBytes)
+                return SpawnParseOutcome.TooLarge;
+
+            bytes = new byte[stream.Length];
+            var offset = 0;
+            while (offset < bytes.Length)
+            {
+                var read = stream.Read(bytes, offset, bytes.Length - offset);
+                if (read == 0)
+                    return SpawnParseOutcome.Malformed;
+
+                offset += read;
+            }
+        }
+
+        // A UTF-8 BOM is not valid JSON. Array.Resize would trim from the end,
+        // so the leading bytes are dropped explicitly.
+        if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
+        {
+            var trimmed = new byte[bytes.Length - 3];
+            Array.Copy(bytes, 3, trimmed, 0, trimmed.Length);
+            bytes = trimmed;
+        }
+
+        JsonDocument document;
+        try
+        {
+            document = JsonDocument.Parse(bytes, new JsonDocumentOptions
+            {
+                CommentHandling = JsonCommentHandling.Skip,
+                AllowTrailingCommas = true,
+            });
+        }
+        catch (JsonException)
+        {
+            return SpawnParseOutcome.Malformed;
+        }
+
+        using (document)
+        {
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+                return SpawnParseOutcome.NotAnArray;
+
+            foreach (var element in document.RootElement.EnumerateArray())
+            {
+                if (!onEntry(element))
+                    break;
+            }
+
+            return SpawnParseOutcome.Complete;
+        }
+    }
+
+    /// <summary>
+    /// Reduces a spawn entry to the fields <c>trace_world_spawn</c> reports, so
+    /// the rest of the element is released as soon as it has been read.
+    ///
+    /// Schema-tolerant, because the aggregate file and the per-world files
+    /// disagree: aggregate entries carry <c>Name</c> + <c>SpawnPosition</c>,
+    /// per-world entries carry <c>UnitId</c> + <c>Position</c>.
+    /// </summary>
+    private static void AddSpawnEntry(JsonElement element, string file, string? nameLower, int? zoneId, long? unitId, JsonArray spawns)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+            return; // a bare scalar is not a spawn entry
+
+        var name = ElementString(element, "Name") ?? ElementString(element, "name") ?? string.Empty;
+        var entryUnitId = ElementLong(element, "UnitId") ?? ElementLong(element, "unit_id");
+
+        JsonElement position = default;
+        var hasPosition = TryGetElement(element, out position, "SpawnPosition")
+                          || TryGetElement(element, out position, "spawn_position")
+                          || TryGetElement(element, out position, "Position")
+                          || TryGetElement(element, out position, "position");
+        long? itemZone = null;
+        if (hasPosition && position.ValueKind == JsonValueKind.Object)
+            itemZone = ElementLong(position, "ZoneId") ?? ElementLong(position, "zone_id");
+
+        // An entry with no identifier at all carries nothing to report.
+        if (name.Length == 0 && !entryUnitId.HasValue)
+            return;
+
+        // A unit id names one entity: the aggregate file has no unit ids, so it
+        // cannot answer this, and matching must not fall back to the name.
+        if (unitId.HasValue)
+        {
+            if (!MatchesUnitId(element, unitId.Value))
+                return;
+        }
+        else
+        {
+            // An unnamed entry cannot answer a name query, but it is still a
+            // position when no name filter was requested.
+            if (nameLower is not null && (name.Length == 0 || !MatchesNameFilter(name, nameLower)))
+                return;
+
+            if (zoneId.HasValue && itemZone != zoneId)
+                return;
+        }
+
+        var node = new JsonObject
+        {
+            ["name"] = name,
+            ["file"] = file,
+        };
+        if (entryUnitId.HasValue)
+            node["unit_id"] = entryUnitId.Value;
+        if (itemZone.HasValue)
+            node["zone_id"] = (int)itemZone.Value;
+        if (hasPosition)
+            node["position"] = ToJsonNode(position);
+        spawns.Add(node);
+    }
+
+    /// <summary>
+    /// True when the element's identifier is exactly the requested unit id.
+    /// Exact equality only — never a substring or prefix match, so unit 3511
+    /// never matches unit 13511.
+    /// </summary>
+    private static bool MatchesUnitId(JsonElement element, long unitId)
+        => element.ValueKind == JsonValueKind.Object
+           && (ElementLong(element, "UnitId") ?? ElementLong(element, "unit_id")) == unitId;
+
+    /// <summary>
+    /// Converts a parsed element back into a node. <see cref="JsonElement.GetRawText"/>
+    /// reproduces the source text verbatim, so the canonical files' "//"
+    /// annotations come with it; the same tolerances as the document parse are
+    /// therefore required here.
+    /// </summary>
+    private static JsonNode? ToJsonNode(JsonElement element)
+    {
+        try
+        {
+            return JsonNode.Parse(element.GetRawText(), documentOptions: new JsonDocumentOptions
+            {
+                CommentHandling = JsonCommentHandling.Skip,
+                AllowTrailingCommas = true,
+            });
+        }
+        catch (JsonException)
+        {
+            return null; // reported by the caller's element filter, not silently kept
+        }
+    }
+
+    private static bool TryGetElement(JsonElement element, out JsonElement value, string name)
+    {
+        if (element.TryGetProperty(name, out value) && value.ValueKind != JsonValueKind.Null)
+            return true;
+
+        value = default;
+        return false;
+    }
+
+    private static string? ElementString(JsonElement element, string name)
+        => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
+            ? value.GetString()
+            : null;
+
+    private static long? ElementLong(JsonElement element, string name)
+    {
+        if (!element.TryGetProperty(name, out var value))
+            return null;
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number => value.TryGetInt64(out var number) ? number : null,
+            JsonValueKind.String => long.TryParse(value.GetString(), out var parsed) ? parsed : null,
+            _ => null,
+        };
     }
 
     private (JsonArray Matches, int FilesScanned, bool Truncated) SearchFilesForTerm(string term, int limit)

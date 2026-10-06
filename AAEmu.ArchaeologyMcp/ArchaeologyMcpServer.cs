@@ -165,7 +165,8 @@ public sealed class ArchaeologyMcpServer
                 "trace_world_spawn" => _service.TraceWorldSpawn(
                     arguments["name"]?.GetValue<string>(),
                     arguments["zone_id"]?.GetValue<int>(),
-                    arguments["limit"]?.GetValue<int>()),
+                    arguments["limit"]?.GetValue<int>(),
+                    arguments["unit_id"]?.GetValue<long>()),
                 "search_physics" => _service.SearchPhysics(
                     arguments["term"]?.GetValue<string>(),
                     arguments["limit"]?.GetValue<int>()),
@@ -270,8 +271,11 @@ public sealed class ArchaeologyMcpServer
                     "Look up crafts by id or title (exact id / textual title match).",
                     ObjectSchema(("id", false, "number"), ("title", false, "string"), ("limit", false, "number"))),
                 Tool("trace_world_spawn",
-                    "World spawns from Data/Worlds/world_spawns.json (by name/zone) plus npc_spawners rows by name.",
-                    ObjectSchema(("name", false, "string"), ("zone_id", false, "number"), ("limit", false, "number"))),
+                    "World spawns from Data/Worlds: named spawns (world_spawns.json) and per-world " +
+                    "coordinate entries (npc_spawns.json and friends, filtered by unit_id). " +
+                    "Files that could not be scanned are listed in files_skipped with their size and reason.",
+                    ObjectSchema(("name", false, "string"), ("zone_id", false, "number"),
+                                 ("unit_id", false, "number"), ("limit", false, "number"))),
                 Tool("search_physics",
                     "Search physical_* tables (enchant abilities, explosion effects). No collision/geometry tables exist in this DB.",
                     ObjectSchema(("term", false, "string"), ("limit", false, "number"))),

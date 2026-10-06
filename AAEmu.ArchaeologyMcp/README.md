@@ -38,7 +38,7 @@ process and use the same newline-delimited JSON-RPC contract.
 | `trace_mate` | Look up `item_summon_mates` by id or `item_id`, joined to NPC names |
 | `trace_vehicle` | Look up `vehicle_models` by id (no name column exists; model columns are returned) |
 | `trace_crafting` | Look up `crafts` by id or title |
-| `trace_world_spawn` | World spawns from `Data/Worlds/world_spawns.json` (by name/zone) plus `npc_spawners` rows by name |
+| `trace_world_spawn` | World spawns from `Data/Worlds`: named spawns (`world_spawns.json`, by `name`/`zone_id`) and per-world coordinate entries (`npc_spawns.json` and friends, by `unit_id`); plus `npc_spawners` rows by name. Unscanned files are listed in `files_skipped` with size and reason |
 | `search_physics` | Search `physical_*` tables (enchant abilities, explosion effects) |
 | `compare_source_data` | Compare a table's row counts and an ordered sample between the canonical DB and a `file:<name>` copy |
 
@@ -179,6 +179,38 @@ list_pak_entries / read_pak_entry).
   full diff; it requires a `file:<name>` copy of the DB in the data root.
 - `search_files` is line-based regex over text files; binary files and files
   over 1 MiB are skipped.
+- **World-spawn files are scanned under their own budget, not `read_file`'s.**
+  `trace_world_spawn` parses `Data/Worlds/**/*.json` itself, so the
+  coordinate-bearing `npc_spawns.json` files (3.79 MiB, ~25.5k entries for
+  `main_world`) are reachable even though `read_file` and `search_files` cap at
+  1 MiB. The per-file spawn budget is **8 MB** (`spawn_scan_byte_budget` in
+  the response), which admits every canonical spawn file with ~2x headroom
+  while staying bounded; `read_file`'s 1 MiB cap is unchanged. Parsing is
+  comment-tolerant (`//` annotations and trailing commas, both of which the
+  canonical files use) and each file is read once into a byte buffer, so a
+  single file costs roughly its own size in transient allocation, released
+  before the next.
+- **A spawn file that is not scanned is always named.** Oversized, unreadable,
+  non-array and malformed files appear in `files_skipped` as
+  `{file, bytes, reason}`; the scan-cap row appears as `(remaining files)`.
+  `files_skipped_count` is the true count and `files_skipped_truncated` says
+  whether the list itself was capped (50). There is no silent omission: one
+  canonical file, `main_world/gimmick_spawns.json`, is legitimately not strict
+  JSON (it carries `0x`-prefixed hex literals) and is always reported.
+- **A `unit_id` query is exact and always answers.** The id namespace is
+  shared across spawn files — on the canonical data unit 3511 occurs 515 times
+  in `main_world/doodad_spawns.json` and once in
+  `main_world/npc_spawns.json`, and the doodad file sorts first — so the cap is
+  applied **per file**, not per call, and the scan always continues to the end
+  of the tree. Every file holding the id therefore contributes, and an id that
+  exists nowhere returns an explicit empty result (`no_match: true`,
+  `unit_id_match_found: false`) rather than a page of unrelated rows. Matching
+  is exact equality only: 3511 never matches 13511 or 35110. `npc_spawners`
+  rows are named rather than unit-addressed, so they are omitted from a
+  `unit_id` query instead of padding it. A file that had more rows for the id
+  than the per-file cap returned is named in `files_skipped` and listed in
+  `unit_id_files_capped`, and sets `truncated: true`. With no `unit_id`, the
+  original per-call limit and result shape are unchanged.
 - `query_sql` does not support `PRAGMA` with table arguments beyond the
   allowlisted schema-read set (`table_info`, `index_list`, `index_info`,
   `index_xinfo`, `foreign_key_list`, `table_list`, `database_list`).
