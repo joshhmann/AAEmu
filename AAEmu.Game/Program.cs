@@ -266,6 +266,26 @@ public static class Program
                 services.AddSingleton<PlayerBotManager>();
                 services.AddSingleton<IPlayerBotManager>(sp => sp.GetRequiredService<PlayerBotManager>());
 
+                // Server-pressure probe (spec §14). The activity modules take a
+                // Func<ServerPressure> with a () => Healthy default, so WITHOUT
+                // this binding every ">= ServerPressure.High" world-budget
+                // denial inside a module is inert in production. Bind the real
+                // probe — the same one PopulationDirector constructs internally
+                // (scheduler metrics + registry embodied count) — and hand the
+                // modules the director's last CLASSIFIED band, so they read the
+                // same band the director's own wake/sleep policy uses. Reading
+                // the cached band (not sampling per CanActivate) keeps the
+                // per-wake arbitration pass allocation- and lock-cheap;
+                // RefreshPressure is what advances it (proximity sweeps, plus
+                // any RefreshPressure caller).
+                services.AddSingleton<IPressureProbe, SchedulerPressureProbe>();
+
+                // Lazy<T> edge to the director's classified band (same
+                // circular-dep-break pattern as the Lazy wrappers further down):
+                // the modules' Func<ServerPressure> resolves the director on
+                // FIRST USE, by which time the graph is fully constructed.
+                services.AddSingleton(sp => new Lazy<IPopulationDirector>(sp.GetRequiredService<IPopulationDirector>));
+
                 // G2-A5 true dormancy: dormant-bot discovery + rematerialization.
                 // MySqlDormantBotSource joins characters ↔ managed bot accounts;
                 // the registry loads rows via Character.Load (the HeadlessSession
@@ -331,10 +351,25 @@ public static class Program
                 services.AddSingleton<OutOfCombatRecoveryModule>();
                 services.AddSingleton<IBotActivityModule, PresenceRoamActivityModule>();
                 services.AddSingleton<IBotActivityModule, ConflictJoinActivityModule>();
-                services.AddSingleton<IBotActivityModule, FishingContestActivityModule>();
-                services.AddSingleton<IBotActivityModule, HomesteadActivityModule>();
-                services.AddSingleton<IBotActivityModule, QuestBootstrapActivityModule>();
-                services.AddSingleton<IBotActivityModule, NeedsFarmActivityModule>();
+                // The four pressure-gated modules are constructed with the real
+                // server-pressure band; registered by concrete type here because
+                // their Func<ServerPressure> parameter is what carries the probe
+                // and DI cannot inject an unregistered Func<> by itself.
+                services.AddSingleton<IBotActivityModule>(sp =>
+                    new FishingContestActivityModule(
+                        sp.GetRequiredService<FishingContestModuleOptions>(),
+                        pressureProbe: () => sp.GetRequiredService<Lazy<IPopulationDirector>>().Value.Pressure));
+                services.AddSingleton<IBotActivityModule>(sp =>
+                    new HomesteadActivityModule(
+                        pressureProbe: () => sp.GetRequiredService<Lazy<IPopulationDirector>>().Value.Pressure));
+                services.AddSingleton<IBotActivityModule>(sp =>
+                    new QuestBootstrapActivityModule(
+                        sp.GetRequiredService<QuestBootstrapModuleOptions>(),
+                        pressureProbe: () => sp.GetRequiredService<Lazy<IPopulationDirector>>().Value.Pressure));
+                services.AddSingleton<IBotActivityModule>(sp =>
+                    new NeedsFarmActivityModule(
+                        sp.GetRequiredService<NeedsFarmModuleOptions>(),
+                        pressureProbe: () => sp.GetRequiredService<Lazy<IPopulationDirector>>().Value.Pressure));
                 services.AddSingleton<IBotActivityModule, IdleActivityModule>();
                 services.AddSingleton<BotGoalArbiter>();
                 services.AddSingleton<IBotGoalArbiter>(sp => sp.GetRequiredService<BotGoalArbiter>());
@@ -381,6 +416,10 @@ public static class Program
                 services.AddSingleton(_ => PopulationDirectorOptions.FromEnvironment());
                 services.AddSingleton<PopulationDirector>();
                 services.AddSingleton<IPopulationDirector>(sp => sp.GetRequiredService<PopulationDirector>());
+                // Takes the IPressureProbe registered above (the same
+                // SchedulerPressureProbe its own parameter default builds), so
+                // the director and the activity modules observe ONE probe
+                // instance instead of two equivalent copies.
 
                 // Presence demo coordinator (G2-A6): manifest-driven bot
                 // provisioning (Data/Bots/presence_manifest.json via

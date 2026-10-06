@@ -560,8 +560,7 @@ public class WorldManager(
 
         // Create a new instance
         var world = new WorldInstance(worldTemplate, channelId, overrideInstanceId, overrideInstanceId ? fixedInstanceId : worldIdManager.GetNextId());
-        if (!_worlds.TryAdd(world.Id, world))
-            throw new InvalidOperationException($"World instance with id {world.Id} already exists");
+
 
         notifyPlayer?.SendPacket(new SCProcessingInstancePacket((int)world.Template.ZoneKeys[0]));
 
@@ -603,6 +602,20 @@ public class WorldManager(
         world.TransferManager = new TransferManager();
         world.TransferManager.Load();
         world.TransferManager.Initialize(); // starts tick
+
+        // Publish the world LAST. Every reader reachable from here —
+        // CharacterLifecycleService.EnterWorld (line 188), Team (line 104),
+        // RadarManager, SaveManager, IndunManager — enumerates GetWorlds()
+        // and dereferences sub-managers without a null check. Publishing at
+        // construction time used to expose a world with MateManager (and 10
+        // other members) still null; a bot provisioning in that window took a
+        // NullReferenceException in EnterWorld. Measured on a real 30-minute
+        // unattended run: 3 of 4 presence bots aborted at boot with
+        // "presence demo up — 1/4 citizen bots roaming". Nothing below may
+        // consult _worlds (verified: no wiring call enumerates it), so the
+        // duplicate-id guard is preserved and simply moves with the publish.
+        if (!_worlds.TryAdd(world.Id, world))
+            throw new InvalidOperationException($"World instance with id {world.Id} already exists");
 
         // world.SpawnManager.SpawnAll();
 

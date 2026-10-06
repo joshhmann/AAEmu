@@ -77,7 +77,38 @@ public class ObstacleManager : Singleton<ObstacleManager>, ILoadable
     private readonly Dictionary<(int CellX, int CellY), List<NavObstacle>> _grid = [];
     private readonly List<NavObstacle> _allObstacles = [];
 
-    public string DataDirectory { get; set; } = Path.Combine("Data", "Navigation");
+    /// <summary>
+    /// Shipped obstacle catalogs directory. Defaults to <c>Data/Navigation</c>
+    /// resolved against the application directory first, then the working
+    /// directory: <see cref="ManagerOrchestrator.RunLoadAsync"/> already invokes
+    /// <see cref="Load"/> on this manager at boot, so a bare relative path only
+    /// found the catalogs when the process happened to start in the deployment
+    /// output folder — launching with <c>dotnet run --project AAEmu.Game</c>
+    /// from the repo root boots with zero obstacles. Relative overrides are kept
+    /// working by probing the working directory too.
+    /// </summary>
+    public string DataDirectory { get; set; } = ResolveDefaultDataDirectory();
+
+    private static string ResolveDefaultDataDirectory()
+    {
+        const string relative = "Data/Navigation";
+
+        // Probe the application directory first, then the working directory.
+        // AppContext.BaseDirectory is where the shipped Data\** payload lands in
+        // every deployment (docker publish, and `dotnet run` / `dotnet test`,
+        // both of which copy Data\** next to the entry assembly), so it resolves
+        // the catalogs regardless of the shell's working directory.
+        foreach (var root in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
+        {
+            var candidate = Path.Combine(root, relative);
+            if (Directory.Exists(candidate))
+                return candidate;
+        }
+
+        // Nothing found: keep the bare relative path so Load() reports the
+        // missing directory and leaves the manager empty (fail-open, unchanged).
+        return relative;
+    }
 
     public int TotalObstacleCount
     {

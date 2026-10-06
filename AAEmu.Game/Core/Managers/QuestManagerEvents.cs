@@ -39,6 +39,17 @@ public partial class QuestManager
             });
         }
 
+        // Run measurement (progress capability): DoReportEvents is the single
+        // report seam — CSCompleteQuestContextPacket, PlayerBotController's
+        // ReportTurnIn / ReportDoodadTurnIn / AutoTurnIn and DoodadFuncQuest
+        // all route here, and all three branches (npc / doodad / auto) live in
+        // this one method, so a turn-in is counted exactly once regardless of
+        // shape. Counted BEFORE the branches resolve their world target: this
+        // is a REQUEST count (attempts reaching the seam), deliberately not a
+        // success count, so "turns in constantly but never completes" is
+        // measurable as a turn-ins/completed gap rather than invisible.
+        QuestProgressCounters.RecordTurnInRequested();
+
         if (npcObjId > 0)
         {
             // Turning in at a NPC?
