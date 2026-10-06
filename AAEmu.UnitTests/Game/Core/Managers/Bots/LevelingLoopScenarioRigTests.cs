@@ -1262,12 +1262,19 @@ public class LevelingLoopScenarioRigTests
         // tight curve (TotalExp = level × 1000) so ONE kill crosses the
         // Level-30 gate. The swap restores the default on dispose.
         using var expSwap = InstallTightExpCurve();
-        character.Level = Quest6250TargetLevel - 1; // 29
-        // Seed 29,950 total exp (level 29's threshold is 29,000; level 30's
-        // is 30,000) through the REAL AddExp path — one 95-XP kill crosses
-        // to level 30. The Experience setter is private; AddExp is the
-        // engine's own public boundary.
-        character.AddExp(29 * 1000 + 950, false);
+        // Seed level 29 AND the 29,000 total XP the TIGHT curve requires to
+        // hold it, together. A bare `Level = 29` cannot: the actor was
+        // provisioned at level 1, and provisioning now also seeds Experience
+        // (GetExpForLevel(1) on the rig's default curve = 100,000,000), so a
+        // level-only assignment leaves a pair whose XP already clears the
+        // level-30 gate — LevelLeg credits without grinding and the audit
+        // below finds no Target record at all.
+        character.InitializeLevelAndExperience(Quest6250TargetLevel - 1); // 29
+        // Top up to 29,950 total exp (level 29's threshold is 29,000; level
+        // 30's is 30,000) through the REAL AddExp path — one 95-XP kill
+        // crosses to level 30. The Experience setter is private; AddExp is
+        // the engine's own public boundary.
+        character.AddExp(950, false);
         character.Hp = character.MaxHp;
         JoinActorRegion(session);
 
@@ -1376,6 +1383,64 @@ public class LevelingLoopScenarioRigTests
         await Assert.That(character.Quests.HasQuestCompleted(Quest6250Id)).IsFalse();
         await Assert.That(result.TraceRecords.Any(r => r.Action is ActorActionType.TurnInQuest
             or ActorActionType.AutoTurnIn)).IsFalse();
+    }
+
+    /// <summary>
+    /// E-LEVEL-3 (inconsistent-pair guard): a QuestActObjLevel objective
+    /// credits from LIVE Owner.Level, so an inconsistent Level/Experience
+    /// pair must not be able to satisfy the gate. Headless provisioning now
+    /// seeds Experience alongside Level (BotProvisioningExperienceTests), so
+    /// the "level X with the XP of a much higher level" state is reachable
+    /// by assigning Level alone — and it must NOT let the objective credit
+    /// without a single grind kill. This pins the boundary the level leg
+    /// actually reads: Level, not Experience.
+    /// </summary>
+    [Test]
+    public async Task LevelingLoop_Quest6250_LevelOnlyAssignmentWithSeededExperience_GrindsInsteadOfCreditingStaleXp()
+    {
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (_, session) = GameplayActorTestRig.CreateActor("pb-leveling-stale-xp");
+        var character = session.Character;
+
+        using var expSwap = InstallTightExpCurve();
+        character.InitializeLevelAndExperience(Quest6250TargetLevel - 1); // 29, 29,000 XP
+        // The inconsistent state this guard exists for: Level 29 (below the
+        // gate) carrying XP that already clears the level-30 threshold under
+        // this curve. AddExp resolves Level from Experience, so the XP is
+        // granted FIRST and Level then forced back down — reproducing exactly
+        // what a bare `character.Level = 29` leaves behind on an actor whose
+        // provisioning already seeded Experience.
+        character.AddExp(50_000, false); // 79,000 XP — far past level 30's 30,000
+        character.Level = Quest6250TargetLevel - 1;
+        await Assert.That(character.Level).IsEqualTo((byte)(Quest6250TargetLevel - 1));
+        await Assert.That(character.Experience).IsGreaterThan(Quest6250TargetLevel * 1000);
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+
+        GameplayActorTestRig.SeedItemTemplate(Quest6250StarterItemId);
+        GameplayActorTestRig.SeedItemTemplate(Quest6250RewardItemA);
+        GameplayActorTestRig.SeedItemTemplate(Quest6250RewardItemB);
+        GameplayActorTestRig.GiveBagItem(new GameplayActor(character), Quest6250StarterItemId, 1);
+        SpawnLevelGrindPrey(session, 4);
+
+        // NO ILevelXpSeam — the level can never rise through the kill path, so
+        // the leg must fail closed rather than credit on the stale XP.
+        var result = LevelingLoopScenario.Run(character, new LevelingLoopScenario.LoopOptions
+        {
+            BandMin = 0,
+            BandMax = 0,
+            MaxLinks = 1,
+            CastRotation = [GameplayActorTestRig.TestSkillId],
+            MaxLevelGrindKills = 8
+        }, new RigKillSeam());
+
+        await Assert.That(result.Passed).IsFalse();
+        await Assert.That(result.FailStage).IsEqualTo($"OBJECTIVES:level({Quest6250TargetLevel})");
+        await Assert.That(result.FailReason).Contains("level grind exhausted");
+        // The level did not move, and the stale XP never credited the act.
+        await Assert.That(character.Level).IsEqualTo((byte)(Quest6250TargetLevel - 1));
+        await Assert.That(character.Quests!.ActiveQuests.ContainsKey(Quest6250Id)).IsTrue();
+        await Assert.That(character.Quests.HasQuestCompleted(Quest6250Id)).IsFalse();
     }
 
     /// <summary>

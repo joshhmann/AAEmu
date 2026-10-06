@@ -82,16 +82,113 @@ public class BotRoamStepExecutorTests
         await Assert.That(next.Value).IsEqualTo(TimeSpan.FromMilliseconds(100));
     }
 
+    /// <summary>
+    /// The default-off contract, stated as its own test: an idler with no route,
+    /// no live request, no hunt and no butcher reports null, so the scheduler
+    /// drops it. Flag is set explicitly OFF so a machine exporting
+    /// AAEMU_PRESENCE_IDLE_WAKE cannot turn this into a tautology.
+    /// </summary>
     [Test]
     public async Task Step_WithoutRoute_IsDormant_NoLegIssued()
     {
         var (executor, actor, runtime, clock) = CreateRig("roam-2");
+        executor.EnableIdleWake = false;
 
         clock.Advance(TimeSpan.FromMilliseconds(100));
         var next = await executor.StepAsync(runtime, CancellationToken.None);
 
         await Assert.That(actor.ActiveRequest).IsNull();
         await Assert.That(next).IsNull();
+    }
+
+    /// <summary>
+    /// The flag ON arm of the same transition: the same idler now reports a
+    /// BOUNDED non-null interval instead of null, so the scheduler re-arms it.
+    /// That interval must be strictly positive (zero would be clamped by the
+    /// scheduler into a scan-interval spin) and strictly LONGER than the live
+    /// cadence (an idle wake must cost strictly less than a live one — that is
+    /// the entire budget argument for the interval).
+    /// </summary>
+    [Test]
+    public async Task Step_WithoutRoute_IdleWakeEnabled_ReportsBoundedInterval_NotNull()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("idle-wake-on");
+        executor.EnableIdleWake = true;
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        var first = await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.ActiveRequest).IsNull();
+        await Assert.That(first).IsNotNull();
+        await Assert.That(first!.Value).IsEqualTo(executor.IdleWakeInterval);
+        await Assert.That(first.Value).IsGreaterThan(TimeSpan.Zero);
+        await Assert.That(first.Value).IsGreaterThan(executor.ActiveCadence);
+
+        // A second wake with nothing new must report the SAME interval (the
+        // cadence is a fixed bound, not a per-wake recomputation).
+        clock.Advance(first.Value);
+        var second = await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(second).IsNotNull();
+        await Assert.That(second!.Value).IsEqualTo(first.Value);
+    }
+
+    /// <summary>
+    /// An idle wake must NOT inherit the per-bot present/broadcast-rate override:
+    /// SetBotCadence is a live-route seam (an idle bot broadcasts nothing), and
+    /// honoring it here would let an operator pin a "roaming" bot into a
+    /// 15 Hz idle spin. The live path still honors the override.
+    /// </summary>
+    [Test]
+    public async Task Step_IdleWake_IgnoresCadenceOverride_ButLivePathHonorsIt()
+    {
+        var (executor, _, runtime, clock) = CreateRig("idle-wake-override");
+        executor.EnableIdleWake = true;
+        executor.SetBotCadence(runtime.Character, 20); // 50ms
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        var idle = await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(idle).IsNotNull();
+        await Assert.That(idle!.Value)
+            .IsEqualTo(executor.IdleWakeInterval)
+            .Because("a 50ms per-bot cadence override must not become the idle re-arm interval");
+
+        // Live path: a looping route keeps the override (unchanged behavior).
+        executor.SetRoamRoute(runtime.Character, new BotPath([new Vector3(10, 0, 0)], BotPath.LoopMode.Loop));
+        clock.Advance(TimeSpan.FromMilliseconds(50));
+        var live = await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(live).IsNotNull();
+        await Assert.That(live!.Value).IsEqualTo(TimeSpan.FromMilliseconds(50));
+    }
+
+    /// <summary>
+    /// The re-arm window must not depend on wall-clock: a finish flag is a
+    /// test seam, never a source of time. Built on a literal so a mutation of
+    /// the shipped interval fails here rather than silently agreeing.
+    /// </summary>
+    [Test]
+    public async Task Step_AfterOnceRouteFinished_IdleWakeEnabled_ReportsBoundedInterval()
+    {
+        var (executor, _, runtime, clock) = CreateRig("roam-4-idle");
+        executor.EnableIdleWake = true;
+
+        var route = new BotPath([new Vector3(10, 0, 0)], BotPath.LoopMode.Once);
+        executor.SetRoamRoute(runtime.Character, route);
+
+        // Walk to the single waypoint (10m at 2 m/s = 50 steps). Bounded by a
+        // counter, NOT by the returned delay — with the flag on the step never
+        // returns null, so a delay-driven loop would never terminate.
+        TimeSpan? next = TimeSpan.Zero;
+        for (var i = 0; i < 200; i++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            next = await executor.StepAsync(runtime, CancellationToken.None);
+            if (next is not null && executor.GetRoamRoute(runtime.CharacterId) is { IsFinished: true })
+                break;
+        }
+
+        // Route finished → the idle interval, NOT null.
+        await Assert.That(next).IsNotNull();
+        await Assert.That(next!.Value).IsEqualTo(TimeSpan.FromSeconds(5));
     }
 
     [Test]
@@ -127,10 +224,16 @@ public class BotRoamStepExecutorTests
         await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move)).IsGreaterThanOrEqualTo(2);
     }
 
+    /// <summary>
+    /// Default-off contract for a finished route: the bot goes dormant and
+    /// stays there. The idle-wake arm of the same transition lives in
+    /// <c>Step_AfterOnceRouteFinished_IdleWakeEnabled_ReportsBoundedInterval</c>.
+    /// </summary>
     [Test]
     public async Task Step_AfterOnceRouteFinished_GoesDormant()
     {
         var (executor, actor, runtime, clock) = CreateRig("roam-4");
+        executor.EnableIdleWake = false;
 
         var route = new BotPath([new Vector3(10, 0, 0)], BotPath.LoopMode.Once);
         executor.SetRoamRoute(runtime.Character, route);

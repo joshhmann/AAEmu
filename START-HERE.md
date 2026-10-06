@@ -76,6 +76,7 @@ Every agent must read these current records before selecting a slice. Historical
 
 | Order | Document | Purpose |
 | :---: | :--- | :--- |
+| **0** | [`.omp/state/CURRENT.md`](.omp/state/CURRENT.md) | **Canonical task state:** objective, status, confirmed/unverified, next action. Contract in [`.omp/state/README.md`](.omp/state/README.md). |
 | **1** | [`START-HERE.md`](START-HERE.md) | **This router:** Architecture, non-negotiables, and domain lane selection. |
 | **2** | [`AGENTS.md`](AGENTS.md) | **Core rules:** Workflows, coding conventions, packet offset maps, and gate policies. |
 | **3** | [`STATUS.md`](STATUS.md) | **Live pulse:** Current checkpoint, active human gates, and today's changes. |

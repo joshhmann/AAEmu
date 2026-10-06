@@ -563,6 +563,15 @@ Before planning or editing any non-trivial task, read the entire relevant curren
 Establish the hierarchy before implementation: **milestone/umbrella → capability track or gate → current slice → evidence boundary → next action**. Do not describe a slice as a completed track or milestone. Use repository documentation indexes/maps and graph/document-relationship tooling, including Graphify when available, to find related docs and avoid missing cross-references; graph output supplements, never replaces, reading authoritative documents. When scope or evidence changes, update the authoritative status, scorecard, and roadmap records in the same wave. Handoff docs are execution notes, not the project source of truth. Preserve historical evidence and distinguish rig/proxy, live, and human evidence.
 
 
+### Canonical task state (single source of truth)
+
+Before any task work, read [`.omp/state/CURRENT.md`](.omp/state/CURRENT.md) — the single
+record of the current objective, status, confirmed facts, unverified items and next action.
+Consult [`.omp/state/DECISIONS.md`](.omp/state/DECISIONS.md) and
+[`.omp/state/EVIDENCE.md`](.omp/state/EVIDENCE.md) for prior decisions and recorded results.
+The main agent is the state arbiter: subagents report findings, they do not rewrite state.
+The full lifecycle contract lives in [`.omp/state/README.md`](.omp/state/README.md).
+
 ### Outcome-first dispatch contract (2026-09-15)
 
 Use [PROJECT-CONTROL.md — Delivery contract](PROJECT-CONTROL.md#delivery-contract)
@@ -648,6 +657,9 @@ breadth: [ROADMAP corrective queue](ROADMAP.md#high-priority-corrective-queue--2
 - Reviewers must reject unsupported completion claims even when all unit tests pass.
   Correct misleading report generators as well as output; preserve historical artifacts
   with an explicit correction. Do not fabricate review signoff or broaden a slice.
+- Reports cite the `E-<n>` ledger ids from [`.omp/state/EVIDENCE.md`](.omp/state/EVIDENCE.md)
+  alongside the required SHA and commands; the ledger entry records what was observed, the
+  SHA and commands record the run that produced it, and a claim with neither is Unverified.
 
 ### Authoritative sources (in order)
 
