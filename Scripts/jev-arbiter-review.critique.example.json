@@ -1,0 +1,44 @@
+{
+  "_comment": [
+    "*** THIS FILE IS A FORMAT TEMPLATE AND IS NOT EVIDENCE. ***",
+    "It contains NO real review. Its 'reviewer' is an illustrative placeholder, and",
+    "jev-arbiter-review.py REFUSES it with exit 1 rather than emitting an",
+    "AGREES/DISAGREES verdict from filler. To use it, copy it, replace 'reviewer'",
+    "with a real identity, and set dataset_sha256 to the capture you are reviewing.",
+    "",
+    "What the tool decides by the CHOSEN REFERENCE, not by rank:",
+    "  selected_candidate  IS the incumbent",
+    "  legal_alternatives[n] is by definition NOT what the game took",
+    "Rank is deliberately NOT used for the verdict: two different proposals can",
+    "score identically, and a rank-based verdict would report AGREEMENT for a",
+    "challenger that picked a different objective.",
+    "",
+    "These are NOT produced by the shadow recorder and NOT inferred by the tool.",
+    "Both envelopes are REFUSED unless bound: dataset_sha256 must equal the",
+    "capture's own sha256, and every cycle_id must exist in the capture and be",
+    "unique. The tool binds the DECLARATION to the capture; it does NOT open or",
+    "verify the cited source file, so source provenance remains a human reviewer's",
+    "responsibility, not something this tool validates.",
+    "",
+    "Benefit is ALWAYS UNKNOWN: no artifact observes what the other candidate would",
+    "have produced, so a DISAGREES verdict is a difference of opinion, not an",
+    "improvement. No Jev model produced any of this; no model caller is configured",
+    "in this repository."
+  ],
+  "dataset_sha256": "3aa299631b08af1103126ece71fcd9b9406241e5f85eb1f9dd7b16d1721ed514",
+  "reviewer": "EXAMPLE-REVIEWER (illustrative; replace with a real identity)",
+  "critique": [
+    {
+      "cycle_id": "quest-1-639265655676529911",
+      "chosen": "legal_alternatives[0]",
+      "claim": "I would have taken the legal AcceptQuest instead of the priority-30 TurnInQuest on this wake.",
+      "basis": "Reviewer opinion on the frozen candidate set. No postcondition in this dataset measures which pick was worth more, so this states a preference only."
+    },
+    {
+      "cycle_id": "quest-1-639265655686619104",
+      "chosen": "selected_candidate",
+      "claim": "I agree the AcceptQuest incumbent was right here; the turn-in wake is no longer competing.",
+      "basis": "Reviewer opinion; picks the incumbent, which must compare as AGREES."
+    }
+  ]
+}

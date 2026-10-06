@@ -1,0 +1,56 @@
+{
+  "_comment": [
+    "EXAMPLE envelopes for Scripts/jev-arbiter-review.py.",
+    "Both envelopes are REFUSED unless bound: dataset_sha256 must equal the",
+    "Claims for the 2026-10-02 t2sol capture:",
+    "/root/aaemu-e2e-t2-sol/runtime/game/Logs/jev-shadow-v2-quest-perception-01.jsonl",
+    "sha256 3aa299631b08af1103126ece71fcd9b9406241e5f85eb1f9dd7b16d1721ed514.",
+    "",
+    "OUTCOME envelope (--outcome-claims): observed facts only.",
+    "  join  : exact-cycle      -> artifact carries the row's own cycle_id",
+    "          identity-sequence -> matches bot/quest/run only; correlation, not proof",
+    "          none             -> unbound assertion",
+    "  class : authoritative-state -> read back from durable state",
+    "          engine-log          -> the engine's own log line",
+    "          actor-self-report   -> the actor describing its own success",
+    "          reviewer-opinion    -> REFUSED here; belongs in a critique",
+    "",
+    "CRITIQUE envelope (--critique): a named reviewer re-picks a LEGAL candidate.",
+    "          A hard rejection in candidates[] is ILLEGAL and cannot be chosen.",
+    "    definition NOT what the game took. Benefit is ALWAYS UNKNOWN: no",
+    "",
+    "No Jev model produced any of this. No model caller is configured in this",
+    "repository; these are illustrative, human/agent-authored claims.",
+    "",
+    "This file holds the OUTCOME envelope for --outcome-claims. The reviewer-side",
+    "envelope lives in jev-arbiter-review.critique.example.json; each carries its",
+    "own dataset_sha256 so the two can be supplied independently."
+  ],
+  "dataset_sha256": "3aa299631b08af1103126ece71fcd9b9406241e5f85eb1f9dd7b16d1721ed514",
+  "claims": [
+    {
+      "cycle_id": "quest-1-639265655676529911",
+      "claim": "Quest 6198 left the active quest set during this wake, as recorded by the engine's own QuestManager finalization path in the same second as the row.",
+      "basis": "Server.log line 28663 carries this exact cycle_id; lines 28664-28673 show QuestManager EnqueueEvaluation/DoQueuedEvaluations plus '[Quest] for player: Qploopbff9dc60, quest: 6198 removed.' for char 1.",
+      "source": "/root/aaemu-e2e-t2-sol/runtime/game/Logs/Server.log:28663-28673",
+      "join": "exact-cycle",
+      "class": "engine-log"
+    },
+    {
+      "cycle_id": "quest-1-639265655676529911",
+      "claim": "Quest 6198 was reported completed and its completed bit persisted across a restart, in a separate lane report for the same bot.",
+      "basis": "archive-pre-g7d report records stagedQuest.completedInSession=true and completedBitPersistedAfterRestart=true for questId 6198. That report carries NO cycle_id and NO trace id, so it joins on bot/quest/run identity and sequence, not on this exact wake.",
+      "source": "/root/aaemu-e2e-t2-sol/logs/archive-pre-g7d-20261002T192157Z.jsonl (questCoverage.stagedQuest)",
+      "join": "identity-sequence",
+      "class": "authoritative-state"
+    },
+    {
+      "cycle_id": "quest-1-639265655686619104",
+      "claim": "Quest 251 was accepted and remained an active row after restart, in a separate lane report for the same bot.",
+      "basis": "archive-pre-g7d report records followUpQuest.accepted=true and activeRowPersistedAfterRestart=true for questId 251, with completed explicitly null and noted as 'not observed'. This corroborates that the accept took; it says nothing about what the accept was worth.",
+      "source": "/root/aaemu-e2e-t2-sol/logs/archive-pre-g7d-20261002T192157Z.jsonl (questCoverage.followUpQuest)",
+      "join": "identity-sequence",
+      "class": "authoritative-state"
+    }
+  ]
+}

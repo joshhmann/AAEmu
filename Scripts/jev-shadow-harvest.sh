@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # jev-shadow-harvest.sh — arm the JevShadow opt-in on an ISOLATED E2E lane and
-# collect the `jev-shadow/v2` arbitration dataset the offline A/B replay needs.
+# collect the `jev-shadow/v3` arbitration dataset the offline review needs.
 #
 # The writer itself lives in the game process
 # (AAEmu.Game/Core/Managers/Bots/JevShadow.cs). It is armed ONLY by env:
@@ -31,7 +31,7 @@
 #   0  --dry-run : every prerequisite for booting the lane is present.
 #                 Nothing was started and nothing was written.
 #      real run  : the dataset was produced AND verified (file exists, is
-#                 non-empty, and EVERY row carries schema jev-shadow/v2).
+#                 non-empty, and EVERY row carries schema jev-shadow/v3).
 #   1  a runtime failure: a check or a boot step failed for a reason this
 #      script reports (md5 drift, game process not found, early exit).
 #   2  REFUSED before starting anything: unmet prerequisites, bad/missing
@@ -46,10 +46,13 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 E2E_COMMON="$REPO_ROOT/Scripts/e2e/e2e-common.sh"
 PROD_ROOT="/root/AAEmu"                 # prod compose root on the .165 box (WORKFLOW.md)
 PROD_HOST="root@192.168.0.165"          # label only; this script never SSHes
-SCHEMA="jev-shadow/v2"                  # JevShadow.SchemaVersion. v2 adds
-                                         # legal_alternatives and redefines
-                                         # candidate_count as selector truth;
-                                         # v1 datasets are historical and are
+SCHEMA="jev-shadow/v3"                  # JevShadow.SchemaVersion. v3 adds
+                                         # target_id to every candidate row
+                                         # (hard rejections, legal
+                                         # alternatives, and the incumbent),
+                                         # so a legal loser is joinable to the
+                                         # objective it named. v2 and v1
+                                         # datasets are historical and are
                                          # REJECTED by this harvester.
 CANONICAL_SQLITE_MD5="78b3bdbf038db3b927056106efdf91af"
 
@@ -67,7 +70,7 @@ usage() {
     # after option parsing.
     local prod_root="${PROD_ROOT:-/root/AAEmu}"
     cat <<EOF
-jev-shadow-harvest.sh — collect the jev-shadow/v2 arbitration dataset on an
+jev-shadow-harvest.sh — collect the jev-shadow/v3 arbitration dataset on an
 isolated E2E lane, then verify it. Prepares/runs the bot shadow harvest; the
 harvest is the only thing that starts a server, and only inside the lane root.
 
@@ -117,7 +120,7 @@ FLAGS
 
 WHAT IT VERIFIES AFTER A REAL RUN
   the file exists, is non-empty, reports line count + byte size, and its FIRST
-  line parses as JSON carrying "schema": "jev-shadow/v2". Anything it cannot verify
+  line parses as JSON carrying "schema": "jev-shadow/v3". Anything it cannot verify
   it reports as unverified and exits non-zero.
 
 WHAT --dry-run VERIFIES (BEFORE starting anything)
@@ -536,9 +539,9 @@ if [[ -z "$first_line" ]]; then
 fi
 if command -v jq >/dev/null 2>&1; then
     # EVERY row is schema-checked, not just the first: a dataset that opens with
-    # a v2 row and then carries v1 rows (an append onto a historical file, or a
-    # lane that restarted against a different build) would otherwise pass a
-    # first-line check while feeding the replay mixed semantics.
+    # a v3 row and then carries older rows (an append onto a historical file, or
+    # a lane that restarted against a different build) would otherwise pass a
+    # first-line check while mixing two different candidate semantics.
     if ! printf '%s' "$first_line" | jq -e . >/dev/null 2>&1; then
         log "UNVERIFIED: first line is not parseable JSON:"
         printf '%s\n' "${first_line:0:400}" >&2
@@ -552,9 +555,12 @@ if command -v jq >/dev/null 2>&1; then
     if [[ "$got_schema" != "$SCHEMA" ]]; then
         log "UNVERIFIED: dataset schema is '$got_schema', expected '$SCHEMA'"
         log "  (every complete row must carry \"schema\":\"$SCHEMA\")"
-        log "  A jev-shadow/v1 dataset is HISTORICAL and must not feed the"
-        log "   offline replay: candidate_count means something different there."
-        log "   Re-harvest, or pass --out <new-path> — never append to an old file."
+        log "  A jev-shadow/v1 or /v2 dataset is HISTORICAL and must not be"
+        log "   appended to or produced by this v3 harvest: neither version"
+        log "   carries the v3 target_id identity field, and v1's"
+        log "   candidate_count means something different. Use a fresh --out."
+        log "   (The offline reviewer reads historical v2 on request via its"
+        log "   --historic flag; that is separate from harvesting.)"
         exit 1
     fi
     # Same `set -e` hazard as above: a MALFORMED row makes jq exit non-zero,
@@ -565,7 +571,7 @@ if command -v jq >/dev/null 2>&1; then
         "$AAEMU_JEV_SHADOW_PATH" 2>/dev/null | head -3 || true)"
     malformed="$(jq -c . "$AAEMU_JEV_SHADOW_PATH" >/dev/null 2>&1 && echo 0 || echo 1)"
     if [[ "$malformed" != 0 ]]; then
-        log "UNVERIFIED: dataset has malformed (unparseable) row(s); trim them before replaying"
+        log "UNVERIFIED: dataset has malformed (unparseable) row(s); trim them before reviewing"
         exit 1
     fi
     if [[ -n "$wrong_schema" ]]; then
@@ -589,7 +595,7 @@ except Exception:
     got_schema="$probe"
     if [[ "$got_schema" != "$SCHEMA" ]]; then
         log "UNVERIFIED: dataset schema is '$got_schema', expected '$SCHEMA'"
-        log "  (a jev-shadow/v1 dataset is historical and must not feed the replay)"
+        log "  (a jev-shadow/v1 or /v2 dataset is historical: not appendable to this v3 harvest)"
         exit 1
     fi
     # No jq: python validates EVERY complete row, so the guarantee matches.
@@ -623,7 +629,7 @@ log "   malformed   : $malformed (whole-file JSON parse check, every row)"
 log "HARVEST VERIFIED: $complete complete row(s), $bytes byte(s), schema=$SCHEMA at $AAEMU_JEV_SHADOW_PATH"
 if [[ "$torn" -ne 0 || "$malformed" != 0 ]]; then
     log "  (torn=$torn, malformed=$malformed — trim the trailing incomplete line and any"
-    log "   unparseable rows before replaying; the count above excludes them)"
+    log "   unparseable rows before reviewing; the count above excludes them)"
 fi
 log "Evidence layer: rig-tier, isolated lane. Synthetic bot arbitration records —"
 log "NOT proof of live human playability and NOT proof of bot autonomy (H stays UNKNOWN)."

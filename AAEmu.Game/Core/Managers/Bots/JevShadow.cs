@@ -49,17 +49,31 @@ public static class JevShadow
     /// <summary>
     /// Dataset schema version carried on every row.
     /// <para>
-    /// v2 (2026-10-02) is a BEHAVIOURAL cutover, not an additive one: it adds
+    /// v3 (2026-10-02) adds <c>target_id</c> to every candidate row —
+    /// hard rejections, legal alternatives, and the incumbent — copied from the
+    /// proposal's own <see cref="BotDecisionProposal.TargetId"/>. Before v3 a
+    /// reviewer could see that an alternative existed and how it scored, but
+    /// never WHICH objective it referred to, so a legal loser could not be
+    /// joined to the quest it named. The field is ADDITIVE: nothing else moves,
+    /// and <c>candidate_count</c> keeps its v2 selector-truth meaning unchanged.
+    /// </para>
+    /// <para>
+    /// v2 (2026-10-02) was a BEHAVIOURAL cutover, not an additive one: it added
     /// <c>legal_alternatives</c> (the proposals that were legal but lost the
-    /// preference order, previously invisible) and redefines
+    /// preference order, previously invisible) and redefined
     /// <c>candidate_count</c> as selector truth — hard rejections + every legal
     /// proposal, the winner included — where v1 reported only
     /// rejections + 1 and therefore under-reported any wake with legal losers.
     /// A v1 reader must not consume a v2 row: the count means something
-    /// different. Rows already written as v1 are historical and stay v1.
+    /// different.
+    /// </para>
+    /// <para>
+    /// Rows already written stay in the version they were written as. Historical
+    /// v1 and v2 datasets are never relabelled or rewritten; a v2 row simply has
+    /// no <c>target_id</c> to read.
     /// </para>
     /// </summary>
-    public const string SchemaVersion = "jev-shadow/v2";
+    public const string SchemaVersion = "jev-shadow/v3";
 
     /// <summary>Bound for the frozen reason text copied into a row.</summary>
     public const int MaxReasonChars = 500;
@@ -268,7 +282,10 @@ public static class JevShadow
                 proposal.Action.ToString(),
                 proposal.Priority,
                 proposal.PersonalityWeight,
-                Truncate(rejection.Reason, MaxCandidateReasonChars)));
+                Truncate(rejection.Reason, MaxCandidateReasonChars),
+                // v3: the refused proposal's own target, so an illegal
+                // candidate is as identifiable as a legal one.
+                proposal.TargetId));
         }
 
         // The LEGAL-but-unselected proposals, kept in their own array so the
@@ -293,7 +310,12 @@ public static class JevShadow
                     proposal.Action.ToString(),
                     proposal.Priority,
                     proposal.PersonalityWeight,
-                    "legal; not selected");
+                    "legal; not selected",
+                    // v3: THIS is the field that makes a legal loser
+                    // joinable to the quest it named. Before v3 a reviewer
+                    // could see that an alternative existed and what it
+                    // scored, but never which objective it referred to.
+                    proposal.TargetId);
             }
         }
 
@@ -360,7 +382,11 @@ public static class JevShadow
                     incumbent.Action.ToString(),
                     incumbent.Priority,
                     incumbent.PersonalityWeight,
-                    "selected")
+                    "selected",
+                    // v3: the incumbent's own target, so the taken pick and
+                    // every outranked alternative are joinable on the SAME
+                    // identity field.
+                    incumbent.TargetId)
                 : null,
             brains?.TravelDecision ?? null,
             brains?.SurvivalDecision ?? null,
@@ -1328,17 +1354,28 @@ public sealed record JevShadowCombat(
             prepared.CommittedQuestTarget);
     }
 }
+
 /// <summary>
-/// One non-selected brain candidate with its deterministic score
-/// (priority + personality weight) and its rejection reason — copied from
-/// the frozen <see cref="BotProposalRejection"/> list, never re-evaluated.
+/// One candidate with its deterministic score (priority + personality
+/// weight), its rejection reason, and — since <c>jev-shadow/v3</c> — the
+/// proposal's own <c>TargetId</c>, copied from the frozen proposal and never
+/// re-evaluated.
+///
+/// The target is copied verbatim, so its MEANING is whatever the emitting
+/// proposal used it for: the quest id for the quest goals, an in-world object
+/// id for a Target/Move proposal. Read it together with <see cref="Action"/>,
+/// never on its own. <c>0</c> means the proposal named no target, which is a
+/// real recorded value and not a missing field — that is exactly why this is a
+/// non-nullable <c>uint</c> with NO default: every construction states its own
+/// target explicitly rather than silently inheriting zero.
 /// </summary>
 public sealed record JevShadowCandidate(
     string Goal,
     string Action,
     int Priority,
     int Weight,
-    string Reason);
+    string Reason,
+    uint TargetId);
 
 /// <summary>
 /// Outcome-request ref: the dispatched request's join keys, copied from the
