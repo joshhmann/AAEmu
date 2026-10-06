@@ -1,0 +1,13 @@
+{
+  "id": "scenario-09",
+  "test_class": "HeldoutRecoveryTests",
+  "test_name": "Scenario9_CohortLoot_PartyTakes_StrangerWithholds",
+  "description": "fellow-bot tag takes, stranger withholds",
+  "schema": {
+    "completed": "test passes unassisted",
+    "intervention": "manual repair during test",
+    "wedged": "test fails with no recovery",
+    "progress_fraction": "passed/total",
+    "frozen_regressions": "always 0 in this harness (frozen suite run separately)"
+  }
+}

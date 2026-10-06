@@ -1,0 +1,13 @@
+{
+  "id": "scenario-04",
+  "test_class": "HeldoutScenarioTests",
+  "test_name": "Scenario4_SelfDamageAttribution_ResetsStreakAndHolds",
+  "description": "self-attributed HP drop resets streak",
+  "schema": {
+    "completed": "test passes unassisted",
+    "intervention": "manual repair during test",
+    "wedged": "test fails with no recovery",
+    "progress_fraction": "passed/total",
+    "frozen_regressions": "always 0 in this harness (frozen suite run separately)"
+  }
+}
