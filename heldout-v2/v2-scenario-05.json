@@ -1,0 +1,13 @@
+{
+  "id": "v2-scenario-05",
+  "test_class": "HeldoutV2ScenarioTests",
+  "test_name": "Scenario5_RegenFlatHp_TripsToCloseInMove",
+  "description": "verdict trip under net-flat regen HP (no kill asserted)",
+  "schema": {
+    "completed": "test passes unassisted",
+    "intervention": "manual repair during test",
+    "wedged": "test fails with no recovery",
+    "progress_fraction": "passed/total",
+    "frozen_regressions": "from frozen-suite log"
+  }
+}

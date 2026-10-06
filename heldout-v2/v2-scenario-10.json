@@ -1,0 +1,13 @@
+{
+  "id": "v2-scenario-10",
+  "test_class": "HeldoutV2RecoveryTests",
+  "test_name": "Scenario10_SeededSpawnerTravelResolves_UnseededFailsClosed",
+  "description": "seeded spawner resolves Move; unseeded fail-closed",
+  "schema": {
+    "completed": "test passes unassisted",
+    "intervention": "manual repair during test",
+    "wedged": "test fails with no recovery",
+    "progress_fraction": "passed/total",
+    "frozen_regressions": "from frozen-suite log"
+  }
+}

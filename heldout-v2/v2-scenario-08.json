@@ -1,0 +1,13 @@
+{
+  "id": "v2-scenario-08",
+  "test_class": "HeldoutV2RecoveryTests",
+  "test_name": "Scenario8_DeadPreyTravel_NotSuppressed_LiveSuppresses",
+  "description": "dead prey does not suppress travel arm",
+  "schema": {
+    "completed": "test passes unassisted",
+    "intervention": "manual repair during test",
+    "wedged": "test fails with no recovery",
+    "progress_fraction": "passed/total",
+    "frozen_regressions": "from frozen-suite log"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "v2-scenario-07",
+  "test_class": "HeldoutV2RecoveryTests",
+  "test_name": "Scenario7_CohortTaggedEmptiedCorpse_Excluded_RetargetsLivePrey",
+  "description": "cohort-tagged emptied corpse excluded, live retarget",
+  "schema": {
+    "completed": "test passes unassisted",
+    "intervention": "manual repair during test",
+    "wedged": "test fails with no recovery",
+    "progress_fraction": "passed/total",
+    "frozen_regressions": "from frozen-suite log"
+  }
+}

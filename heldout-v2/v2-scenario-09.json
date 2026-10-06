@@ -1,0 +1,13 @@
+{
+  "id": "v2-scenario-09",
+  "test_class": "HeldoutV2RecoveryTests",
+  "test_name": "Scenario9_GiveUp_WithdrawsAtTen_HoldsAtNine",
+  "description": "give-up withdraws at 10, holds at 9",
+  "schema": {
+    "completed": "test passes unassisted",
+    "intervention": "manual repair during test",
+    "wedged": "test fails with no recovery",
+    "progress_fraction": "passed/total",
+    "frozen_regressions": "from frozen-suite log"
+  }
+}

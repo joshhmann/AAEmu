@@ -1,0 +1,13 @@
+{
+  "id": "v2-scenario-01",
+  "test_class": "HeldoutV2ScenarioTests",
+  "test_name": "Scenario1_PerTargetStall_TripsToCloseInMove",
+  "description": "per-target stall trip fires close-in Move at 10 stagnant wakes",
+  "schema": {
+    "completed": "test passes unassisted",
+    "intervention": "manual repair during test",
+    "wedged": "test fails with no recovery",
+    "progress_fraction": "passed/total",
+    "frozen_regressions": "from frozen-suite log"
+  }
+}
