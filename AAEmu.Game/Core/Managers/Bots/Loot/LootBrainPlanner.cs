@@ -260,6 +260,9 @@ public static class LootBrainPlanner
         return BotAccountProvisioningService.Instance.IsBotAccount(accountId);
     }
 
+    internal static LootClaimEvidence ReadClaimEvidenceForCorpse(Character? character, Npc? corpse, uint actorObjId)
+        => ReadClaimEvidence(character, corpse, actorObjId);
+
     private static LootClaimEvidence ReadClaimEvidence(Character? character, Npc? corpse, uint actorObjId)
     {
         if (character == null || corpse == null)

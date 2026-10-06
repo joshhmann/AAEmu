@@ -729,6 +729,35 @@ public static class QuestBehavior
         return (true, count, count > 0 && inRange);
     }
     /// <summary>
+    /// Whether a census corpse is terminally spent for this actor through a
+    /// FOREIGN take: the container exists with 0 items (the probe's own empty
+    /// tally) AND the ownership classifier reads Foreign/Unresolved for this
+    /// actor (the loot brain's own verdict over the engine tagging surface).
+    /// The two reads are the same facts the loot chain withholds on; combined
+    /// they name a corpse no wake of this actor will ever take. Read-only, and
+    /// called OUTSIDE <see cref="PursuitSync"/> so the world read never runs
+    /// under the lock. Fail-closed: any unreadable surface returns false.
+    /// </summary>
+    private static bool IsTerminalEmptyForeign(Character? character, uint actorObjId, Npc? npc)
+    {
+        if (character?.ParentWorld == null || npc == null)
+            return false;
+        try
+        {
+            var owner = character.ParentWorld.GetBaseUnit(npc.ObjId);
+            var container = owner?.LootingContainer;
+            if (container == null || container.Items.Count != 0)
+                return false;
+            var evidence = LootBrainPlanner.ReadClaimEvidenceForCorpse(character, npc, actorObjId);
+            var ownership = LootBrain.ClassifyOwnership(evidence, corpseIsOurPinnedCorpse: false);
+            return ownership is LootOwnership.Foreign or LootOwnership.Unresolved;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    /// <summary>
     /// Pure diag fragment for a recognized corpse
     /// (<c>:corpse={objId}:container={n}:lootable={true|false}</c>) or
     /// <c>:corpse={objId}:gone=true</c> once despawned. Carries no spaces or
@@ -1045,6 +1074,20 @@ public static class QuestBehavior
             // corpse anyone ELSE took is untouched — this is owner-scoped, and
             // the engine's own ownership gates still decide such a corpse.
             if (IsLootDispatched(actor.ActorId, objId))
+                continue;
+            // TERMINAL-EMPTY-FOREIGN EXCLUSION (contended-corpse race: a second
+            // actor pins a corpse a foreign killer already emptied — container
+            // exists, 0 items, ownership Foreign/Unresolved for this actor — and
+            // starves live prey because Target never commits while the census
+            // keeps re-pinning the spent corpse). The probe's own empty tally
+            // plus the classifier's own foreign verdict for THIS actor is the
+            // same terminal shape the loot-once arm reports for our own take,
+            // read through the engine's own surfaces — so it belongs beside the
+            // loot-once gate here: such a corpse is not a candidate. Scoped to
+            // container-exists/0-items on purpose: an unreadable container is
+            // generation-in-flight, never terminal. A non-empty foreign corpse
+            // is untouched — the ownership arm still withholds it per wake.
+            if (IsTerminalEmptyForeign(character, actor.ActorId, npc))
                 continue;
             var distance = MathUtil.CalculateDistance(here, npc.Transform.World.Position, false);
             if (double.IsNaN(distance)
@@ -3815,6 +3858,22 @@ public static class QuestBehavior
             if (decision.Reason == LootReason.AlreadyLooted && already
                 && prepared.CorpseResolved && candidate != null
                 && decision.CorpseObjId == candidate.ObjId)
+            {
+                lock (PursuitSync)
+                    LastCorpse.Remove(actor.ActorId);
+                LootTravelDispatch.EndJourneyForPin(actor.ActorId);
+            }
+            // EMPTY-FOREIGN PIN RELEASE (the contended-corpse race, mirrored from
+            // the census exclusion above): an empty-foreign withhold on the PINNED
+            // corpse — container exists/0 items with ownership Foreign/Unresolved
+            // for this actor — is terminal for this actor exactly like its own
+            // take, so the pin drops the same owner-scoped way. TargetEmit then
+            // commits the funnel's live selection via the existing SetTarget.
+            else if (candidate != null && prepared.CorpseResolved
+                && decision.CorpseObjId == candidate.ObjId
+                && prepared.Inputs.ContainerReadable && prepared.Inputs.ContainerItemCount == 0
+                && decision.Ownership is LootOwnership.Foreign or LootOwnership.Unresolved
+                && decision.Reason is LootReason.OwnershipForeign or LootReason.OwnershipUnresolved or LootReason.ContainerEmpty)
             {
                 lock (PursuitSync)
                     LastCorpse.Remove(actor.ActorId);
