@@ -182,6 +182,60 @@ public static class CombatDecisionTree
     }
 
     /// <summary>
+    /// THE ENGINE'S OWN RANGE RULE, mirrored: the (min, max) the engine will
+    /// enforce at <c>Skill.Use</c> for this skill on this actor.
+    ///
+    /// This is deliberately a DIFFERENT rule from
+    /// <see cref="GetSkillEffectiveRange"/>, and the difference is the point:
+    /// the engine does not union a template range with a weapon range, it
+    /// OVERWRITES the template band with the equipped weapon's holdable range
+    /// (<c>Skill.cs:246-247</c>) whenever <c>WeaponSlotForRangeId &gt; 0</c>,
+    /// falling back to the fist defaults (0 - 3.0 m) when that slot is empty.
+    /// <see cref="GetSkillEffectiveRange"/> takes the UNION (<c>Math.Max</c>),
+    /// which is the right conservative read for "is this cast worth offering"
+    /// ordering but is WRONG as a ceiling for "can the engine accept a cast at
+    /// this distance": a 20 m bow against a 25 m template unioned to 25, while
+    /// the engine refuses anything past 20.
+    ///
+    /// Anything that bounds a SPACING DECISION must read this one: a band
+    /// ceiling or an admission radius derived from the union can sit outside
+    /// the actor's real reach, which is how a ranged role ended up admitted,
+    /// holding its closing leg, and unable to land the one shot it was admitted
+    /// for. The template-side zero-max fallback is NOT mirrored: the engine has
+    /// no such fallback on its own path (it overwrites and takes the weapon's
+    /// own max, or the fist default), so inventing one here would re-open the
+    /// same gap on an unarmed actor.
+    /// </summary>
+    public static (float MinRange, float MaxRange) GetSkillEnforcedRange(SkillTemplate template, Character? bot)
+    {
+        ArgumentNullException.ThrowIfNull(template);
+
+        var minRange = (float)template.MinRange;
+        var maxRange = (float)template.MaxRange;
+
+        // Fist defaults: what the engine uses when the weapon slot is empty.
+        const float FistMinRangeM = 0.0f;
+        const float FistMaxRangeM = 3.0f;
+
+        if (template.WeaponSlotForRangeId > 0)
+        {
+            minRange = FistMinRangeM;
+            maxRange = FistMaxRangeM;
+
+            var item = bot?.Equipment?.GetItemBySlot(template.WeaponSlotForRangeId);
+            if (item?.Template is WeaponTemplate weapon && weapon.HoldableTemplate != null)
+            {
+                minRange = weapon.HoldableTemplate.MinRange;
+                maxRange = weapon.HoldableTemplate.MaxRange;
+            }
+
+            return (minRange, maxRange);
+        }
+
+        return (minRange, maxRange);
+    }
+
+    /// <summary>
     /// Fallback static ranges for well-known starter and combo skills (used in unit test/mock environments).
     /// </summary>
     public static (float MinRange, float MaxRange) GetKnownSkillRange(uint skillId)

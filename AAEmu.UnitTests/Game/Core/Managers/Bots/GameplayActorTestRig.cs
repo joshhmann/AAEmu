@@ -3083,6 +3083,47 @@ public static class GameplayActorTestRig
             list.Add(reqs[reqId]);
     }
 
+    /// <summary>
+    /// Seeds a unit_reqs MaxLevel row (kind 0x45) owned by a QuestComponent so
+    /// UnitRequirementsGameData.CanComponentRun vetoes the Start component when
+    /// the character is ABOVE <paramref name="maxLevel"/> — the REAL engine gate
+    /// that validates <c>player?.Level &lt;= Value1</c> (UnitReqs.cs). This is
+    /// the requirement kind that makes <c>template.Level</c> unsafe as an upper
+    /// bound on offerability: a level-35 display row can still be refused to a
+    /// level-40 character. Fixture id 90_787 keeps it collision-free against
+    /// the level-requirement row's 90_730 and every other 9xxxx test fixture.
+    /// </summary>
+    public static void SeedQuestComponentMaxLevelRequirement(uint componentId, uint maxLevel)
+    {
+        var data = UnitRequirementsGameData.Instance;
+        const string ownerType = "QuestComponent";
+        const uint reqId = 90_787;
+
+        var reqsField = typeof(UnitRequirementsGameData).GetField("<_unitReqs>k__BackingField",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var reqs = (Dictionary<uint, UnitReqs>)reqsField!.GetValue(data)!;
+        reqs[reqId] = new UnitReqs
+        {
+            Id = reqId,
+            OwnerId = componentId,
+            OwnerType = ownerType,
+            KindType = AAEmu.Game.Models.Game.Units.Static.UnitReqsKindType.MaxLevel,
+            Value1 = maxLevel,
+            Value2 = 0
+        };
+
+        var byOwnerField = typeof(UnitRequirementsGameData).GetField("<_unitReqsByOwnerType>k__BackingField",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var byOwner = (Dictionary<string, List<UnitReqs>>)byOwnerField!.GetValue(data)!;
+        if (!byOwner.TryGetValue(ownerType, out var list))
+        {
+            list = [];
+            byOwner[ownerType] = list;
+        }
+        if (!list.Any(r => r.Id == reqId))
+            list.Add(reqs[reqId]);
+    }
+
 
     // ------------------------------------------------------ discovery v2 + talk (quest-surface)
 

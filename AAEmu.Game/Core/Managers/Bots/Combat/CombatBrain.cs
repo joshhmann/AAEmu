@@ -93,7 +93,12 @@ public static class CombatBrain
     /// <summary>Contact range: inside this the observer is being hit (engine melee reach).</summary>
     public const float ContactRangeM = CombatDecisionTree.DefaultMeleeMax;
 
-    /// <summary>Retreat leg length (engine precedent: <c>CombatDecisionTree.Evaluate</c>'s emergency flee steps 25 m).</summary>
+    /// <summary>
+    /// Retreat leg length (engine precedent: <c>CombatDecisionTree.Evaluate</c>'s
+    /// emergency flee steps 25 m). This is the FLEE arm's length; for the SPACING
+    /// arm it is only the CEILING, because the walk is measured FROM THE ACTOR
+    /// (see <see cref="BackOffDistanceM"/>).
+    /// </summary>
     public const float RetreatDistanceM = 25.0f;
 
     /// <summary>Close-in destination: land this far inside the band's ceiling so the next wake is already in band.</summary>
@@ -310,17 +315,32 @@ public static class CombatBrain
             { CommittedThisWake = committedThisWake, TargetScore = targetScore };
         }
         // Backing off is a SPACING arm, so it belongs to the roles that lose their
-        // verb by being crowded: a ranged archer/caster inside its floor cannot
-        // shoot, while a melee fighter inside its floor is exactly where it wants
-        // to be (the floor exists so the close-in arm does not jitter at contact,
-        // not to push a melee bot out of its own reach). This mirrors the engine
-        // tree, which kites only for the ranged roles.
+        // verb by being crowded: an archer inside its floor cannot shoot, and a
+        // melee fighter inside its floor is exactly where it wants to be (the
+        // floor exists so the close-in arm does not jitter at contact, not to push
+        // a melee bot out of its own reach). This mirrors the engine tree, which
+        // kites only for the ranged roles.
+        //
+        // The spacing arm additionally requires that the role ACTUALLY loses its
+        // verb when crowded, and the engine answers that per role, not per label.
+        // GameplayActor.AutoAttack picks the ranged auto-attack (skill 4, whose
+        // effective range is 4-20 m) when `role == RangedPhysical || (dist > 4 &&
+        // hasRangedWeapon)` — so inside 4 m ONLY the ranged-physical role is handed
+        // a verb that cannot reach: an archer is genuinely stuck in the jaws and
+        // spacing is the correct answer. Every other role (the casters and the
+        // healer) is handed the MELEE auto-attack (skill 2, range 0-4 m) there,
+        // which reaches at contact. Telling a caster to walk away from a fight it
+        // can already hit denies it a verb it has, and walks it out of the one
+        // range where it has any — the reachability contract the melee exemption
+        // below already encodes, stated in the engine's own terms.
+        var withinMeleeAutoAttack = !float.IsNaN(targetDistance) && targetDistance <= MeleeMaxM;
         if (inputs.Role != CombatRole.Melee
+            && !(withinMeleeAutoAttack && inputs.Role != CombatRole.RangedPhysical)
             && !float.IsNaN(targetDistance) && targetDistance < bandMin)
         {
             return new CombatBrainDecision(
                 CombatArm.BackOff, CombatVerb.Move, CombatBrainState.Engaged,
-                targetObjId, 0, 0, RetreatDestination(inputs), bandMin, bandMax,
+                targetObjId, 0, 0, BackOffDestination(inputs, targetDistance, bandMax), bandMin, bandMax,
                 targetDistance, inputs.SelfHpRatio, (int)threat, CombatDisengageReason.None,
                 CombatReason.BackOff)
             { CommittedThisWake = committedThisWake, TargetScore = targetScore };
@@ -408,6 +428,79 @@ public static class CombatBrain
     private static Vector3 RetreatDestination(in CombatBrainInputs inputs)
         => AAEmu.Game.Core.Managers.Bots.Travel.TravelBrain.SafeAnchor(
             inputs.SelfPosition, inputs.IncumbentPosition, RetreatDistanceM);
+
+    /// <summary>
+    /// The SPACING leg's destination: the same anchor and the same escape math
+    /// (<see cref="TravelBrain.SafeAnchor"/>), walked far enough to open the
+    /// spacing and NO further.
+    ///
+    /// The ceiling exists because the anchor measures the step FROM THE ACTOR,
+    /// not from the threat: backing a 1.7 m contact off by the full
+    /// <see cref="RetreatDistanceM"/> leaves the prey 26.7 m away, past the
+    /// <see cref="AggroBandM"/> census the very next wake perceives through
+    /// (<c>GameplayActor.Observe</c>'s <c>GetAround(..., 25f)</c>). The census
+    /// drops the row, the objective selector withdraws to no-selection, and the
+    /// pursuit closes back in — which re-crowds the archer and re-fires this same
+    /// arm. That is the recorded 1↔25 m oscillation: the retreat was resolving
+    /// itself onto the far side of the observer's own horizon.
+    ///
+    /// The census is the OUTER of the two boundaries; the binding one is this
+    /// actor's OWN band ceiling (<paramref name="bandMax"/>, read from the same
+    /// <see cref="DesiredBand"/> the whole chain works from). Perception is the
+    /// wider circle, but it is not the one that decides this actor's wake: the
+    /// combat brain is consulted only within
+    /// <c>QuestBehavior.CombatAdmissionRadiusM</c> — that same ceiling — so a
+    /// step bounded by the census alone lands an archer at 24 m, outside the 22 m
+    /// its brain is consulted from. The next wake is then
+    /// <c>validate=out-of-range</c>, the BAND arm never runs, and the pursuit leg
+    /// re-crowds it: the one loop a census bound alone cannot close.
+    ///
+    /// So the step is bounded by the nearer of the two boundaries, less
+    /// <see cref="CloseInMarginM"/> (the codebase's own "land inside the boundary
+    /// with margin" idiom, the same one the close-in arm uses) less the contact the
+    /// actor is already standing at. The prey then lands INSIDE this role's own
+    /// band — admitted, in band, and still inside the census — which is where the
+    /// band arm reads it and closes the remaining distance on the next wake. Every
+    /// role's leg is a real step: the arm only fires below the role's own floor,
+    /// so the shortest leg any role can take is its ceiling less the margin less
+    /// its floor — 9 m for the archer and the healer, 7 m for the caster.
+    ///
+    /// The FLEE leg above deliberately keeps the full length: a survival break
+    /// wants maximum separation, and losing sight of what you are fleeing is the
+    /// point.
+    /// </summary>
+    private static Vector3 BackOffDestination(in CombatBrainInputs inputs, float targetDistanceM, float bandMax)
+    {
+        var step = BackOffDistanceM(targetDistanceM, bandMax);
+        // A band narrower than the close-in margin leaves no room to walk, and the
+        // shared anchor reads a non-positive distance as UNREADABLE and substitutes
+        // the full retreat length — the very census crossing this leg exists to
+        // prevent. Standing is the honest reading there: the prey already sits at
+        // the boundary this leg would have landed it at.
+        return step > 0f
+            ? AAEmu.Game.Core.Managers.Bots.Travel.TravelBrain.SafeAnchor(
+                inputs.SelfPosition, inputs.IncumbentPosition, step)
+            : inputs.SelfPosition;
+    }
+
+    /// <summary>
+    /// The spacing leg's length: the nearer of the two boundaries the actor must
+    /// not cross — the census it perceives through, and the band ceiling its
+    /// combat brain is consulted from — less the same margin the close-in arm
+    /// lands by, less the contact already spent; capped at the full retreat leg
+    /// so an actor that starts at arm's length still takes the engine's own step.
+    ///
+    /// Only the reachable shapes are trusted: a caller reads this from the band
+    /// arm, which has already rejected NaN and has already given anything past
+    /// <paramref name="bandMax"/> to the close-in arm, so the arithmetic below is
+    /// finite and the contact never stands past the ceiling.
+    /// </summary>
+    private static float BackOffDistanceM(float targetDistanceM, float bandMax)
+    {
+        var withinCensus = AggroBandM - CloseInMarginM - targetDistanceM;
+        var withinBand = bandMax - CloseInMarginM - targetDistanceM;
+        return Math.Min(RetreatDistanceM, Math.Min(withinCensus, withinBand));
+    }
 
     /// <summary>The close-in destination: a point just inside the band's ceiling, on the line to the target.</summary>
     private static Vector3 ApproachDestination(in CombatBrainInputs inputs, float bandMax)

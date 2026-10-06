@@ -123,8 +123,35 @@ public static class CombatBrainPlanner
                 if (incumbentValid)
                 {
                     incumbentDistance = MathUtil.CalculateDistance(selfPosition, incumbentPosition, false);
+                    // Deliberately the 2-D XZ reading, NOT the engine's
+                    // 3-D-minus-radii `GetDistanceTo(target, true)`. The brain's
+                    // arms walk the actor INSIDE a ceiling, so this metric must
+                    // never read SHORTER than the distance the engine will judge
+                    // the cast by — and it cannot: 2-D omits the elevation term and
+                    // the two model radii are non-negative, so this value is always
+                    // >= the engine's. The bias is therefore one-directional
+                    // (it may ask to close a little further than strictly needed,
+                    // never stop short of its own reach), which is the safe side
+                    // to err on. The gate that decides whether the brain is ASKED
+                    // is the strict side, and that one is on the engine's metric
+                    // (`QuestBehavior.CombatAdmissionRadiusM`).
                     leashBudget = LeashBudgetOf(incumbentNpc);
                     incumbentDrift = DriftFromAnchor(actor.ActorId, incumbentPosition);
+                    // The leash frame is a MEASUREMENT, so it advances on every
+                    // readable wake — not only on the wakes that dispatch. The
+                    // drift above is measured against the previous frame; the
+                    // advance below moves that frame to where the prey stands
+                    // now, so drift next wake is the prey's movement SINCE THIS
+                    // frame rather than everything since the last dispatched
+                    // wake. Left to Publish alone, the anchor froze on every wake
+                    // the brain takes away (the disengage break, the survival
+                    // veto, the crowd-control hold), and one frame of drift past
+                    // the edge re-fired the leash forever on the same prey.
+                    // Reading stays fail-closed: with no engagement, no anchor, or
+                    // a different committed target there is nothing to advance,
+                    // so the drift that decided THIS wake is untouched.
+                    CombatBrainEngagement.Reanchor(
+                        actor.ActorId, incumbentObjId, incumbentPosition, leashBudget, nowUtc);
                 }
             }
         }
@@ -188,7 +215,16 @@ public static class CombatBrainPlanner
                 var template = SkillTemplateOf(selectedSkill);
                 if (template != null)
                 {
-                    (skillMin, skillMax) = CombatDecisionTree.GetSkillEffectiveRange(template, character);
+                    // THE ENGINE'S OWN RANGE, not the union. This band is not an
+                    // ordering hint: it is the interval the CloseRange and BackOff
+                    // arms walk the actor into, and `QuestBehavior` admits the brain
+                    // only inside `CombatAdmissionRadiusM`, which is bounded by this
+                    // same reach. A union ceiling (a 20 m weapon against a 25 m
+                    // template reads 25) therefore walks the actor to a pose the
+                    // admission gate then refuses — the same
+                    // walk-out/close-back loop this band exists to prevent, reached
+                    // from the other side. One authority, one number.
+                    (skillMin, skillMax) = CombatDecisionTree.GetSkillEnforcedRange(template, character);
                 }
                 else
                 {
@@ -319,22 +355,23 @@ public static class CombatBrainPlanner
             return decision;
         }
 
-        if (decision.CommittedThisWake
-            || !CombatBrainEngagement.TryGet(inputs.ActorObjId, out var current)
-            || current.IncumbentObjId != decision.TargetObjId)
-        {
-            // A commitment that just started, the first one for this actor, or a
-            // committed target that CHANGED (the quest funnel re-selected, or the
-            // ranker displaced the incumbent) all re-anchor the engagement.
-            var anchor = inputs.IncumbentPosition;
-            CombatBrainEngagement.Publish(
-                inputs.ActorObjId, decision.TargetObjId, decision.TargetScore, anchor,
-                inputs.LeashBudgetM, inputs.CrowdControlled, disengaging: false, nowUtc);
-        }
-        else
-        {
-            CombatBrainEngagement.PublishState(inputs.ActorObjId, inputs.CrowdControlled, false, nowUtc);
-        }
+        // The leash anchor is the PREY's LIVE position, refreshed on EVERY published
+        // wake — a commitment that just started, the first one for this actor, a
+        // committed target that CHANGED (the quest funnel re-selected, or the ranker
+        // displaced the incumbent), and the ordinary same-target wake alike. The
+        // anchor is therefore always the freshest readable reading of where the mob
+        // is: it never freezes at the position it happened to hold when the fight
+        // started, which is what made a mob that had merely wandered read as a 45 m
+        // strayer on every later wake. (A leash arm can only ever measure the mob's
+        // movement since the last readable frame; "since engage" is not a fact the
+        // world keeps handing us.)
+        //
+        // A same-target re-anchor must NOT restart the commitment window or the skill
+        // rotation — CombatBrainEngagement.Publish keys both off the TARGET, not off
+        // this call, so the hysteresis the rest of the chain reads is untouched here.
+        CombatBrainEngagement.Publish(
+            inputs.ActorObjId, decision.TargetObjId, decision.TargetScore, inputs.IncumbentPosition,
+            inputs.LeashBudgetM, inputs.CrowdControlled, disengaging: false, nowUtc);
 
         return decision;
     }
@@ -364,9 +401,11 @@ public static class CombatBrainPlanner
     }
 
     /// <summary>
-    /// The prey's drift from the engagement's leash anchor. Before an anchor is
-    /// published the drift reads 0 (there is nothing to be far from), which is
-    /// the fail-closed direction: no fabricated "about to reset".
+    /// The prey's drift from the engagement's leash anchor — which is the position
+    /// the prey was last SEEN at, refreshed by every publish, so this is the
+    /// distance it has covered since that frame. Before an anchor is published the
+    /// drift reads 0 (there is nothing to be far from), which is the fail-closed
+    /// direction: no fabricated "about to reset".
     /// </summary>
     private static float DriftFromAnchor(uint actorObjId, Vector3 targetPosition)
         => CombatBrainEngagement.TryGet(actorObjId, out var engagement)

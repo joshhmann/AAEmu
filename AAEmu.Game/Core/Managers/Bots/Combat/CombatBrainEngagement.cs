@@ -24,11 +24,16 @@ namespace AAEmu.Game.Core.Managers.Bots.Combat;
 /// computed from the stored state, so a consumer can never observe a fact the
 /// brain did not publish, and a cleared engagement reads as "not engaged".
 ///
-/// The leash anchor is the PREY's own home captured at engage, not the bot's
-/// position: the point of the leash arm is that the MOB is about to reset home,
-/// which is a property of its drift from where it spawned. The engine itself
-/// measures this against <c>NpcAi.IdlePosition</c> with the template's
-/// <c>ReturnDistance</c> (default 50 m) — see <c>BaseCombatBehavior.ShouldReturn</c>.
+/// The leash anchor is the PREY's own live position, re-read on every published
+/// wake — never a coordinate frozen at the moment the fight started. Freezing it
+/// made a mob that had merely wandered read as a full-budget strayer on every
+/// later wake: the drift is measured between the anchor and the prey's CURRENT
+/// position, so a stale anchor keeps a fight that never moves pinned at its
+/// widest while the bot stands on the prey. Refreshing it is not widening the
+/// budget — the budget still comes from the template's <c>ReturnDistance</c>,
+/// the same measure the engine's own <c>BaseCombatBehavior.ShouldReturn</c> puts
+/// against <c>NpcAi.IdlePosition</c>, re-anchored to <c>HomePosition</c> on
+/// combat entry (<c>NpcAi.AnchorLeashOnCombatEntry</c>).
 /// </summary>
 public static class CombatBrainEngagement
 {
@@ -57,7 +62,7 @@ public static class CombatBrainEngagement
         /// <summary>True once the engagement has been running past the hysteresis window.</summary>
         public double AgeSeconds(DateTime nowUtc) => (nowUtc - CommittedUtc).TotalSeconds;
 
-        /// <summary>True when the incumbent has drifted past the leash edge — the mob is about to reset home.</summary>
+        /// <summary>True when the incumbent has strayed past the leash edge since the anchor was last refreshed — the mob is about to reset home.</summary>
         public bool AtLeashEdge(Vector3 targetPosition)
         {
             if (LeashBudgetM <= 0f)
@@ -133,6 +138,48 @@ public static class CombatBrainEngagement
         {
             LastSkillUsed = skillId,
             LastCastUtc = nowUtc,
+            UpdatedUtc = nowUtc
+        };
+    }
+
+    /// <summary>
+    /// Advances the leash anchor to where the committed prey stands NOW — the
+    /// PER-WAKE half of "the anchor is the prey's live position" (the other half
+    /// is the publish, which starts and re-points the engagement).
+    ///
+    /// This deliberately is not done in <see cref="Publish"/> alone. Publish is
+    /// reached only from a DISPATCHED decision, so every wake the brain takes
+    /// away — the disengage break, the survival veto, the crowd-control hold —
+    /// returns before anything dispatches and Publish never runs. Leaving the
+    /// advance there made the anchor freeze on exactly the wake that most needs
+    /// it to move: one frame of drift past the edge, and the frozen anchor
+    /// re-fired the leash on every later wake for the same prey, forever.
+    ///
+    /// The anchor is a MEASUREMENT frame, not a decision outcome. Drift means
+    /// "how far the prey has covered since the last readable frame", so the
+    /// frame advances whether or not this wake's proposal is dispatched — the
+    /// same reason the prey's live position is read on every wake. Only the
+    /// measurement moves: <see cref="Engagement.CommittedUtc"/>, the rotation
+    /// and the lifecycle flags are carried verbatim, so an advance never
+    /// restarts the commitment window and never clears a published veto.
+    ///
+    /// Fails closed: no engagement, no anchor, or a DIFFERENT committed target
+    /// means there is nothing to advance — the anchor is then whatever the
+    /// publish that starts or re-points that engagement banks.
+    /// </summary>
+    public static void Reanchor(uint actorObjId, uint incumbentObjId, Vector3 leashAnchor,
+        float leashBudgetM, DateTime nowUtc)
+    {
+        if (actorObjId == 0 || incumbentObjId == 0 || leashAnchor == Vector3.Zero)
+            return;
+        if (!Engagements.TryGetValue(actorObjId, out var current))
+            return;
+        if (current.IncumbentObjId != incumbentObjId || current.LeashAnchor == Vector3.Zero)
+            return;
+        Engagements[actorObjId] = current with
+        {
+            LeashAnchor = leashAnchor,
+            LeashBudgetM = leashBudgetM > 0f ? leashBudgetM : current.LeashBudgetM,
             UpdatedUtc = nowUtc
         };
     }

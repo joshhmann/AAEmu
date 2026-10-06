@@ -36,8 +36,9 @@ namespace AAEmu.Game.Core.Managers.Bots.Loot;
 ///                           live → hold (releases by construction at teardown);
 ///   5. LOOT-ONCE          — this corpse already ran its Loot course, or the
 ///                           ledger banked a terminal skip → hold (terminal);
-///   6. SAFE               — the wake census is unreadable, or a hostile stands
-///                           inside the safe radius → hold;
+///   6. SAFE               — the wake census is unreadable, or the corpse must be
+///                           REACHED and a hostile stands inside the safe radius
+///                           → hold (an in-range corpse is an in-place take);
 ///   7. WORTH              — every container entry is vendor junk, or the whole
 ///                           container is under the caller's copper floor → skip
 ///                           (terminal);
@@ -46,18 +47,37 @@ namespace AAEmu.Game.Core.Managers.Bots.Loot;
 ///
 /// Arms 2-6 withhold UNDECIDED (their causes can clear); arms 7-8 skip TERMINALLY
 /// (they cannot, for this corpse). The emit arm banks the take.
+///
+/// ONE arm reports for another: an EMPTY container on a corpse this actor
+/// already took is the loot-once arm's terminal fact reached through the probe
+/// (which precedes it in the order), so it names arm 5's reason rather than the
+/// probe's. See <see cref="Decide"/>.
 /// </summary>
 public static class LootBrain
 {
     /// <summary>
-    /// The default safe radius: a loot take inside this distance of a live
-    /// hostile is not worth the risk. Quoted from the melee band ceiling's
-    /// neighbourhood rather than a perception radius, and deliberately a flat
-    /// radius on the wake's own census — the same shape the objective funnel's
-    /// candidate legality uses (<c>CombatDecisionTree.IsHostileTarget</c> over
+    /// The default safe radius: how close a live hostile may stand to a corpse
+    /// this actor must still WALK to. It is an APPROACH gate, not a ban on
+    /// looting — a Loot verb is an in-place take, so an actor already in reach of
+    /// the corpse is never stepping into a fight and the radius does not apply
+    /// (see the safety arm in <see cref="Decide"/>). Quoted from the melee band
+    /// ceiling's neighbourhood rather than a perception radius, and deliberately
+    /// a flat radius on the wake's own census, anchored on the CORPSE — the same
+    /// shape the objective funnel's candidate legality uses
+    /// (<c>CombatDecisionTree.IsHostileTarget</c> over
     /// <c>ObservedContext.NearbyNpcObjIds</c>).
     /// </summary>
     public const float DefaultSafeRadiusM = 15.0f;
+
+    /// <summary>
+    /// The band inside which a corpse is "already under the actor", so the safe
+    /// radius stops being an approach gate and the take is in place. Quoted from
+    /// the melee band's own ceiling (<c>CombatDecisionTree.DefaultMeleeMax</c> is
+    /// 3.5 m) rather than fitted to a run: a corpse inside melee reach cannot be
+    /// approached any closer, so refusing it would refuse a take that is already
+    /// standing still.
+    /// </summary>
+    public const float ContactRangeM = 3.5f;
 
     /// <summary>
     /// True for the reasons whose skip is TERMINAL for a corpse (the two the
@@ -157,7 +177,26 @@ public static class LootBrain
         // ------------------------------------------------ 3. PROBE
         var probeReason = ProbeReason(inputs);
         if (probeReason != LootReason.None)
+        {
+            // An EMPTY container on a corpse this actor ALREADY took is not an open
+            // question — it is the same terminal fact the loot-once arm reports, read
+            // through the probe. The probe arm precedes loot-once in the order, so
+            // without this the corpse a take just EMPTIED withholds as an undecided
+            // `not-lootable` on every later wake: the terminal take masked by the
+            // empty tally it caused, the corpse re-decided forever, and the lane
+            // reporting `not-lootable` for a corpse that WAS looted. Loot generation
+            // is one-shot (the container's `AlreadyGenerated` guard), so nothing can
+            // refill it — the emptiness is a fact about the corpse, not a question
+            // about the next wake.
+            //
+            // Scoped to the actor's OWN loot-once facts on purpose. An empty container
+            // nobody has taken is NOT terminal here: it is indistinguishable from a
+            // corpse whose generation is still in flight, and the brain must never
+            // fabricate a terminal verdict it cannot establish.
+            if (probeReason == LootReason.ContainerEmpty && AlreadyTaken(inputs))
+                return Withhold(LootArm.LootOnce, LootReason.AlreadyLooted, inputs);
             return Withhold(LootArm.Probe, probeReason, inputs);
+        }
 
         // ------------------------------------------------ 4. LOOP RELEASE
         // The loop owns the corpse until it tears itself down (the engine's
@@ -180,14 +219,38 @@ public static class LootBrain
         }
 
         // ------------------------------------------------ 6. SAFE
-        // Fail-closed: an unreadable census is NOT safe. The census is the wake's
-        // own bounded perception, resolved live through the engine's own hostility
-        // rule — never a fabricated "nothing is around".
-        if (!inputs.SafetyResolved || !inputs.Safe)
-        {
-            return Withhold(LootArm.Safety,
-                inputs.SafetyResolved ? LootReason.Unsafe : LootReason.SafetyUnresolved, inputs);
-        }
+        // The arm's question is "does TAKING this corpse mean stepping into a
+        // fight", not "is a hostile near". A Loot verb is an IN-PLACE take — the
+        // take's own gate is `GameplayActor.Loot`'s reachability check — so an actor
+        // already standing on the corpse is never walking toward hostiles, however
+        // many of them share the tile. The census (LootBrainPlanner.ReadSafety) is
+        // anchored on the CORPSE for exactly that reason; this arm asks whether the
+        // actor has to MOVE at all.
+        //
+        // So the safe radius governs the APPROACH, and only the approach. Arm 3
+        // cannot stand in for "already there": the take's reach band
+        // (`LootingContainer.MaxLootingRange`) is 200 m, so a corpse across the
+        // room reaches arm 6 in range and would be refused by a radius that has
+        // nothing to do with how far the actor must walk.
+        //
+        // Within contact range the arm releases and the take proceeds to
+        // worth/space exactly as it did before a hostile ever appeared. Without
+        // this the arm is a permanent veto on any corpse killed inside its own
+        // camp: the kill legs leave the corpse ringed by live monsters, so the
+        // predicate can never clear, and the corpse is never looted at all.
+        //
+        // Fail-closed, both directions untouched: an unreadable census is NOT safe
+        // (`SafetyUnresolved`, its own reason), and a positive unsafe verdict on an
+        // UNREACHED corpse still withholds — the actor must not walk into a camp to
+        // grab a corpse across the safe radius.
+        // Fail-closed on the contact reading itself: a corpse distance the planner
+        // could not establish is NOT contact, so `!(d <= ContactRangeM)` withholds
+        // (NaN fails the comparison). Only a positively measured in-contact corpse
+        // releases the arm.
+        if (!inputs.SafetyResolved)
+            return Withhold(LootArm.Safety, LootReason.SafetyUnresolved, inputs);
+        if (!inputs.Safe && !(inputs.CorpseDistanceM <= ContactRangeM))
+            return Withhold(LootArm.Safety, LootReason.Unsafe, inputs);
 
         // ------------------------------------------------ 7. WORTH
         // Only a POSITIVE junk verdict skips (an unreadable worth proceeds).
@@ -211,6 +274,14 @@ public static class LootBrain
             inputs.Space,
             LootDisposition.Take);
     }
+
+    /// <summary>
+    /// Whether this actor's own loot-once facts already cover the corpse: the leg's
+    /// loot-once memory and the decision layer's banked take are the two sides of the
+    /// SAME take, so either one means this corpse has already run its Loot course.
+    /// </summary>
+    private static bool AlreadyTaken(in LootBrainInputs inputs)
+        => inputs.AlreadyLooted || inputs.PriorDisposition == LootDisposition.Take;
 
     /// <summary>
     /// The probe arm's own predicate: everything about the corpse and its

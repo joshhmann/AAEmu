@@ -43,6 +43,7 @@ public class LootBrainTests
         SafetyResolved: true,
         Safe: true,
         NearestHostileDistanceM: float.NaN,
+        CorpseDistanceM: 0.0f,
         Worth: LootWorth.Worthwhile,
         Space: LootSpace.Room,
         PriorDisposition: LootDisposition.Undecided,
@@ -141,6 +142,66 @@ public class LootBrainTests
         await Assert.That(far.Reason).IsEqualTo(LootReason.ContainerOutOfRange);
     }
 
+    /// <summary>
+    /// THE EMPTY-TALLY MASK: a corpse this actor ALREADY took has an empty
+    /// container BY VISA OF the take, and the probe arm precedes loot-once in the
+    /// order — so a taken corpse must report the loot-once terminal, not an
+    /// undecided `not-lootable` that re-decides the same corpse forever.
+    /// </summary>
+    [Test]
+    public async Task EmptyContainerOnATakenCorpse_ReportsTheLootOnceTerminalNotTheProbe()
+    {
+        // The leg's own loot-once memory.
+        var viaMemory = LootBrain.Decide(EmitReady() with { ContainerItemCount = 0, AlreadyLooted = true });
+        await Assert.That(viaMemory.Arm).IsEqualTo(LootArm.LootOnce);
+        await Assert.That(viaMemory.Reason).IsEqualTo(LootReason.AlreadyLooted);
+        await Assert.That(LootBrain.ValidateToken(viaMemory.Reason)).IsEqualTo("already-looted");
+
+        // The decision layer's own banked take (the same fact, other side).
+        var viaLedger = LootBrain.Decide(EmitReady() with
+        {
+            ContainerItemCount = 0,
+            PriorDisposition = LootDisposition.Take
+        });
+        await Assert.That(viaLedger.Arm).IsEqualTo(LootArm.LootOnce);
+        await Assert.That(viaLedger.Reason).IsEqualTo(LootReason.AlreadyLooted);
+        await Assert.That(LootBrain.ValidateToken(viaLedger.Reason)).IsEqualTo("already-looted");
+    }
+
+    /// <summary>
+    /// The mask is scoped to the actor's OWN takes. An empty container nobody has
+    /// taken stays an undecided probe withhold — it is indistinguishable from a
+    /// generation still in flight, and the brain must never fabricate a terminal
+    /// verdict it cannot establish.
+    /// </summary>
+    [Test]
+    public async Task EmptyContainerNobodyTook_StaysAnUndecidedProbeWithhold()
+    {
+        var untouched = LootBrain.Decide(EmitReady() with { ContainerItemCount = 0 });
+
+        await Assert.That(untouched.Arm).IsEqualTo(LootArm.Probe);
+        await Assert.That(untouched.Reason).IsEqualTo(LootReason.ContainerEmpty);
+        await Assert.That(untouched.Disposition).IsEqualTo(LootDisposition.Undecided);
+        await Assert.That(LootBrain.IsTerminalSkip(untouched.Reason)).IsFalse();
+    }
+
+    /// <summary>
+    /// Only the EMPTY tally is masked. A taken corpse that is out of range, or that
+    /// exposes no container at all, still reports its own probe shape: those are
+    /// facts about reach and readability, not the emptiness a take caused.
+    /// </summary>
+    [Test]
+    public async Task TakenCorpse_OutOfRangeOrContainerless_StillReportsItsProbeShape()
+    {
+        var far = LootBrain.Decide(EmitReady() with { ContainerInRange = false, AlreadyLooted = true });
+        await Assert.That(far.Arm).IsEqualTo(LootArm.Probe);
+        await Assert.That(far.Reason).IsEqualTo(LootReason.ContainerOutOfRange);
+
+        var missing = LootBrain.Decide(EmitReady() with { ContainerReadable = false, AlreadyLooted = true });
+        await Assert.That(missing.Arm).IsEqualTo(LootArm.Probe);
+        await Assert.That(missing.Reason).IsEqualTo(LootReason.ContainerMissing);
+    }
+
     [Test]
     public async Task LoopRelease_WithholdsWhileTheAttackLoopIsLive()
     {
@@ -204,15 +265,170 @@ public class LootBrainTests
     [Test]
     public async Task SafetyArm_WithholdsForAHostileInsideTheRadius()
     {
+        // The corpse is out of contact range, so taking it means WALKING to it —
+        // the case the safe radius governs. (A corpse already under the actor is
+        // an in-place take: see
+        // SafetyArm_CorpseAtContactRangeWithHostilesNearby_EmitsTheTake.)
         var decision = LootBrain.Decide(EmitReady() with
         {
             Safe = false,
-            NearestHostileDistanceM = 6.0f
+            NearestHostileDistanceM = 6.0f,
+            CorpseDistanceM = 18.0f
         });
 
         await Assert.That(decision.Arm).IsEqualTo(LootArm.Safety);
         await Assert.That(decision.Reason).IsEqualTo(LootReason.Unsafe);
         await Assert.That(decision.Disposition).IsEqualTo(LootDisposition.Undecided);
+    }
+
+    // ------------------------------------------------------- safety: approach
+
+    /// <summary>
+    /// THE FIX. A corpse the actor is ALREADY ON is taken even with a hostile on
+    /// the same tile: a Loot verb is an in-place take, so there is no approach to
+    /// refuse and the safe radius (an APPROACH gate) does not apply. This is the
+    /// camp-corpse case the actor-relative radius vetoed forever.
+    /// </summary>
+    [Test]
+    public async Task SafetyArm_CorpseAtContactRangeWithHostilesNearby_EmitsTheTake()
+    {
+        // Hostile 3 m from the actor, corpse under the actor's feet.
+        var decision = LootBrain.Decide(EmitReady() with
+        {
+            Safe = false,
+            NearestHostileDistanceM = 3.0f,
+            CorpseDistanceM = 0.0f
+        });
+
+        await Assert.That(decision.Arm).IsEqualTo(LootArm.Emit);
+        await Assert.That(decision.Verb).IsEqualTo(LootVerb.Loot);
+        await Assert.That(decision.Disposition).IsEqualTo(LootDisposition.Take);
+    }
+
+    /// <summary>
+    /// INVARIANT: the safe radius still refuses an APPROACH into hostiles. A
+    /// corpse the actor must still walk to, with a hostile inside the radius, is
+    /// withheld — the bot must not walk into a camp to grab a corpse.
+    /// </summary>
+    [Test]
+    public async Task SafetyArm_UnreachedCorpseInsideTheRadius_StillWithholdsUnsafe()
+    {
+        // Out of contact range AND hostile near: the actor must step toward the
+        // corpse, so the refuse survives the fix.
+        var decision = LootBrain.Decide(EmitReady() with
+        {
+            Safe = false,
+            NearestHostileDistanceM = 6.0f,
+            CorpseDistanceM = 18.0f
+        });
+
+        await Assert.That(decision.Arm).IsEqualTo(LootArm.Safety);
+        await Assert.That(decision.Reason).IsEqualTo(LootReason.Unsafe);
+        await Assert.That(decision.Verb).IsEqualTo(LootVerb.Hold);
+        await Assert.That(decision.Disposition).IsEqualTo(LootDisposition.Undecided);
+    }
+
+    /// <summary>
+    /// INVARIANT: an UNREADABLE corpse distance is not contact. The planner
+    /// reports NaN when the pin did not resolve, and NaN fails the contact
+    /// comparison — so a failed read withholds rather than releasing the arm.
+    /// </summary>
+    [Test]
+    public async Task SafetyArm_UnreadableCorpseDistance_IsNotTreatedAsContact()
+    {
+        var decision = LootBrain.Decide(EmitReady() with
+        {
+            Safe = false,
+            NearestHostileDistanceM = 2.0f,
+            CorpseDistanceM = float.NaN
+        });
+
+        await Assert.That(decision.Arm).IsEqualTo(LootArm.Safety);
+        await Assert.That(decision.Reason).IsEqualTo(LootReason.Unsafe);
+    }
+
+    /// <summary>
+    /// INVARIANT (fail-closed survives the fix): an UNRESOLVED census withholds
+    /// with its OWN reason even when the corpse is at contact range — an unreadable
+    /// perception is never treated as "safe because in place".
+    /// </summary>
+    [Test]
+    public async Task SafetyArm_UnresolvedCensusAtContactRange_StillFailsClosed()
+    {
+        var decision = LootBrain.Decide(EmitReady() with
+        {
+            SafetyResolved = false,
+            Safe = false,
+            NearestHostileDistanceM = float.NaN,
+            CorpseDistanceM = 0.0f
+        });
+
+        await Assert.That(decision.Arm).IsEqualTo(LootArm.Safety);
+        await Assert.That(decision.Reason).IsEqualTo(LootReason.SafetyUnresolved);
+        await Assert.That(LootBrain.ValidateToken(decision.Reason)).IsEqualTo("unsafe");
+        await Assert.That(decision.Disposition).IsEqualTo(LootDisposition.Undecided);
+    }
+
+    /// <summary>
+    /// INVARIANT: the fix releases the arm, it does not delete it. A reached corpse
+    /// in a hostile area is judged by WORTH/SPACE, and a junk container still skips
+    /// terminally rather than being taken.
+    /// </summary>
+    [Test]
+    public async Task SafetyArm_ReleasedCorpse_StillRunsWorthAndSpaceTerminally()
+    {
+        var junk = LootBrain.Decide(EmitReady() with
+        {
+            Safe = false, NearestHostileDistanceM = 2.0f, CorpseDistanceM = 0.5f,
+            Worth = LootWorth.Junk
+        });
+        await Assert.That(junk.Arm).IsEqualTo(LootArm.Worth);
+        await Assert.That(junk.Disposition).IsEqualTo(LootDisposition.Skipped);
+
+        var full = LootBrain.Decide(EmitReady() with
+        {
+            Safe = false, NearestHostileDistanceM = 2.0f, CorpseDistanceM = 0.5f,
+            Space = LootSpace.Full
+        });
+        await Assert.That(full.Arm).IsEqualTo(LootArm.Space);
+        await Assert.That(full.Disposition).IsEqualTo(LootDisposition.Skipped);
+    }
+
+    /// <summary>
+    /// INVARIANT: the arms BEFORE safety are untouched by the fix — a reached
+    /// corpse in a hostile area that is already looted, foreign, or mid-loop still
+    /// reports ITS own terminal arm, never Emit.
+    /// </summary>
+    [Test]
+    public async Task EarlierArms_StillOwnTheirOwnCasesWhenSafetyWouldRelease()
+    {
+        var once = LootBrain.Decide(EmitReady() with
+        {
+            Safe = false, NearestHostileDistanceM = 1.0f, CorpseDistanceM = 0.0f,
+            AlreadyLooted = true
+        });
+        await Assert.That(once.Arm).IsEqualTo(LootArm.LootOnce);
+
+        var foreign = LootBrain.Decide(EmitReady() with
+        {
+            Safe = false, NearestHostileDistanceM = 1.0f, CorpseDistanceM = 0.0f,
+            Ownership = LootOwnership.Foreign
+        });
+        await Assert.That(foreign.Arm).IsEqualTo(LootArm.Ownership);
+
+        var loop = LootBrain.Decide(EmitReady() with
+        {
+            Safe = false, NearestHostileDistanceM = 1.0f, CorpseDistanceM = 0.0f,
+            LoopLive = true
+        });
+        await Assert.That(loop.Arm).IsEqualTo(LootArm.LoopRelease);
+
+        var veto = LootBrain.Decide(EmitReady() with
+        {
+            Safe = false, NearestHostileDistanceM = 1.0f, CorpseDistanceM = 0.0f,
+            SurvivalVetoed = true
+        });
+        await Assert.That(veto.Arm).IsEqualTo(LootArm.SurvivalVeto);
     }
 
     // ------------------------------------------------------------ worth / space
@@ -313,10 +529,11 @@ public class LootBrainTests
         });
         await Assert.That(once.Arm).IsEqualTo(LootArm.LootOnce);
 
-        // Safety beats worth and space.
+        // Safety beats worth and space (for a corpse that must still be walked to).
         var unsafeWake = LootBrain.Decide(EmitReady() with
         {
             Safe = false,
+            CorpseDistanceM = 18.0f,
             Worth = LootWorth.Junk,
             Space = LootSpace.Full
         });
@@ -325,6 +542,26 @@ public class LootBrainTests
         // Worth beats space.
         var junk = LootBrain.Decide(EmitReady() with { Worth = LootWorth.Junk, Space = LootSpace.Full });
         await Assert.That(junk.Arm).IsEqualTo(LootArm.Worth);
+    }
+
+    /// <summary>
+    /// The masked take reports the LOOT-ONCE arm even when a later arm would also
+    /// apply, so the named cause stays the terminal fact rather than a symptom.
+    /// </summary>
+    [Test]
+    public async Task MaskedTake_ReportsLootOnceOverTheArmsThatFollowIt()
+    {
+        var decision = LootBrain.Decide(EmitReady() with
+        {
+            ContainerItemCount = 0,
+            AlreadyLooted = true,
+            Safe = false,
+            Worth = LootWorth.Junk,
+            Space = LootSpace.Full
+        });
+
+        await Assert.That(decision.Arm).IsEqualTo(LootArm.LootOnce);
+        await Assert.That(decision.Verb).IsEqualTo(LootVerb.Hold);
     }
 
     // ------------------------------------------------------------ ownership

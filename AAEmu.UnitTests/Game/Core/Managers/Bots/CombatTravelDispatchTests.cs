@@ -379,6 +379,13 @@ public class CombatTravelDispatchTests
     /// travel chain, and the retreat arm's Move walks the SHARED 25 m safe anchor
     /// opposite the threat — the same anchor the combat brain's own fallback and the
     /// survival flee leg use.
+    ///
+    /// That 25 m is the TRAVEL chain's RETREAT arm's length. The combat brain's own
+    /// SPACING destination keeps the same ray but not the same length: it is bounded
+    /// by the perception census so the prey it backs off from stays visible on the
+    /// next wake (see <see cref="CombatBrain.RetreatDistanceM"/>). The two are the
+    /// same escape RAY from the same origin, not the same point — and the ray, not a
+    /// metre count, is what this pins.
     /// </summary>
     [Test]
     public async Task Prepare_ArmsTheJourneyAndWalksTheSharedKiteAnchor()
@@ -405,10 +412,10 @@ public class CombatTravelDispatchTests
         await Assert.That(Vector3.Distance(here, shared)).IsCloseTo(25f, 0.001f);
         await Assert.That(shared.X).IsLessThan(here.X); // away from a threat to the east
 
-        // The ROUTED anchor and the brain's OWN spacing destination are the same point
-        // by construction: run the pure combat chain over matching inputs and compare.
-        // This is the behavior-preservation proof — the seam swaps the leg's SOURCE,
-        // never the escape ray (both come from the shared SafeAnchor).
+        // The ROUTED anchor and the brain's OWN spacing destination are the same
+        // escape RAY by construction: run the pure combat chain over matching inputs
+        // and compare. This is the behavior-preservation proof — the seam swaps the
+        // leg's SOURCE, never the escape ray (both come from the shared SafeAnchor).
         var brainDecision = CombatBrain.Decide(new CombatBrainInputs(
             ActorObjId: actor.ActorId, Role: CombatRole.RangedPhysical, Alive: true,
             SelfHpRatio: 0.80f, SelfLevel: 10, SelfPosition: here, EnemyCount: 1,
@@ -421,7 +428,36 @@ public class CombatTravelDispatchTests
             Candidates: [], NowUtc: DateTime.UtcNow));
         await Assert.That(brainDecision.Arm).IsEqualTo(CombatArm.BackOff);
         await Assert.That(CombatTravelDispatch.IsSubCriticalSpacing(brainDecision)).IsTrue();
-        await Assert.That(brainDecision.Destination!.Value).IsEqualTo(shared);
+        var spacing = brainDecision.Destination!.Value;
+
+        // SAME RAY, shorter step: the spacing point sits on the segment here→shared,
+        // away from the threat. This half of the contract survives a legitimate
+        // change to the spacing arm's LENGTH; the ray is what may not move.
+        await Assert.That(Vector3.Distance(here, spacing) + Vector3.Distance(spacing, shared))
+            .IsCloseTo(Vector3.Distance(here, shared), 0.001f)
+            .Because("the spacing destination must be collinear with the routed anchor, away from the threat");
+
+        // SAME RAY and the spacing arm's own LENGTH — derived from the same public
+        // constants CombatBrain's own BackOffDistanceM is built from, never a
+        // literal metre count, so a change to either boundary or the margin is
+        // picked up here instead of needing a hand-updated X. `contactM` is the
+        // `IncumbentDistanceM` the arm read above, which is what that bound
+        // measures against: the NEARER of the census and this actor's own band
+        // ceiling — the radius its combat brain is consulted from, so a spacing
+        // step bounded by the census alone would push the prey past the point
+        // where the brain can ever be consulted again — less the close-in margin,
+        // less the contact already spent, capped at the retreat ceiling.
+        // At 2 m contact with this archer's 22 m ceiling that is 19 m: the prey
+        // lands inside the band, not merely inside the 25 m census.
+        const float contactM = 2f;
+        var (_, bandCeilingM) = CombatBrain.RoleBand(CombatRole.RangedPhysical);
+        var spacingLengthM = Math.Min(
+            CombatBrain.RetreatDistanceM,
+            Math.Min(
+                CombatBrain.AggroBandM - CombatBrain.CloseInMarginM - contactM,
+                bandCeilingM - CombatBrain.CloseInMarginM - contactM));
+        await Assert.That(spacing).IsEqualTo(TravelBrain.SafeAnchor(here, threat, spacingLengthM))
+            .Because("the spacing leg walks the shared anchor at the band-bounded step, not the full retreat length");
 
         // The journey is armed for this threat (the identity the leg keeps across wakes).
         await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var armed, CombatTravelDispatch.KiteMoveOwner)).IsTrue();
@@ -535,6 +571,299 @@ public class CombatTravelDispatchTests
         CombatTravelDispatch.PublishDispatched(actor, null);
         await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var untouched, CombatTravelDispatch.KiteMoveOwner)).IsTrue();
         await Assert.That(untouched.PriorDestination).IsEqualTo(anchor);
+    }
+
+    // ------------------------------------------------------- bounded-anchor fix
+
+    /// <summary>
+    /// THE BOUNDED ANCHOR IS RESTORED. The routed kite leg walked the travel chain's
+    /// UNCAPPED <see cref="TravelBrain.RetreatAnchorDistanceM"/> step, which is the
+    /// SURVIVAL separation contract — but a spacing wake is not a survival wake. From
+    /// 2 m of contact the archer walked 25 m, leaving its prey at 27 m: past the 25 m
+    /// perception census, so the next wake could not perceive its own target, the
+    /// objective selector withdrew, and the archer spent six runs standing on its prey
+    /// and killing nothing.
+    ///
+    /// This is the failing-before case: the combat brain ALREADY computes the bounded
+    /// anchor for exactly this reason (<see cref="CombatBrain.BackOffDistanceM"/>), and
+    /// the routed leg was simply discarding it. The expected value is derived from the
+    /// same public constants that bound is built from, never a hand-written metre count.
+    /// </summary>
+    [Test]
+    public async Task ARoutedKite_WalksTheCombatBrainsBoundedAnchor_NotTheUncappedRetreatStep()
+    {
+        const float contactM = 2f;
+        var routed = await RouteKiteWake(CombatRole.RangedPhysical, contactM);
+
+        var (_, bandCeilingM) = CombatBrain.RoleBand(CombatRole.RangedPhysical);
+        var boundedStepM = Math.Min(
+            CombatBrain.RetreatDistanceM,
+            Math.Min(
+                CombatBrain.AggroBandM - CombatBrain.CloseInMarginM - contactM,
+                bandCeilingM - CombatBrain.CloseInMarginM - contactM));
+        await Assert.That(Vector3.Distance(routed.Here, routed.Dispatched!.Value))
+            .IsCloseTo(boundedStepM, 0.001f)
+            .Because($"at {contactM} m contact the archer's spacing step is bounded to {boundedStepM} m " +
+                      $"({CombatBrain.AggroBandM} m census and {bandCeilingM} m band, less the " +
+                      $"{CombatBrain.CloseInMarginM} m margin, less the contact) — NOT the uncapped " +
+                      $"{TravelBrain.RetreatAnchorDistanceM} m survival step");
+
+        var uncapped = TravelBrain.SafeAnchor(
+            routed.Here, routed.Threat, TravelBrain.RetreatAnchorDistanceM);
+        await Assert.That(routed.Dispatched!.Value).IsNotEqualTo(uncapped)
+            .Because("the uncapped anchor is the value this seam used to dispatch, and it is what put the " +
+                      "prey outside the census");
+
+        // The prey must land INSIDE both boundaries — admitted, in band, still perceived.
+        await Assert.That(Vector3.Distance(routed.Dispatched!.Value, routed.Threat))
+            .IsLessThan(bandCeilingM)
+            .Because("a step bounded by the census alone still lands outside the band ceiling the " +
+                      "combat brain is consulted from, and the next wake can never re-decide it");
+    }
+
+    /// <summary>
+    /// THE SURVIVAL INVARIANT, stated numerically: "full separation" is the engine's own
+    /// <see cref="TravelBrain.RetreatAnchorDistanceM"/> = 25 m walked FROM THE ACTOR,
+    /// leaving the prey at contact + 25 m. A survival flee must keep that number exactly
+    /// — losing sight of what you are fleeing is the point — while the spacing leg above
+    /// takes the shorter, bounded step.
+    ///
+    /// This is the test that fails if the bounded anchor ever leaks into survival. The
+    /// survival path does NOT share the travel retreat arm with this seam (it consumes
+    /// <c>SurvivalBrain.Decide</c> through <c>BotRoamStepExecutor</c>, and never reads
+    /// <c>RetreatRequested</c>), so the two lengths are independent by construction —
+    /// and this pins that independence with both numbers in one place.
+    /// </summary>
+    [Test]
+    public async Task ASurvivalFlee_StillAchievesFullSeparation_AtExactlyTwentyFiveMetres()
+    {
+        const float contactM = 2f;
+        var self = new Vector3(100f, 100f, 10f);
+        var threat = self + new Vector3(contactM, 0f, 0f);
+
+        // (a) The survival layer's own flee leg — the consumer that reaches the 25 m
+        // separation contract, dispatched by the executor, not through this seam.
+        var flee = SurvivalBrain.Decide(new SurvivalBrainInputs(
+            ActorObjId: 1, SelfHpRatio: 0.10f, CombatRetreatPublished: true,
+            CommittedTargetObjId: BoarObjId, SelectedTargetObjId: BoarObjId,
+            SelfPosition: self, ThreatPosition: threat));
+        await Assert.That(flee.IsFlee).IsTrue();
+        await Assert.That(Vector3.Distance(self, flee.Destination!.Value))
+            .IsCloseTo(TravelBrain.RetreatAnchorDistanceM, 0.001f)
+            .Because($"full separation is {TravelBrain.RetreatAnchorDistanceM} m from the ACTOR, " +
+                      "so the prey lands at contact + 25 m — losing sight of the threat is the point");
+        await Assert.That(Vector3.Distance(flee.Destination!.Value, threat))
+            .IsCloseTo(contactM + TravelBrain.RetreatAnchorDistanceM, 0.001f);
+
+        // (b) The combat brain's own disengage flee leg keeps the same full length.
+        var disengage = CombatBrain.Decide(new CombatBrainInputs(
+            ActorObjId: 1, Role: CombatRole.RangedPhysical, Alive: true,
+            SelfHpRatio: CombatBrain.FleeHpThreshold, SelfLevel: 10, SelfPosition: self, EnemyCount: 1,
+            NearestEnemyDistanceM: contactM, TookDamageThisFrame: false, CrowdControlled: false,
+            CcAvailable: true, IsAutoAttackLive: false, HealItemTemplateId: 0,
+            SkillMinRangeM: 0f, SkillMaxRangeM: 0f, SelectedSkillId: 0, LastSkillUsed: 0,
+            IncumbentObjId: BoarObjId, IncumbentValid: true, IncumbentUnknown: false,
+            IncumbentScore: 0, CommitmentInForce: false, IncumbentPosition: threat,
+            IncumbentDistanceM: contactM, IncumbentLeashDriftM: 0f, LeashBudgetM: 50f,
+            Candidates: [], NowUtc: DateTime.UtcNow));
+        await Assert.That(disengage.Arm).IsEqualTo(CombatArm.Disengage);
+        await Assert.That(Vector3.Distance(self, disengage.Destination!.Value))
+            .IsCloseTo(CombatBrain.RetreatDistanceM, 0.001f)
+            .Because("the bounded spacing step is scoped to the SPACING arm; a survival break keeps " +
+                      "the engine's full step and must never be shortened by this seam's fix");
+
+        // (c) The two lengths are genuinely different here, so (a)/(b) are not vacuous:
+        // the same actor, the same contact, the same threat — one wake flees, one spaces.
+        var spacing = await RouteKiteWake(CombatRole.RangedPhysical, contactM);
+        await Assert.That(Vector3.Distance(self, spacing.Dispatched!.Value))
+            .IsLessThan(Vector3.Distance(self, flee.Destination!.Value))
+            .Because("if these were equal the spacing leg would be the survival leg, and the " +
+                      "pre-fix oscillation would not have been a spacing defect at all");
+    }
+
+    /// <summary>
+    /// MELEE NEVER REACHES THIS SEAM, so the fix is a provable NO-OP for it. The spacing
+    /// arm is gated <c>inputs.Role != CombatRole.Melee</c>, and a melee band's floor is
+    /// <see cref="CombatDecisionTree.DefaultMeleeMin"/> = 1.0 m — the actor standing on
+    /// its prey is already IN band, so no distance the engine can produce drops it below
+    /// its own floor. The seam therefore never routes a melee wake, and this pins both
+    /// halves: the gate rejects it, and the fallback leg it would issue is byte-identical
+    /// to the pre-wiring behavior.
+    /// </summary>
+    [Test]
+    public async Task AMeleeActor_IsNeverRoutedByThisSeam_AndItsLegIsUnchanged()
+    {
+        foreach (var contactM in new[] { 0.1f, CombatBrain.MeleeMinM * 0.5f, 0.99f })
+        {
+            var decision = CombatBrain.Decide(new CombatBrainInputs(
+                ActorObjId: 1, Role: CombatRole.Melee, Alive: true,
+                SelfHpRatio: 0.80f, SelfLevel: 10, SelfPosition: new Vector3(100f, 100f, 10f), EnemyCount: 1,
+                NearestEnemyDistanceM: contactM, TookDamageThisFrame: false, CrowdControlled: false,
+                CcAvailable: true, IsAutoAttackLive: false, HealItemTemplateId: 0,
+                SkillMinRangeM: 0f, SkillMaxRangeM: 0f, SelectedSkillId: 0, LastSkillUsed: 0,
+                IncumbentObjId: BoarObjId, IncumbentValid: true, IncumbentUnknown: false,
+                IncumbentScore: 0, CommitmentInForce: false,
+                IncumbentPosition: new Vector3(100f + contactM, 100f, 10f),
+                IncumbentDistanceM: contactM, IncumbentLeashDriftM: 0f, LeashBudgetM: 50f,
+                Candidates: [], NowUtc: DateTime.UtcNow));
+
+            await Assert.That(CombatTravelDispatch.IsSubCriticalSpacing(decision)).IsFalse()
+                .Because($"a melee bot at {contactM} m is inside its own {CombatBrain.MeleeMinM} m band " +
+                          "floor, so the spacing arm — and with it this seam — cannot fire");
+
+            // And the wake it WOULD issue keeps the caller's pre-brain rule exactly.
+            var verdict = CombatTravelDispatch.DecideKiteLeg(Prepared(), decision);
+            await Assert.That(verdict.Verb).IsEqualTo(CombatTravelDispatch.KiteLegVerb.Fallback);
+            await Assert.That(verdict.DispatchToken).IsEqualTo("fallback");
+            await Assert.That(verdict.Reason).IsEqualTo("not-sub-critical-spacing");
+            await Assert.That(verdict.Decision).IsNull();
+            await Assert.That(verdict.Destination).IsEqualTo(decision.Destination)
+                .Because("a melee wake dispatches the brain's own destination under the original owner, " +
+                          "byte-identically to the pre-wiring behavior — the fix cannot touch it");
+        }
+    }
+
+    /// <summary>
+    /// PER-ROLE ARITHMETIC: the dispatched anchor is the combat brain's own bounded step
+    /// at every role the spacing arm can serve, at two contact distances. Read from the
+    /// same public constants the bound is built from, so a change to any boundary or the
+    /// margin moves this table rather than silently diverging from it.
+    ///
+    /// TWO roles legitimately never appear here, and both are pinned rather than skipped:
+    /// MELEE is gated out by <c>Role != Melee</c> (its own 1.0 m floor puts it in band at
+    /// any contact the engine can produce), and inside MELEE REACH the caster and healer
+    /// are held by the reachability carve-out — they are handed the melee auto-attack
+    /// there, which reaches, so spacing would walk them out of the only range where they
+    /// have a verb. Only RANGED-PHYSICAL is genuinely stuck at contact (its skill-4 range
+    /// is 4-20 m), which is exactly why the archer, and only the archer, was the
+    /// zero-kill role. See <see cref="AMeleeActor_IsNeverRoutedByThisSeam_AndItsLegIsUnchanged"/>.
+    /// </summary>
+    [Test]
+    public async Task TheDispatchedAnchor_IsTheRoleBoundedStep_AtTwoContactDistances()
+    {
+        var roles = new[]
+        {
+            CombatRole.Melee, CombatRole.RangedPhysical,
+            CombatRole.RangedMagic, CombatRole.HealerSupport,
+        };
+
+        foreach (var role in roles)
+        foreach (var contactM in new[] { 1.5f, 3.5f })
+        {
+            var (bandMinM, bandMaxM) = CombatBrain.RoleBand(role);
+            var expectedStepM = Math.Min(
+                CombatBrain.RetreatDistanceM,
+                Math.Min(
+                    CombatBrain.AggroBandM - CombatBrain.CloseInMarginM - contactM,
+                    bandMaxM - CombatBrain.CloseInMarginM - contactM));
+            var routed = await RouteKiteWake(role, contactM);
+
+            if (contactM <= CombatBrain.MeleeMaxM && role != CombatRole.RangedPhysical)
+            {
+                // Inside melee reach the caster/healer/melee all hold the MELEE
+                // auto-attack, which reaches — spacing there would deny them a verb
+                // they have. Pinned so this table keeps saying so out loud.
+                await Assert.That(routed.Routed).IsFalse()
+                    .Because($"{role} at {contactM} m is within the {CombatBrain.MeleeMaxM} m melee " +
+                              "reach it can still hit from, so the spacing arm must not fire");
+                continue;
+            }
+
+            await Assert.That(routed.Routed).IsTrue()
+                .Because($"{role} at {contactM} m has no verb inside its {bandMinM} m band floor — " +
+                          "spacing is the only arm that gives it one back");
+            await Assert.That(routed.Dispatched).IsNotNull();
+            await Assert.That(Vector3.Distance(routed.Here, routed.Dispatched!.Value))
+                .IsCloseTo(expectedStepM, 0.001f)
+                .Because($"{role} at {contactM} m: min({CombatBrain.RetreatDistanceM} m ceiling, " +
+                          $"{CombatBrain.AggroBandM} m census − {CombatBrain.CloseInMarginM} m − {contactM}, " +
+                          $"{bandMaxM} m band − {CombatBrain.CloseInMarginM} m − {contactM})");
+            await Assert.That(routed.PreyDistanceM)
+                .IsCloseTo(contactM + expectedStepM, 0.001f)
+                .Because("the step is measured FROM THE ACTOR, so the prey lands at contact + step");
+        }
+    }
+
+    /// <summary>
+    /// THE CENSUS BOUND, end to end: at every contact where the spacing arm actually
+    /// fires, the prey the dispatched anchor leaves behind must stay strictly INSIDE
+    /// both the 25 m perception census and this role's own band ceiling. This is the
+    /// invariant the uncapped 25 m step broke — from contact it always put the prey
+    /// past the horizon, which is what made the archer unkillable from 6 runs.
+    /// </summary>
+    [Test]
+    public async Task TheDispatchedAnchor_NeverCrossesThePerceptionCensus()
+    {
+        foreach (var role in (CombatRole[])[CombatRole.RangedPhysical, CombatRole.RangedMagic, CombatRole.HealerSupport])
+        {
+            var (bandMinM, bandMaxM) = CombatBrain.RoleBand(role);
+            foreach (var contactM in new[] { 0.1f, 1.5f, 3.5f, 6f, bandMaxM - CombatBrain.CloseInMarginM - 0.01f })
+            {
+                var routed = await RouteKiteWake(role, contactM);
+                if (!routed.Routed)
+                    continue; // the reachability carve-out owns this contact; no leg is issued.
+
+                await Assert.That(routed.PreyDistanceM).IsLessThan(CombatBrain.AggroBandM)
+                    .Because($"{role} at {contactM} m: the prey must remain inside the " +
+                              $"{CombatBrain.AggroBandM} m census or the next wake cannot perceive it, " +
+                              "selection withdraws, and the pursuit re-crowds the actor");
+                await Assert.That(routed.PreyDistanceM).IsLessThan(bandMaxM)
+                    .Because($"{role}'s band ceiling is {bandMaxM} m — the radius its combat brain is " +
+                              "consulted from, so a leg past it can never be re-decided");
+                await Assert.That(routed.PreyDistanceM).IsGreaterThan(bandMinM)
+                    .Because("the bound must not be won by standing still: the step has to open real " +
+                              "spacing past this role's floor, or the next wake re-fires the same arm");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Drives one routed kite wake END TO END against the live headless actor: the real
+    /// combat brain decides the spacing anchor, the real travel chain decides the wake,
+    /// and <see cref="CombatTravelDispatch.DecideKiteLeg"/> maps one onto the other. No
+    /// hand-built destination — the anchor under test is the one the engine produces.
+    /// </summary>
+    private static async Task<KiteWake> RouteKiteWake(CombatRole role, float contactM)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor($"kite-{role}-{contactM}");
+        var here = new Vector3(100f, 100f, 10f);
+        GameplayActorTestRig.SetPosition(actor, here);
+        var threatObjId = session.SpawnNpc(BoarObjId);
+        var threat = here + new Vector3(contactM, 0f, 0f);
+        GameplayActorTestRig.SetNpcPosition(session, threatObjId, threat);
+
+        var brain = CombatBrain.Decide(new CombatBrainInputs(
+            ActorObjId: actor.ActorId, Role: role, Alive: true,
+            SelfHpRatio: 0.80f, SelfLevel: 10, SelfPosition: here, EnemyCount: 1,
+            NearestEnemyDistanceM: contactM, TookDamageThisFrame: false, CrowdControlled: false,
+            CcAvailable: true, IsAutoAttackLive: false, HealItemTemplateId: 0,
+            SkillMinRangeM: 0f, SkillMaxRangeM: 0f, SelectedSkillId: 0, LastSkillUsed: 0,
+            IncumbentObjId: threatObjId, IncumbentValid: true, IncumbentUnknown: false,
+            IncumbentScore: 0, CommitmentInForce: false, IncumbentPosition: threat,
+            IncumbentDistanceM: contactM, IncumbentLeashDriftM: 0f, LeashBudgetM: 50f,
+            Candidates: [], NowUtc: DateTime.UtcNow));
+
+        // A non-kite wake never routes, and the caller never even prepares a journey
+        // for it — mirroring QuestBehavior's own guard.
+        if (!CombatTravelDispatch.IsSubCriticalSpacing(brain))
+            return new KiteWake(here, threat, null, false);
+
+        var prepared = CombatTravelDispatch.Prepare(actor, threatObjId, threat, liveLegDestination: null);
+        var verdict = CombatTravelDispatch.DecideKiteLeg(prepared, brain);
+        return new KiteWake(
+            here, threat, verdict.Verb == CombatTravelDispatch.KiteLegVerb.Move
+                ? verdict.Destination
+                : null,
+            verdict.Routed);
+    }
+
+    /// <summary>One wake's measured outcome: where the leg would walk, and the prey distance it leaves.</summary>
+    private readonly record struct KiteWake(
+        Vector3 Here, Vector3 Threat, Vector3? Dispatched, bool Routed)
+    {
+        public float PreyDistanceM => Dispatched is { } anchor
+            ? Vector3.Distance(anchor, Threat)
+            : float.NaN;
     }
 
     // ------------------------------------------------------------ fixture

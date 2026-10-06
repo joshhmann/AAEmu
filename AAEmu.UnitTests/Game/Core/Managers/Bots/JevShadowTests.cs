@@ -68,10 +68,10 @@ public class JevShadowTests
     private string _prevPath = "";
 
     private static BotDecisionProposal Proposal(
-        string goal, int priority, int weight, string rejectName) => new(
+        string goal, int priority, int weight, string rejectName, uint targetId = 0) => new(
             goal: goal,
             action: ActorActionType.Observe,
-            targetId: 0,
+            targetId: targetId,
             expectedPostcondition: new BotProposalPostcondition("observation remains available", _ => true),
             idempotencyKey: $"shadow-{goal}",
             timeout: TimeSpan.FromSeconds(1),
@@ -91,10 +91,10 @@ public class JevShadowTests
     /// therefore cannot express a LEGAL contender.
     /// </summary>
     private static BotDecisionProposal LegalProposal(
-        string goal, int priority, int weight, string tieBreakKey) => new(
+        string goal, int priority, int weight, string tieBreakKey, uint targetId = 0) => new(
             goal: goal,
             action: ActorActionType.Observe,
-            targetId: 0,
+            targetId: targetId,
             expectedPostcondition: new BotProposalPostcondition("observation remains available", _ => true),
             idempotencyKey: $"shadow-{goal}",
             timeout: TimeSpan.FromSeconds(1),
@@ -1326,6 +1326,121 @@ public class JevShadowTests
     }
 
     /// <summary>
+    /// v3 (<c>target_id</c>): a legal loser that reaches the dataset without
+    /// its target can never be joined to the objective it named, so a reviewer
+    /// can see that an alternative existed and how it scored but not WHICH
+    /// quest it referred to. The gap is in the record, not in the selector, so
+    /// this drives the REAL selector and the REAL JSONL writer and asserts the
+    /// identity survives to the wire for all THREE candidate kinds — with
+    /// DISTINCT ids, because copying one id into all three would satisfy a
+    /// weaker test while leaving the join wrong.
+    ///
+    /// It also pins the honest edge: a proposal that names no target records
+    /// <c>0</c>, which is a real value and must never be dropped or defaulted
+    /// away to "absent".
+    /// </summary>
+    [Test]
+    public async Task MaybeEmitQuest_TargetIdentity_SurvivesSerializationForEveryCandidateKind()
+    {
+        const uint rejectedQuest = 6198;
+        const uint takenQuest = 6199;
+        const uint alternativeQuest = 251;
+
+        var illegal = Proposal("quest.accept", 99, 0, "quest-not-active", rejectedQuest);
+        var winner = LegalProposal("quest.turn-in", 30, 7, "reporter-range", takenQuest);
+        var legalLoser = LegalProposal("quest.accept", 17, 1, "accept-band", alternativeQuest);
+        var context = new BotObservedContext { ActorId = 78 };
+
+        var selection = BotDecisionSelector.Select(
+            context,
+            [illegal, winner, legalLoser],
+            includeLegalAlternatives: true);
+
+        var result = new QuestDecisionScenario.QuestRunResult
+        {
+            Scenario = QuestDecisionScenario.ScenarioName,
+            WorkSelected = true,
+            SelectedAction = ActorActionType.Observe,
+            SelectedProposal = winner,
+            Request = null,
+            Rejections = selection.Rejections,
+            LegalAlternatives = selection.LegalAlternatives,
+            Explanation = selection.Explanation,
+            TraceRecords = []
+        };
+
+        JevShadow.MaybeEmitQuest(78, "quest-78-1", "landed Observe", result);
+
+        await Assert.That(JevShadow.WaitForDrainForTest(TimeSpan.FromSeconds(10))).IsTrue();
+        var lines = await File.ReadAllLinesAsync(JevShadow.FilePath);
+        using var doc = JsonDocument.Parse(lines[0]);
+        var root = doc.RootElement;
+
+        await Assert.That(root.GetProperty("schema").GetString()).IsEqualTo(JevShadow.SchemaVersion);
+        await Assert.That(root.GetProperty("schema").GetString()).IsEqualTo("jev-shadow/v3")
+            .Because("the row must announce the version that carries target identity");
+
+        await Assert.That(root.GetProperty("candidates")[0].GetProperty("target_id").GetUInt32())
+            .IsEqualTo(rejectedQuest)
+            .Because("a hard-precondition rejection must be as identifiable as a legal one");
+        await Assert.That(root.GetProperty("legal_alternatives")[0].GetProperty("target_id").GetUInt32())
+            .IsEqualTo(alternativeQuest)
+            .Because("this is the join a v2 reviewer could not make at all");
+        await Assert.That(root.GetProperty("selected_candidate").GetProperty("target_id").GetUInt32())
+            .IsEqualTo(takenQuest);
+
+        // The three ids are distinct: one id copied everywhere would pass a
+        // weaker assertion and still mis-join every comparison.
+        var ids = new[]
+        {
+            root.GetProperty("candidates")[0].GetProperty("target_id").GetUInt32(),
+            root.GetProperty("legal_alternatives")[0].GetProperty("target_id").GetUInt32(),
+            root.GetProperty("selected_candidate").GetProperty("target_id").GetUInt32()
+        };
+        await Assert.That(ids.Distinct().Count()).IsEqualTo(3)
+            .Because("each candidate must carry its OWN target, not a shared one");
+    }
+
+    /// <summary>
+    /// A proposal that names no target must record <c>target_id: 0</c> — a real
+    /// observed value — never an absent field. Dropping it would make "the
+    /// proposal had no target" and "the recorder never wrote one" identical,
+    /// and a consumer would be free to invent an identity.
+    /// </summary>
+    [Test]
+    public async Task MaybeEmitQuest_TargetlessProposal_RecordsZeroTargetRatherThanAbsent()
+    {
+        var targetless = LegalProposal("quest.advance", 20, 0, "no-target", targetId: 0);
+        var context = new BotObservedContext { ActorId = 79 };
+
+        var selection = BotDecisionSelector.Select(context, [targetless], includeLegalAlternatives: true);
+
+        var result = new QuestDecisionScenario.QuestRunResult
+        {
+            Scenario = QuestDecisionScenario.ScenarioName,
+            WorkSelected = true,
+            SelectedAction = ActorActionType.Observe,
+            SelectedProposal = targetless,
+            Request = null,
+            Rejections = selection.Rejections,
+            LegalAlternatives = selection.LegalAlternatives,
+            Explanation = selection.Explanation,
+            TraceRecords = []
+        };
+
+        JevShadow.MaybeEmitQuest(79, "quest-79-1", "landed Observe", result);
+
+        await Assert.That(JevShadow.WaitForDrainForTest(TimeSpan.FromSeconds(10))).IsTrue();
+        var lines = await File.ReadAllLinesAsync(JevShadow.FilePath);
+        using var doc = JsonDocument.Parse(lines[0]);
+
+        var target = doc.RootElement.GetProperty("selected_candidate").GetProperty("target_id");
+        await Assert.That(target.ValueKind).IsEqualTo(JsonValueKind.Number)
+            .Because("a targetless proposal still carries target_id: 0, so absence is never inferred");
+        await Assert.That(target.GetUInt32()).IsEqualTo(0u);
+    }
+
+    /// <summary>
     /// "Collected and there were none" must not serialize the same as "not
     /// collected". A lane that saw the alternatives and found the winner was
     /// the only legal proposal has to say so with an empty array; only a
@@ -1438,13 +1553,16 @@ public class JevShadowTests
     /// The schema cutover is behavioural, so the version string is the contract
     /// and must not drift back. v2 exists because candidate_count changed meaning
     /// (selector truth: rejections + legal losers + winner) and legal_alternatives
-    /// was added; a v1 reader would silently misread both. Rows already written as
-    /// v1 stay v1 and must never be relabelled.
+    /// was added; a v1 reader would silently misread both. v3 is ADDITIVE on top
+    /// of that: every candidate also carries target_id, and the v2 semantics this
+    /// test pins must still hold under it — so the same assertions are kept and
+    /// only the version advances. Rows already written as v1 or v2 stay as they
+    /// were written and are never relabelled.
     /// </summary>
     [Test]
-    public async Task SchemaVersion_IsV2_NotTheV1WhoseCandidateCountMeantRejectionsPlusOne()
+    public async Task SchemaVersion_IsV3_AndStillCarriesTheV2SelectorTruthSemantics()
     {
-        await Assert.That(JevShadow.SchemaVersion).IsEqualTo("jev-shadow/v2");
+        await Assert.That(JevShadow.SchemaVersion).IsEqualTo("jev-shadow/v3");
 
         // The v2-only field must actually be emitted, or the bump would be a lie.
         var winner = LegalProposal("quest.turn-in", 30, 0, "reporter-range");
@@ -1473,7 +1591,7 @@ public class JevShadowTests
         var lines = await File.ReadAllLinesAsync(JevShadow.FilePath);
         await Assert.That(lines.Length).IsEqualTo(1);
         using var doc = JsonDocument.Parse(lines[0]);
-        await Assert.That(doc.RootElement.GetProperty("schema").GetString()).IsEqualTo("jev-shadow/v2");
+        await Assert.That(doc.RootElement.GetProperty("schema").GetString()).IsEqualTo("jev-shadow/v3");
         await Assert.That(doc.RootElement.TryGetProperty("legal_alternatives", out _)).IsTrue();
         await Assert.That(doc.RootElement.GetProperty("candidate_count").GetInt32()).IsEqualTo(2);
     }

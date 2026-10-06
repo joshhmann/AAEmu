@@ -74,8 +74,15 @@ public class QuestCombatKiteTravelTests
     /// <summary>
     /// THE KITE ROUTES THROUGH THE SEAM, live: a ranged bot crowded inside its band
     /// floor asks the combat brain for spacing (<c>arm=BackOff</c>), and the spacing
-    /// leg it dispatches walks the TRAVEL chain's anchor under the kite's own owner —
+    /// leg it dispatches walks the TRAVEL chain's wake under the kite's own owner —
     /// not the ad-hoc pre-brain Move the frozen G6 lane issued.
+    ///
+    /// The leg walks the COMBAT BRAIN's bounded spacing anchor, not the travel chain's
+    /// uncapped 25 m retreat step. The chain still owns the wake (its arm still names
+    /// <c>arm=Retreat</c>, its hold/budget/terminals still govern), but the POINT is this
+    /// brain's — a spacing leg measured from the actor and bounded by the perception
+    /// census and this role's own band ceiling. Dispatching the uncapped step instead put
+    /// the prey past the 25 m census, so the next wake could not perceive its own target.
     /// </summary>
     [Test]
     public async Task KiteWake_RoutesThroughTheTravelChain_UnderTheKiteOwner()
@@ -90,9 +97,9 @@ public class QuestCombatKiteTravelTests
         await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Move)).IsFalse();
 
         // Wake 2: settled (nobody moved) — the kite Move lands, and it is the TRAVEL
-        // chain's leg: the shared anchor, the kite owner, the additive fragment. A
-        // 25 m escape is a RUNNING leg (the same shape the pre-brain spacing Move
-        // had), so the wake reports the leg, not a terminal completion.
+        // chain's wake under the kite's own owner, walking the BOUNDED spacing anchor.
+        // A multi-metre escape is a RUNNING leg (the same shape the pre-brain spacing
+        // Move had), so the wake reports the leg, not a terminal completion.
         var second = QuestDecisionScenario.Run(actor, (_, _) => [],
             new QuestDecisionScenario.QuestOptions { CycleId = "kite-route-2" });
         await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.Move);
@@ -100,9 +107,24 @@ public class QuestCombatKiteTravelTests
         await Assert.That(second.Request.TargetId).IsEqualTo(0u); // a position leg
         await Assert.That(second.Request.MoveOwner).IsEqualTo(CombatTravelDispatch.KiteMoveOwner);
 
-        var anchor = TravelBrain.SafeAnchor(here, threat, TravelBrain.RetreatAnchorDistanceM);
+        // 2 m of contact, this archer's 22 m band ceiling: min(25 ceiling, 25 census −
+        // 1 margin − 2 contact, 22 band − 1 margin − 2 contact) = 19 m. Derived from the
+        // same public constants the bound is built from, never a hand-written metre count.
+        const float contactM = 2f;
+        var (_, bandCeilingM) = CombatBrain.RoleBand(CombatRole.RangedPhysical);
+        var boundedStepM = Math.Min(
+            CombatBrain.RetreatDistanceM,
+            Math.Min(
+                CombatBrain.AggroBandM - CombatBrain.CloseInMarginM - contactM,
+                bandCeilingM - CombatBrain.CloseInMarginM - contactM));
+        var anchor = TravelBrain.SafeAnchor(here, threat, boundedStepM);
         await Assert.That(second.Request.Destination!.Value).IsEqualTo(anchor);
-        await Assert.That(Vector3.Distance(here, anchor)).IsCloseTo(25f, 0.001f);
+        await Assert.That(Vector3.Distance(here, anchor)).IsCloseTo(boundedStepM, 0.001f);
+        await Assert.That(Vector3.Distance(anchor, threat)).IsCloseTo(contactM + boundedStepM, 0.001f)
+            .Because("the spacing step is measured FROM THE ACTOR, so the prey lands at contact + step");
+        await Assert.That(Vector3.Distance(anchor, threat)).IsLessThan(bandCeilingM)
+            .Because("the prey must land inside this archer's own band ceiling, which is the radius its " +
+                      "combat brain is consulted from — a leg past it can never be re-decided");
 
         // The leg's diag names the brain's own arm AND the travel chain's routing: the
         // retreat arm, the dispatched Move, and the retreat reason, additively.
@@ -117,7 +139,9 @@ public class QuestCombatKiteTravelTests
             actor.ActorId, out var armed, CombatTravelDispatch.KiteMoveOwner)).IsTrue();
         await Assert.That(armed.TargetObjId).IsEqualTo(boarObjId);
         await Assert.That(armed.Terminal).IsEqualTo(TravelTerminal.None);
-        await Assert.That(armed.PriorDestination).IsEqualTo(anchor);
+        await Assert.That(armed.PriorDestination).IsEqualTo(anchor)
+            .Because("the leg that ACTUALLY ran is banked, so the store records the bounded point the " +
+                      "actor was really sent to, not the chain's proposal");
         await Assert.That(armed.RepathCount).IsEqualTo(0);
 
         // The LIVE leg is attributed to the kite (the audit row lands when the leg

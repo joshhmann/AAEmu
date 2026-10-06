@@ -122,3 +122,59 @@ public sealed record ActorAuditRecord(
             move_owner = MoveOwner
         });
 }
+
+/// <summary>
+/// State of the bounded post-cast HP observation for one trace id.
+/// </summary>
+public enum CastEffectResolution
+{
+    /// <summary>No observation was ever registered (refused swing, or an
+    /// unobservable target). NOT the same as "dealt zero".</summary>
+    None = 0,
+    /// <summary>Registered, window still OPEN: the engine accepted the cast
+    /// and the damage may be scheduled but has not landed yet.</summary>
+    Pending = 1,
+    /// <summary>The bounded window closed and the engine's own before/after
+    /// is available.</summary>
+    Resolved = 2,
+}
+
+/// <summary>
+/// The engine's OWN pre/post HP observation for one cast, as drained from the
+/// bounded effect window (<c>ProcessPendingCastEffects</c>).
+///
+/// <see cref="State"/> is the load-bearing field: a ranged/animated swing
+/// defers its damage to a scheduled task, so at dispatch time the only
+/// knowable truth is <see cref="CastEffectResolution.Pending"/> — never a
+/// zero. <see cref="HpBefore"/>/<see cref="HpAfter"/> are populated only once
+/// <see cref="CastEffectResolution.Resolved"/>.
+/// </summary>
+/// <param name="State">Whether the observation is absent, still open, or closed.</param>
+/// <param name="HpBefore">Pre-strike HP sampled before the cast, once resolved.</param>
+/// <param name="HpAfter">HP observed when the window closed, once resolved.</param>
+/// <param name="EffectObserved">True when HP moved inside the window; false when
+/// it closed unchanged (a genuine miss, not a pending swing).</param>
+/// <param name="Wait">How long the window waited before closing.</param>
+public readonly record struct CastEffectObservation(
+    CastEffectResolution State,
+    int? HpBefore = null,
+    int? HpAfter = null,
+    bool? EffectObserved = null,
+    TimeSpan? Wait = null)
+{
+    /// <summary>Damage actually observed by the engine: null unless resolved.</summary>
+    public int? Delta => State == CastEffectResolution.Resolved && HpBefore.HasValue && HpAfter.HasValue
+        ? HpAfter.Value - HpBefore.Value
+        : null;
+
+    /// <summary>Stable one-token log/diag form. Never fabricates a number.</summary>
+    public string Describe()
+        => State switch
+        {
+            CastEffectResolution.Pending => "pending",
+            CastEffectResolution.Resolved => (EffectObserved ?? false)
+                ? Delta?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "NA"
+                : "0",
+            _ => "NA",
+        };
+}

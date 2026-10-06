@@ -899,6 +899,22 @@ public interface IGameplayActor
     /// </summary>
     ActorAuditRecord? FindByKey(string idempotencyKey);
     /// <summary>
+    /// Reads the engine's OWN post-cast HP observation for a trace id.
+    ///
+    /// The observation is a bounded, ASYNCHRONOUS window: a swing whose skill
+    /// template carries an effect delay/speed lands its damage on a scheduled
+    /// task AFTER the request is already terminal, so at dispatch time the
+    /// honest answer is "not known YET", never a zero.
+    /// <see cref="CastEffectResolution.Pending"/> is that state;
+    /// <see cref="CastEffectResolution.Resolved"/> carries the engine's own
+    /// before/after; <see cref="CastEffectResolution.None"/> means no
+    /// observation was ever registered (a refused swing, or an unobservable
+    /// target) and must never be read as "dealt zero".
+    ///
+    /// Default no-op so delegating/fake implementations are unaffected.
+    /// </summary>
+    CastEffectObservation GetCastEffectObservation(Guid traceId) => default;
+    /// <summary>
     /// Records a queue-backstop expiry as a ledger outcome: the request was
     /// force-transitioned to TimedOut without the actor's Finish running, so
     /// without this the explicit idempotency key stays unrecorded and a

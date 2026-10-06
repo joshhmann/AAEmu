@@ -306,6 +306,13 @@ public readonly record struct LootBrainInputs(
     bool SafetyResolved,
     bool Safe,
     float NearestHostileDistanceM,
+    /// <summary>
+    /// How far the actor still has to MOVE for this take (the live actor→pinned
+    /// corpse distance the planner reads). NaN when the pin did not resolve.
+    /// The safety arm asks whether an APPROACH exists, so this — not the reach
+    /// band — is what separates "standing on the corpse" from "walking to it".
+    /// </summary>
+    float CorpseDistanceM,
     LootWorth Worth,
     LootSpace Space,
     LootDisposition PriorDisposition,

@@ -58,6 +58,16 @@ namespace AAEmu.Game.Core.Managers.Bots.Combat;
 /// <see cref="TravelBrain.SafeAnchor"/> shape). A chain verdict this leg cannot serve
 /// withdraws NAMING the cause (a terminal token, or the unserved verb), and an
 /// abandonment withdraws with its NAMED terminal — never a bare failure.
+///
+/// WHO OWNS THE ANCHOR LENGTH: the chain owns the WAKE, this seam's dispatch owns the
+/// POINT. The travel chain's retreat arm walks the UNCAPPED
+/// <see cref="TravelBrain.RetreatAnchorDistanceM"/> — the survival separation
+/// contract — and dispatching that point verbatim let a spacing wake resolve onto the
+/// far side of the observer's own perception horizon: a 25 m step from contact landed
+/// the prey past the 25 m census, so the next wake could not perceive its own target,
+/// selection withdrew, and the archer stood on its prey and killed nothing. This seam
+/// therefore dispatches the combat brain's OWN bounded spacing anchor, which was
+/// already computed and was only being discarded. See <see cref="BoundedAnchor"/>.
 /// </summary>
 internal static class CombatTravelDispatch
 {
@@ -176,10 +186,18 @@ internal static class CombatTravelDispatch
             LegTargetObjId: threatObjId,
             LegDestinationKnown: liveLegDestination.HasValue,
             LegDestination: liveLegDestination ?? Vector3.Zero,
-            // THE RETREAT ARM: a sub-critical kite asks for ROOM, so the travel brain
-            // walks the shared safe anchor opposite the threat — the same
-            // TravelBrain.SafeAnchor the combat brain's fallback destination and the
-            // survival flee leg use, never a second copy of the escape ray.
+            // THE RETREAT ARM still owns this WAKE: it precedes the chain's distance
+            // read by contract (the anchor is derived from live positions, so it must
+            // never be withheld for a distance), and a kite fires at CONTACT — inside
+            // the chain's own arrival radius — so without this arm the wake would fall
+            // through to Arrival and halt on the prey instead of spacing away from it.
+            // What the arm must NOT do is dictate the LENGTH: its step is the UNCAPPED
+            // <see cref="TravelBrain.RetreatAnchorDistanceM"/>, a SURVIVAL contract for
+            // maximum separation, and this seam never serves a survival wake. The
+            // bounded spacing anchor this brain already computed for itself
+            // (<c>CombatBrain.BackOffDistanceM</c>) is restored at the DISPATCH seam by
+            // <see cref="DecideKiteLeg"/>, so the wake keeps its arm and the leg stops
+            // walking past the perception census.
             RetreatRequested: true,
             ThreatObjId: threatObjId,
             ThreatPosition: threatPosition), legOwner: KiteMoveOwner);
@@ -238,8 +256,9 @@ internal static class CombatTravelDispatch
     /// <summary>
     /// One wake's verdict for the caller: the verb, the <c>dispatch=</c> token and
     /// <c>reason=</c> the leg's own lane vocabulary uses, the terminal it names when
-    /// the journey ended, the destination a leg would walk (the travel layer's own on
-    /// the routed path, the brain's own on the fallback path), and the travel decision
+    /// the journey ended, the destination a leg would walk (the combat brain's own
+    /// BOUNDED spacing anchor on the routed path — see <see cref="BoundedAnchor"/> —
+    /// the brain's own destination on the fallback path), and the travel decision
     /// that produced it (<c>null</c> on the fallback path).
     /// </summary>
     internal readonly record struct KiteLegVerdict(
@@ -306,7 +325,8 @@ internal static class CombatTravelDispatch
 
         switch (travel.Verb)
         {
-            case TravelVerb.MoveTo when KiteLegAlreadyServes(prepared, travel):
+            case TravelVerb.MoveTo when decision.Destination is { } spacing
+                                       && KiteLegAlreadyServes(prepared, BoundedAnchor(spacing, travel)):
                 // The kite's anchor RECEDES as the bot walks, and the chain's own
                 // leg-hold arm sits BEHIND the retreat arm — so the hold is applied
                 // here, from the caller's own reading of the leg it issued: a live leg
@@ -314,7 +334,33 @@ internal static class CombatTravelDispatch
                 // progress instead of restarting the escape every wake.
                 return new KiteLegVerdict(
                     KiteLegVerb.Held, "held", "anchor-held", null, null, travel);
+
+            case TravelVerb.MoveTo when decision.Destination is { } spacing:
+                // THE BOUNDED ANCHOR WINS. The chain owns the WAKE — the retreat arm
+                // fires before its distance read, so a kite at contact is never halted
+                // by the arrival arm, and the journey's hold, budget and named
+                // terminals all stay authoritative. The POINT it walks is this brain's
+                // own: this is a SPACING leg, and the spacing leg's length is bounded
+                // by the two boundaries the actor must not cross — the perception
+                // census it perceives through and this role's own band ceiling its
+                // brain is consulted from (CombatBrain.BackOffDistanceM). The retreat
+                // arm's own step is the UNCAPPED survival length, and a 25 m step from
+                // 1.5 m contact lands the prey at 26.5 m — past the 25 m census, where
+                // the next wake cannot perceive its own target at all.
+                //
+                // The verdict carries the decision AS DISPATCHED — same arm, same verb,
+                // same reason, same budget, same terminal, with the bounded point. That
+                // keeps the whole leg self-consistent: the additive :travel= fragment,
+                // the store's banked "the destination the actor was really sent to",
+                // and the next wake's leg reading all name the leg that ACTUALLY ran
+                // rather than the point that was proposed and overridden here.
+                var bounded = BoundedAnchor(spacing, travel);
+                return new KiteLegVerdict(
+                    KiteLegVerb.Move, "move", ReasonToken(travel.Reason), null,
+                    bounded, travel with { Destination = bounded });
             case TravelVerb.MoveTo:
+                // No readable spacing anchor on this brain decision: the chain's own
+                // point stands, unchanged from the pre-wiring behavior.
                 return new KiteLegVerdict(
                     KiteLegVerb.Move, "move", ReasonToken(travel.Reason), null, travel.Destination, travel);
             case TravelVerb.Stop:
@@ -344,19 +390,18 @@ internal static class CombatTravelDispatch
     /// <summary>
     /// Whether the caller's own live kite leg still serves THIS wake's anchor — the
     /// hold discipline the retreat arm's position in the chain means this seam has to
-    /// apply itself. Reads the leg destination the caller reported and compares it to
-    /// the anchor this wake would issue, under the shared
+    /// apply itself. Compares the leg destination the caller reported against the
+    /// anchor this wake would actually issue (the same bounded anchor the Move case
+    /// dispatches — see <see cref="BoundedAnchor"/>), under the shared
     /// <see cref="TravelBrain.LegDriftToleranceM"/> (the same tolerance the chain's own
     /// leg-hold arm uses). An unreadable leg destination reads as NOT tracking, so a
     /// leg whose point could not be read is re-issued rather than assumed to be right.
     /// </summary>
-    private static bool KiteLegAlreadyServes(
-        in TravelBrainPlanner.Prepared prepared, in TravelDecision travel)
+    private static bool KiteLegAlreadyServes(in TravelBrainPlanner.Prepared prepared, Vector3 anchor)
     {
         if (!prepared.Inputs.LegLive || !prepared.Inputs.LegDestinationKnown)
             return false;
-        return travel.Destination is { } anchor
-               && TravelBrainInputs.IsFinite(anchor)
+        return TravelBrainInputs.IsFinite(anchor)
                && Vector3.Distance(prepared.Inputs.LegDestination, anchor) <= TravelBrain.LegDriftToleranceM;
     }
 
@@ -370,6 +415,28 @@ internal static class CombatTravelDispatch
         if (decision.HasValue)
             TravelBrainPlanner.PublishDispatched(actor, decision.Value, KiteMoveOwner);
     }
+
+    /// <summary>
+    /// The point a routed spacing leg actually WALKS: the combat brain's own bounded
+    /// anchor, restored.
+    ///
+    /// The chain's arm verdict is still authoritative for the WAKE — which arm owned
+    /// it, whether it is held, withheld or terminal — and the verdict travels on it so
+    /// the diagnostic keeps naming the arm that decided. But the DESTINATION is this
+    /// brain's: it measured how much room this wake actually needs, bounded by the
+    /// perception census and this role's own band ceiling
+    /// (<see cref="CombatBrain.BackOffDistanceM"/>), and a wake whose own length is
+    /// already bounded must not be issued an unbounded step. The chain's retreat arm
+    /// walks the full <see cref="TravelBrain.RetreatAnchorDistanceM"/> — a SURVIVAL
+    /// contract, and this seam never serves a survival wake — so the bounded point is
+    /// the only one that keeps the prey inside both boundaries.
+    ///
+    /// An UNREADABLE spacing anchor never fabricates a destination: the chain's own
+    /// point stands, which is the pre-existing behavior for a decision that carries no
+    /// readable anchor of its own.
+    /// </summary>
+    private static Vector3 BoundedAnchor(Vector3 spacing, in TravelDecision travel)
+        => TravelBrainInputs.IsFinite(spacing) ? spacing : travel.Destination ?? spacing;
 
     /// <summary>
     /// The kite's own reading of the leg it dispatched, for the journey's leg input:
