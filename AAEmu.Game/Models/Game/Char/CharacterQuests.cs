@@ -95,7 +95,8 @@ public class CharacterQuests(Character owner)
     {
         var questBlockId = questId / 64;
         var questBlockIndex = (int)(questId % 64);
-        return CompletedQuests.TryGetValue(questBlockId, out var questBlock) && questBlock.Body.Get(questBlockIndex);
+        lock (CompletedQuests)
+            return CompletedQuests.TryGetValue(questBlockId, out var questBlock) && questBlock.Body.Get(questBlockIndex);
     }
 
     /// <summary>
@@ -381,13 +382,14 @@ public class CharacterQuests(Character owner)
     /// </summary>
     public void DropQuest(uint questId, bool update, bool forcibly = false, string remover = "REMOVER=DropQuest-explicit")
     {
-        if (!ActiveQuests.TryGetValue(questId, out var quest))
+        if (!ActiveQuests.TryRemove(questId, out var quest))
         {
             if (DiagEnabled)
                 Logger.Warn($"[QuestRemove] {remover} quest={questId} char={Owner.Name}({Owner.Id}) present=False");
             return;
         }
 
+        // Taking the active entry is the once-only claim for cleanup and ID release.
         var preStep = quest.Step;
         var preStatus = quest.Status;
         if (DiagEnabled)
@@ -396,7 +398,6 @@ public class CharacterQuests(Character owner)
         quest.Cleanup();
         quest.Drop(update);
         quest.FinalizeQuestActs();
-        ActiveQuests.TryRemove(questId, out _);
         lock (_removedLock)
         {
             _removed.Add(questId);
@@ -548,18 +549,26 @@ public class CharacterQuests(Character owner)
     /// </summary>
     /// <param name="questId"></param>
     /// <param name="isCompleted"></param>
-    /// <returns>Returns the CompletedQuest block that was changed</returns>
+    /// <returns>Snapshot of the CompletedQuest block after the change.</returns>
     public CompletedQuest SetCompletedQuestFlag(uint questId, bool isCompleted)
     {
         // Calculate block and index
         var completedQuestBlockId = questId / 64;
         var completedQuestBlockIndex = (ushort)(questId % 64);
-        // Grab or create block (atomic — concurrent completions of the same quest
-        // must not race TryGetValue/Add on the same block; t_781cdb32)
-        var completedBlock = CompletedQuests.GetOrAdd(completedQuestBlockId, static id => new CompletedQuest(id));
-        // Set quest flag to (not) completed
-        completedBlock.Body.Set(completedQuestBlockIndex, isCompleted);
-        return completedBlock;
+        // Atomic dictionary insertion alone does not protect BitArray's
+        // read/modify/write: two quests in the same word can lose one flag.
+        lock (CompletedQuests)
+        {
+            var completedBlock = CompletedQuests.GetOrAdd(completedQuestBlockId, static id => new CompletedQuest(id));
+            completedBlock.Body.Set(completedQuestBlockIndex, isCompleted);
+            // Packet callers serialize after this method returns; give them a
+            // stable body rather than the BitArray still being changed by peers.
+            return new CompletedQuest
+            {
+                Id = completedBlock.Id,
+                Body = (System.Collections.BitArray)completedBlock.Body.Clone()
+            };
+        }
     }
 
     /// <summary>
@@ -567,13 +576,7 @@ public class CharacterQuests(Character owner)
     /// </summary>
     /// <param name="questId"></param>
     /// <returns></returns>
-    public bool IsQuestComplete(uint questId)
-    {
-        var completeId = questId / 64;
-        if (!CompletedQuests.TryGetValue(completeId, out var completedQuest))
-            return false;
-        return completedQuest.Body[(int)(questId % 64)];
-    }
+    public bool IsQuestComplete(uint questId) => HasQuestCompleted(questId);
 
     /// <summary>
     /// Number of quests the character has ever completed (set bits across all
@@ -585,16 +588,19 @@ public class CharacterQuests(Character owner)
     {
         get
         {
-            var count = 0;
-            foreach (var block in CompletedQuests.Values)
+            lock (CompletedQuests)
             {
-                if (block?.Body == null)
-                    continue;
-                for (var i = 0; i < block.Body.Length; i++)
-                    if (block.Body[i])
-                        count++;
+                var count = 0;
+                foreach (var block in CompletedQuests.Values)
+                {
+                    if (block?.Body == null)
+                        continue;
+                    for (var i = 0; i < block.Body.Length; i++)
+                        if (block.Body[i])
+                            count++;
+                }
+                return count;
             }
-            return count;
         }
     }
 
@@ -620,13 +626,25 @@ public class CharacterQuests(Character owner)
         }
     }
 
+    private CompletedQuest[] SnapshotCompletedQuests()
+    {
+        lock (CompletedQuests)
+        {
+            return CompletedQuests.Values.Select(block => new CompletedQuest
+            {
+                Id = block.Id,
+                Body = (System.Collections.BitArray)block.Body.Clone()
+            }).ToArray();
+        }
+    }
+
     /// <summary>
     /// Sends list of quest completed blocks (200 / packet)
     /// </summary>
     public void SendCompleted()
     {
         const int MaxEntriesPerPacket = 200;
-        var completedQuests = CompletedQuests.Values.ToArray();
+        var completedQuests = SnapshotCompletedQuests();
         if (completedQuests.Length <= MaxEntriesPerPacket)
         {
             Owner.SendPacket(new SCCompletedQuestsPacket(completedQuests));
@@ -649,33 +667,36 @@ public class CharacterQuests(Character owner)
     /// <param name="sendIfChanged"></param>
     private void ResetQuests(QuestDetail[] questDetail, bool sendIfChanged = true)
     {
-        foreach (var (completeBlockId, completeBlock) in CompletedQuests)
+        lock (CompletedQuests)
         {
-            for (var blockIndex = 0; blockIndex < 64; blockIndex++)
+            foreach (var (completeBlockId, completeBlock) in CompletedQuests)
             {
-                var questId = (uint)(completeBlockId * 64) + (uint)blockIndex;
-                var q = QuestManager.Instance.GetTemplate(questId);
-                // Skip unused Ids
-                if (q == null)
-                    continue;
-                // Skip if quest still active
-                if (HasQuest(questId))
-                    continue;
-
-                foreach (var qd in questDetail)
+                for (var blockIndex = 0; blockIndex < 64; blockIndex++)
                 {
-                    if (q.DetailId == qd && completeBlock.Body[blockIndex])
+                    var questId = (uint)(completeBlockId * 64) + (uint)blockIndex;
+                    var q = QuestManager.Instance.GetTemplate(questId);
+                    // Skip unused Ids
+                    if (q == null)
+                        continue;
+                    // Skip if quest still active
+                    if (HasQuest(questId))
+                        continue;
+
+                    foreach (var qd in questDetail)
                     {
-                        // TEMPORARY live-lane diagnostic: daily-reset touches completed flags only, never active rows (read-only log, never branched on).
-                        if (DiagEnabled && HasQuest(questId))
-                            Logger.Warn($"[QuestRemove] REMOVER=daily-reset-active-kept quest={questId} char={Owner.Name}({Owner.Id}) present=True note=completed-flag-cleared-active-kept");
-                        completeBlock.Body.Set(blockIndex, false);
-                        Logger.Info($"QuestReset by {Owner.Name}, reset {questId}");
-                        if (sendIfChanged)
+                        if (q.DetailId == qd && completeBlock.Body[blockIndex])
                         {
-                            var body = new byte[8];
-                            completeBlock.Body.CopyTo(body, 0);
-                            Owner.SendPacket(new SCQuestContextResetPacket(questId, body, completeBlockId));
+                            // TEMPORARY live-lane diagnostic: daily-reset touches completed flags only, never active rows (read-only log, never branched on).
+                            if (DiagEnabled && HasQuest(questId))
+                                Logger.Warn($"[QuestRemove] REMOVER=daily-reset-active-kept quest={questId} char={Owner.Name}({Owner.Id}) present=True note=completed-flag-cleared-active-kept");
+                            completeBlock.Body.Set(blockIndex, false);
+                            Logger.Info($"QuestReset by {Owner.Name}, reset {questId}");
+                            if (sendIfChanged)
+                            {
+                                var body = new byte[8];
+                                completeBlock.Body.CopyTo(body, 0);
+                                Owner.SendPacket(new SCQuestContextResetPacket(questId, body, completeBlockId));
+                            }
                         }
                     }
                 }
@@ -797,17 +818,8 @@ public class CharacterQuests(Character owner)
 
             command.CommandText = "REPLACE INTO completed_quests(`id`,`data`,`owner`) VALUES(@id,@data,@owner)";
 
-            // t_90c0d0d1: snapshot under the per-character lock. A concurrent
-            // SetCompletedQuestFlag Add during live enumeration of CompletedQuests
-            // can yield a NULL block entry (Dictionary resize artifact); quest.Id
-            // then NREs and the save aborts BEFORE the active-quest REPLACE loop
-            // below — losing active-quest rows on disconnect. The snapshot kills
-            // the modified-during-save class; nulls are skipped with a WARN.
-            CompletedQuest[] completedBlocks;
-            lock (CompletedQuests)
-            {
-                completedBlocks = CompletedQuests.Values.ToArray();
-            }
+            // Copy the bodies while flag writers are excluded; DB I/O stays outside the lock.
+            var completedBlocks = SnapshotCompletedQuests();
 
             foreach (var quest in completedBlocks)
             {
