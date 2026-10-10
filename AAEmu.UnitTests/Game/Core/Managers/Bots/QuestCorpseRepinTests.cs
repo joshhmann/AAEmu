@@ -149,6 +149,48 @@ public class QuestCorpseRepinTests
         };
     }
 
+    [Test]
+    public async Task DepartedCorpse_RecordReleased_AnotherActorsRecordKept()
+    {
+        var (actorA, session) = GameplayActorTestRig.CreateActor("recovery-corpse-a");
+        var (actorB, _) = GameplayActorTestRig.CreateActor("recovery-corpse-b");
+        var objId = SpawnBoar(session, actorA, Vector3.Zero, new Vector3(2, 0, 0));
+        Activate251(actorA.Character);
+        QuestBehavior.NotePinnedCorpse(actorA.ActorId, objId, Boar3475, Quest251, "a-before");
+        QuestBehavior.NotePinnedCorpse(actorB.ActorId, objId, Boar3475, Quest251, "b-before");
+        session.World.RemoveObject(session.World.GetNpc(objId)!);
+
+        _ = QuestDecisionScenario.Run(actorA, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "a-after" });
+
+        await Assert.That(QuestBehavior.TryGetCorpse(actorA.ActorId, out _)).IsFalse();
+        await Assert.That(QuestBehavior.TryGetCorpse(actorB.ActorId, out var kept)).IsTrue();
+        await Assert.That(kept!.CycleId).IsEqualTo("b-before");
+    }
+
+    [Test]
+    public async Task RecordedCorpse_ObservationResolvesLiveNpc_RecordReleased()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("recovery-recycled-corpse");
+        var objId = SpawnBoar(session, actor, Vector3.Zero, new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        QuestBehavior.NotePinnedCorpse(actor.ActorId, objId, Boar3475, Quest251, "old-corpse");
+
+        // Probe the observation owner directly: a live target may select a combat
+        // or Stop leg before that observation runs. This is a primitive regression,
+        // not a claim that every runtime wake already visits corpse recovery.
+        var context = BotObservedContext.Capture(actor);
+        var options = new QuestDecisionScenario.QuestOptions { CycleId = "alive-now" };
+        var funnel = QuestObjectiveTargetSelector.Evaluate(actor.Character, context,
+            options.CycleId, QuestFixtureRow.FromQuestData(Quest251));
+        var observe = typeof(QuestBehavior).GetMethod("ObservePinnedCorpse",
+            BindingFlags.Static | BindingFlags.NonPublic)!;
+        observe.Invoke(null, [actor, options, funnel, context]);
+
+        await Assert.That(session.World.GetNpc(objId)!.Hp).IsGreaterThan(0);
+        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out _)).IsFalse();
+    }
+
     private static uint SpawnBoar(HeadlessSession session, GameplayActor actor, Vector3 actorPos, Vector3 npcPos)
     {
         GameplayActorTestRig.SetPosition(actor, actorPos);

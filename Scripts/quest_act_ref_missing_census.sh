@@ -15,7 +15,7 @@
 #   2145  comp 9927 accept-act 89 -> 2146   (THIS card)
 #
 # Usage:
-#   quest_act_ref_missing_census.sh [path-to-compact.sqlite3] [--apply-fix] [--scope=N]
+#   quest_act_ref_missing_census.sh [path-to-compact.sqlite3] [--apply-fix] [--scope=N | --scope N]
 #     default DB: ./AAEmu.Game/Data/compact.sqlite3 (repo layout)
 #     --scope=N: verdict only on quest N (default 2145 — the card's quest;
 #                pass --scope=0 to verdict the full predicate, both rows)
@@ -29,16 +29,32 @@
 # ============================================================================
 set -u
 
-DB="${1:-./AAEmu.Game/Data/compact.sqlite3}"
+DB="./AAEmu.Game/Data/compact.sqlite3"
+if [ "$#" -gt 0 ] && [[ "$1" != --* ]]; then
+    DB="$1"
+    shift
+fi
 APPLY_FIX=0
 SCOPE=2145
-for arg in "${@:2}"; do
-    case "$arg" in
+while [ "$#" -gt 0 ]; do
+    case "$1" in
         --apply-fix) APPLY_FIX=1 ;;
-        --scope) echo "error: --scope needs a quest id (0 = all)" >&2; exit 2 ;;
-        --scope=*) SCOPE="${arg#--scope=}" ;;
+        --scope)
+            shift
+            if [ "$#" -eq 0 ]; then
+                echo "error: --scope needs a non-negative quest id (0 = all)" >&2
+                exit 2
+            fi
+            SCOPE="$1" ;;
+        --scope=*) SCOPE="${1#--scope=}" ;;
+        *) echo "error: unknown option: $1" >&2; exit 2 ;;
     esac
+    shift
 done
+if ! [[ "$SCOPE" =~ ^[0-9]+$ ]]; then
+    echo "error: --scope needs a non-negative quest id (0 = all)" >&2
+    exit 2
+fi
 
 CENSUS_SQL='SELECT q.id AS quest, q.name AS quest_name, c.id AS component,
                    a.id AS act_row, a.act_detail_id AS accept_act_id,
