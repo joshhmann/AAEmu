@@ -1,7 +1,7 @@
 # Quest Test Harness & Game-Data Graphs
 
 - Audience: Contributors
-- Last verified against: `develop` on August 5, 2026
+- Last verified against: policy-reviewed 2026-10-10 at `fix/npc-spawner-population-count` / `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work (unmerged; documentation only, no fresh gameplay verification)
 - Prerequisites: .NET 10 SDK, `compact.sqlite3` for graph regen
 
 ## Scenario harness (M1-5b)
@@ -31,6 +31,54 @@ tiers to 29 PASS / 0 FAIL / 6 SKIP. The current `runnability.md` (regenerated
 the golden zone while over-representing an already-fixed break. See
 `Quest-Runnability-Census.md` for the full drift table.
 
+## Current bot acceptance scope
+
+Apply the sole [supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+to an explicitly named objective-family denominator. The seven predicates below
+retain their meanings; named unsupported-objective deferral is not completion
+and must leave another eligible quest at the same NPC selectable. B/B2 comparisons
+and exact human presentation are not generic autonomy prerequisites.
+Relevant authoritative outcomes/correlation govern future proof, not universally
+all 119 body fields. The dated E-95/E-96 results/oracles below remain intact;
+[current evidence/allocation limits](../../STATUS.md#current-playerbot-policy-checkpoint)
+record no new runtime acceptance.
+
+## Bounded headless quest regression and restart (2026-10-09)
+
+The existing permanent `BotShortRunTests/BotShortRunHeadless30Min` harness
+retains seven predicates: ordinary start, discovery, choice, execution,
+authoritative completion, one declared interruption/fresh-request recovery and
+independent subsequent choice. Setup is disclosed natural spawn, level 10/starter
+provisioning, one enrollment wake and opt-ins; no assigned goals/routes/teleport.
+Fresh E-95 run `20261009T202451205Z-0e45fccf` passed 1/1, all 7 at 158.0862619s:
+330/6198 reports then 251 acceptance, ordinary 325s/two durable snapshots and
+registry/session cleanup. Fresh consumer tests 53/53 passed against normal compiled
+Integration output. Integration publish separately failed RC1 NETSDK1152 duplicate
+Config/NLog packaging; it is not a successful publish.
+
+E-94 adds requested NPC report **event** attribution: 251 and 6198 at NPC 3512 each
+require their own report/reward. `GameplayActorQuestActionsTests` uses the real
+manager and production queue with `CurrentTarget=null`; target-only `RunAct`,
+zero-auto and numerical reach remain unproved. Multiple quests per NPC are allowed.
+The 16 known fixture/obsolete wording contracts resolved without production movement
+changes; focused 141/141 and full 4398/4397 pass/0 fail/1 known environment-gated skip.
+
+E-96's one automatic Game-only restart restored saved active 251 without postboot
+assignment. Main and independent review accept log-backed first within-window
+quest Loot/grant for one active quest/sole counted objective. Strict same-History-row
+explicit Q/applied-action criterion remains NOT MET; no durable chosen plan or
+immutable Move parent. Final 2/3 and 4058×2 include a second loot after 180s END,
+before cleanup, not 251 completion. All 11 baseline item instances/completed 330/
+6198 bytes/money conserved; actual ordinary 325.078976s margin confirmed.
+Owned resources cleaned. Global LOOP INCOMPLETE; no H/Stage 2/grade/freeze promotion.
+
+Exact commands, frozen identities, fixture boundaries, failed packaging/readiness
+receipts, raw DB/logs and review:
+[autonomy-priority evidence](../../.omp/state/artifacts/autonomy-priorities-2026-10-09/README.md).
+Client Lua `CompleteQuestContext(who,qtype,doodad,npcId)`→
+`TryCompleteQuestContext(...qtype...)` is textual corroboration only:
+source_id/version null, 800 bytes, truncated=true, not captured wire/version proof.
+
 ## Game-data knowledge graphs
 
 `tools/quest-graph/` + `tools/gamedata-graph/` build queryable graphs over
@@ -48,8 +96,10 @@ Per-zone readiness pipeline → golden-path expansion. See tools/quest-graph/REA
 ## Quality gate
 
 `scripts/gate.sh` = Release build + in-game script compiler-check + full unit
-test suite. Local gate is the real gate (upstream CI on fork PRs is
-unreliable).
+test suite + downstream BotControl/read-only archaeology MCP smokes after units
+pass. E-94 actually exercised 44-tool BotControl and 24-tool/679-table archaeology
+smokes; separate archaeology cycle 163/163 plus full 24-tool smoke passed.
+Local gate is the real gate (upstream CI on fork PRs is unreliable).
 
 ## Correction — G7d failure attributed to the wrong cause (2026-10-02)
 

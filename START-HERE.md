@@ -1,10 +1,17 @@
 # START HERE — Agent Onboarding & Domain Lane Dispatcher
 
-Last refreshed: 2026-10-01 · branch of record: `develop` (`joshhmann/AAEmu`) · planning baseline: `d0d58e5848829b7a85da3847d03da00a90cb7c68` (not a fresh gate) · repo HEAD at refresh: `626548de92b8dca8af1f0f92e22d37c9fbe6074e`
+Last refreshed: 2026-10-10 · policy/documentation review at `fix/npc-spawner-population-count` / `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work (unmerged; no fresh gate/runtime verification) · retained planning baseline: `d0d58e5848829b7a85da3847d03da00a90cb7c68`
 
-**Newest checkpoint is `STATUS.md` (updated 2026-09-18), not this router's 2026-09-15 dispatch view.** Read [`STATUS.md`](STATUS.md) first for live pulse, then use the sections below. This refresh corrected the lane scopes and the blocker-ledger reference; it promoted no evidence grade. The dispatch-source question it raised was settled by the owner on 2026-10-01 — see below and [`STATUS.md`](STATUS.md).
+**Current checkpoint:** read [STATUS's current PlayerBot policy checkpoint](STATUS.md#current-playerbot-policy-checkpoint)
+and [canonical task state](.omp/state/CURRENT.md). The user-approved
+[supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+is the sole bot-scope policy owner. [Finite goal handoff reproduction](ROADMAP.md#next-bounded-playerbot-priority)
+is the next bounded engineering priority, not a source/live allocation.
 
-**Dispatch source — RESOLVED 2026-10-01 (owner-ratified).** Two records previously named different next-dispatch sources and neither declared the other superseded. The owner has ruled: **`STATUS.md` line 4 governs next-dispatch selection.** It names the conversion backlog (8 missing actor/paths, §E) in `scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md`. The "Immediate dispatch priority" section below is **superseded as next-work selection** and is kept as requirement context; [`ROADMAP.md`](ROADMAP.md#current-delivery-direction) remains authoritative for milestone requirements, boundaries, exit criteria and the standing freeze. Size the next card from [`STATUS.md`](STATUS.md), not from the queue below.
+**Historical dispatch ruling — 2026-10-01:** conversion backlog §E superseded the
+older immediate-dispatch queue below. That dated ruling remains in STATUS; use
+the stable current checkpoint above, not a volatile “line 4” reference, for current
+policy/allocation limits. ROADMAP retains milestone requirements and exit boundaries.
 
 This document is the **single authoritative router** for agents and developers entering this repository. It tells you what to read, what to ignore, which domain lane to enter, and where active backlogs and verification gates live.
 
@@ -22,12 +29,13 @@ application, not the limit of this process.
 ## Immediate dispatch priority — 2026-09-16 (SUPERSEDED as dispatch source by `STATUS.md`, 2026-10-01)
 
 First product journey: [ordinary starter → owned small plot → harvest/replant](ROADMAP.md#first-owned-small-plot-journey).
-Dispatch selection itself is governed by [`STATUS.md`](STATUS.md) line 4 (owner-ratified
-2026-10-01); the pointers below are **requirement context**, not the next-work choice.
+Current priority/allocation limits are in [STATUS](STATUS.md#current-playerbot-policy-checkpoint);
+the pointers below are retained livelihood requirements, not universal gates for quest autonomy.
 Use the [shared implementation template](.kanban-templates/implementation.md) for
 every implementation; fill it once in the existing card/dossier. The canonical route
 requires prerequisite quests and level-10 eligibility, not a direct level-7 shortcut.
 
+**Anti-drift rule:** a scenario/quest/lane/benchmark/bug/campaign validates a reusable capability; it never becomes the objective unless canonical docs promote it. Full rule: [PROJECT-CONTROL.md](PROJECT-CONTROL.md#delivery-contract). Name capability + failure mechanism + confirm/reject evidence before scenario-specific work; otherwise stop and reassess.
 Read the [high-priority corrective queue](ROADMAP.md#high-priority-corrective-queue--2026-09-16)
 before expanding homestead/GOAP work. Synthetic tests prove their simulated scope,
 not real gameplay loops. The [mandatory reporting gate](AGENTS.md#evidence-honesty-and-anti-overclaim-gate-2026-09-16)
@@ -45,11 +53,10 @@ top of this file and in [`STATUS.md`](STATUS.md).
 
 ## 1. What This Repo Is
 
-Open-source **ArcheAge 1.2** (`r208022`) server emulator in .NET 10 (`AAEmu.Login`, `AAEmu.Game`, shared `AAEmu.Commons`). 
+Open-source **ArcheAge 1.2** (`r208022`) server emulator in .NET 10 (`AAEmu.Login`, `AAEmu.Game`, shared `AAEmu.Commons`). Freshness: planning baseline `d0d58e5848829b7a85da3847d03da00a90cb7c68` predates HEAD `e6e401129`; not a fresh gate. See STATUS 2026-10-06 note for the quest-251 lane ratification, activity-spine proposal status, and `.omp/state/` mirror.
 * **Product Doctrine:** *The living world is the feature; PlayerBots are just the mechanism that gives it life.*
-* **Current dispatch:** [outcome-first slice queue](ROADMAP.md#near-term-slice-queue), not the oldest open board item. One observable outcome per slice; no automatic milestone promotion.
+* **Current priority:** [finite existing-owner handoff reproduction](ROADMAP.md#next-bounded-playerbot-priority); [STATUS](STATUS.md#current-playerbot-policy-checkpoint) records no source/live allocation. Older slice queues are requirement context; no automatic milestone promotion.
 * **Milestone Horizon:** M8 (Living Village) → M9 (Emergent world systems) → M10 (Territory & siege).
-* **Topology:**
 ```text
 Dev box (/root/aaemu-dev, origin = writable fork)
   ──push──►  GitHub fork develop (joshhmann/AAEmu — source of truth)
@@ -134,8 +141,8 @@ flowchart TD
 ### Lane B: Living World & PlayerBots
 * **Agent Role:** AI & simulation engineer working on autonomous bot decision trees, combat rotations, leveling loop, dormancy/restoration, scheduling, bot GM commands, and town presence.
 * **Prerequisite Reading:**
-  * Master Architecture: [`PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md`](PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md)
-  * Framework: [`PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md`](PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md)
+  * Master Architecture: [`PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md`](PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md) (normative invariants)
+  * Framework: [`PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md`](PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md) (HISTORICAL audit 2026-09-13; ladder definitions reused, diagnoses not current dispatch)
   * Vision: [`LIVING-WORLD.md`](LIVING-WORLD.md)
   * **Rule #9 & #10:** PlayerBots compose around normal `Character` records and standard gameplay services. NEVER create parallel character, inventory, or quest implementations!
 * **Where Unfinished Work Lives:**

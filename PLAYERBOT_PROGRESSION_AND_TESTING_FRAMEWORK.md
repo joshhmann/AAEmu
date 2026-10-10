@@ -6,6 +6,11 @@
 > [ROADMAP](ROADMAP.md#current-delivery-direction) and
 > [PROJECT-CONTROL](PROJECT-CONTROL.md#bot-decision-architecture). Reproduce a finding
 > against current source before fixing it; do not treat every old diagnosis as open.
+>
+> **Current scope — user-approved 2026-10-10:** apply the sole
+> [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
+> Ladder definitions and historical evidence remain unchanged; B/B2 comparisons
+> are claim-specific, not blanket prerequisites to every supported autonomy loop.
 
 ## Comprehensive Feature-by-Feature Loop Audit, Orchestrator Dashboard, and H-Gate Diagnosis
 
@@ -22,6 +27,9 @@
 ### 1.1 The Progression Ladder Definitions (`P → B → L → A → N → G → T`)
 
 Every PlayerBot feature must be measured against a rigorous 7-step progression ladder. Levels **do not promote upward automatically**: having an engine packet (P) does not mean a bot can call it (B); an action working in isolation (B) does not mean a gameplay loop closes (L); a seeded test loop (L) does not mean a bot can autonomously decide to do it (A); a single bot acting alone (A) does not mean 500 bots can coexist without crashing or griefing (N); and individual bot autonomy does not create collective guild cooperation (G).
+Current applicability: measure the named supported scope, not exhaustive human
+coverage. Optional per-family B/B2 claims retain their definitions; no rung or
+historical grade is promoted by the [current contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
 
 ```text
   [ P ]  PLAYER ENGINE PATH       Ordinary engine packets & services work for human players
@@ -575,6 +583,14 @@ A critical rule in AAEmu test engineering:
 | `TaxClockMultiplier = 60` | **Acceleration** | **YES (Tier 2/3)** | Mail and tax deduction still occur; weeks elapse in minutes. |
 | `Actor.DirectSetPosition()` | **Bypass** | **NO (Banned)** | Skips terrain collision, movement packets, and broadcast notifications. Must use `MoveTo()`. |
 ## 5. PlayerBot Architecture Realignment: Shared Player Action Lifecycle
+
+**Current applicability qualification (2026-10-10):** the dated choreography below
+is historical parity research, not universal bot acceptance. Applicable authoritative
+reach/timing/rule gates remain required; UI/animation/packet resemblance alone is
+not correctness. Use the [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
+The historical EntryPath adoption wording below does not adopt that proposed,
+non-scoring label; its standing status is [SCORECARD's open proposal](SCORECARD.md#open-dimension-proposal--entrypath--decision-required-not-adopted-2026-10-01).
+
 
 ### 5.1 The Core Realignment Finding
 A PlayerBot is backed by ordinary `Character` records with authentic inventories, quests, skills, labor, and persistence. However, historical bot implementations entered the gameplay stack **BELOW** the human player controller/action path. 

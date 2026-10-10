@@ -2,6 +2,14 @@
 
 Goal-Oriented Action Planning (GOAP) for ArcheAge 1.2 PlayerBots in AAEmu.
 
+- Audience: Contributors
+- Last verified against: policy-reviewed 2026-10-10 at `fix/npc-spawner-population-count` / `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work (unmerged; documentation only, no fresh gameplay verification)
+
+Current bot coverage/acceptance follows the sole [supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract).
+Ordinary engine correctness remains mandatory; full human coverage or B2 across
+all families is not a prerequisite to supported autonomy. [Current priority/allocation limits](../../STATUS.md#current-playerbot-policy-checkpoint)
+do not authorize runtime work; historical examples and named comparison claims remain scoped.
+
 > **2026-09-15 scope correction:** committed planner/action foundations exist;
 > runtime integration also has uncommitted WIP. This page describes intent, not a
 > verified production-autonomy exit. Current rollout and slice acceptance:

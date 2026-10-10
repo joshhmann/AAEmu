@@ -1,5 +1,191 @@
 # ArcheAge Slums — Data-Wiring and Evidence Scorecard (enriched)
 
+## Current PlayerBot policy checkpoint
+
+**2026-10-10 — USER-APPROVED / CANONICAL, documentation/control only.**
+The sole [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+governs bot coverage; B/B2 comparison definitions, C/W/H/A/R/S grades, presentation
+evidence and independent human/H commitments remain unchanged. Supported autonomy
+is not contingent on exhaustive human coverage or blanket B2 across action families.
+
+[Current layer-bound evidence](STATUS.md#current-playerbot-policy-checkpoint):
+E-121 code GREEN is not live acceptance; E-124 third run FAILED/CLOSED, OBSERVE
+cancellation cause UNKNOWN; E-125–E-126 are bounded research/source reconciliation.
+Seven general autonomy criteria remain unclosed; historical bounded passes and
+locked milestone exits retain their original scope. No evidence/grade/milestone,
+standing-freeze, deployment or runtime-capability promotion.
+
+The [finite existing-owner handoff reproduction priority](ROADMAP.md#next-bounded-playerbot-priority)
+is not an implementation/live allocation. Future artifacts require the relevant
+authoritative outcomes/correlation for their named denominator, not universally
+all 119 body fields; historical full-copy oracles and receipts are not weakened.
+
+## 2026-10-10 — Seeded execution, whole durable proof and cleanup (E-106)
+
+**Fresh bounded LIVE layer:** Main accepts D-25 COMPLETE, run
+`run-20261010T045146Z-b79ca444`, whole PASS1/1/all seven/no failures; independent
+purpose-attribution t10 actual-file review supports this scope. Denominator:
+**two potato2259 lifetimes and two ACTUAL harvests**, not a whole farm journey.
+One enrollment wake/one own queued Move interrupt; fresh recovery Move ended
+Interrupted by ordinary Stop, not Completed. Immature advancing wakes and explicit
+mature4457 snapshots preceded both requests; potato7992 gains3+3, seeds3→1,
+labor100→98, XP0→16, Farming ActAbility (ID6) point0→2.
+
+**Durable layer:** afterRelease and afterFlush typed XYZ match frozen END inside
+unchanged0.01m; full325.0022636s after first afterRelease attempt, both cropDB IDs1/2
+absent at final reads, registry/session cleanup and verified owned teardown passed.
+All seven ports free; foreign4 processes/40 containers/55 volumes/26 networks preserved.
+E-105 original whole FAIL/durablefalse and its late typed diagnostic remain
+unchanged history, not retroactive afterRelease proof.
+
+**Code/consumer layer:** final consumer46/46; full4402total4401pass0fail1known
+opt-in skip; solution0errors10warnings/ScriptCompiler0/0; actual MCP44/24tools/
+679read-only tables; archaeology163/163+24-tool smoke. Standalone Integration
+0errors/**591warnings**; archaeology builds0errors/2+6warnings. Earlier unchanged
+Unit48/48 retained, not rerun separately for the XYZ-only final delta.
+[Layer-specific receipts/history](.omp/state/artifacts/autonomous-farm-2026-10-09/README.md).
+
+**Boundary unchanged:** seeded level1/3seed/labor100/off-soil Lilyut/Growth10/
+Loot1/actualDrop0/farm+idlewake5s/questbootstrapOFF/homesteadfalse, not acquisition.
+Synchronous Doodad.Use Harvest leaves full cast/range/client parity unproved;
+H UNKNOWN. No private homestead, quest→farm strategic handoff/restart/general
+Stage2/global LOOP closure. Immutable quest-purpose, numeric NPC reach and Q251
+completion remain open. Recommended next dependencies only, NOT DISPATCHED:
+quest-purpose attribution → harvest semantics → ordinary acquisition/handoff.
+Exact HEAD `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d`, branch
+`fix/npc-spawner-population-count`+dirty (run77tracked/1406untracked).
+No C/W/H/A/R/S grade, milestone, freeze, merge/deploy or global dispatch promotion.
+
+## 2026-10-09 — Distinct contract, LIVE regression and restart evidence (E-94–E-96)
+
+**Contract layer (E-94):** one requestedQuestId NPC report-event guard plus
+real-manager 251/6198 regression at 3512 (CurrentTarget=null), separate own reports/
+rewards. Multiple quests per NPC remain legal; target-only RunAct, zero-auto and
+numeric reach unproved. Synthetic movement consumer contracts pass; production
+movement unchanged. The 16 known fixture failures/dead wording tests resolved.
+Focused 141/141; full 4398/4397 pass/0 fail/1 environment-gated live skip; solution
+0 errors/10 warnings, ScriptCompiler 0/0. Actual downstream MCP 44/24 tools/679
+read-only tables passed; separate archaeology 163/163 + full 24-tool smoke.
+
+**Fresh bounded LIVE layer (E-95):** original-seven run
+`20261009T202451205Z-0e45fccf`, 1/1/all 7 at 158.0862619s: 330/6198 completion,
+one interrupt/fresh Move/own 6198 turn-in, then 251 acceptance. Original harness
+unchanged; disclosed natural spawn/level 10/starter setup/one enrollment wake/
+opt-ins, no assigned goals/routes/teleport. 325s/two DB snapshots and registry/
+session cleanup passed. Fresh consumer 53/53 passed; Integration publish RC1
+NETSDK1152 remains a separate packaging failure despite successful compilation.
+
+**Qualified restart layer (E-96):** same ordinary saved active Q251 restored/
+state-based reselected after one Game-only restart with predeclared autoRestore,
+no postboot assignment. Main/independent review accept causal log-backed
+Q251 → exact first Loot GUID → Completed/grant 1 inside 180s, not merely UI coexistence.
+One active quest/sole counted objective bounds this result; objectiveFixture is
+first-of-wake, not a multi-Q invariant. **Strict same-History-row criterion
+NOT MET, zero candidates**; no durable chosen plan/immutable Move parent.
+Second loot after END/before cleanup explains final 2/3 and 4058×2, not within-window
+two-grant proof or 251 completion. XP 42840→42878 observed; exact XP attribution
+unproved. 11 baseline item instances, 330/6198 bytes/money 66 conserved; 325.078976s
+ordinary flush margin confirmed (earlier 35s reviewer reading corrected).
+Captured config hash equality is not all-loaded-config equality.
+
+Owned resources cleaned and foreign 40 containers/55 volumes/four servers preserved.
+Exact unmerged HEAD `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d`,
+branch `fix/npc-spawner-population-count`, inherited dirty.
+[Layer-specific receipts/review](.omp/state/artifacts/autonomy-priorities-2026-10-09/README.md).
+**Global LOOP INCOMPLETE**: legal numeric reach, immutable purpose propagation,
+broader 251 completion/acquisition/H/general Stage 2 remain open. Next recommended,
+not dispatched: existing-owner immutable quest-purpose→request/audit propagation/
+observation with interrupt/newboot reselection and real progress/durability.
+No C/W/H/A/R/S grade, freeze, milestone, merge or deployment promotion; preserve
+historical E-92/earlier counts and evidence below.
+
+## 2026-10-09 — Permanent reproducibility, bounded server evidence (E-92 checkpoint)
+
+Main independently accepts all seven criteria in **one fresh permanent-harness
+LIVE report**, `20261009T173926006Z-914c40e1`, ending at 158.0162557s.
+Denominator: **two NPC-report completions (330/6198), one declared cancel and
+fresh own QUEST_TRAVEL recovery, one subsequent 251 selection/acceptance**.
+No 251 completion campaign, broad variants or general progression claim.
+One pre-START wake and one interrupt; no failures.
+
+Both post-END DB reads agree on XP 42840, copper 66, 330/6198 completed bits,
+all ten body-equipment baseline quantities conserved and item 18792×1.
+Owned-bot cleanup and runner-owned lane teardown passed; focused consumer
+tests 53/53. New-consumer replay is smoke only, not a retroactive D15 pass.
+Level-10/natural-spawn/body-equipment provisioning and opt-ins remain disclosed;
+not unseeded acquisition or full-kit proof, and no assigned quests/routes/teleport.
+
+This increment delivers permanent reproducibility at the bounded server layer,
+**no new production gameplay code or capability**. Exact HEAD
+`e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work and the
+three-file harness layer are recorded in the
+[E-92 ledger](.omp/state/EVIDENCE.md),
+[evidence README](.omp/state/artifacts/headless-harness-2026-10-09/README.md)
+and [manifest](.omp/state/artifacts/headless-harness-2026-10-09/manifest.json).
+Use those receipts for actual integrated-gate results; the known 16 are separate
+and not fixed. E-91 and earlier grades/evidence remain historical.
+
+**Global LOOP INCOMPLETE.** Legal reporter reach, unseeded acquisition, broad
+variants, restart, H and general Stage 2 are unproved; observed goal retention
+does not establish an immutable Move-to-quest parent. No C/W/H/A/R/S grade,
+standing-freeze, track or milestone closure changes; not merge-ready.
+Next recommended, not dispatched: actual reporter target/reach and ordinary
+interaction validation, with fresh ownership; then closure of the known 16 before
+merge and bounded restart/intent continuity.
+
+## 2026-10-09 — Seven LIVE gates, bounded NPC-report scope (E-91 checkpoint)
+
+Main's independent source/runtime review accepts **7/7 at the LIVE server layer**
+for one naturally spawned bot: start without scripted work → discovery → choice →
+ordinary movement/quest APIs → completion → one declared Move-interrupt recovery →
+independent next choice. `AutoAfter094347` first satisfied all seven at157.0248s
+(`09:46:26.2791474Z`), within213.083s/214 observations.
+
+The denominator is **two nonrepeatable NPC-report quests330 and6198 completed,
+then251 selected/accepted**, not kill/gather objectives or general progression.
+Disclose level10/starter provisioning, one enrollment wake and opt-in flags;
+no scripted goal/quest/route or teleport. Queue result=true and old/fresh request
+identities establish the controlled interruption, not an HTTP acknowledgment.
+Main reviewed durable completed bits5/96 and rewards: +840XP, +66copper,
+item18792 absent→1, all ten starter-template quantities unchanged. The natural
+no-cancel run separately completed330 then6198.
+
+[LIVE criteria/raw-proof pointers](.omp/state/artifacts/astra-autonomy-2026-10-09/AutoAfter094347/seven-live-gates-observed.json),
+[reward baseline](.omp/state/artifacts/astra-autonomy-2026-10-09/AutoAfter094347/reward-before-explicit-wake.json),
+[flushed result](.omp/state/artifacts/astra-autonomy-2026-10-09/AutoAfter094347/reward-after-flush.json)
+and [source/data provenance](.omp/state/artifacts/astra-autonomy-2026-10-09/architecture-map.md)
+remain distinct from deterministic fixtures. **Measured full gate remains RED;
+its 16 failed names exactly match E-90, with seven new regressions passing.**
+See [measured counts and separate checks](STATUS.md). Independent control/MCP/
+cycle/report checks passed; the E-91 ledger is Main-directed/fast-owned. No
+C/W/H/A/R/S grade, standing freeze, PB-002, M5/M7 or Stage2 closure changes.
+H, general combat/gathering, restart and population proof remain unknown;
+not merge-ready, no external signoff/deployment/commit.
+
+
+## 2026-10-09 — Report checks are evidence checks, not live autonomy
+
+[E-90](.omp/state/EVIDENCE.md) verifies 24 supplied-observation report cases:
+old completion totals, watched deaths, waiting and failed requests cannot earn
+new-progress/recovery/abandonment claims. Existing server/request fields are
+projected read-only; live integration, abandonment/kill attribution and sustained
+autonomy remain unproved. Full gate still RED with 16 unchanged failures.
+No capability or human grade changes.
+Evidence and source identities: [E-90](.omp/state/EVIDENCE.md),
+[manifest](.omp/state/artifacts/sol-report-2026-10-09/manifest.json).
+
+
+## 2026-10-08 — Evidence boundary: remaining quest work
+
+[E-89](.omp/state/EVIDENCE.md) adds deterministic engine/actor/owner-runtime evidence
+for component alternatives and bot-selected remaining gathering/talk/turn-in.
+Fixtures supply quests/world objects and initial objective credit. This does not
+promote live autonomy, human/client evidence, persistence or population grades.
+Full gate remains RED with the same 16 measured pre-change failures; archaeology
+and focused checks passing do not erase that result. Source hashes and commands:
+[manifest](.omp/state/artifacts/sol-remaining-2026-10-08/manifest.json).
+
+
 ## Coverage across zones and mechanics
 
 Every scope brief declares its supported variants/coverage denominator. The next
@@ -12,9 +198,9 @@ the existing evidence dimensions; no aggregate completion percentage is introduc
 
 ## Current journey scope — starting character to owned small plot
 
-The first bot product exit is [one ordinary starter → owned small plot → first
-harvest/replant](ROADMAP.md#first-owned-small-plot-journey), not a house-building or
-ten-bot village exit. **LOOP INCOMPLETE**: data requirements are now identified, not
+The retained future livelihood exit is [one ordinary starter → owned small plot → first
+harvest/replant](ROADMAP.md#first-owned-small-plot-journey), not a universal gate for
+supported quest autonomy, a house-building or ten-bot village exit. **LOOP INCOMPLETE**: data requirements are now identified, not
 executed end-to-end. No mechanic or autonomy grade is promoted.
 
 Canonical correction: the six-quest route to 4438 starts with a level-10 requirement,
@@ -105,9 +291,9 @@ H UNKNOWN, Josh run pending.
 
 ## Current reading guide — 2026-09-15
 
-Read broad outcomes in [VISION](VISION.md), dispatch in
-[ROADMAP](ROADMAP.md#current-delivery-direction), and execute through the
-[slice contract](PROJECT-CONTROL.md#delivery-contract). This scorecard measures
+Read broad outcomes in [VISION](VISION.md), current priority/allocation limits in
+[STATUS](STATUS.md#current-playerbot-policy-checkpoint), and execute through the
+[supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract). This scorecard measures
 evidence, not effort or overall project percent complete. Existing grades below
 are retained; this planning revision runs no gameplay tests and promotes none.
 Bot capability grades rest on bot-performed evidence per the [conversion doc](scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md); H is a review verdict, never execution evidence.

@@ -1,11 +1,8 @@
-# AAEmu Project Architecture Analysis
+# AAEmu Tiered Testing Contract (authoritative tiers + evidence rules)
 
-- Audience: Contributors and maintainers
-- Last verified against: `develop` on February 28, 2026
-- Prerequisites: Familiarity with `AAEmu.Game` and `AAEmu.UnitTests`
+> Historical architecture analysis (2026-02, §§1–6 below) is preserved for context and is NOT normative for current dispatch. Authoritative: §7 tier workflow + evidence rules + loop-closure evidence. Tiers govern **how to validate**, never **what to work on** — consult [STATUS's current policy/allocation checkpoint](../STATUS.md#current-playerbot-policy-checkpoint). Hardening touch: 2026-10-10 (stable selection router; no test content changed).
 
-<!-- markdownlint-disable-file MD012 MD013 MD022 MD032 MD058 MD060 -->
-
+## Historical architecture analysis (2026-02, non-normative)
 ## Key Subsystems
 
 1. **Game Service** – `AAEmu.Game/GameService.cs` – responsible for initialization, startup and shutdown of server components, manages server lifecycle.
@@ -189,6 +186,14 @@ Use the repository-wide [Loop-Closure Definition of
 Done](../PROJECT-CONTROL.md#loop-closure-definition-of-done) and its objective
 matrix when recording this evidence. This is the acceptance method for new or
 updated features; it does not assert that all current features satisfy it.
+
+For bot claims, use the sole [supported-capability contract](../PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+and an explicit supported denominator. Seven autonomy criteria and applicable
+ordinary rules remain required; B/B2/presentation comparisons are claim-specific,
+not blanket prerequisites. Unsupported-objective deferral must be named, not
+credited as completion or used to suppress other eligible quests at the same NPC.
+Future proof uses relevant authoritative outcomes/correlation, not a universal
+119-field copy; historical acceptance oracles/results are unchanged.
 
 
 ______________________________________________________________________

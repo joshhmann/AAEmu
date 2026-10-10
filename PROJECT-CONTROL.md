@@ -28,6 +28,7 @@ dated evidence and locked milestone exit requirements below remain intact.
 "Finish combat", "finish GOAP", and "make the village alive" are initiatives, not
 executable cards. Conversely, one card per class or method hides integration risk.
 A slice should carry one meaningful behavior across the layers it actually needs.
+**Anti-drift rule (2026-10-07).** A scenario, quest, lane, benchmark, bug, or campaign is evidence used to improve or validate a reusable capability — it does not become the project objective unless canonical project documentation explicitly promotes it. Before scenario-specific implementation work, name (1) the reusable capability under test, (2) the failure mechanism being investigated, and (3) the evidence that would confirm or reject the hypothesis. If those cannot be named, stop and reassess rather than patching the scenario.
 
 **Actors under test (reaudit 2026-09-18).** PlayerBots are the actors under test for every bot
 capability: each capability names the bot actor exercised through real engine paths. The human
@@ -50,16 +51,67 @@ Closure names the supported scope and evidence layer; the next zone never inheri
 a completion claim automatically. Reuse evidence while its dependencies hold;
 avoid repeating whole-domain research for every child card.
 
+### PlayerBot supported-capability contract
+
+**User-approved canonical policy — 2026-10-10.** PlayerBot delivery targets useful,
+explicitly supported capabilities with autonomous discovery, choice, planning,
+ordinary execution, observed completion, recovery and goal continuation. Declare
+the supported action/objective families, prerequisites and coverage denominator.
+Exhaustive human-player capability coverage, every quest or tutorial, exact client
+UI/packet choreography, animations and identical activity choices are not generic
+bot acceptance requirements.
+
+Supported actions MUST retain applicable authoritative engine rules: legality,
+eligibility, reach, required timing, ownership, costs, rewards, conservation and
+persistence. A genuine shared-rule bypass blocks the affected supported action;
+reduced coverage is not permission to waive correctness. No fake quest credit,
+GM grants, teleport shortcuts or synthetic completion may stand in for ordinary work.
+Unsupported quests/objectives may be deferred or skipped with a named reason,
+without marking them completed or suppressing an entire NPC when another quest
+there is eligible. Recovery is bounded and has one owner; retain one ordinary
+`Character`/gameplay path, scheduler and `ActorRequest` lifecycle, not a second brain.
+
+Existing B/B2 grading definitions remain unchanged when those per-family comparison
+claims are made. Blanket B2 across all families or full human parity is not a
+prerequisite to supported autonomy. Presentation evidence and human playability/H
+commitments remain independent, not removed by bot scope.
+
+The seven autonomy criteria remain intact:
+
+1. Production bot starts without scripted task
+2. Discovers a valid gameplay opportunity
+3. Independently selects an objective
+4. Executes through authoritative gameplay APIs
+5. Confirms actual objective completion
+6. Handles an interruption or failed action
+7. Independently selects a subsequent goal
+
+Declare an explicit denominator of supported, legal, meaningful goals. Recovery
+must be observed and bounded, not false credit; a fresh request for the same quest
+is not a subsequent goal. Planning is part of the loop; intent or predicted effects
+are not proof.
+Future artifacts require relevant authoritative outcomes and causal correlation,
+not a universal copy of all 119 body fields. Preserve historical oracles/results;
+this documentation/control policy closes no general autonomy criterion, promotes
+no grade or milestone and allocates no source/runtime work. Current evidence limits
+and proposed engineering priority are in [STATUS](STATUS.md#current-playerbot-policy-checkpoint)
+and [ROADMAP](ROADMAP.md#next-bounded-playerbot-priority).
+Documentation/UI delivery evidence: [E-127](.omp/state/EVIDENCE.md#e-127--user-approved-supported-capability-contract-and-documentation-ui-delivery).
+That bounded verification does not certify new gameplay capability or human acceptance.
+
 ### First concrete product journey
 
-Current bot delivery target: [one ordinary starter → one owned small farm plot →
-first harvest and repeat](ROADMAP.md#first-owned-small-plot-journey), not a house,
-construction-pack economy or ten-bot village. GOAP is the intended choice mechanism;
+Retained future livelihood journey: [one ordinary starter → one owned small farm plot →
+first harvest and repeat](ROADMAP.md#first-owned-small-plot-journey), not a universal
+gate before supported quest autonomy, a house, construction-pack economy or ten-bot village.
+GOAP is the intended choice mechanism;
 a deterministic reference scenario proves the same ordinary actions without faking
 their results. Follow the
 [common implementation template](.kanban-templates/implementation.md) for all domains.
 Canonical eligibility and existing service gaps determine the next slice, not a
 speculative goal chain. Data/code verification is not loop completion.
+The E-106 seeded public-farm proof is a bounded execution dependency with disclosed inputs, not delivery of the earned owned-small-plot journey.
+
 
 ### Required slice brief
 
@@ -250,8 +302,9 @@ identity, truthful observations, concrete target binding, and the existing singl
 action lifecycle. Then compare a bounded planner-driven loop with the deterministic
 baseline. Expand only after observed execution and recovery pass. Do not build a
 second scheduler, parallel gameplay rules, or speculative caches to compensate for
-unclosed actions. This supersedes the blanket "GOAP deferred" wording, not parity
-requirements or the existing architecture invariants.
+unclosed actions. This supersedes the blanket "GOAP deferred" wording. Named parity
+claims retain their requirements; supported autonomy follows the
+[supported-capability contract](#playerbot-supported-capability-contract), with existing architecture invariants retained.
 
 ### PlayerBot ownership checkpoint — 2026-09-16
 

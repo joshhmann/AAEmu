@@ -6,6 +6,11 @@
 > follows [PROJECT-CONTROL](PROJECT-CONTROL.md#bot-decision-architecture) and the
 > [current slices](ROADMAP.md#near-term-slice-queue). This is not an autonomy exit,
 > a waiver of action parity, or permission to deploy.
+>
+> **Current applicability — user-approved 2026-10-10:** the sole
+> [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+> governs coverage/autonomy. Retain ordinary correctness, B/B2 definitions and
+> invariants; blanket parity migration is not a prerequisite to all supported autonomy.
 
 > RESEARCH / DESIGN ONLY. No AAEmu code modified, built, tested, or committed for this draft.
 > Merges: `playerbot-target-architecture-proposal.md` (Muse proposal) + `playerbot-target-architecture-independent-review.md`
@@ -272,6 +277,9 @@ executes for the same action (packet-`Read`-is-the-handler shape may require ref
 completion/failure via DeferUntil within Deadline. EXCLUDED: animation smoothness, jitter, observer polish — E-axis work. NUANCE (locked):
 if a "presentation" event is required by the semantic pipeline (e.g. fire-before-phase), it is correctness, not E — the test is whether the
 pipeline needs it, not which client renders it. B2 ≠ E2.
+**Applicability:** these four criteria are unchanged for a B2 claim about the named
+family. B2 across all families is not a generic autonomy prerequisite under the
+[supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
 
 ## 22. Correctness / semantic execution / presentation / humanization
 
@@ -282,8 +290,16 @@ PRESENTATION/E: observer animation, posture, cast bars, build preview, smoothnes
 skill packets are fabrication, not presentation; presentation failure never fails the action. HUMANIZATION: hesitation, idle variation,
 imperfect choice, look-around — one duration-scale jitter primitive at most, default OFF, ledger-tagged, per-activity opt-in; any jitter on a
 canonical gate is auto-reject. Facing/stop required for B2 only where trace shows humans observably do it or the engine gates it.
+For supported autonomy, applicable engine gates remain mandatory irrespective of
+whether B/B2 comparison or E presentation evidence is claimed; exact human
+choreography is not a universal gate. See the [canonical contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
 
 ## 23. Trace corpus + tooling
+
+**Scope qualification:** the farm+buy-first order below belongs to this historical
+parity corpus workstream, not all supported quest/combat/loot autonomy.
+Current applicability follows the [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
+
 
 PROVISIONAL (LOW cost, HIGH value). Action-oriented corpus; level is metadata. Per scenario: `meta.json` (scenario, actor, client version,
 server SHA, zone, level, target type, expected action, IDs) + `trace.jsonl` + `annotations.jsonl` (intended-action, settle-point, begin,
@@ -375,6 +391,11 @@ LOCK NOW (review-usable; a violating PR amends the invariant first, through a pr
 ## 29. Migration roadmap
 
 **This roadmap is a PlayerBot/parity workstream layered on top of ongoing AAEmu completion, not the master AAEmu roadmap.** Unrelated emulator development continues in parallel. The phases below constrain only PlayerBot behavior, shared semantic seams being migrated for parity, and evidence claims that depend on those seams. If ongoing AAEmu work changes an authoritative mechanic or handler, re-ground the affected PlayerBot family before continuing; do not halt unrelated AAEmu completion work.
+**Current qualification:** this historical parity-migration order does not impose
+blanket B2 or Two-Potatoes prerequisites on every supported autonomy capability.
+Its named parity claims retain their original requirements; current scope follows
+the [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract),
+and present priority/allocation limits are in [STATUS](STATUS.md#current-playerbot-policy-checkpoint).
 
 Phase 0 — Evidence/integrity (no PlayerBot behavior changes required by this architecture): `two_potatoes_full_cycle` + `npc_buy_single` traces; hook upgrades (annotation,
 inbound details, refusal events, chat filter); ledger/backstop + Harvest-seam + GCD-shape + PlayCinema decisions; wedge-rate + loop-tax

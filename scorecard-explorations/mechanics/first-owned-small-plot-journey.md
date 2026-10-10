@@ -16,7 +16,7 @@
   - Race & Corridor: Nuian, Solzreed Peninsula (L1–L10 Golden Route) to Windshade village (`ZoneId 8`).
   - Quest Chain: 6 quests (`4415 → 4479 → 4417 → 4424 → 4439 → 4438`).
   - Housing Type: Template 267 (`Item 15596`, Straw Hat Scarecrow Garden 8×8).
-  - Crop Type: Potato Seed (`Item 15659`) → Potato Plant (`Doodad 2259`) → Potato (`Item 15660`).
+  - Crop Type: Potato Seed (`Item 15659`) → Potato Plant (`Doodad 2259`) → Potato (`Item 7992`).
   - Tax Sustainment: Craft 76 (Skill 16767, 200 LP → 5× `Item 31892` Bound Tax Certificates) at Building Management Plaque (`Doodad 2392`).
 - **This slice changes exactly:**
   - Establishes the authoritative discovery-to-delivery contract for the complete beginner-to-farm loop.
@@ -37,6 +37,8 @@
 
 ## 2. Establish truth before design
 
+> **Potato identity correction — 2026-10-10:** At HEAD `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work, retained [canonical catalog traces](../../.omp/state/artifacts/autonomous-farm-2026-10-09/canonical-catalog-traces.json) identify `7992` as Potato and `15660` as Sweet Potato Seed (`trace_item`: one item row each, limit 10, untruncated, evidence **exact**). Retained [canonical harvest links](../../.omp/state/artifacts/autonomous-farm-2026-10-09/canonical-harvest-links.json) query crop `2259`'s loot-pack links: six rows, limit 30, untruncated; pack `6452` contains `7992` with `min_amount=2` / `max_amount=4`. These are **data-layer** identities and quantity bounds, not observed harvests or guaranteed optional seed/bonus returns. Both receipts name source `compact.sqlite3`, path `/root/aaemu-dev/AAEmu.Game/Data/compact.sqlite3`, version `1.2 r208022`, MD5 `78b3bdbf038db3b927056106efdf91af`. This corrects only the three potato-yield references in this dossier; it does not validate the rest of the earned owned-plot journey or reinterpret old fixture runs as `7992` proof.
+
 - **Source SHA + relevant dirty files; reference-data identity:**
   - Working tree: `develop` at baseline commit `63f6567e7a198775ffe885a3345db70ff5a50777` + high-priority corrective commits.
   - Canonical Reference DB: `AAEmu.Game/Data/compact.sqlite3`
@@ -50,7 +52,7 @@
   - *Quest 4438 Rewards:* 1× `Item 15596` (Design: 8×8 Scarecrow Garden), 1× `Item 8337` (Lumber), 25× `Item 31892` (Bound Tax Certificate). Confidence: **exact**.
   - *Housing 267 Taxation:* Group 8 (small 8×8). Base weekly tax = 50,000 copper. Deposit = 100,000 copper (10 certs), first week = 50,000 copper (5 certs). Total initial payment = 15 certificates (`Item 31892`). Remaining in bag = 10 certificates. Confidence: **exact**.
   - *Housing 267 Build Step:* Exactly 1 step: Skill 18553 (10 LP, 0 reagents/material packs). Confidence: **exact**.
-  - *Potato Crop:* Potato Seed (`Item 15659`, costs 25 copper from Seed Merchant 8522 in pack 171) grows into Doodad 2259. Harvest yields Potato (`Item 15660`) + EXP + Farming actability. Confidence: **exact**.
+  - *Potato Crop:* Potato Seed (`Item 15659`, costs 25 copper from Seed Merchant 8522 in pack 171) grows into Doodad 2259. Harvest yields Potato (`Item 7992`) + EXP + Farming actability. Confidence: **exact**.
   - *Tax Sustainment Crafting:* Craft 76 (`skills` id 16767) at Building Management Plaque (`Doodad 2392`). Consumes 200 LP, produces 5× `Item 31892` (Bound Tax Certificate). No coins, materials, or cash shop required. Confidence: **exact**.
 - **Current ordinary human gameplay path:**
   1. Client spawns in Solzreed Peninsula, talks to NPC 3597, follows Golden Route to level 10.
@@ -107,7 +109,7 @@
   3. Plot placement creates a valid `House` object in `HousingManager.Houses` owned by `character.Id`.
   4. Inventory retains exactly `10× Item 31892` after 15 certificates are deducted as deposit and first week tax.
   5. House build step completes using Skill 18553, expending 10 LP.
-  6. Planted potato seed grows and is harvested into character inventory as `Item 15660`.
+  6. Planted potato seed grows and is harvested into character inventory as `Item 7992`.
   7. Crafting at building plaque expends 200 LP and adds `5× Item 31892` to bag.
 - **Negative/refusal and recovery cases:**
   1. Placement outside housing zone rejected (`NotHousingZone`).

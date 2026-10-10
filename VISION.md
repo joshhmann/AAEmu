@@ -44,14 +44,17 @@ Target features (our lane):
    actual production and consumption matter to other residents and human players.
    Scripted presence, seeded demonstrations, and ledger activity alone are not this exit.
 
-Keep three delivery lanes visible: **human playability**, **PlayerBot parity and
-autonomy**, and **population/society**. These are planning views, not replacements
+Keep three delivery lanes visible: **human playability**, **PlayerBot supported
+capabilities and autonomy**, and **population/society**. These are planning views, not replacements
 for the existing domain lanes, milestone IDs, or evidence dimensions. Bots need not
 wait for every human feature: improve one shared playable loop, teach bots to close
 it, then expand. Human-only defects retain product priority even without a bot consumer.
+The user-approved [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+defines bot coverage and ordinary correctness; optional per-family parity and
+presentation comparisons retain their meanings without gating all bot autonomy.
 
 M8 → M9 remains the long-term horizon, not a command to skip unfinished shared loops.
-The dispatch order is the [current delivery queue](ROADMAP.md#current-delivery-direction).
+The next bounded priority is [finite goal handoff reproduction](ROADMAP.md#next-bounded-playerbot-priority), not a runtime allocation.
 The [slice contract](PROJECT-CONTROL.md#delivery-contract) governs agent work.
 
 Historically, M8 — Living Village has a qualified engineering/runtime exit,

@@ -34,6 +34,15 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 
 ## OPEN
 
+### PB-BRIDGE-01 · Test/control plane can perform gameplay (event-injection + fixture ops) — OPEN, removal tracked here (doc-alignment step 6)
+- Scenario: any autonomy lane where the harness drives progress the bot did not earn (`BotDriveBridge` `drive/kill`, `drive/gather`, `drive/talk`, `drive/interact`, `drive/enterSphere`, `drive/cinemaStarted/Ended`, `drive/aggro`, `drive/zoneKill`, `drive/levelUp`, `drive/express`, plus fixture grants `drive/stock`, `drive/setLevel`, `homestead/kit`, `farm/rig`, positional staging `drive/teleportToNpc`, `homestead/move`, `farm/place`).
+- Intended: test/control API spawns/removes/assigns/observes/waits/collects traces + explicitly labelled privileged setup only; no Test API verb may inject a `UnitEvents` progress event or synthesise a success (see `scorecard-explorations/mechanics/playerbot-api-architecture-2026-09-18.md` §1, §6.4).
+- Observed vs expected: 20 event-injection call sites + 14 privileged fixture ops coexist with 11 real engine events reachable through `IGameplayActor`, producing indistinguishable-looking green evidence; bridge throwaway actors run off the execution boundary on a different ledger from the scheduler's actor.
+- Layer: BOT-SIDE (control plane) + HARNESS.
+- Status: OPEN.
+- Evidence: API audit 2026-09-18 (HEAD `d0bea9e6a`); activity-spine rules forbid gameplay-by-bridge; no removal landed yet.
+- Exit: event-injection ops removed or hard-gated out of autonomy lanes (fixture-only label + artifact disclosure), `/api/actors` enqueue path used for live claims; verify by grep for `KillNpc|TalkToNpc|GatherItem|AdvanceQuest` in bridge lane artifacts showing zero gameplay calls.
+
 ### PB-FARM-01 · Farming loop stalls: 3m merchant range check, 150m soil horizon, and maturation patrol fallthrough
 - Scenario: playerbot executes needs-farm loop (`BotRoamStepExecutor` Branch 0b, `NeedsFarmActivityModule`) during autonomous roaming or live H-gate testing
 - Intended: bot checks bag for seeds; if missing, locates nearest seed merchant, navigates to merchant, purchases seeds; navigates to public/owned farm soil; plants seeds; remains leashed to plot while waiting for crop maturity; harvests mature crop; deposits or sells yield.
@@ -215,6 +224,41 @@ evidence · status (OPEN/FIXED/WONTFIX-with-reason).
 - Status: HARNESS HARDENED / A5 CONJUNCTION CLOSED 2026-09-08 — tier-3 legs
   evidenced at their tested revisions, not re-verified at HEAD.
 
+
+### PB-CORPSE-01 · Quest corpse-memory pin never records: 7/7 identity asserts return TryGetCorpse-false — OPEN, owner needed
+- Scenario: quest bot kills its pinned prey via full decision-stack QuestDecisionScenario.Run on the real headless actor; any later wake asks QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse) for the corpse record (ObjId + TemplateId + QuestId + detecting cycle).
+- Intended: AliveToDead transition promotes the dead pinned target into the bounded per-bot record; re-observation preserves identity; irrelevant dead NPC never pins; fresh kill re-pins over stale; unresolved corpse keeps its pin.
+- Observed vs expected: all 7 identity asserts fail with the SAME signature — TryGetCorpse returns false (no record created). Expected IsTrue() + corpse.ObjId == pinned objId. Nothing dispatches Loot off the missing record.
+- Failing tests: AAEmu.UnitTests/Game/Core/Managers/Bots/QuestCorpseObserveTests.cs:58 AliveToDead_PromotesCorpse (:75 TryGetCorpse IsTrue); :85 SameIdentity_PreservedAcrossWakes (:100 IsTrue); :108 IrrelevantDeadNpc_Ignored (:126 IsTrue, :120 pre-kill IsFalse passes); QuestCorpseRepinTests.cs:58 FreshKill_ReplacesStaleRecord (:71/:90 IsTrue); :98 IrrelevantDead_WithStaleRecord_KeepsStale (:110 IsTrue); :218 RepinnedCorpse_PreservesIdentityAcrossWakes (same signature); QuestCorpseLootTests.cs:251 UnresolvedCorpse_PinKept_NoRelease (:267 IsTrue).
+- Layer: BOT-SIDE (QuestBehavior corpse-memory) + HARNESS (fixture staging shared 251/3475 funnel, verified benign).
+- Status: OPEN, owner needed.
+- Evidence: RED-ON-CLEAN 7/7 at pristine HEAD e6e401129 (clean worktree /root/aaemu-cleanhead, per-test isolated processes, 143-233ms each; logs /tmp/cleanhead-logs/<Class>.<Method>.log). Contamination ruled out: rig hunk additive-safe, fixture blocks disjoint, all classes NotInParallel, names never keys.
+- Suspected area: QuestBehavior.cs:642-647 NotePinnedCorpse guard (objId==0 || templateId != fixture.PreyTemplate → return) and/or funnel call sites :776/:859/:972/:1098 not reaching the pin arm. TryGetCorpse :664-667 (plain dict read) NOT suspect.
+- Bounded next step: read QuestBehavior.cs:640-700 FIRST, trace which funnel arm the kill wake takes (:852-975), log whether NotePinnedCorpse is reached and with what objId/templateId vs fixture.PreyTemplate.
+- Non-scope: not the reload-reconcile chain, not TalkChain, not stall/advance (PB-HELDOUT-01), not S5 arithmetic (PB-HELDOUT-S5).
+
+### PB-HELDOUT-01 · Recovery mis-arbitration: S10 travel-vs-advance picks wrong; S7 second actor never retargets — OPEN, owner needed
+- Scenario: heldout recovery scenarios drive QuestDecisionScenario.Run on staged fixtures (travel-arm prey at 26m; two actors racing one corpse then live prey).
+- Intended: S10 resolves Move with destination toward live prey spawner; S7 second actor leaves the spent corpse and retargets live prey.
+- Observed vs expected: S10 got AdvanceQuest where Move expected (:238); S7 retargeted=false (:135, second actor stays on spent corpse).
+- Failing tests: HeldoutRecoveryTests.cs:227 Scenario10_TravelArm_PreyAt26m (:237 WorkSelected IsTrue, :238 Move, :239 Destination.HasValue IsTrue); :99 Scenario7_ContendedCorpseRace (:135 retargeted IsTrue).
+- Layer: BOT-SIDE (dispatch/stall arbitration + spent-corpse release arm).
+- Status: OPEN, owner needed.
+- Evidence: RED-ON-CLEAN 2/2 at e6e401129 (isolated, 143-233ms; logs /tmp/cleanhead-logs/HeldoutRecoveryTests.<Method>.log).
+- Suspected area: stall/advance arbitration (travel-arm vs AdvanceQuest dispatch, dispatch=held/stall-close-in Pursuit region) + spent-corpse release arm QuestBehavior.cs:935-938 / :1072-1075 (IsLootDispatched/terminal-empty exclusion holding 2nd actor on spent pin).
+- Bounded next step: read QuestBehavior.cs dispatch/stall Pursuit-leg region FIRST, repro S7 2nd-actor wakes, log which arm holds CurrentTarget.
+- Non-scope: not reload-reconcile, not TalkChain, not pin creation (PB-CORPSE-01), not S5 arithmetic, not this filing lane.
+
+### PB-HELDOUT-S5 · Suite-invalid: regen-outpaces-DPS kill assert unsatisfiable by its own arithmetic — OPEN, owner needed (fix shape known, unapproved)
+- Scenario: HeldoutScenarioTests Scenario5 stages npc Hp=MaxHp=100 then loops 30 wakes with npc.Hp = Min(MaxHp, Hp-2+5) (net +3/wake clamped at max).
+- Intended (doc comment :232-236): the stall detector must trip instead of yielding forever.
+- Observed vs expected: assert :260 (npc.Hp <= 0 IsTrue) can NEVER pass — from full HP the expression is Min(100,103)=100 every wake. The body asserts a kill the staging arithmetic precludes; no stall fact (SelectedAction/reason/count) is asserted.
+- Failing test: HeldoutScenarioTests.cs:238 Scenario5_RegenOutpacesDps_NoKillWithin30Wakes (:260 assert).
+- Layer: HARNESS (test-body arithmetic only; engine not suspect).
+- Status: OPEN, owner needed; fix shape known (assert stall evidence — SelectedAction/reason/stall-count — not kill) but unapproved; test-body-only change when authorized.
+- Evidence: RED-ON-CLEAN 1/1 at e6e401129; log /tmp/cleanhead-logs/HeldoutScenarioTests.Scenario5.log. E-19 suite-invalid postmortem concurs.
+- Bounded next step: read HeldoutScenarioTests.cs:232-264 FIRST; pick ONE contract (stall-trips vs kill-lands) and align body/assert test-body-only.
+- Non-scope: not reload-reconcile, not TalkChain, not cards 1/2, no engine change.
 
 ## FIXED (evidence retained)
 ### PB-007 · Flagged same-faction aggression handshake — FIXED / CLOSED 2026-08-27

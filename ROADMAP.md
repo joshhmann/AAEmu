@@ -1,5 +1,185 @@
 # ArcheAge Slums — Roadmap & Milestones (locked-shape 2026-08-03; version number retired 2026-08-04 — v1/v4/v6/v7 label drift, the date is canonical)
 
+## Current PlayerBot policy checkpoint
+
+**2026-10-10 — USER-APPROVED / CANONICAL policy; documentation/control only.**
+Apply the sole [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
+[Current evidence and allocation limits](STATUS.md#current-playerbot-policy-checkpoint):
+E-121 code GREEN is not live acceptance; E-124 third run FAILED/CLOSED, cancellation
+cause UNKNOWN; E-125–E-126 are research/source reconciliation only. Existing grades,
+locked historical exits and bounded results stand; seven general autonomy criteria
+remain unclosed. No new source/runtime capability, implementation or live campaign.
+
+### Next bounded PlayerBot priority
+
+**Ready for bounded reproduction, not allocated here:** demonstrate finite EXISTING
+goal-owner retirement/handoff from unsupported or stuck A to supported eligible B,
+including another quest at the same NPC. Declare the objective-family denominator
+and authoritative signals; preserve AdvanceEnter's existing give-up guard/counter.
+Reproduce first and repair ONLY a demonstrated failing boundary, if any; returned
+GiveUps not being consumed in an inspected branch is not proof all recovery is missing.
+Release the owner only on actual give-up/named blocker; A's completed-memory stays
+false and interrupted/resolvable under-budget work is not prematurely abandoned.
+No whole-giver suppression, second timer or duplicate brain.
+
+Following distinct future work proves an actual chosen objective pattern
+(kill/loot/gather or another supported pattern), ordinary full completion including
+turn-in if required, then next choice. Earned resource→seed→farm is a separate
+future slice. Quest251/farm instances are reusable-capability evidence, not the
+entire project objective. Activity-Spine is not ratified. Main owns future allocation;
+this priority does not launch implementation, tests or live work.
+
+## 2026-10-10 — Bounded seeded public-farm proof COMPLETE (E-106)
+
+Main closes D-25 at its **seeded PUBLIC-FARM** boundary: fresh run
+`run-20261010T045146Z-b79ca444` whole PASS1/1/all seven,181.3174286s; independent
+purpose-attribution t10 review supports that scope. One enrollment wake, one
+queued own Move interrupt/fresh autonomous recovery, two real crop2259 lifetimes,
+advancing immature waits and mature4457-before-request, actual potato7992 gains3+3,
+ordinary325.0022636s after first afterRelease attempt, typed frozen-END conservation,
+cropDB absence and owned cleanup passed. Recovery Move stopped Interrupted, not Completed.
+
+Consumer46/46; full4402/4401 pass/0 fail/1 known opt-in live skip; solution0errors/
+10warnings, ScriptCompiler0/0, actual MCP44/24tools679tables; archaeology163/163+
+24-tool smoke passed. Standalone Integration0errors/591warnings; archaeology
+builds0errors/2+6warnings. [Exact evidence and retained failures](.omp/state/artifacts/autonomous-farm-2026-10-09/README.md).
+E-105's original whole FAIL remains historical; the final harness changed only
+durable XYZ projections to CAST AS DOUBLE with unchanged0.01m tolerance.
+
+This is disclosed level1/seed/labor/site/rate setup, **not** the earned owned-plot
+journey, private homestead, strategic quest→farm handoff, restart or self-sufficiency.
+Synchronous Harvest does not prove full canonical cast/range/client parity; H
+UNKNOWN. Global LOOP/general Stage2/immutable quest-purpose/numeric NPC reach/
+broader Q251 remain open. **No next dispatch:** recommended dependencies are
+existing-owner quest-purpose attribution, harvest semantics, then ordinary
+acquisition/handoff. No milestone/grade/freeze/global dispatch/merge/deploy change.
+HEAD `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d`, branch
+`fix/npc-spawner-population-count` plus inherited dirty; prior checkpoints retained.
+
+## 2026-10-09 — Bounded event binding/gates and qualified restart checkpoint (E-94–E-96)
+
+Main accepts requested NPC report **event** attribution and the changed-patch
+gate: focused 141/141; full 4398 total/4397 pass/0 fail/1 known opt-in skip,
+both downstream 44-tool BotControl/24-tool 679-table read-only MCP smokes, and
+archaeology 163/163 plus full smoke. The 16 known fixture/dead-wording contracts
+resolved without production movement changes. Multiple quests at NPC 3512 remain
+allowed; 251 and 6198 each require their own report/reward. CurrentTarget=null
+regression is not target-only RunAct or numeric reach acceptance.
+
+Fresh original-seven E-95 run `20261009T202451205Z-0e45fccf` passed 1/1/all 7 at
+158.0862619s with unchanged three-file harness, ordinary rewards/durability and
+registry/session cleanup. Fresh consumer 53/53 passed; compiled Integration output
+was used despite separate publish RC1 NETSDK1152 packaging failure.
+
+One E-96 Game-only automatic restart restored saved active Q251 and produced
+log-backed Q251 → first within-window Loot GUID → applied grant through existing
+owners, accepted by Main/independent review for this one-active-quest run.
+**Strict same-History-row oracle NOT MET**; no durable plan/immutable Move-parent.
+Second loot occurred after the 180s window before cleanup: final 2/3 and 4058×2
+include that work, not 251 completion. Baseline 11 item instances/completion bytes/
+money conserved; actual 325.0789759992622s ordinary margin confirmed, not 35s.
+Owned resources cleaned; foreign 40 containers/55 volumes/four servers preserved.
+
+**Next recommended slice — NOT DISPATCHED:** immutable quest-purpose→actual
+fallback Move/quest Loot request/audit propagation and observation using existing
+owners only. Require same immutable Q/GUID/cycle, no stale parent after observed
+interrupt/newboot reselection, real quest progress/durability, no scripted goals.
+No new brain, GOAP rewrite or claim private chosen plans were persisted.
+Numerical NPC-report reach remains BLOCKED on version-matched authoritative rule/
+human boundary/product policy; target-only and zero-auto untouched.
+
+Exact unmerged branch `fix/npc-spawner-population-count`, HEAD
+`e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work.
+[Evidence/commands/limits](.omp/state/artifacts/autonomy-priorities-2026-10-09/README.md).
+Global LOOP INCOMPLETE; acquisition, broader 251 completion/H/general Stage 2 open.
+No grade, milestone, merge/deployment, standing-freeze or global dispatch change;
+historical E-92/earlier recommendations and gate results below remain dated history.
+
+## 2026-10-09 — Repeatable bounded harness delivered; reporter reach next (E-92 checkpoint)
+
+Main accepts the permanent harness's fresh LIVE run
+`20261009T173926006Z-914c40e1`: all seven criteria together, END at 158.0162557s.
+Measured scope is NPC-report 330→6198 completion, one true queued own Move
+interrupt, fresh `QUEST_TRAVEL` recovery and authoritative turn-in, then own 251
+selection/acceptance. Both DB reads verify XP 42840/copper 66, 330/6198 completion
+bits, conserved ten-template body-equipment baseline and item 18792×1. Owned-bot
+cleanup and owned-lane teardown passed; focused consumer tests 53/53.
+
+The E-91 recommended harness dependency below is now delivered, not redispatched.
+This wave changes only the permanent harness/evidence-consumer layer, **no new
+production gameplay code or capability**. HEAD
+`e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work remains
+disclosed. [E-92 ledger](.omp/state/EVIDENCE.md),
+[README](.omp/state/artifacts/headless-harness-2026-10-09/README.md) and
+[manifest](.omp/state/artifacts/headless-harness-2026-10-09/manifest.json)
+contain actual integrated-gate verdicts. The known 16 remain separately classified,
+not fixed; no grade, standing-freeze, track or Stage 2 closure.
+
+**Next recommended single slice / Muse brief — NOT DISPATCHED:** establish the
+actual NPC reporter target and legal reach, then reuse or enforce the existing
+ordinary interaction validation. Do not invent a distance threshold. Require
+fresh ownership before production edits and evidence that an out-of-range report
+cannot complete or reward, normal travel permits an in-range report, and the
+interrupt→fresh-request recovery→next-goal chain remains valid.
+
+After that, close the known 16 before merge; then establish bounded restart and
+intent-continuity proof. **Global LOOP INCOMPLETE:** actual legal reporter reach,
+unseeded acquisition, broad variants, restart, H and general Stage 2 are unproved.
+Observed retained goal is not an immutable Move-parent binding. Disclosed
+level-10/body-equipment provisioning is not acquisition/full-kit proof. Preserve
+E-91 and earlier history; no broad autonomy or milestone promotion.
+
+## 2026-10-09 — Bounded autonomy proved; repeatable harness next (E-91 checkpoint)
+
+Main reviewed seven LIVE gates for one natural-spawn, level10/starter-provisioned
+headless bot with one enrollment wake and opt-in flags: independent discovery/
+choice/execution, NPC-report330 and6198 completion, one declared Move cancel
+with autonomous fresh-request recovery, then independent251 choice. No scripted
+goal/quest/route, teleport or251 completion campaign. Main reviewed durable
+completed bits5/96 and ordinary +840XP/+66copper/item18792×1 rewards with
+starter quantities unchanged. [Bounded proof](.omp/state/artifacts/astra-autonomy-2026-10-09/AutoAfter094347/seven-live-gates-observed.json)
+first closed at157.0248s; [ownership/scope map](.omp/state/artifacts/astra-autonomy-2026-10-09/architecture-map.md).
+
+**Next recommended bounded dependency (not dispatched by this checkpoint):** repair
+`AAEmu.IntegrationTests/E2e/BotShortRunTests.cs` and existing evidence-binding seams,
+whose network-only `charPos`/`charState` setup fails for a headless bot before START.
+Use the existing passive headless observer, exact actor/generation/request joins
+and pre-START control readiness. Require all seven behaviors and honest failure
+boundaries without a throwaway collector, scripted goals or new telemetry/brain.
+Preserve E-89/E-90 and the single arbiter/director/request lifecycle.
+
+**Measured full gate remains RED with the same 16 failed names as E-90; seven new
+regressions pass.** [Exact counts/build and separate checks](STATUS.md);
+independent control/MCP/cycle/report checks passed. E-91 is Main-directed/
+fast-owned.
+This bounded PB-002 leg does not close broad PB autonomy, M5/M7, Stage2,
+combat/gathering, restart, many-bot or H requirements. Not merge-ready; no
+additional source fixes, external signoff/deployment/commit, grade promotion,
+global dispatch change or standing-freeze change.
+
+
+## 2026-10-09 — Truthful report dependency implemented
+
+The bounded E-90 report correction is implemented and deterministically verified.
+Next dependency: review observer/report integration before separately authorized
+natural-spawn live proof. Do not expand quests, decisions, economy or timers to
+make reporting pass. Full gate remains RED (16 unchanged failures); no global
+dispatch, standing freeze, milestone requirement or grade changes.
+Evidence and source identities: [E-90](.omp/state/EVIDENCE.md),
+[manifest](.omp/state/artifacts/sol-report-2026-10-09/manifest.json).
+
+
+## 2026-10-08 — Bounded PlayerBot correction checkpoint
+
+Per [E-89](.omp/state/EVIDENCE.md), remaining-objective/alternative corrections are
+implemented and deterministically verified in the existing quest execution path.
+Preserve them; next bounded dependency is truthful live outcome reporting, then
+a reviewed live goal-to-goal proof. The full gate is still RED (16 unchanged
+measured baseline failures). No new milestone, expanded quest campaign, economy/
+A-Life scope or change to the standing global dispatch/freeze is ratified here.
+Commands/source identities: [manifest](.omp/state/artifacts/sol-remaining-2026-10-08/manifest.json).
+
+
 > **🚫 THE RULE (Josh, permanent): NEVER push a branch or open a PR to
 > upstream AAEmu/AAEmu.** Upstream is intake-only: fetch and integrate its
 > updates into the fork; never send fork changes back.
@@ -24,6 +204,9 @@ Source checkpoint: `d0d58e5848829b7a85da3847d03da00a90cb7c68` plus existing unco
 GOAP/runtime work. No engineering, live, or human grade is promoted by this plan.
 Product commitments: [VISION](VISION.md#product-commitments-current-direction-2026-09-15).
 Agent operating rules: [delivery contract](PROJECT-CONTROL.md#delivery-contract).
+Current bot scope follows the [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract);
+the [next bounded priority](#next-bounded-playerbot-priority) governs present
+planning, not the older queues' authorization language.
 
 ### Repeatable expansion protocol
 
@@ -44,6 +227,9 @@ plants a crop, receives its harvest and starts the next cycle without interventi
 Planning corridor: **one Nuian/Solzreed character**, not all races/regions at once.
 Existing milestone parents: M1/M2 progression → M3a/M3b ownership/persistence →
 M5 shared actions → M7 autonomous journey; not a new milestone number.
+This retained future livelihood journey is not a universal prerequisite for
+supported quest autonomy; its own eligibility/acquisition/ownership requirements
+remain intact under the [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
 
 Canonical review: [fresh-bot-to-farm dossier](scorecard-explorations/mechanics/fresh-bot-to-farm-audit-2026-09-12.md#2026-09-16--owned-small-plot-route-canonical-correction-and-gap-map).
 The actual requirement chain is **level 10 eligibility → 4415 → 4479 → 4417 → 4424
@@ -254,7 +440,7 @@ is a targeted dependency hold, not a freeze on safe core work or all PlayerBot w
 | Lane | Outcome and expansion order | Exit boundary |
 |---|---|---|
 | Human-playable 1.2.4 | Reliable operations → everyday movement/combat/loot/equip/death/recovery → progression corridors → property/farming/crafting/trade → party/Expedition/Indun/ships/PvP/justice → wider world and endgame fidelity. | Named ordinary-client journeys, durable consequences, known deviations, human verdicts. No GM repair. |
-| PlayerBot parity and autonomy | Shared action semantics → seeded closed loop → self-acquired livelihood → choice/recovery/repetition → cooperation. | Perceive/decide/act/verify on ordinary Characters; distinguish seeded execution from autonomous acquisition. |
+| PlayerBot supported capabilities and autonomy | Supported ordinary actions → observed execution → scoped acquisition/choice/recovery/repetition → cooperation. | Apply the [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract); distinguish seeded execution, autonomous acquisition and optional named parity claims. |
 | Population and society | Reliable resident loop → real producer/consumer dependency → mixed village → broader M9 interactions → M10 territory/siege. | Actual resources change hands and constrain behavior; persistence, load, and coexistence at the claimed population. |
 
 These are not sequential whole-project gates. A shared playable slice may advance all
@@ -265,11 +451,7 @@ their existing definitions. Full 1.2.4 fidelity remains a coverage program, not 
 
 ### Near-term slice queue
 
-Labels below are descriptive anchors, not new milestone or kanban IDs. "Ready to
-scope" authorizes a bounded brief/reproduction, not an unsupported assumption that
-implementation can begin. Map each brief to its existing mechanic/blocker row.
-Tai owns implementation, Rei verification, Nei tracking; Mai coordinates authorized
-deployment; Josh supplies named H verdicts. Assign a specific worker before dispatch.
+> Current selection guard: OPEN below is a roadmap state, not work authorization. Consult [current policy/allocation limits](STATUS.md#current-playerbot-policy-checkpoint) and the [next bounded priority](#next-bounded-playerbot-priority). Historical conversion backlog and owned-plot rows remain requirements context, not automatic permission to implement or launch live work.
 
 | Slice / parent | Observable acceptance | Readiness and next dependency |
 |---|---|---|
@@ -283,6 +465,8 @@ deployment; Josh supplies named H verdicts. Assign a specific worker before disp
 | **Planner observation and target binding** — M5/M6 | One action binds an actual eligible object; perception reflects authoritative range, hostility, resources, and availability; stale/disappearing targets refuse or replan. | Narrow to one supported action; depends on its ordinary actor contract. Separate observation and binding cards if independently verifiable. |
 | **Planner runtime integration** — M6/M7 | One planner-driven loop uses the existing scheduler/request lifecycle, verifies real effects, survives cancellation/restart as specified, and matches the deterministic baseline without second-path gameplay. | Depends on state correctness, observation/binding, and reliable action chain. Existing untracked runtime files require review, not replacement by default. |
 | **Real producer–consumer village** — M8 | A consumer requires goods actually produced by another resident; interruption or shortage changes behavior; ledger reconciles inventory/currency; repeat and restart preserve obligations. | After one self-sustaining livelihood. Start at a small declared cohort; mixed-client observation remains a separate H gate. |
+
+**Activity-spine proposal (2026-10-06, doc-alignment step 2):** `Docs/wiki/Activity-Spine-Campaign.md` (untracked) + `AGENTS.md:574` pointer propose quest/farm/trade legs sharing primitives. It overlaps conversion §E items 2–4 and does not replace conversion dispatch or this journey table until ratified; see STATUS 2026-10-06 note.
 
 ### Expansion and stop rules
 

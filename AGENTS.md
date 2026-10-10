@@ -2,6 +2,31 @@
 
 Guidance for coding agents working in this repository.
 
+## Explain work in plain language
+
+Explain work through what the player, bot, and server actually do. This applies
+to prompts, progress updates, reviews, handoffs, and final answers.
+
+Lead with the relevant questions:
+
+- What is happening?
+- Why is it happening?
+- What needs to change?
+- How will we know it works?
+
+Use concrete wording such as “the player logs in” and “the server starts the
+bot's AI.” Avoid invented labels, unexplained abbreviations, and architecture
+jargon. If a technical term is necessary, explain it in ordinary words first.
+Use AAEmu's existing gameplay names when they help identify the mechanic.
+
+Keep code names, file references, and internal workflow details as supporting
+evidence rather than the main explanation. Explain testing through the behavior
+it checks. Do not make the user understand loop controls or internal process
+labels to understand the work. Include exact commands when they need to run them.
+
+Plain language must preserve accuracy: distinguish what was observed, what is
+suspected, and what still needs checking. Do not present a likely cause as proven.
+
 > **Onboarding & Domain Lanes:** New agents should first consult [`START-HERE.md`](START-HERE.md) to review the Universal Gateway and select their specific Domain Lane (Core Engine, PlayerBots, Tracing/Dashboard, Archaeology, or Devops) before picking up tasks.
 
 ## What this repo is
@@ -571,6 +596,7 @@ Consult [`.omp/state/DECISIONS.md`](.omp/state/DECISIONS.md) and
 [`.omp/state/EVIDENCE.md`](.omp/state/EVIDENCE.md) for prior decisions and recorded results.
 The main agent is the state arbiter: subagents report findings, they do not rewrite state.
 The full lifecycle contract lives in [`.omp/state/README.md`](.omp/state/README.md).
+Live autonomy proof is PROPOSED as the [Activity-Spine Campaign](Docs/wiki/Activity-Spine-Campaign.md) (untracked design, no lane verdicts; see STATUS 2026-10-06 note) — quest, farm, and trade legs sharing primitives, first-failure format, DB proof per leg. It does not replace conversion backlog §E dispatch until ratified.
 
 ### Outcome-first dispatch contract (2026-09-15)
 

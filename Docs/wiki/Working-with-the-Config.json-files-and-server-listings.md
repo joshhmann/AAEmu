@@ -88,10 +88,34 @@ set in prod config unless explicitly desired.
 | `"Bots": { "EnableSchedules": true }` / `AAEMU_BOT_SCHEDULES_ENABLED` | Game-clock daily schedules (Home/Work/Travel/Rest) for persistent bots |
 | `"Bots": { "PresenceManifest": "<path>" }` / `AAEMU_PRESENCE_MANIFEST` | Data-driven citizen roster (JSON); unset = legacy hardcoded demo citizens |
 | `"Bots": { "MaxPresenceBots": N }` / `AAEMU_PRESENCE_MAX_BOTS` | Presence bot clamp (default 10) |
+| `AAEMU_QUEST_BOOTSTRAP_ENABLED=1` | Opts into the existing quest activity module; does not globally enable bots or assign a quest |
+| `AAEMU_PRESENCE_IDLE_WAKE=1` | Enables the existing idle self-wake after enrollment; does not add a discovery scheduler or supply work |
 
 Related env-only knobs: `AAEMU_PRESENCE_HOME_X/Y/Z` (demo patrol home
 override), `AAEMU_BOT_CHATTER_RADIUS`, `AAEMU_BOT_CHATTER_ZONE_BUDGET`,
 `AAEMU_BOT_SCHEDULE_SCAN_SECONDS`.
+
+### Opt-in quest discovery and progress (E-91 checkpoint)
+
+With the quest module opted in, a healthy bot with valid coverage and a genuinely
+empty local listing can elect `quest.discovery`. This is exploratory movement
+through the existing route/actor/cadence; chosen quest stays zero. Distant spawner
+knowledge is not a live NPC or eligible quest. Busy/unknown perception is not an
+empty listing. Once ordinary local observation exposes legal work, the same owner
+selects a quest and the existing director/runtime executes `quest.progress`.
+Running requests, survival, generation changes and death retain their existing
+authority; recovery creates fresh requests instead of resuming interrupted ones.
+
+Main reviewed a bounded LIVE330→6198 completion→251 selection run, including
+one declared trace-specific Move cancel and ordinary durable rewards. Setup was
+natural spawn, level10/starter items, one enrollment wake and explicit opt-in
+flags—not a globally enabled default or an unseeded leveling proof. NPC-report
+quests do not prove kill/gather, restart, population or human acceptance.
+The measured full gate remains RED with 16 unchanged failed names; independent
+control/MCP/cycle/report checks passed separately. Not merge-ready; grades and
+the standing freeze are unchanged.
+See [current status](../../STATUS.md) and
+[ownership/evidence scope](../../.omp/state/artifacts/astra-autonomy-2026-10-09/architecture-map.md).
 
 ## Migration note from old setup docs
 

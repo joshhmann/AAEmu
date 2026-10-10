@@ -1,5 +1,251 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
+## Current PlayerBot policy checkpoint
+
+**2026-10-10 — USER-APPROVED / CANONICAL, documentation and control only.**
+The sole policy owner is the [PlayerBot supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
+Useful supported autonomy, ordinary engine correctness and independent human/H
+commitments govern current planning; existing B/B2 definitions and grades are unchanged.
+
+Evidence remains layer-bound: [E-121](.omp/state/EVIDENCE.md#e-121--d26-current-corrected-code-redgreen-not-live-acceptance)
+records code GREEN, not live acceptance; [E-124](.omp/state/EVIDENCE.md#e-124--third-actual-native-failedclosed-cancellation-cause-unknown-no-gameplaysave-defect-inference)
+records the third live run FAILED/CLOSED with OBSERVE cancellation cause UNKNOWN,
+not a gameplay/save-defect diagnosis. Owned cleanup completed and all foreign
+40 containers/55 volumes/26 networks plus four processes were preserved.
+[E-125](.omp/state/EVIDENCE.md#e-125--read-only-acore-questing-lessons-and-bounded-aaemu-give-up-handoff-corroboration)
+and [E-126](.omp/state/EVIDENCE.md#e-126--existing-research-reconciliation-complete-main-read-only-realignment-review-accepted-no-new-capability)
+are bounded source/research reconciliation, not executed capability.
+
+The [next bounded engineering priority](ROADMAP.md#next-bounded-playerbot-priority)
+is reproduction-first finite existing-owner A→eligible B handoff, including same NPC,
+not a named-quest campaign. Ready for bounded reproduction does not allocate source
+or live work here. Main is sole owner; no Muse handoff. Gameplay C# writers and
+game-server campaigns remain held; documentation/dashboard work does not allocate
+gameplay implementation. The seven general autonomy criteria remain unclosed;
+historical bounded passes retain their denominators. No grade, locked milestone exit,
+standing freeze, H, deployment or runtime-capability promotion follows.
+
+The owned-plot livelihood journey remains future work, not a universal gate before
+supported quest autonomy. Activity-Spine remains an unratified proposal.
+Current policy/priority supersedes older next-work recommendations only; dated
+results and the historical conversion-dispatch ruling below remain intact.
+
+## 2026-10-10 — Seeded public-farm two-harvest proof COMPLETE (E-106)
+
+Main accepts D-25's **bounded seeded PUBLIC-FARM deliverable**, including the
+fresh fixed-harness whole PASS, all seven behaviors, ordinary persistence and
+owned cleanup. Independent `purpose-attribution` t10 actual-file review supports
+this scope with no residual blocker. Run `run-20261010T045146Z-b79ca444` passed
+1/1 (RC0, no failures), START `04:58:57.1354855Z` → END `05:01:58.4625926Z`,
+181.3174286s, exactly one enrollment wake and one actual queued own Move interrupt.
+Fresh autonomous recovery was proved; its recovery Move ended Interrupted by
+ordinary Stop, **not Completed**.
+
+Two real potato crop2259 lifetimes independently planted, waited through advancing
+immature wakes and reached mature4457 **before** their Harvest requests. Actual
+potato7992 gains were **3 + 3**; seeds3→1, potatoes0→6, labor100→98, XP0→16,
+Farming ActAbility (ID6) point0→2. Both final DB crop reads (IDs1/2) were absent.
+AfterRelease/afterFlush typed coordinates match frozen END inside unchanged0.01m;
+the full **325.0022636s after the first afterRelease attempt** was observed.
+Registry removal/session release/registry absence passed. Owned resources cleaned,
+seven ports free; four foreign processes/40 containers/55 volumes/26 networks preserved.
+
+Final changed-harness consumer46/46; full gate4402 total/4401 pass/0 fail/1 known
+opt-in skip (`Provision_Activate_Persist_Deactivate_RoundTrip`: absent
+`AAEMU_LIVE_RIG`/`AAEMU_E2E_DB_PASSWORD`), solution0 errors/10 warnings,
+ScriptCompiler0/0, actual MCP44-tool BotControl and read-only24-tool/679-table smoke
+passed. Separate archaeology163/163 +24-tool smoke passed, builds0 errors/2 and6
+warnings. Standalone Integration build was **0 errors/591 warnings**, not10.
+Prior unchanged focused Unit48/48 is retained evidence, not a separate final rerun.
+
+Disclosed level1 Nuian, three seeded15659/labor100/off-soil Lilyut staging,
+Growth10/Loot1/actualDropRateMul0, farm+idle-wake5s ON, quest bootstrapOFF/
+homesteadfalse are prerequisites, **not earned acquisition**. Harvest remains
+synchronous `Doodad.Use`; canonical4s cast/maxrange4 are data, full cast/range/client
+parity and H unproved. Private homestead, quest→farm strategic handoff, restart,
+general Stage2/global LOOP remain open. E-105 run5 original whole FAIL and
+E-98–E-105 failures/apparatus chronology are preserved, not retroactively green.
+
+Exact HEAD `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d`, branch
+`fix/npc-spawner-population-count`, inherited dirty (run snapshot77 tracked/
+1406 untracked); not clean/merged/deployed. [Evidence/index](.omp/state/artifacts/autonomous-farm-2026-10-09/README.md)
+and [E-106](.omp/state/EVIDENCE.md#e-106--main-closes-bounded-seeded-public-farm-proof-fresh-fixed-harness-whole-pass)
+carry exact receipts. **Stop at D-25; no next dispatch.** Recommendations only:
+immutable quest-purpose attribution → harvest semantic parity → ordinary
+acquisition/earned-resource handoff. Numeric NPC reach and broader Q251 completion
+stay unclosed. No grade, milestone, standing-freeze or global dispatch promotion.
+
+## 2026-10-09 — Event binding and gates accepted; fresh LIVE and qualified restart (E-94–E-96)
+
+Main accepts the requested **NPC report EVENT attribution** fix: one guard in
+`QuestActConReportNpc` prevents reporting 251 from also completing Ready 6198 at
+NPC 3512. Both quests may share that NPC and later report/reward independently.
+The real-manager regression deliberately keeps `CurrentTarget=null`; target-only
+`RunAct`, zero-auto and numerical legal reach remain open.
+
+**E-94:** focused 141/141; full gate 4398 total / 4397 passed / 0 failed / 1 skipped
+(`Provision_Activate_Persist_Deactivate_RoundTrip`: absent `AAEMU_LIVE_RIG`/
+`AAEMU_E2E_DB_PASSWORD`). Solution 0 errors/10 warnings, ScriptCompiler 0/0.
+Both actual downstream MCP smokes passed: BotControl 44 tools and read-only
+archaeology 24 tools/679 tables. Separate archaeology 163/163 plus full 24-tool
+smoke passed. Unit first build: 0 errors/1977 warnings; archaeology/unit rebuilds:
+0 errors/2 and 6 warnings. The 16 known fixture failures were repaired and obsolete
+implementation/wording tests removed; production movement was not changed.
+Historical RED results below are not retroactively green.
+
+**E-95:** Main independently reviewed fresh original-seven LIVE run
+`20261009T202451205Z-0e45fccf`, all seven at 158.0862619s, test 1/1.
+Character 1/actor 44295/generation 1 completed 330/6198 with one actual interrupt,
+fresh Move, own 6198 turn-in and independent 251 acceptance. Ordinary post-END
+325s/two DB reads conserved ten starter quantities with XP 42840, money 66 and
+item 18792×1; registry/session cleanup passed. Original three harness files
+unchanged. Fresh consumer 53/53 passed using normal compiled Integration output;
+Integration publish remained **RC1 NETSDK1152** duplicate Config/NLog packaging,
+not a green publish. Readiness 401 was a probe-header typo corrected to canonical
+`X-Auth-Token` before the only harness run, with no server/config/token change.
+
+**E-96:** one opt-in automatic Game-only restart restored the same saved active
+Q251 without postboot assignment/wake/provisioning. First active at 67.138s;
+180.000261s observation, 543 HTTP200, 201 expected pre-active refusals and none
+active; scheduler 0→371 with no failures/skips/timeouts. Main and independent
+review accept log-backed ordinary Q251→Loot
+`01674654-4213-4e0c-aef4-b4c18b2ba45e`→Completed/grant1 within the window.
+This run had one active quest/sole counted objective; the diagnostic fixture is
+first-of-wake, not a general multi-quest invariant. **Strict same-History-row
+explicit quest/applied-action oracle NOT MET (zero candidates)**: Loot Reason
+omits Q. No durable chosen plan or immutable Move-parent proof.
+
+Second Loot `e6b54bb9-974a-493d-9360-7060edf98d28` occurred after collector END
+and before cleanup. Final Q251 objective 0→2 of 3, item 4058×2 and XP 42840→42878
+include that cleanup-window work; Q251 was not completed and exact per-grant XP
+attribution is unproved. All eleven baseline item-instance rows, completed 330/
+6198 bytes and money 66 were conserved. Main raw review resolves the earlier
+reviewer's 35s misread: actual ordinary margin was **325.0789759992622s**;
+afterRelease/afterFlush agree. Config equality covers captured files only,
+not omitted `Configurations/World.json` (current ExpRate 1/AutoSave 5 confirmed).
+Owned Game/Login, DB/volume, seven ports and private collector/control artifacts
+are cleaned; all 40 foreign containers/55 volumes/four servers preserved.
+
+Evidence: [artifact entrypoint](.omp/state/artifacts/autonomy-priorities-2026-10-09/README.md),
+[manifest](.omp/state/artifacts/autonomy-priorities-2026-10-09/manifest.json),
+and [E-94–E-96 ledger](.omp/state/EVIDENCE.md). Exact branch
+`fix/npc-spawner-population-count`, HEAD
+`e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work, unmerged;
+8183 selected source/config inputs, 90 runtime DLLs and three harness files frozen
+through the run. No commit, deployment, grade or freeze change.
+
+**Global LOOP INCOMPLETE.** Numerical reach requires version-matched authority,
+human boundary or product policy; target-only/zero-auto remain untouched.
+Next recommended, **not dispatched**: one bounded immutable quest-purpose→actual
+request/audit propagation and observation slice through existing owners, with
+same Q/GUID/cycle on fallback Move/quest Loot, interrupt/newboot reselection
+without stale parent, real progress/durability and no scripted goals. No new
+brain/GOAP rewrite or private-plan persistence claim. Acquisition, broader 251
+completion, H and general Stage 2 remain unproved. Earlier checkpoints retained.
+
+## 2026-10-09 — Permanent bounded headless acceptance delivered (E-92 checkpoint)
+
+Main independently accepts **all seven criteria in one fresh permanent-harness
+LIVE report**, run `20261009T173926006Z-914c40e1`: character 1, actor 44176,
+enrollment generation 1. NPC-report quests 330 and 6198 completed; one true queued
+control (`3029f8f6…`) interrupted victim Move `701c76bc…`, followed by fresh
+own `QUEST_TRAVEL` Move `826f55a3…`, own 6198 TurnIn `95f6ac9d…`, then own 251
+Accept `6c94f0e2…`. END was `SEVEN_GATES_COMPLETE` at 158.0162557s, with one
+pre-START wake, one interrupt and no failures.
+
+Both post-END DB reads show XP 42840, copper 66, completed 330/6198, all ten
+body-equipment baseline quantities unchanged and item 18792×1. Owned-bot cleanup
+passed; the runner confirms owned-lane teardown with four foreign processes and
+23 foreign containers preserved. Focused consumer tests passed 53/53. Changed-
+consumer replay is a separate smoke, not a retroactive pass for the D15 report.
+
+This wave delivers **permanent reproducibility at the bounded server layer**,
+not new production gameplay code or capability. Provenance remains HEAD
+`e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work and the
+three-file harness/evidence-consumer layer. [E-92 ledger](.omp/state/EVIDENCE.md),
+[evidence README](.omp/state/artifacts/headless-harness-2026-10-09/README.md)
+and [manifest](.omp/state/artifacts/headless-harness-2026-10-09/manifest.json)
+carry the exact source/runtime receipts and actual integrated-gate verdict.
+The known 16 failures are separately classified, not fixed by this wave.
+
+**Global LOOP INCOMPLETE; not merge-ready.** Measured scope is two NPC-report
+completions, one cancel/recovery and one subsequent selection, with disclosed
+natural spawn, level-10/body-equipment provisioning and opt-ins; no assigned
+quests/routes or teleport. Actual legal reporter reach, unseeded acquisition,
+broad variants, restart, H and general Stage 2 remain unproved. Observed goal
+retention is not immutable Move-parent proof. Grades and standing freeze are
+unchanged; E-91 and earlier checkpoints remain historical.
+
+Next recommended single slice, **not dispatched**: establish actual NPC reporter
+target/reach and reuse or enforce ordinary interaction validation, without
+inventing a range. Acquire fresh production-file ownership first. Then close
+the known 16 before merge, followed by bounded restart/intent-continuity proof.
+
+## 2026-10-09 — Bounded quest autonomy observed (E-91 checkpoint)
+
+Main reviewed **7/7 LIVE gates** in `AutoAfter094347`: unscripted production
+start, valid discovery, independent choice, ordinary execution, actual completion,
+handling of one declared Move interruption, and independent subsequent choice.
+First closure: `2026-10-09T09:46:26.2791474Z` (157.0248s); capture213.083s/
+214 observations. Scope is **one bot, NPC-report quests330→6198 completed,
+then quest251 independently selected/accepted**; no251 completion campaign.
+
+Disclosed setup: natural spawn, level10 and starter items, one pre-START enrollment
+wake, quest-bootstrap/idle-wake opt-ins. No external goal, quest, target, route or
+teleport. One trace-specific cancel returned true; the old Move was Interrupted,
+the bot issued fresh work for retained6198 and completed its own turn-in.
+Main reviewed flushed completed bits5/96 and ordinary rewards: XP42000→42840,
+copper0→66, item18792 absent→1, ten starter-template quantities unchanged.
+The separate natural `AutoAfter092022` run also completed330 then6198.
+
+Evidence: [seven LIVE gates](.omp/state/artifacts/astra-autonomy-2026-10-09/AutoAfter094347/seven-live-gates-observed.json),
+[queue result](.omp/state/artifacts/astra-autonomy-2026-10-09/AutoAfter094347/single-interrupt-queue-result-polls.json),
+[flushed rewards](.omp/state/artifacts/astra-autonomy-2026-10-09/AutoAfter094347/reward-after-flush.json),
+[architecture/provenance](.omp/state/artifacts/astra-autonomy-2026-10-09/architecture-map.md).
+HEAD `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus captured inherited dirty work.
+Main independently reviewed source/runtime evidence; no external signoff, H,
+deployment or commit. Own lane cleaned; foreign lanes unchanged.
+
+**Measured full gate remains RED (RC2): 4402 total / 4385 passed / 16 failed /
+1 skipped; exact failed-name multiset matches E-90 (added{}, removed{}), with
+seven new regressions passing.** Solution build: 0 errors/541 warnings; in-game
+compiler: 0 errors/0 warnings. Gate downstream smokes were NOT RUN because units
+were red. Independent checks passed: archaeology163/163, full MCP24 tools/
+679 read-only tables, BotControl stdio44 tools, light archaeology24 tools/679,
+and report JSON24/24 (supplied observations, not live). Archaeology rebuild:
+0 errors/2 warnings; unit rebuild:0 errors/6 warnings. Not merge-ready;
+no additional source fixes authorized. [E-91 ledger](.omp/state/EVIDENCE.md) is
+Main-directed/fast-owned. PB-002 broad autonomy, M5/M7/Stage2,
+combat/gathering, restart and many-bot claims remain unproved; grades and freeze
+unchanged. Next mission dependency: repair the existing headless short-run harness
+so the seven-gate proof is repeatable, not another brain or GOAP rewrite.
+
+
+## 2026-10-09 — Short-run report correction (E-90)
+
+Sol corrected report baselines, selected-goal/request identity and authoritative
+quest results. Supplied-observation report tests 24/24; remaining quest fixtures
+13/13; archaeology 163/163; both MCP smokes pass. Full gate remains RED:
+4378 passed /16 failed /1 skipped, same failed names as E-89. No live campaign,
+independent signoff, deployment, human verdict or milestone promotion.
+Evidence and source identities: [E-90](.omp/state/EVIDENCE.md),
+[manifest](.omp/state/artifacts/sol-report-2026-10-09/manifest.json).
+
+
+## 2026-10-08 — Bounded remaining-quest-work correction (E-89)
+
+Sol implemented alternative-component/remaining-objective observation and connected
+remaining actions to the existing quest runtime. Deterministic checks: 13/13 new
+suite, focused death/hold 4/4, running ownership 4/4, listing 12/12. Full gate remains
+RED: 4378 passed, 16 failed, 1 skipped; same failed-name multiset as the measured
+dirty-tree baseline. Archaeology cycle 163/163 and both MCP smokes pass. Evidence:
+[working ledger E-89](.omp/state/EVIDENCE.md) and
+[manifest](.omp/state/artifacts/sol-remaining-2026-10-08/manifest.json).
+HEAD e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d plus recorded dirty-file hashes.
+No live/client/H proof, merge/deployment, milestone closure or global dispatch
+change. Next bounded dependency is truthful live reporting before autonomy proof.
+
+
 Updated: 2026-09-18 · Wave One exit VERIFIED by independent second-session re-run (step-7 E2E 1/1, step-8 loop 1/1, fresh bots, restart + conservation confirmed); plant/harvest/tax/travel/H open
 Next dispatch source (owner-ratified 2026-10-01): the conversion backlog (8 missing actor/paths, §E) in `scorecard-explorations/mechanics/wave1-scenario-conversion-2026-09-18.md`. **This file governs next-dispatch selection.** It supersedes `START-HERE.md` "Immediate dispatch priority" and the `ROADMAP.md#first-owned-small-plot-journey` slice table *as next-work selection*. `ROADMAP.md` remains authoritative for milestone requirements, boundaries, exit criteria and the standing freeze; `SCORECARD.md` for evidence dimensions. See the dispatch-source ruling immediately below for the rationale.
 PlayerBot API/E2E control-layer architecture audit: `scorecard-explorations/mechanics/playerbot-api-architecture-2026-09-18.md` (investigation-only, no production changes). Audit note: P12 (PlanTemplateCache flags-only key) is stale — worktree key is (Flags,Labor,Gold,GoalName) per step 4.
@@ -10,7 +256,15 @@ PlayerBot API/E2E control-layer architecture audit: `scorecard-explorations/mech
   - `START-HERE.md` (last refreshed 2026-09-15): "Immediate dispatch priority — 2026-09-16" → "First product journey: ordinary starter → owned small plot → harvest/replant", and it points at `ROADMAP.md#first-owned-small-plot-journey`.
 ROADMAP's own journey table is the older of the three and lists most slices as **OPEN**; the conversion backlog is newer and claims to be the remaining gap. **Owner ruling (2026-10-01): this file, line 4, is the governing dispatch source** — it selects the next slice; `ROADMAP.md` keeps its authority over milestone requirements, boundaries, exit criteria and the standing freeze, and `SCORECARD.md` over evidence dimensions. Both documents are consistent with the standing freeze (see below); this ruling promotes no grade and establishes no new evidence.
 
-**Authoritative source/evidence checkpoint — 2026-10-01 (read-only; no build, no test, no gate.sh).** Branch `develop`, `git rev-parse HEAD` = `626548de92b8dca8af1f0f92e22d37c9fbe6074e`; working tree was dirty at that checkpoint (inherited uncommitted work; the path count is deliberately omitted as volatile). This names the current SHA only. **No claim recorded in this file has been re-verified at that SHA**; each retains the revision at which it was actually measured. Supersedes earlier "Branch of record"/"current source HEAD" lines **for SHA-naming only**, not for any verdict.
+**Evidence baseline — implementation SHA at observation, 2026-10-01 (read-only; no build, no test, no gate.sh).** At observation time: branch `develop`, implementation SHA `626548de92b8dca8af1f0f92e22d37c9fbe6074e`; working tree was dirty (inherited uncommitted work; path count omitted as volatile). This SHA is the **evidence baseline** — the implementation revision the reconciled claims were read against — **not current repo HEAD** (lane work has since moved to `e6e401129` on `fix/npc-spawner-population-count`; doc-only hardening does not move this baseline). **No claim recorded in this file has been re-verified at any newer SHA**; each retains the revision at which it was actually measured. Supersedes earlier "Branch of record"/"current source HEAD" lines **for SHA-naming only**, not for any verdict.
+
+## 2026-10-06 — Quest-251 lane ratified + activity-spine landing (doc-alignment steps 1–2, 4)
+
+- **Quest-251 lane (`.omp/state/CURRENT.md` objective) is ratified as a bounded validation leg, not the product goal.** Objective: quest 251 to 4/4 DB-verified turn-in in one isolated run (best 2/4 kill22/24/31; kill31 binding constraint is prey availability, E-17). **Stop rule:** two further isolated lanes without 4/4, or any regression in other quest completions/gates → stop threshold tuning and redirect to conversion backlog §E + activity-spine legs; record the outcome as a new `E-<n>` per D-4.
+- **Activity-spine (`Docs/wiki/Activity-Spine-Campaign.md`, untracked design, pointed from `AGENTS.md:574`) lands as PROPOSAL, not program.** It overlaps conversion §E items 2–4 (plant/harvest, pack/trade, talk/delivery) and does not replace the conversion backlog or the small-plot journey. The quest-256 lane (`AAEmu.IntegrationTests/E2e/Quest256LiveLaneTests.cs`, untracked, in flight) is leg-1 evidence when DB-verified, not dispatch by default.
+- **`.omp/state/` mirror (step 4):** canonical task state lives in untracked `.omp/state/CURRENT.md` (HEAD `e6e401129`, 25-commit chain), decisions in `DECISIONS.md` (D-1…D-6), ledger in `EVIDENCE.md` (E-1…E-23). This file records only HEAD/date/scope; `history://` transcripts are not durable evidence. Freshness: 2026-10-06, HEAD `e6e401129`; kill25–31, heldout v1/v2, and spine E-22/E-23 are not re-verified in this file.
+**Git-invisible artifact dispositions (2026-10-07 hardening §1 — no files tracked/moved by this pass).**
+`Docs/wiki/Activity-Spine-Campaign.md` (62 lines): WORKING NOTE → MOVE INTO CANONICAL DOC only if ratified; until then stays untracked PROPOSAL, never dispatch. `.omp/state/{CURRENT,DECISIONS,EVIDENCE,README}.md`: AUTHORITATIVE working state → mirrored here (scope/HEAD/decisions/ledger ids), durable authority stays in tracked docs. `Quest256LiveLaneTests.cs` (605 lines): EVIDENCE-driving lane code → TRACK only after a DB-verified verdict; until then untracked in-flight leg. `ChallengeV1*.cs`, `QuestRetentionReproTests.cs`, `QuestTalkChainReturnTests.cs`: WORKING NOTE harness probes → TRACK only if they become the discrimination suite, else IGNORE. `results/eval-*`: GENERATED → IGNORE (lane logs, never authority). `scratch/geominer`, `basalt-audit/` (nested git repo), `.agents/skills/brief-evolution/SKILL.md`: DISPOSABLE/adjacent tooling → IGNORE (brief-evolution is director prompt tooling, not project authority).
 
 ## 2026-09-18 — Wave One exit (VERIFIED by independent second-session re-run)
 

@@ -5,11 +5,18 @@
 > [canonical farm addendum](fresh-bot-to-farm-audit-2026-09-12.md#2026-09-16--owned-small-plot-route-canonical-correction-and-gap-map):
 > level-10 eligibility, six prerequisite quests, certificate rewards, and a small
 > plot's own completion. Do not infer direct level-7 access or a required gold grind.
-> Current dispatch: [owned-small-plot journey](../../ROADMAP.md#first-owned-small-plot-journey).
+> Current priority/allocation limits: [STATUS](../../STATUS.md#current-playerbot-policy-checkpoint).
 
 Canonical, concise grading frame for PlayerBot work. Planning + docs only: no engine/behavior
 change, no test change, no milestone rewrite. Living Village keeps its name; new coordination
 language uses GUILD, not village. Auroria/territory is a separate future domain (T only).
+
+**Current applicability — user-approved 2026-10-10:** the sole
+[supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+defines scope. Grading definitions and historical rows below are unchanged.
+B/B2 comparisons apply when claimed for a named family; blanket full parity is
+not required before every supported autonomy loop. Owned-plot livelihood is
+retained future work, not a universal quest-autonomy gate.
 
 Provenance: docs HEAD `c7351b242e4088e0db5ef7926659a948312cb2fb` (2026-09-12 reconciliation);
 E2E evidence reports at the same revision (E2E evidence dir `/root/aaemu-e2e/logs/`, not in-repo);

@@ -1,11 +1,19 @@
 # Project Status — "ArcheAge Slums" fork milestones
 
 - Audience: Contributors, players, and testers
-- Last verified against: `develop` on 2026-09-12 (documentation revision `c7351b242`; no fresh gameplay verification)
+- Last verified against: policy-reviewed 2026-10-10 at `fix/npc-spawner-population-count` / `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work (unmerged; documentation only, no fresh gameplay verification)
 - Prerequisites: None
 
 Status of the fork's milestone plan (joshhmann/AAEmu). The canonical plan
 lives in the repo: ROADMAP.md; this page is the short public status.
+
+## Current PlayerBot policy
+
+User-approved bot scope is owned by the [supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract),
+not this public summary. [Current checkpoint/allocation limits](../../STATUS.md#current-playerbot-policy-checkpoint)
+and [finite goal handoff reproduction priority](../../ROADMAP.md#next-bounded-playerbot-priority)
+promote no runtime capability, grade, milestone or H verdict. Historical parity
+and human-playability requirements retain their named scope.
 
 ## First bot product journey (2026-09-16)
 
@@ -15,6 +23,8 @@ house/construction-pack or ten-bot village exit. The
 include canonical prerequisite quests and level-10 eligibility; mapped data is not
 proof of live execution. All implementation follows the
 [common contract](../../.kanban-templates/implementation.md). Required gaps must be explicit.
+This retained future livelihood journey is not a universal prerequisite to
+supported quest autonomy; the historical queue below is not current allocation.
 
 ## High-priority correction (2026-09-16)
 

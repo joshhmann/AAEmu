@@ -37,6 +37,8 @@ one mechanic. Conversely, do not code around an unresolved gameplay-rule decisio
 - Scope kind: zone/instance / player journey / mechanic / bot controller / service/UI:
 - Supported variants and coverage denominator (zone keys, level bands, objective
   families, item/skill categories, state transitions, configurations as applicable):
+- Bot scope: link the [supported-capability contract](../PROJECT-CONTROL.md#playerbot-supported-capability-contract);
+  declare supported/unsupported objective families and any separately claimed B/B2 comparison:
 - This slice changes exactly:
 - Non-goals / deferred work:
 - Full journey or explicitly named subloop:
@@ -129,6 +131,8 @@ replace this map with its explicit observable service/UI outcome where appropria
 - Happy-path assertion and authoritative before/after state:
 - Negative/refusal and retry/idempotency cases applicable to the change:
 - Interruption/recovery, repeat and restart cases required by the claim:
+- Unsupported objective deferral, named reason, unchanged completion state and
+  eligible next-goal continuation (including same NPC where relevant):
 - Exact build/test/scenario commands, isolated resources, required assets:
 - Bypasses forbidden during acceptance:
 - Unit/contract test evidence expected:
@@ -139,6 +143,10 @@ A deterministic reference route may select known actions, but may not manually m
 them succeed. No second scheduler, request lifecycle or gameplay implementation.
 Separate seeded live subloop, complete acquisition-to-repeat loop, and adaptive
 autonomy. Passing one does not prove the others.
+Use the [supported-capability contract](../PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+for the named bot denominator and seven autonomy criteria. B/B2 or presentation
+comparisons are claim-specific, not universal prerequisites; authoritative ordinary
+rules and required conservation/timing/persistence checks are not optional.
 
 ## 5. Ownership, order and stop rule
 

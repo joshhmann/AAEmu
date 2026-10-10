@@ -34,6 +34,17 @@ Operator command (requires Docker, read-only `/root/hl-cp-test` assets, and
 `ensure-log-caps.sh` in the isolated E2E root):
 `A5_TIER3_SIX_HOUR=1 A5_TIER3_SIX_HOUR_MINUTES=360 A5_TIER3_SIX_HOUR_SAMPLE_SECONDS=60 A5_DORMANT_COUNT=1000 E2E_ROOT=/root/aaemu-e2e-a5-tier3-sixhour E2E_LOGIN_PORT=4237 E2E_GAME_PORT=4239 E2E_STREAM_PORT=4250 E2E_BRIDGE_PORT=4260 E2E_INTERNAL_PORT=4234 E2E_WEBAPI_PORT=4280 E2E_DB_PORT=43306 DB_HOST_PORT=43306 COMPOSE_PROJECT_NAME=aaemu_a5_t3_sixhour E2E_REBUILD=1 dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --filter-method AAEmu.IntegrationTests.E2e.G2.A5Tier3AcceptanceProbeTests.Probe_A5Tier3DormantTimers_SixHour`
 
+## Supported-scope applicability — 2026-10-10
+
+The user-approved [supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+is the sole policy owner. Declare the supported denominator for discovery, choice,
+planning, ordinary execution, observed completion, recovery and continuation.
+Existing evidence rows/grades and B/B2 meanings are unchanged; per-family parity
+and presentation comparisons do not gate all supported autonomy. Applicable
+ordinary engine gates remain required. EntryPath stays proposed/non-scoring;
+no value or grade is adopted here. [Current priority/allocation limits](../../STATUS.md#current-playerbot-policy-checkpoint)
+do not authorize a new implementation or live campaign.
+
 ## Current position (2026-09-12)
 
 ### Execution ownership and evidence boundary — 2026-09-16
