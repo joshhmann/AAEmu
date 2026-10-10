@@ -1,0 +1,91 @@
+AAEmu — recovered branch work for merge review
+
+Branch: review/branch-recovery-2026-10-10
+Base: develop aa057ffc3bb4596f4a6972eb4f012994970e163a
+Purpose: recover useful missing work without restoring old bot architecture or
+replacing current project decisions. This branch is for review, not deployed.
+
+What is included
+
+1. Historical crafting, trade-pack and vehicle research.
+   Originals:375705d8f,9f1d16380,84f550ae0. Recovered in mechanics/crafting.md,
+   trade-packs.md and vehicles-ships.md with explicit historical notices.
+   Old SCORECARD modifications were not imported. Earlier gaps are not newly
+   verified defects; research remains separate from current capability claims.
+
+2. Test hosts can find their log guard on a fresh clone.
+   Adapted from66060ba04. Shell and C# hosts prefer a runtime override and otherwise
+   use Scripts/e2e/ensure-log-caps.sh. Scratch-file checks cover fallback, override,
+   missing guard, legacy log caps and idempotence. No game server is needed.
+   The C# database reset now checks exit status using its existing project name;
+   after fresh seeding it refuses active/completed quest rows from an older run.
+   The reset failure is not ignored or retried against a global volume name.
+   Pure setup tests do not prove an actual Docker reset or server boot.
+
+3. Two demonstrated quest concurrency failures are repaired.
+   Candidate9a3b16e72 was partly replaced by newer code: completed-block insertion
+   already uses ConcurrentDictionary.GetOrAdd. That alone did not protect flags
+   within each block. A synchronized two-writer rig lost flags in1076 of20000
+   blocks before protection. A separate coordinated removal rig ran cleanup twice.
+   Current-compatible fixes claim the active quest once for removal, protect
+   completion-bit readers/writers/reset, and copy bodies for packet/save use.
+   These checks prove bounded server-model correctness, not live autonomy,
+   complete reward-path concurrency safety or restart durability.
+
+4. Better quest failure explanations and selected corpse regressions.
+   From0dcb8ef87: quest save mismatches name the differing byte/field and failures
+   include the observed quest step/status/objectives. Unknown layouts remain raw.
+   From9e72989be: tests cover actor-scoped despawn cleanup and observation of a live
+   NPC replacing recorded corpse state. The latter tests the existing observation
+   primitive directly; it does not prove every runtime wake visits that primitive.
+   Current combat, loot rules and travel behavior remain in place.
+
+5. Quest census parsing and corrected reference explanations.
+   Frombbc7a6758: both --scope N and --scope=N work; malformed options fail before
+   database access. Census tests compare forms on read-only canonical data.
+   Frome6dc7de4b: data-defects.md explains the loader's category45 exclusion:
+   canonical184 empty contexts include88 excluded tutorials, leaving96 outside it.
+   A SQL-file comment corrects accept-act74 to66 at quest1960's Start component;
+   canonical data verified66. No SQL statement changed or patch executed.
+
+Recommendations retained for a separate decision
+
+- Task quest daily resets (5a98fc59c): current reset omits QuestDetail.Task.
+  The old commit records a historical rule decision, but Task categorization
+  alone does not prove every Task quest should reset daily. Confirm the intended
+  rule before changing the whole family. Existing daily/repeatable tests remain.
+- Movement tracing (78d4bd717): useful to record client-requested position alongside
+  prior server-held position. Prior accepted position is not independent movement
+  simulation. Reuse authoritative speed policy instead of copying another formula.
+- Region activity split (6b4e571a2): decide which bots sustain NPC spawns; do not
+  blindly suppress bot activity and deprive autonomous bots of gameplay targets.
+- Metadata persistence (28817852c): define missing durable intent first; do not
+  import six old tables and another shutdown/save owner simply because they exist.
+- Old generated census and production deployment files: preserve history rather
+  than replace current results or deployment identity.
+- Older scheduler, combat, names, loot trace, item-group and navigation branches:
+  their main changes are already included or replaced; whole merges are unnecessary.
+
+How to check this branch
+
+python3 Scripts/e2e/test-recovered-guards.py
+./scripts/gate.sh
+./scripts/archaeology-cycle.sh
+dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --filter-class '*E2eSetupGuardTests'
+
+The integration selection is pure setup checks, not a server campaign.
+Record exact tested HEAD, commands, build/compiler result, counts/skips and MCP
+smoke results. No live server, destructive reset or long campaign is part of this
+review branch's local verification. A real isolated fresh boot/reset and normal
+quest completion/save/restart remain necessary before deployment claims.
+
+Reference data evidence
+
+Read-only archaeology MCP list_sources,describe_table,query_sql,read_file used.
+Canonical source compact.sqlite3, version1.2r208022,
+MD5 78b3bdbf038db3b927056106efdf91af. Bounded accepted queries did not truncate.
+Loader/source reading is textual; table/row aggregate results are exact data.
+One initial query used the wrong table column and was rejected; the corrected
+component/act join established accept-act66. No claim depends on that failed query.
+Contract:mechanics/archaeology-mcp-acceptance.md. Raw replies and test logs retained
+in the local cleanup/recovery evidence record. No live/client/H promotion.
