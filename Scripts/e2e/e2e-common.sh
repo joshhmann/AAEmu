@@ -432,11 +432,24 @@ e2e_prepare() {
     # Hard-fails the boot (set -e) if a re-cap cannot be applied. Touch
     # afterwards so a live adopted stack re-reads via NLog autoReload (no
     # restart needed).
-    "$E2E_ROOT/ensure-log-caps.sh" "$E2E_ROOT"
+    local log_caps_guard
+    log_caps_guard="$(e2e_log_caps_guard)"
+    bash "$log_caps_guard" "$E2E_ROOT"
     [ -f "$LOGIN_DIR/NLog.config" ] && touch "$LOGIN_DIR/NLog.config"
     [ -f "$GAME_DIR/NLog.config" ]  && touch "$GAME_DIR/NLog.config"
 
     e2e_provision_layout
+}
+
+# Existing test roots may carry a customized guard; fresh clones use the repo copy.
+e2e_log_caps_guard() {
+    if [ -f "$E2E_ROOT/ensure-log-caps.sh" ]; then
+        echo "$E2E_ROOT/ensure-log-caps.sh"
+    elif [ -f "$SCRIPT_DIR/ensure-log-caps.sh" ]; then
+        echo "$SCRIPT_DIR/ensure-log-caps.sh"
+    else
+        e2e_fail "ensure-log-caps.sh missing from test root and Scripts/e2e"
+    fi
 }
 
 # Phase 1: MySQL up with a fresh deterministic seed (volume wipe + SQL/ init).

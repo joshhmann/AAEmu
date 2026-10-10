@@ -248,6 +248,7 @@ public static class E2eStack
             ResetDbVolume();
             RestoreCanonicalSqlite();
             EnsureDb();
+            AssertFreshDb();
 
             EnsureServerBinaries();
             EnsureRuntimeLayout();
@@ -271,7 +272,7 @@ public static class E2eStack
         var envFile = Path.Combine(E2eRoot, ".env");
         EnsureEnvFile(envFile);
         Run("docker", $"compose -p {ComposeProject} -f {ComposeFile} --env-file {envFile} down -v", E2eRoot,
-            timeoutMs: 120_000, check: false);
+            timeoutMs: 120_000, check: true);
     }
 
     /// <summary>
@@ -439,6 +440,7 @@ public static class E2eStack
         var loginDll = Path.Combine(RuntimeLoginDir, "AAEmu.Login.dll");
         var gameDll = Path.Combine(RuntimeGameDir, "AAEmu.Game.dll");
         var rebuild = Environment.GetEnvironmentVariable("E2E_REBUILD") == "1";
+        var guard = ResolveLogCapsGuard(E2eRoot, RepoRoot);
         // Same stamp the shell harness writes (Scripts/e2e/e2e-common.sh
         // e2e_publish_stamp): sha256 of git HEAD + dirty status of the publish
         // source dirs. Warm-stack second runs with unchanged sources skip the
@@ -450,6 +452,7 @@ public static class E2eStack
             && File.ReadAllText(stampPath).Trim() == ComputePublishStamp())
         {
             Console.WriteLine("[e2e] publish skipped — binaries match source inputs (.publish-stamp); E2E_REBUILD=1 forces");
+            Run("bash", $"\"{guard}\" \"{E2eRoot}\"", E2eRoot);
             return;
         }
 
@@ -458,14 +461,39 @@ public static class E2eStack
         Run("dotnet", $"publish {Path.Combine(RepoRoot, "AAEmu.Game", "AAEmu.Game.csproj")} -c Release -o {RuntimeGameDir} --nologo", RepoRoot);
 
         Directory.CreateDirectory(Path.Combine(E2eRoot, "runtime"));
+        // Reapply the test log guard after publish. Existing roots can override it;
+        // fresh clones use Scripts/e2e/ensure-log-caps.sh without manual provisioning.
+        Run("bash", $"\"{guard}\" \"{E2eRoot}\"", E2eRoot);
         File.WriteAllText(stampPath, ComputePublishStamp() + Environment.NewLine);
+    }
 
-        // Publish copies NLog.config from the repo tree — STILL the uncapped
-        // daily-rotation version until fix/thinpool-log-caps merges into local
-        // develop. Re-apply the runtime caps so E2E_REBUILD=1 can never
-        // clobber them (t_a54574e9; same guard as Scripts/e2e/e2e-common.sh).
-        // Idempotent no-op when already capped; throws on failure (check=true).
-        Run("bash", $"{Path.Combine(E2eRoot, "ensure-log-caps.sh")} {E2eRoot}", E2eRoot);
+    internal static string ResolveLogCapsGuard(string runtimeRoot, string repositoryRoot)
+    {
+        var runtimeGuard = Path.Combine(runtimeRoot, "ensure-log-caps.sh");
+        if (File.Exists(runtimeGuard))
+            return runtimeGuard;
+        var repositoryGuard = Path.Combine(repositoryRoot, "Scripts", "e2e", "ensure-log-caps.sh");
+        if (File.Exists(repositoryGuard))
+            return repositoryGuard;
+        throw new FileNotFoundException("ensure-log-caps.sh missing from test root and Scripts/e2e");
+    }
+
+    private static void AssertFreshDb()
+    {
+        using var connection = OpenDb("aaemu_game");
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM quests";
+        var active = Convert.ToInt64(command.ExecuteScalar());
+        command.CommandText = "SELECT COUNT(*) FROM completed_quests";
+        var completed = Convert.ToInt64(command.ExecuteScalar());
+        ValidateFreshQuestState(active, completed);
+    }
+
+    internal static void ValidateFreshQuestState(long active, long completed)
+    {
+        if (active != 0 || completed != 0)
+            throw new InvalidOperationException(
+                $"Fresh test database contains previous quest state: quests={active}, completed_quests={completed}");
     }
 
     /// <summary>sha256 over (git HEAD sha + "\n" + content diff of the

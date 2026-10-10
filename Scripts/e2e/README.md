@@ -104,3 +104,12 @@ verification, not compose state.
 
 The committed files contain no credentials: `DB_PASSWORD` is read from
 `$E2E_ROOT/.env` (runtime-generated) or injected via `docker compose --env-file`.
+
+### Fresh test-host log guard and database reset
+
+Both shell and C# test hosts prefer `E2E_ROOT/ensure-log-caps.sh` when it exists,
+then use the committed `Scripts/e2e/ensure-log-caps.sh`. No separate guard download
+is required. The guard only edits the explicitly supplied test runtime.
+The C# host aborts if its project-scoped database reset fails, and checks that
+active/completed quest tables are empty after fresh seeding before starting servers.
+This check applies to a fresh `EnsureUp`, not a Game-only restart or an adopted live run.
