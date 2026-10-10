@@ -630,7 +630,7 @@ public class CharacterQuests(Character owner)
     {
         lock (CompletedQuests)
         {
-            return CompletedQuests.Values.Select(block => new CompletedQuest
+            return CompletedQuests.Values.Select(block => block is null ? null : new CompletedQuest
             {
                 Id = block.Id,
                 Body = (System.Collections.BitArray)block.Body.Clone()
