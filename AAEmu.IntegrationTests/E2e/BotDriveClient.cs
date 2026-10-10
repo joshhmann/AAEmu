@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
@@ -16,9 +17,13 @@ public sealed class BotDriveClient : IDisposable
     private readonly NetworkStream _stream;
     private readonly StreamReader _reader;
     private readonly StreamWriter _writer;
+    private readonly int _maximumResponseBytes;
+    private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
-    public BotDriveClient(int port)
+    public BotDriveClient(int port, int maximumResponseBytes = 0)
     {
+        if (maximumResponseBytes < 0) throw new ArgumentOutOfRangeException(nameof(maximumResponseBytes));
+        _maximumResponseBytes = maximumResponseBytes;
         _tcp = new TcpClient { NoDelay = true };
         _tcp.Connect("127.0.0.1", port);
         _stream = _tcp.GetStream();
@@ -58,7 +63,9 @@ public sealed class BotDriveClient : IDisposable
         string? line;
         try
         {
-            line = await _reader.ReadLineAsync(waitToken).ConfigureAwait(false);
+            line = _maximumResponseBytes == 0
+                ? await _reader.ReadLineAsync(waitToken).ConfigureAwait(false)
+                : await ReadBoundedLineAsync(_stream, _maximumResponseBytes, waitToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (
             timeoutCts?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
@@ -75,6 +82,40 @@ public sealed class BotDriveClient : IDisposable
             throw new InvalidOperationException("bridge error: " + root.GetProperty("error").GetString());
 
         return root.GetProperty("data").Clone();
+    }
+
+    // Opt-in ingress bound: reject before an unbounded line or JSON DOM exists.
+    // One sequential request has exactly one reply; unsolicited trailing frames
+    // fail rather than being mistaken for the next command's response.
+    internal static async Task<string?> ReadBoundedLineAsync(Stream stream, int maximumBytes, CancellationToken token)
+    {
+        if (maximumBytes <= 0) throw new ArgumentOutOfRangeException(nameof(maximumBytes));
+        var buffer = ArrayPool<byte>.Shared.Rent(Math.Min(4096, maximumBytes));
+        try
+        {
+            using var line = new MemoryStream(Math.Min(4096, maximumBytes));
+            while (true)
+            {
+                var read = await stream.ReadAsync(buffer.AsMemory(0, Math.Min(4096, maximumBytes)), token).ConfigureAwait(false);
+                if (read == 0)
+                {
+                    if (line.Length != 0) throw new IOException("bridge response ended without its newline");
+                    return null;
+                }
+                if (line.Length + read > maximumBytes) throw new InvalidDataException("bridge response exceeds declared byte bound");
+                var newline = System.Array.IndexOf(buffer, (byte)'\n', 0, read);
+                var used = newline < 0 ? read : newline;
+                if (newline >= 0 && read != used + 1) throw new InvalidDataException("unsolicited trailing bridge frame");
+                line.Write(buffer, 0, used);
+                if (newline >= 0)
+                {
+                    var length = checked((int)line.Length);
+                    if (length > 0 && line.GetBuffer()[length - 1] == '\r') length--;
+                    return StrictUtf8.GetString(line.GetBuffer(), 0, length);
+                }
+            }
+        }
+        finally { ArrayPool<byte>.Shared.Return(buffer); }
     }
 
     public JsonElement Call(string json, int timeoutMs = 30000)

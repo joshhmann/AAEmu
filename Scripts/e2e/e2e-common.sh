@@ -47,10 +47,16 @@ PORT_WEBAPI="${E2E_WEBAPI_PORT:-1280}"
 PORT_DB="${DB_HOST_PORT:-${E2E_DB_PORT:-3306}}"
 PORT_BRIDGE="${E2E_BRIDGE_PORT:-1260}"    # BotDriveBridge (game process, E2E-2 scope — OFF by default)
 
+# AAEMU_QUESTREMOVE_DIAG=1 opts into live-lane REMOVER=instance-*/eval-*/save-* WARNs
+# in the GAME process (q256 lane lane-grep evidence; default OFF keeps gate
+# allocation clean). Passthrough: the game process inherits boot-time env, so
+# `AAEMU_QUESTREMOVE_DIAG=1 ./e2e-boot.sh` (or exporting it before e2e_start_server
+# / before the E2E test-runner spawns the game) turns the witnesses ON with
+# byte-identical formats. Read site: CharacterQuests.DiagEnabled
+# (AAEmu.Game/Models/Game/Char/CharacterQuests.cs, static readonly, read once).
 # E2E_BRIDGE=1 opts into the BotDriveBridge (port 1260): the game config gets
 # the Bots section and boot waits for the bridge. Default off — this card
 # (boot orchestration) must work against the base repo build; E2E-2 flips it.
-E2E_BRIDGE="${E2E_BRIDGE:-0}"
 
 DB_PASSWORD=""
 
