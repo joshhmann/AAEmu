@@ -15,7 +15,8 @@ state, and link on it must trace to a record below — or render as OUT-OF-REPO.
 | Milestone evidence transitions | `EVIDENCE-LEDGER.md` (append-only) | Freshness + claimed states |
 | Human-gate ownership | `Docs/wiki/Human-Gate-Field-Guide.md` | H-gate intake |
 | Live checkpoint narrative | `STATUS.md` | Freshness line |
-| PlayerBot capability boundary | `SCORECARD.md` + progression ladder + capability matrix | Bot Capability lane |
+| PlayerBot capability evidence + grades (unchanged) | `SCORECARD.md` + progression ladder + capability matrix | Bot Capability evidence lane |
+| PlayerBot supported-capability policy | [PROJECT-CONTROL supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract) | Bot Capability current policy/card and Roadmap scope |
 
 ## Update triggers (any of these MUST refresh the tab in the same wave)
 
