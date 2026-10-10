@@ -314,12 +314,12 @@ public class QuestTravelRouteChunkingTests
 
         // NON-VACUITY PRECONDITION, asserted before the arm runs: the gather
         // quest is really staged and its resolver really names the far
-        var outArgs = new object?[] { actor, null, null, false };
+        var outArgs = new object?[] { actor, 0u, null, null, false };
         var resolved = (bool)ResolveObjectiveSource.Invoke(null, outArgs)!;
         await Assert.That(resolved,
             "the objective-source resolver must find the seeded source (arm-1b non-vacuity)").IsTrue();
-        await Assert.That((uint)outArgs[2]!).IsEqualTo(GatherDoodad);
-        await Assert.That(Vector3.Distance((Vector3)outArgs[1]!, source) <= 1f,
+        await Assert.That((uint)outArgs[3]!).IsEqualTo(GatherDoodad);
+        await Assert.That(Vector3.Distance((Vector3)outArgs[2]!, source) <= 1f,
             "the resolved source must be the far spawner the test seeded").IsTrue();
 
 
@@ -501,7 +501,10 @@ public class QuestTravelRouteChunkingTests
     {
         _ = executor.GetOrCreateActor(actor.Character);
         var state = executor.GetBotState(runtime.CharacterId)!;
-        return (bool)ArmQuestTravel.Invoke(executor, [runtime, actor, state])!;
+        var band = typeof(BotRoamStepExecutor)
+            .GetMethod("OfferBandFor", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(executor, [actor])!;
+        return (bool)ArmQuestTravel.Invoke(executor, [runtime, actor, state, band, "quest.progress"])!;
     }
 
     private static void StageActiveQuest(GameplayActor actor, uint questId, int objective)

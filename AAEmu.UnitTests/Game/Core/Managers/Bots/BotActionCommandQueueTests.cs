@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Text.Json;
 
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Bots;
@@ -70,6 +71,7 @@ public class BotActionCommandQueueTests
         public bool WakeAt(uint characterId, DateTime utcDue) => true;
         public bool WakeAfter(uint characterId, TimeSpan delay) => true;
         public bool IsLeased(uint characterId) => false;
+        public BotEnrollmentSnapshot GetEnrollmentSnapshot(uint characterId) => new(false, "-", null, false, null, null, null, 0, 0, 0, 0, false, 0);
         public PlayerBotSchedulerMetrics GetMetrics() => new(4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0);
         public int WorkerCount => 4;
         public bool IsRunning => true;
@@ -316,14 +318,20 @@ public class BotActionCommandQueueTests
     public async Task Move_NoTicks_BackstopExpiresCleanly()
     {
         var rig = CreateRig();
+        rig.Actor.SetPendingDecision("quest.progress", "quest-v1", 2, 1, "opaque-source", 251);
 
         // The scheduler never steps this bot (stopped/not started) — the
         // actor's own Tick never runs, so the queue backstop must expire the
         // request: a command can never hang the actor indefinitely.
         var result = rig.Queue.Enqueue("api-bot",
             new BotActionSpec(BotActionKind.Move,
-                Destination: new Vector3(50, 0, 0), Timeout: TimeSpan.FromSeconds(2)));
+                Destination: new Vector3(50, 0, 0), Timeout: TimeSpan.FromSeconds(2),
+                DecisionCycleId: "opaque-source", WakeSequence: 17));
         rig.Queue.DrainCommands();
+        var request = rig.Actor.ActiveRequest!;
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(request.DecisionQuestId).IsEqualTo((uint?)251);
+        await Assert.That(result.TraceId).IsNotEqualTo(request.TraceId);
 
         rig.Clock.Advance(TimeSpan.FromSeconds(5));
         rig.Queue.DrainCommands();
@@ -332,12 +340,25 @@ public class BotActionCommandQueueTests
         await Assert.That(snap.State).IsEqualTo(nameof(ActorLifecycleState.TimedOut));
         await Assert.That(snap.Failure).IsEqualTo(nameof(ActorFailureReason.Navigation));
         await Assert.That(snap.AuditJson).IsNotNull();
+        using var audit = JsonDocument.Parse(snap.AuditJson!);
+        var row = audit.RootElement;
+        await Assert.That(row.GetProperty("trace_id").GetGuid()).IsEqualTo(request.TraceId);
+        await Assert.That(row.GetProperty("decision_quest_id").GetUInt32()).IsEqualTo(251u);
+        await Assert.That(row.GetProperty("decision_goal").GetString()).IsEqualTo(request.DecisionGoal);
+        await Assert.That(row.GetProperty("decision_policy").GetString()).IsEqualTo(request.DecisionPolicy);
+        await Assert.That(row.GetProperty("decision_cycle_id").GetString()).IsEqualTo(request.DecisionCycleId);
+        await Assert.That(row.GetProperty("decision_seed").GetString()).IsEqualTo(request.DecisionSeed);
+        await Assert.That(row.GetProperty("decision_candidates").GetInt32()).IsEqualTo(request.DecisionCandidates);
+        await Assert.That(row.GetProperty("decision_rejections").GetInt32()).IsEqualTo(request.DecisionRejections);
+        await Assert.That(row.GetProperty("requested_at").GetDateTime()).IsEqualTo(request.RequestedAtUtc);
 
         // The actor is usable again afterwards (no wedge).
         var observe = rig.Queue.Enqueue("api-bot", new BotActionSpec(BotActionKind.Observe));
         rig.Queue.DrainCommands();
         await Assert.That(rig.Queue.TryGetSnapshot(observe.TraceId, out var o)).IsTrue();
         await Assert.That(o.State).IsEqualTo(nameof(ActorLifecycleState.Completed));
+        using var after = JsonDocument.Parse(o.AuditJson!);
+        await Assert.That(after.RootElement.GetProperty("decision_quest_id").ValueKind).IsEqualTo(JsonValueKind.Null);
     }
     [Test]
     public async Task BackstopExpiry_RecordsLedgerOutcome_SameKeyRetryRefused()

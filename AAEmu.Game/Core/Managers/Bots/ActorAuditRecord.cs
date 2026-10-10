@@ -66,7 +66,8 @@ public sealed record ActorAuditRecord(
     string? DecisionSeed = null,
     string? DecisionCycleId = null,
     long? WakeSequence = null,
-    string? MoveOwner = null)
+    string? MoveOwner = null,
+    uint? DecisionQuestId = null)
 {
     /// <summary>Stable one-line log form (structured fields, no packet content).</summary>
     public override string ToString()
@@ -108,6 +109,7 @@ public sealed record ActorAuditRecord(
             // v3 additive decision-context fields (Wave: trace enrichment).
             decision_goal = DecisionGoal,
             decision_policy = DecisionPolicy,
+            decision_quest_id = DecisionQuestId,
             decision_candidates = DecisionCandidates,
             decision_rejections = DecisionRejections,
             decision_seed = DecisionSeed,

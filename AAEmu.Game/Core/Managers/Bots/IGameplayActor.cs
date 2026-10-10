@@ -60,7 +60,7 @@ public interface IGameplayActor
     /// Stages decision context (goal/policy/candidates/rejections/seed) for
     /// the next created request — copied into its audit record at Finish.
     /// </summary>
-    void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed);
+    void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed, uint? questId);
 
     /// <summary>
     /// Stages the Part-3 join key for the next created request (copied into

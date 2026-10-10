@@ -71,7 +71,6 @@ public class AccountManager(ITickManager tickManager, ITimedRewardsManager timed
             using var command = connection.CreateCommand();
             command.CommandText = "SELECT * FROM accounts WHERE account_id = @acc_id";
             command.Parameters.AddWithValue("@acc_id", accountId);
-            command.Prepare();
             using var reader = command.ExecuteReader();
             if (reader.Read())
             {
@@ -92,7 +91,6 @@ public class AccountManager(ITickManager tickManager, ITimedRewardsManager timed
 
             // Account didn't exist, check if it's our first
             command.CommandText = "SELECT COUNT(*) FROM accounts";
-            command.Prepare();
             var accountCount = (int)(long)(command.ExecuteScalar() ?? 0L);
             var newAccessLevel = accountCount <= 0
                 ? AppConfiguration.Instance.Account.AccessLevelFirstAccount
@@ -107,7 +105,6 @@ public class AccountManager(ITickManager tickManager, ITimedRewardsManager timed
             command.Parameters.AddWithValue("@last_labor_tick", DateTime.UtcNow);
             command.Parameters.AddWithValue("@last_credits_tick", DateTime.UtcNow);
             command.Parameters.AddWithValue("@last_loyalty_tick", DateTime.UtcNow);
-            command.Prepare();
             command.ExecuteNonQuery();
             res.AccountId = (int)command.LastInsertedId;
             res.LastLogin = DateTime.UtcNow;

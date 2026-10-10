@@ -54,6 +54,28 @@ public sealed class BotBehaviorRuntime
     {
         _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
     }
+    /// <summary>
+    /// True while a dispatched-but-running quest request is owned across
+    /// turns (the G5 pursuit/return/approach Move shape). While set, the
+    /// tick holds the exact request — no re-selection, no fallback arm —
+    /// until its terminal lands, which is consumed once before the next
+    /// fresh decision. Safety preemptions retire the leg through the actor;
+    /// <see cref="Cancel"/> preserves this flag so the terminal is still
+    /// consumed on resume. Generation-scoped with the runtime itself.
+    /// </summary>
+    private bool _ownsRunning;
+
+    /// <summary>
+    /// True when <paramref name="request"/> is this runtime's live owned
+    /// Running job (identity by reference — the actor's single-writer slot
+    /// holds the dispatched object itself). The executor's sole pre-check
+    /// before letting the quest leg hold a busy wake.
+    /// </summary>
+    public bool OwnsRunningRequest(ActorRequest? request)
+        => _ownsRunning
+            && CurrentActorRequest is { IsTerminal: false } owned
+            && request is { IsTerminal: false } live
+            && ReferenceEquals(live, owned);
 
     /// <summary>Electing activity holding this bot (e.g. quest.progress), as gated by the caller.</summary>
     public string? CurrentActivity { get; private set; }
@@ -94,10 +116,55 @@ public sealed class BotBehaviorRuntime
     public BotBehaviorStatus Status { get; private set; } = BotBehaviorStatus.NotStarted;
 
     /// <summary>
+    /// Quest-terminal feed (E-66 Gap 2): invoked once per landed quest-verb
+    /// request (characterId, questId, engine-confirmed completed) — and once
+    /// per completed quest id on a bulk landing wake. Null (default) =
+    /// unenrolled: zero behavior change — one null check on landing wakes
+    /// only, never on holds. The executor wires the owning module; the
+    /// runtime never resolves DI.
+    /// </summary>
+    public Action<uint, uint, bool>? QuestCompletedSink { get; set; }
+
+    /// <summary>
+    /// Feeds quest terminals into the owning module: every quest id is
+    /// reported, with engine-confirmed completion (never inferred from the
+    /// terminal alone — a Completed verb can land without the quest
+    /// completing, and quests can leave ActiveQuests by drop/fail too).
+    /// A non-completed terminal still releases the module's purpose so the
+    /// next wake re-decides from the fresh listing.
+    /// </summary>
+    private void FeedQuestTerminals(IGameplayActor actor, IReadOnlyList<uint> questIds)
+    {
+        var sink = QuestCompletedSink;
+        if (sink == null || questIds.Count == 0)
+            return;
+        var character = actor.Character;
+        foreach (var questId in questIds)
+            sink.Invoke(character.Id, questId, character.Quests?.HasQuestCompleted(questId) == true);
+    }
+
+    /// <summary>
+    /// Quest verbs whose terminal can carry quest credit (accept/advance and
+    /// the three turn-in shapes — the request's TargetId is the quest id).
+    /// Movement and all other verbs never complete quests, so an owned-hold
+    /// terminal of any other action feeds nothing.
+    /// </summary>
+    private static bool IsQuestTerminalAction(ActorActionType action)
+        => action is ActorActionType.AcceptQuest
+            or ActorActionType.AdvanceQuest
+            or ActorActionType.TurnInQuest
+            or ActorActionType.TurnInDoodad
+            or ActorActionType.AutoTurnIn;
+
+    /// <summary>
     /// Runs one quest leg tick: perceive → propose → shared-select → stage →
-    /// dispatch → observe, via <see cref="QuestBehavior"/>. Returns the 0b
-    /// landed contract (true only on terminal Completed work) so the caller
-    /// keeps its route/cadence discipline byte-identical.
+    /// dispatch → observe, via <see cref="QuestBehavior"/>. Returns true when
+    /// decision work landed (a terminal Completed request) OR when an owned
+    /// Running request still holds the actor — the caller keeps its
+    /// route/cadence discipline byte-identical either way.
+    /// A Running dispatch becomes owned: later ticks hold it (same request,
+    /// no new decision) until its exact terminal lands, which is consumed
+    /// once before the next fresh decision reads it through the audit trace.
     /// </summary>
     public bool Tick(
         IGameplayActor actor,
@@ -108,14 +175,29 @@ public sealed class BotBehaviorRuntime
         ArgumentNullException.ThrowIfNull(actor);
         ArgumentNullException.ThrowIfNull(options);
 
-        // The caller gates on actor-idle; this guard is defense-in-depth so a
-        // busy actor degrades to Waiting instead of a TryBegin busy-drop.
-        if (actor.ActiveRequest is { IsTerminal: false })
+        // Single-owner hold (P0.4): while we own a Running job and the actor
+        // still carries that exact request, hold it — no re-selection. Holds
+        // any Running request (quest or quest-travel), because either is the
+        // quest slice's own landed work. Only the executor's top-of-wake
+        // safety gate and generation binding may supersede this: survival
+        // preempts through the actor first (StepSurvivalWake), so a retired
+        // leg falls through to fresh work below by identity, never by flag.
+        if (_ownsRunning && CurrentActorRequest is { } ownedRunning)
         {
-            Status = BotBehaviorStatus.Waiting;
-            CurrentPhase = "waiting-actor-busy";
-            NextWake = null;
-            return false;
+            if (!ownedRunning.IsTerminal)
+            {
+                Status = BotBehaviorStatus.Running;
+                CurrentPhase = "quest-leg-running";
+                NextWake = null;
+                return true;
+            }
+            // The exact terminal landed: consume it once — carry the same
+            // landed/failed surface a fresh decision would, then release so
+            // the NEXT wake re-decides.
+            _ownsRunning = false;
+            CurrentActorRequest = null;
+            LastResult = null;
+            return ConsumeOwnedTerminal(actor, ownedRunning, activity, options);
         }
 
         CurrentActivity = activity;
@@ -129,6 +211,17 @@ public sealed class BotBehaviorRuntime
         LastResult = result;
         CurrentActorRequest = result.Request;
 
+        // A dispatched-but-running Move leg IS landed work (the pursuit,
+        // return, loot-approach and gather/interact closes take many wakes).
+        // Own it: later ticks hold it until its exact terminal lands, and the
+        // travel fallback below must not arm against our own leg.
+        if (result.WorkSelected && result.Request is { IsTerminal: false })
+        {
+            _ownsRunning = true;
+            Status = BotBehaviorStatus.Running;
+            CurrentPhase = "quest-leg-running";
+            return true;
+        }
         var landed = result.WorkSelected && result.Request?.State == ActorLifecycleState.Completed;
         if (landed)
         {
@@ -136,8 +229,11 @@ public sealed class BotBehaviorRuntime
             CurrentPhase = result.SelectedAction?.ToString() ?? "completed";
             LastProgressAt = _utcNow();
             LastFailure = null;
+            if (result.CompletedQuestIds.Count > 0)
+                FeedQuestTerminals(actor, result.CompletedQuestIds);
             return true;
         }
+
 
         if (!result.WorkSelected && result.FailStage == "DECIDE")
         {
@@ -152,15 +248,70 @@ public sealed class BotBehaviorRuntime
         LastFailure = result.FailReason;
         return false;
     }
+    /// <summary>
+    /// Consumes the owned request's exact terminal once (the hold released
+    /// above): a Completed leg lands progress exactly like a fresh Completed
+    /// decision; any other terminal fails closed with the request's own
+    /// state/detail (never a re-selection, never a bare failure).
+    /// </summary>
+    private bool ConsumeOwnedTerminal(IGameplayActor actor, ActorRequest request, string? activity, QuestDecisionScenario.QuestOptions options)
+    {
+        CurrentActivity = activity;
+        BehaviorInstanceId = options.CycleId;
+        StartedAt = _utcNow();
+        NextWake = null;
+        if (request.State == ActorLifecycleState.Completed)
+        {
+            Status = BotBehaviorStatus.Completed;
+            CurrentPhase = request.Action.ToString();
+            LastProgressAt = _utcNow();
+            LastFailure = null;
+            if (IsQuestTerminalAction(request.Action))
+                FeedQuestTerminals(actor, [request.TargetId]);
+            return true;
+        }
+        Status = BotBehaviorStatus.Failed;
+        CurrentPhase = "execute";
+        LastFailure = $"{request.Action} ended {request.State} ({request.Detail})";
+        return false;
+    }
+
+    /// <summary>
+    /// Death release (M6.2 death watch): the bot died while this runtime
+    /// owned a Running job. Drops the hold and the quest request pointer so
+    /// the first post-respawn turn re-decides from the fresh listing instead
+    /// of resuming the stale pre-death leg from the portal position. The
+    /// actor's live request is retired by the caller through the actor
+    /// (PreemptCurrent) — this method never touches the actor. No terminal
+    /// is consumed and no failure recorded: death is not a step failure.
+    /// </summary>
+    public void ReleaseOnDeath(string reason)
+    {
+        _ownsRunning = false;
+        CurrentActorRequest = null;
+        LastResult = null;
+        if (Status is BotBehaviorStatus.Running or BotBehaviorStatus.Waiting)
+        {
+            Status = BotBehaviorStatus.Cancelled;
+            CurrentPhase = $"cancelled:{reason}";
+        }
+        NextWake = null;
+    }
 
     /// <summary>
     /// Marks the hosted tick superseded (the electing activity moved away).
-    /// Observation only: transitions Running/Waiting → Cancelled and drops
-    /// the quest request pointer. Any live-actor preemption stays with the
-    /// owning leg via PreemptCurrent — this method never touches the actor.
+    /// Observation only: transitions Running/Waiting → Cancelled, releases
+    /// any owned Running hold, and drops the quest request pointer. Any
+    /// live-actor preemption stays with the owning leg via PreemptCurrent —
+    /// this method never touches the actor.
     /// </summary>
     public void Cancel(string reason)
     {
+        // P0.4: the safety supersede retires the owned job through the actor
+        // (executor StepSurvivalWake preempts first); the runtime drops its
+        // hold so the next quest wake re-decides instead of consuming a leg
+        // that no longer belongs to it.
+        _ownsRunning = false;
         if (Status is not (BotBehaviorStatus.Running or BotBehaviorStatus.Waiting))
             return;
         Status = BotBehaviorStatus.Cancelled;

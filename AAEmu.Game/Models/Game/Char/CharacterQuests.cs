@@ -19,12 +19,67 @@ namespace AAEmu.Game.Models.Game.Char;
 
 public class CharacterQuests(Character owner)
 {
+    // Live-lane instance-identity witnesses (REMOVER=instance-*/eval-*/save-*): gated behind
+    // AAEMU_QUESTREMOVE_DIAG=1 (default OFF). Read once at startup; flag-off is a single
+    // static-bool read with zero allocation. Lane enablement: export the var before boot —
+    // Scripts/e2e/e2e-common.sh passes it through to the game process; the q256 lane sets
+    // AAEMU_QUESTREMOVE_DIAG=1. Witness formats are byte-identical when ON.
+    internal static readonly bool DiagEnabled =
+        Environment.GetEnvironmentVariable("AAEMU_QUESTREMOVE_DIAG") is "1" or "true" or "True";
+
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
+
     private readonly List<uint> _removed = [];
     private readonly object _removedLock = new();
 
     private Character Owner { get; set; } = owner;
     public ConcurrentDictionary<uint, Quest> ActiveQuests { get; } = [];
+    // TEMPORARY live-lane diagnostic (read-only log, never branched on): construction-site instance witness.
+    // Called once at each `new CharacterQuests` site with a path label so two live instances for one bot
+    // name are visible as two questsHash values. Join key: char name + charHash/questsHash.
+    internal static void LogInstanceConstruct(CharacterQuests quests, Character ownerChar, string path)
+    {
+        if (!DiagEnabled)
+            return;
+        if (ownerChar == null)
+            return;
+        Logger.Warn($"[QuestRemove] REMOVER=instance-construct path={path} char={ownerChar.Name}({ownerChar.Id}) objId={ownerChar.ObjId} charHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(ownerChar)} questsHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(quests)}");
+    }
+    // TEMPORARY live-lane diagnostic (read-only log, never branched on): mid-session-reload caller witness.
+    // Fires ONLY when a load-from-db construct replaces a live CharacterQuests that already holds active
+    // quests (the replacement case: same Character, new empty container, old progress orphaned). First-
+    // provision/first-login construction (old null or empty) never logs. One WARN per replacement; the
+    // captured stack discriminates enter-world re-fire vs teleport region-sync vs scheduler re-enroll vs save-path Load.
+    internal static void LogInstanceReloadStack(CharacterQuests oldQuests, CharacterQuests newQuests, Character ownerChar, string path)
+    {
+        if (!DiagEnabled)
+            return;
+        if (ownerChar == null || oldQuests == null || oldQuests.ActiveQuests.IsEmpty)
+            return;
+        string stack;
+        try
+        {
+            stack = string.Join(" <- ", Environment.StackTrace.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(15));
+        }
+        catch
+        {
+            stack = "unavailable";
+        }
+        Logger.Warn($"[QuestRemove] REMOVER=reload-caller-stack path={path} char={ownerChar.Name}({ownerChar.Id}) objId={ownerChar.ObjId} charHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(ownerChar)} oldQuestsHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(oldQuests)} oldActiveCount={oldQuests.ActiveQuests.Count} oldActiveIds=[{string.Join(",", oldQuests.ActiveQuests.Keys.OrderBy(k => k))}] oldPresent254={oldQuests.ActiveQuests.ContainsKey(254)} newQuestsHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(newQuests)} stack={stack}");
+    }
+    // TEMPORARY live-lane diagnostic (read-only log, never branched on): load + add instance witnesses.
+    private void LogInstanceLoad()
+    {
+        if (!DiagEnabled)
+            return;
+        Logger.Warn($"[QuestRemove] REMOVER=instance-load char={Owner.Name}({Owner.Id}) objId={Owner.ObjId} charHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(Owner)} questsHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this)} activeCount={ActiveQuests.Count} activeIds=[{string.Join(",", ActiveQuests.Keys.OrderBy(k => k))}] present254={ActiveQuests.ContainsKey(254)}");
+    }
+    private void LogInstanceAdd(uint questId)
+    {
+        if (!DiagEnabled)
+            return;
+        Logger.Warn($"[QuestRemove] REMOVER=instance-add quest={questId} char={Owner.Name}({Owner.Id}) objId={Owner.ObjId} charHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(Owner)} questsHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this)} activeCount={ActiveQuests.Count} activeIds=[{string.Join(",", ActiveQuests.Keys.OrderBy(k => k))}] present254={ActiveQuests.ContainsKey(254)}");
+    }
     // BUG-014: completed blocks are keyed by uint (block id = questId / 64) — a
     // ushort key wrapped for quest ids >= 4,194,304 and ResetQuests recomputed a
     // wrapped quest id that never resolved to a template (bit never cleared).
@@ -87,11 +142,17 @@ public class CharacterQuests(Character owner)
             if (forcibly)
             {
                 Logger.Info($"[GM] quest {questId}, added!");
-                DropQuest(questId, true);
+                DropQuest(questId, true, false, "REMOVER=AddQuest-forcible-readd");
             }
             else
             {
                 Logger.Info($"Duplicate quest {questId}, not added!");
+                // TEMPORARY live-lane diagnostic: re-accept refusal keeps the original (read-only witness, never branched on).
+                if (DiagEnabled)
+                    if (ActiveQuests.TryGetValue(questId, out var duplicateQuest))
+                        Logger.Warn($"[QuestRemove] REMOVER=AddQuest-duplicate-refused {duplicateQuest.DiagDescribe()} char={Owner.Name}({Owner.Id}) present=True note=reaccept-refused-original-kept");
+                    else
+                        Logger.Warn($"[QuestRemove] REMOVER=AddQuest-duplicate-refused quest={questId} char={Owner.Name}({Owner.Id}) present=True note=reaccept-refused-race-cleared");
                 // The client opens a full-screen quest-offer cutscene and waits for
                 // SCQuestContextStartedPacket. Return without replying and the player
                 // is frozen in the offer (X / Esc / Back all dead). Send an error so
@@ -109,7 +170,15 @@ public class CharacterQuests(Character owner)
         }
 
         if (!forcibly && !CanAcceptSupplyItems(template))
+        {
+            // TEMPORARY live-lane diagnostic: supply-gate refusal keeps prior state (read-only witness, never branched on).
+            if (DiagEnabled)
+                if (ActiveQuests.TryGetValue(questId, out var supplyGateQuest))
+                    Logger.Warn($"[QuestRemove] REMOVER=AddQuest-supply-refused {supplyGateQuest.DiagDescribe()} char={Owner.Name}({Owner.Id}) present=True note=supply-gate-refused");
+                else
+                    Logger.Warn($"[QuestRemove] REMOVER=AddQuest-supply-refused quest={questId} char={Owner.Name}({Owner.Id}) present=False note=supply-gate-refused-no-active");
             return false;
+        }
 
         // Check if start step components are active
         var startComponentTemplate = template.GetComponents(QuestComponentKind.Start);
@@ -120,6 +189,12 @@ public class CharacterQuests(Character owner)
                 Logger.Trace($"User {Owner.Name} ({Owner.Id}) does not meet requirements to start new Quest {questId}, ComponentId {questComponentTemplate.Id}");
                 if (!forcibly)
                 {
+                    // TEMPORARY live-lane diagnostic: requirement-gate refusal (read-only witness, never branched on).
+                    if (DiagEnabled)
+                        if (ActiveQuests.TryGetValue(questId, out var reqGateQuest))
+                            Logger.Warn($"[QuestRemove] REMOVER=AddQuest-requirement-refused {reqGateQuest.DiagDescribe()} char={Owner.Name}({Owner.Id}) present=True comp={questComponentTemplate.Id} note=requirement-gate-refused");
+                        else
+                            Logger.Warn($"[QuestRemove] REMOVER=AddQuest-requirement-refused quest={questId} char={Owner.Name}({Owner.Id}) present=False comp={questComponentTemplate.Id} note=requirement-gate-refused-no-active");
                     // Dismiss the client's quest-offer cutscene so it doesn't hang
                     // waiting for a start confirmation.
                     Owner.SendErrorMessage(ErrorMessageType.AlreadyRequested);
@@ -133,12 +208,18 @@ public class CharacterQuests(Character owner)
             if (forcibly)
             {
                 Logger.Info($"[GM] quest {questId}, added!");
-                DropQuest(questId, true);
+                DropQuest(questId, true, false, "REMOVER=AddQuest-forcible-readd-completed");
             }
             else if (template.Repeatable == false)
             {
                 Logger.Warn($"Quest {questId} already completed for {Owner.Name}, not added!");
                 Owner.SendErrorMessage(ErrorMessageType.QuestDailyLimit);
+                // TEMPORARY live-lane diagnostic: completed-gate refusal (read-only witness, never branched on).
+                if (DiagEnabled)
+                    if (ActiveQuests.TryGetValue(questId, out var completedGateQuest))
+                        Logger.Warn($"[QuestRemove] REMOVER=AddQuest-completed-refused {completedGateQuest.DiagDescribe()} char={Owner.Name}({Owner.Id}) present=True note=completed-gate-refused");
+                    else
+                        Logger.Warn($"[QuestRemove] REMOVER=AddQuest-completed-refused quest={questId} char={Owner.Name}({Owner.Id}) present=False note=completed-gate-refused-no-active");
                 return false;
             }
         }
@@ -167,7 +248,7 @@ public class CharacterQuests(Character owner)
         if (!res)
         {
             // If it failed to start, drop the quest here
-            DropQuest(questId, true);
+            DropQuest(questId, true, false, "REMOVER=AddQuest-failure");
             return false;
         }
 
@@ -176,13 +257,20 @@ public class CharacterQuests(Character owner)
         if (!ActiveQuests.TryAdd(quest.TemplateId, quest))
         {
             // Concurrent duplicate (same quest added from another thread) — undo this instance
-            Logger.Warn($"Quest {questId} already active for {Owner.Name}, concurrent add rejected");
+            // TEMPORARY live-lane diagnostic: re-accept refusal keeps the original (read-only witness).
+            if (DiagEnabled)
+                Logger.Warn($"[QuestRemove] REMOVER=AddQuest-concurrent-reject {quest.DiagDescribe()} char={Owner.Name}({Owner.Id}) present=True note=rejected-dup-original-kept");
             quest.SkipUpdatePackets();
             quest.Cleanup();
             QuestIdManager.Instance.ReleaseId((uint)quest.Id);
             return false;
         }
         quest.Owner.SendDebugMessage($"[Quest] {Owner.Name}, quest {questId} added.");
+        // TEMPORARY live-lane diagnostic: row-id allocator witness (read-only log, never branched on).
+        if (DiagEnabled)
+            Logger.Warn($"[QuestRemove] REMOVER=questid-alloc quest={quest.TemplateId} char={Owner.Name}({Owner.Id}) step={quest.Step} status={quest.Status} present=True note=db-row-id-allocated dbId={quest.Id}");
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): add-path instance witness (fires for any quest, incl. 254).
+        LogInstanceAdd(questId);
         Owner.MarkDirty();
 
         // Run measurement (progress capability): the accept funnel ends here —
@@ -288,15 +376,22 @@ public class CharacterQuests(Character owner)
     }
 
     /// <summary>
-    /// Removes a quest
+    /// TEMPORARY live-lane diagnostic: caller-identity tag for quest removals.
+    /// Diagnostics only — the value is logged, never branched on.
     /// </summary>
-    /// <param name="questId"></param>
-    /// <param name="update"></param>
-    /// <param name="forcibly"></param>
-    public void DropQuest(uint questId, bool update, bool forcibly = false)
+    public void DropQuest(uint questId, bool update, bool forcibly = false, string remover = "REMOVER=DropQuest-explicit")
     {
-        if (!ActiveQuests.TryGetValue(questId, out var quest)) { return; }
+        if (!ActiveQuests.TryGetValue(questId, out var quest))
+        {
+            if (DiagEnabled)
+                Logger.Warn($"[QuestRemove] {remover} quest={questId} char={Owner.Name}({Owner.Id}) present=False");
+            return;
+        }
 
+        var preStep = quest.Step;
+        var preStatus = quest.Status;
+        if (DiagEnabled)
+            Logger.Warn($"[QuestRemove] {remover} {quest.DiagDescribe()} char={Owner.Name}({Owner.Id}) present=True preStep={preStep} preStatus={preStatus}");
         quest.SkipUpdatePackets(); // make sure no further "update packets" are send to the player
         quest.Cleanup();
         quest.Drop(update);
@@ -313,7 +408,8 @@ public class CharacterQuests(Character owner)
         }
 
         quest.Owner.SendDebugMessage($"[Quest] for player: {Owner.Name}, quest: {questId} removed.");
-        Logger.Warn($"[Quest] for player: {Owner.Name}, quest: {questId} removed.");
+        if (DiagEnabled)
+            Logger.Warn($"[QuestRemove] {remover} quest={questId} char={Owner.Name}({Owner.Id}) removedFrom=ActiveQuests postStep={quest.Step} postStatus={quest.Status}");
 
         QuestManager.Instance.RemoveQuestTimer(Owner.Id, questId);
 
@@ -382,6 +478,8 @@ public class CharacterQuests(Character owner)
                                 break;
                             }
                             // it's a match, but we don't need to drop the quest, just exit
+                            if (DiagEnabled)
+                                Logger.Warn($"[QuestRemove] REMOVER=DropWhenDestroy-keep item={item.TemplateId} lootQuestId={item.Template.LootQuestId} dropWhenDestroy=False quest={quest.TemplateId} char={Owner.Name}({Owner.Id}) step={quest.Step} status={quest.Status} act=GenericItem");
                             return;
                         }
 
@@ -394,6 +492,8 @@ public class CharacterQuests(Character owner)
                                 break;
                             }
                             // it's a match, but we don't need to drop the quest, just exit
+                            if (DiagEnabled)
+                                Logger.Warn($"[QuestRemove] REMOVER=DropWhenDestroy-keep item={item.TemplateId} lootQuestId={item.Template.LootQuestId} dropWhenDestroy=False quest={quest.TemplateId} char={Owner.Name}({Owner.Id}) step={quest.Step} status={quest.Status} act=ItemGroupGather");
                             return;
                         }
 
@@ -406,6 +506,8 @@ public class CharacterQuests(Character owner)
                                 break;
                             }
                             // it's a match, but we don't need to drop the quest, just exit
+                            if (DiagEnabled)
+                                Logger.Warn($"[QuestRemove] REMOVER=DropWhenDestroy-keep item={item.TemplateId} lootQuestId={item.Template.LootQuestId} dropWhenDestroy=False quest={quest.TemplateId} char={Owner.Name}({Owner.Id}) step={quest.Step} status={quest.Status} act=ItemGroupUse");
                             return;
                         }
 
@@ -418,6 +520,8 @@ public class CharacterQuests(Character owner)
                                 break;
                             }
                             // it's a match, but we don't need to drop the quest, just exit
+                            if (DiagEnabled)
+                                Logger.Warn($"[QuestRemove] REMOVER=DropWhenDestroy-keep item={item.TemplateId} lootQuestId={item.Template.LootQuestId} dropWhenDestroy=False quest={quest.TemplateId} char={Owner.Name}({Owner.Id}) step={quest.Step} status={quest.Status} act=ItemUse");
                             return;
                         }
 
@@ -433,8 +537,10 @@ public class CharacterQuests(Character owner)
                 break;
         }
 
+        if (DiagEnabled && doDropQuest)
+            Logger.Warn($"[QuestRemove] REMOVER=DropWhenDestroy-item-{item.TemplateId} item={item.TemplateId} lootQuestId={item.Template.LootQuestId} dropWhenDestroy=True char={Owner.Name}({Owner.Id})");
         if (doDropQuest)
-            Owner.Quests.DropQuest(item.Template.LootQuestId, true);
+            Owner.Quests.DropQuest(item.Template.LootQuestId, true, false, $"REMOVER=DropWhenDestroy-item-{item.TemplateId}");
     }
 
     /// <summary>
@@ -560,6 +666,9 @@ public class CharacterQuests(Character owner)
                 {
                     if (q.DetailId == qd && completeBlock.Body[blockIndex])
                     {
+                        // TEMPORARY live-lane diagnostic: daily-reset touches completed flags only, never active rows (read-only log, never branched on).
+                        if (DiagEnabled && HasQuest(questId))
+                            Logger.Warn($"[QuestRemove] REMOVER=daily-reset-active-kept quest={questId} char={Owner.Name}({Owner.Id}) present=True note=completed-flag-cleared-active-kept");
                         completeBlock.Body.Set(blockIndex, false);
                         Logger.Info($"QuestReset by {Owner.Name}, reset {questId}");
                         if (sendIfChanged)
@@ -612,6 +721,9 @@ public class CharacterQuests(Character owner)
                     var template = QuestManager.Instance.GetTemplate(templateId);
                     if (template == null)
                     {
+                        // TEMPORARY live-lane diagnostic: relog-orphan skip witness (read-only log, never branched on).
+                        if (DiagEnabled)
+                            Logger.Warn($"[QuestRemove] REMOVER=relog-orphan-skip quest={templateId} char={Owner.Name}({Owner.Id}) present=False note=db-row-no-template-skipped dbId={questId}");
                         Logger.Error($"Quest {templateId} by {Owner.Name} does not exist");
                         continue;
                     }
@@ -631,6 +743,12 @@ public class CharacterQuests(Character owner)
                 }
             }
         }
+        // TEMPORARY live-lane diagnostic: relog-load reconciliation witness (read-only log, never branched on).
+        if (DiagEnabled)
+            foreach (var loadedQuest in ActiveQuests.Values.ToList())
+                Logger.Warn($"[QuestRemove] REMOVER=relog-load-restored {loadedQuest.DiagDescribe()} char={Owner.Name}({Owner.Id}) present=True note=row-restored-at-load");
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): load-path instance witness.
+        LogInstanceLoad();
     }
 
     /// <summary>
@@ -652,6 +770,18 @@ public class CharacterQuests(Character owner)
                 {
                     ids = [.. _removed];
                     _removed.Clear();
+                }
+                // TEMPORARY live-lane diagnostic: row-ownership delete witness (read-only log, never branched on).
+                if (DiagEnabled)
+                {
+                    var removedSnapshot = string.Join(",", ids);
+                    foreach (var removedId in ids)
+                    {
+                        if (ActiveQuests.TryGetValue(removedId, out var removedQuest))
+                            Logger.Warn($"[QuestRemove] REMOVER=save-delete-row {removedQuest.DiagDescribe()} char={Owner.Name}({Owner.Id}) present=False note=row-queued-by-DropQuest ids={removedSnapshot}");
+                        else
+                            Logger.Warn($"[QuestRemove] REMOVER=save-delete-row quest={removedId} char={Owner.Name}({Owner.Id}) present=False note=row-queued-by-DropQuest ids={removedSnapshot}");
+                    }
                 }
 
                 command.CommandText = $"DELETE FROM quests WHERE owner = @owner AND template_id IN({string.Join(",", ids)})";
@@ -716,6 +846,9 @@ public class CharacterQuests(Character owner)
             {
                 activeQuests = ActiveQuests.Values.ToArray();
             }
+            // TEMPORARY live-lane diagnostic: active-row write-back witness (read-only log, never branched on).
+            if (DiagEnabled)
+                Logger.Warn($"[QuestRemove] REMOVER=save-writeback-active count={activeQuests.Length} char={Owner.Name}({Owner.Id}) present=True note=active-rows-replaced ids={string.Join(",", activeQuests.Where(q => q is not null).Select(q => q.TemplateId.ToString()))}");
 
             foreach (var quest in activeQuests)
             {

@@ -52,8 +52,15 @@ public interface IPlayerBotScheduler
     /// <summary>True while the bot has a step leased (queued or running).</summary>
     bool IsLeased(uint characterId);
 
-    /// <summary>Thread-safe metrics snapshot (queue depth, latency, utilization).</summary>
-    PlayerBotSchedulerMetrics GetMetrics();
+    /// <summary>
+    /// Read-only per-bot enrollment snapshot for the P0.1 first-wake
+    /// discriminator (no-entry / entry-never-due / due-never-executed /
+    /// executed). Pure read: never mutates registry, scheduler or executor.
+    /// </summary>
+    BotEnrollmentSnapshot GetEnrollmentSnapshot(uint characterId);
+
+     /// <summary>Thread-safe metrics snapshot (queue depth, latency, utilization).</summary>
+     PlayerBotSchedulerMetrics GetMetrics();
 
     /// <summary>Configured worker count (clamped to 4-8).</summary>
     int WorkerCount { get; }

@@ -94,8 +94,8 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     // when the bot is seen alive again.
     private readonly ConcurrentDictionary<uint, DateTime> _deadSince = new();
     // §4 diagnostic (additive only): last terminal outcome per bot + per-bot
-    // counters. Updated ONLY at the four terminal sites of
-    // ExecuteStepOnExecutionBoundary (skip/timeout/fail/run) — never on the
+    // counters. Updated ONLY at the five terminal sites of
+    // ExecuteStepOnExecutionBoundary (skip/timeout/fail/fault/run) — never on the
     // hot path — so steady-state stepping allocates nothing extra.
     private readonly ConcurrentDictionary<uint, BotStepOutcome> _botStepOutcomes = new();
 
@@ -297,7 +297,8 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
 
         foreach (var (botId, due) in batch)
         {
-            if (!_work.Writer.TryWrite(new BotStep(botId, due)))
+            var gen = _manager.TryGet(botId, out var queued) && queued is not null ? queued.Generation : 0;
+            if (!_work.Writer.TryWrite(new BotStep(botId, due, gen)))
             {
                 // Channel saturated → release the lease and re-schedule for the
                 // next cycle (bounded backpressure; no lost wake).
@@ -380,6 +381,18 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                 return;
             }
 
+            // Generation binding: a step stamped at pop time is valid only for
+            // the activation that was live then. Reactivation bumps the
+            // generation, so any older step is stale and refused.
+            if (step.Generation != runtime.Generation)
+            {
+                Logger.Debug("PlayerBot step skipped: character {CharacterId} (StaleGeneration step={StepGen} live={LiveGen})", step.BotId, step.Generation, runtime.Generation);
+                Interlocked.Increment(ref _totalStepsSkipped);
+                RecordBotStepOutcome(step.BotId, BotStepOutcomeKind.StaleGeneration);
+                ReleaseLease(step.BotId);
+                return;
+            }
+
             // wake → start latency (due time to actual step start).
             var now = UtcNow;
             var latencyMs = Math.Max(0, (long)(now - step.DueUtc).TotalMilliseconds);
@@ -395,9 +408,16 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                 {
                     // M6.2 death watch: a dead bot gets no work steps — the
                     // scheduler polls the corpse and resurrects it once the
-                    // delay elapses, then normal stepping resumes (the step
-                    // executor re-engages its route/behavior from the new
-                    // position). All of this stays on the boundary thread.
+                    // delay elapses, then normal stepping resumes from the
+                    // fresh listing: the death entry releases any owned
+                    // pre-death running-hold (runtime) plus the actor's live
+                    // leg (interrupted through the actor — the survival-flee
+                    // supersede discipline), so the first post-respawn turn
+                    // cannot resume the stale leg from the portal position.
+                    // Death is not a step failure: ok stays true and the
+                    // fault streak is untouched. All of this stays on the
+                    // boundary thread.
+                    ReleaseDeathHold(step.BotId);
                     HandleDeathWatch(step.BotId, runtime.Character);
                     nextDelay = _options.DeathPollInterval;
                 }
@@ -449,7 +469,8 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             }
 
             // Lease release + next scheduling decision, atomic with pending wake.
-            // External wakes are always honored; step-driven cadence only after success.
+            // External wakes are always honored; step-driven cadence after success,
+            // one ScanInterval retry after the first consecutive failure, fault after the second.
             DateTime? pending = null;
             lock (_queueLock)
             {
@@ -460,7 +481,6 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                     pending = wake;
                 }
             }
-
             if (pending is { } pendingDue)
             {
                 var target = pendingDue <= UtcNow ? UtcNow : pendingDue;
@@ -471,6 +491,20 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                 var clamped = delay > TimeSpan.Zero ? delay : _options.ScanInterval;
                 Schedule(step.BotId, UtcNow + clamped);
             }
+            else if (!ok)
+            {
+                // Failed-step retry-once-then-fault: RecordBotStepOutcome
+                // already ran above (catch at :429/:437), so the streak
+                // includes this failure — first failure => streak == 1.
+                // The death-watch path sets ok = true, so it never lands here.
+                var streak = _botStepOutcomes.TryGetValue(step.BotId, out var outcome)
+                    ? outcome.ConsecutiveFailures
+                    : 0;
+                if (streak <= 1)
+                    Schedule(step.BotId, UtcNow + _options.ScanInterval);
+                else
+                    RecordBotStepOutcome(step.BotId, BotStepOutcomeKind.Faulted);
+            }
         }
         finally
         {
@@ -480,12 +514,46 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     }
 
     /// <summary>
+    /// P0.1 first-wake discriminator query: registry state + scheduler entry
+    /// (due/lease/pending) + last terminal outcome for one bot, read-only.
+    /// </summary>
+    public BotEnrollmentSnapshot GetEnrollmentSnapshot(uint characterId)
+    {
+        var registered = _manager.TryGet(characterId, out var runtime) && runtime is not null;
+        var state = runtime?.State.ToString() ?? "-";
+        DateTime? due = null;
+        DateTime? pending = null;
+        lock (_queueLock)
+        {
+            if (_scheduled.TryGetValue(characterId, out var scheduledDue))
+                due = scheduledDue;
+            if (_pendingWake.TryGetValue(characterId, out var pendingDue))
+                pending = pendingDue;
+        }
+        var leased = _leases.ContainsKey(characterId);
+        var outcome = _botStepOutcomes.TryGetValue(characterId, out var step) ? step : null;
+        return new BotEnrollmentSnapshot(
+            registered,
+            state,
+            due,
+            leased,
+            pending,
+            outcome?.LastOutcome.ToString(),
+            outcome?.LastUtc,
+            outcome?.Skipped ?? 0,
+            outcome?.Failed ?? 0,
+            outcome?.TimedOut ?? 0,
+            outcome?.Ran ?? 0,
+            IsRunning,
+            runtime?.Generation ?? 0);
+    }
+
+    /// <summary>
     /// §4 diagnostic query: last terminal step outcome for one bot (null when
     /// the bot never reached a terminal site since Start). Read-only.
     /// </summary>
     public BotStepOutcome? GetBotStepState(uint characterId)
         => _botStepOutcomes.TryGetValue(characterId, out var outcome) ? outcome : null;
-
     private void RecordBotStepOutcome(uint botId, BotStepOutcomeKind kind)
     {
         var now = UtcNow;
@@ -499,8 +567,10 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     public enum BotStepOutcomeKind
     {
         Skipped,
+        StaleGeneration,
         TimedOut,
         Failed,
+        Faulted,
         Ran,
     }
 
@@ -508,21 +578,25 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     /// §4 diagnostic: last terminal outcome + UTC + per-outcome counts for one
     /// bot. Immutable; replaced (never mutated) on each terminal site.
     /// </summary>
-    public sealed record BotStepOutcome(BotStepOutcomeKind LastOutcome, DateTime LastUtc, long Skipped, long TimedOut, long Failed, long Ran)
+    public sealed record BotStepOutcome(BotStepOutcomeKind LastOutcome, DateTime LastUtc, long Skipped, long TimedOut, long Failed, long Ran, int ConsecutiveFailures)
     {
         internal static BotStepOutcome FromKind(BotStepOutcomeKind kind, DateTime now) =>
             new(kind, now,
-                kind == BotStepOutcomeKind.Skipped ? 1 : 0,
+                kind is BotStepOutcomeKind.Skipped or BotStepOutcomeKind.StaleGeneration ? 1 : 0,
                 kind == BotStepOutcomeKind.TimedOut ? 1 : 0,
                 kind == BotStepOutcomeKind.Failed ? 1 : 0,
-                kind == BotStepOutcomeKind.Ran ? 1 : 0);
+                kind == BotStepOutcomeKind.Ran ? 1 : 0,
+                (kind == BotStepOutcomeKind.Failed || kind == BotStepOutcomeKind.TimedOut) ? 1 : 0);
 
         internal BotStepOutcome With(BotStepOutcomeKind kind, DateTime now) =>
             new(kind, now,
-                Skipped + (kind == BotStepOutcomeKind.Skipped ? 1 : 0),
+                Skipped + (kind is BotStepOutcomeKind.Skipped or BotStepOutcomeKind.StaleGeneration ? 1 : 0),
                 TimedOut + (kind == BotStepOutcomeKind.TimedOut ? 1 : 0),
                 Failed + (kind == BotStepOutcomeKind.Failed ? 1 : 0),
-                Ran + (kind == BotStepOutcomeKind.Ran ? 1 : 0));
+                Ran + (kind == BotStepOutcomeKind.Ran ? 1 : 0),
+                kind == BotStepOutcomeKind.Ran ? 0
+                    : (kind == BotStepOutcomeKind.Failed || kind == BotStepOutcomeKind.TimedOut) ? ConsecutiveFailures + 1
+                    : ConsecutiveFailures);
     }
 
 
@@ -560,6 +634,65 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             Logger.Info("PlayerBotScheduler: resurrected dead bot {CharacterId} in place (no return portal resolved) — M6.2 death watch",
                 botId);
         }
+    }
+
+    /// <summary>
+    /// Death entry (M6.2 death watch): unwinds through the executor seam so
+    /// the stale pre-death job cannot resume post-respawn — the executor
+    /// releases the quest running-hold and interrupts the actor's live leg
+    /// (the survival-flee supersede discipline: runtime observation plus
+    /// actor-side preemption, never a runtime flag alone). Non-roam
+    /// executors (recording rigs, GOAP, plain-actor) ignore the call — their
+    /// wakes hold no quest runtime — and death stays out of the fault
+    /// streak (the death-watch path sets ok=true; this helper records
+    /// nothing). Runs on the execution boundary (called from the step).
+    /// </summary>
+    private void ReleaseDeathHold(uint botId)
+    {
+        try
+        {
+            if (TryGetRoamExecutor(out var roam))
+                roam.ReleaseQuestHoldOnDeath(botId, "bot died");
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "PlayerBot death release skipped: character {CharacterId}", botId);
+        }
+    }
+
+    /// <summary>
+    /// Resolves the live roam executor behind the production binding, which
+    /// may be the roam executor itself (unit rigs) or the arbitration
+    /// decorator around it (production + through-scheduler rigs), possibly
+    /// behind test counting decorators. Any other shape (GOAP, plain-actor,
+    /// recording executors) holds no quest runtime and resolves false.
+    /// </summary>
+    private bool TryGetRoamExecutor(out BotRoamStepExecutor? roam)
+    {
+        var current = _executor;
+        while (current is not null)
+        {
+            switch (current)
+            {
+                case BotRoamStepExecutor direct:
+                    roam = direct;
+                    return true;
+                case BotGoalArbiterStepExecutor arbiter when arbiter.InnerIs<IBotStepExecutor>(out var inner) && inner is not null:
+                    current = inner;
+                    continue;
+                default:
+                    break;
+            }
+            var innerProperty = current.GetType().GetProperty("Inner", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (innerProperty?.GetValue(current) is IBotStepExecutor innerExecutor)
+            {
+                current = innerExecutor;
+                continue;
+            }
+            break;
+        }
+        roam = null;
+        return false;
     }
 
     private bool Schedule(uint characterId, DateTime utcDue)
@@ -629,5 +762,5 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     }
 
     /// <summary>A step handed from the due queue to the worker pool.</summary>
-    private readonly record struct BotStep(uint BotId, DateTime DueUtc);
+    private readonly record struct BotStep(uint BotId, DateTime DueUtc, ulong Generation);
 }

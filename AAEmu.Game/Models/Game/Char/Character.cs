@@ -2708,9 +2708,26 @@ public partial class Character : Unit, ICharacter
             Friends.Load(connection);
             Blocked = new CharacterBlocked(this);
             Blocked.Load(connection);
-            Quests = new CharacterQuests(this);
-            Quests.Load(connection);
-            Quests.CheckDailyResetAtLogin();
+            // Mid-session reload SKIP-guard: a live CharacterQuests holding active quests (accepted this
+            // session) must survive a second EnterWorld Load — replacement would orphan H1 progress.
+            // Fresh logins (null/empty) take the full DB load path. Daily reset runs in both branches.
+            if (Quests != null && Quests.ActiveQuests.Count > 0)
+            {
+                if (CharacterQuests.DiagEnabled)
+                    Logger.Warn($"[QuestRemove] REMOVER=reload-reconcile char={Name}({Id}) charHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this)} questsHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(Quests)} activeCount={Quests.ActiveQuests.Count} activeIds=[{string.Join(",", Quests.ActiveQuests.Keys.OrderBy(k => k))}] present254={Quests.ActiveQuests.ContainsKey(254)} note=mid-session-reload-skipped-live-kept");
+                Quests.CheckDailyResetAtLogin();
+            }
+            else
+            {
+                var oldQuestsForReloadWitness = Quests;
+                Quests = new CharacterQuests(this);
+                // TEMPORARY live-lane diagnostic (read-only log, never branched on): construction-site instance witness.
+                CharacterQuests.LogInstanceConstruct(Quests, this, "load-from-db");
+                // TEMPORARY live-lane diagnostic (read-only log, never branched on): mid-session-reload caller stack (fires only on replacement).
+                CharacterQuests.LogInstanceReloadStack(oldQuestsForReloadWitness, Quests, this, "load-from-db");
+                Quests.Load(connection);
+                Quests.CheckDailyResetAtLogin();
+            }
             Mates = new CharacterMates(this);
             Mates.Load(connection);
 

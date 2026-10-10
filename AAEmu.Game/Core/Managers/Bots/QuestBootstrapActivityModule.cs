@@ -48,6 +48,8 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
 
     /// <summary>Stable activity name (the arbiter's unit of change).</summary>
     public const string ActivityName = "quest.progress";
+    /// <summary>Exploratory travel only; no quest is chosen until live perception admits one.</summary>
+    public const string DiscoveryActivityName = "quest.discovery";
 
     private readonly QuestBootstrapModuleOptions _options;
     private readonly Func<ServerPressure> _pressureProbe;
@@ -59,6 +61,54 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _pressureProbe = pressureProbe ?? (() => ServerPressure.Healthy);
     }
+
+    /// <summary>
+    /// Chosen purpose per bot: the quest the module picked from the
+    /// opportunity listing (0 = none). Memory-only, keyed by character id —
+    /// the same discipline as the arbiter's own active-activity memory. Kept
+    /// during ordinary waiting (a Running hold or a rest/wait wake never
+    /// clears it); reconsidered only on terminal results or changed
+    /// conditions (completion, disappearance, failure — read live below).
+    /// Cleared by <see cref="Forget"/> on lifecycle teardown.
+    /// </summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, uint> _chosenQuest = new();
+
+    /// <summary>Latest terminal outcome per bot (completed quest ids feed the next pick).</summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, System.Collections.Generic.HashSet<uint>> _completedQuests = new();
+
+    // Admission memory, not spawner knowledge: a busy actor can only retain
+    // discovery already elected for this activation. Unknown offers never
+    // create a new discovery disposition.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, ulong> _discoveryGeneration = new();
+
+    /// <summary>Current chosen quest for a bot (0 = none).</summary>
+    public uint GetChosenQuest(uint characterId)
+        => _chosenQuest.TryGetValue(characterId, out var questId) ? questId : 0;
+
+    /// <summary>Drops a bot's purpose memory (lifecycle teardown).</summary>
+    public void Forget(uint characterId)
+    {
+        _chosenQuest.TryRemove(characterId, out _);
+        _completedQuests.TryRemove(characterId, out _);
+        _discoveryGeneration.TryRemove(characterId, out _);
+    }
+
+    /// <summary>
+    /// Feeds a terminal result back into the next pick: a completed quest is
+    /// remembered (never re-picked) and the purpose is released so the next
+    /// wake re-decides from the fresh listing.
+    /// </summary>
+    public void NotifyQuestTerminal(uint characterId, uint questId, bool completed)
+    {
+        if (completed)
+        {
+            var set = _completedQuests.GetOrAdd(characterId, static _ => new System.Collections.Generic.HashSet<uint>());
+            lock (set)
+                set.Add(questId);
+        }
+        _chosenQuest.TryRemove(characterId, out _);
+    }
+
 
     /// <inheritdoc />
     public BotActivityDecision CanActivate(BotActivityContext context)
@@ -78,15 +128,151 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         if (_pressureProbe() is { } pressure && pressure >= ServerPressure.High)
             return BotActivityDecision.Deny($"held: server pressure {pressure} (world-budget observance)");
 
-        // Quest work exists when quests are active (advance/turn-in) or the
-        // bot is broke (discover + accept for copper). A rich quest-less bot
-        // falls through to farm/roam.
-        var activeCount = character.Quests?.ActiveQuests.Count ?? 0;
-        if (activeCount == 0 && character.Money >= _options.GoldTarget)
-            return BotActivityDecision.Deny(
-                $"no active quests and copper {character.Money} at or above {_options.GoldTarget}");
+    // ONE existing goal owner: the quest module owns WHICH quest (the
+    // BotBehaviorRuntime owns the running job once dispatched — that
+    // split is load-bearing, never crossed here). The pick reads the
+    // read-only opportunity listing off the bot's LIVE executor actor
+    // (the same actor the quest leg will dispatch on — never a second
+    // actor, never a temp GameplayActor), never a second scan: eligible
+    // quest offers passing the real accept gate, viable hunts serving an
+    // ACTIVE quest, accepted-quest work from actual quest state, recovery
+    // needs from live vitals.
+        var bot = context.Bot;
+        var actor = QuestLegActor.Resolve(bot.CharacterId);
+        if (actor == null)
+            return BotActivityDecision.Deny("no live quest-leg actor for opportunity listing");
+        var listing = BotOpportunityListing.List(actor);
+        if (!listing.CoverageValid)
+            return BotActivityDecision.Deny($"opportunity coverage invalid ({listing.CoverageReason})");
+        if (listing.Recovery.NeedsRecovery)
+            return BotActivityDecision.Deny($"recovery owns the wake ({listing.Recovery.Reason})");
 
+        // Keep the chosen purpose during ordinary waiting: a live,
+        // still-actionable, still-uncompleted purpose stays picked without
+        // re-ranking (no churn while a Running hold or a wait wake passes).
+        // Actionable reads actual quest state (accepted work with a named leg,
+        // a fresh offer, or live prey) — never offer/prey presence alone.
+        // Unknown-offer observations never prove disappearance: when the
+        // listing flags busy-refused quest offers, the eligible set is
+        // incomplete, so a purpose that is neither completed nor hunt-visible
+        // is held (not cleared, not re-picked) until an authoritative scan.
+        // A genuinely blocked quest (named blocker) releases immediately.
+        var characterId = bot.CharacterId;
+        if (_discoveryGeneration.TryGetValue(characterId, out var discoveryGeneration)
+            && discoveryGeneration != bot.Generation)
+            _discoveryGeneration.TryRemove(characterId, out _);
+        if (_chosenQuest.TryGetValue(characterId, out var kept)
+            && !IsCompleted(characterId, kept)
+            && listing.BlockedWork.Any(b => b.QuestId == kept))
+        {
+            var blocker = listing.BlockedWork.First(b => b.QuestId == kept).Blocker;
+            _chosenQuest.TryRemove(characterId, out _);
+            return BotActivityDecision.Deny($"quest {kept} blocked ({blocker})");
+        }
+        // Keep the accepted purpose only while the listing still shows a live
+        // reason to hold it: a named active-work leg, a fresh offer, or live
+        // prey. An accepted quest whose objective leg withdrew (no active-work
+        // row) and whose hunt row is gone releases here so the policy below
+        // re-picks the next actionable quest — absence from the narrow
+        // offer/prey lists alone never releases while an active-work leg
+        // persists (the accept→objective→return chain continues without
+        // another offer or live prey).
+        var keptWork = kept != 0
+            ? listing.ActiveWork.FirstOrDefault(q => q.QuestId == kept)
+            : null;
+        var keptOffered = kept != 0 && listing.EligibleQuests.Any(q => q.QuestId == kept);
+        var keptHunted = kept != 0 && listing.ViableHunts.Any(h => h.QuestId == kept);
+        if (kept != 0
+            && !IsCompleted(characterId, kept)
+            && (keptWork != null || keptOffered || keptHunted)
+            && (keptWork == null || keptWork.Leg != "hunt" || keptHunted))
+        {
+            _discoveryGeneration.TryRemove(characterId, out _);
+            return BotActivityDecision.Allow(ActivityName);
+        }
+        if (kept != 0 && !IsCompleted(characterId, kept) && listing.QuestOffersUnknown)
+        {
+            _discoveryGeneration.TryRemove(characterId, out _);
+            return BotActivityDecision.Allow(ActivityName);
+        }
+
+        // Reconsider on actual results or changed conditions: completion,
+        // blockage, a withdrawn objective leg with no live hunt/offer, or
+        // disappearance releases the purpose (NotifyQuestTerminal feeds
+        // terminals; a named blocker or absence from an AUTHORITATIVE fresh
+        // listing proves the quest is done or unusable) and the deterministic
+        // policy re-picks below.
+        if (kept != 0 && (IsCompleted(characterId, kept)
+            || listing.BlockedWork.Any(b => b.QuestId == kept)
+            || (!listing.ActiveWork.Any(q => q.QuestId == kept)
+                && !listing.EligibleQuests.Any(q => q.QuestId == kept)
+                && !listing.ViableHunts.Any(h => h.QuestId == kept))))
+            _chosenQuest.TryRemove(characterId, out _);
+
+        var pick = PickQuest(characterId, listing);
+        if (pick == 0)
+        {
+            if (listing.QuestOffersUnknown)
+                return context.ActiveActivity == DiscoveryActivityName
+                    && _discoveryGeneration.TryGetValue(characterId, out discoveryGeneration)
+                    && discoveryGeneration == bot.Generation
+                    ? BotActivityDecision.Allow(DiscoveryActivityName)
+                    : BotActivityDecision.Deny("quest offers unknown (actor busy) — holding for an authoritative scan");
+            if (listing.ActiveWork.Count != 0 || listing.BlockedWork.Count != 0)
+                return BotActivityDecision.Deny("opportunity listing names no actionable quest work");
+
+            _chosenQuest.TryRemove(characterId, out _);
+            _discoveryGeneration[characterId] = bot.Generation;
+            return BotActivityDecision.Allow(DiscoveryActivityName);
+        }
+        _discoveryGeneration.TryRemove(characterId, out _);
+        _chosenQuest[characterId] = pick;
         return BotActivityDecision.Allow(ActivityName);
+    }
+
+    /// <summary>
+    /// Small deterministic policy over the listing (no new selector, no
+    /// second scan). Order: (1) an ACTIVE quest with a viable hunt and unmet
+    /// need (nearest hunt wins — ordinary hunting where mechanics permit);
+    /// (2) accepted work with a named NON-HUNT leg (lowest quest id —
+    /// talk/delivery/gather/return/wait legs continue without another offer
+    /// or live prey); (3) the lowest eligible quest id (useful quest
+    /// progression — deterministic). A hunt-leg row without live prey never
+    /// outranks a quest with prey or an offer (a prey-less hunt hold would
+    /// pin the bot). Completed quests (terminal feedback) and blocked quests
+    /// (named blockers) never re-pick.
+    /// </summary>
+    private uint PickQuest(uint characterId, BotOpportunityListing.OpportunityListing listing)
+    {
+        var blocked = new HashSet<uint>(listing.BlockedWork.Select(b => b.QuestId));
+        var hunted = new HashSet<uint>(listing.ViableHunts.Select(h => h.QuestId));
+        var hunt = listing.ViableHunts
+            .Where(h => !IsCompleted(characterId, h.QuestId) && h.HaveCount < h.NeedCount && !blocked.Contains(h.QuestId))
+            .OrderBy(h => h.DistanceM)
+            .ThenBy(h => h.TargetObjId)
+            .FirstOrDefault();
+        if (hunt != null)
+            return hunt.QuestId;
+        var work = listing.ActiveWork
+            .Where(q => !IsCompleted(characterId, q.QuestId) && !blocked.Contains(q.QuestId))
+            .Where(q => q.Leg != "hunt" || hunted.Contains(q.QuestId))
+            .OrderBy(q => q.QuestId)
+            .FirstOrDefault();
+        if (work != null)
+            return work.QuestId;
+        var eligible = listing.EligibleQuests
+            .Where(q => !IsCompleted(characterId, q.QuestId) && !blocked.Contains(q.QuestId))
+            .OrderBy(q => q.QuestId)
+            .FirstOrDefault();
+        return eligible?.QuestId ?? 0;
+    }
+
+    private bool IsCompleted(uint characterId, uint questId)
+    {
+        if (!_completedQuests.TryGetValue(characterId, out var set) || set == null)
+            return false;
+        lock (set)
+            return set.Contains(questId);
     }
 
     /// <inheritdoc />
@@ -94,6 +280,39 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        return new BotActivity(ActivityName, Name);
+        var discovery = _discoveryGeneration.TryGetValue(context.Bot.CharacterId, out var generation)
+            && generation == context.Bot.Generation;
+        return new BotActivity(discovery ? DiscoveryActivityName : ActivityName, Name);
     }
+}
+
+/// <summary>
+/// Test/live bridge: resolves the bot's LIVE quest-leg actor (the same
+/// actor the executor's quest leg dispatches on) for the opportunity
+/// listing. Production wires the executor's GetBotState actor; tests stage
+/// a per-bot actor. Never creates an actor — null when the bot has no live
+/// quest-leg state yet (the module denies, the listing waits).
+/// </summary>
+public static class QuestLegActor
+{
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<uint, IGameplayActor> Staged = new();
+    private static Func<uint, IGameplayActor?>? _resolver;
+
+    /// <summary>Production wiring: resolve through the live executor state.</summary>
+    public static void SetResolver(Func<uint, IGameplayActor?>? resolver) => _resolver = resolver;
+
+    /// <summary>Test seam: stage a live actor for a bot.</summary>
+    public static void Stage(uint characterId, IGameplayActor actor) => Staged[characterId] = actor;
+
+    /// <summary>Test seam: drop a staged actor.</summary>
+    public static void Clear(uint characterId) => Staged.TryRemove(characterId, out _);
+
+    /// <summary>Test seam: drop all staged actors.</summary>
+    public static void ClearAll() => Staged.Clear();
+
+    /// <summary>Resolves the live actor (staged test actor first, then production).</summary>
+    public static IGameplayActor? Resolve(uint characterId)
+        => Staged.TryGetValue(characterId, out var staged)
+            ? staged
+            : _resolver?.Invoke(characterId);
 }

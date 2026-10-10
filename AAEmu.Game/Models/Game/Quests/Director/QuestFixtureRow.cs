@@ -91,8 +91,8 @@ public sealed record QuestFixtureRow(
     uint RewardItem)
 {
     /// <summary>
-    /// The quest's objective shape, derived from the Progress component's first
-    /// objective act (see the type doc). <see cref="QuestPattern.Unknown"/> with
+    /// The selected objective shape, or the first Progress objective for a
+    /// whole-template row (see the type doc). <see cref="QuestPattern.Unknown"/> with
     /// an empty <see cref="ObjectiveActType"/> is the pure-bootstrap shape (no
     /// Progress objective act at all); <see cref="QuestPattern.Unknown"/> WITH an
     /// act type is an objective this vocabulary cannot serve yet — the caller's
@@ -271,10 +271,10 @@ public sealed record QuestFixtureRow(
     public uint TalkNpcGroup { get; init; }
 
     /// <summary>
-    /// Memo of derived rows, one per quest id. Concurrent: the wake path can
+    /// Memo of derived rows, per quest and selected objective. Concurrent: the wake path can
     /// derive different quests from different bot threads.
     /// </summary>
-    private static readonly ConcurrentDictionary<uint, MemoEntry> RowCache = new();
+    private static readonly ConcurrentDictionary<(uint QuestId, uint ActId), MemoEntry> RowCache = new();
 
     /// <summary>
     /// Bumped by every invalidation. A derivation that started before a reload
@@ -322,19 +322,34 @@ public sealed record QuestFixtureRow(
     /// surface yields the zero row (or a partly-populated one when only the
     /// loot source is unresolvable).
     /// </summary>
-    public static QuestFixtureRow FromQuestData(uint questId)
+    public static QuestFixtureRow FromQuestData(uint questId) => FromQuestData(questId, null);
+
+    /// <summary>Derives the existing action facts for one objective, without
+    /// letting an earlier, already-credited objective choose its shape.</summary>
+    public static QuestFixtureRow FromQuestData(uint questId, QuestActTemplate? objective)
     {
-        if (RowCache.TryGetValue(questId, out var cached) && cached.Sources.Unchanged)
+        // Preserve the established combined hunt/loot facts while the original
+        // objective still needs work. Scope facts only when moving past it.
+        if (objective != null)
+        {
+            var first = QuestManager.Instance.GetTemplate(questId)?.GetComponents(QuestComponentKind.Progress)
+                .SelectMany(c => c.ActTemplates).Where(a => a.CountsAsAnObjective)
+                .OrderBy(a => a.ParentComponent.Id).ThenBy(a => a.ActId).FirstOrDefault();
+            if (first?.ActId == objective.ActId)
+                objective = null;
+        }
+        var key = (questId, objective?.ActId ?? 0);
+        if (RowCache.TryGetValue(key, out var cached) && cached.Sources.Unchanged)
             return cached.Row;
 
         // Snapshot BEFORE deriving so the entry names the surfaces the
         // derivation actually read, never a replacement that landed mid-read.
         var sources = DataSources.Snapshot();
         var generation = Interlocked.Read(ref s_dataGeneration);
-        var derived = DeriveFromQuestData(questId);
+        var derived = DeriveFromQuestData(questId, objective);
 
         if (Interlocked.Read(ref s_dataGeneration) == generation)
-            RowCache[questId] = new MemoEntry(derived, sources);
+            RowCache[key] = new MemoEntry(derived, sources);
         return derived;
     }
 
@@ -345,7 +360,8 @@ public sealed record QuestFixtureRow(
     public static void Invalidate(uint questId)
     {
         Interlocked.Increment(ref s_dataGeneration);
-        RowCache.TryRemove(questId, out _);
+        foreach (var key in RowCache.Keys.Where(key => key.QuestId == questId))
+            RowCache.TryRemove(key, out _);
     }
 
     /// <summary>
@@ -363,7 +379,7 @@ public sealed record QuestFixtureRow(
     /// no world mutation. <see cref="FromQuestData"/> is the only entry point
     /// callers need.
     /// </summary>
-    private static QuestFixtureRow DeriveFromQuestData(uint questId)
+    private static QuestFixtureRow DeriveFromQuestData(uint questId, QuestActTemplate? selectedObjective)
     {
         if (questId == 0)
             return Empty(questId);
@@ -397,7 +413,9 @@ public sealed record QuestFixtureRow(
             if (template == null)
                 return Empty(questId);
 
-            var gather = FirstAct<QuestActObjItemGather>(template, QuestComponentKind.Progress);
+            var gather = selectedObjective == null
+                ? FirstAct<QuestActObjItemGather>(template, QuestComponentKind.Progress)
+                : selectedObjective as QuestActObjItemGather;
             if (gather != null)
             {
                 gatherActId = gather.ActId;
@@ -405,14 +423,18 @@ public sealed record QuestFixtureRow(
                 need = gather.Count;
             }
 
-            var useItem = FirstAct<QuestActObjItemUse>(template, QuestComponentKind.Progress);
+            var useItem = selectedObjective == null
+                ? FirstAct<QuestActObjItemUse>(template, QuestComponentKind.Progress)
+                : selectedObjective as QuestActObjItemUse;
             if (useItem != null)
             {
                 useItemActId = useItem.ActId;
                 useItemTemplateId = useItem.ItemId;
                 useItemNeed = useItem.Count;
             }
-            var interact = FirstAct<QuestActObjInteraction>(template, QuestComponentKind.Progress);
+            var interact = selectedObjective == null
+                ? FirstAct<QuestActObjInteraction>(template, QuestComponentKind.Progress)
+                : selectedObjective as QuestActObjInteraction;
             if (interact != null)
             {
                 interactActId = interact.ActId;
@@ -432,7 +454,7 @@ public sealed record QuestFixtureRow(
             // on. A quest with none is the pure-bootstrap shape; one whose act
             // this vocabulary does not serve keeps the act's name so the
             // director can refuse it BY NAME instead of guessing.
-            var objective = template.GetComponents(QuestComponentKind.Progress)
+            var objective = selectedObjective ?? template.GetComponents(QuestComponentKind.Progress)
                 .SelectMany(c => c.ActTemplates)
                 .Where(a => a.CountsAsAnObjective)
                 .OrderBy(a => a.ParentComponent.Id)

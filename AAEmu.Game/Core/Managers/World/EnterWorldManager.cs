@@ -171,8 +171,16 @@ public class EnterWorldManager(
             activeChar.LeaveTime = DateTime.UtcNow;
 
             // Remove all remaining quest timer tasks
+            // TEMPORARY live-lane diagnostic: relog timer-clear witness (read-only log, never branched on).
+            foreach (var clearedTimerId in new List<uint>(activeChar.Quests.ActiveQuests.Keys))
+            {
+                if (CharacterQuests.DiagEnabled)
+                    if (activeChar.Quests.ActiveQuests.TryGetValue(clearedTimerId, out var clearedTimerQuest))
+                        Logger.Warn($"[QuestRemove] REMOVER=relog-timer-clear {clearedTimerQuest.DiagDescribe()} char={activeChar.Name}({activeChar.Id}) present=True note=timers-cleared-quest-kept");
+                    else
+                        Logger.Warn($"[QuestRemove] REMOVER=relog-timer-clear quest={clearedTimerId} char={activeChar.Name}({activeChar.Id}) present=False note=timers-cleared-quest-missing");
+            }
             questManager.RemoveQuestTimer(activeChar.Id, 0);
-
             // Despawn and unmount everybody from owned Mates
             activeChar.ParentWorld.MateManager.RemoveAndDespawnAllActiveOwnedMates(activeChar);
             activeChar.ParentWorld.SlaveManager.RemoveAndDespawnAllActiveOwnedSlaves(activeChar);

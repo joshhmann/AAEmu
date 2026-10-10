@@ -267,6 +267,15 @@ public class HeadlessSession
         var template = CharacterManager.Instance.GetTemplate(race, gender)
             ?? throw new InvalidOperationException($"Provisioning failed: no character template for race {race} / gender {gender} (server data not loaded?)");
 
+        // Human entry initializes the ordinary game-side account before loading
+        // a body. A newly inserted details result is incomplete; read the row
+        // again rather than treating LastInsertedId/default fields as labor.
+        _ = AccountManager.Instance.GetAccountDetails(account.AccountId);
+        var accountDetails = AccountManager.Instance.GetAccountDetails(account.AccountId);
+        if (accountDetails.AccountId != account.AccountId)
+            throw new InvalidOperationException(
+                $"Provisioning failed: game account details do not match managed account {account.AccountId}");
+
         var characterId = CharacterIdManager.Instance.GetNextId();
         // Register the name BEFORE the row save, exactly like the human create
         // path (CharacterManager.Create): bot names occupy the same namespace
@@ -274,6 +283,7 @@ public class HeadlessSession
         // by the same registry. RemoveCharacterId on failure releases it.
         NameManager.Instance.AddCharacter(characterId, name, account.AccountId);
         var character = BuildProvisionedCharacter(characterId, account.AccountId, name, race, gender, level, template, appearance);
+        character.InitializeLaborCache(accountDetails.Labor, accountDetails.LastUpdated);
 
         // P1 t_61814965: a fresh citizen is born with its player-like
         // starting equipment (per-class gear pack + race body items + newbie
@@ -483,6 +493,8 @@ public class HeadlessSession
         character.Appellations = new CharacterAppellations(character);
         character.Abilities = new CharacterAbilities(character);
         character.Quests = new CharacterQuests(character);
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): construction-site instance witness.
+        CharacterQuests.LogInstanceConstruct(character.Quests, character, "headless-provision");
 
         character.Hp = character.MaxHp;
         character.Mp = character.MaxMp;
@@ -533,6 +545,8 @@ public class HeadlessSession
         character.Ability2 = AbilityType.Magic;
         character.Ability3 = AbilityType.Will;
         character.Quests = new CharacterQuests(character);
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): construction-site instance witness.
+        CharacterQuests.LogInstanceConstruct(character.Quests, character, "headless-fixture-create");
         // E2E-fixture path — same ordinary default as Provision's
         // BuildProvisionedCharacter (no client spawn packet ever sets this).
         character.VisualOptions = new CharacterVisualOptions();

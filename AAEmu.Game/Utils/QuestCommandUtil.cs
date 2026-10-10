@@ -7,11 +7,12 @@ using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Utils.Scripts;
 using Discord;
-
+using NLog;
 namespace AAEmu.Game.Utils;
 
 public class QuestCommandUtil
 {
+    private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
     public static void GetCommandChoice(ICommand command, IMessageOutput messageOutput, ICharacter character, string choice, string[] args)
     {
         uint questId;
@@ -40,6 +41,12 @@ public class QuestCommandUtil
                     }
                     if (uint.TryParse(args[1], out questId))
                     {
+                        // TEMPORARY live-lane diagnostic: GM-add after auto DropQuest re-adds the same id (read-only witness, never branched on).
+                        if (CharacterQuests.DiagEnabled)
+                            if (character.Quests.ActiveQuests.TryGetValue(questId, out var gmPreQuest))
+                                Logger.Warn($"[QuestRemove] REMOVER=GM-command-add-pre {gmPreQuest.DiagDescribe()} char={character.Name}({character.Id}) present=True note=gm-forcible-add-replaces");
+                            else
+                                Logger.Warn($"[QuestRemove] REMOVER=GM-command-add-pre quest={questId} char={character.Name}({character.Id}) present=False note=gm-forcible-add-fresh");
                         character.Quests.AddQuest(questId, true, acceptorType, acceptorId);
                         if (character.Quests.ActiveQuests.TryGetValue(questId, out var newQuest))
                         {
@@ -107,6 +114,9 @@ public class QuestCommandUtil
                                 quest.Step = QuestComponentKind.Reward;
                             else if (quest.Step > QuestComponentKind.Reward)
                             {
+                                // TEMPORARY live-lane diagnostic: direct Quest.Drop bypasses DropQuest (read-only witness, never branched on; Quest-Drop line carries identity).
+                                if (CharacterQuests.DiagEnabled)
+                                    Logger.Warn($"[QuestRemove] REMOVER=GM-command-prog-direct-drop {quest.DiagDescribe()} char={character.Name}({character.Id}) present=True note=direct-Drop-no-ActiveQuests-remove");
                                 quest.Drop(true);
                                 break;
                             }
@@ -131,7 +141,7 @@ public class QuestCommandUtil
                     {
                         if (character.Quests.HasQuest(questId))
                         {
-                            character.Quests.DropQuest(questId, true, true); // Remove from CompletedQuests
+                            character.Quests.DropQuest(questId, true, true, "REMOVER=GM-command-remove"); // Remove from CompletedQuests
                         }
                         else
                         {
@@ -155,7 +165,7 @@ public class QuestCommandUtil
                     {
                         if (character.Quests.HasQuest(questId))
                         {
-                            character.Quests.DropQuest(questId, true, true);
+                            character.Quests.DropQuest(questId, true, true, "REMOVER=GM-command-uncomplete");
                             CommandManager.SendNormalText(command, messageOutput, $"Quest @QUEST_NAME({questId}) ({questId}) has been dropped");
                         }
 

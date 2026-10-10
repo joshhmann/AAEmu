@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Reflection;
+using System.Text.Json;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.GameData;
@@ -23,7 +24,7 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// lootable true) proposes canonical <see cref="GameplayActor.Loot"/> ONCE per
 /// corpse — below combat priority, above advance — and withholds afterwards.
 /// Full decision-stack coverage through <see cref="QuestDecisionScenario.Run"/>
-/// on the REAL headless actor — no fakes.
+/// on synthetic seeded headless engine rigs, not live gameplay evidence.
 /// </summary>
 [NotInParallel]
 public class QuestCorpseLootTests
@@ -242,30 +243,37 @@ public class QuestCorpseLootTests
         await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot && r.TargetId == spentObjId)).IsEqualTo(1);
     }
 
-    /// <summary>
-    /// The release is scoped to the actor's OWN loot-once verdict: a corpse that
-    /// withholds for any other reason (ownership unresolved here — no take ever
-    /// ran) keeps its pin, so unknown state never drops identity.
-    /// </summary>
     [Test]
-    public async Task UnresolvedCorpse_PinKept_NoRelease()
+    public async Task NonemptyForeignCorpse_RemainsOwedWithoutLootOrMutation()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("g7c-pinkept");
-        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
-        Activate251(actor.Character);
-        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
-
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-kept-1" });
+        var (actor, session) = GameplayActorTestRig.CreateActor("g7c-foreign-owed");
+        var npcObjId = SpawnBoar(session, actor, Vector3.Zero, new Vector3(2, 0, 0));
         var npc = session.World.GetNpc(npcObjId)!;
+        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
+        GameplayActorTestRig.SeedLootContainer(npc, (ProbeItemTemplateId, 1));
         npc.Hp = 0;
-        // Empty container, never taken: withholds as not-lootable (probe), not
-        // already-looted — the pin must survive.
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7c-kept-2" });
-        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, npcObjId)).IsFalse();
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse)).IsTrue();
-        await Assert.That(corpse!.ObjId).IsEqualTo(npcObjId);
+        var (stranger, _) = GameplayActorTestRig.CreateActor("g7c-stranger");
+        actor.Character.AccountId = 91_001;
+        stranger.Character.AccountId = 91_002;
+        npc.CharacterTagging.AddTagger(stranger.Character, 10);
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = npc;
+        var bagBefore = GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId);
+        var objectivesBefore = actor.Character.Quests.ActiveQuests[Quest251].Objectives.ToArray();
+
+        for (var wake = 1; wake <= 3; wake++)
+        {
+            var run = QuestDecisionScenario.Run(actor, (_, _) => [],
+                new QuestDecisionScenario.QuestOptions { CycleId = $"g7c-foreign-{wake}" });
+            await Assert.That(run.SelectedAction == ActorActionType.Loot).IsFalse();
+            await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse)).IsTrue();
+            await Assert.That(corpse!.ObjId).IsEqualTo(npcObjId);
+            await Assert.That(npc.LootingContainer.Items.Count).IsEqualTo(1);
+        }
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Loot)).IsFalse();
+        await Assert.That(GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId)).IsEqualTo(bagBefore);
+        await Assert.That(actor.Character.Quests.ActiveQuests[Quest251].Objectives.SequenceEqual(objectivesBefore)).IsTrue();
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(Quest251)).IsFalse();
     }
 
     [Test]
@@ -318,6 +326,88 @@ public class QuestCorpseLootTests
 
         await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(1);
         await Assert.That(session.World.GetNpc(npcObjId)!.LootingContainer.Items.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task QuestLootPurpose_SameAuditRowCreditsOwnNumericObjective()
+    {
+        var (actor, request, before, after, corpseId) = await TakeActualQuestMeat("quest-loot-purpose");
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.TargetId).IsEqualTo(corpseId);
+        await Assert.That(after - before).IsEqualTo(1);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, Meat4058)).IsEqualTo(1);
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(Quest251)).IsFalse();
+        var row = actor.AuditTrace.Single(r => r.TraceId == request.TraceId);
+        await Assert.That(row.DecisionGoal).IsEqualTo("quest.objective-loot");
+        await Assert.That(row.DecisionCycleId).IsEqualTo("loot-purpose-decision");
+        using var json = JsonDocument.Parse(row.ToJson());
+        var hasParent = json.RootElement.TryGetProperty("decision_quest_id", out var parent);
+        await Assert.That(hasParent).IsTrue();
+        await Assert.That(hasParent ? parent.GetUInt32() : 0u).IsEqualTo(Quest251);
+        var liveCopy = JsonSerializer.SerializeToElement(request);
+        await Assert.That(liveCopy.TryGetProperty("DecisionQuestId", out var requestParent)).IsTrue();
+        await Assert.That(requestParent.GetUInt32()).IsEqualTo(Quest251);
+    }
+
+    [Test]
+    public async Task QuestLootPurpose_DoesNotLeakIntoFollowingUnrelatedRequest()
+    {
+        var (actor, request, _, _, _) = await TakeActualQuestMeat("quest-loot-purpose-clear");
+        var lootBefore = actor.AuditTrace.Single(r => r.TraceId == request.TraceId).ToJson();
+        _ = actor.Observe();
+        var observed = actor.AuditTrace[^1];
+        await Assert.That(observed.Action).IsEqualTo(ActorActionType.Observe);
+        using var observationJson = JsonDocument.Parse(observed.ToJson());
+        var hasParent = observationJson.RootElement.TryGetProperty("decision_quest_id", out var parent);
+        await Assert.That(hasParent).IsTrue();
+        await Assert.That(parent.ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(observed.DecisionGoal).IsNull();
+        await Assert.That(observed.DecisionCycleId).IsNull();
+        await Assert.That(actor.AuditTrace.Single(r => r.TraceId == request.TraceId).ToJson()).IsEqualTo(lootBefore);
+    }
+
+    private static async Task<(GameplayActor Actor, ActorRequest Request, int Before, int After, uint CorpseId)>
+        TakeActualQuestMeat(string name)
+    {
+        // Synthetic shapes/container only. Real AcceptQuest initializes the
+        // gather event; real Loot must grant4058 and change its quest counter.
+        var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        actor.Character.Level = 2;
+        actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
+        var corpseId = SpawnBoar(session, actor, Vector3.Zero, new Vector3(2, 0, 0));
+        GameplayActorTestRig.SeedQuestDelivery(Quest251, 2510902, 2510903, 3512, 3512, level: 2);
+        GameplayActorTestRig.SeedItemTemplate(Meat4058);
+        var offerId = session.SpawnNpc(3512);
+        var offer = session.World.GetNpc(offerId)!;
+        offer.Template = new NpcTemplate { Id = 3512, Scale = 1f };
+        offer.Hp = offer.MaxHp = 100;
+        offer.IsVisible = true;
+        GameplayActorTestRig.SetNpcPosition(session, offerId, new Vector3(3, 0, 0));
+        actor.Character.Region.AddObject(offer);
+        offer.Region = actor.Character.Region;
+        var accepted = actor.AcceptQuest(Quest251, QuestAcceptorType.Npc, 3512);
+        await Assert.That(accepted.State).IsEqualTo(ActorLifecycleState.Completed);
+        var quest = actor.Character.Quests.ActiveQuests[Quest251];
+        quest.SkipUpdatePackets();
+        quest.Step = QuestComponentKind.Progress;
+        quest.Status = QuestStatus.Progress;
+        var gather = quest.Template.GetComponents(QuestComponentKind.Progress)
+            .SelectMany(c => c.ActTemplates).OfType<QuestActObjItemGather>()
+            .First(a => a.ItemId == Meat4058);
+        actor.Character.CurrentTarget = session.World.GetNpc(corpseId);
+        var pin = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { ChosenQuestId = Quest251, CycleId = "loot-pin-decision" });
+        await Assert.That(pin.SelectedAction).IsEqualTo(ActorActionType.Stop);
+        var corpse = session.World.GetNpc(corpseId)!;
+        GameplayActorTestRig.SeedLootContainer(corpse, (Meat4058, 1));
+        corpse.Hp = 0;
+        var before = gather.GetObjective(quest);
+        var take = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { ChosenQuestId = Quest251, CycleId = "loot-purpose-decision" });
+        await Assert.That(take.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(corpse.LootingContainer.Items.Count).IsEqualTo(0);
+        return (actor, take.Request!, before, gather.GetObjective(quest), corpseId);
     }
 
     // ------------------------------------------------------------ fixture

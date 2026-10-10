@@ -100,7 +100,8 @@ public static class BotBrainProjection
         string Result,
         string? Reason,
         string? Goal,
-        string? Policy);
+        string? Policy,
+        uint? DecisionQuestId);
 
     /// <summary>
     /// Per-bot Brain Inspector snapshot. Every field is a read of
@@ -136,6 +137,10 @@ public static class BotBrainProjection
         string? LiveAction,
         string? LiveState,
         string? LiveDetail,
+        uint? LiveDecisionQuestId,
+        string? LiveDecisionGoal,
+        string? LiveDecisionPolicy,
+        string? LiveDecisionCycleId,
         // Last tick evidence.
         bool WorkSelected,
         string? SelectedAction,
@@ -209,7 +214,8 @@ public static class BotBrainProjection
                 r.Result.ToString(),
                 BuildReason(r.Failure?.ToString(), r.Detail),
                 r.DecisionGoal,
-                r.DecisionPolicy))
+                r.DecisionPolicy,
+                r.DecisionQuestId))
             .ToList();
 
         var rejections = result?.Rejections.Take(MaxRejections)
@@ -231,6 +237,10 @@ public static class BotBrainProjection
             liveRunning ? liveRequest!.Action.ToString() : null,
             liveRequest?.State.ToString(),
             liveRequest?.Detail,
+            liveRunning ? liveRequest!.DecisionQuestId : null,
+            liveRunning ? liveRequest!.DecisionGoal : null,
+            liveRunning ? liveRequest!.DecisionPolicy : null,
+            liveRunning ? liveRequest!.DecisionCycleId : null,
             result?.WorkSelected ?? false,
             result?.SelectedAction?.ToString(),
             result?.Explanation ?? "",

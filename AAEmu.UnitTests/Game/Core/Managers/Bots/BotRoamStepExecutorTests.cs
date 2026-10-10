@@ -1,12 +1,20 @@
 using System.Numerics;
+using System.Reflection;
+using System.Text.Json;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Quests;
+using AAEmu.Game.Models.Game.Quests.Director;
+using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.Game.World.Transform;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Team;
 using AAEmu.Game.Models.StaticValues;
@@ -32,7 +40,8 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 public class BotRoamStepExecutorTests
 {
     private static (BotRoamStepExecutor Executor, GameplayActor Actor, PlayerBotRuntime Runtime, FakeTimeProvider Clock) CreateRig(
-        string name = "roam-bot", Func<Vector3, uint, float>? terrain = null)
+        string name = "roam-bot", Func<Vector3, uint, float>? terrain = null,
+        Func<uint, string?>? questActivityProvider = null)
     {
         // No config JSON is loaded in unit tests: AppConfiguration.Instance.World
         // is null by default, and GetHeight dereferences it (NpcMoveTowardsTests
@@ -52,7 +61,10 @@ public class BotRoamStepExecutorTests
             TimeProvider = clock,
             BroadcastInterval = TimeSpan.FromMilliseconds(200),
             ActiveCadence = TimeSpan.FromMilliseconds(100),
-            RoamSpeed = 2f
+            RoamSpeed = 2f,
+            ActiveActivityProvider = questActivityProvider,
+            NearbyNpcProvider = questActivityProvider == null ? null : static (_, _) => [],
+            NearbyDoodadProvider = questActivityProvider == null ? null : static (_, _) => [],
         };
 
         return (executor, actor, runtime, clock);
@@ -838,6 +850,262 @@ public class BotRoamStepExecutorTests
         // No live route, no match.
         await Assert.That(BotRoamStepExecutor.IsForeignRouteInterruption(
             StateWith("QUEST_TRAVEL", null, TerminatedLeg("quest pursuit retrack")))).IsFalse();
+    }
+
+    [Test]
+    public async Task QuestFallbackPurpose_StaysImmutableAcrossInterruptAndReselection()
+    {
+        const uint firstQuest = 91_581;
+        const uint secondQuest = 91_582;
+        uint chosen = firstQuest;
+        var (executor, actor, runtime, clock) = CreateRig("travel-purpose-reselect",
+            questActivityProvider: _ => QuestBootstrapActivityModule.ActivityName);
+        var firstTarget = new Vector3(40, 0, 0);
+        var secondTarget = new Vector3(-40, 0, 0);
+        SeedPurposeReadyQuest(actor, firstQuest, 91_591, firstTarget);
+        SeedPurposeReadyQuest(actor, secondQuest, 91_592, secondTarget);
+        executor.QuestChosenProvider = _ => chosen;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var victim = actor.ActiveRequest!;
+        await Assert.That(victim.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(victim.MoveOwner).IsEqualTo("QUEST_TRAVEL");
+        await Assert.That(victim.Destination).IsEqualTo((Vector3?)firstTarget);
+        var running = JsonSerializer.SerializeToElement(victim);
+
+        chosen = secondQuest;
+        actor.PreemptCurrent("interrupted by controller");
+        var interrupted = actor.AuditTrace.Single(r => r.TraceId == victim.TraceId);
+        var oldJson = interrupted.ToJson();
+        await Assert.That(interrupted.Result).IsEqualTo(ActorLifecycleState.Interrupted);
+        for (var i = 0; i < 3 && actor.ActiveRequest == null; i++)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(runtime, CancellationToken.None);
+        }
+        var fresh = actor.ActiveRequest!;
+        await Assert.That(fresh is { Action: ActorActionType.Move, State: ActorLifecycleState.Running }).IsTrue();
+        await Assert.That(fresh.TraceId).IsNotEqualTo(victim.TraceId);
+        await Assert.That(fresh.Destination).IsEqualTo((Vector3?)secondTarget);
+        var freshRunning = JsonSerializer.SerializeToElement(fresh);
+        actor.PreemptCurrent("interrupted by controller");
+        var freshRow = actor.AuditTrace.Single(r => r.TraceId == fresh.TraceId);
+        using var oldAudit = JsonDocument.Parse(oldJson);
+        using var newAudit = JsonDocument.Parse(freshRow.ToJson());
+        await Assert.That(running.TryGetProperty("DecisionQuestId", out var captured)).IsTrue();
+        await Assert.That(captured.GetUInt32()).IsEqualTo(firstQuest);
+        await Assert.That(oldAudit.RootElement.TryGetProperty("decision_quest_id", out var oldParent)).IsTrue();
+        await Assert.That(oldParent.GetUInt32()).IsEqualTo(firstQuest);
+        await Assert.That(newAudit.RootElement.TryGetProperty("decision_quest_id", out var newParent)).IsTrue();
+        await Assert.That(newParent.GetUInt32()).IsEqualTo(secondQuest);
+        await Assert.That(freshRunning.GetProperty("DecisionQuestId").GetUInt32()).IsEqualTo(secondQuest);
+        await Assert.That(interrupted.TraceId).IsEqualTo(running.GetProperty("TraceId").GetGuid());
+        await Assert.That(interrupted.RequestedAtUtc).IsEqualTo(running.GetProperty("RequestedAtUtc").GetDateTime());
+        await Assert.That(interrupted.DecisionGoal).IsEqualTo(running.GetProperty("DecisionGoal").GetString());
+        await Assert.That(interrupted.DecisionPolicy).IsEqualTo(running.GetProperty("DecisionPolicy").GetString());
+        await Assert.That(interrupted.DecisionCycleId).IsEqualTo(running.GetProperty("DecisionCycleId").GetString());
+        await Assert.That(freshRow.DecisionCycleId).IsEqualTo(freshRunning.GetProperty("DecisionCycleId").GetString());
+        await Assert.That(interrupted.DecisionGoal).IsEqualTo(victim.DecisionGoal);
+        await Assert.That(interrupted.DecisionCycleId).IsEqualTo(victim.DecisionCycleId);
+        await Assert.That(string.IsNullOrEmpty(interrupted.DecisionCycleId)).IsFalse();
+        await Assert.That(freshRow.DecisionCycleId).IsNotEqualTo(interrupted.DecisionCycleId);
+        _ = actor.Observe();
+        using var unrelated = JsonDocument.Parse(actor.AuditTrace[^1].ToJson());
+        await Assert.That(unrelated.RootElement.TryGetProperty("decision_quest_id", out var noParent)).IsTrue();
+        await Assert.That(noParent.ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(actor.AuditTrace.Single(r => r.TraceId == victim.TraceId).ToJson()).IsEqualTo(oldJson);
+    }
+
+    [Test]
+    public async Task QuestFallbackPurpose_ClearedChoiceRetiresRunningRouteBeforeFurtherMovement()
+    {
+        const uint questId = 91_583;
+        uint chosen = questId;
+        var (executor, actor, runtime, clock) = CreateRig("travel-purpose-clear",
+            questActivityProvider: _ => chosen == 0 ? null : QuestBootstrapActivityModule.ActivityName);
+        SeedPurposeReadyQuest(actor, questId, 91_593, new Vector3(40, 0, 0));
+        executor.QuestChosenProvider = _ => chosen;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var victim = actor.ActiveRequest!;
+        await Assert.That(victim.State).IsEqualTo(ActorLifecycleState.Running);
+        var before = actor.Character.Transform.World.Position;
+        chosen = 0;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(victim.State).IsEqualTo(ActorLifecycleState.Interrupted);
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull();
+        await Assert.That(actor.Character.Transform.World.Position).IsEqualTo(before);
+        executor.SetRoamRoute(actor.Character, BotPath.PathTo(new Vector3(-20, 0, 0)));
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var patrol = actor.ActiveRequest!;
+        await Assert.That(patrol.MoveOwner).IsEqualTo("ROAM");
+        actor.PreemptCurrent("test patrol teardown");
+        using var json = JsonDocument.Parse(actor.AuditTrace.Single(r => r.TraceId == patrol.TraceId).ToJson());
+        await Assert.That(json.RootElement.TryGetProperty("decision_quest_id", out var parent)).IsTrue();
+        await Assert.That(parent.ValueKind).IsEqualTo(JsonValueKind.Null);
+    }
+
+    [Test]
+    public async Task QuestFallbackPurpose_SameQuestCompletionRetiresBeforeTick()
+    {
+        const uint questId = 91_584;
+        var (executor, actor, runtime, clock) = CreateRig("travel-purpose-complete",
+            questActivityProvider: _ => QuestBootstrapActivityModule.ActivityName);
+        SeedPurposeReadyQuest(actor, questId, 91_594, new Vector3(40, 0, 0));
+        executor.QuestChosenProvider = _ => questId;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var victim = actor.ActiveRequest!;
+        await Assert.That(victim.State).IsEqualTo(ActorLifecycleState.Running);
+        var before = actor.Character.Transform.World.Position;
+        actor.Character.Quests.ActiveQuests[questId].Status = QuestStatus.Completed;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(victim.State).IsEqualTo(ActorLifecycleState.Interrupted);
+        await Assert.That(actor.Character.Transform.World.Position).IsEqualTo(before);
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull();
+        await Assert.That(actor.AuditTrace.Single(r => r.TraceId == victim.TraceId).DecisionQuestId)
+            .IsEqualTo((uint?)questId);
+    }
+
+    [Test]
+    public async Task QuestFallbackPurpose_TeleportRetirementDoesNotPreemptDifferentActualMove()
+    {
+        const uint questId = 91_585;
+        var (executor, actor, runtime, clock) = CreateRig("travel-purpose-foreign",
+            questActivityProvider: _ => QuestBootstrapActivityModule.ActivityName);
+        SeedPurposeReadyQuest(actor, questId, 91_595, new Vector3(40, 0, 0));
+        executor.QuestChosenProvider = _ => questId;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var victim = actor.ActiveRequest!;
+        await Assert.That(victim.State).IsEqualTo(ActorLifecycleState.Running);
+        actor.PreemptCurrent("external work selected");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(1000, 0, 0));
+        actor.SetPendingMoveOwner("ROAM");
+        var unrelated = actor.MoveTo(new Vector3(1100, 0, 0), 2f, TimeSpan.FromMinutes(1));
+        await Assert.That(unrelated.State).IsEqualTo(ActorLifecycleState.Running);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(actor.ActiveRequest).IsSameReferenceAs(unrelated);
+        await Assert.That(unrelated.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(unrelated.DecisionQuestId).IsNull();
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull();
+    }
+
+    [Test]
+    public async Task QuestFallbackPurpose_FlatExhaustionDoesNotOrphanMoveAfterOwnerWithdrawal()
+    {
+        // Disclosed synthetic Ready quest/source and terrain clamp. Route
+        // creation, XY arrival, exhaustion and owner withdrawal all execute
+        // actual actor requests; no injected Path.Move or forwarding mock.
+        const uint questId = 91_586;
+        uint chosen = questId;
+        var target = new Vector3(2, 0, 3);
+        var (executor, actor, runtime, clock) = CreateRig("travel-purpose-exhaust",
+            terrain: static (_, _) => 1f,
+            questActivityProvider: _ => chosen == 0 ? null : QuestBootstrapActivityModule.ActivityName);
+        executor.EnableIdleWake = false;
+        SeedPurposeReadyQuest(actor, questId, 91_596, target);
+        executor.QuestChosenProvider = _ => chosen;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var victim = actor.ActiveRequest!;
+        await Assert.That(victim).IsNotNull();
+        await Assert.That(victim.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(victim.MoveOwner).IsEqualTo("QUEST_TRAVEL");
+        await Assert.That(victim.DecisionQuestId).IsEqualTo((uint?)questId);
+        var cycle = victim.DecisionCycleId;
+        var route = executor.GetRoamRoute(runtime.CharacterId)!;
+        await Assert.That(route).IsNotNull();
+        try
+        {
+            for (var wake = 0; wake < 100 && !route.IsFinished; wake++)
+            {
+                clock.Advance(TimeSpan.FromMilliseconds(100));
+                await executor.StepAsync(runtime, CancellationToken.None);
+            }
+            await Assert.That(route.IsFinished).IsTrue();
+            await Assert.That(victim.State).IsEqualTo(ActorLifecycleState.Interrupted);
+            var arrival = actor.Character.Transform.World.Position;
+            var xyDistance = Vector2.Distance(new Vector2(arrival.X, arrival.Y), new Vector2(target.X, target.Y));
+            await Assert.That(xyDistance <= route.ArrivalRadius).IsTrue();
+            await Assert.That(MathF.Abs(arrival.Z - target.Z) > 0.5f).IsTrue();
+            var terminal = actor.AuditTrace.Single(r => r.TraceId == victim.TraceId);
+            var terminalJson = terminal.ToJson();
+            var requestAtExhaustion = actor.ActiveRequest;
+            var traceCount = actor.AuditTrace.Count;
+
+            // Execute withdrawal even with the faulty orphan still Running,
+            // then assert consumer-visible request/history and movement.
+            chosen = 0;
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(runtime, CancellationToken.None);
+            await Assert.That(requestAtExhaustion).IsNull();
+            await Assert.That(actor.ActiveRequest).IsNull();
+            await Assert.That(actor.AuditTrace.Count).IsEqualTo(traceCount);
+            await Assert.That(terminal.DecisionQuestId).IsEqualTo((uint?)questId);
+            await Assert.That(terminal.DecisionCycleId).IsEqualTo(cycle);
+            await Assert.That(terminal.ToJson()).IsEqualTo(terminalJson);
+            var afterWithdrawal = actor.Character.Transform.World.Position;
+            await Assert.That(new Vector2(afterWithdrawal.X, afterWithdrawal.Y))
+                .IsEqualTo(new Vector2(arrival.X, arrival.Y));
+        }
+        finally
+        {
+            actor.PreemptCurrent("exhaustion regression teardown");
+        }
+    }
+
+    private static void SeedPurposeReadyQuest(GameplayActor actor, uint questId, uint reporterId, Vector3 target)
+    {
+        // Synthetic accepted-state fixture; target selection and movement run
+        // through the real executor and GameplayActor, never a forwarding mock.
+        GameplayActorTestRig.SeedQuestDelivery(questId, questId + 100, questId + 200,
+            questId + 300, reporterId, level: 1);
+        var quest = new Quest(QuestManager.Instance.GetTemplate(questId), actor.Character);
+        quest.SkipUpdatePackets();
+        quest.Step = QuestComponentKind.Ready;
+        quest.Status = QuestStatus.Ready;
+        actor.Character.Quests.ActiveQuests[questId] = quest;
+        var world = actor.Character.ParentWorld!;
+        world.SpawnManager ??= new SpawnManager(world);
+        var spawners = (Dictionary<uint, List<NpcSpawner>>)typeof(SpawnManager)
+            .GetProperty("NpcSpawners", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(world.SpawnManager)!;
+        var key = (uint)(91_980 + spawners.Count);
+        spawners[key] =
+        [
+            new NpcSpawner
+            {
+                Id = key, UnitId = reporterId,
+                Position = new WorldSpawnPosition { X = target.X, Y = target.Y, Z = target.Z },
+            }
+        ];
+        QuestFixtureRow.InvalidateAll();
+    }
+
+    [Test]
+    public async Task Step_GenerationBump_EvictsOldActor()
+    {
+        // A reactivated runtime (new generation) evicts the cached actor from
+        // the prior activation; the step recreates state bound to the live gen.
+        var (executor, actor, runtime, clock) = CreateRig("gen-evict");
+        runtime.Generation = 1;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(executor.GetBotState(runtime.CharacterId)!.Generation).IsEqualTo(1UL);
+        await Assert.That(executor.GetBotState(runtime.CharacterId)!.Actor).IsSameReferenceAs(actor);
+        var before = executor.GetBotState(runtime.CharacterId)!;
+
+        runtime.Generation = 2;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(state.Generation).IsEqualTo(2UL);
+        await Assert.That(state).IsNotSameReferenceAs(before);
     }
 }
 

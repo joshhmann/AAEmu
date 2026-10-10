@@ -15,11 +15,12 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 [NotInParallel]
 public class DoodadTurnInTests
 {
-    private const uint QuestId = 90_760;
-    private const uint StartComponentId = 90_761;
-    private const uint ReadyComponentId = 90_762;
-    private const uint OfferNpcTemplateId = 90_763;
-    private const uint ReportDoodadGroupId = 90_765;
+    // Separate from BotOpportunityListingTests' 90_760–90_764 components.
+    private const uint QuestId = 108_860;
+    private const uint StartComponentId = 108_861;
+    private const uint ReadyComponentId = 108_862;
+    private const uint OfferNpcTemplateId = 108_863;
+    private const uint ReportDoodadGroupId = 108_865;
 
     [Before(Test)]
     public void SetUp()

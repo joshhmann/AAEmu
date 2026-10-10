@@ -409,9 +409,9 @@ public class QuestObjectiveSourcePreyTravelTests
 
     private static (bool Resolved, Vector3 Position, uint Template, bool IsPrey) Resolve(GameplayActor actor)
     {
-        var args = new object?[] { actor, default(Vector3), 0u, false };
+        var args = new object?[] { actor, 0u, default(Vector3), 0u, false };
         var resolved = (bool)ResolveObjectiveSource.Invoke(null, args)!;
-        return (resolved, (Vector3)args[1]!, (uint)args[2]!, (bool)args[3]!);
+        return (resolved, (Vector3)args[2]!, (uint)args[3]!, (bool)args[4]!);
     }
 
     private static void StageActiveQuest(GameplayActor actor, uint questId, int objective)

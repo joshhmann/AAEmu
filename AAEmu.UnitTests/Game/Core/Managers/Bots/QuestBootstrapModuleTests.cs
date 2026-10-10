@@ -37,6 +37,74 @@ public class QuestBootstrapModuleTests
         ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
         AppConfiguration.Instance.World ??= new WorldConfig();
         PlayerbotPilotRig.SeedPilotSingletons();
+        QuestLegActor.ClearAll();
+        QuestLegActor.SetResolver(null);
+    }
+
+    [After(Test)]
+    public void TearDown()
+    {
+        QuestLegActor.ClearAll();
+        QuestLegActor.SetResolver(null);
+    }
+
+    // ------------------------------------------------------------ listing-contract seeding
+    // The module now reads the live opportunity listing off the bot's staged
+    // quest-leg actor: eligible offers (SeedQuestOffer + a nearby offerer in
+    // the region census) and viable hunts (SeedQuestHunt + real accept + live
+    // prey). Shapes mirror QuestGoalOwnerTests; ids are file-local (92_xxx).
+    private const uint BrokeQuestId = 92_751;
+    private const uint BrokeStartComponent = 92_761;
+    private const uint BrokeOfferNpcTemplate = 92_741;
+    private const uint HuntQuestId = 92_752;
+    private const uint HuntStartComponent = 92_762;
+    private const uint HuntProgressComponent = 92_763;
+    private const uint HuntReadyComponent = 92_764;
+    private const uint HuntOfferNpcTemplate = 92_741;
+    private const uint HuntPreyTemplate = 92_742;
+    private const uint HuntReportNpcTemplate = 92_743;
+    private static readonly Vector3 SeedPos = new(32, 32, 0);
+
+    private static void PlaceActorInSeedArea(GameplayActor actor, HeadlessSession session)
+    {
+        GameplayActorTestRig.SetPosition(actor, SeedPos);
+        JoinActorRegion(session);
+    }
+
+    private static void SpawnSeedNpc(HeadlessSession session, uint templateId, Vector3 pos)
+    {
+        var objId = session.SpawnNpc(templateId);
+        var npc = session.World.GetNpc(objId)!;
+        npc.Template = new NpcTemplate { Id = templateId, Scale = 1f };
+        npc.Hp = 100;
+        npc.MaxHp = 100;
+        npc.IsVisible = true;
+        GameplayActorTestRig.SetNpcPosition(session, objId, pos);
+        var region = session.World.GetRegionByPos(pos)!;
+        region.AddObject(npc);
+        npc.Region = region;
+    }
+
+    private static void SeedListedOffer(GameplayActor actor, HeadlessSession session)
+    {
+        PlaceActorInSeedArea(actor, session);
+        GameplayActorTestRig.SeedQuestOffer(BrokeQuestId, BrokeStartComponent, BrokeOfferNpcTemplate, level: 1);
+        SpawnSeedNpc(session, BrokeOfferNpcTemplate, SeedPos + new Vector3(5, 0, 0));
+        QuestLegActor.Stage(actor.Character.Id, actor);
+    }
+
+    private static void SeedListedHunt(GameplayActor actor, HeadlessSession session, string cycleId)
+    {
+        PlaceActorInSeedArea(actor, session);
+        GameplayActorTestRig.SeedQuestHunt(HuntQuestId, HuntStartComponent, HuntProgressComponent,
+            HuntReadyComponent, HuntOfferNpcTemplate, HuntPreyTemplate, HuntReportNpcTemplate,
+            huntCount: 3, level: 1);
+        QuestFixtureRow.Invalidate(HuntQuestId);
+        var huntAccept = actor.AcceptQuest(HuntQuestId, QuestAcceptorType.Npc, HuntOfferNpcTemplate, cycleId);
+        if (huntAccept.State != ActorLifecycleState.Completed)
+            throw new InvalidOperationException($"seeded hunt quest {HuntQuestId} did not accept ({huntAccept.State})");
+        SpawnSeedNpc(session, HuntPreyTemplate, SeedPos + new Vector3(8, 0, 0));
+        QuestLegActor.Stage(actor.Character.Id, actor);
     }
 
     private static PlayerBotRuntime NewBot(GameplayActor actor)
@@ -246,13 +314,15 @@ public class QuestBootstrapModuleTests
     [Test]
     public async Task CanActivate_BrokeQuestless_AllowsNamedActivity()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("qb-broke");
+        var (actor, session) = GameplayActorTestRig.CreateActor("qb-broke");
+        actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
         GameplayActorTestRig.SetMoney(actor, 0);
-
+        SeedListedOffer(actor, session);
         var first = EnabledModule().CanActivate(ContextFor(NewBot(actor)));
         var second = EnabledModule().CanActivate(ContextFor(NewBot(actor)));
 
-        await Assert.That(first.CanActivate).IsTrue();
+        await Assert.That(first.CanActivate).IsTrue().Because($"why={first.WhyNot}");
         await Assert.That(first.ActivityName).IsEqualTo(QuestBootstrapActivityModule.ActivityName);
         await Assert.That(second.ActivityName).IsEqualTo(first.ActivityName);
     }
@@ -298,18 +368,16 @@ public class QuestBootstrapModuleTests
     [Test]
     public async Task CanActivate_ActiveQuestAllows_DespiteRichCopper()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("qb-active-rich");
+        var (actor, session) = GameplayActorTestRig.CreateActor("qb-active-rich");
         actor.Character.Level = 3;
         actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
         GameplayActorTestRig.SetMoney(actor, 10_000);
-        var accept = actor.AcceptQuest(LevelingLoopScenario.SeedQuestDeliveryId,
-            QuestAcceptorType.Npc, LevelingLoopScenario.SeedOffererNpcTemplateId,
-            "qb-active-rich-accept");
-        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+        SeedListedHunt(actor, session, "qb-active-rich-accept");
 
         var decision = EnabledModule().CanActivate(ContextFor(NewBot(actor)));
 
-        await Assert.That(decision.CanActivate).IsTrue();
+        await Assert.That(decision.CanActivate).IsTrue().Because($"why={decision.WhyNot}");
         await Assert.That(decision.ActivityName).IsEqualTo(QuestBootstrapActivityModule.ActivityName);
     }
 
@@ -327,14 +395,12 @@ public class QuestBootstrapModuleTests
     [Test]
     public async Task Arbitrate_QuestBeatsNeedsAndRoam_BelowContest()
     {
-        var (actor, _) = GameplayActorTestRig.CreateActor("qb-arbiter");
+        var (actor, session) = GameplayActorTestRig.CreateActor("qb-arbiter");
         actor.Character.Level = 3;
         actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
         GameplayActorTestRig.SetMoney(actor, 0);
-        var accept = actor.AcceptQuest(LevelingLoopScenario.SeedQuestDeliveryId,
-            QuestAcceptorType.Npc, LevelingLoopScenario.SeedOffererNpcTemplateId,
-            "qb-arbiter-accept");
-        await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+        SeedListedHunt(actor, session, "qb-arbiter-accept");
         var bot = NewBot(actor);
         var quest = EnabledModule();
         var needs = new NeedsProbe();

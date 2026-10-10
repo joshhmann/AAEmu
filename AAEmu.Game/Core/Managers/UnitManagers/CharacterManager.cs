@@ -581,6 +581,8 @@ public class CharacterManager(
 
         character.Appellations = new CharacterAppellations(character);
         character.Quests = new CharacterQuests(character);
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): construction-site instance witness.
+        CharacterQuests.LogInstanceConstruct(character.Quests, character, "create-new-player");
         character.Mails = new CharacterMails(character);
         character.Portals = new CharacterPortals(character);
         character.Friends = new CharacterFriends(character);

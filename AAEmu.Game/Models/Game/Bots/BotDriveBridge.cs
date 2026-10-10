@@ -753,6 +753,22 @@ public sealed class BotDriveBridge
             case "talk":
                 controller.TalkToNpc(quest, GetUInt(root, "npc"));
                 return Ok(new { fired = true });
+            // SETUP-ONLY dialogue staging (E2E fixture staging, NOT gameplay):
+            // mirrors the engine CSInteractNPCPacket path — resolve the NPC
+            // template to the live world actor and set CurrentTarget (plus
+            // CurrentInteractionObject), which the report-act gate reads when
+            // the scheduler later fires the evaluation. Fires NO quest event
+            // itself (unlike "talk"); the scheduler owns all progress.
+            case "interactNpc":
+            {
+                var npcTemplate = GetUInt(root, "npc");
+                var npc = character.ParentWorld.GetNpcByTemplateId(npcTemplate);
+                if (npc == null)
+                    return Err($"interactNpc: NPC template {npcTemplate} not spawned in the live world");
+                character.CurrentTarget = npc;
+                character.CurrentInteractionObject = npc;
+                return Ok(new { interacted = "Completed", npcObjId = npc.ObjId, detail = $"npc {npc.ObjId}: dialogue with npc {npcTemplate} ({npc.Template?.Name})" });
+            }
             case "interact":
                 controller.InteractWithDoodad(GetUInt(root, "doodad"), GetInt(root, "times", 1));
                 return Ok(new { fired = true });
@@ -870,8 +886,18 @@ public sealed class BotDriveBridge
             case "setLevel":
                 character.Level = (byte)GetInt(root, "level", 1);
                 return Ok(new { level = character.Level });
+            // SETUP-ONLY leveling (E2E fixture staging, NOT gameplay): grants
+            // XP through the REAL Character.AddExp engine path (XP table
+            // promotion, ability-XP share, broadcasts, DoOnLevelUpEvents) —
+            // the same call quest rewards (Quest.cs), kill grants (Npc.cs)
+            // and the ChangeLevel GM command use. Unlike setLevel (raw Level
+            // write leaving Hp/Mp stale), this keeps vitals consistent.
+            case "addExp":
+                character.AddExp(GetInt(root, "exp", 0), true);
+                return Ok(new { level = character.Level, exp = character.Experience });
             case "questState":
             {
+                LogInstanceObserve(character, "drive-questState", quest);
                 var activeQuest = controller.ActiveQuest(quest);
                 if (activeQuest == null)
                     return Ok(new { active = false });
@@ -886,10 +912,13 @@ public sealed class BotDriveBridge
             case "invCount":
                 return Ok(new { count = controller.InventoryCount(GetUInt(root, "item")) });
             case "isActive":
+                LogInstanceObserve(character, "drive-isActive", quest);
                 return Ok(new { active = controller.IsActive(quest) });
             case "hasCompleted":
+                LogInstanceObserve(character, "drive-hasCompleted", quest);
                 return Ok(new { completed = controller.HasCompleted(quest) });
             case "charState":
+                LogInstanceObserve(character, "drive-charState", quest);
                 return Ok(new
                 {
                     name = character.Name,
@@ -4152,51 +4181,49 @@ public sealed class BotDriveBridge
             }
             case "needs":
             {
-                // LIVE needs-farm wake driver for the Tier 0 E2E loop (additive,
-                // E2E-only): enrolls the resolved bot in the live bot registry
-                // (Spawn + Activate when not already Active), wakes the live
-                // PlayerBotScheduler for it, waits for at least one scheduler
-                // step to run, then reports the observable loop state off the
-                // live BotRoamStepExecutor (phase + soil target + tracked crop
-                // + reason) plus position and audit evidence. No gameplay
-                // action is issued here — the scheduler wake owns the whole
-                // decision (buy/travel/plant/wait/harvest/replant); this op
-                // only enrolls, wakes, and observes.
+                // Observe is passive, including when registry/state/actor are
+                // absent. Only wake may enroll/activate/wake; it remains a
+                // setup control, not an unattended observation.
                 var sub = root.TryGetProperty("op2", out var subEl) ? subEl.GetString()
                     : root.TryGetProperty("sub", out var subEl2) ? subEl2.GetString() : "wake";
-                if (!string.Equals(sub, "wake", StringComparison.OrdinalIgnoreCase))
-                    return Err($"farm needs: unknown sub '{sub}' (want 'wake')");
+                var wake = string.Equals(sub, "wake", StringComparison.OrdinalIgnoreCase);
+                if (!wake && !string.Equals(sub, "observe", StringComparison.OrdinalIgnoreCase))
+                    return Err($"farm needs: unknown sub '{sub}' (want 'wake' or 'observe')");
                 var manager = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.IPlayerBotManager>();
                 var scheduler = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.IPlayerBotScheduler>();
                 var executor = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.BotRoamStepExecutor>();
                 if (manager == null || scheduler == null || executor == null)
                     return Err("farm needs: bot scheduler/registry unavailable in DI");
                 var before = scheduler.GetMetrics().TotalStepsRun;
-                if (!manager.TryGet(character!.Id, out var runtime) || runtime == null)
+                long afterSteps = before;
+                if (wake)
                 {
-                    if (!manager.Spawn(character, "e2e-needs"))
-                        return Err($"farm needs: spawn refused for '{character.Name}'");
-                    if (!manager.TryGet(character.Id, out runtime) || runtime == null)
-                        return Err($"farm needs: '{character.Name}' not registered after spawn");
-                }
-                if (runtime.State != Core.Managers.Bots.PlayerBotState.Active)
-                {
-                    if (!manager.Activate(character.Id,
+                    if (!manager.TryGet(character!.Id, out var runtime) || runtime == null)
+                    {
+                        if (!manager.Spawn(character, "e2e-needs"))
+                            return Err($"farm needs: spawn refused for '{character.Name}'");
+                        if (!manager.TryGet(character.Id, out runtime) || runtime == null)
+                            return Err($"farm needs: '{character.Name}' not registered after spawn");
+                    }
+                    if (runtime.State != Core.Managers.Bots.PlayerBotState.Active
+                        && !manager.Activate(character.Id,
                             new global::AAEmu.Game.Models.Game.Bots.BotContext { BotId = character.Id, Name = character.Name }, "e2e-needs"))
                         return Err($"farm needs: activate refused for '{character.Name}'");
+                    if (!scheduler.Wake(character.Id))
+                        return Err($"farm needs: scheduler refused wake for '{character.Name}'");
+                    var waitMs = GetInt(root, "waitMs", 15000);
+                    var deadline = Environment.TickCount64 + Math.Clamp(waitMs, 1000, 120000);
+                    while (Environment.TickCount64 < deadline)
+                    {
+                        afterSteps = scheduler.GetMetrics().TotalStepsRun;
+                        if (afterSteps > before)
+                            break;
+                        Thread.Sleep(200);
+                    }
                 }
-                if (!scheduler.Wake(character.Id))
-                    return Err($"farm needs: scheduler refused wake for '{character.Name}'");
-                var waitMs = GetInt(root, "waitMs", 15000);
-                var deadline = Environment.TickCount64 + Math.Clamp(waitMs, 1000, 120000);
-                long afterSteps = before;
-                while (Environment.TickCount64 < deadline)
-                {
+                else
                     afterSteps = scheduler.GetMetrics().TotalStepsRun;
-                    if (afterSteps > before)
-                        break;
-                    Thread.Sleep(200);
-                }
+                var snapshotStartedAtUtc = DateTime.UtcNow;
                 var p = character.Transform.World.Position;
                 var st = executor.GetBotState(character.Id);
                 // Audit evidence comes from the EXECUTOR's live actor (the
@@ -4216,34 +4243,80 @@ public sealed class BotDriveBridge
                 var buys = liveAudit?.Count(r => r.Action == Core.Managers.Bots.ActorActionType.Buy) ?? 0;
                 var lastSell = liveAudit?.LastOrDefault(r => r.Action == Core.Managers.Bots.ActorActionType.Sell);
                 var lastBuy = liveAudit?.LastOrDefault(r => r.Action == Core.Managers.Bots.ActorActionType.Buy);
-                var lastMove = liveAudit?.LastOrDefault(r => r.Action == Core.Managers.Bots.ActorActionType.Move);
-                var route = st?.Path;
                 var liveReq = st?.Actor.ActiveRequest;
+                var enrollment = scheduler.GetEnrollmentSnapshot(character.Id);
+                var arbiterStep = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.BotGoalArbiterStepExecutor>();
+                var arbiter = SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.IBotGoalArbiter>();
+                var watchedIds = root.TryGetProperty("objIds", out var ids) && ids.ValueKind == JsonValueKind.Array
+                    ? ids.EnumerateArray().Select(e => e.GetUInt32()).Take(2).ToList() : [];
+                if (st?.NeedsFarmCropObjId is > 0 && !watchedIds.Contains(st.NeedsFarmCropObjId))
+                    watchedIds.Add(st.NeedsFarmCropObjId);
+                var doodads = watchedIds.Select(objId =>
+                {
+                    var crop = character.ParentWorld?.GetDoodad(objId);
+                    var position = crop?.Transform.World.Position;
+                    return new
+                    {
+                        objId, found = crop != null, dbId = crop?.DbId,
+                        template = crop?.TemplateId, phase = crop?.FuncGroupId,
+                        ownerId = crop?.OwnerId, ownerType = crop?.OwnerType.ToString(),
+                        houseId = crop?.OwnerDbId, farmType = crop?.FarmType.ToString(),
+                        plantTime = crop?.PlantTime, growthTime = crop?.GrowthTime,
+                        x = position?.X, y = position?.Y, z = position?.Z,
+                    };
+                }).ToArray();
+                var controller = new PlayerBotController(character);
+                var items = new uint[] { PotatoSeedItemId, 7992, 19887 }
+                    .Select(template => new { template, count = controller.InventoryCount(template) }).ToArray();
+                // Materialize every projected value before the completion
+                // watermark. This is NOT an atomic world snapshot: consumers
+                // must reject request/phase/effect joins that straddle it.
                 return Ok(new
                 {
-                    name = character.Name,
-                    id = character.Id,
-                    stepsBefore = before,
-                    stepsAfter = afterSteps,
-                    stepped = afterSteps > before,
-                    x = p.X, y = p.Y, z = p.Z,
-                    zoneId = character.Transform.ZoneId,
+                    name = character.Name, id = character.Id,
+                    objId = character.ObjId, accountId = character.AccountId,
+                    stepsBefore = before, stepsAfter = afterSteps, stepped = afterSteps > before,
+                    x = p.X, y = p.Y, z = p.Z, zoneId = character.Transform.ZoneId,
+                    worldId = character.Transform.WorldId, instanceId = character.Transform.InstanceId,
+                    level = character.Level, experience = character.Experience,
+                    money = character.Money, labor = character.LaborPower,
+                    actabilities = character.Actability?.Actabilities.Values.OrderBy(a => a.Id)
+                        .Select(a => new { id = a.Id, point = a.Point, step = a.Step }).ToArray(),
+                    dropRateMul = character.DropRateMul, isDead = character.IsDead,
+                    stateAvailable = st != null, actorAvailable = st?.Actor != null,
+                    actorCharId = st?.Actor.Character.Id, actorObjId = st?.Actor.Character.ObjId,
+                    enrollmentRegistered = enrollment.Registered, enrollmentState = enrollment.State,
+                    enrollmentSchedulerRunning = enrollment.SchedulerRunning,
+                    enrollmentGeneration = enrollment.Generation, enrollmentIdleWakeEnabled = executor.EnableIdleWake,
+                    growthRate = AppConfiguration.Instance.World.GrowthRate,
+                    lootRate = AppConfiguration.Instance.World.LootRate,
+                    autoSaveMinutes = AppConfiguration.Instance.World.AutoSaveInterval,
+                    laborConsumptionDisabled = AppConfiguration.Instance.Labor.DisableConsumption,
+                    questBootstrapEnvironment = Environment.GetEnvironmentVariable("AAEMU_QUEST_BOOTSTRAP_ENABLED"),
+                    needsFarmEnvironment = Environment.GetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED"),
+                    homesteadEnabled = SingletonContainer.ServiceProvider?.GetServices<Core.Managers.Bots.IBotActivityModule>()
+                        .OfType<Core.Managers.Bots.HomesteadActivityModule>().SingleOrDefault()?.Enabled,
+                    arbiterActivity = arbiter?.GetActiveActivity(character.Id),
+                    wakeSequence = arbiterStep?.GetWakeSequence(character.Id),
                     needsLegActive = st?.NeedsLegActive ?? false,
-                    phase = st?.NeedsFarmPhase.ToString() ?? "unknown",
-                    reason = st?.NeedsFarmReason ?? "",
-                    soilX = st?.NeedsFarmSoilTarget?.X,
-                    soilY = st?.NeedsFarmSoilTarget?.Y,
-                    soilZ = st?.NeedsFarmSoilTarget?.Z,
-                    cropObjId = st?.NeedsFarmCropObjId ?? 0u,
-                    plants, harvests, moves,
-                    sells, buys,
-                    lastSellState = lastSell?.Result.ToString(),
-                    lastSellDetail = lastSell?.Detail,
-                    lastBuyState = lastBuy?.Result.ToString(),
-                    lastBuyDetail = lastBuy?.Detail,
-                    liveAction = liveReq?.Action.ToString(),
-                    liveState = liveReq?.State.ToString(),
-                    liveDetail = liveReq?.Detail,
+                    phase = st?.NeedsFarmPhase.ToString() ?? "unknown", reason = st?.NeedsFarmReason ?? "",
+                    soilX = st?.NeedsFarmSoilTarget?.X, soilY = st?.NeedsFarmSoilTarget?.Y,
+                    soilZ = st?.NeedsFarmSoilTarget?.Z, cropObjId = st?.NeedsFarmCropObjId ?? 0u,
+                    plants, harvests, moves, sells, buys,
+                    lastSellState = lastSell?.Result.ToString(), lastSellDetail = lastSell?.Detail,
+                    lastBuyState = lastBuy?.Result.ToString(), lastBuyDetail = lastBuy?.Detail,
+                    liveAction = liveReq?.Action.ToString(), liveState = liveReq?.State.ToString(),
+                    liveDetail = liveReq?.Detail, liveTraceId = liveReq?.TraceId,
+                    liveTargetId = liveReq?.TargetId, liveRequestedAtUtc = liveReq?.RequestedAtUtc,
+                    liveMoveOwner = liveReq?.MoveOwner,
+                    liveDestinationX = liveReq?.Destination?.X, liveDestinationY = liveReq?.Destination?.Y,
+                    liveDestinationZ = liveReq?.Destination?.Z,
+                    doodads, items,
+                    actorAudit = liveAudit?.Select(r => JsonSerializer.Deserialize<JsonElement>(r.ToJson())).ToArray(),
+                    snapshotStartedAtUtc,
+                    // Last evaluated member: every phase/projection copy above
+                    // completed before this watermark (still not atomic).
+                    observedAtUtc = DateTime.UtcNow,
                 });
             }
             case "soil":
@@ -4374,6 +4447,19 @@ public sealed class BotDriveBridge
     ///              action): {"sub":"withhold","on":true|false} flips the per-bot
     ///              flag the quest leg reads; wake/observe payloads echo it.
     /// </summary>
+    private static readonly System.Reflection.PropertyInfo? QuestCompletedBlocksProperty =
+        typeof(CharacterQuests).GetProperty("CompletedQuests",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+    private static readonly System.Reflection.MethodInfo? CharacterSlotsBlobMethod =
+        typeof(Character).GetMethod("GetActionSlotsAsBlob",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+    private static readonly System.Reflection.FieldInfo? QuestOwnedItemPoolField =
+        typeof(ItemManager).GetField("_allItems",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+    private static readonly System.Reflection.MethodInfo? QuestDetachedCopyMethod =
+        typeof(object).GetMethod("MemberwiseClone",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
     private string HandleQuestOp(JsonElement root)
     {
         if (!TryResolvePersistentBot(root.TryGetProperty("bot", out var b) ? b.GetString() : null, out var character, out var err)
@@ -4382,6 +4468,18 @@ public sealed class BotDriveBridge
 
         var sub = root.TryGetProperty("op2", out var subEl) ? subEl.GetString()
             : root.TryGetProperty("sub", out var subEl2) ? subEl2.GetString() : "wake";
+        Guid? auditAfterTraceId = null;
+        if (root.TryGetProperty("auditAfterTraceId", out var cursor))
+        {
+            // Validate before any explicit wake, withhold or place operation.
+            // A supplied cursor is an observe-only contract, never a fallback.
+            if (!string.Equals(sub, "observe", StringComparison.OrdinalIgnoreCase))
+                return Err("NOT_PROVED quest: audit cursor requires passive observe");
+            if (cursor.ValueKind != JsonValueKind.String ||
+                !Guid.TryParse(cursor.GetString(), out var parsedCursor) || parsedCursor == Guid.Empty)
+                return Err("NOT_PROVED quest observe: audit cursor must be a nonempty request GUID");
+            auditAfterTraceId = parsedCursor;
+        }
         var arcIds = root.TryGetProperty("arc", out var arcEl) && arcEl.ValueKind == JsonValueKind.Array
             ? arcEl.EnumerateArray().Select(e => e.GetUInt32()).ToList()
             : [];
@@ -4480,6 +4578,14 @@ public sealed class BotDriveBridge
         {
             return Err($"quest: unknown sub '{sub}' (want 'wake', 'observe', or 'withhold')");
         }
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): observe-path instance witness.
+        // Join key with REMOVER=instance-wake rows: bot/char name + charHash/questsHash.
+        // Flag-checked BEFORE the $"quest-{sub}" interpolation so flag-off allocates nothing.
+        if (CharacterQuests.DiagEnabled)
+            LogInstanceObserve(character, $"quest-{sub}", 0);
+
+        // BEGIN precedes every local copy; END below is not an atomic-world claim.
+        var snapshotStartedAtUtc = DateTime.UtcNow;
 
         var metricsAfter = scheduler.GetMetrics();
         var after = metricsAfter.TotalStepsRun;
@@ -4494,7 +4600,23 @@ public sealed class BotDriveBridge
         // Quest-action audit rows from the EXECUTOR's live actor (a fresh
         // GameplayActor carries an empty trace) — the same seam the needs op
         // reads. Trace rows carry the real acting character id.
-        var trace = state?.Actor.AuditTrace ?? new GameplayActor(character).AuditTrace;
+        var trace = state?.Actor?.AuditTrace.ToArray() ?? [];
+        var actorAuditStartIndex = 0;
+        if (auditAfterTraceId.HasValue)
+        {
+            actorAuditStartIndex = -1;
+            for (var i = 0; i < trace.Length; i++)
+            {
+                if (trace[i].TraceId != auditAfterTraceId.Value)
+                    continue;
+                actorAuditStartIndex = i;
+                break;
+            }
+            if (actorAuditStartIndex < 0)
+                return Err("NOT_PROVED quest observe: audit cursor is not in the retained actor trace");
+        }
+        // All diagnostics below retain the complete copied trace. Only the
+        // final actorAudit projection starts at the inclusive overlap cursor.
         var questActions = new[]
         {
             Core.Managers.Bots.ActorActionType.AcceptQuest,
@@ -4543,22 +4665,248 @@ public sealed class BotDriveBridge
         var botPos = character!.Transform.World.Position;
         var reporterDistM = reporterPos.HasValue ? (double)AAEmu.Game.Utils.MathUtil.CalculateDistance(botPos, reporterPos.Value, false) : -1.0;
 
-        return Ok(new
+        // P0.1 enrollment discriminator (read-only): one snapshot local, no
+        // repeated queries, so the fields below describe the same instant.
+        var enrollment = scheduler.GetEnrollmentSnapshot(character!.Id);
+        var chosenQuest = executor.QuestChosenProvider?.Invoke(character.Id) ?? 0u;
+        var observedQuestIds = snapshot.ActiveQuests.Select(q => q.QuestId)
+            .Concat(trace.Where(r => r.DecisionQuestId.HasValue).Select(r => r.DecisionQuestId!.Value))
+            .Concat(rows.Where(r => r.Action is Core.Managers.Bots.ActorActionType.AcceptQuest
+                or Core.Managers.Bots.ActorActionType.AdvanceQuest
+                or Core.Managers.Bots.ActorActionType.TurnInQuest
+                or Core.Managers.Bots.ActorActionType.TurnInDoodad
+                or Core.Managers.Bots.ActorActionType.AutoTurnIn).Select(r => r.TargetId))
+            .Append(chosenQuest).Where(id => id != 0).Distinct().OrderBy(id => id).ToArray();
+        var activeQuestSources = character.Quests.ActiveQuests.Values.OrderBy(q => q.TemplateId).ToArray();
+        var activeQuestCopies = activeQuestSources.Select(q =>
+        {
+            // Decode objectives/step from the same ordinary persistence blob,
+            // so a concurrent engine update cannot split those two projections.
+            var data = q.WriteData();
+            var reader = new PacketStream(data);
+            var objectives = new int[q.Objectives.Length];
+            for (var i = 0; i < objectives.Length; i++)
+                objectives[i] = reader.ReadInt32();
+            var step = ((QuestComponentKind)reader.ReadByte()).ToString();
+            return new
+            {
+                questId = q.TemplateId, status = q.Status.ToString(), step,
+                id = q.Id, owner = q.Owner.Id,
+                objectives, data = Convert.ToBase64String(data),
+            };
+        }).ToArray();
+        var objectiveItems = new List<object>();
+        foreach (var quest in activeQuestSources)
+        {
+            var acts = quest.QuestSteps.TryGetValue(QuestComponentKind.Progress, out var progress)
+                ? progress.Components.Values.SelectMany(c => c.Acts)
+                    .Where(a => a.Template.CountsAsAnObjective).ToArray()
+                : [];
+            foreach (var act in acts)
+            {
+                if (act.Template is not AAEmu.Game.Models.Game.Quests.Acts.QuestActObjItemGather gather)
+                    continue;
+                var index = gather.ThisComponentObjectiveIndex;
+                if (gather.UseAlias || gather.ItemId == 0 || gather.Count <= 0 ||
+                    index >= quest.Objectives.Length || act.Id == 0 ||
+                    act.QuestComponent.Template.Id == 0 ||
+                    acts.Count(a => a.Template.ThisComponentObjectiveIndex == index) != 1)
+                    return Err("quest observe: invalid or ambiguous objective-item mapping");
+                objectiveItems.Add(new
+                {
+                    questId = quest.TemplateId, actId = act.Id,
+                    componentId = act.QuestComponent.Template.Id, objectiveIndex = index,
+                    itemId = gather.ItemId, required = gather.Count,
+                });
+            }
+        }
+        if (QuestCompletedBlocksProperty?.GetValue(character.Quests) is not
+            System.Collections.Concurrent.ConcurrentDictionary<uint, AAEmu.Game.Models.Game.Quests.CompletedQuest> blocks)
+            return Err("quest observe: completed quest blocks unavailable");
+        var completedQuests = new List<object>();
+        foreach (var pair in blocks.ToArray().OrderBy(p => p.Key))
+        {
+            if (pair.Value == null || pair.Value.Id != pair.Key || pair.Value.Body?.Length != 64)
+                return Err("quest observe: malformed completed quest block");
+            var bytes = new byte[8];
+            pair.Value.Body.CopyTo(bytes, 0);
+            completedQuests.Add(new { blockId = pair.Key, owner = character.Id, data = Convert.ToBase64String(bytes) });
+        }
+        if (QuestOwnedItemPoolField?.GetValue(ItemManager.Instance) is not
+            ConcurrentDictionary<ulong, Item> itemPool || QuestDetachedCopyMethod == null)
+            return Err("NOT_PROVED quest observe: owned item pool or detached codec unavailable");
+        const int maximumOwnedItemRows = 4096;
+        const int maximumCopiedDetailBytes = 2 * 1024 * 1024;
+        var copiedDetailBytes = 0;
+        var ownItems = new List<object>();
+        var items = new List<object>();
+        var bag = character.Inventory.Bag;
+        // Enumerate the pool directly: ConcurrentDictionary.Values would copy
+        // every foreign player's items just to filter this character's rows.
+        foreach (var pair in itemPool)
+        {
+            var liveItem = pair.Value;
+            if (liveItem.OwnerId != character.Id)
+                continue;
+            if (ownItems.Count == maximumOwnedItemRows)
+                return Err("NOT_PROVED quest observe: owned item row cap exceeded");
+            var type = liveItem.GetType();
+            // These exact implementations are source-validated below. Unknown
+            // subclass getters/writers cannot inherit that guarantee.
+            if (type != typeof(Item) && type != typeof(EquipItem) &&
+                type != typeof(Backpack) && type != typeof(BodyPart) && type != typeof(AAEmu.Game.Models.Game.Items.Rune) &&
+                type != typeof(Accessory) && type != typeof(Armor) && type != typeof(Weapon) &&
+                type != typeof(BigFish) && type != typeof(MusicSheetItem) &&
+                type != typeof(UccItem) && type != typeof(SummonMate) &&
+                type != typeof(SummonSlave) && type != typeof(TreasureMap))
+                return Err($"NOT_PROVED quest observe: unsupported detached item codec {type}");
+            var copy = (Item)QuestDetachedCopyMethod.Invoke(liveItem, null)!;
+            if (copy.OwnerId != character.Id || copy.Id != pair.Key)
+                return Err("NOT_PROVED quest observe: owned item identity changed during copy");
+            var container = copy._holdingContainer;
+            var containerId = container?.ContainerId ?? 0;
+            var inBag = ReferenceEquals(container, bag);
+            copy._holdingContainer = null;
+            // Item.WriteDetails only replaces the detached Detail field.
+            // EquipItem.WriteDetails reads Template.BindType and GemIds;
+            // detach those inputs too. All other validated writers read only
+            // copied scalar fields (BigFish, MusicSheetItem, SummonMate,
+            // SummonSlave, TreasureMap, UccItem); none touches shared state.
+            copy.Detail = null;
+            if (copy is EquipItem equipment)
+            {
+                if (equipment.Template == null || equipment.GemIds == null)
+                    return Err("NOT_PROVED quest observe: equipment detail inputs unavailable");
+                if (equipment.GemIds.Length > (maximumCopiedDetailBytes - copiedDetailBytes) / sizeof(uint))
+                    return Err("NOT_PROVED quest observe: detached detail byte cap exceeded");
+                equipment.Template = (AAEmu.Game.Models.Game.Items.Templates.ItemTemplate)
+                    QuestDetachedCopyMethod.Invoke(equipment.Template, null)!;
+                equipment.GemIds = equipment.GemIds.ToArray();
+            }
+            var detailStream = new PacketStream();
+            copy.WriteDetails(detailStream);
+            var persistedDetails = detailStream.GetBytes();
+            if (persistedDetails.Length > maximumCopiedDetailBytes - copiedDetailBytes)
+                return Err("NOT_PROVED quest observe: detached detail byte cap exceeded");
+            copiedDetailBytes += persistedDetails.Length;
+            var row = new
+            {
+                id = copy.Id, type = type.ToString(), template = copy.TemplateId, count = copy.Count,
+                containerId, slotType = (int)copy.SlotType, slot = copy.Slot,
+                persistedDetails = Convert.ToBase64String(persistedDetails),
+                lifespanMins = copy.LifespanMins, madeUnitId = copy.MadeUnitId,
+                unsecureTime = copy.UnsecureTime, unpackTime = copy.UnpackTime,
+                owner = copy.OwnerId, createdAt = copy.CreateTime, grade = copy.Grade,
+                flags = (byte)copy.ItemFlags, ucc = copy.UccId,
+                expireTime = copy.ExpirationTime, expireOnlineMinutes = copy.ExpirationOnlineMinutesLeft,
+                chargeTime = copy.ChargeStartTime, chargeCount = copy.ChargeCount,
+            };
+            ownItems.Add(row);
+            if (inBag)
+                items.Add(row);
+        }
+        var actorAudit = trace.Length == actorAuditStartIndex
+            ? Array.Empty<JsonElement>()
+            : new JsonElement[trace.Length - actorAuditStartIndex];
+        for (var i = actorAuditStartIndex; i < trace.Length; i++)
+            actorAudit[i - actorAuditStartIndex] = JsonSerializer.Deserialize<JsonElement>(trace[i].ToJson());
+        var questCompletion = observedQuestIds.Select(id => new
+        {
+            questId = id, completed = character.Quests.HasQuestCompleted(id),
+        }).ToArray();
+        if (character.Slots == null || character.Slots.Any(s => s == null))
+            return Err("NOT_PROVED quest observe: persisted action slots unavailable");
+        if (CharacterSlotsBlobMethod?.Invoke(character, null) is not byte[] slotsBlob)
+            return Err("NOT_PROVED quest observe: persisted action slots unavailable");
+        var saveTransform = character.MainWorldPosition != null &&
+            character.Transform.InstanceId != WorldManager.DefaultInstanceId
+            ? character.MainWorldPosition : character.Transform;
+        var savePosition = saveTransform.World.Position;
+        var saveRotation = saveTransform.World.Rotation;
+        var saveDomain = new
+        {
+            worldId = character.ServerId, zoneId = saveTransform.ZoneId,
+            x = savePosition.X, y = savePosition.Y, z = savePosition.Z,
+            roll = saveRotation.X, pitch = saveRotation.Y, yaw = saveRotation.Z,
+            usesInstanceReturn = !ReferenceEquals(saveTransform, character.Transform),
+        };
+        var body = Convert.ToBase64String(character.ModelParams.Write(new PacketStream()).GetBytes());
+        var fullCharacter = new
+        {
+            id = character.Id, account_id = character.AccountId, name = character.Name,
+            access_level = character.AccessLevel, race = (byte)character.Race, gender = (byte)character.Gender,
+            unit_model_params = body,
+            level = character.Level, experience = character.Experience, recoverable_exp = character.RecoverableExp,
+            hp = character.Hp, mp = character.Mp, consumed_lp = character.ConsumedLaborPower,
+            ability1 = (byte)character.Ability1, ability2 = (byte)character.Ability2, ability3 = (byte)character.Ability3,
+            world_id = saveDomain.worldId, zone_id = saveDomain.zoneId,
+            x = saveDomain.x, y = saveDomain.y, z = saveDomain.z,
+            roll = saveDomain.roll, pitch = saveDomain.pitch, yaw = saveDomain.yaw,
+            faction_id = character.Faction.Id, faction_name = character.FactionName,
+            expedition_id = character.Expedition?.Id ?? 0, family = character.Family,
+            dead_count = character.DeadCount, dead_time = character.DeadTime,
+            rez_wait_duration = character.RezWaitDuration, rez_time = character.RezTime,
+            rez_penalty_duration = character.RezPenaltyDuration, leave_time = character.LeaveTime,
+            money = character.Money, money2 = character.Money2, honor_point = character.HonorPoint,
+            vocation_point = character.VocationPoint, crime_point = character.CrimePoint,
+            crime_record = character.InfamyPoint, jury_point = character.JuryPoint,
+            hostile_faction_kills = character.HostileFactionKills, pvp_honor = character.HonorGainedInCombat,
+            died_in_pvp = character.DiedInPvp, died_in_pvp_war_zone = character.DiedInPvpWarZone,
+            delete_request_time = character.DeleteRequestTime, transfer_request_time = character.TransferRequestTime,
+            delete_time = character.DeleteTime, auto_use_aapoint = character.AutoUseAAPoint,
+            prev_point = character.PrevPoint, point = character.Point, gift = character.Gift,
+            num_inv_slot = character.NumInventorySlots, num_bank_slot = character.NumBankSlots,
+            expanded_expert = character.ExpandedExpert, slots = Convert.ToBase64String(slotsBlob),
+            created_at = character.Created, updated_at = character.Updated,
+            return_district = character.ReturnDistrictId, online_time = character.OnlineTime.TotalSeconds,
+            arrest_count = character.ArrestCount, accept_guilty_count = character.AcceptGuiltyCount,
+            accept_trial_count = character.AcceptTrialCount, not_guilty_count = character.NotGuiltyCount,
+            guilty_count = character.GuiltyCount, evidence_reported_count = character.EvidenceReportedCount,
+            bot_reported_count = character.BotReportedCount,
+            offline_guilty_time = character.OfflineGuiltyTime, offline_guilty_region = (int)character.OfflineGuiltyRegion,
+        };
+        var abilities = character.Abilities.Values.OrderBy(a => a.Id)
+            .Select(a => new { id = (byte)a.Id, exp = a.Exp, owner = character.Id }).ToArray();
+        var payload = new
         {
             name = character.Name,
             id = character.Id,
+            objId = character.ObjId, accountId = character.AccountId,
+            snapshotStartedAtUtc,
+            fullCharacter, abilities, saveDomain,
+            fullAccount = (object?)null,
+            fullAccountProof = "NOT_PROVED: no passive full account cache",
+            experience = character.Experience, labor = character.LaborPower,
+            laborPowerModified = character.LaborPowerModified,
+            hp = character.Hp, mp = character.Mp,
+            body,
+            actabilities = character.Actability?.Actabilities.Values.OrderBy(a => a.Id)
+                .Select(a => new { id = a.Id, point = a.Point, step = a.Step }).ToArray(),
+            items = items.ToArray(), ownItems = ownItems.ToArray(),
+            objectiveItems = objectiveItems.ToArray(), completedQuests = completedQuests.ToArray(),
+            chosenQuestId = chosenQuest,
+            isDead = character.IsDead,
+            // Existing server truth and request records, projected read-only.
+            // The trace is already bounded by GameplayActor; no new ledger.
+            actorAudit,
+            questCompletion,
             stepsBefore = before,
             stepsAfter = after,
             stepped,
-            totalStepsSkipped = metricsAfter.TotalStepsSkipped,
-            totalStepsFailed = metricsAfter.TotalStepsFailed,
-            totalStepsTimedOut = metricsAfter.TotalStepsTimedOut,
-            botLastStepOutcome = botStep?.LastOutcome.ToString(),
-            botLastStepUtc = botStep?.LastUtc,
-            botStepsSkipped = botStep?.Skipped ?? 0,
-            botStepsFailed = botStep?.Failed ?? 0,
-            botStepsTimedOut = botStep?.TimedOut ?? 0,
-            botStepsRan = botStep?.Ran ?? 0,
+            enrollmentRegistered = enrollment.Registered,
+            enrollmentState = enrollment.State,
+            enrollmentScheduledDueUtc = enrollment.ScheduledDueUtc,
+            enrollmentLeased = enrollment.Leased,
+            enrollmentPendingWakeUtc = enrollment.PendingWakeUtc,
+            enrollmentLastOutcome = enrollment.LastOutcome,
+            enrollmentLastStepUtc = enrollment.LastStepUtc,
+            enrollmentDisposition = enrollment.Disposition,
+            enrollmentSchedulerRunning = enrollment.SchedulerRunning,
+            enrollmentGeneration = enrollment.Generation,
+            enrollmentIdleWakeEnabled = executor.EnableIdleWake,
+            idleWakeIntervalSeconds = executor.IdleWakeInterval.TotalSeconds,
+            homesteadEnabled = SingletonContainer.ServiceProvider?.GetServices<Core.Managers.Bots.IBotActivityModule>()
+                .OfType<Core.Managers.Bots.HomesteadActivityModule>().SingleOrDefault()?.Enabled,
             level = snapshot.Level,
             money = snapshot.Money,
             x = snapshot.X, y = snapshot.Y, z = snapshot.Z,
@@ -4592,13 +4940,7 @@ public sealed class BotDriveBridge
             reporterObjId = reporter?.ObjId ?? 0u,
             reporterX = reporterPos?.X, reporterY = reporterPos?.Y, reporterZ = reporterPos?.Z,
             reporterDistM = reporterDistM,
-            activeQuests = snapshot.ActiveQuests.Select(q => new
-            {
-                questId = q.QuestId,
-                status = q.Status,
-                step = q.Step,
-                objectives = q.Objectives,
-            }).ToArray(),
+            activeQuests = activeQuestCopies,
             activeCount = snapshot.ActiveQuests.Count,
             readyQuestIds = Core.Managers.Bots.BotQuestLoopObservation.ReadyQuestIds(snapshot),
             completedCount = snapshot.CompletedCount,
@@ -4628,11 +4970,28 @@ public sealed class BotDriveBridge
             liveAction = liveReq?.Action.ToString(),
             liveState = liveReq?.State.ToString(),
             liveDetail = liveReq?.Detail,
+            liveTraceId = liveReq?.TraceId,
+            liveTargetId = liveReq?.TargetId,
+            liveRequestedAtUtc = liveReq?.RequestedAtUtc,
+            liveDecisionQuestId = liveReq?.DecisionQuestId,
+            liveDecisionGoal = liveReq?.DecisionGoal,
+            liveDecisionPolicy = liveReq?.DecisionPolicy,
+            liveDecisionCycleId = liveReq?.DecisionCycleId,
+            liveMoveOwner = liveReq?.MoveOwner,
+            liveDestinationX = liveReq?.Destination?.X,
+            liveDestinationY = liveReq?.Destination?.Y,
+            liveDestinationZ = liveReq?.Destination?.Z,
             // G6 combat-gate reads (additive, read-only): the auto-attack
             // loop flag + pinned target straight off the character.
             isAutoAttack = character!.IsAutoAttack,
             currentTargetObjId = character!.CurrentTarget?.ObjId ?? 0u,
-        });
+            // Last copied scalar: END encloses every projected array/blob and
+            // member above; serialization below reads only frozen local data.
+            observedAtUtc = DateTime.UtcNow,
+        };
+        var response = Ok(payload);
+        return System.Text.Encoding.UTF8.GetByteCount(response) <= 2 * 1024 * 1024
+            ? response : Err("NOT_PROVED quest observe: payload exceeds 2 MiB");
     }
 
     #endregion
@@ -4679,6 +5038,9 @@ public sealed class BotDriveBridge
 
         using (var cmd = connection.CreateCommand())
         {
+            // TEMPORARY live-lane diagnostic: out-of-process full-owner wipe witness (read-only log, never branched on; fires only on fresh:true provisioning).
+            if (CharacterQuests.DiagEnabled)
+                Logger.Warn($"[QuestRemove] REMOVER=scenario-fresh-wipe quest=* char={botName}({characterId}) present=False note=full-owner-delete-before-provision");
             cmd.CommandText = "DELETE FROM quests WHERE owner = @charId";
             cmd.Parameters.AddWithValue("@charId", characterId);
             try { cmd.ExecuteNonQuery(); }
@@ -4712,6 +5074,20 @@ public sealed class BotDriveBridge
     }
 
     #endregion
+
+    // TEMPORARY live-lane diagnostic (read-only log, never branched on): instance-identity witness for the observe path.
+    // Join key with REMOVER=instance-wake rows: bot/char name + charHash/questsHash. Same hashes = same instance (aliasing eliminated); different = aliasing CONFIRMED.
+    private static void LogInstanceObserve(Character? character, string op, uint quest)
+    {
+        if (!CharacterQuests.DiagEnabled)
+            return;
+        if (character == null)
+            return;
+        var quests = character.Quests;
+        var isPersistent = PersistentBotSessions.Values.Any(s => ReferenceEquals(s.Character, character));
+        var connId = GameConnectionTable.Instance.GetConnections().FirstOrDefault(c => ReferenceEquals(c.ActiveChar, character))?.Id ?? 0u;
+        Logger.Warn($"[QuestRemove] REMOVER=instance-observe op={op} quest={quest} char={character.Name}({character.Id}) objId={character.ObjId} charHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(character)} questsHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(quests)} source={(isPersistent ? "persistent" : "networked")} connId={connId} activeCount={quests.ActiveQuests.Count} activeIds=[{string.Join(",", quests.ActiveQuests.Keys.OrderBy(k => k))}] present254={quests.ActiveQuests.ContainsKey(254)} presentPolled={quest != 0 && quests.ActiveQuests.ContainsKey(quest)}");
+    }
 
     private static uint GetUInt(JsonElement root, string name)
         => root.TryGetProperty(name, out var el) && el.TryGetUInt32(out var v) ? v : 0u;

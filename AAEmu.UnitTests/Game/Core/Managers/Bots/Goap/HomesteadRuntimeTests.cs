@@ -29,7 +29,7 @@ public class HomesteadRuntimeTests
             Character = character;
         }
 
-        public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed) { }
+        public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed, uint? questId) { }
         public void SetPendingCycleId(string? cycleId) { }
         public void SetPendingWakeSequence(long? wakeSequence) { }
         public bool PreemptCurrent(string reason) => false;

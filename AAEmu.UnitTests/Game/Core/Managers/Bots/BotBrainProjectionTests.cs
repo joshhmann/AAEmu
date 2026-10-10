@@ -24,8 +24,17 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// projection forwards fields (implementation). What IS tested: the values
 /// a dashboard consumer reads for each production state.
 /// </summary>
+[NotInParallel]
 public class BotBrainProjectionTests
 {
+    [Before(Test)]
+    public void PinBoundary()
+        => ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+
+    [After(Test)]
+    public void UnpinBoundary()
+        => ExecutionBoundary.ResetForTest();
+
     /// <summary>Minimal actor: empty observation, idle, empty trace.</summary>
     private sealed class BrainFixtureActor : IGameplayActor
     {
@@ -33,7 +42,7 @@ public class BotBrainProjectionTests
         public Character Character => null!;
         public ActorRequest? ActiveRequest => null;
         public IReadOnlyList<ActorAuditRecord> AuditTrace => [];
-        public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed) { }
+        public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed, uint? questId) { }
         public void SetPendingCycleId(string? cycleId) { }
         public void SetPendingWakeSequence(long? wakeSequence) { }
         public bool PreemptCurrent(string reason) => false;
@@ -305,6 +314,31 @@ public class BotBrainProjectionTests
         var idle = CaptureBlocked(runtime, [], live);
         await Assert.That(idle.LiveAction).IsNull();
         await Assert.That(idle.LiveTraceId).IsNull();
+    }
+
+    [Test]
+    public async Task Capture_ActualRequestAndAuditRetainParentWhenRuntimeDiffers()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("projection-request-purpose");
+        IGameplayActor capability = actor;
+        capability.SetPendingDecision("quest.progress", "quest-v1", 1, 0, "opaque-request", 251);
+        capability.SetPendingCycleId("opaque-request");
+        var request = capability.MoveTo(new Vector3(40, 0, 0), 2f, TimeSpan.FromMinutes(1));
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        var runtime = BlockedRuntime("different-current-decision");
+        var running = CaptureBlocked(runtime, actor.AuditTrace, request);
+        await Assert.That(running.LiveDecisionQuestId).IsEqualTo((uint?)251);
+        await Assert.That(running.LiveDecisionGoal).IsEqualTo("quest.progress");
+        await Assert.That(running.LiveDecisionPolicy).IsEqualTo("quest-v1");
+        await Assert.That(running.LiveDecisionCycleId).IsEqualTo("opaque-request");
+        actor.PreemptCurrent("projection fixture teardown");
+        var terminal = CaptureBlocked(runtime, actor.AuditTrace);
+        await Assert.That(terminal.LiveDecisionQuestId).IsNull();
+        var row = terminal.History.Single(r => r.TraceId == request.TraceId);
+        await Assert.That(row.DecisionQuestId).IsEqualTo((uint?)251);
+        await Assert.That(row.Goal).IsEqualTo(request.DecisionGoal);
+        await Assert.That(row.Policy).IsEqualTo(request.DecisionPolicy);
+        await Assert.That(row.DecisionCycleId).IsEqualTo("opaque-request");
     }
 
     /// <summary>

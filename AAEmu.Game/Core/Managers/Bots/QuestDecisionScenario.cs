@@ -203,6 +203,15 @@ public static class QuestDecisionScenario
         /// </summary>
         public int GiveUpAfterPlanFailures { get; init; } = 10;
         /// <summary>
+        /// Chosen quest purpose carried from the owning activity module (0 = none).
+        /// When set, ordinary quest work is scoped to this quest: proposals for
+        /// other quests are not emitted, so the recorded choice determines the
+        /// dispatched request's quest identity. Safety still preempts via the
+        /// per-leg survival-veto preconditions (ordinary proposals simply lose
+        /// legality while the veto holds), and explicit give-up evidence or a
+        /// failed plan still names the switch.
+        public uint ChosenQuestId { get; init; } = 0;
+        /// <summary>
         /// Consecutive wakes a quest's objective slice may resolve NO target
         /// (no objective/source/no selection) before the director gives the
         /// quest up with that slice's own named detail. 0 disables the rule.
@@ -220,7 +229,18 @@ public static class QuestDecisionScenario
         public ActorActionType? SelectedAction { get; init; }
         /// <summary>The dispatched request (null when nothing was dispatched).</summary>
         public ActorRequest? Request { get; init; }
-        /// <summary>Why each non-selected candidate was refused (legality-before-preference evidence).</summary>
+        /// <summary>
+        /// Quest identity the dispatched request belongs to (the chosen purpose
+        /// when set, else the selected proposal's own quest). 0 when nothing
+        /// was dispatched or the request carries no quest identity.
+        public uint SelectedQuestId { get; init; }
+        /// <summary>
+        /// Explicit reason when the wake's quest differs from the carried
+        /// purpose (e.g. purpose stale, given up, failed, or safety-vetoed to
+        /// no ordinary work). Empty when the wake served the purpose (or no
+        /// purpose was carried).
+        /// </summary>
+        public string PurposeSwitchReason { get; init; } = "";
         public IReadOnlyList<BotProposalRejection> Rejections { get; init; } = [];
         /// <summary>
         /// The proposal the deterministic selector actually chose, copied

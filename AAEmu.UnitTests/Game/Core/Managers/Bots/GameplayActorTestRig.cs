@@ -39,6 +39,7 @@ using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills;
@@ -3050,13 +3051,13 @@ public static class GameplayActorTestRig
     /// 'QuestComponent') so UnitRequirementsGameData.CanComponentRun gates
     /// the Start component on min level — the REAL engine level gate.
     /// Works against the empty scenario instance and the real canonical
-    /// load alike; the fixture row id keeps it collision-free.
+    /// load alike; each component has its own high-range fixture requirement id.
     /// </summary>
     public static void SeedQuestComponentLevelRequirement(uint componentId, uint minLevel)
     {
         var data = UnitRequirementsGameData.Instance;
         const string ownerType = "QuestComponent";
-        const uint reqId = 90_730;
+        var reqId = checked(0x8000_0000u + componentId);
 
         var reqsField = typeof(UnitRequirementsGameData).GetField("<_unitReqs>k__BackingField",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -3079,7 +3080,10 @@ public static class GameplayActorTestRig
             list = [];
             byOwner[ownerType] = list;
         }
-        if (!list.Any(r => r.Id == reqId))
+        var existingIndex = list.FindIndex(r => r.Id == reqId);
+        if (existingIndex >= 0)
+            list[existingIndex] = reqs[reqId];
+        else
             list.Add(reqs[reqId]);
     }
 
@@ -3091,7 +3095,7 @@ public static class GameplayActorTestRig
     /// the requirement kind that makes <c>template.Level</c> unsafe as an upper
     /// bound on offerability: a level-35 display row can still be refused to a
     /// level-40 character. Fixture id 90_787 keeps it collision-free against
-    /// the level-requirement row's 90_730 and every other 9xxxx test fixture.
+    /// the high-range level-requirement rows and every other 9xxxx test fixture.
     /// </summary>
     public static void SeedQuestComponentMaxLevelRequirement(uint componentId, uint maxLevel)
     {
@@ -3455,6 +3459,45 @@ public static class GameplayActorTestRig
                     ActId = progressComponentId + 1000
                 });
         }
+    }
+
+    /// <summary>
+    /// Seeds a complete talk-chain quest: Start component offered by <paramref name="offerNpcTemplateId"/>,
+    /// Progress component carrying a single-npc talk objective for <paramref name="objectiveNpcTemplateId"/>,
+    /// and Ready component reported to <paramref name="reportNpcTemplateId"/> (the split-reporter
+    /// case is the reporter differing from the offerer). Missing-only and additive, like the
+    /// sibling SeedQuest* helpers.
+    /// </summary>
+    public static void SeedQuestTalkChain(uint questId, uint startComponentId, uint progressComponentId,
+        uint readyComponentId, uint offerNpcTemplateId, uint objectiveNpcTemplateId,
+        uint reportNpcTemplateId, byte level = 15)
+    {
+        SeedQuestTalkObjective(questId, startComponentId, progressComponentId,
+            offerNpcTemplateId, objectiveNpcTemplateId, level: level);
+
+        var manager = QuestManager.Instance;
+        var questTemplates = (Dictionary<uint, QuestTemplate>)GetField(manager, "_questTemplates");
+        var questTemplate = questTemplates[questId];
+
+        var componentTemplates = (Dictionary<uint, QuestComponentTemplate>)GetField(manager, "_componentTemplates");
+        if (!componentTemplates.TryGetValue(readyComponentId, out var readyComponent))
+        {
+            readyComponent = new QuestComponentTemplate(questTemplate)
+            {
+                Id = readyComponentId,
+                KindId = QuestComponentKind.Ready
+            };
+            componentTemplates[readyComponentId] = readyComponent;
+        }
+        if (!questTemplate.Components.ContainsKey(readyComponentId))
+            questTemplate.Components[readyComponentId] = readyComponent;
+
+        if (!readyComponent.ActTemplates.OfType<QuestActConReportNpc>().Any(a => a.NpcId == reportNpcTemplateId))
+        {
+            RegisterQuestAct(nameof(QuestActConReportNpc), readyComponentId,
+                new QuestActConReportNpc(readyComponent) { DetailId = readyComponentId, ActId = readyComponentId, NpcId = reportNpcTemplateId });
+        }
+        QuestFixtureRow.InvalidateAll();
     }
 
     /// <summary>Registers an NPC-talk group membership (QuestManager._groupNpcs).</summary>

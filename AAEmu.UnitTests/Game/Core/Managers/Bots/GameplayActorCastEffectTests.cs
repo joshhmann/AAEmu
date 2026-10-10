@@ -185,40 +185,34 @@ public class GameplayActorCastEffectTests
     #region ToJson contract regression
 
     [Test]
-    public async Task ToJson_V1KeysUnchanged_AndV2KeysArePurelyAdditive()
+    public async Task ToJson_PreservesNamedContractAndNullQuestPurpose()
     {
-        var traceId = Guid.NewGuid();
-        var requested = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var started = requested.AddMilliseconds(10);
-        var completed = requested.AddMilliseconds(20);
-        var record = new ActorAuditRecord(
-            traceId, 42, ActorActionType.Cast, 7, requested, started, completed,
-            ActorLifecycleState.Completed, null, "detail", ["Requested", "Completed"]);
+        var (actor, _) = GameplayActorTestRig.CreateActor("audit-null-purpose");
+        var request = actor.Stop();
+        var record = actor.AuditTrace.Single(r => r.TraceId == request.TraceId);
 
         using var json = JsonDocument.Parse(record.ToJson());
         var root = json.RootElement;
 
-        // Exact key set: every v1 name identical + exactly the four v2
-        // additive names + exactly the five v3 decision-context names +
-        // exactly the three additive join/telemetry keys (decision_cycle_id,
-        // wake_sequence, move_owner). A rename here is an API contract break.
+        // Named API fields, including explicit nullable purpose, are the contract.
         var keys = root.EnumerateObject().Select(p => p.Name).ToArray();
         await Assert.That(keys).IsEquivalentTo(new[]
         {
             "trace_id", "actor_id", "action", "target_id", "requested_at", "started_at",
             "completed_at", "result", "failure", "detail", "state_changes",
             "target_hp_before", "target_hp_after", "effect_observed", "effect_wait_ms",
-            "decision_goal", "decision_policy", "decision_candidates", "decision_rejections", "decision_seed",
+            "decision_goal", "decision_policy", "decision_quest_id", "decision_candidates", "decision_rejections", "decision_seed",
             "decision_cycle_id", "wake_sequence", "move_owner"
         });
 
-        await Assert.That(root.GetProperty("trace_id").GetGuid()).IsEqualTo(traceId);
-        await Assert.That(root.GetProperty("actor_id").GetUInt32()).IsEqualTo(42u);
-        await Assert.That(root.GetProperty("action").GetString()).IsEqualTo(nameof(ActorActionType.Cast));
-        await Assert.That(root.GetProperty("target_id").GetUInt32()).IsEqualTo(7u);
+        await Assert.That(root.GetProperty("trace_id").GetGuid()).IsEqualTo(request.TraceId);
+        await Assert.That(root.GetProperty("actor_id").GetUInt32()).IsEqualTo(actor.ActorId);
+        await Assert.That(root.GetProperty("action").GetString()).IsEqualTo(nameof(ActorActionType.Stop));
+        await Assert.That(root.GetProperty("target_id").GetUInt32()).IsEqualTo(0u);
         await Assert.That(root.GetProperty("result").GetString()).IsEqualTo(nameof(ActorLifecycleState.Completed));
         await Assert.That(root.GetProperty("failure").ValueKind).IsEqualTo(JsonValueKind.Null);
-        await Assert.That(root.GetProperty("state_changes").GetArrayLength()).IsEqualTo(2);
+        await Assert.That(root.GetProperty("state_changes").GetArrayLength()).IsEqualTo(request.StateChanges.Count);
+        await Assert.That(root.GetProperty("decision_quest_id").ValueKind).IsEqualTo(JsonValueKind.Null);
         // Unmeasured observations serialize as null (never fabricated).
         await Assert.That(root.GetProperty("target_hp_before").ValueKind).IsEqualTo(JsonValueKind.Null);
         await Assert.That(root.GetProperty("target_hp_after").ValueKind).IsEqualTo(JsonValueKind.Null);

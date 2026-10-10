@@ -43,8 +43,8 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
     public ActorRequest? ActiveRequest => Actor.ActiveRequest;
     public IReadOnlyList<ActorAuditRecord> AuditTrace => Actor.AuditTrace;
 
-    public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed)
-        => Actor.SetPendingDecision(goal, policy, candidates, rejections, seed);
+    public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed, uint? questId)
+        => Actor.SetPendingDecision(goal, policy, candidates, rejections, seed, questId);
 
     public void SetPendingCycleId(string? cycleId) => Actor.SetPendingCycleId(cycleId);
 

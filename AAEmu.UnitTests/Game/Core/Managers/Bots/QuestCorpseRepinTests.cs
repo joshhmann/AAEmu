@@ -20,13 +20,9 @@ using AAEmu.UnitTests.Game.Quests.Playerbot;
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 /// <summary>
-/// G7d death-wake corpse re-pin: a newly dead quest-relevant pinned 3475
-/// shadows any stale <c>LastCorpse</c> record, so <c>LootProposal</c>
-/// evaluates the FRESH corpse's container. Loot-once survives the handoff
-/// (looted corpses never re-propose), same-ObjId pins keep continuity, and
-/// irrelevant dead NPCs never re-pin.
-/// Full decision-stack coverage through <see cref="QuestDecisionScenario.Run"/>
-/// on the REAL headless actor — no fakes.
+/// Available fresh corpses can replace spent loot, and every real take remains
+/// exactly once through <see cref="QuestDecisionScenario.Run"/>.
+/// These are synthetic seeded headless engine rigs, not live gameplay evidence.
 /// </summary>
 [NotInParallel]
 public class QuestCorpseRepinTests
@@ -35,7 +31,6 @@ public class QuestCorpseRepinTests
     private const uint Boar3475 = 3475;
     private const uint Pack4530 = 4530;
     private const uint Meat4058 = 4058;
-    private const uint OtherTemplate9001 = 9001;
     private const uint ProbeItemTemplateId = 91_411;
     private const uint GatherActId = 10473;
     private const int GatherNeed = 3;
@@ -54,80 +49,6 @@ public class QuestCorpseRepinTests
         QuestBehavior.ClearLootMemory();
     }
 
-    [Test]
-    public async Task FreshKill_ReplacesStaleRecord_AndLootProposed()
-    {
-        var (actor, session) = GameplayActorTestRig.CreateActor("g7d-repin");
-        var boar1 = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
-        Activate251(actor.Character);
-        actor.Character.CurrentTarget = session.World.GetNpc(boar1);
-
-        // Cycle 1: pin live, kill with an EMPTY container (no loot course).
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-repin-1" });
-        session.World.GetNpc(boar1)!.Hp = 0;
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-repin-2" });
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var stale)).IsTrue();
-        await Assert.That(stale!.ObjId).IsEqualTo(boar1);
-
-        // Cycle 2: fresh prey pinned live, then killed with a full container.
-        var boar2 = SpawnSecondBoar(session, new Vector3(2, 0, 0));
-        actor.Character.CurrentTarget = session.World.GetNpc(boar2);
-        var pinWake = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-repin-3" });
-        await Assert.That(pinWake.SelectedAction).IsEqualTo(ActorActionType.Stop);
-
-        var npc2 = session.World.GetNpc(boar2)!;
-        GameplayActorTestRig.SeedItemTemplate(ProbeItemTemplateId);
-        GameplayActorTestRig.SeedLootContainer(npc2, (ProbeItemTemplateId, 1));
-        npc2.Hp = 0;
-        var deathWake = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-repin-4" });
-
-        // The death wake re-pins the fresh corpse (old released) and the loot
-        // proposal evaluates the fresh container.
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var fresh)).IsTrue();
-        await Assert.That(fresh!.ObjId).IsEqualTo(boar2);
-        await Assert.That(fresh.CycleId).IsEqualTo("g7d-repin-4");
-        await Assert.That(deathWake.SelectedAction).IsEqualTo(ActorActionType.Loot);
-        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, boar2)).IsTrue();
-    }
-
-    [Test]
-    public async Task IrrelevantDead_WithStaleRecord_KeepsStale()
-    {
-        var (actor, session) = GameplayActorTestRig.CreateActor("g7d-repin-irrel");
-        var boar1 = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
-        Activate251(actor.Character);
-        actor.Character.CurrentTarget = session.World.GetNpc(boar1);
-
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-irrel-1" });
-        session.World.GetNpc(boar1)!.Hp = 0;
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-irrel-2" });
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var before)).IsTrue();
-        await Assert.That(before!.ObjId).IsEqualTo(boar1);
-
-        // An irrelevant NPC dies beside the stale record: no re-pin, the
-        // stale record stands, and nothing dispatches.
-        var other = SpawnExtraNpc(session, OtherTemplate9001, new Vector3(2.5f, 0, 0));
-        session.World.GetNpc(other)!.Hp = 0;
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-irrel-3" });
-
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var after)).IsTrue();
-        await Assert.That(after!.ObjId).IsEqualTo(boar1);
-        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Loot)).IsFalse();
-
-        // Guard level: irrelevant callers never record, stale untouched.
-        QuestBehavior.NotePinnedCorpse(actor.ActorId, other, OtherTemplate9001, Quest251, "g7d-irrel-guard");
-        QuestBehavior.NotePinnedCorpse(actor.ActorId, other, Boar3475, 999, "g7d-irrel-guard");
-        QuestBehavior.NotePinnedCorpse(actor.ActorId, 0, Boar3475, Quest251, "g7d-irrel-guard");
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var guarded)).IsTrue();
-        await Assert.That(guarded!.ObjId).IsEqualTo(boar1);
-    }
 
     [Test]
     public async Task LootedCorpses_NeverReproposed_AcrossRepin()
@@ -214,40 +135,6 @@ public class QuestCorpseRepinTests
         await Assert.That(actor.AuditTrace.Last(r => r.Action == ActorActionType.Loot).TargetId).IsEqualTo(fresh);
     }
 
-    [Test]
-    public async Task RepinnedCorpse_PreservesIdentityAcrossWakes()
-    {
-        var (actor, session) = GameplayActorTestRig.CreateActor("g7d-repin-ident");
-        var boar1 = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
-        Activate251(actor.Character);
-        actor.Character.CurrentTarget = session.World.GetNpc(boar1);
-
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-ident-1" });
-        session.World.GetNpc(boar1)!.Hp = 0;
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-ident-2" });
-
-        var boar2 = SpawnSecondBoar(session, new Vector3(2, 0, 0));
-        actor.Character.CurrentTarget = session.World.GetNpc(boar2);
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-ident-3" });
-        session.World.GetNpc(boar2)!.Hp = 0;
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-ident-4" });
-
-        // Re-observation of the same fresh corpse keeps the re-pin detection —
-        // never re-created, never reverted to the stale record.
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-ident-5" });
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7d-ident-6" });
-
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse)).IsTrue();
-        await Assert.That(corpse!.ObjId).IsEqualTo(boar2);
-        await Assert.That(corpse.CycleId).IsEqualTo("g7d-ident-4");
-        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Loot)).IsFalse();
-    }
 
     // ------------------------------------------------------------ fixture
 
@@ -307,28 +194,6 @@ public class QuestCorpseRepinTests
         return objId;
     }
 
-    private static uint SpawnExtraNpc(HeadlessSession session, uint templateId, Vector3 npcPos)
-    {
-        var objId = s_secondObjId++;
-        var npc = new Npc
-        {
-            ObjId = objId,
-            TemplateId = templateId,
-            Template = new NpcTemplate { Id = templateId, Scale = 1f },
-            Hp = 100,
-            MaxHp = 100,
-            IsVisible = true,
-        };
-        npc.Transform.Local.SetPosition(npcPos);
-        session.World.AddObject(npc);
-        var region = session.World.GetRegionByPos(npcPos);
-        if (region != null)
-        {
-            region.AddObject(npc);
-            npc.Region = region;
-        }
-        return objId;
-    }
 
     /// <summary>
     /// Additive, missing-only static surface for the 251 funnel: skill-2

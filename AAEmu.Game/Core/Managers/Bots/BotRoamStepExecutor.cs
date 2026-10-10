@@ -361,6 +361,27 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     public Func<uint, string?>? ActiveActivityProvider { get; init; }
 
     /// <summary>
+    /// Quest-terminal feed (E-66 Gap 2): per completed quest the owning
+    /// module's purpose feed — (characterId, questId, engine-confirmed
+    /// completed). Null (default) = no module enrolled: zero behavior change
+    /// (one null field read where the runtime is constructed). Set once at
+    /// composition (production wires the QuestBootstrap module); copied onto
+    /// every per-bot runtime at construction so generation rebinding keeps it.
+    /// </summary>
+    public Action<uint, uint, bool>? QuestTerminalSink { get; set; }
+
+    /// <summary>
+    /// Chosen-quest purpose feed (HIGH 1): the owning module's retained choice
+    /// per bot (0 = none). Read once per quest wake and carried on
+    /// <c>QuestOptions.ChosenQuestId</c> into the existing execution path, so
+    /// the recorded choice scopes the plan set and the resulting request is
+    /// verified against it. Null (default) = no module enrolled: zero
+    /// behavior change. Production wires the QuestBootstrap module's
+    /// <c>GetChosenQuest</c>; the executor never resolves DI.
+    /// </summary>
+    public Func<uint, uint>? QuestChosenProvider { get; set; }
+
+    /// <summary>
     /// PvP attackability gate (default: the real CanAttack path). Test seam
     /// for the conflict branch — the engine relation/zone check needs seeded
     /// singletons headless.
@@ -445,6 +466,7 @@ public enum NeedsFarmLoopPhase
 
     internal sealed class BotRoamState
     {
+        public ulong Generation { get; set; }
         public required IGameplayActor Actor { get; init; }
         public BotPath? Path { get; set; }
         public ActorRequest? PendingLeg { get; set; }
@@ -491,6 +513,9 @@ public enum NeedsFarmLoopPhase
         /// </summary>
         public bool QuestLegActive { get; set; }
 
+        /// <summary>Generation-scoped discovery intent; route execution keeps its ordinary owner.</summary>
+        public bool QuestDiscoveryActive { get; set; }
+
         /// <summary>
         /// Quest-travel observability: the world position the quest leg is
         /// walking toward (null = none) and why. Memory-only like the rest of
@@ -499,6 +524,12 @@ public enum NeedsFarmLoopPhase
         public Vector3? QuestTravelTarget { get; set; }
         /// <summary>Human-readable reason for the current quest-travel decision.</summary>
         public string QuestTravelReason { get; set; } = "";
+
+        public uint? QuestTravelDecisionQuestId { get; set; }
+        public string? QuestTravelDecisionGoal { get; set; }
+        public string? QuestTravelDecisionPolicy { get; set; }
+        public string? QuestTravelDecisionCycleId { get; set; }
+        public QuestStatus? QuestTravelDecisionStatus { get; set; }
 
         /// <summary>
         /// Branch-1b re-arm bound: the last armed objective-source spawner
@@ -646,6 +677,12 @@ public enum NeedsFarmLoopPhase
 
     private readonly ConcurrentDictionary<uint, BotRoamState> _states = [];
     private readonly ConcurrentDictionary<uint, DateTime> _lastStepUtc = [];
+    // Generation sidecars for GetOrAdd caches recreated inside a wake
+    // (quest runtime, homestead runner/context). The E2E turn-in withhold has
+    // no in-wake GetOrAdd site (set externally, evicted at the gate below),
+    // so it needs no sidecar. _lastStepUtc is rewritten every wake.
+    private readonly ConcurrentDictionary<uint, ulong> _questRuntimeGenerations = [];
+    private readonly ConcurrentDictionary<uint, ulong> _homesteadGenerations = [];
 
     // Cached already-completed step results: the scheduler GetResult()s every
     // return, so a fresh Task<TimeSpan?> allocation per wake was pure churn at
@@ -698,6 +735,7 @@ public enum NeedsFarmLoopPhase
             _states[characterId] = state;
         }
 
+        SupersedeQuestTravelRoute(state, "route replaced");
         state.Path = path;
         if (path != null)
         {
@@ -793,6 +831,15 @@ public enum NeedsFarmLoopPhase
         => _states.TryGetValue(characterId, out var state) ? state : null;
 
     /// <summary>
+    /// Non-creating live-actor read (E-66 Gap 1): the bot's quest-leg actor,
+    /// or null when the bot has no executor state yet. Never creates — the
+    /// <see cref="QuestLegActor"/> resolver docstring forbids creation, so
+    /// production prefers this read over <see cref="GetOrCreateActor"/>.
+    /// </summary>
+    public IGameplayActor? TryGetActor(uint characterId)
+        => _states.TryGetValue(characterId, out var state) ? state.Actor : null;
+
+    /// <summary>
     /// Read-only diagnostic hook for the Brain Inspector dashboard
     /// (<c>GET /api/bots/brain/*</c>): returns the quest behavior runtime
     /// hosting this bot's quest leg, when any wake has created one (null =
@@ -802,6 +849,42 @@ public enum NeedsFarmLoopPhase
     internal bool TryGetQuestRuntime(uint characterId, out BotBehaviorRuntime? runtime)
         => _questRuntimes.TryGetValue(characterId, out runtime);
 
+    /// <summary>
+    /// Death release (M6.2 death watch): drops the quest running-hold for one
+    /// bot so the first post-respawn turn re-decides from the fresh listing.
+    /// Observation-only on the runtime plus the owning leg preempted through
+    /// the actor — the same discipline as the survival-flee supersede. No
+    /// terminal is consumed, no failure recorded: death is not a step
+    /// failure. Discovery movement is retired even before a quest runtime
+    /// exists. No-op when the bot has no executor state.
+    /// </summary>
+    public void ReleaseQuestHoldOnDeath(uint characterId, string reason)
+    {
+        if (!_states.TryGetValue(characterId, out var state))
+            return;
+        RetireQuestDiscovery(state, reason);
+        if (_questRuntimes.TryGetValue(characterId, out var runtime)
+            && _questRuntimeGenerations.TryGetValue(characterId, out var runtimeGen)
+            && runtimeGen == state.Generation)
+        {
+            if (state.Actor.ActiveRequest is { IsTerminal: false })
+                state.Actor.PreemptCurrent(reason);
+            runtime.ReleaseOnDeath(reason);
+            state.PendingLeg = null;
+        }
+    }
+
+    private static void RetireQuestDiscovery(BotRoamState state, string reason)
+    {
+        if (!state.QuestDiscoveryActive)
+            return;
+        if (state.PendingLeg is { IsTerminal: false, Action: ActorActionType.Move } pending
+            && pending.MoveOwner == QuestTravelMoveOwner
+            && ReferenceEquals(state.Actor.ActiveRequest, pending))
+            state.Actor.PreemptCurrent(reason);
+        SupersedeQuestTravelRoute(state, reason);
+        state.QuestDiscoveryActive = false;
+    }
 
     /// <summary>
     /// Telemetry: stages the movement-owner tag on the bot's actor for the
@@ -815,17 +898,159 @@ public enum NeedsFarmLoopPhase
             concrete.SetPendingMoveOwner(owner);
     }
 
+    private static void PreemptQuestTravelLeg(BotRoamState state, string reason)
+    {
+        if (state.PendingMoveOwner == QuestTravelMoveOwner
+            && state.PendingLeg is { IsTerminal: false, Action: ActorActionType.Move } pending
+            && pending.MoveOwner == QuestTravelMoveOwner
+            && ReferenceEquals(state.Actor.ActiveRequest, pending))
+            state.Actor.PreemptCurrent(reason);
+    }
+
+    private static void ClearQuestTravelPurpose(BotRoamState state)
+    {
+        state.QuestTravelDecisionQuestId = null;
+        state.QuestTravelDecisionGoal = null;
+        state.QuestTravelDecisionPolicy = null;
+        state.QuestTravelDecisionCycleId = null;
+        state.QuestTravelDecisionStatus = null;
+    }
+
+    private static void CaptureQuestTravelPurpose(BotRoamState state, GameplayActor actor,
+        QuestDecisionScenario.QuestOptions band, string? activity)
+    {
+        ClearQuestTravelPurpose(state);
+        if (band.ChosenQuestId == 0)
+            return;
+        state.QuestTravelDecisionQuestId = band.ChosenQuestId;
+        state.QuestTravelDecisionGoal = activity;
+        state.QuestTravelDecisionPolicy = band.PolicyVersion;
+        state.QuestTravelDecisionCycleId = band.CycleId;
+        if (actor.Character.Quests.ActiveQuests.TryGetValue(band.ChosenQuestId, out var quest))
+            state.QuestTravelDecisionStatus = quest.Status;
+    }
+
+    private void ValidateQuestTravelAuthorization(PlayerBotRuntime bot, BotRoamState state)
+    {
+        if (state.PendingMoveOwner != QuestTravelMoveOwner)
+            return;
+        var chosen = QuestChosenProvider?.Invoke(bot.CharacterId) ?? 0u;
+        if (state.QuestTravelDecisionQuestId is not { } parent)
+        {
+            if (chosen != 0)
+                SupersedeQuestTravelRoute(state, "selected quest changed");
+            return;
+        }
+        if (parent != chosen || state.Actor is not GameplayActor actor
+            || !QuestTravelPhaseAuthorized(actor, state, parent))
+            SupersedeQuestTravelRoute(state, "selected quest authorization lost");
+    }
+
+    private static bool QuestTravelPhaseAuthorized(GameplayActor actor, BotRoamState state, uint parent)
+    {
+        var quests = actor.Character.Quests;
+        if (!quests.ActiveQuests.TryGetValue(parent, out var quest))
+            return state.QuestTravelDecisionStatus == null && actor.IsDiscoverable(parent);
+        if (state.QuestTravelDecisionStatus != quest.Status || quest.Status == QuestStatus.Completed)
+            return false;
+        if (quest.Status == QuestStatus.Ready)
+        {
+            if (quest.QuestSteps.TryGetValue(QuestComponentKind.Ready, out var ready))
+                foreach (var component in ready.Components.Values)
+                    foreach (var act in component.Acts)
+                        if (act.Template is QuestActConReportNpc report)
+                            return actor.Character.ParentWorld?.GetNpcByTemplateId(report.NpcId) == null;
+            return true;
+        }
+        // Cached objective facts and credit only: retained movement must never
+        // copy the spawner table or re-run nearest-source/perception selection.
+        if (!quest.QuestSteps.TryGetValue(QuestComponentKind.Progress, out var progress))
+            return true;
+        QuestFixtureRow row;
+        try
+        {
+            row = QuestFixtureRow.FromQuestData(parent);
+        }
+        catch
+        {
+            return true; // Unknown source availability is not authoritative absence.
+        }
+        if (row.GatherActId == 0 && row.InteractActId == 0)
+            return true;
+        var gatherKnown = row.GatherActId == 0;
+        var interactKnown = row.InteractActId == 0;
+        foreach (var component in progress.Components.Values)
+        {
+            foreach (var act in component.Acts)
+            {
+                var template = act.Template;
+                if (template is QuestActObjItemGather && template.ActId == row.GatherActId)
+                    gatherKnown = true;
+                else if (template is QuestActObjInteraction && template.ActId == row.InteractActId)
+                    interactKnown = true;
+                else
+                    continue;
+                if (template.GetObjective(quest) < Math.Max(1, template.Count))
+                    return true;
+            }
+        }
+        return !gatherKnown || !interactKnown;
+    }
+
+    private ActorRequest IssueRouteMove(IGameplayActor actor, BotRoamState state, Vector3 target)
+    {
+        var questRoute = state.PendingMoveOwner == QuestTravelMoveOwner;
+        StageMoveOwner(actor, state.PendingMoveOwner ?? "ROAM");
+        if (questRoute)
+        {
+            actor.SetPendingDecision(state.QuestTravelDecisionGoal, state.QuestTravelDecisionPolicy,
+                1, 0, state.QuestTravelDecisionCycleId, state.QuestTravelDecisionQuestId);
+            actor.SetPendingCycleId(state.QuestTravelDecisionCycleId);
+        }
+        try
+        {
+            return actor.MoveTo(target, RoamSpeed, RoamLegTimeout);
+        }
+        finally
+        {
+            if (questRoute)
+            {
+                actor.SetPendingDecision(null, null, 0, 0, null, null);
+                actor.SetPendingCycleId(null);
+            }
+        }
+    }
+
     public Task<TimeSpan?> StepAsync(PlayerBotRuntime bot, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         var now = TimeProvider.GetUtcNow().UtcDateTime;
-        if (!_states.TryGetValue(bot.CharacterId, out var state))
+        if (!_states.TryGetValue(bot.CharacterId, out var state) || state.Generation != bot.Generation)
         {
-            state = new BotRoamState { Actor = ActorFactory(bot.Character) };
+            if (state != null)
+                RetireQuestDiscovery(state, "discovery activation changed");
+            if (state != null)
+                SupersedeQuestTravelRoute(state, "generation changed");
+            // Generation binding: stale caches from a prior activation are
+            // evicted (actor + sidecar entries) and recreated bound to the
+            // live generation. Fresh bots (gen 0 runtime, no state) just create.
+            _states.TryRemove(bot.CharacterId, out _);
+            _questRuntimes.TryRemove(bot.CharacterId, out _);
+            _questRuntimeGenerations.TryRemove(bot.CharacterId, out _);
+            _homesteadRunners.TryRemove(bot.CharacterId, out _);
+            _homesteadContexts.TryRemove(bot.CharacterId, out _);
+            _homesteadGenerations.TryRemove(bot.CharacterId, out _);
+            _questTurnInWithheld.TryRemove(bot.CharacterId, out _);
+            _lastStepUtc.TryRemove(bot.CharacterId, out _);
+            state = new BotRoamState { Actor = ActorFactory(bot.Character), Generation = bot.Generation };
             _states[bot.CharacterId] = state;
         }
         var actor = state.Actor;
+        if (state.QuestDiscoveryActive
+            && ActiveActivityProvider?.Invoke(bot.CharacterId) != QuestBootstrapActivityModule.DiscoveryActivityName)
+            RetireQuestDiscovery(state, "discovery activity superseded");
+        ValidateQuestTravelAuthorization(bot, state);
 
         // Link-1d teleport-jump detection: the harness teleports the bot AFTER a
         // branch-2 quest-travel route is armed, so the live QUEST_TRAVEL Move keeps
@@ -834,12 +1059,16 @@ public enum NeedsFarmLoopPhase
         // teleports move that far per tick), so drop the stale route and let the
         // next quest wake re-decide. Scoped to QUEST_TRAVEL exactly — live
         // non-quest legs are never preempted here.
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): wake-path instance witness for EVERY scheduler wake.
+        LogInstanceWake("wake-top", bot);
         var currentTickPos = bot.Character.Transform.World.Position;
         if (state.LastTickPosition is { } lastTickPos
             && state.PendingMoveOwner == QuestTravelMoveOwner
             && Vector3.Distance(lastTickPos, currentTickPos) > TeleportJumpThresholdMeters)
         {
-            actor.PreemptCurrent("teleport jump during quest travel");
+            // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+            LogQuestTravelHaltCaller(bot, state, "other", "teleport-jump");
+            PreemptQuestTravelLeg(state, "teleport jump during quest travel");
             SupersedeQuestTravelRoute(state, "teleport");
             ResetObjectiveSourceArms(state, "");
         }
@@ -917,6 +1146,8 @@ public enum NeedsFarmLoopPhase
                             {
                                 if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
                                 {
+                                    // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                                    LogQuestTravelHaltCaller(bot, state, "settle", "party-assist-in-range");
                                     _ = actor.Stop();
                                     state.PendingLeg = null;
                                 }
@@ -940,7 +1171,11 @@ public enum NeedsFarmLoopPhase
                                 if (needsFollowMove)
                                 {
                                     if (actor.ActiveRequest is { IsTerminal: false })
+                                    {
+                                        // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                                        LogQuestTravelHaltCaller(bot, state, "other", "party-follow-retrack");
                                         _ = actor.Stop();
+                                    }
                                     StageMoveOwner(actor, "OTHER:party-follow");
                                     state.PendingLeg = actor.MoveTo(leaderPos, HuntChaseSpeed, TimeSpan.FromSeconds(5));
                                 }
@@ -949,6 +1184,8 @@ public enum NeedsFarmLoopPhase
                             {
                                 if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
                                 {
+                                    // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                                    LogQuestTravelHaltCaller(bot, state, "settle", "party-follow-arrived");
                                     actor.PreemptCurrent("party follow arrived");
                                     state.PendingLeg = null;
                                 }
@@ -997,6 +1234,8 @@ public enum NeedsFarmLoopPhase
                 && liveNeeds.Action == ActorActionType.Move
                 && state.NeedsFarmPhase != NeedsFarmLoopPhase.Traveling)
             {
+                // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                LogQuestTravelHaltCaller(bot, state, "other", "needs-preempt");
                 _ = actor.Stop();
             }
             if (actor.ActiveRequest is not { IsTerminal: false })
@@ -1015,10 +1254,49 @@ public enum NeedsFarmLoopPhase
         // exactly. The arbiter holds ONE activity per wake, so at most one
         // of the 0a/0b legs fires; both flags stay readable for tests.
         state.QuestLegActive = false;
+        // TEMPORARY live-lane diagnostic (read-only witness, never branched on): 0a scheduling-gate snapshot — names which gate holds StepQuestLeg off this wake.
+        if (CharacterQuests.DiagEnabled)
+        {
+            var gateActivity = ActiveActivityProvider?.Invoke(bot.CharacterId);
+            var gateQuestHeld = gateActivity != null && gateActivity.StartsWith("quest.", StringComparison.Ordinal);
+            var gateActorBusy = actor.ActiveRequest is { IsTerminal: false };
+            Logger.Warn($"[QuestRemove] REMOVER=report-walk-sched party={handledByParty} pvp={pvpEngaged} survivalOwned={state.SurvivalWakeOwned} activity={gateActivity ?? "<null>"} questHeld={gateQuestHeld} actorBusy={gateActorBusy} scheduled={!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned && gateQuestHeld && !gateActorBusy}");
+            // TEMPORARY live-lane diagnostic (read-only witness, never branched on): busy-holder identity — which live request (action/owner/trace/dest/detail) holds the 0a actor-idle guard off this wake; actorBusy with no live holder is itself the finding.
+            var busyHolder = actor.ActiveRequest;
+            var busyHolderLive = busyHolder is { IsTerminal: false };
+            var busyHolderDest = busyHolder?.Destination;
+            var busyHolderDestText = busyHolderDest.HasValue ? "(" + busyHolderDest.Value.X.ToString("F1") + "," + busyHolderDest.Value.Y.ToString("F1") + "," + busyHolderDest.Value.Z.ToString("F1") + ")" : "-";
+            Logger.Warn($"[QuestRemove] REMOVER=report-walk-busy-holder actorBusy={gateActorBusy} holderLive={busyHolderLive} holderAction={busyHolder?.Action.ToString() ?? "-"} holderOwner={busyHolder?.MoveOwner ?? "-"} holderState={busyHolder?.State.ToString() ?? "-"} holderTrace={busyHolder?.TraceId.ToString() ?? "-"} holderTarget={busyHolder?.TargetId ?? 0} holderDest={busyHolderDestText} holderDetail={busyHolder?.Detail ?? "-"} pendingOwner={state.PendingMoveOwner ?? "-"} pendingLegState={state.PendingLeg?.State.ToString() ?? "-"} pendingLegOwner={state.PendingLeg?.MoveOwner ?? "-"} routeLive={state.Path is { IsFinished: false }}");
+        }
+        // P0.4 single owner: the runtime owns a Running job. A quest wake
+        // whose actor still carries the runtime's exact owned request routes
+        // THROUGH the quest leg (hold/consume), even though the actor is
+        // busy — no other fallback may replace it while owned. Every other
+        // busy wake keeps the idle guard exactly.
+        var ownedBusy = actor.ActiveRequest is { IsTerminal: false } liveBusy
+            && _questRuntimes.TryGetValue(bot.CharacterId, out var ownedRuntime)
+            && _questRuntimeGenerations.TryGetValue(bot.CharacterId, out var ownedGen)
+            && ownedGen == state.Generation
+            && ownedRuntime.OwnsRunningRequest(liveBusy);
+        var questActivity = ActiveActivityProvider?.Invoke(bot.CharacterId);
         if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
-            && ActiveActivityProvider?.Invoke(bot.CharacterId) is string questActivity
+            && questActivity == QuestBootstrapActivityModule.DiscoveryActivityName)
+        {
+            state.QuestDiscoveryActive = true;
+            // Pending route movement owns the actor until its ordinary terminal.
+            // Never scan again while running, nor dispatch unscoped quest work.
+            if (actor is GameplayActor discoveryActor && actor.ActiveRequest is not { IsTerminal: false })
+            {
+                if (IsForeignRouteInterruption(state))
+                    SupersedeQuestTravelRoute(state, "discovery move interrupted");
+                ArmQuestTravel(bot, discoveryActor, state, OfferBandFor(discoveryActor),
+                    QuestBootstrapActivityModule.DiscoveryActivityName);
+            }
+        }
+        else if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
+            && questActivity != null
             && questActivity.StartsWith("quest.", StringComparison.Ordinal)
-            && actor.ActiveRequest is not { IsTerminal: false })
+            && (actor.ActiveRequest is not { IsTerminal: false } || ownedBusy))
         {
             state.QuestLegActive = StepQuestLeg(bot, actor, state, questActivity);
         }
@@ -1052,8 +1330,19 @@ public enum NeedsFarmLoopPhase
         // 1. Opportunistic wildlife hunt loop (skipped while fighting players,
         // or while a work leg landed, or while actively farming — needs/quest/homestead preempt hunt acquisition/engagement).
         var isFarmingActive = state.NeedsFarmPhase != NeedsFarmLoopPhase.Idle;
+        // P0.4: the hunt/butcher/route sites already stand down on QuestLegActive
+        // (landed this wake), but an owned Running job must ALSO hold them on
+        // wakes the quest leg defers to the hold — the one exception is the
+        // terminal SettleDrop: dead/invalid target teardown may retire the
+        // actor's own live leg (preempt + null), never dispatch a new one.
+        var questOwnedHold = actor.ActiveRequest is { IsTerminal: false } liveHold
+            && _questRuntimes.TryGetValue(bot.CharacterId, out var holdRuntime)
+            && _questRuntimeGenerations.TryGetValue(bot.CharacterId, out var holdGen)
+            && holdGen == state.Generation
+            && holdRuntime.OwnsRunningRequest(liveHold);
         if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
-            && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeHunt)
+            && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeHunt
+            && !questOwnedHold && !state.QuestDiscoveryActive)
         {
             if (state.TargetNpcObjId != 0)
             {
@@ -1104,6 +1393,8 @@ public enum NeedsFarmLoopPhase
 
                     if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
                     {
+                        // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                        LogQuestTravelHaltCaller(bot, state, "other", "hunt-target-down");
                         actor.PreemptCurrent("hunt target down");
                         state.PendingLeg = null;
                     }
@@ -1130,7 +1421,11 @@ public enum NeedsFarmLoopPhase
                         if (needsMove)
                         {
                             if (actor.ActiveRequest is { IsTerminal: false })
+                            {
+                                // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                                LogQuestTravelHaltCaller(bot, state, "other", "hunt-chase-retrack");
                                 _ = actor.Stop();
+                            }
                             StageMoveOwner(actor, "HUNT");
                             state.PendingLeg = actor.MoveTo(targetPos, HuntChaseSpeed, TimeSpan.FromSeconds(10));
                         }
@@ -1139,6 +1434,8 @@ public enum NeedsFarmLoopPhase
                     {
                         if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
                         {
+                            // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                            LogQuestTravelHaltCaller(bot, state, "settle", "hunt-engage-range");
                             actor.PreemptCurrent("hunt in engage range");
                             state.PendingLeg = null;
                         }
@@ -1212,6 +1509,8 @@ public enum NeedsFarmLoopPhase
                     bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, bestNpc.ObjId), true);
                     if (actor.ActiveRequest is { IsTerminal: false })
                     {
+                        // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                        LogQuestTravelHaltCaller(bot, state, "other", "hunt-engage-acquire");
                         _ = actor.Stop();
                         state.PendingLeg = null;
                     }
@@ -1231,7 +1530,8 @@ public enum NeedsFarmLoopPhase
         // ActorRequest. Logging only on the terminal outcome (slice 1/3
         // idiom) — zero success-path change. Skipped while a work leg landed
         // or while actively farming (needs/quest/homestead preempt butcher acquisition/engagement).
-        if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeButcher)
+        if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeButcher
+            && !questOwnedHold && !state.QuestDiscoveryActive)
         {
             if (state.TargetButcherDoodadObjId != 0)
             {
@@ -1249,6 +1549,8 @@ public enum NeedsFarmLoopPhase
                     state.TargetButcherDoodadObjId = 0;
                     if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
                     {
+                        // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                        LogQuestTravelHaltCaller(bot, state, "other", "butcher-target-lost");
                         _ = actor.Stop();
                         state.PendingLeg = null;
                     }
@@ -1266,7 +1568,11 @@ public enum NeedsFarmLoopPhase
                         if (needsButcherMove)
                         {
                             if (actor.ActiveRequest is { IsTerminal: false })
+                            {
+                                // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                                LogQuestTravelHaltCaller(bot, state, "other", "butcher-approach-retrack");
                                 _ = actor.Stop();
+                            }
                             StageMoveOwner(actor, "OTHER:butcher-approach");
                             state.PendingLeg = actor.MoveTo(butcherPos, HuntChaseSpeed, TimeSpan.FromSeconds(10));
                         }
@@ -1277,6 +1583,8 @@ public enum NeedsFarmLoopPhase
                         // park the approach leg first (hunt-engage precedent).
                         if (actor.ActiveRequest is { IsTerminal: false })
                         {
+                            // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                            LogQuestTravelHaltCaller(bot, state, "settle", "butcher-in-range");
                             _ = actor.Stop();
                             state.PendingLeg = null;
                         }
@@ -1325,6 +1633,8 @@ public enum NeedsFarmLoopPhase
                     state.TargetButcherDoodadObjId = bestDoodad.ObjId;
                     if (actor.ActiveRequest is { IsTerminal: false })
                     {
+                        // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                        LogQuestTravelHaltCaller(bot, state, "other", "butcher-engage-acquire");
                         _ = actor.Stop();
                         state.PendingLeg = null;
                     }
@@ -1341,23 +1651,44 @@ public enum NeedsFarmLoopPhase
         // (Completed arrivals, route-owned arrival halts) never match.
         if (IsForeignRouteInterruption(state))
         {
+            // TEMPORARY live-lane diagnostic (read-only witnesses, never branched on): pre-drop cursor snapshot — SupersedeQuestTravelRoute nulls the route; capture before.
+            var staleArticle = state.PendingLeg;
+            var staleTarget = state.Path is { IsFinished: false } ? state.Path.CurrentTarget : (Vector3?)null;
+            var staleCount = state.Path?.Waypoints.Count ?? -1;
+            var staleIndex = state.Path is { IsFinished: false } ? state.Path.CurrentIndex : -1;
+            LogQuestTravelArticle(state, "stale-guard", staleArticle);
             var detail = state.PendingLeg?.Detail ?? "-";
             SupersedeQuestTravelRoute(state, $"pending leg foreign-interrupted ({detail})");
+            LogQuestTravelTurnover(bot, state, "drop", staleTarget, null, staleCount < 0 || staleIndex < 0 ? -1 : staleCount - 1 - staleIndex, staleArticle);
         }
+        ValidateQuestTravelAuthorization(bot, state);
         // 2. Issue the next leg when idle, not in party, not hunting, not butchering, not work-legged, not waiting for crop, and a route is active.
-        if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive
+        // P0.4: an owned Running job also holds the route sites while the
+        // quest leg defers to the hold (QuestLegActive only covers landed).
+        if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !questOwnedHold
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
         {
-            StageMoveOwner(actor, state.PendingMoveOwner ?? "ROAM");
             var target = state.Path.CurrentTarget;
-            var leg = actor.MoveTo(target, RoamSpeed, RoamLegTimeout);
+            var leg = IssueRouteMove(actor, state, target);
             state.PendingLeg = leg;
             if (leg.IsTerminal && leg.State != ActorLifecycleState.Completed)
             {
                 Logger.Warn("Roam leg rejected for bot {CharacterId}: {State} ({Reason}) — advancing route",
                     bot.CharacterId, leg.State, leg.Detail);
+                // TEMPORARY live-lane diagnostic (read-only witnesses, never branched on): terminal-article read + Path-finished marker for the unreachable-leg skip.
+                LogQuestTravelArticle(state, "reject-advance", state.PendingLeg);
+                var rejectFinishedBefore = state.Path.IsFinished;
+                var rejectCount = state.Path.Waypoints.Count;
+                var rejectIndex = state.Path.CurrentIndex;
                 _ = state.Path.Move(bot.Character.Transform.World.Position, flatArrival: true); // advance past the unreachable point
+                if (state.Path.IsFinished && !rejectFinishedBefore)
+                    LogQuestTravelPathFinished(state, "reject-advance", rejectCount, rejectIndex, leg.Destination ?? state.Path.CurrentTarget);
+                if (state.Path.IsFinished)
+                {
+                    ClearQuestTravelPurpose(state);
+                    state.QuestTravelTarget = null;
+                }
                 state.PendingLeg = null; // already advanced here
             }
         }
@@ -1370,6 +1701,7 @@ public enum NeedsFarmLoopPhase
         if (elapsed > MaxStepElapsed)
             elapsed = MaxStepElapsed;
 
+        ValidateQuestTravelAuthorization(bot, state);
         actor.Tick(elapsed);
 
         // 3a. Flat arrival owns the leg for ground-clamped walkers (only when roaming)
@@ -1382,21 +1714,60 @@ public enum NeedsFarmLoopPhase
             var flat = MathUtil.CalculateDistance(
                 bot.Character.Transform.World.Position, state.Path.CurrentTarget, false);
             if (flat <= state.Path.ArrivalRadius)
+            {
+                // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                LogQuestTravelHaltCaller(bot, state, "flat-arrival", "arrival-radius");
                 _ = actor.Stop();
+            }
         }
         // 3b. Route advance on arrival: when the pending Move leg reached a terminal state
         // (deferred while a work leg landed — needs/quest preempt route advancement too).
+        // TEMPORARY live-lane diagnostic (read-only witness, never branched on): skip side — a terminal Move article the 3b guard below leaves unconsumed (the guard's negation, so it fires exactly when the guard declines).
+        if (CharacterQuests.DiagEnabled
+            && state.PendingMoveOwner == QuestTravelMoveOwner
+            && state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move } skippedArticle
+            && (state.SurvivalWakeOwned
+                || state.NeedsLegActive || state.QuestLegActive || state.HomesteadLegActive || questOwnedHold
+                || state.NeedsFarmPhase == NeedsFarmLoopPhase.WaitingMaturity
+                || state.TargetNpcObjId != 0
+                || state.TargetButcherDoodadObjId != 0
+                || state.Path is not { IsFinished: false }))
+        {
+            var skipTarget = state.Path is { IsFinished: false } ? state.Path.CurrentTarget : (Vector3?)null;
+            var skipCount = state.Path?.Waypoints.Count ?? -1;
+            var skipIndex = state.Path is { IsFinished: false } ? state.Path.CurrentIndex : -1;
+            LogQuestTravelTurnover(bot, state, "skip", skipTarget, null, skipCount < 0 || skipIndex < 0 ? -1 : skipCount - 1 - skipIndex, skippedArticle);
+        }
+        ValidateQuestTravelAuthorization(bot, state);
         if (!state.SurvivalWakeOwned
-            && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive
+            && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !questOwnedHold
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0
             && state.TargetButcherDoodadObjId == 0
             && state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move }
             && state.Path is { IsFinished: false })
         {
-            StageMoveOwner(actor, state.PendingMoveOwner ?? "ROAM");
+            // TEMPORARY live-lane diagnostic (read-only witnesses, never branched on): pre-turnover cursor snapshot — Path.Move steps CurrentIndex and may set IsFinished; capture before.
+            var turnoverArticle = state.PendingLeg;
+            var turnoverTarget = state.Path.CurrentTarget;
+            var turnoverCount = state.Path.Waypoints.Count;
+            var turnoverIndex = state.Path.CurrentIndex;
+            LogQuestTravelArticle(state, "route-advance", turnoverArticle);
             _ = state.Path.Move(bot.Character.Transform.World.Position, flatArrival: true);
-            state.PendingLeg = actor.MoveTo(state.Path.CurrentTarget, RoamSpeed, RoamLegTimeout);
+            var turnoverRemaining = turnoverCount - 1 - turnoverIndex;
+            if (state.Path.IsFinished)
+            {
+                LogQuestTravelPathFinished(state, "route-advance", turnoverCount, turnoverIndex, turnoverTarget);
+                LogQuestTravelTurnover(bot, state, "finish", turnoverTarget, null, turnoverRemaining, turnoverArticle);
+                ClearQuestTravelPurpose(state);
+                state.QuestTravelTarget = null;
+                state.PendingLeg = null;
+            }
+            else
+            {
+                LogQuestTravelTurnover(bot, state, "advance", turnoverTarget, state.Path.CurrentTarget, turnoverRemaining, turnoverArticle);
+                state.PendingLeg = IssueRouteMove(actor, state, state.Path.CurrentTarget);
+            }
         }
 
         // 4a. Ground clamp — continuous slope-constrained following
@@ -1698,7 +2069,11 @@ public enum NeedsFarmLoopPhase
         if (bot.Character.IsAutoAttack)
             actor.StopAutoAttack();
         if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+        {
+            // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+            LogQuestTravelHaltCaller(bot, state, "other", "survival-flee-retrack");
             actor.PreemptCurrent(TravelLegDispatch.SurvivalFleeRetrackDetail);
+        }
 
         StageMoveOwner(actor, SurvivalFleeMoveOwner);
         state.PendingLeg = actor.MoveTo(destination, SurvivalFleeSpeed, SurvivalFleeLegTimeout);
@@ -1765,15 +2140,124 @@ public enum NeedsFarmLoopPhase
     /// route still walks and the scheduler keeps its cadence instead of
     /// spinning.
     /// </summary>
+    // TEMPORARY live-lane diagnostic (read-only log, never branched on): scheduler-wake instance witness.
+    // Join key with REMOVER=instance-observe rows: bot/char name + charHash/questsHash. Same hashes = same instance (aliasing eliminated); different = aliasing CONFIRMED.
+    private static void LogInstanceWake(string site, PlayerBotRuntime bot)
+    {
+        if (!CharacterQuests.DiagEnabled)
+            return;
+        var wakeChar = bot.Character;
+        if (wakeChar == null)
+            return;
+        var wakeQuests = wakeChar.Quests;
+        if (wakeQuests == null)
+            return;
+        Logger.Warn($"[QuestRemove] REMOVER=instance-wake site={site} char={wakeChar.Name}({wakeChar.Id}) objId={wakeChar.ObjId} charHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(wakeChar)} questsHash={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(wakeQuests)} activeCount={wakeQuests.ActiveQuests.Count} activeIds=[{string.Join(",", wakeQuests.ActiveQuests.Keys.OrderBy(k => k))}] present254={wakeQuests.ActiveQuests.ContainsKey(254)}");
+    }
+
+    // TEMPORARY live-lane diagnostic (read-only witness, never branched on): QUEST_TRAVEL halt-caller — names which route-layer/executor Stop (or preempt) fired on a QUEST_TRAVEL-owned route, with the remaining distance that tells arrival-misfire (dist small) from settle/foreign stops (dist large). Self-gates on QUEST_TRAVEL ownership so every call site stays one line and flag-off allocates nothing.
+    private static void LogQuestTravelHaltCaller(PlayerBotRuntime bot, BotRoamState state, string site, string reason)
+    {
+        if (!CharacterQuests.DiagEnabled)
+            return;
+        if (state.PendingMoveOwner != QuestTravelMoveOwner)
+            return;
+        var character = bot.Character;
+        if (character == null)
+            return;
+        var dest = state.Path is { IsFinished: false } ? state.Path.CurrentTarget : state.QuestTravelTarget;
+        var destText = dest.HasValue ? "(" + dest.Value.X.ToString("F1") + "," + dest.Value.Y.ToString("F1") + "," + dest.Value.Z.ToString("F1") + ")" : "-";
+        var dist = dest.HasValue ? MathUtil.CalculateDistance(character.Transform.World.Position, dest.Value, false) : -1f;
+        var elapsedS = state.PendingLeg != null ? state.PendingLeg.Elapsed.TotalSeconds : -1.0;
+        Logger.Warn($"[QuestRemove] REMOVER=report-walk-halt-caller site={site} reason={reason} dest={destText} elapsed={elapsedS:F1}s dist={dist:F1}m");
+    }
+
+    // TEMPORARY live-lane diagnostic (read-only witness, never branched on): QUEST_TRAVEL chunk-turnover decision — whether the route-advance article (a terminal Move pending leg) advanced the Once cursor (advance), marked it finished (finish), was dropped by the stale-route guard (drop), or was left unconsumed by the 3b guard (skip, with hold= naming the holding guard). current is the arrived chunk target (pre-decision cursor), next is the post-decision target (- on finish/drop), remaining counts waypoints after the arrived chunk (Count-1-Index; -1 when no live route was snapshotted), leg is the terminal article. Only BotPath.Arrive steps the cursor; SupersedeQuestTravelRoute nulls the route. Self-gates on QUEST_TRAVEL ownership like LogQuestTravelHaltCaller so call sites stay one line and flag-off allocates nothing.
+    private static void LogQuestTravelTurnover(PlayerBotRuntime bot, BotRoamState state, string decision, Vector3? current, Vector3? next, int remaining, ActorRequest? leg)
+    {
+        if (!CharacterQuests.DiagEnabled)
+            return;
+        if (state.PendingMoveOwner != QuestTravelMoveOwner)
+            return;
+        if (bot.Character == null)
+            return;
+        var currentText = current.HasValue ? "(" + current.Value.X.ToString("F1") + "," + current.Value.Y.ToString("F1") + "," + current.Value.Z.ToString("F1") + ")" : "-";
+        var nextText = next.HasValue ? "(" + next.Value.X.ToString("F1") + "," + next.Value.Y.ToString("F1") + "," + next.Value.Z.ToString("F1") + ")" : "-";
+        var legState = leg?.State.ToString() ?? "-";
+        if (decision == "skip")
+        {
+            string hold;
+            if (state.SurvivalWakeOwned)
+                hold = "survival-owned";
+            else if (state.NeedsLegActive)
+                hold = "needs-leg";
+            else if (state.QuestLegActive)
+                hold = "quest-leg";
+            else if (state.HomesteadLegActive)
+                hold = "homestead-leg";
+            else if (state.NeedsFarmPhase == NeedsFarmLoopPhase.WaitingMaturity)
+                hold = "farm-wait";
+            else if (state.TargetNpcObjId != 0)
+                hold = "hunt-target";
+            else if (state.TargetButcherDoodadObjId != 0)
+                hold = "butcher-target";
+            else if (state.Path is not { IsFinished: false })
+                hold = "path-finished-or-null";
+            else if (state.PendingLeg is not { IsTerminal: true, Action: ActorActionType.Move })
+                hold = "article-not-terminal-move";
+            else
+                hold = "unknown";
+            Logger.Warn($"[QuestRemove] REMOVER=report-walk-turnover decision={decision} remainingChunks={remaining} currentTarget={currentText} nextTarget={nextText} legState={legState} hold={hold}");
+            return;
+        }
+        Logger.Warn($"[QuestRemove] REMOVER=report-walk-turnover decision={decision} remainingChunks={remaining} currentTarget={currentText} nextTarget={nextText} legState={legState}");
+    }
+
+    // TEMPORARY live-lane diagnostic (read-only witness, never branched on): PendingLeg terminal-article consumption — which site read the terminal Move article first on this wake (stale-guard = the 1b foreign-interruption drop, route-advance = the 3b turnover, reject-advance = the site-2 unreachable-leg skip). Pairs with report-walk-terminal (GameplayActor, every QUEST_TRAVEL terminal) to order article-death vs article-read. Self-gates on QUEST_TRAVEL ownership; flag-off allocates nothing.
+    private static void LogQuestTravelArticle(BotRoamState state, string site, ActorRequest? leg)
+    {
+        if (!CharacterQuests.DiagEnabled)
+            return;
+        if (state.PendingMoveOwner != QuestTravelMoveOwner)
+            return;
+        var trace = leg?.TraceId.ToString() ?? "-";
+        var articleState = leg?.State.ToString() ?? "-";
+        var detail = leg?.Detail ?? "-";
+        Logger.Warn($"[QuestRemove] REMOVER=report-walk-article site={site} trace={trace} state={articleState} detail={detail}");
+    }
+
+    // TEMPORARY live-lane diagnostic (read-only witness, never branched on): Path-finished marker — which Path.Move call site flipped a Once route to IsFinished (route-advance = the 3b turnover; reject-advance = the site-2 unreachable-leg skip), with the waypoint census that tells premature-finish (index 0 of N>1) from final-leg finish (index N-1). Only BotPath.Arrive sets IsFinished; the route layer only reads it. Self-gates on QUEST_TRAVEL ownership; flag-off allocates nothing.
+    private static void LogQuestTravelPathFinished(BotRoamState state, string site, int waypoints, int index, Vector3? current)
+    {
+        if (!CharacterQuests.DiagEnabled)
+            return;
+        if (state.PendingMoveOwner != QuestTravelMoveOwner)
+            return;
+        var currentText = current.HasValue ? "(" + current.Value.X.ToString("F1") + "," + current.Value.Y.ToString("F1") + "," + current.Value.Z.ToString("F1") + ")" : "-";
+        Logger.Warn($"[QuestRemove] REMOVER=report-walk-path-finished site={site} waypoints={waypoints} index={index} currentTarget={currentText}");
+    }
+
     private bool StepQuestLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state, string questActivity)
     {
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): wake-path instance witness for this bot.
+        LogInstanceWake("quest-leg", bot);
+        // Dead bots (scheduler death-watch owns them until resurrection) run
+        // no quest work: a stale pre-death hold must never be re-entered from
+        // a direct executor call, and no fresh decision may dispatch against
+        // a corpse. The death entry already released the hold; this guard is
+        // defense-in-depth so direct-step callers get the same discipline.
+        if (bot.Character.IsDead)
+            return false;
         if (actor is not GameplayActor concreteActor)
             return false;
-
         Func<Character, float, IEnumerable<Npc>> nearbyNpcs =
             NearbyNpcProvider ?? DefaultNearbyNpcs;
-        var runtime = _questRuntimes.GetOrAdd(bot.CharacterId,
-            _ => new BotBehaviorRuntime(() => TimeProvider.GetUtcNow()));
+        if (!_questRuntimes.TryGetValue(bot.CharacterId, out var runtime) || !_questRuntimeGenerations.TryGetValue(bot.CharacterId, out var runtimeGen) || runtimeGen != state.Generation)
+        {
+            runtime = new BotBehaviorRuntime(() => TimeProvider.GetUtcNow()) { QuestCompletedSink = QuestTerminalSink };
+            _questRuntimes[bot.CharacterId] = runtime;
+            _questRuntimeGenerations[bot.CharacterId] = state.Generation;
+        }
         // ONE band value for the whole wake: the accept sweep (QuestBehavior's
         // in-band filter) and the travel pre-filter (OffersWalkableQuest) must
         // never disagree — a bot that walks to an offerer whose only offers
@@ -1784,7 +2268,8 @@ public enum NeedsFarmLoopPhase
         var wakeOptions = BotBrainTuningStore.ApplyTo(band) with
         {
             CycleId = $"quest-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}",
-            WithholdTurnIn = IsQuestTurnInWithheld(bot.CharacterId)
+            WithholdTurnIn = IsQuestTurnInWithheld(bot.CharacterId),
+            ChosenQuestId = QuestChosenProvider?.Invoke(bot.CharacterId) ?? 0,
         };
         var landed = runtime.Tick(concreteActor, nearbyNpcs, wakeOptions, questActivity);
         var result = runtime.LastResult;
@@ -1794,7 +2279,7 @@ public enum NeedsFarmLoopPhase
         var botPos = bot.Character.Transform.World.Position;
         var actorPos = concreteActor.Character.Transform.World.Position;
         state.QuestDecideDetail = result == null
-            ? ""
+            ? $"holding {actor.ActiveRequest?.Action} ({TruncateDecide(actor.ActiveRequest?.Detail)})"
             : result.WorkSelected
                 ? $"landed {result.SelectedAction} ({TruncateDecide(result.Request?.Detail)})"
                 : $"{result.FailStage}: {TruncateDecide(result.FailReason)}";
@@ -1825,6 +2310,10 @@ public enum NeedsFarmLoopPhase
             bot.Character.Id, concreteActor.Character.Id,
             botPos.X, botPos.Y, botPos.Z, actorPos.X, actorPos.Y, actorPos.Z,
             TruncateDecide(state.QuestDecideDetail, 400));
+        // P0.4: the running-hold wake reports landed with no fresh decision
+        // (runtime LastResult is null there) — a hold must never arm fallback
+        // against our own leg, and only a Blocked (no-legal-work) wake arms it.
+        var holdingRunning = result == null;
         if (landed)
         {
             // G5: a dispatched pursuit leg preempts (and thereby orphans) any
@@ -1833,12 +2322,12 @@ public enum NeedsFarmLoopPhase
             // completes (the next quest wake re-arms when travel is needed).
             // G8b: the quest-owned return leg preempts the same way, and G7c's
             // corpse approach is the third leg that walks the actor itself.
-            var moveOwner = result?.Request?.MoveOwner;
+            var moveOwner = result?.Request?.MoveOwner ?? actor.ActiveRequest?.MoveOwner;
             var returnDispatched = string.Equals(
                 moveOwner, TravelLegDispatch.ReturnMoveOwner, StringComparison.Ordinal);
             var approachDispatched = string.Equals(
                 moveOwner, LootTravelDispatch.ApproachMoveOwner, StringComparison.Ordinal);
-            if (result?.SelectedAction == ActorActionType.Move
+            if ((result?.SelectedAction == ActorActionType.Move || (holdingRunning && actor.ActiveRequest?.Action == ActorActionType.Move))
                 && (returnDispatched || approachDispatched
                     || string.Equals(moveOwner, TravelLegDispatch.PursuitMoveOwner, StringComparison.Ordinal)))
             {
@@ -1847,14 +2336,17 @@ public enum NeedsFarmLoopPhase
                     : approachDispatched ? "loot approach dispatched"
                     : "quest pursuit dispatched");
             }
+            // TEMPORARY live-lane diagnostic (read-only log, never branched on): landed short-circuit — ArmQuestTravel not reached this wake.
+            if (CharacterQuests.DiagEnabled)
+                Logger.Warn($"[QuestRemove] REMOVER=report-walk-entry liveRoute={state.Path is { IsFinished: false }} owner={state.PendingMoveOwner ?? "-"} reached=landed-short-circuit action={result?.SelectedAction} moveOwner={moveOwner ?? "-"}");
             Logger.Debug("Roam quest leg completed for bot {CharacterId}: {Action} ({Detail})",
-                bot.CharacterId, result?.SelectedAction, result?.Request?.Detail);
+                bot.CharacterId, result?.SelectedAction, result?.Request?.Detail ?? actor.ActiveRequest?.Detail);
         }
-        else
+        else if (!holdingRunning)
         {
             // No legal work: if a quest is waiting on a target that is not
             // spawned yet, walk toward its spawner so it CAN spawn.
-            ArmQuestTravel(bot, concreteActor, state);
+            ArmQuestTravel(bot, concreteActor, state, wakeOptions, questActivity);
         }
         return landed;
     }
@@ -1872,8 +2364,10 @@ public enum NeedsFarmLoopPhase
     /// movement decision: the engine still owns discovery/accept/turn-in at
     /// dispatch.
     /// </summary>
-    private bool ArmQuestTravel(PlayerBotRuntime bot, GameplayActor actor, BotRoamState state)
+    private bool ArmQuestTravel(PlayerBotRuntime bot, GameplayActor actor, BotRoamState state,
+        QuestDecisionScenario.QuestOptions band, string? questActivity)
     {
+        ValidateQuestTravelAuthorization(bot, state);
         // A live route is already walking — never re-arm (keeps progress) —
         // but only for a route that carries QUEST progress. The owner-blind
         // guard starved the quest leg forever against a patrol ring: a
@@ -1888,11 +2382,14 @@ public enum NeedsFarmLoopPhase
         // PresenceRoam's own route-less ResumeRoam once quest work is done.
         // Every other owner (QUEST_TRAVEL progress, OTHER:needs-farm-travel)
         // keeps the original protect-the-walk behaviour, byte-identical.
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): ArmQuestTravel entry — distinguish live-route short-circuit from resolver reach.
+        if (CharacterQuests.DiagEnabled)
+            Logger.Warn($"[QuestRemove] REMOVER=report-walk-entry liveRoute={state.Path is { IsFinished: false }} owner={state.PendingMoveOwner ?? "-"} reached={(state.Path is { IsFinished: false } && state.PendingMoveOwner != "ROAM" ? "short-circuit" : "resolver")}");
         if (state.Path is { IsFinished: false } && state.PendingMoveOwner != "ROAM")
             return false;
 
         var character = bot.Character;
-        var target = ResolveQuestTravelTarget(actor, OfferBandFor(actor));
+        var target = ResolveQuestTravelTarget(actor, band);
         if (target == null)
         {
             state.QuestTravelReason = "no walkable quest target (nothing ready-unspawned, nothing in-band to discover)";
@@ -1934,7 +2431,7 @@ public enum NeedsFarmLoopPhase
         // genuinely does mean unreachable, and that is the behaviour this bound
         // was written for.
         if (character.Quests != null
-            && ResolveQuestObjectiveSource(actor, out var source, out var sourceTemplate, out var sourceIsPrey)
+            && ResolveQuestObjectiveSource(actor, band.ChosenQuestId, out var source, out var sourceTemplate, out var sourceIsPrey)
             && target.Value.Equals(source))
         {
             var sourceDist = Vector3.Distance(character.Transform.World.Position, source);
@@ -1968,6 +2465,7 @@ public enum NeedsFarmLoopPhase
             state.PendingLeg = null;
             // Telemetry: the route layer's next legs own as QUEST_TRAVEL.
             state.PendingMoveOwner = "QUEST_TRAVEL";
+            CaptureQuestTravelPurpose(state, actor, band, questActivity);
             if (sameSpawner)
             {
                 state.QuestObjectiveSourceArms++;
@@ -1992,6 +2490,7 @@ public enum NeedsFarmLoopPhase
         state.PendingLeg = null;
         // Telemetry: the route layer's next legs own as QUEST_TRAVEL.
         state.PendingMoveOwner = "QUEST_TRAVEL";
+        CaptureQuestTravelPurpose(state, actor, band, questActivity);
         Logger.Debug("Roam quest travel armed for bot {CharacterId}: walking toward pending quest target at ({X:F0},{Y:F0})",
             bot.CharacterId, target.Value.X, target.Value.Y);
         return true;
@@ -2026,11 +2525,16 @@ public enum NeedsFarmLoopPhase
     {
         if (state.PendingMoveOwner != "QUEST_TRAVEL")
             return;
+        PreemptQuestTravelLeg(state, reason);
+        ClearQuestTravelPurpose(state);
         if (state.Path is not { IsFinished: false } && state.PendingLeg == null && state.QuestTravelTarget == null)
             return;
         state.Path = null;
         state.PendingLeg = null;
         state.QuestTravelTarget = null;
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): QUEST_TRAVEL drop witness — which guard fired. No-op re-entries stay silent.
+        if (CharacterQuests.DiagEnabled)
+            Logger.Warn($"[QuestRemove] REMOVER=report-walk-superseded reason={reason}");
         state.QuestTravelReason = $"superseded: {reason}";
         Logger.Info("Roam quest travel superseded ({Reason}) — route dropped, next quest wake re-decides", reason);
     }
@@ -2065,27 +2569,65 @@ public enum NeedsFarmLoopPhase
         var character = actor.Character;
         var world = character.ParentWorld;
         var quests = character.Quests;
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): resolver entered with no world/quest state — arm-1 never evaluated.
+        if ((world == null || quests == null) && CharacterQuests.DiagEnabled)
+            Logger.Warn($"[QuestRemove] REMOVER=report-walk-skip quest=0 reporter=0 reason=no-world-or-quests");
         if (world == null || quests == null)
+            return null;
+        quests.ActiveQuests.TryGetValue(band.ChosenQuestId, out var selectedQuest);
+        var chosenActive = band.ChosenQuestId != 0 && selectedQuest != null;
+        if (chosenActive && selectedQuest is { Status: QuestStatus.Completed })
             return null;
 
         // 1. A Ready quest whose reporter is missing — walk to the reporter's
         //    spawner so the world's normal spawn path materializes it.
+        // TEMPORARY live-lane diagnostic (read-only log, never branched on): arm-1 reach + Ready-candidate census, once per pass.
+        if (CharacterQuests.DiagEnabled)
+        {
+            var readyCount = 0;
+            foreach (var censusQuest in quests.ActiveQuests.Values)
+                if (censusQuest is { Status: QuestStatus.Ready })
+                    readyCount++;
+            Logger.Warn($"[QuestRemove] REMOVER=report-walk-scan readyCount={readyCount}");
+        }
         foreach (var (questId, quest) in quests.ActiveQuests.OrderBy(kv => kv.Key))
         {
-            if (quest is not { Status: QuestStatus.Ready })
+            if (band.ChosenQuestId != 0 && questId != band.ChosenQuestId)
                 continue;
+            if (quest is not { Status: QuestStatus.Ready })
+            {
+                if (CharacterQuests.DiagEnabled)
+                    Logger.Warn($"[QuestRemove] REMOVER=report-walk-skip quest={questId} reporter=0 reason=not-ready");
+                continue;
+            }
             var template = QuestManager.Instance.GetTemplate(questId);
             var reportNpc = template?.GetComponents(QuestComponentKind.Ready)
                 .SelectMany(c => c.ActTemplates)
                 .OfType<QuestActConReportNpc>()
                 .FirstOrDefault();
             if (reportNpc == null)
+            {
+                if (CharacterQuests.DiagEnabled)
+                    Logger.Warn($"[QuestRemove] REMOVER=report-walk-skip quest={questId} reporter=0 reason=no-report-act");
                 continue; // doodad/auto turn-ins need no travel
+            }
             if (world.GetNpcByTemplateId(reportNpc.NpcId) != null)
+            {
+                if (CharacterQuests.DiagEnabled)
+                    Logger.Warn($"[QuestRemove] REMOVER=report-walk-skip quest={questId} reporter={reportNpc.NpcId} reason=spawned");
                 continue; // reporter already spawned — turn-in will land next wake
+            }
             if (TrySpawnerPosition(world, reportNpc.NpcId) is { } reportPos)
+            {
+                if (CharacterQuests.DiagEnabled)
+                    Logger.Warn($"[QuestRemove] REMOVER=report-walk-armed quest={questId} reporter={reportNpc.NpcId} spawnerPos=({reportPos.X:F1},{reportPos.Y:F1},{reportPos.Z:F1})");
                 return reportPos;
+            }
+            if (CharacterQuests.DiagEnabled)
+                Logger.Warn($"[QuestRemove] REMOVER=report-walk-skip quest={questId} reporter={reportNpc.NpcId} reason=no-spawner-row");
         }
+        if (chosenActive && selectedQuest is { Status: QuestStatus.Ready })
+            return null;
 
         // 1b. Active non-Ready quest waiting on an uncredited gather/interact
         //     objective's doodad source — walk to the nearest spawner for that
@@ -2125,8 +2667,10 @@ public enum NeedsFarmLoopPhase
         //     nothing else.
         var objectiveSource = (Vector3?)null;
         var objectiveSourceIsPrey = false;
-        if (ResolveQuestObjectiveSource(actor, out var resolvedSource, out _, out objectiveSourceIsPrey))
+        if (ResolveQuestObjectiveSource(actor, band.ChosenQuestId, out var resolvedSource, out _, out objectiveSourceIsPrey))
             objectiveSource = resolvedSource;
+        if (chosenActive)
+            return objectiveSource;
 
         // 2. Nearest offerer spawner whose offers are actually worth walking
         //    to — in band and not already completed (a spawner whose only
@@ -2238,6 +2782,8 @@ public enum NeedsFarmLoopPhase
     {
         foreach (var questId in QuestManager.Instance.GetQuestsOfferedByNpc(npcTemplateId))
         {
+            if (band.ChosenQuestId != 0 && questId != band.ChosenQuestId)
+                continue;
             var template = QuestManager.Instance.GetTemplate(questId);
             // The template == null guard is load-bearing: 116 quest_components
             // rows have no matching quest_contexts row, and this pre-filter
@@ -2300,7 +2846,7 @@ public enum NeedsFarmLoopPhase
     /// guards, not a second decision: no arm is added, no guard relaxed, and
     /// both doodad arms keep reporting false.
     /// </summary>
-    private static bool ResolveQuestObjectiveSource(GameplayActor actor, out Vector3 source,
+    private static bool ResolveQuestObjectiveSource(GameplayActor actor, uint chosenQuestId, out Vector3 source,
         out uint sourceTemplate, out bool sourceIsPrey)
     {
         source = default;
@@ -2336,6 +2882,8 @@ public enum NeedsFarmLoopPhase
 
         foreach (var (questId, quest) in quests.ActiveQuests.OrderBy(kv => kv.Key))
         {
+            if (chosenQuestId != 0 && questId != chosenQuestId)
+                continue;
             if (quest is not { Status: not QuestStatus.Ready and not QuestStatus.Completed })
                 continue;
             QuestFixtureRow row;
@@ -2503,8 +3051,18 @@ public enum NeedsFarmLoopPhase
     /// </summary>
     private bool StepHomesteadLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
     {
-        var runner = _homesteadRunners.GetOrAdd(bot.CharacterId, _ => new AAEmu.Game.Core.Managers.Bots.Goap.GoapPlanRunner());
-        var context = _homesteadContexts.GetOrAdd(bot.CharacterId, _ => new AAEmu.Game.Core.Managers.Bots.Goap.BotContext());
+        if (!_homesteadRunners.TryGetValue(bot.CharacterId, out var runner) || !_homesteadGenerations.TryGetValue(bot.CharacterId, out var homeGen) || homeGen != state.Generation)
+        {
+            runner = new AAEmu.Game.Core.Managers.Bots.Goap.GoapPlanRunner();
+            _homesteadRunners[bot.CharacterId] = runner;
+            _homesteadGenerations[bot.CharacterId] = state.Generation;
+        }
+        if (!_homesteadContexts.TryGetValue(bot.CharacterId, out var context) || !_homesteadGenerations.TryGetValue(bot.CharacterId, out var ctxGen) || ctxGen != state.Generation)
+        {
+            context = new AAEmu.Game.Core.Managers.Bots.Goap.BotContext();
+            _homesteadContexts[bot.CharacterId] = context;
+            _homesteadGenerations[bot.CharacterId] = state.Generation;
+        }
 
         if (!context.Memory.KnownHousingZonePos.HasValue)
         {
@@ -2623,6 +3181,8 @@ public enum NeedsFarmLoopPhase
                 RestoreFarmRoute(state, bot, "on valid soil");
                 if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
                 {
+                    // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                    LogQuestTravelHaltCaller(bot, state, "settle", "farm-on-soil");
                     _ = actor.Stop();
                     state.PendingLeg = null;
                 }
@@ -2661,6 +3221,8 @@ public enum NeedsFarmLoopPhase
         {
             if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
             {
+                // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                LogQuestTravelHaltCaller(bot, state, "settle", "farm-merchant-range");
                 _ = actor.Stop();
                 state.PendingLeg = null;
             }
@@ -2788,6 +3350,8 @@ public enum NeedsFarmLoopPhase
         // In interact range! Halt approach, face the crop, and broadcast standstill so bot doesn't walk in place
         if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
         {
+            // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+            LogQuestTravelHaltCaller(bot, state, "settle", "farm-harvest-range");
             _ = actor.Stop();
             state.PendingLeg = null;
         }
@@ -2829,6 +3393,8 @@ public enum NeedsFarmLoopPhase
             RestoreFarmRoute(state, bot, "arrived on valid soil");
             if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
             {
+                // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                LogQuestTravelHaltCaller(bot, state, "settle", "farm-soil-arrival");
                 _ = actor.Stop();
                 state.PendingLeg = null;
             }
@@ -3338,7 +3904,8 @@ public enum NeedsFarmLoopPhase
     /// </summary>
     private void ArmFarmRoute(BotRoamState state, PlayerBotRuntime bot, Vector3 target, string reason)
     {
-        if (state.NeedsFarmStashedRoute == null && state.Path is { IsFinished: false })
+        if (state.NeedsFarmStashedRoute == null && state.Path is { IsFinished: false }
+            && state.PendingMoveOwner != QuestTravelMoveOwner)
             state.NeedsFarmStashedRoute = state.Path;
         state.NeedsFarmSoilTarget = target;
         state.NeedsFarmReason = reason;
@@ -3687,7 +4254,11 @@ public enum NeedsFarmLoopPhase
                 if (needsMove)
                 {
                     if (actor.ActiveRequest is { IsTerminal: false })
+                    {
+                        // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                        LogQuestTravelHaltCaller(bot, state, "other", "pvp-engage-retrack");
                         _ = actor.Stop();
+                    }
                     StageMoveOwner(actor, "OTHER:pvp-engage");
                     state.PendingLeg = actor.MoveToUnit(target.ObjId, HuntChaseSpeed, TimeSpan.FromSeconds(10));
                 }
@@ -3696,6 +4267,8 @@ public enum NeedsFarmLoopPhase
             {
                 if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
                 {
+                    // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                    LogQuestTravelHaltCaller(bot, state, "settle", "pvp-engage-range");
                     _ = actor.Stop();
                     state.PendingLeg = null;
                 }
@@ -3763,6 +4336,8 @@ public enum NeedsFarmLoopPhase
             bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, best.ObjId), true);
             if (actor.ActiveRequest is { IsTerminal: false })
             {
+                // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                LogQuestTravelHaltCaller(bot, state, "other", "pvp-engage-acquire");
                 _ = actor.Stop();
                 state.PendingLeg = null;
             }

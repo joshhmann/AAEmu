@@ -34,12 +34,19 @@ public sealed class PlayerBotRuntime
     public PlayerBotState State { get; internal set; } = PlayerBotState.Registered;
 
     /// <summary>
+    /// Activation generation: bumped on every successful Activate (process-wide
+    /// monotonic counter, first issue = 1). 0 = never activated. Queued steps
+    /// and executor caches bound to an older generation are stale and refused.
+    /// Mutated by the manager under <see cref="Sync"/>; read lock-free.
+    /// </summary>
+    public ulong Generation { get; internal set; }
+
+    /// <summary>
     /// Runtime ownership: the subsystem that requested the current lifecycle
     /// transition (e.g. "population-director", "scheduler", "admin").
     /// Empty when no owner holds the bot (Registered/Deactivated).
     /// </summary>
     public string Owner { get; internal set; } = string.Empty;
-
     public DateTime CreatedAtUtc { get; } = DateTime.UtcNow;
 
     public DateTime? ActivatedAtUtc { get; internal set; }

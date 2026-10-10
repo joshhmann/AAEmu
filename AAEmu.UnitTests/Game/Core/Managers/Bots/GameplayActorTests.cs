@@ -695,6 +695,71 @@ public class GameplayActorTests
     }
 
     [Test]
+    public async Task CompletedK_BusyRetry_IdleRetry_Refused()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("m53-move-busy-retry");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var first = actor.MoveTo(new Vector3(10, 0, 0), speed: 1f, idempotencyKey: "m53-busy-key");
+        for (var i = 0; i < 30 && first.State is not ActorLifecycleState.Completed; i++)
+            actor.Tick(TimeSpan.FromSeconds(1));
+        await Assert.That(first.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        // Unrelated long leg keeps the actor busy.
+        var unrelated = actor.MoveTo(new Vector3(100, 0, 0), speed: 5f);
+        await Assert.That(unrelated.State).IsEqualTo(ActorLifecycleState.Running);
+
+        // Busy retry of the FINISHED key K: still recognized as a duplicate.
+        var busyRetry = actor.MoveTo(new Vector3(10, 0, 0), speed: 1f, idempotencyKey: "m53-busy-key");
+        await Assert.That(busyRetry.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(busyRetry.IsDedupeRejection).IsTrue();
+        await Assert.That(busyRetry.Detail?.Contains("duplicate idempotency key")).IsTrue();
+        await Assert.That(busyRetry.StateChanges.Any(s => s.Contains("Running"))).IsFalse();
+
+        // Finish the unrelated leg → actor idle.
+        for (var i = 0; i < 60 && unrelated.State is ActorLifecycleState.Running; i++)
+            actor.Tick(TimeSpan.FromSeconds(1));
+        await Assert.That(unrelated.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.ActiveRequest).IsNull();
+
+        // Idle retry of K: still refused as a duplicate, never re-executed.
+        var idleRetry = actor.MoveTo(new Vector3(10, 0, 0), speed: 1f, idempotencyKey: "m53-busy-key");
+        await Assert.That(idleRetry.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(idleRetry.IsDedupeRejection).IsTrue();
+        await Assert.That(idleRetry.StateChanges.Any(s => s.Contains("Running"))).IsFalse();
+        await Assert.That(actor.FindByKey("m53-busy-key")!.TraceId).IsEqualTo(first.TraceId);
+    }
+
+    [Test]
+    public async Task Ledger_LockedOutcome_NotOverwrittenByBusy()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("m53-move-ledger-lock");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+
+        var first = actor.MoveTo(new Vector3(10, 0, 0), speed: 1f, idempotencyKey: "m53-ledger-key");
+        for (var i = 0; i < 30 && first.State is not ActorLifecycleState.Completed; i++)
+            actor.Tick(TimeSpan.FromSeconds(1));
+        await Assert.That(first.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        var unrelated = actor.MoveTo(new Vector3(100, 0, 0), speed: 5f);
+        await Assert.That(unrelated.State).IsEqualTo(ActorLifecycleState.Running);
+
+        var busyRetry = actor.MoveTo(new Vector3(10, 0, 0), speed: 1f, idempotencyKey: "m53-ledger-key");
+        await Assert.That(busyRetry.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(busyRetry.IsDedupeRejection).IsTrue();
+        // Full audit lifecycle preserved for the refused duplicate.
+        await Assert.That(busyRetry.StateChanges.Any(s => s.Contains("Requested"))).IsTrue();
+        await Assert.That(busyRetry.StateChanges.Any(s => s.Contains("Accepted"))).IsTrue();
+        await Assert.That(busyRetry.StateChanges.Any(s => s.Contains("Rejected"))).IsTrue();
+
+        // The locked Completed outcome still stands under the key.
+        var entry = actor.FindByKey("m53-ledger-key");
+        await Assert.That(entry).IsNotNull();
+        await Assert.That(entry!.TraceId).IsEqualTo(first.TraceId);
+        await Assert.That(entry.Result).IsEqualTo(ActorLifecycleState.Completed);
+    }
+
+    [Test]
     public async Task Stop_RunningMove_HaltsMovement_SecondStopIsNoOp()
     {
         var (actor, session) = GameplayActorTestRig.CreateActor("m53-move-6");

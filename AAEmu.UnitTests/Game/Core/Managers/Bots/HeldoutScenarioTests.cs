@@ -247,17 +247,32 @@ public class HeldoutScenarioTests
         actor.Character.IsAutoAttack = true;
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
+        ActorRequest? recovery = null;
 
         for (var wake = 1; wake <= 30; wake++)
         {
-            _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            var run = QuestDecisionScenario.Run(actor, (_, _) => [],
                 new QuestDecisionScenario.QuestOptions { CycleId = $"ho-regen-{wake}" });
+            Console.WriteLine($"REGEN_DIAGNOSTIC wake={wake} hp={npc.Hp} selected={run.SelectedAction} request={run.Request?.TraceId}/{run.Request?.State}/{run.Request?.TargetId}/{run.Request?.Destination} legs={string.Join(" | ", run.LegEvidence.Select(e => $"{e.Leg}:{e.Detail}"))}");
+            if (recovery == null && run.SelectedAction == ActorActionType.Move
+                && run.Request is { TargetId: var target } request
+                && target == npcObjId
+                && request.State is ActorLifecycleState.Running or ActorLifecycleState.Completed)
+                recovery = request;
             // Regen outpaces DPS: bot deals ~2/wake, mob heals 5/wake.
             npc.Hp = Math.Min(npc.MaxHp, npc.Hp - 2 + 5);
             actor.Character.IsAutoAttack = true;
         }
 
-        await Assert.That(npc.Hp <= 0).IsTrue();
+        await Assert.That(npc.Hp > 0).IsTrue();
+        await Assert.That(recovery, "Regeneration must provoke an actual bounded close-in request, not a synthetic kill.").IsNotNull();
+        await Assert.That(recovery!.TargetId).IsEqualTo(npcObjId);
+        // MoveToUnit deliberately has no position Destination on its request;
+        // the unit identity selects the live destination inside StartMove.
+        await Assert.That(recovery.Action).IsEqualTo(ActorActionType.Move);
+        await Assert.That(recovery.Timeout.HasValue && recovery.Timeout.Value > TimeSpan.Zero).IsTrue();
+        await Assert.That(actor.ActiveRequest!.TraceId).IsEqualTo(recovery.TraceId);
+        await Assert.That(recovery.State is ActorLifecycleState.Running or ActorLifecycleState.Completed).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
         actor.StopAutoAttack();

@@ -136,10 +136,11 @@ public partial class Quest
                     break;
                 case QuestComponentKind.Drop:
                     // This quest is being dropped, there is no next step
-                    Owner.Quests.DropQuest(TemplateId, true, false);
+                    if (CharacterQuests.DiagEnabled)
+                        Logger.Warn($"[QuestRemove] REMOVER=step-machine-Drop {DiagDescribe()} char={Owner.Name}({Owner.Id})");
+                    Owner.Quests.DropQuest(TemplateId, true, false, "REMOVER=step-machine-Drop");
                     return;
                 case QuestComponentKind.Reward:
-                    // Reward is the last possible step
 
                     // Mark quest as completed
                     var completedBlock = Owner.Quests.SetCompletedQuestFlag(TemplateId, true);
@@ -171,8 +172,7 @@ public partial class Quest
                     // to run. Counted AFTER the flag write so the counter can
                     // only ever be >= the quests the DB now shows completed.
                     QuestProgressCounters.RecordCompleted();
-
-                    Owner.Quests.DropQuest(TemplateId, false, false);
+                    Owner.Quests.DropQuest(TemplateId, false, false, "REMOVER=report-complete");
                     Owner.SendPacket(new SCQuestContextCompletedPacket(TemplateId, body, 0));
 
                     return;

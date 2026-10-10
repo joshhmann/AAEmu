@@ -1,5 +1,10 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
+
+using AAEmu.Commons.Network.Core;
+using AAEmu.Game.Core.Network.Connections;
 
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Char;
@@ -34,9 +39,32 @@ public class PlayerBotSchedulerTests
     /// <summary>Deterministic lifecycle seam (same shape as the manager rig).</summary>
     private sealed class RecordingLifecycle : IPlayerBotLifecycleService
     {
-        public bool ActivateHeadless(Character character, object? botContext) => true;
+        public bool Called { get; private set; }
+
+        public bool ActivateHeadless(Character character, object? botContext)
+        {
+            Called = true;
+            return true;
+        }
 
         public bool Deactivate(Character character, string reason) => true;
+    }
+
+    /// <summary>
+    /// Minimal live-connection stub (E2eNullSession shape at BotDriveBridge.cs:3656-3667).
+    /// Packets vanish; the connection only needs to be non-null on the character.
+    /// </summary>
+    private sealed class NullSession : ISession
+    {
+        private readonly Dictionary<string, object> _attributes = [];
+        public IPAddress Ip => IPAddress.Loopback;
+        public uint SessionId => 0xE2E1;
+        public Socket Socket => null!;
+        public void SendPacket(byte[] packet) { }
+        public void AddAttribute(string name, object attribute) => _attributes[name] = attribute;
+        public object GetAttribute(string name) => _attributes.GetValueOrDefault(name)!;
+        public void ClearAttribute(string name) => _attributes.Remove(name);
+        public void Close() { }
     }
 
     /// <summary>
@@ -613,7 +641,7 @@ public class PlayerBotSchedulerTests
     }
 
     [Test]
-    public async Task ThrowingStep_CountedAsFailed_LeaseReleased_NoReschedule()
+    public async Task ThrowingStep_RetriesOnceThenFaults()
     {
         using var rig = new Rig();
         var bot = rig.AddActiveBot(1);
@@ -624,9 +652,140 @@ public class PlayerBotSchedulerTests
         await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().TotalStepsFailed == 1);
 
         await Assert.That(rig.Scheduler.IsLeased(bot)).IsFalse();
-        await Task.Delay(100);
-        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(1); // no auto retry spin
+
+        // First consecutive failure => one retry at ScanInterval (1h rig clock).
+        rig.Time.Advance(TimeSpan.FromHours(1) + TimeSpan.FromMilliseconds(1));
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 2);
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().TotalStepsFailed == 2);
+        await Assert.That(rig.Scheduler.IsLeased(bot)).IsFalse();
+
+        // Second consecutive failure => Faulted, nothing scheduled.
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetBotStepState(bot)?.LastOutcome
+            == PlayerBotScheduler.BotStepOutcomeKind.Faulted);
         await Assert.That(rig.Scheduler.GetMetrics().TotalStepsRun).IsEqualTo(0);
+
+        // Quiescence: no third start.
+        rig.Time.Advance(TimeSpan.FromHours(2));
+        rig.Pump();
+        await Task.Delay(300);
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task FailedStep_FirstFailure_RetriesOnce()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        rig.Executor.Throw = true;
+
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().TotalStepsFailed == 1);
+
+        // Retry succeeds: exactly one retry start, then dormant (null delay).
+        rig.Executor.Throw = false;
+        rig.Time.Advance(TimeSpan.FromHours(1) + TimeSpan.FromMilliseconds(1));
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 2);
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().TotalStepsRun == 1);
+        await Assert.That(rig.Scheduler.GetBotStepState(bot)?.LastOutcome)
+            .IsEqualTo(PlayerBotScheduler.BotStepOutcomeKind.Ran);
+    }
+
+    [Test]
+    public async Task FailedStep_SuccessResetsStreak()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        rig.Executor.Throw = true;
+
+        // Fail once (streak 1), then retry with a fix: success resets the streak.
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().TotalStepsFailed == 1);
+        rig.Executor.Throw = false;
+        rig.Time.Advance(TimeSpan.FromHours(1) + TimeSpan.FromMilliseconds(1));
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().TotalStepsRun == 1);
+
+        // Fail again (streak 1 anew — not a fault), so it retries once more.
+        rig.Executor.Throw = true;
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().TotalStepsFailed == 2);
+        rig.Executor.Throw = false;
+        rig.Time.Advance(TimeSpan.FromHours(1) + TimeSpan.FromMilliseconds(1));
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 4);
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().TotalStepsRun == 2);
+
+        // Four starts, two runs, never faulted.
+        await Assert.That(rig.Scheduler.GetBotStepState(bot)?.LastOutcome)
+            .IsEqualTo(PlayerBotScheduler.BotStepOutcomeKind.Ran);
+    }
+
+    [Test]
+    public async Task FailedStep_ExternalWake_RevivesFaulted()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        rig.Executor.Throw = true;
+
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetMetrics().TotalStepsFailed == 1);
+        rig.Time.Advance(TimeSpan.FromHours(1) + TimeSpan.FromMilliseconds(1));
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Scheduler.GetBotStepState(bot)?.LastOutcome
+            == PlayerBotScheduler.BotStepOutcomeKind.Faulted);
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(2);
+
+        // An external wake revives the faulted bot: it steps again.
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 3);
+    }
+
+    [Test]
+    public async Task EnrollmentSnapshot_UnknownBot_IsNoEntry()
+    {
+        using var rig = new Rig();
+        var snap = rig.Scheduler.GetEnrollmentSnapshot(9999);
+        await Assert.That(snap.Registered).IsFalse();
+        await Assert.That(snap.Disposition).IsEqualTo("no-entry");
+        await Assert.That(snap.SchedulerRunning).IsTrue();
+    }
+
+    [Test]
+    public async Task EnrollmentSnapshot_ActiveBotWithNoWake_IsEntryNeverDue()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        var snap = rig.Scheduler.GetEnrollmentSnapshot(bot);
+        await Assert.That(snap.Registered).IsTrue();
+        await Assert.That(snap.State).IsEqualTo(nameof(PlayerBotState.Active));
+        await Assert.That(snap.ScheduledDueUtc).IsNull();
+        await Assert.That(snap.Disposition).IsEqualTo("entry-never-due");
+    }
+
+    [Test]
+    public async Task EnrollmentSnapshot_ScheduledBot_IsDueNeverExecuted_ThenExecuted()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        rig.Scheduler.WakeAt(bot, rig.Now + TimeSpan.FromMilliseconds(10));
+        rig.Pump(); // not due yet: entry held, nothing executed
+        var before = rig.Scheduler.GetEnrollmentSnapshot(bot);
+        await Assert.That(before.ScheduledDueUtc).IsNotNull();
+        await Assert.That(before.Disposition).IsEqualTo("due-never-executed");
+        rig.Time.Advance(TimeSpan.FromMilliseconds(11));
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
+        await rig.WaitUntilAsync(() => !rig.Scheduler.IsLeased(bot));
+        var after = rig.Scheduler.GetEnrollmentSnapshot(bot);
+        await Assert.That(after.Disposition).IsEqualTo("executed");
+        await Assert.That(after.LastOutcome).IsEqualTo(nameof(PlayerBotScheduler.BotStepOutcomeKind.Ran));
     }
 
     [Test]
@@ -939,6 +1098,118 @@ public class PlayerBotSchedulerTests
         await Assert.That(rig.Scheduler.IsRunning).IsTrue();
         await Assert.That(rig.Scheduler.GetMetrics().TotalStepsRun).IsEqualTo(1);
     }
+
+    #region Generation binding (P0.2 defects 4-6)
+
+    [Test]
+    public async Task Reactivation_NewGeneration_EvictsOldActor()
+    {
+        // Deactivate → Activate bumps the generation; an old queued step is
+        // refused as StaleGeneration and never reaches the executor.
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        rig.Manager.TryGet(bot, out var rt1);
+        var gen1 = rt1!.Generation;
+        await Assert.That(gen1).IsEqualTo(1UL);
+
+        rig.Scheduler.WakeAt(bot, rig.Now); // queue gen-1 step (stays leased until drained)
+        rig.Pump();
+        rig.Manager.Deactivate(bot, "test");
+        rig.Manager.Activate(bot, null, "rig");
+        rig.Manager.TryGet(bot, out var rt2);
+        await Assert.That(rt2!.Generation).IsEqualTo(gen1 + 1);
+
+        rig.Scheduler.DrainTickQueue(); // executes the stale gen-1 step
+        await rig.WaitUntilAsync(() => !rig.Scheduler.IsLeased(bot));
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(0);
+        var outcome = rig.Scheduler.GetBotStepState(bot);
+        await Assert.That(outcome!.LastOutcome).IsEqualTo(PlayerBotScheduler.BotStepOutcomeKind.StaleGeneration);
+        await Assert.That(outcome!.Skipped).IsEqualTo(1);
+        await Assert.That(outcome!.ConsecutiveFailures).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task StaleSnapshot_GenerationMismatch_Refused()
+    {
+        // The enrollment snapshot carries the live generation; a caller
+        // holding a pre-reactivation snapshot observes the mismatch.
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        var before = rig.Scheduler.GetEnrollmentSnapshot(bot);
+        rig.Manager.Deactivate(bot, "test");
+        rig.Manager.Activate(bot, null, "rig");
+        var after = rig.Scheduler.GetEnrollmentSnapshot(bot);
+        await Assert.That(after.Generation).IsNotEqualTo(before.Generation);
+        await Assert.That(after.Generation).IsEqualTo(before.Generation + 1);
+    }
+
+    [Test]
+    public async Task Remove_ThenSpawn_DrawsFreshGeneration()
+    {
+        // The counter is process-wide: a re-spawned bot draws a strictly
+        // larger generation, so no recycled step can validate.
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        rig.Manager.TryGet(bot, out var rt1);
+        var gen1 = rt1!.Generation;
+        var character = rt1.Character;
+        rig.Manager.Deactivate(bot, "test");
+        await Assert.That(rig.Manager.Remove(bot)).IsTrue();
+        await Assert.That(rig.Manager.Spawn(character, "rig")).IsTrue();
+        await Assert.That(rig.Manager.Activate(bot, null, "rig")).IsTrue();
+        rig.Manager.TryGet(bot, out var rt2);
+        await Assert.That(rt2!.Generation).IsGreaterThan(gen1);
+    }
+
+    [Test]
+    public async Task DormantMaterialize_BumpsGeneration()
+    {
+        // Materialize flows through Activate, so a rematerialized bot draws a
+        // fresh generation (verified here through the manager path it calls).
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        rig.Manager.TryGet(bot, out var rt1);
+        var gen1 = rt1!.Generation;
+        rig.Manager.Deactivate(bot, "dormancy");
+        await Assert.That(rig.Manager.Activate(bot, null, "dormant")).IsTrue();
+        rig.Manager.TryGet(bot, out var rt2);
+        await Assert.That(rt2!.Generation).IsEqualTo(gen1 + 1);
+    }
+
+    #endregion
+    #region Live-connection guard
+
+    [Test]
+    public async Task Activate_RefusesCharacterWithLiveConnection()
+    {
+        var lifecycle = new RecordingLifecycle();
+        var manager = new PlayerBotManager(lifecycle);
+        var character = new Character(new UnitCustomModelParams()) { Id = 1, Name = "live", MaxHp = 100, Hp = 100 };
+        await Assert.That(manager.Spawn(character, "rig")).IsTrue();
+
+        var conn = new GameConnection(new NullSession()) { ActiveChar = character };
+        character.Connection = conn;
+
+        await Assert.That(manager.Activate(1, null, "rig")).IsFalse();
+        await Assert.That(manager.GetDiagnostics().FailedActivations).IsEqualTo(1);
+        await Assert.That(lifecycle.Called).IsFalse();
+        await Assert.That(manager.TryGet(1, out var runtime)).IsTrue();
+        await Assert.That(runtime!.State).IsEqualTo(PlayerBotState.Registered);
+    }
+
+    [Test]
+    public async Task Activate_AllowsNullConnectionCharacter()
+    {
+        var lifecycle = new RecordingLifecycle();
+        var manager = new PlayerBotManager(lifecycle);
+        var character = new Character(new UnitCustomModelParams()) { Id = 2, Name = "headless", MaxHp = 100, Hp = 100 };
+        await Assert.That(manager.Spawn(character, "rig")).IsTrue();
+
+        await Assert.That(manager.Activate(2, null, "rig")).IsTrue();
+        await Assert.That(lifecycle.Called).IsTrue();
+    }
+
+    #endregion
 
     #endregion
 }

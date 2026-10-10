@@ -114,6 +114,50 @@ public class GameplayActorQuestDiscoveryTests
     }
 
     [Test]
+    public async Task DiscoverQuests_TwoLevelRequirements_RemainIndependentAfterReseeding()
+    {
+        const uint firstQuestId = 108_870;
+        const uint firstComponentId = 108_871;
+        const uint npcTemplateId = 108_872;
+        const uint secondQuestId = 108_873;
+        const uint secondComponentId = 108_874;
+        var (actor, session) = GameplayActorTestRig.CreateActor("pb002-two-level-gates");
+        GameplayActorTestRig.SeedQuestOffer(firstQuestId, firstComponentId, npcTemplateId);
+        GameplayActorTestRig.SeedQuestOffer(secondQuestId, secondComponentId, npcTemplateId);
+        GameplayActorTestRig.SeedQuestComponentLevelRequirement(firstComponentId, minLevel: 10);
+        GameplayActorTestRig.SeedQuestComponentLevelRequirement(secondComponentId, minLevel: 20);
+        var npcObjId = session.SpawnNpc(npcTemplateId);
+        actor.Character.Level = 15;
+        actor.Character.Hp = actor.Character.MaxHp;
+
+        var initial = actor.DiscoverQuests(npcObjId);
+        await Assert.That(initial.State).IsEqualTo(ActorLifecycleState.Completed);
+        var initialOffers = ((QuestDiscoveryResult)initial.Result!).Offerings;
+        await Assert.That(initialOffers.Any(o => o.QuestId == firstQuestId)).IsTrue();
+        await Assert.That(initialOffers.Any(o => o.QuestId == secondQuestId)).IsFalse();
+
+        // Updating one component must replace its owner's indexed row without
+        // changing the other component's ordinary acceptance requirement.
+        GameplayActorTestRig.SeedQuestComponentLevelRequirement(firstComponentId, minLevel: 30);
+        actor.Character.Level = 20;
+        actor.Character.Hp = actor.Character.MaxHp;
+        var reseeded = actor.DiscoverQuests(npcObjId);
+        await Assert.That(reseeded.State).IsEqualTo(ActorLifecycleState.Completed);
+        var reseededOffers = ((QuestDiscoveryResult)reseeded.Result!).Offerings;
+        await Assert.That(reseededOffers.Any(o => o.QuestId == firstQuestId)).IsFalse();
+        await Assert.That(reseededOffers.Any(o => o.QuestId == secondQuestId)).IsTrue();
+
+        var refused = actor.AcceptQuest(firstQuestId, QuestAcceptorType.Npc, npcTemplateId);
+        await Assert.That(refused.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(firstQuestId)).IsFalse();
+        var accepted = actor.AcceptQuest(secondQuestId, QuestAcceptorType.Npc, npcTemplateId);
+        await Assert.That(accepted.State).IsEqualTo(ActorLifecycleState.Completed);
+        // Start-only fixture quests may finish during AcceptQuest's automatic
+        // step drain; the actual engine acceptance result is the contract here.
+        await Assert.That((bool)accepted.Result!).IsTrue();
+    }
+
+    [Test]
     public async Task DiscoverQuests_NpcWithoutOffers_CompletesEmpty()
     {
         var (actor, session) = GameplayActorTestRig.CreateActor("pb002-discover-4");

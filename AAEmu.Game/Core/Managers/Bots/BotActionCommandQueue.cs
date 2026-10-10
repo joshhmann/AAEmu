@@ -885,7 +885,11 @@ public sealed class BotActionCommandQueue
                 request.TraceId, entry.Actor?.ActorId ?? entry.CharacterId, request.Action,
                 request.TargetId, request.RequestedAtUtc, request.StartedAtUtc, request.CompletedAtUtc,
                 request.State, request.Failure, request.Detail, request.StateChanges.ToList(),
-                DecisionCycleId: request.DecisionCycleId, WakeSequence: request.WakeSequence);
+                DecisionGoal: request.DecisionGoal, DecisionPolicy: request.DecisionPolicy,
+                DecisionCandidates: request.DecisionCandidates, DecisionRejections: request.DecisionRejections,
+                DecisionSeed: request.DecisionSeed, DecisionCycleId: request.DecisionCycleId,
+                WakeSequence: request.WakeSequence, MoveOwner: request.MoveOwner,
+                DecisionQuestId: request.DecisionQuestId);
     }
 
     private void PublishSnapshot(BotActionCommand entry)

@@ -484,7 +484,7 @@ public class QuestDirectorGateTests
         await Assert.That(plan.Pattern).IsEqualTo(QuestPattern.TalkChain);
         await Assert.That(plan.Legs.Select(l => l.Id)).IsEquivalentTo(new[]
         {
-            QuestLegId.Advance, QuestLegId.Talk, QuestLegId.TurnIn
+            QuestLegId.Advance, QuestLegId.Return, QuestLegId.Talk, QuestLegId.TurnIn
         });
         await Assert.That(plan.Leg(QuestLegId.Talk)).IsNotNull();
         await Assert.That(plan.Leg(QuestLegId.TurnIn)).IsNotNull();
@@ -502,7 +502,7 @@ public class QuestDirectorGateTests
     {
         await Assert.That(PatternCatalog.VerbsFor(QuestPattern.TalkChain)).IsEquivalentTo(new[]
         {
-            "MoveTo", "Stop", "Observe", "AcceptQuest", "Talk", "TurnInQuest"
+            "MoveTo", "Stop", "Observe", "AcceptQuest", "Talk", "InteractNpc", "TurnInQuest"
         });
 
         foreach (var verbKey in PatternCatalog.VerbsFor(QuestPattern.TalkChain))

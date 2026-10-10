@@ -178,11 +178,11 @@ public class GameplayActor : IGameplayActor
     /// onto the next created request, then cleared. Single-writer safe —
     /// the actor is driven from exactly one execution context at a time.
     /// </summary>
-    private (string? Goal, string? Policy, int Candidates, int Rejections, string? Seed)? _pendingDecision;
+    private (string? Goal, string? Policy, int Candidates, int Rejections, string? Seed, uint? QuestId)? _pendingDecision;
 
     /// <summary>Stages decision context for the next created request.</summary>
-    public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed)
-        => _pendingDecision = (goal, policy, candidates, rejections, seed);
+    public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed, uint? questId)
+        => _pendingDecision = (goal, policy, candidates, rejections, seed, questId);
 
     /// <summary>
     /// Pending Part-3 join key for the next created request. Staged
@@ -424,6 +424,19 @@ public class GameplayActor : IGameplayActor
                 request.TraceId, ActorId, Character.Name, request.Action, request.TargetId,
                 request.State, request.Failure?.ToString() ?? "-", request.MoveOwner ?? "NONE",
                 request.Elapsed.TotalSeconds, request.Detail ?? "-");
+    }
+    // TEMPORARY live-lane diagnostic (read-only witness, never branched on): QUEST_TRAVEL terminal-outcome — the terminal verbatim (Completed/Rejected/Interrupted/TimedOut + audit detail) for every QUEST_TRAVEL-owned Move/Drive; fires exactly once per leg via Finish, Shannon Askett non-quest legs untouched.
+    private void LogQuestTravelTerminal(ActorRequest request)
+    {
+        if (!CharacterQuests.DiagEnabled)
+            return;
+        if (request.MoveOwner != "QUEST_TRAVEL")
+            return;
+        if (request.Action is not (ActorActionType.Move or ActorActionType.Drive))
+            return;
+        var dest = request.Destination;
+        var destText = dest.HasValue ? "(" + dest.Value.X.ToString("F1") + "," + dest.Value.Y.ToString("F1") + "," + dest.Value.Z.ToString("F1") + ")" : "-";
+        Logger.Warn($"[QuestRemove] REMOVER=report-walk-terminal trace={request.TraceId} action={request.Action} target={request.TargetId} result={request.State} failure={request.Failure?.ToString() ?? "-"} owner={request.MoveOwner} elapsed={request.Elapsed.TotalSeconds:F1}s detail={request.Detail ?? "-"} dest={destText}");
     }
 
     /// <summary>
@@ -4816,7 +4829,8 @@ public class GameplayActor : IGameplayActor
         Vector3? destination = null, uint skillId = 0, TimeSpan? timeout = null, object? payload = null,
         string? idempotencyKey = null)
     {
-        var request = new ActorRequest(action, targetId, destination, skillId, timeout, payload, idempotencyKey)
+        var request = new ActorRequest(action, targetId, destination, skillId, timeout, payload, idempotencyKey,
+            _pendingDecision?.QuestId)
         {
             Clock = TimeProvider
         };
@@ -4844,29 +4858,26 @@ public class GameplayActor : IGameplayActor
     }
 
     /// <summary>
-    /// Single-writer gate: accepts the request as the new active one, or
-    /// rejects it with StateTransition("busy") when another request is live.
+    /// Single-writer gate: rejects a duplicate of a locked idempotency key
+    /// first, else accepts the request as the new active one, or rejects it
+    /// with StateTransition("busy") when another request is live.
     /// The busy request still walks the full lifecycle (Requested → Accepted
     /// → Rejected) so its audit record shows the complete transition log.
     /// </summary>
     private bool TryBegin(ActorRequest request, string what)
     {
-        if (_active is { IsTerminal: false })
-        {
-            request.Accept(what);
-            Reject(request, ActorFailureReason.StateTransition, $"actor busy with {_active.Action}");
-            return false;
-        }
-
         request.Accept(what);
 
-        // Idempotency gate: an explicit key whose prior attempt ended in a
+        // Idempotency gate (first): an explicit key whose prior attempt ended in a
         // state that may have executed (Completed/Interrupted/TimedOut) is
         // NEVER re-executed — the duplicate is rejected pre-flight and its
         // audit record shows no Running transition (the roadmap's "retries
         // and timeouts cannot duplicate" guarantee). Rejected attempts are
         // retryable (v1 rejections all occur before engine execution). The
         // refusal is flagged so it cannot replace the locked outcome.
+        // This check precedes the busy gate so a retry of a finished key is
+        // recognized as a duplicate even while the actor is busy with an
+        // unrelated request.
         if (!string.IsNullOrEmpty(request.IdempotencyKey)
             && _ledger.TryGetOutcome(request.IdempotencyKey, out var prior)
             && prior.Result != ActorLifecycleState.Rejected)
@@ -4878,12 +4889,25 @@ public class GameplayActor : IGameplayActor
             return false;
         }
 
+        if (_active is { IsTerminal: false })
+        {
+            Reject(request, ActorFailureReason.StateTransition, $"actor busy with {_active.Action}");
+            return false;
+        }
+
         _active = request;
         return true;
     }
 
     private void InterruptActive(string detail)
     {
+        // TEMPORARY live-lane diagnostic (read-only witness, never branched on): QUEST_TRAVEL preempt victim — movement interrupts (Stop/PreemptCurrent/Interrupt-by-id) funnel here, so one witness covers every issuer; the reason detail names the issuer via the stop/retrack/controller vocabulary (persistence-boundary interrupts are separate private paths that never hold a Move leg).
+        if (CharacterQuests.DiagEnabled && _active is { IsTerminal: false } preemptVictim && preemptVictim.MoveOwner == "QUEST_TRAVEL")
+        {
+            var victimDest = preemptVictim.Destination;
+            var victimDestText = victimDest.HasValue ? "(" + victimDest.Value.X.ToString("F1") + "," + victimDest.Value.Y.ToString("F1") + "," + victimDest.Value.Z.ToString("F1") + ")" : "-";
+            Logger.Warn($"[QuestRemove] REMOVER=report-walk-preempt victimOwner={preemptVictim.MoveOwner} victimAction={preemptVictim.Action} victimTrace={preemptVictim.TraceId} reason={detail} dest={victimDestText} target={preemptVictim.TargetId}");
+        }
         if (_active is { IsTerminal: false } request)
         {
             Finish(request, request.Interrupt(detail));
@@ -4939,12 +4963,14 @@ public class GameplayActor : IGameplayActor
             DecisionGoal: request.DecisionGoal, DecisionPolicy: request.DecisionPolicy,
             DecisionCandidates: request.DecisionCandidates, DecisionRejections: request.DecisionRejections,
             DecisionSeed: request.DecisionSeed, DecisionCycleId: request.DecisionCycleId,
-            WakeSequence: request.WakeSequence, MoveOwner: request.MoveOwner));
+            WakeSequence: request.WakeSequence, MoveOwner: request.MoveOwner,
+            DecisionQuestId: request.DecisionQuestId));
         // Telemetry: one bounded line per terminal transition so a lane log
         // joins ACCEPTED→Running (BotMoveStart) to its terminal outcome.
         // Move/Drive legs log at Info (legs are seconds-to-minutes long);
         // all other actions stay at Debug.
         LogMoveTerminal(request);
+        LogQuestTravelTerminal(request);
         if (_trace.Count > MaxTraceRecords)
             _trace.RemoveRange(0, _trace.Count - MaxTraceRecords);
         if (ReferenceEquals(_active, request))

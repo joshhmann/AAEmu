@@ -114,6 +114,7 @@ public class BotAdminServiceTests
         public bool WakeAt(uint characterId, DateTime utcDue) => true;
         public bool WakeAfter(uint characterId, TimeSpan delay) => true;
         public bool IsLeased(uint characterId) => false;
+        public BotEnrollmentSnapshot GetEnrollmentSnapshot(uint characterId) => new(false, "-", null, false, null, null, null, 0, 0, 0, 0, false, 0);
         public PlayerBotSchedulerMetrics GetMetrics() => new(4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 0);
         public int WorkerCount => 4;
         public bool IsRunning => StartCalls > 0;

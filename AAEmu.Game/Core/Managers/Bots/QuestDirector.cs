@@ -1,11 +1,18 @@
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.GameData;
+using AAEmu.Game.Models.Game.Quests;
+using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Models.Game.Quests.Director;
+
+using QuestPattern = AAEmu.Game.Models.Game.Quests.Director.QuestPattern;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
-/// Assembles one <see cref="QuestPlan"/> per active quest, from the behavior's
+/// Assembles <see cref="QuestPlan"/> work for the remaining objectives of each active quest, from the behavior's
 /// leg <c>Emit</c> providers, over EVERY quest: the shape is decided by the
 /// quest's derived <see cref="QuestFixtureRow"/>, never by a quest id. Six
 /// shapes exist, and they are exhaustive by construction:
@@ -172,19 +179,30 @@ public static class QuestDirector
             Enter: QuestBehavior.TurnInEnter)
     });
     /// <summary>
-    /// The talk-chain leg set: Advance, the talk objective leg, then TurnIn.
-    /// The ordinary TurnIn leg serves the Ready step against the row's
+    /// The talk-chain leg set: Advance, the Return leg, the talk objective leg,
+    /// then TurnIn — the Return leg rides second, the same position it holds in
+    /// <see cref="ObjectiveLegs"/>, so TurnIn's enter gate reads the return slice
+    /// the same wake. The ordinary TurnIn leg serves the Ready step against the row's
     /// <see cref="QuestFixtureRow.ReporterTemplate"/> (falling back to the
     /// Start-step acceptor, exactly as the row derives it); Advance serves the
-    /// step machine as always. No funnel legs: the objective's target is an npc
-    /// resolved per wake from the perception snapshot, never the gather funnel
-    /// (which is built around the item-gather loot chain this shape has no
-    /// item for).
+    /// step machine as always. The Return leg walks to the live reporter
+    /// (Move outside the gate, Stop inside, InteractNpc dialogue once settled),
+    /// which sets <c>CurrentTarget</c> — the gate
+    /// <c>QuestActConReportNpc.RunAct</c> turns in through — and converges
+    /// TurnIn exactly as the kill-to-gather shape does. While the reporter is
+    /// unspawned the Return leg withdraws by name (reporter-lost) exactly as
+    /// TurnIn does, so the wake carries no proposal and the travel fallback
+    /// walks to the reporter's spawner; reporter==acceptor quests therefore
+    /// keep the walk they always had. No funnel legs: the objective's target is
+    /// an npc resolved per wake from the perception snapshot, never the gather
+    /// funnel (which is built around the item-gather loot chain this shape has
+    /// no item for).
     /// </summary>
     private static readonly IReadOnlyList<QuestLeg> TalkChainLegs = Array.AsReadOnly(new QuestLeg[]
     {
         new(QuestLegId.Advance, QuestBehavior.AdvanceEmit,
             Enter: QuestBehavior.AdvanceEnter),
+        new(QuestLegId.Return, QuestBehavior.ReturnEmit, QuestBehavior.ReturnExit),
         new(QuestLegId.Talk, QuestBehavior.TalkEmit,
             Enter: QuestBehavior.TalkEnter),
         new(QuestLegId.TurnIn, QuestBehavior.TurnInEmit,
@@ -197,6 +215,9 @@ public static class QuestDirector
     /// drive it through the behavior's leg loop. The single entry point for the
     /// quest decision path (<see cref="QuestDecisionScenario.Run"/> and the
     /// runtime-hosted <see cref="BotBehaviorRuntime"/> both land here).
+    /// The carried <c>ChosenQuestId</c> scopes the plan set to the owning
+    /// module's retained choice (see <see cref="PlanWake"/>): zero preserves
+    /// the historical all-active-quests assembly.
     /// </summary>
     public static QuestDecisionScenario.QuestRunResult Run(
         IGameplayActor actor,
@@ -213,7 +234,7 @@ public static class QuestDirector
             // selection). A throw here reports the same RUN/FidelityError the
             // wake path has always reported for a failed run.
             var context = BotObservedContext.Capture(actor);
-            return QuestBehavior.Run(actor, opts, context, PlanWake(context), nearbyNpcs);
+            return QuestBehavior.Run(actor, opts, context, PlanWake(context, opts.ChosenQuestId, actor.Character), nearbyNpcs);
         }
         catch (Exception ex)
         {
@@ -223,25 +244,106 @@ public static class QuestDirector
     }
 
     /// <summary>
-    /// The wake's plan set: one gate-checked plan per active quest, in
-    /// ascending quest-id order (the decision order the wake has always used).
+    /// The wake's plan set: gate-checked work for uncredited objectives, in
+    /// quest/component/act order. Ready/bootstrap quests keep their usual plan.
+    /// With no character supplied, callers inspect the static template plans.
     /// Every active quest gets a row derived from its own data — the quest id is
     /// never compared against a wired constant, so a quest the vocabulary can
     /// serve derives its plan the moment it is active. A plan that failed its
     /// gate is present and legless — the run loop names it at run-result level
     /// instead of silently skipping the quest.
+    ///
+    /// Chosen-purpose scoping (HIGH 1): when <paramref name="chosenQuestId"/>
+    /// names the owning module's retained choice, only that quest's plan is
+    /// assembled — ordinary work cannot select another quest independently.
+    /// A nonzero purpose for a quest that is NOT active this wake yields an
+    /// EMPTY set (never a fallback plan for another quest): the caller names
+    /// the switch explicitly from the empty set + its own live reads. Zero
+    /// (no purpose carried) includes every active quest.
+    ///
+    /// GOAP fit (PROJECT-CONTROL strategic ownership): GOAP owns goal
+    /// selection, plan selection, replanning, and abandonment; this module's
+    /// retained choice is the transitional adapter carrying a GOAP-compatible
+    /// purpose (one quest id) into the existing execution path — not a
+    /// competing owner. The director still owns plan assembly, the behavior
+    /// still owns the leg loop and dispatch, and the survival layer still
+    /// preempts through its own per-leg preconditions.
     /// </summary>
-    public static IReadOnlyList<QuestPlan> PlanWake(BotObservedContext context)
+    public static IReadOnlyList<QuestPlan> PlanWake(BotObservedContext context, uint chosenQuestId = 0, Character? character = null)
     {
         ArgumentNullException.ThrowIfNull(context);
-        var plans = new List<QuestPlan>(context.ActiveQuestIds.Count);
-        foreach (var questId in context.ActiveQuestIds.Order())
+        if (chosenQuestId != 0 && !context.ActiveQuestIds.Contains(chosenQuestId))
+            return Array.Empty<QuestPlan>();
+        var source = chosenQuestId != 0
+            ? (IReadOnlyList<uint>)[chosenQuestId]
+            : context.ActiveQuestIds;
+        var plans = new List<QuestPlan>(source.Count);
+        foreach (var questId in source.Order())
         {
-            // The fixture row is derived ONCE per quest per wake (memoized in
-            // the row) and threaded into the plan; no leg re-derives it.
-            plans.Add(Plan(questId, QuestFixtureRow.FromQuestData(questId)));
+            // Objective-specific facts use the existing template/source cache;
+            // live progress determines which objective needs work this wake.
+            var quest = character?.Quests?.ActiveQuests.GetValueOrDefault(questId);
+            var groups = quest == null ? [] : ReadObjectiveGroups(quest);
+            if (quest == null || quest.Status != QuestStatus.Progress || ObjectivesPermitAdvance(quest, groups))
+            {
+                plans.Add(Plan(questId, QuestFixtureRow.FromQuestData(questId)));
+                continue;
+            }
+            var candidates = groups.Where(g => g.Active && !g.Credited)
+                .Select(g => g.Remaining.Select(act => Plan(questId, QuestFixtureRow.FromQuestData(questId, act))).ToList())
+                .ToList();
+            // One completeable component is enough for Selective, but every
+            // remaining action inside that component still has to be served.
+            if (quest.Template?.Selective == true)
+            {
+                var supported = candidates.FirstOrDefault(component => component.All(p => !p.HasFailed && p.Unserved.Length == 0));
+                if (supported != null)
+                    candidates = [supported];
+            }
+            // Keep one bounded execution plan, as before. Once it receives
+            // credit, the next wake selects the next unfinished objective.
+            var remainingPlans = candidates.SelectMany(component => component).ToList();
+            plans.Add(remainingPlans.Count > 0 ? remainingPlans[0] : Plan(questId, QuestFixtureRow.FromQuestData(questId)));
         }
         return plans;
+    }
+
+    /// <summary>Read the live engine components without executing their acts.
+    /// Selective combines components with OR; progress acts within a component
+    /// are AND. Read requirements now, without mutating the engine's cache.</summary>
+    internal sealed record ObjectiveGroup(uint ComponentId, bool Active, bool Credited, IReadOnlyList<QuestActTemplate> Remaining);
+
+    internal static IReadOnlyList<ObjectiveGroup> ReadObjectiveGroups(Quest quest)
+    {
+        if (!quest.QuestSteps.TryGetValue(QuestComponentKind.Progress, out var step))
+            return [];
+        return step.Components.Values.OrderBy(c => c.Template.Id).Select(component =>
+        {
+            var active = quest.Owner is AAEmu.Game.Models.Game.Units.BaseUnit owner
+                && UnitRequirementsGameData.Instance.CanComponentRun(component.Template, owner);
+            var remaining = component.Acts.Where(a => a.Template.CountsAsAnObjective)
+                .Where(a => !component.OverrideObjectiveCompleted && !a.OverrideObjectiveCompleted && !ObjectiveCredited(a.Template, quest))
+                .Select(a => a.Template).OrderBy(a => a.ActId).ToList();
+            return new ObjectiveGroup(component.Template.Id, active, remaining.Count == 0, remaining);
+        }).ToList();
+    }
+
+    internal static bool ObjectiveCredited(QuestActTemplate act, Quest quest)
+        => act.GetObjective(quest) >= (act is QuestActObjTalk or QuestActObjTalkNpcGroup ? 1 : act.Count);
+
+    internal static bool ObjectivesPermitAdvance(Quest quest, IReadOnlyList<ObjectiveGroup> groups)
+    {
+        // An incomplete quest instance cannot establish completion. Preserve
+        // the existing static execution plan rather than crashing perception.
+        if (quest.Template == null)
+            return false;
+        // Score/LetItDone have their own server status calculation; never
+        // replace that with a per-objective count comparison.
+        if (quest.Template.Score > 0 || quest.Template.LetItDone)
+            return quest.GetQuestObjectiveStatus() >= QuestObjectiveStatus.QuestComplete;
+        return quest.Template.Selective
+            ? groups.Any(g => g.Active && g.Credited)
+            : groups.All(g => g.Active && g.Credited);
     }
 
     /// <summary>

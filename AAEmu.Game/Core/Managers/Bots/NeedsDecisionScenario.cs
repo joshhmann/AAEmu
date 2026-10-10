@@ -227,8 +227,24 @@ public static class NeedsDecisionScenario
             }
 
             // ---------------------------------------------------- 3. EXECUTE
-            var execution = BotDecisionCycle.Execute(actor, context, decision.Proposal!,
-                static (gameplayActor, proposal) => Dispatch(gameplayActor, proposal));
+            var selected = decision.Proposal!;
+            // Perception has already emitted its own request. Stage only the
+            // selected dispatch so NewRequest copies attribution before Finish.
+            actor.SetPendingDecision(selected.Goal, selected.PolicyVersion,
+                decision.SelectionCandidateCount ?? decision.Rejections.Count + 1, decision.Rejections.Count, opts.CycleId, null);
+            actor.SetPendingCycleId(opts.CycleId);
+            BotDecisionExecution execution;
+            try
+            {
+                execution = BotDecisionCycle.Execute(actor, context, selected,
+                    static (gameplayActor, proposal) => Dispatch(gameplayActor, proposal));
+            }
+            finally
+            {
+                // Selection/dispatch exceptions must not label a later action.
+                actor.SetPendingDecision(null, null, 0, 0, null, null);
+                actor.SetPendingCycleId(null);
+            }
             var request = execution.Request;
             if (!request.IsTerminal)
             {

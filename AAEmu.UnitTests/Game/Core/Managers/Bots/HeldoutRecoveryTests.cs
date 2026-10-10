@@ -19,6 +19,7 @@ using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.World.Transform;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
+using Microsoft.Extensions.Time.Testing;
 using QuestComponentKind = AAEmu.Game.Models.Game.Quests.Static.QuestComponentKind;
 using QuestStatus = AAEmu.Game.Models.Game.Quests.Static.QuestStatus;
 
@@ -27,7 +28,8 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 /// <summary>
 /// Held-out generalization suite, part B: corpse/loot/deconfliction shapes on
 /// fresh 98_xxx fixtures (unclaimed repo-wide), asserting wake verdicts through
-/// <see cref="QuestDecisionScenario.Run"/> on the real headless actor.
+/// <see cref="QuestDecisionScenario.Run"/> on synthetic seeded headless engine
+/// rigs, not live gameplay evidence.
 /// </summary>
 [NotInParallel]
 public class HeldoutRecoveryTests
@@ -100,25 +102,33 @@ public class HeldoutRecoveryTests
     {
         var (first, session) = GameplayActorTestRig.CreateActor("heldB-race-first");
         var (second, _) = GameplayActorTestRig.CreateActor("heldB-race-second");
+        GameplayActorTestRig.JoinActorWorld(session, second);
         GameplayActorTestRig.SetPosition(second, new Vector3(0, 0, 0));
         var npcObjId = SpawnPrey(session, first, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        JoinToRegion(second, session, new Vector3(0, 0, 0));
         var corpse = session.World.GetNpc(npcObjId)!;
         corpse.Hp = 0;
         GameplayActorTestRig.SeedItemTemplate(ProbeItem);
         GameplayActorTestRig.SeedLootContainer(corpse, (ProbeItem, 1));
-        var liveObjId = SpawnExtraPrey(session, new Vector3(3, 0, 0));
-        var live = session.World.GetNpc(liveObjId)!;
 
         // First actor loots the corpse empty.
         StageQuest(first);
         first.Character.CurrentTarget = corpse;
-        _ = QuestDecisionScenario.Run(first, (_, _) => [],
+        var firstBagBefore = GameplayActorTestRig.BagCount(first, ProbeItem);
+        var take = QuestDecisionScenario.Run(first, (_, _) => [],
             new QuestDecisionScenario.QuestOptions { CycleId = "heldB-7-loot" });
-        GameplayActorTestRig.SeedLootContainer(corpse);
+        await Assert.That(take.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(take.Request!.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(take.Request.TargetId).IsEqualTo(npcObjId);
+        await Assert.That(corpse.LootingContainer.Items.Count).IsEqualTo(0);
+        await Assert.That(GameplayActorTestRig.BagCount(first, ProbeItem) - firstBagBefore).IsEqualTo(1);
+        var liveObjId = SpawnExtraPrey(session, new Vector3(3, 0, 0));
+        var live = session.World.GetNpc(liveObjId)!;
 
         // Second actor arrives after the loot: must re-target live prey within 5 wakes.
         StageQuest(second);
         second.Character.CurrentTarget = corpse;
+        var secondBagBefore = GameplayActorTestRig.BagCount(second, ProbeItem);
         var retargeted = false;
         for (var wake = 1; wake <= 5; wake++)
         {
@@ -133,6 +143,8 @@ public class HeldoutRecoveryTests
         }
 
         await Assert.That(retargeted).IsTrue();
+        await Assert.That(GameplayActorTestRig.BagCount(second, ProbeItem)).IsEqualTo(secondBagBefore);
+        await Assert.That(second.AuditTrace.Any(r => r.Action == ActorActionType.Loot)).IsFalse();
     }
 
 
@@ -223,29 +235,75 @@ public class HeldoutRecoveryTests
         }
     }
 
+    /// <summary>
+    /// Disclosed component seam: production source arming followed by the real
+    /// route executor dispatch/tick, not activity-owner or full autonomy proof.
+    /// </summary>
     [Test]
-    public async Task Scenario10_TravelArm_PreyAt26m_ResolvesToPreySpawner()
+    public async Task Scenario10_TravelArm_PreyAt26m_TravelsToAdvertisedSource()
     {
         var (actor, session) = GameplayActorTestRig.CreateActor("heldB-travel26");
-        var npcObjId = SpawnPrey(session, actor, new Vector3(0, 0, 0), new Vector3(26, 0, 0));
+        var source = new Vector3(26, 0, 0);
+        var npcObjId = SpawnPrey(session, actor, Vector3.Zero, source);
         StageQuest(actor);
-        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
+        SeedNpcSpawner(actor, PreyTemplate, source);
+        await Assert.That(actor.Observe().NearbyNpcObjIds.Contains(npcObjId)).IsFalse();
+        var (resolved, position, template, isPrey) = Resolve(actor);
+        await Assert.That(resolved).IsTrue();
+        await Assert.That(isPrey).IsTrue();
+        await Assert.That(template).IsEqualTo(PreyTemplate);
+        await Assert.That(position).IsEqualTo(source);
 
-        var result = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "heldB-10-travel26" });
+        var clock = new FakeTimeProvider();
+        var runtime = new PlayerBotRuntime(actor.Character, "rig");
+        var executor = new BotRoamStepExecutor
+        {
+            ActorFactory = _ => actor,
+            TimeProvider = clock,
+            BroadcastInterval = TimeSpan.FromMilliseconds(200),
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            RoamSpeed = 2f,
+            EnableWildlifeHunt = false,
+            EnableWildlifeButcher = false,
+            // No activity-owner simulation: this exercises the armed source route.
+            ActiveActivityProvider = _ => null,
+        };
+        _ = executor.GetOrCreateActor(actor.Character);
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        var arm = typeof(BotRoamStepExecutor)
+            .GetMethod("ArmQuestTravel", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var band = typeof(BotRoamStepExecutor)
+            .GetMethod("OfferBandFor", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(executor, [actor])!;
+        await Assert.That((bool)arm.Invoke(executor, [runtime, actor, state, band, "quest.progress"])!).IsTrue();
+        await Assert.That(state.QuestObjectiveSourceTemplate).IsEqualTo(PreyTemplate);
+        await Assert.That(state.QuestTravelTarget!.Value).IsEqualTo(source);
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)!.Waypoints[^1]).IsEqualTo(source);
+        await Assert.That(actor.ActiveRequest).IsNull();
 
-        await Assert.That(result.WorkSelected).IsTrue();
-        await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.Move);
-        await Assert.That(result.Request!.Destination.HasValue).IsTrue();
+        var before = actor.Character.Transform.World.Position;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var move = actor.ActiveRequest;
+        await Assert.That(move).IsNotNull();
+        await Assert.That(move!.Action).IsEqualTo(ActorActionType.Move);
+        await Assert.That(move.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(move.MoveOwner).IsEqualTo(BotRoamStepExecutor.QuestTravelMoveOwner);
+        await Assert.That(move.Destination!.Value).IsEqualTo(source);
+        await Assert.That(move.Timeout.HasValue && move.Timeout.Value > TimeSpan.Zero).IsTrue();
+        await Assert.That(state.PendingLeg!.TraceId).IsEqualTo(move.TraceId);
+        var after = actor.Character.Transform.World.Position;
+        await Assert.That(Vector3.Distance(before, after)).IsGreaterThan(0f);
+        await Assert.That(Vector3.Distance(after, source)).IsLessThan(Vector3.Distance(before, source));
     }
 
     // ------------------------------------------------------------ harness
 
     private static (bool Resolved, Vector3 Position, uint Template, bool IsPrey) Resolve(GameplayActor actor)
     {
-        var args = new object?[] { actor, default(Vector3), 0u, false };
+        var args = new object?[] { actor, 0u, default(Vector3), 0u, false };
         var resolved = (bool)ResolveObjectiveSource.Invoke(null, args)!;
-        return (resolved, (Vector3)args[1]!, (uint)args[2]!, (bool)args[3]!);
+        return (resolved, (Vector3)args[2]!, (uint)args[3]!, (bool)args[4]!);
     }
 
     private static void StageQuest(GameplayActor actor)
@@ -454,4 +512,5 @@ public class HeldoutRecoveryTests
             throw new InvalidOperationException(
                 $"fixture row resolved prey {row.PreyTemplate}, expected {PreyTemplate}");
     }
+
 }

@@ -418,6 +418,9 @@ public partial class Quest : PacketMarshaler
     /// <param name="update">Should an update packet be sent to the player</param>
     public void Drop(bool update)
     {
+        // TEMPORARY live-lane diagnostic: lowest-level drop marker (all removals funnel through here via DropQuest; direct callers bypass it).
+        if (CharacterQuests.DiagEnabled)
+            Logger.Warn($"[QuestRemove] REMOVER=Quest-Drop {DiagDescribe()} char={Owner.Name}({Owner.Id}) update={update}");
         Status = QuestStatus.Dropped;
         Step = QuestComponentKind.Drop;
 
@@ -440,6 +443,15 @@ public partial class Quest : PacketMarshaler
 
         ClearObjectives();
     }
+    /// <summary>
+    /// Read-only diagnostic snapshot for quest-removal forensics (temporary live-lane
+    /// instrumentation: no state change, no packets, string formatting only).
+    /// </summary>
+    public string DiagDescribe()
+    {
+        return $"quest={TemplateId} dbId={Id} step={Step} status={Status}";
+    }
+
 
     /// <summary>
     /// Resets objectives

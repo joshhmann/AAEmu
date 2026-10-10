@@ -168,9 +168,25 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
             while (EvaluationQueue.Count > 0)
             {
                 var quest = EvaluationQueue.Dequeue();
+                // TEMPORARY live-lane diagnostic: eval-queue transition witness (read-only log, never branched on).
+                if (CharacterQuests.DiagEnabled)
+                {
+                    var ownerName = quest.Owner?.Name ?? "<unknown>";
+                    var ownerId = quest.Owner?.Id ?? 0u;
+                    var preEvalPresent = quest.Owner?.Quests?.ActiveQuests?.ContainsKey(quest.TemplateId) ?? false;
+                    Logger.Warn($"[QuestRemove] REMOVER=eval-queue-drain {quest.DiagDescribe()} char={ownerName}({ownerId}) present={preEvalPresent} preStep={quest.Step} preStatus={quest.Status} note=eval-entry-start");
+                }
                 quest.StartingEvaluation();
                 Logger.Info($"DoQueuedEvaluations, {quest.Owner.Name} ({quest.Owner.Id}), Quest {quest.TemplateId}");
                 var currentResult = quest.RunCurrentStep();
+                // TEMPORARY live-lane diagnostic: eval result witness (read-only log, never branched on).
+                if (CharacterQuests.DiagEnabled)
+                {
+                    var ownerName = quest.Owner?.Name ?? "<unknown>";
+                    var ownerId = quest.Owner?.Id ?? 0u;
+                    var postEvalPresent = quest.Owner?.Quests?.ActiveQuests?.ContainsKey(quest.TemplateId) ?? false;
+                    Logger.Warn($"[QuestRemove] REMOVER=eval-queue-result {quest.DiagDescribe()} char={ownerName}({ownerId}) present={postEvalPresent} result={currentResult} note=eval-entry-end");
+                }
             }
         }
     }
@@ -190,7 +206,8 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
 
         quest.Step = QuestComponentKind.Fail;
         //owner.Quests.Drop(questId, true);
-        Logger.Debug($"[Quest] {owner.Name}, quest {questId} failed.");
+        if (CharacterQuests.DiagEnabled)
+            Logger.Warn($"[QuestRemove] REMOVER=timer-expiry-FailQuest {quest.DiagDescribe()} char={owner.Name}({owner.Id}) note=Fail-sets-Step-not-removal");
     }
 
     /// <summary>

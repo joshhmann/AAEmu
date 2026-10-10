@@ -20,12 +20,9 @@ using AAEmu.UnitTests.Game.Quests.Playerbot;
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 /// <summary>
-/// G7b quest-side corpse recognition (observe-only): the pinned-target dead
-/// transition populates a bounded per-bot corpse record (ObjId + TemplateId +
-/// QuestId + detecting cycle/time) with a read-only loot-container probe, and
-/// recognition dispatches NOTHING (no Loot, container untouched).
-/// Full decision-stack coverage through <see cref="QuestDecisionScenario.Run"/>
-/// on the REAL headless actor — no fakes.
+/// Read-only loot-container probes and terminal empty-corpse exclusion.
+/// Decision-stack coverage through <see cref="QuestDecisionScenario.Run"/>
+/// uses synthetic seeded headless engine rigs, not live gameplay evidence.
 /// </summary>
 [NotInParallel]
 public class QuestCorpseObserveTests
@@ -55,78 +52,32 @@ public class QuestCorpseObserveTests
     // ------------------------------------------------------------ recognition
 
     [Test]
-    public async Task AliveToDead_PromotesCorpse()
+    public async Task EmptyAndIrrelevantCorpses_DoNotBlockFreshPreyOrDispatchLoot()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("g7b-promote");
-        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
+        var (actor, session) = GameplayActorTestRig.CreateActor("g7b-empty-to-fresh");
+        var emptyId = SpawnBoar(session, actor, Vector3.Zero, new Vector3(2, 0, 0));
+        var empty = session.World.GetNpc(emptyId)!;
+        empty.Hp = 0;
+        var irrelevantId = SpawnExtraNpc(session, OtherTemplate9001, new Vector3(2.5f, 0, 0));
+        session.World.GetNpc(irrelevantId)!.Hp = 0;
         Activate251(actor.Character);
-        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
-
-        // Wake 1: live target, range-hold Stop lands (quest-pins the target).
-        var first = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7b-promote-1" });
-        await Assert.That(first.SelectedAction).IsEqualTo(ActorActionType.Stop);
-
-        // The kill: Hp 0 observed, no loot seeded (probe must read empty).
-        session.World.GetNpc(npcObjId)!.Hp = 0;
-        var second = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7b-promote-2" });
-
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse)).IsTrue();
-        await Assert.That(corpse!.ObjId).IsEqualTo(npcObjId);
-        await Assert.That(corpse.TemplateId).IsEqualTo(Boar3475);
-        await Assert.That(corpse.QuestId).IsEqualTo(Quest251);
-        await Assert.That(corpse.CycleId).IsEqualTo("g7b-promote-2");
-        await Assert.That(second.SelectedAction == ActorActionType.AutoAttack).IsFalse();
-        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Loot)).IsFalse();
-    }
-
-    [Test]
-    public async Task SameIdentity_PreservedAcrossWakes()
-    {
-        var (actor, session) = GameplayActorTestRig.CreateActor("g7b-identity");
-        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
-        Activate251(actor.Character);
-        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
+        actor.Character.CurrentTarget = empty;
+        var bagBefore = GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId);
 
         _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7b-ident-1" });
-        session.World.GetNpc(npcObjId)!.Hp = 0;
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7b-ident-2" });
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7b-ident-3" });
-
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse)).IsTrue();
-        await Assert.That(corpse!.ObjId).IsEqualTo(npcObjId);
-        // Re-observation keeps the original detection — never re-created.
-        await Assert.That(corpse.CycleId).IsEqualTo("g7b-ident-2");
-        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Loot)).IsFalse();
-    }
-
-    [Test]
-    public async Task IrrelevantDeadNpc_Ignored()
-    {
-        var (actor, session) = GameplayActorTestRig.CreateActor("g7b-irrelevant");
-        var npcObjId = SpawnBoar(session, actor, new Vector3(0, 0, 0), new Vector3(2, 0, 0));
-        var otherObjId = SpawnExtraNpc(session, OtherTemplate9001, new Vector3(2.5f, 0, 0));
-        session.World.GetNpc(otherObjId)!.Hp = 0;
-        Activate251(actor.Character);
-        actor.Character.CurrentTarget = session.World.GetNpc(npcObjId);
-
-        // Only the irrelevant NPC is dead: no corpse may be recognized.
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7b-irrel-1" });
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7b-empty" });
         await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out _)).IsFalse();
+        await Assert.That(empty.LootingContainer.Items.Count).IsEqualTo(0);
 
-        // OUR 3475 dies too: the record names OUR objId, never the other one.
-        session.World.GetNpc(npcObjId)!.Hp = 0;
-        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
-            new QuestDecisionScenario.QuestOptions { CycleId = "g7b-irrel-2" });
-        await Assert.That(QuestBehavior.TryGetCorpse(actor.ActorId, out var corpse)).IsTrue();
-        await Assert.That(corpse!.ObjId).IsEqualTo(npcObjId);
-        await Assert.That(corpse.ObjId == otherObjId).IsFalse();
+        var freshId = SpawnExtraNpc(session, Boar3475, new Vector3(3, 0, 0));
+        var next = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g7b-fresh" });
+        await Assert.That(next.SelectedAction).IsEqualTo(ActorActionType.Target);
+        await Assert.That(next.Request!.TargetId).IsEqualTo(freshId);
+        await Assert.That(next.Request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.CurrentTarget).IsEqualTo(session.World.GetNpc(freshId));
         await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Loot)).IsFalse();
+        await Assert.That(GameplayActorTestRig.BagCount(actor, ProbeItemTemplateId)).IsEqualTo(bagBefore);
     }
 
     // ------------------------------------------------------------ probe
@@ -163,17 +114,6 @@ public class QuestCorpseObserveTests
         await Assert.That(probe.Lootable).IsFalse();
     }
 
-    [Test]
-    public async Task CorpseFragment_IsParserSafe()
-    {
-        var frag = QuestBehavior.FormatCorpseFragment(12345, 1, true);
-
-        await Assert.That(frag.Contains("corpse")).IsTrue();
-        await Assert.That(frag.Contains("12345")).IsTrue();
-        await Assert.That(frag.Contains(' ')).IsFalse();
-        await Assert.That(frag.Contains('[')).IsFalse();
-        await Assert.That(frag.Contains(']')).IsFalse();
-    }
 
     // ------------------------------------------------------------ fixture
 

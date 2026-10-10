@@ -154,14 +154,18 @@ public static class PatternCatalog
     /// The talk-chain verb set — the registry-green verbs a talk objective
     /// needs: travel to the npc (<c>MoveTo</c>), stop in range (<c>Stop</c>),
     /// observe it (<c>Observe</c>), accept the quest (<c>AcceptQuest</c>), talk
-    /// to it through the real <c>Talk</c> contract, and hand the turn-in to the
-    /// NPC reporter (<c>TurnInQuest</c>). Every key is a row the kill-to-gather
-    /// set already proved — <c>Talk</c> included (FROZEN G2), which is the same
-    /// verb <c>IGameplayActor.Talk</c> drives on the real
+    /// to it through the real <c>Talk</c> contract, hold the return leg's
+    /// dialogue with the reporter (<c>InteractNpc</c>, frozen with G8b — the
+    /// shape's quest may report to a split reporter the Talk leg never visits,
+    /// so Talk alone would void-reject on the return leg, exactly as on the
+    /// kill-to-gather shape), and hand the turn-in to the NPC reporter
+    /// (<c>TurnInQuest</c>). Every key is a row the kill-to-gather set already
+    /// proved — <c>Talk</c> included (FROZEN G2), which is the same verb
+    /// <c>IGameplayActor.Talk</c> drives on the real
     /// <c>CSQuestTalkMadePacket</c> path that
     /// <c>QuestActObjTalk.OnTalkMade</c> listens to. So a talk objective is
-    /// gate-checked on a strictly smaller, already-proved set: the talk family
-    /// needs no new proof to be served.
+    /// gate-checked on an already-proved set: the talk family needs no new
+    /// proof to be served.
     /// </summary>
     private static readonly IReadOnlyList<string> TalkChainVerbs = Array.AsReadOnly(new[]
     {
@@ -170,6 +174,7 @@ public static class PatternCatalog
         "Observe",
         "AcceptQuest",
         "Talk",
+        "InteractNpc",
         "TurnInQuest"
     });
     private static readonly IReadOnlyList<string> NoVerbs = Array.AsReadOnly(Array.Empty<string>());

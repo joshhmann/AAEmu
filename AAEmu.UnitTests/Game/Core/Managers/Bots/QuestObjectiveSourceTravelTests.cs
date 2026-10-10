@@ -148,7 +148,10 @@ public class QuestObjectiveSourceTravelTests
     {
         _ = executor.GetOrCreateActor(actor.Character);
         var state = executor.GetBotState(runtime.CharacterId)!;
-        return (bool)ArmQuestTravel.Invoke(executor, [runtime, actor, state])!;
+        var band = typeof(BotRoamStepExecutor)
+            .GetMethod("OfferBandFor", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(executor, [actor])!;
+        return (bool)ArmQuestTravel.Invoke(executor, [runtime, actor, state, band, "quest.progress"])!;
     }
 
     [Test]

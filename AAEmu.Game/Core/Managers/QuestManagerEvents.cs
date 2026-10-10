@@ -55,6 +55,12 @@ public partial class QuestManager
             // Turning in at a NPC?
             var npc = ((Character)owner).ParentWorld.GetNpc(npcObjId);
             // Is it a valid NPC?
+            // TEMPORARY live-lane diagnostic: report request identity (the actual removal, if any, lands later in the Reward branch).
+            if (CharacterQuests.DiagEnabled)
+                if (owner.Quests.ActiveQuests.TryGetValue(questContextId, out var npcQuest))
+                    Logger.Warn($"[QuestRemove] REMOVER=report-npc-request {npcQuest.DiagDescribe()} char={owner.Name}({owner.Id}) npcObjId={npcObjId} npcTemplate={(npc != null ? npc.TemplateId.ToString() : "unresolved")}");
+                else
+                    Logger.Warn($"[QuestRemove] REMOVER=report-npc-request quest={questContextId} char={owner.Name}({owner.Id}) present=False npcObjId={npcObjId}");
             if (npc == null)
                 return;
 
@@ -73,6 +79,12 @@ public partial class QuestManager
             // Turning in at a Doodad?
             var doodad = ((Character)owner).ParentWorld.GetDoodad(doodadObjId);
             // Does the Doodad exist?
+            // TEMPORARY live-lane diagnostic: report request identity (the actual removal, if any, lands later in the Reward branch).
+            if (CharacterQuests.DiagEnabled)
+                if (owner.Quests.ActiveQuests.TryGetValue(questContextId, out var doodadQuest))
+                    Logger.Warn($"[QuestRemove] REMOVER=report-doodad-request {doodadQuest.DiagDescribe()} char={owner.Name}({owner.Id}) doodadObjId={doodadObjId}");
+                else
+                    Logger.Warn($"[QuestRemove] REMOVER=report-doodad-request quest={questContextId} char={owner.Name}({owner.Id}) present=False doodadObjId={doodadObjId}");
             if (doodad == null)
                 return;
 
@@ -92,8 +104,16 @@ public partial class QuestManager
             // owner.Quests.CompleteQuest(questContextId, selected, true);
             if (owner.Quests.ActiveQuests.TryGetValue(questContextId, out var quest))
             {
+                // TEMPORARY live-lane diagnostic: auto turn-in drives Step=Reward (removal happens later in the Reward branch).
+                if (CharacterQuests.DiagEnabled)
+                    Logger.Warn($"[QuestRemove] REMOVER=report-auto-step-Reward {quest.DiagDescribe()} char={owner.Name}({owner.Id})");
                 quest.SelectedRewardIndex = selected;
                 quest.Step = QuestComponentKind.Reward;
+            }
+            else
+            {
+                if (CharacterQuests.DiagEnabled)
+                    Logger.Warn($"[QuestRemove] REMOVER=report-auto-step-Reward quest={questContextId} char={owner.Name}({owner.Id}) present=False");
             }
         }
     }
@@ -236,7 +256,18 @@ public partial class QuestManager
         foreach (var questId in GetQuestIdsFromKillAcceptNpc(npc.TemplateId))
         {
             if (owner.Quests.HasQuest(questId) || owner.Quests.IsQuestComplete(questId))
+            {
+                // TEMPORARY live-lane diagnostic: kill-accept skip keeps prior state (read-only witness, never branched on).
+                if (CharacterQuests.DiagEnabled)
+                {
+                    var killPresent = owner.Quests.ActiveQuests.TryGetValue(questId, out var killSkipQuest);
+                    if (killPresent)
+                        Logger.Warn($"[QuestRemove] REMOVER=kill-accept-skip {killSkipQuest.DiagDescribe()} char={owner.Name}({owner.Id}) present=True note=kill-accept-skipped-kept");
+                    else
+                        Logger.Warn($"[QuestRemove] REMOVER=kill-accept-skip quest={questId} char={owner.Name}({owner.Id}) present=False note=kill-accept-skipped-no-active");
+                }
                 continue;
+            }
             owner.Quests.AddQuest(questId, false, QuestAcceptorType.Kill, npc.TemplateId);
         }
     }
@@ -308,9 +339,20 @@ public partial class QuestManager
                     // Start quest
                     owner.Quests.AddQuest(actLevelUp.ParentQuestTemplate.Id);
                 }
+                else if (levelAct is QuestActConAcceptLevelUp skipLevelUp)
+                {
+                    // TEMPORARY live-lane diagnostic: level-accept skip keeps prior state (read-only witness, never branched on).
+                    if (CharacterQuests.DiagEnabled)
+                    {
+                        var levelPresent = owner.Quests.ActiveQuests.TryGetValue(skipLevelUp.ParentQuestTemplate.Id, out var levelSkipQuest);
+                        if (levelPresent)
+                            Logger.Warn($"[QuestRemove] REMOVER=level-accept-skip {levelSkipQuest.DiagDescribe()} char={owner.Name}({owner.Id}) present=True note=level-accept-skipped-kept");
+                        else
+                            Logger.Warn($"[QuestRemove] REMOVER=level-accept-skip quest={skipLevelUp.ParentQuestTemplate.Id} char={owner.Name}({owner.Id}) present=False note=level-accept-skipped-no-active");
+                    }
+                }
             }
     }
-
     /// <summary>
     /// Triggers quest related events when a craft was successful
     /// </summary>
@@ -370,6 +412,12 @@ public partial class QuestManager
     /// <param name="questId"></param>
     public void OnTimerExpired(ICharacter owner, uint questId)
     {
+        // TEMPORARY live-lane diagnostic: timer fire is read-only evidence (Fail-sets-Step, never removes).
+        if (CharacterQuests.DiagEnabled)
+            if (owner != null && owner.Quests.ActiveQuests.TryGetValue(questId, out var quest))
+                Logger.Warn($"[QuestRemove] REMOVER=timer-expiry-fired {quest.DiagDescribe()} char={owner.Name}({owner.Id})");
+            else if (owner != null)
+                Logger.Warn($"[QuestRemove] REMOVER=timer-expiry-fired quest={questId} char={owner.Name}({owner.Id}) present=False");
         owner?.Events?.OnTimerExpired(owner, new OnTimerExpiredArgs { QuestId = questId });
     }
 

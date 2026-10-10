@@ -97,6 +97,8 @@ public class QuestActCheckTimer(QuestComponentTemplate parentComponent) : QuestA
 
         // NOTE: All the still active quests don't use any of the special parameters that are possible
         // So basically any quest that uses this, makes the quest fail as a result.
+        if (AAEmu.Game.Models.Game.Char.CharacterQuests.DiagEnabled)
+            Logger.Warn($"[QuestRemove] REMOVER=timer-expiry quest={questAct.QuestComponent.Parent.Parent.TemplateId} char={questAct.QuestComponent.Parent.Parent.Owner.Name}({questAct.QuestComponent.Parent.Parent.Owner.Id}) step={questAct.QuestComponent.Parent.Parent.Step} status={questAct.QuestComponent.Parent.Parent.Status} act=QuestActCheckTimer");
         QuestManager.Instance.FailQuest(questAct.QuestComponent.Parent.Parent.Owner, questAct.QuestComponent.Parent.Parent.TemplateId);
     }
 
@@ -112,6 +114,9 @@ public class QuestActCheckTimer(QuestComponentTemplate parentComponent) : QuestA
             return;
 
         Logger.Debug($"{QuestActTemplateName}({DetailId}).OnTimerExpired Quest {questAct.QuestComponent.Parent.Parent.TemplateId}, Owner {questAct.QuestComponent.Parent.Parent.Owner.Name} ({questAct.QuestComponent.Parent.Parent.Owner.Id})");
+        // TEMPORARY live-lane diagnostic: timer housekeeping never removes quests itself (read-only witness, never branched on).
+        if (AAEmu.Game.Models.Game.Char.CharacterQuests.DiagEnabled)
+            Logger.Warn($"[QuestRemove] REMOVER=timer-step-housekeeping quest={questAct.QuestComponent.Parent.Parent.TemplateId} char={questAct.QuestComponent.Parent.Parent.Owner.Name}({questAct.QuestComponent.Parent.Parent.Owner.Id}) step={args.Step} status={questAct.QuestComponent.Parent.Parent.Status} present=True note=timer-unsubscribed-no-removal");
         switch (args.Step)
         {
             case QuestComponentKind.None:

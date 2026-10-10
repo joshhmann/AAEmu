@@ -39,7 +39,7 @@ public class QuestActConReportNpc(QuestComponentTemplate parentComponent) : Ques
 
     public override void OnReportNpc(QuestAct questAct, object sender, OnReportNpcArgs args)
     {
-        if (questAct.Id != ActId || NpcId != args.NpcId)
+        if (questAct.Id != ActId || NpcId != args.NpcId || questAct.QuestComponent.Parent.Parent.TemplateId != args.QuestId)
             return;
 
         // This check is needed so that turning in a quest at a NPC doesn't complete all active quests that

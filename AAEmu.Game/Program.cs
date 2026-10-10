@@ -319,10 +319,27 @@ public static class Program
                     // graph is fully constructed and this returns the same
                     // singleton the eager edge captured.
                     var arbiter = new Lazy<BotGoalArbiter>(sp.GetRequiredService<BotGoalArbiter>);
-                    return new BotRoamStepExecutor
+                    var questModule = new Lazy<QuestBootstrapActivityModule?>(() => sp.GetRequiredService<IEnumerable<IBotActivityModule>>().OfType<QuestBootstrapActivityModule>().FirstOrDefault());
+                    var executor = new BotRoamStepExecutor
                     {
                         ActiveActivityProvider = characterId => arbiter.Value.GetActiveActivity(characterId),
                     };
+                    // E-66 Gap 1: the owner module reads the opportunity
+                    // listing off the bot's LIVE quest-leg actor — wire the
+                    // executor's non-creating read (never GetOrCreateActor:
+                    // Resolve must not create). Idempotent: the factory runs
+                    // once per process; staged test actors win over this
+                    // resolver inside Resolve, and tests reset it in SetUp.
+                    QuestLegActor.SetResolver(executor.TryGetActor);
+                    // E-66 Gap 2: feed landed quest terminals into the owning
+                    // module's completed-memory (module unset = no-op sink).
+                    executor.QuestTerminalSink = (characterId, questId, completed) =>
+                        questModule.Value?.NotifyQuestTerminal(characterId, questId, completed);
+                    // HIGH 1: carry the module's retained choice into the
+                    // existing execution path (module unset = 0 = unscoped).
+                    executor.QuestChosenProvider = characterId =>
+                        questModule.Value?.GetChosenQuest(characterId) ?? 0;
+                    return executor;
                 });
 
                 // G3-B3 goal arbitration (IBotActivityModule seam): modules

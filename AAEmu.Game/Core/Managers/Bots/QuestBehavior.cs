@@ -1122,6 +1122,10 @@ public static class QuestBehavior
     /// Runs the wake's plan set through the leg loop and the decision
     /// pipeline: <see cref="QuestDirector.Run"/> perceives once and assembles
     /// the plans, then hands them here with that same snapshot.
+    /// When <c>opts.ChosenQuestId</c> carries the owning module's purpose, the
+    /// plan set is already scoped to it (see <see cref="QuestDirector.PlanWake"/>);
+    /// the resulting request's quest identity is verified below and stamped on
+    /// the run result — any change carries an explicit reason, never silence.
     /// </summary>
     internal static QuestDecisionScenario.QuestRunResult Run(
         IGameplayActor actor,
@@ -1392,6 +1396,27 @@ public static class QuestBehavior
                 Math.Max(0, rawCount - discoverTargets.Count),
                 string.Join(";", outcomeShown),
                 offerings.Count, inBand);
+            // Chosen-purpose scoping (HIGH 1): when opts.ChosenQuestId carries
+            // the owning module's purpose, ONLY that quest's offering may be
+            // proposed — ordinary acceptance cannot select another quest on its
+            // own. The sweep above still collects every in-band offering (the
+            // diagnostics stay honest); the rank/cut below narrows to the
+            // purpose. A chosen quest that is already active never reaches an
+            // offering (the before-set filter above); its work flows through
+            // the scoped plan set instead. A chosen offer still seen is served,
+            // never labeled stale.
+            var eligible = opts.ChosenQuestId != 0
+                ? offerings.Where(o => o.Offering.QuestId == opts.ChosenQuestId)
+                : offerings;
+            // Server-state cause for the carried purpose, read once per wake for
+            // the no-proposal reason below: active quest (the wake's before-set),
+            // offer still available (seen in this sweep — a valid fresh offer is
+            // NOT stale), completed quest (engine completed flag on a
+            // non-repeatable), or unavailable (the engine's own accept-gate
+            // reason). Anything else is an offer this bounded sweep did not see
+            // (offerer out of range, sweep cut, or a non-swept channel) — the
+            // purpose is kept, never released, and the reason says so.
+            var chosenCause = ChosenCause(actor, opts, before, offerings);
             // Offerings are RANKED before they are proposed, and the bound is
             // applied after ranking — so a wake with more in-band offers than
             // the bound drops its WORST offers, and the shared selector never
@@ -1401,7 +1426,9 @@ public static class QuestBehavior
             // so the two never disagree about what the quest offers. The order is
             // the selector's own key order (priority, weight, tie-break), so the
             // bound's cut and the selector's pick agree on what "best" means.
-            var ranked = offerings
+            // With a purpose carried, the ranked set holds at most the chosen
+            // quest, so the bound can never cut it in favor of another offer.
+            var ranked = eligible
                 .Select(o => (o.TargetObjId, o.Offering, Row: QuestFixtureRow.FromQuestData(o.Offering.QuestId)))
                 .OrderByDescending(o => AcceptRank(opts, o.Offering, o.Row).Priority)
                 .ThenByDescending(o => AcceptRank(opts, o.Offering, o.Row).Weight)
@@ -1472,12 +1499,55 @@ public static class QuestBehavior
                     failStage = "FIXTURE";
                     decideDetail = $"plan failed: {string.Join(" ; ", planFailures.Select(f => f.Reason))} | {decideDetail}";
                 }
+                // HIGH 1: a carried purpose that yielded no proposal is never
+                // silent — the result names the SERVER-STATE cause as an
+                // ADVISORY (SelectedQuestId / PurposeSwitchReason have no
+                // production reader; the real release is owned by
+                // QuestBootstrapActivityModule on its own later listing
+                // turn). A valid fresh offer, or an active quest whose legs
+                // withdrew this wake, KEEPS the purpose (SelectedQuestId 0,
+                // "held" — never "stale"). A sweep-unseen purpose is also
+                // KEPT ("unseen": this bounded sweep did not see the offer
+                // — never "stale"). Only a completed or engine-rejected
+                // unavailable purpose is "stale" (and additionally flagged
+                // Releasable on the advisory fields). Survival-vetoed legs
+                // name the veto cause below.
+                var staleDetail = opts.ChosenQuestId != 0
+                    ? chosenCause.Kind switch
+                    {
+                        "offer-available" or "active" =>
+                            $"purpose-held chosen={opts.ChosenQuestId} {chosenCause.Detail} ({decideDetail})",
+                        "offer-unseen" =>
+                            $"purpose-unseen chosen={opts.ChosenQuestId} {chosenCause.Detail} ({decideDetail})",
+                        _ =>
+                            $"purpose-stale chosen={opts.ChosenQuestId} {chosenCause.Detail} ({decideDetail})"
+                    }
+                    : "";
                 return Fail(failStage, ActorFailureReason.WrongDecision, decideDetail,
-                    actor, null, decision.Rejections, null, legEvidence, planFailures, giveUps);
+                    actor, null, decision.Rejections, null, legEvidence, planFailures, giveUps,
+                    purposeSwitchReason: staleDetail,
+                    selectedQuestId: chosenCause.Releasable ? opts.ChosenQuestId : 0);
             }
-
             // ---------------------------------------------------- 3. EXECUTE
             var selected = decision.Proposal!;
+            // Chosen-purpose dispatch guard: with a purpose carried, a selected
+            // quest that is NOT the chosen one is NEVER dispatched — an
+            // explanatory message after executing another quest is not control.
+            // With the scoped rank above this is unreachable in production; the
+            // guard stays as the fail-closed backstop (no silent substitution:
+            // nothing lands, the actual reason is surfaced, and the owner may
+            // choose again). Survival keeps its own path: vetoed legs never
+            // reach selection (their own preconditions withhold them), so this
+            // guard never names a veto.
+            if (opts.ChosenQuestId != 0 && QuestIdOf(selected) is var selectedQuest && selectedQuest != opts.ChosenQuestId)
+            {
+                var mismatchCause = ChosenCause(actor, opts, before, offerings);
+                var mismatchDetail = $"purpose-mismatch chosen={opts.ChosenQuestId} selected={selectedQuest} {mismatchCause.Detail}: no unrelated quest action dispatched ({decision.Explanation})";
+                return Fail("DECIDE", ActorFailureReason.WrongDecision, mismatchDetail,
+                    actor, selected.Action, decision.Rejections, null, legEvidence, planFailures, giveUps,
+                    purposeSwitchReason: mismatchDetail,
+                    selectedQuestId: mismatchCause.Releasable ? opts.ChosenQuestId : 0);
+            }
             // E2E-ONLY turn-in withhold (default-off): the leg ran whole —
             // perception, eligibility, and selection above are untouched — but
             // a selected turn-in is NOT dispatched. SelectedAction stays set
@@ -1491,13 +1561,19 @@ public static class QuestBehavior
                     actor, selected.Action, decision.Rejections);
             }
             actor.SetPendingDecision(selected.Goal, opts.PolicyVersion,
-                decision.Rejections.Count + 1, decision.Rejections.Count, opts.CycleId);
-            // Part-3 join key: the per-wake CycleId (StepQuestLeg mints
-            // quest-{characterId}-{ticks}) travels request → audit record so
-            // a test can join this wake to its terminal audit row.
+                decision.Rejections.Count + 1, decision.Rejections.Count, opts.CycleId, QuestIdOf(selected));
             actor.SetPendingCycleId(opts.CycleId);
-            var execution = BotDecisionCycle.Execute(actor, decideContext, selected,
-                static (gameplayActor, proposal) => Dispatch(gameplayActor, proposal));
+            BotDecisionExecution execution;
+            try
+            {
+                execution = BotDecisionCycle.Execute(actor, decideContext, selected,
+                    static (gameplayActor, proposal) => Dispatch(gameplayActor, proposal));
+            }
+            finally
+            {
+                actor.SetPendingDecision(null, null, 0, 0, null, null);
+                actor.SetPendingCycleId(null);
+            }
             var request = execution.Request;
             if (selected.Goal == CombatGoal && objectiveFixture != null)
                 LogCombatOutcome(actor, opts, selected, request, combatHpBefore, objectiveFixture);
@@ -1526,6 +1602,8 @@ public static class QuestBehavior
                         InteractGoal => "interact",
                         _ => "pursuit"
                     };
+                    var runningQuest = QuestIdOf(selected);
+                    var (runningSwitch, runningSwitchReason) = PurposeSwitch(opts, runningQuest, request, legEvidence, planFailures, giveUps);
                     return new QuestDecisionScenario.QuestRunResult
                     {
                         Scenario = QuestDecisionScenario.ScenarioName,
@@ -1533,6 +1611,8 @@ public static class QuestBehavior
                         SelectedAction = selected.Action,
                         SelectedProposal = selected,
                         Request = request,
+                        SelectedQuestId = runningSwitch,
+                        PurposeSwitchReason = runningSwitchReason,
                         Rejections = decision.Rejections,
                         LegalAlternatives = decision.LegalAlternatives,
                         SelectionCandidateCount = decision.SelectionCandidateCount,
@@ -1562,6 +1642,7 @@ public static class QuestBehavior
             // it — cleared explicitly so the map never holds a stale quest.
             foreach (var completedId in completed)
                 ClearGiveUpWake(actor.ActorId, completedId);
+            var (landedQuest, landedSwitchReason) = PurposeSwitch(opts, QuestIdOf(selected), request, legEvidence, planFailures, giveUps);
             return new QuestDecisionScenario.QuestRunResult
             {
                 Scenario = QuestDecisionScenario.ScenarioName,
@@ -1569,6 +1650,8 @@ public static class QuestBehavior
                 SelectedAction = selected.Action,
                 SelectedProposal = selected,
                 Request = request,
+                SelectedQuestId = landedQuest,
+                PurposeSwitchReason = landedSwitchReason,
                 Rejections = decision.Rejections,
                 LegalAlternatives = decision.LegalAlternatives,
                 Explanation = decision.Explanation,
@@ -1586,7 +1669,114 @@ public static class QuestBehavior
                 $"{ex.GetType().Name}: {ex.Message}", actor, null, []);
         }
     }
+    /// <summary>
+    /// Quest identity of a selected proposal: every quest-work proposal carries
+    /// its quest in <c>TargetId</c> (advance, turn-in, item-use consume) or in
+    /// its tie-break key (<c>"name:questId:target"</c> for target, pursuit,
+    /// combat, loot, gather, interact, return, talk legs). The accept leg is
+    /// the one shape whose TargetId IS the quest id already. Returns 0 when no
+    /// identity is readable — never a guess.
+    /// </summary>
+    internal static uint QuestIdOf(BotDecisionProposal proposal)
+    {
+        if (proposal.Goal == UseItemGoal)
+            return QuestIdFromTieBreak(proposal.TieBreakKey);
+        var tie = QuestIdFromTieBreak(proposal.TieBreakKey);
+        return tie != 0 ? tie : proposal.TargetId;
+    }
 
+    /// <summary>Reads the quest id out of a leg tie-break key (0 when absent).</summary>
+    private static uint QuestIdFromTieBreak(string tieBreakKey)
+    {
+        if (string.IsNullOrEmpty(tieBreakKey))
+            return 0;
+        foreach (var part in tieBreakKey.Split(':'))
+        {
+            if (uint.TryParse(part, out var questId) && questId != 0)
+                return questId;
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// Verifies the wake's quest against the carried purpose: returns the
+    /// served quest plus the explicit switch reason (empty when the wake
+    /// served the purpose, or when no purpose was carried). A wake that lands
+    /// work for another quest while a purpose is carried is never silent: the
+    /// reason names the carried purpose, the served quest, and the evidence
+    /// that justified it (give-up verdict, plan failure, or the leg evidence
+    /// that withdrew the purpose's work). Safety preemption needs no switch:
+    /// the veto withholds ordinary proposals through their own preconditions,
+    /// so a vetoed wake lands nothing (or safety's own non-quest work) with
+    /// the veto named in the rejections/evidence it already carries.
+    /// </summary>
+    private static (uint QuestId, string Reason) PurposeSwitch(
+        QuestDecisionScenario.QuestOptions opts,
+        uint servedQuestId,
+        ActorRequest request,
+        IReadOnlyList<LegEvidence> legEvidence,
+        IReadOnlyList<QuestPlanFailure> planFailures,
+        IReadOnlyList<QuestGiveUp> giveUps)
+    {
+        if (opts.ChosenQuestId == 0)
+            return (servedQuestId, "");
+        if (servedQuestId == opts.ChosenQuestId)
+            return (servedQuestId, "");
+        var evidence = giveUps.Count > 0
+            ? $"give-up {giveUps[0].Reason}"
+            : planFailures.Count > 0
+                ? $"plan failed {planFailures[0].Reason}"
+                : legEvidence.Count > 0
+                    ? $"purpose withdrew ({legEvidence[0].Leg}:{legEvidence[0].Detail})"
+                    : "purpose yielded no proposal";
+        return (servedQuestId,
+            $"purpose-switch chosen={opts.ChosenQuestId} served={servedQuestId} request={request.Action}:{request.TargetId} {evidence}");
+    }
+
+    /// <summary>
+    /// Server-state cause for the carried purpose (HIGH 1): distinguishes the
+    /// four states using live server reads — (a) the offer is still available
+    /// (seen in this wake's sweep: a valid fresh offer is NEVER stale), (b)
+    /// the quest is active (the wake's own before-set: its legs own this
+    /// wake), (c) the quest is completed (engine completed flag on a
+    /// non-repeatable), (d) the offer is unavailable (the engine's own
+    /// accept-gate reason via the same predicates AddQuest refuses). A
+    /// purpose this bounded sweep did not see is "unseen" — the purpose is
+    /// KEPT (the offerer may be out of range, past the sweep cut, or on a
+    /// non-swept channel; absence from one sweep never proves
+    /// disappearance), so the owner does not churn. Releasable is an
+    /// ADVISORY flag for the result fields only (SelectedQuestId /
+    /// PurposeSwitchReason have no production reader): the REAL release is
+    /// owned by QuestBootstrapActivityModule, which re-reads the live
+    /// opportunity listing on its own later turn. Survival veto is NOT a
+    /// cause here — vetoed legs withhold through their own preconditions,
+    /// and the rejections/evidence they already carry name the veto.
+    /// </summary>
+    private static (string Kind, string Detail, bool Releasable) ChosenCause(
+        IGameplayActor actor,
+        QuestDecisionScenario.QuestOptions opts,
+        HashSet<uint> before,
+        List<(uint TargetObjId, QuestOffering Offering)> offerings)
+    {
+        if (opts.ChosenQuestId == 0)
+            return ("none", "no purpose carried", false);
+        var chosen = opts.ChosenQuestId;
+        if (before.Contains(chosen))
+            return ("active", $"quest {chosen} is active (ordinary work serves it through the scoped plan set)", false);
+        if (offerings.Any(o => o.Offering.QuestId == chosen))
+            return ("offer-available", $"quest {chosen} offer still available (valid fresh offer, purpose kept)", false);
+        var quests = actor.Character?.Quests;
+        var template = QuestManager.Instance?.GetTemplate(chosen);
+        if (quests != null && template != null && quests.HasQuestCompleted(chosen) && !template.Repeatable)
+            return ("completed", $"quest {chosen} completed (non-repeatable, releasable-advisory)", true);
+        if (actor is GameplayActor concrete)
+        {
+            var reject = concrete.DiscoverRejectReason(chosen);
+            if (reject.Length != 0 && reject != "ALREADY_ACTIVE")
+                return ("offer-unavailable", $"quest {chosen} unavailable ({reject}, releasable-advisory)", true);
+        }
+        return ("offer-unseen", $"quest {chosen} not seen in this sweep (offerer out of range, past the sweep cut, or a non-swept channel — purpose kept)", false);
+    }
     /// <summary>
     /// Item-use leg entry gate: the step machine has work only for an active,
     /// non-Ready quest (a Ready quest's only legal work is turn-in), and the
@@ -2875,7 +3065,8 @@ public static class QuestBehavior
             hardPreconditions:
             [
                 new BotProposalPrecondition("quest-active",
-                    observed => observed.ActiveQuestIds.Contains(questId))
+                    observed => observed.ActiveQuestIds.Contains(questId)),
+                SurvivalVetoClear(actor)
             ]);
     }
     /// <summary>
@@ -2944,7 +3135,8 @@ public static class QuestBehavior
             hardPreconditions:
             [
                 new BotProposalPrecondition("quest-active",
-                    observed => observed.ActiveQuestIds.Contains(questId))
+                    observed => observed.ActiveQuestIds.Contains(questId)),
+                SurvivalVetoClear(actor)
             ]);
 
     /// <summary>
@@ -3057,7 +3249,8 @@ public static class QuestBehavior
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
                     observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
                 new BotProposalPrecondition("target-unassigned",
-                    observed => observed.CurrentTargetObjId != selected)
+                    observed => observed.CurrentTargetObjId != selected),
+                SurvivalVetoClear(actor)
             ]);
     }
 
@@ -3324,7 +3517,8 @@ public static class QuestBehavior
                     hardPreconditions:
                     [
                         new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                            observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+                            observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                        SurvivalVetoClear(actor)
                     ]);
             }
             TravelLegDispatch.EndJourney(actor, TravelLegDispatch.PursuitMoveOwner);
@@ -3349,7 +3543,8 @@ public static class QuestBehavior
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                SurvivalVetoClear(actor)
             ]);
     }
 
@@ -3962,7 +4157,8 @@ public static class QuestBehavior
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                SurvivalVetoClear(actor)
             ]);
     }
 
@@ -4036,7 +4232,7 @@ public static class QuestBehavior
                 priority: opts.ObjectiveLootPriority,
                 tieBreakKey: $"loot-approach:{fixture.QuestId}:{corpseObjId:D10}",
                 payload: payload,
-                hardPreconditions: LootApproachPreconditions(fixture)),
+                hardPreconditions: LootApproachPreconditions(actor, fixture)),
             verdict.DispatchToken,
             verdict.Reason,
             travel);
@@ -4048,11 +4244,12 @@ public static class QuestBehavior
     /// item is still missing), so the walk is withdrawn the moment the corpse stops
     /// being this quest's work.
     /// </summary>
-    private static BotProposalPrecondition[] LootApproachPreconditions(QuestFixtureRow fixture)
+    private static BotProposalPrecondition[] LootApproachPreconditions(IGameplayActor actor, QuestFixtureRow fixture)
         =>
         [
             new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture))
+                observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+            SurvivalVetoClear(actor)
         ];
 
     /// <summary>
@@ -4243,7 +4440,8 @@ public static class QuestBehavior
                     hardPreconditions:
                     [
                         new BotProposalPrecondition("quest-active",
-                            observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
+                            observed => observed.ActiveQuestIds.Contains(fixture.QuestId)),
+                        SurvivalVetoClear(actor)
                     ]);
             case TravelLegDispatch.ReturnLegVerb.Stop:
                 diag = $"{prefix}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
@@ -4264,7 +4462,8 @@ public static class QuestBehavior
                     hardPreconditions:
                     [
                         new BotProposalPrecondition("quest-active",
-                            observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
+                            observed => observed.ActiveQuestIds.Contains(fixture.QuestId)),
+                        SurvivalVetoClear(actor)
                     ]);
             case TravelLegDispatch.ReturnLegVerb.MoveToUnit:
                 diag = $"{prefix}:dispatch={verdict.DispatchToken}:reason={verdict.Reason}{travelFrag}";
@@ -4285,7 +4484,8 @@ public static class QuestBehavior
                     hardPreconditions:
                     [
                         new BotProposalPrecondition("quest-active",
-                            observed => observed.ActiveQuestIds.Contains(fixture.QuestId))
+                            observed => observed.ActiveQuestIds.Contains(fixture.QuestId)),
+                        SurvivalVetoClear(actor)
                     ]);
             default:
                 // Held (a live leg keeps its progress) or Withdrawn (a named travel
@@ -5153,13 +5353,17 @@ public static class QuestBehavior
         IReadOnlyList<QuestPlanFailure>? planFailures = null,
         IReadOnlyList<QuestGiveUp>? giveUps = null,
         IReadOnlyList<BotDecisionProposal>? legalAlternatives = null,
-        int? selectionCandidateCount = null)
+        int? selectionCandidateCount = null,
+        uint selectedQuestId = 0,
+        string purposeSwitchReason = "")
         => new()
         {
             Scenario = QuestDecisionScenario.ScenarioName,
             WorkSelected = false,
             SelectedAction = selected,
             Request = request,
+            SelectedQuestId = selectedQuestId,
+            PurposeSwitchReason = purposeSwitchReason,
             Rejections = rejections,
             LegalAlternatives = legalAlternatives,
             SelectionCandidateCount = selectionCandidateCount,

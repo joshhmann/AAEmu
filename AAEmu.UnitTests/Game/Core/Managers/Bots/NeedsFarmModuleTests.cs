@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Numerics;
+using System.Text.Json;
 
 using AAEmu.Commons.Models;
 using AAEmu.Commons.Utils.DB;
@@ -461,6 +462,146 @@ public class NeedsFarmModuleTests
             throw new InvalidOperationException($"crop did not reach mature phase (got {crop.FuncGroupId})");
         return crop;
     }
+
+    // Attribution prerequisites, not autonomous live or persistence proof.
+    // These use the existing real actor/engine rig; no echo actor or observer
+    // stamps. Only an emitted terminal row can prove pre-NewRequest staging.
+    [Test]
+    public async Task Run_NeedsAudit_InterruptedPlantUsesSelectedProposalBeforeTerminalEmission()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("nf-audit-plant");
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 0);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestSeedItemId, 3);
+        GameplayActorTestRig.SetFarmGateEnabled(true);
+        GameplayActorTestRig.SetFarmAllowlist(true);
+        actor.SetPendingDecision("parent.activity", "parent-policy", 2, 0, "parent-seed", null);
+        actor.SetPendingCycleId("parent-cycle");
+        actor.SetPendingWakeSequence(73);
+        var options = new NeedsDecisionScenario.NeedsOptions
+        {
+            CycleId = "nf-audit-plant-cycle",
+            PolicyVersion = "nf-audit-policy",
+            PlantSeedItemTemplateId = GameplayActorTestRig.TestSeedItemId,
+            PlantPosition = TestPosition
+        };
+
+        var result = NeedsDecisionScenario.Run(actor, options);
+
+        await Assert.That(result.WorkSelected).IsTrue();
+        await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.Plant);
+        await Assert.That(result.SelectedProposal!.Goal).IsEqualTo("needs.plant");
+        // Real seed cost/placement occurred; the rig's deliberately dead DB
+        // produces Interrupted at Save. This is NOT successful persistence.
+        await Assert.That(result.Request!.State).IsEqualTo(ActorLifecycleState.Interrupted);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.TestSeedItemId)).IsEqualTo(2);
+        var perception = actor.AuditTrace.First(r => r.Action == ActorActionType.Observe);
+        await Assert.That(perception.DecisionGoal).IsEqualTo("parent.activity");
+        await Assert.That(perception.DecisionCycleId).IsEqualTo("parent-cycle");
+        await Assert.That(perception.WakeSequence).IsEqualTo(73L);
+        await AssertSelectedNeedsTerminalAudit(actor, result, options);
+        await AssertLaterOrdinaryAuditUnattributed(actor);
+    }
+
+    [Test]
+    public async Task Run_NeedsAudit_CompletedHarvestAndRejectedReselectionPreserveEarlierAudit()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("nf-audit-harvest");
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 0);
+        actor.Character.LaborPower = 100;
+        var crop = PlantMatureCrop(actor, session);
+        var before = GameplayActorTestRig.BagCount(actor, CropHarvestLoopTests.PotatoItemId);
+        var options = new NeedsDecisionScenario.NeedsOptions
+        {
+            CycleId = "nf-audit-harvest-first",
+            PolicyVersion = "nf-audit-policy-first",
+            FoodItemTemplateId = CropHarvestLoopTests.PotatoItemId,
+            HarvestDoodadObjId = crop.ObjId
+        };
+
+        var first = NeedsDecisionScenario.Run(actor, options);
+
+        await Assert.That(first.SelectedProposal!.Goal).IsEqualTo("needs.harvest");
+        await Assert.That(first.Request!.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, CropHarvestLoopTests.PotatoItemId) - before >= 2).IsTrue();
+        await Assert.That(session.World.GetDoodad(crop.ObjId)).IsNull();
+        await AssertSelectedNeedsTerminalAudit(actor, first, options);
+        var emittedFirst = actor.AuditTrace.Single(r => r.TraceId == first.Request.TraceId);
+        var immutableJson = emittedFirst.ToJson();
+        // A fresh selection still targets the now-deleted real crop. The actor
+        // actually creates and rejects that request, rather than echoing a label.
+        var laterOptions = options with { CycleId = "nf-audit-harvest-later", PolicyVersion = "nf-audit-policy-later" };
+        var later = NeedsDecisionScenario.Run(actor, laterOptions);
+        await Assert.That(later.SelectedAction).IsEqualTo(ActorActionType.Harvest);
+        await Assert.That(later.Request!.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await AssertSelectedNeedsTerminalAudit(actor, later, laterOptions);
+        await Assert.That(actor.AuditTrace.Single(r => r.TraceId == emittedFirst.TraceId).ToJson()).IsEqualTo(immutableJson);
+        await AssertLaterOrdinaryAuditUnattributed(actor);
+    }
+
+    [Test]
+    public async Task Run_NeedsAudit_DeclinedPlantCannotLabelLaterOrdinaryRequest()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("nf-audit-declined");
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 0);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestSeedItemId, 3);
+        // Actual public-farm gate remains off: no Plant is dispatched.
+        var result = NeedsDecisionScenario.Run(actor, new NeedsDecisionScenario.NeedsOptions
+        {
+            CycleId = "nf-audit-declined-cycle",
+            PlantSeedItemTemplateId = GameplayActorTestRig.TestSeedItemId,
+            PlantPosition = TestPosition
+        });
+        await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.Stop);
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Plant)).IsFalse();
+        await AssertLaterOrdinaryAuditUnattributed(actor);
+    }
+
+    [Test]
+    public async Task Run_NeedsAudit_InvalidCallerPolicyAbortsWithoutDispatchOrLaterLeak()
+    {
+        var (actor, _) = CreateActorOnUniqueWorld("nf-audit-abort");
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 0);
+        // Existing proposal-constructor validation rejects a malformed public
+        // option after ordinary perception; no invented exception/actor seam.
+        var result = NeedsDecisionScenario.Run(actor, new NeedsDecisionScenario.NeedsOptions
+        {
+            CycleId = "nf-audit-aborted-cycle",
+            PolicyVersion = ""
+        });
+        await Assert.That(result.FailStage).IsEqualTo("RUN");
+        await Assert.That(result.Request).IsNull();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action is ActorActionType.Plant or ActorActionType.Harvest or ActorActionType.Stop)).IsFalse();
+        await AssertLaterOrdinaryAuditUnattributed(actor);
+    }
+
+    private static async Task AssertSelectedNeedsTerminalAudit(GameplayActor actor,
+        NeedsDecisionScenario.NeedsRunResult result, NeedsDecisionScenario.NeedsOptions options)
+    {
+        var emitted = actor.AuditTrace.Single(r => r.TraceId == result.Request!.TraceId);
+        using var json = JsonDocument.Parse(emitted.ToJson());
+        await Assert.That(json.RootElement.GetProperty("decision_goal").GetString()).IsEqualTo(result.SelectedProposal!.Goal);
+        await Assert.That(json.RootElement.GetProperty("decision_policy").GetString()).IsEqualTo(result.SelectedProposal.PolicyVersion);
+        await Assert.That(json.RootElement.GetProperty("decision_cycle_id").GetString()).IsEqualTo(options.CycleId);
+        await Assert.That(emitted.Result).IsEqualTo(result.Request!.State);
+    }
+
+    private static async Task AssertLaterOrdinaryAuditUnattributed(GameplayActor actor)
+    {
+        _ = actor.Observe();
+        var emitted = actor.AuditTrace.Last();
+        await Assert.That(emitted.Action).IsEqualTo(ActorActionType.Observe);
+        using var json = JsonDocument.Parse(emitted.ToJson());
+        await Assert.That(json.RootElement.GetProperty("decision_goal").ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(json.RootElement.GetProperty("decision_policy").ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(json.RootElement.GetProperty("decision_cycle_id").ValueKind).IsEqualTo(JsonValueKind.Null);
+    }
+
     // ------------------------------------------------------------ executor preemption (FIX 1)
 
     private static class NeedsPreemptionRig

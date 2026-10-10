@@ -139,6 +139,9 @@ public sealed class ActorRequest
     public int DecisionRejections { get; private set; }
     public string? DecisionSeed { get; private set; }
 
+    /// <summary>The quest selected for this request, captured before execution; null for non-quest work.</summary>
+    public uint? DecisionQuestId { get; }
+
     /// <summary>
     /// Join key spanning wake → decision → capability request → terminal
     /// result (prereq Part 3). One correlation id per decision cycle: set at
@@ -213,7 +216,8 @@ public sealed class ActorRequest
     }
 
     public ActorRequest(ActorActionType action, uint targetId, System.Numerics.Vector3? destination,
-        uint skillId, TimeSpan? timeout, object? payload = null, string? idempotencyKey = null)
+        uint skillId, TimeSpan? timeout, object? payload = null, string? idempotencyKey = null,
+        uint? decisionQuestId = null)
     {
         TraceId = Guid.NewGuid();
         Action = action;
@@ -223,6 +227,7 @@ public sealed class ActorRequest
         Payload = payload;
         Timeout = timeout;
         IdempotencyKey = idempotencyKey;
+        DecisionQuestId = decisionQuestId;
         RequestedAtUtc = DateTime.UtcNow;
         // The lifecycle starts here: Requested is the initial state and must
         // appear in the audit state_changes (full transition log, oldest first).

@@ -28,6 +28,9 @@ public sealed class PlayerBotManager : IPlayerBotManager
     private long _failedActivations;
     private long _failedDeactivations;
 
+    // Activation generation sequence (process-wide monotonic counter; gen 0
+    // reserved never-valid). Issued inside the entry lock on success only.
+    private long _generationSequence;
     public PlayerBotManager(IPlayerBotLifecycleService lifecycle)
     {
         _lifecycle = lifecycle ?? throw new ArgumentNullException(nameof(lifecycle));
@@ -70,6 +73,14 @@ public sealed class PlayerBotManager : IPlayerBotManager
                 return false;
             }
 
+            if (runtime.Character.Connection != null)
+            {
+                Interlocked.Increment(ref _failedActivations);
+                Logger.Warn("PlayerBot activation refused: character {CharacterId} holds a live connection",
+                    characterId);
+                return false;
+            }
+
             try
             {
                 if (!_lifecycle.ActivateHeadless(runtime.Character, botContext))
@@ -93,6 +104,7 @@ public sealed class PlayerBotManager : IPlayerBotManager
             runtime.ActivatedAtUtc = DateTime.UtcNow;
             runtime.DeactivatedAtUtc = null;
             runtime.LastDeactivateReason = null;
+            runtime.Generation = (ulong)Interlocked.Increment(ref _generationSequence);
         }
 
         Interlocked.Increment(ref _totalActivations);

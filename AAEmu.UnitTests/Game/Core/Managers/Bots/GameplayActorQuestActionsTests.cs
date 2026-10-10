@@ -1,4 +1,6 @@
+using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Units;
@@ -39,14 +41,14 @@ public class GameplayActorQuestActionsTests
     private const int GatherCount = 3;
     private const uint RewardItemId = 18791;
 
-    private static QuestScenarioManifest LoadManifest()
+    private static QuestScenarioManifest LoadManifest(string tier, uint questId)
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null &&
                !Directory.Exists(Path.Combine(dir.FullName, ".git")) &&
                !File.Exists(Path.Combine(dir.FullName, ".git")))
             dir = dir.Parent;
-        var path = Path.Combine(dir!.FullName, "AAEmu.UnitTests", "Game", "Quests", "Scenario", "Manifests", "t1", $"{QuestId}.json");
+        var path = Path.Combine(dir!.FullName, "AAEmu.UnitTests", "Game", "Quests", "Scenario", "Manifests", tier, $"{questId}.json");
         return QuestScenarioManifest.LoadFromFile(path);
     }
 
@@ -63,7 +65,7 @@ public class GameplayActorQuestActionsTests
         PlayerbotPilotRig.SeedPilotSingletons();
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
         actor.Character.Level = 2; // quest 251 is level 2; the real gate evaluates
-        PlayerbotPilotRig.RegisterQuestItems(LoadManifest());
+        PlayerbotPilotRig.RegisterQuestItems(LoadManifest("t1", QuestId));
         return (actor, session);
     }
 
@@ -160,6 +162,83 @@ public class GameplayActorQuestActionsTests
         await Assert.That(record.Action).IsEqualTo(ActorActionType.TurnInQuest);
         await Assert.That(record.TargetId).IsEqualTo(QuestId);
         await Assert.That(record.StateChanges).Contains($"quest_id={QuestId}");
+    }
+
+    [Test]
+    public async Task ReportNpc_OnlyRequestedQuestCompletes_WhenTwoReadyQuestsShareNpc()
+    {
+        const uint otherQuestId = 6198;
+        const uint otherAcceptorNpcTemplateId = 3511;
+        const uint otherRewardItemId = 18792;
+        var (actor, session) = CreateRealActor("qa-report-quest-isolation");
+        var character = actor.Character;
+        var quests = character.Quests;
+        var manager = QuestManager.Instance;
+        PlayerbotPilotRig.RegisterQuestItems(LoadManifest("t6", otherQuestId));
+
+        // Disclosed fixture setup: seed the gather objective through the existing
+        // bag/event helper, not natural acquisition. Do not exercise or redefine
+        // the separately open target-only completion or NPC reach semantics.
+        character.CurrentTarget = null;
+        AcceptAndProgressToReady(actor);
+        var acceptOther = actor.AcceptQuest(otherQuestId, QuestAcceptorType.Npc, otherAcceptorNpcTemplateId);
+        await Assert.That(acceptOther.State).IsEqualTo(ActorLifecycleState.Completed);
+        manager.DoQueuedEvaluations();
+
+        await Assert.That(character.CurrentTarget).IsNull();
+        await Assert.That(quests.HasQuestCompleted(QuestId)).IsFalse();
+        await Assert.That(quests.HasQuestCompleted(otherQuestId)).IsFalse();
+        await Assert.That(quests.ActiveQuests[QuestId].Status).IsEqualTo(QuestStatus.Ready);
+        await Assert.That(quests.ActiveQuests[QuestId].Step).IsEqualTo(QuestComponentKind.Ready);
+        await Assert.That(quests.ActiveQuests[otherQuestId].Status).IsEqualTo(QuestStatus.Ready);
+        await Assert.That(quests.ActiveQuests[otherQuestId].Step).IsEqualTo(QuestComponentKind.Ready);
+        var otherObjectivesBefore = quests.ActiveQuests[otherQuestId].Objectives.ToArray();
+
+        var npcObjId = session.SpawnNpc(AcceptorNpcTemplateId);
+        await Assert.That(character.ParentWorld.GetNpc(npcObjId)?.TemplateId).IsEqualTo(AcceptorNpcTemplateId);
+        var firstRewardBefore = GameplayActorTestRig.BagCount(actor, RewardItemId);
+        var otherRewardBefore = GameplayActorTestRig.BagCount(actor, otherRewardItemId);
+        var experienceBefore = character.Experience;
+        var moneyBefore = character.Money;
+        var firstSupplies = manager.GetSupplies(manager.GetTemplate(QuestId).Level)
+            ?? throw new InvalidOperationException("canonical quest 251 supplies missing");
+        var otherSupplies = manager.GetSupplies(manager.GetTemplate(otherQuestId).Level)
+            ?? throw new InvalidOperationException("canonical quest 6198 supplies missing");
+        var firstExperience = (int)(firstSupplies.Exp * AppConfiguration.Instance.World.ExpRate);
+        var otherExperience = (int)(otherSupplies.Exp * AppConfiguration.Instance.World.ExpRate);
+
+        // Same ordinary manager entry as CSCompleteQuestContextPacket, then the
+        // production queue drain: no synthetic report or direct reward/flag write.
+        manager.DoReportEvents(character, QuestId, npcObjId, 0, 0);
+        manager.DoQueuedEvaluations();
+
+        await Assert.That(character.CurrentTarget).IsNull();
+        await Assert.That(quests.HasQuestCompleted(QuestId)).IsTrue();
+        await Assert.That(quests.ActiveQuests.ContainsKey(QuestId)).IsFalse();
+        await Assert.That(quests.HasQuestCompleted(otherQuestId)).IsFalse()
+            .Because("an NPC report must credit only its requested quest, even when another ready quest shares the NPC");
+        await Assert.That(quests.ActiveQuests.ContainsKey(otherQuestId)).IsTrue();
+        await Assert.That(quests.ActiveQuests[otherQuestId].Status).IsEqualTo(QuestStatus.Ready);
+        await Assert.That(quests.ActiveQuests[otherQuestId].Step).IsEqualTo(QuestComponentKind.Ready);
+        await Assert.That(quests.ActiveQuests[otherQuestId].Objectives.SequenceEqual(otherObjectivesBefore)).IsTrue();
+        await Assert.That(GameplayActorTestRig.BagCount(actor, RewardItemId)).IsEqualTo(firstRewardBefore + 1);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, otherRewardItemId)).IsEqualTo(otherRewardBefore);
+        await Assert.That(character.Experience).IsEqualTo(experienceBefore + firstExperience);
+        await Assert.That(character.Money).IsEqualTo(moneyBefore + firstSupplies.Copper);
+
+        // The other quest is genuinely ready: its own ordinary report completes
+        // it and grants only its own reward, without duplicating the first reward.
+        manager.DoReportEvents(character, otherQuestId, npcObjId, 0, 0);
+        manager.DoQueuedEvaluations();
+
+        await Assert.That(character.CurrentTarget).IsNull();
+        await Assert.That(quests.HasQuestCompleted(QuestId)).IsTrue();
+        await Assert.That(quests.HasQuestCompleted(otherQuestId)).IsTrue();
+        await Assert.That(quests.ActiveQuests.ContainsKey(otherQuestId)).IsFalse();
+        await Assert.That(GameplayActorTestRig.BagCount(actor, RewardItemId)).IsEqualTo(firstRewardBefore + 1);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, otherRewardItemId)).IsEqualTo(otherRewardBefore + 1);
+        await Assert.That(character.Experience).IsEqualTo(experienceBefore + firstExperience + otherExperience);
+        await Assert.That(character.Money).IsEqualTo(moneyBefore + firstSupplies.Copper + otherSupplies.Copper);
     }
 
     [Test]

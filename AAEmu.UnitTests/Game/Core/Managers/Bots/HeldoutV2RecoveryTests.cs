@@ -353,9 +353,9 @@ public class HeldoutV2RecoveryTests
 
     private static (bool Resolved, Vector3 Position, uint Template, bool IsPrey) Resolve(GameplayActor actor)
     {
-        var args = new object?[] { actor, default(Vector3), 0u, false };
+        var args = new object?[] { actor, 0u, default(Vector3), 0u, false };
         var resolved = (bool)ResolveObjectiveSource.Invoke(null, args)!;
-        return (resolved, (Vector3)args[1]!, (uint)args[2]!, (bool)args[3]!);
+        return (resolved, (Vector3)args[2]!, (uint)args[3]!, (bool)args[4]!);
     }
 
     private static (BotRoamStepExecutor Executor, PlayerBotRuntime Runtime) CreateExecutorFor(GameplayActor actor)
@@ -379,7 +379,10 @@ public class HeldoutV2RecoveryTests
     {
         _ = executor.GetOrCreateActor(actor.Character);
         var state = executor.GetBotState(runtime.CharacterId)!;
-        return (bool)ArmQuestTravel.Invoke(executor, [runtime, actor, state])!;
+        var band = typeof(BotRoamStepExecutor)
+            .GetMethod("OfferBandFor", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(executor, [actor])!;
+        return (bool)ArmQuestTravel.Invoke(executor, [runtime, actor, state, band, "quest.progress"])!;
     }
 
     private static void StageQuest(GameplayActor actor)

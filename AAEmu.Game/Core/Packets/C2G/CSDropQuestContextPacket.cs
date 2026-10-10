@@ -8,6 +8,6 @@ public class CSDropQuestContextPacket() : GamePacket(CSOffsets.CSDropQuestContex
     public override void Read(PacketStream stream)
     {
         var questId = stream.ReadUInt32();
-        Connection.ActiveChar.Quests.DropQuest(questId, true);
+        Connection.ActiveChar.Quests.DropQuest(questId, true, false, "REMOVER=client-giveup-packet");
     }
 }

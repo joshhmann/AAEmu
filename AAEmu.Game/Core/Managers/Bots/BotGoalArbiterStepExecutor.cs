@@ -63,6 +63,18 @@ public sealed class BotGoalArbiterStepExecutor : IBotStepExecutor
     }
 
     /// <summary>
+    /// Typed inner-executor read for death-watch unwinding (the scheduler's
+    /// death entry releases the quest running-hold through the live roam
+    /// executor). False when the inner executor is any other shape — the
+    /// caller's switch then ignores that executor. Never creates, ticks, or
+    /// mutates; behavior and cadence are untouched.
+    public bool InnerIs<T>(out T? inner) where T : class, IBotStepExecutor
+    {
+        inner = _inner as T;
+        return inner is not null;
+    }
+
+    /// <summary>
     /// Minimal decision trace (prereq Part 2): stamps the arbitration
     /// outcome — selected activity + candidate/rejection counts — for the
     /// next request the inner step creates, so the audit record answers
@@ -90,7 +102,7 @@ public sealed class BotGoalArbiterStepExecutor : IBotStepExecutor
             activity != null ? $"module:{activity.ModuleName}" : null,
             arbitration.Candidates,
             arbitration.Rejections,
-            seed: null);
+            seed: null, questId: null);
     }
 
     /// <summary>
