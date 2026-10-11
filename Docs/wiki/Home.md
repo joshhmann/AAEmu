@@ -5,13 +5,30 @@ Open source server software for ArcheAge written in `.NET`.
 ## Start Here
 
 - Audience: Contributors, players, and testers
-- Last verified against: policy-reviewed 2026-10-10 at `fix/npc-spawner-population-count` / `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work (unmerged; documentation only, no fresh gameplay verification)
+- Last verified against: documentation-reviewed 2026-10-11 at `develop` / `aa057ffc3bb4596f4a6972eb4f012994970e163a` plus inherited projection/E131 docUI dirty work; no fresh gameplay verification
 - Prerequisites: None
 - Preferred local development: [Aspire Development Guide](Aspire-Development-Guide)
 - Manual setup fallback: [Installation & Setup](Installation-&-Setup)
 - Docker setup alternative: [Docker Installation Guide](Docker-Installation-Guide)
 - Troubleshooting first stop: [Mini troubleshoot guide](Mini-troubleshoot-guide)
 - Need help: [Getting Help](Getting-Help)
+
+For a new session, begin with the [canonical bootstrap](../../START-HERE.md#new-session-bootstrap)
+and [session-resume state](../../.omp/state/CURRENT.md#session-resume), not a historical wiki queue.
+The user-approved direction is reuse-first supported goal-to-goal autonomy, grounded in
+the [E132 current developed capability baseline](../../ROADMAP.md#current-developed-capability-baseline).
+Reuse implemented PlayerBot foundations; do not require exhaustive human parity, a new
+brain, or a port of every AzerothCore module. Necessary shared-core repairs are authorized
+by the [integration direction](../../PROJECT-CONTROL.md#playerbot-integration-direction)
+and [core authorization](../../PROJECT-CONTROL.md#server-core-integration-authorization).
+The [approved extension roadmap](../../ROADMAP.md#playerbot-extension-roadmap) is direction,
+not completion or allocation of future implementation/campaigns.
+
+The seven supported-capability criteria remain unchanged, including recovery from an
+interruption **or** failed action. This documentation review promotes no grade or H verdict;
+a farm/private plot is not a universal quest gate. E130 recovery branch
+`review/branch-recovery-2026-10-10` at `8024926a718a11f754abd2d92716e1c421fc22ce`
+remains unmerged pending the user's decision.
 
 ## Documentation Map
 
@@ -23,8 +40,8 @@ Open source server software for ArcheAge written in `.NET`.
 - [Golden Route — Solzreed](Golden-Route-Solzreed) — the curated M1 opening progression
 - [Quest Test Harness](Quest-Test-Harness) — scenario harness, game-data graphs, quality gate
 - [Soak-Runs](Soak-Runs) — isolated E2E QA / soak / smoke lanes on the testing server
-- [Activity-Spine Campaign](Activity-Spine-Campaign) — PlayerBot loop-composition proof across behavior shapes (design + open questions)
-- [PlayerBot Progression Framework](../../PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md) — canonical ladder (P→B→L→A→N→G→T), feature matrix dashboard, farming H-gate diagnosis, and testing framework
+- [Activity-Spine Campaign](Activity-Spine-Campaign) — detailed design/open questions remain unratified; not current dispatch
+- [PlayerBot Progression Framework](../../PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md) — retained ladder (P→B→L→A→N→G→T), feature matrix and historical farming H-gate diagnoses; not a current parity-first allocation
 
 ### Getting Started
 

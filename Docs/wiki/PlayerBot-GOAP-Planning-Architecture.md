@@ -3,18 +3,45 @@
 Goal-Oriented Action Planning (GOAP) for ArcheAge 1.2 PlayerBots in AAEmu.
 
 - Audience: Contributors
-- Last verified against: policy-reviewed 2026-10-10 at `fix/npc-spawner-population-count` / `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work (unmerged; documentation only, no fresh gameplay verification)
+- Last verified against: documentation-reviewed 2026-10-11 at `develop` / `aa057ffc3bb4596f4a6972eb4f012994970e163a` plus inherited projection/E131 docUI dirty work; no fresh gameplay verification
 
-Current bot coverage/acceptance follows the sole [supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract).
-Ordinary engine correctness remains mandatory; full human coverage or B2 across
-all families is not a prerequisite to supported autonomy. [Current priority/allocation limits](../../STATUS.md#current-playerbot-policy-checkpoint)
-do not authorize runtime work; historical examples and named comparison claims remain scoped.
+## Current use and onboarding
 
-> **2026-09-15 scope correction:** committed planner/action foundations exist;
-> runtime integration also has uncommitted WIP. This page describes intent, not a
-> verified production-autonomy exit. Current rollout and slice acceptance:
-> [PROJECT-CONTROL](../../PROJECT-CONTROL.md#bot-decision-architecture) and
-> [ROADMAP](../../ROADMAP.md#near-term-slice-queue).
+Begin with the [new-session bootstrap](../../START-HERE.md#new-session-bootstrap),
+[current session state](../../.omp/state/CURRENT.md#session-resume) and
+[E132 current developed capability baseline](../../ROADMAP.md#current-developed-capability-baseline).
+The user-approved [integration direction](../../PROJECT-CONTROL.md#playerbot-integration-direction)
+and [extension roadmap](../../ROADMAP.md#playerbot-extension-roadmap) reuse existing
+PlayerBot foundations to prove supported goal-to-goal autonomy. No new brain,
+exhaustive human parity or module-by-module AzerothCore port is required.
+Necessary shared-core repairs follow the [core authorization](../../PROJECT-CONTROL.md#server-core-integration-authorization).
+
+Current wiring is **production activity arbiter + roam**, a **quest-only behavior
+runtime**, and a **separate hosted homestead GOAP** path—not universal GOAP ownership
+of every activity. The [current ownership contract](../../PROJECT-CONTROL.md#current-playerbot-ownership-contract)
+is authoritative; this page does not choose a replacement design. Reuse the existing
+planner where appropriate rather than introducing another brain. E132 distinguishes
+actual source capability, wired opt-in policy and historical live proof: farm seed
+buy/surplus sell are already coded; provisioned housing claim → construct/restart has
+historical proof; commerce/group scenarios are not autonomous policy.
+
+The [supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+retains all seven criteria, including recovery from interruption **or** failed action.
+The [current checkpoint](../../STATUS.md#current-playerbot-policy-checkpoint) promotes
+no grade or H verdict; historical A5 closure stays scoped, and a farm/private plot
+is not a universal quest gate. The next [bounded priority](../../ROADMAP.md#next-bounded-playerbot-priority)
+is finite existing-owner A → eligible B, including the same NPC, preserving the
+`AdvanceEnter` guard/counter and repairing only observed failure.
+E130 recovery branch `review/branch-recovery-2026-10-10` at
+`8024926a718a11f754abd2d92716e1c421fc22ce` is unmerged pending the user's decision.
+Future implementation/gates are not completed or allocated here; the detailed
+Activity-Spine campaign remains unratified.
+
+## Historical/design planner model
+
+The diagram and strategic model below describe planner design, not current universal
+wiring or live autonomy proof. The former 2026-09-15 integration-WIP/near-term-queue
+guidance is historical, not today's dispatch.
 
 ```
                   ┌─────────────────────────────────────┐
@@ -46,7 +73,8 @@ do not authorize runtime work; historical examples and named comparison claims r
 
 ## 1. Overview & Architectural Role
 
-The intended integration separates three responsibilities; verify wiring per slice:
+The historical intended integration separates three responsibilities; these are design
+roles, not a claim that production currently routes all activities through GOAP:
 1. **Strategic Planning (GOAP)**: Evaluates high-level goals (`GoapGoal`), world beliefs (`BotWorldState`), and synthesizes dynamic multi-step action chains (`IGoapAction`) without hardcoded state machines.
 2. **Tactical Combat (CombatDecisionTree)**: Handles instant, reactive, sub-second combat decisions (melee vs ranged kiting, class combo triggers, Battlerage/Vitalism rotations).
 3. **Physical Execution (IGameplayActor & BotRoamStepExecutor)**: Server-authoritative movement, interaction, casting, and inventory operations respecting native ArcheAge 1.2 rules.
@@ -95,7 +123,8 @@ before claiming fleet-scale readiness:
 
 The architecture originally deferred graph planning until execution was reliable.
 Planner foundations have since landed; blanket deferral no longer describes source
-inventory. Retain that work and integrate a bounded chain under the current queue.
+inventory. Retain that work; bounded integration follows the current ownership contract
+and approved roadmap above, not the historical parity-first queue.
 
 The previously cited 25-bot / 8-hour roaming observation, even if corroborated by its
 original artifacts, demonstrates only its measured movement/presence scope. It cannot
@@ -109,6 +138,10 @@ Keep one lifecycle and scheduler; do not add parallel rules or speculative fleet
 ---
 
 ## 5. Example: 4-Step Wild Farming Plan Discovery
+
+This is a synthetic planner illustration, not a wired activity policy, current dispatch,
+or live farming proof. Existing farming code and historical evidence must be assessed
+separately through the E132 baseline; the flag plan below does not replace either.
 
 When a bot with an empty initial state (`BotWorldState.Empty`) activates the goal `SecretWildFarm`:
 ```csharp

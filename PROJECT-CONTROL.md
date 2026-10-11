@@ -10,18 +10,22 @@ wiki status page. For human-facing wiki navigation, start at
 - **Project:** AAEmu fork (`joshhmann/AAEmu`), ArcheAge server emulator
 - **Target:** ArcheAge 1.2 client and reference data `compact.sqlite3` r208022
   (read-only)
-**Documentation HEAD (2026-09-12 reconciliation):** `c7351b242e4088e0db5ef7926659a948312cb2fb`.
-That checkpoint is historical. Current delivery direction is the 2026-09-15
-[outcome-first queue](ROADMAP.md#current-delivery-direction), with M8 → M9 as the horizon;
-M8 has a qualified engineering/runtime exit, not human acceptance. Older source/test
-checkpoints and per-slice counts below remain historical unless re-run; they are not
-restamped as fresh results here. Current evidence narrative: [`STATUS.md`](STATUS.md);
-current direction and requirements: [`ROADMAP.md`](ROADMAP.md).
+**Current direction — user-approved 2026-10-11:** the
+[reuse-first PlayerBot integration direction](#playerbot-integration-direction)
+and [approved extension roadmap](ROADMAP.md#playerbot-extension-roadmap) ground
+future bot work in existing capability/evidence, under the unchanged supported
+scope and milestone requirements. Main owns integration; current mode and pending
+decisions live in [CURRENT](.omp/state/CURRENT.md#session-resume).
+The former documentation HEAD `c7351b242e4088e0db5ef7926659a948312cb2fb`
+and older queues are historical checkpoints, not fresh gates or present dispatch.
+M8's qualified engineering/runtime exit and independent human acceptance remain
+unchanged. Current evidence: [STATUS](STATUS.md#current-playerbot-policy-checkpoint).
 
 ## Delivery contract
 
-Current operating direction — 2026-09-15. This section governs new dispatch;
-dated evidence and locked milestone exit requirements below remain intact.
+Current operating direction — user-approved 2026-10-11. The outcome-first contract
+is retained; the approved reuse-first goals/roadmap supersede older next-work order,
+not dated evidence, invariants, safety boundaries or locked milestone exits.
 
 **Plan broadly; execute by observable outcome.** The hierarchy is product commitment
 → player journey → existing milestone/capability → bounded slice → evidence.
@@ -99,6 +103,62 @@ and [ROADMAP](ROADMAP.md#next-bounded-playerbot-priority).
 Documentation/UI delivery evidence: [E-127](.omp/state/EVIDENCE.md#e-127--user-approved-supported-capability-contract-and-documentation-ui-delivery).
 That bounded verification does not certify new gameplay capability or human acceptance.
 
+### Server-core integration authorization
+
+**User-approved — 2026-10-11 UTC.** Server-core changes are greenlit when they
+make supported PlayerBot capabilities work through ordinary authoritative gameplay.
+A pure-plugin constraint is not a product goal. Reuse existing services first;
+where client/session coupling or an incomplete engine boundary blocks an outcome,
+repair that boundary instead of making bots imitate client UI choreography.
+
+Keep eligibility, reach, required timing, ownership, costs, rewards, conservation
+and persistence in shared engine services. If gameplay behavior must be extracted
+from a packet handler, migrate both human and bot callers to the same service;
+do not add a parallel bot-only implementation. Reuse the existing game-thread
+execution boundary, scheduler, actor and activity owners before adding hooks.
+
+Each core slice names the evidenced blocker, affected human/bot callers, observable
+result, interruption/cleanup contract, negative controls and regression proof.
+Greenlight is not a diagnosis that a hook is missing, a broad rewrite, an automatic
+merge of the unmerged recovery branch, or permission to push/deploy/start campaigns.
+The [approved extension roadmap](ROADMAP.md#playerbot-extension-roadmap) orders
+future work; individual slices require bounded scope and proof. Main owns integration;
+Vibe is off and bounded delegates use native OMP agents. D29/E131 record the original
+greenlight/planning; D30 records the user's subsequent roadmap adoption.
+
+### PlayerBot integration direction
+
+**User-approved 2026-10-11 — canonical goals and roadmap (D30).** Improve what the
+fork's real PlayerBots can do by reusing the existing ordinary Character lifecycle,
+scheduler, activity arbitration, actor requests, domain policies, GOAP where wired,
+gameplay services, persistence and population controls. The
+[E132 developed baseline](ROADMAP.md#current-developed-capability-baseline)
+separates source implementation, bot access, policy wiring and historical live proof.
+Unproved acquisition/continuation is not evidence that seed purchase, housing,
+crafting, trade, parties or other action implementations are absent.
+
+The immediate product outcome remains the original seven-criterion supported
+goal-to-goal loop. First reproduce finite existing-owner A→eligible B handoff;
+then prove one supported productive objective and follow-up, and one ordinary
+resource→farm/craft/trade increment with conservation. Extend livelihood/commerce,
+cooperation and truthful social presence as dependency-driven families; connect
+proved families through existing arbitration. Optional population administration
+or abstract simulation is later, not a prerequisite or synthetic-reward shortcut.
+
+This direction supersedes old parity-first/owned-plot-first dispatch recommendations
+and universal-GOAP/pure-plugin assumptions. It preserves applicable ordinary rules,
+architecture invariants, named B/B2 grades, historical milestone exits and H as an
+independent commitment. Necessary core repairs belong inside an evidenced slice;
+no replacement engine, brain, scheduler or automatic module-by-module port.
+The detailed Activity-Spine campaign remains unratified; approving this roadmap
+does not ratify every older proposal or lift unrelated safety/breadth restrictions.
+
+Direction approval is not implemented/verified/deployed status. The active CURRENT
+card states permitted actions, ownership, resources, acceptance and stop; pending
+branch merges/publication/deployment and bounded live-lane ownership stay explicit.
+New-session entry: [START-HERE](START-HERE.md#new-session-bootstrap).
+
+
 ### First concrete product journey
 
 Retained future livelihood journey: [one ordinary starter → one owned small farm plot →
@@ -165,8 +225,9 @@ the specific gaps listed. Seeded subloop success does not close the complete liv
 
 - Josh owns product tradeoffs, declared supported journeys, and named human verdicts.
   Prepare short runnable human packets; do not ask Josh to diagnose every code failure.
-- Tai implements; Rei independently verifies; Nei reconciles records; Mai coordinates
-  blockers and authorized deployment. Role names do not imply signoff already occurred.
+- Main is the sole architecture/integration and canonical-state owner; no Muse handoff.
+  Native OMP delegates investigate or implement bounded nonoverlapping slices;
+  name the independent verifier where required, never infer signoff from a role.
 - Dispatch one active implementation slice per worker. Parallel work requires disjoint
   ownership and safe test resources; never run competing resets on the same E2E database.
 - Prioritize loss/duplication/exploit/crash/deploy safety, then blocked progression,
@@ -180,12 +241,26 @@ the specific gaps listed. Seeded subloop success does not close the complete liv
   Preserve successful foundations; reduce repeated repair and uncertainty, not just backlog size.
 
 Keep a small Ready queue; split later work only when its dependency is understood.
+Use the dashboard's [Delivery & Sessions workflow](Scripts/playertrace-coverage/README.md#delivery--sessions-workflow)
+for bounded cards, relevant feature references, named work records and checkpoints.
+One primary and one independent secondary active record is the initial WIP cap;
+source/resource/owner conflicts and stale writes are rejected in the board.
+Continue coherent scope, checkpoint before pause/fresh, and require an explicit
+fresh reason or context review. This metadata does not launch/control OMP or
+automatically verify evidence; Main retains actual allocation and acceptance.
+Feature shelves distinguish implementation, historical proof, research/corpus/
+policy and unanswered questions. Use those references to target the next missing
+fact, not to inherit a live claim or reopen a broad audit.
+
 The queue is not permission to commit, push, deploy, or mutate external services.
 
 ## Authoritative records
 
 | Record | Use |
 |---|---|
+| [CURRENT](.omp/state/CURRENT.md#session-resume) / [DECISIONS](.omp/state/DECISIONS.md) / [EVIDENCE](.omp/state/EVIDENCE.md) | Active objective/mode, approved decisions and exact layer-bound evidence; state arbiter is Main |
+| [START-HERE](START-HERE.md#new-session-bootstrap) | New-session bootstrap and domain routing; old handoffs are reference only |
+| [Developed PlayerBot baseline](ROADMAP.md#current-developed-capability-baseline) | E132 current-source comparison and historical proof boundaries, not a new grade |
 | [`VISION.md`](VISION.md) | Human playability + living-world commitments, delivery lanes, independent acceptance (not test verdicts) |
 | [`LIVING-WORLD.md`](LIVING-WORLD.md) | Living-world philosophy and architecture reference (not test verdicts) |
 | [`STATUS.md`](STATUS.md) | Current fork checkpoint, milestone narrative, open human gates, and recent reconciliations |
@@ -193,10 +268,10 @@ The queue is not permission to commit, push, deploy, or mutate external services
 | [`SCORECARD.md`](SCORECARD.md) | Mechanic evidence dimensions and conservative current scope |
 | [`EVIDENCE-LEDGER.md`](EVIDENCE-LEDGER.md) | Append-only milestone evidence states and human-feel boundary |
 | [`PLAYERBOT_BLOCKER ledger`](scorecard-explorations/playerbot-blockers.md) | Active bot blockers and retained resolutions |
-| [`PlayerBot Capability Matrix`](scorecard-explorations/mechanics/playerbot-capability-matrix.md) | Perceive / Decide / Act / Verify and autonomous-loop view |
-| [`PlayerBot Progression Ladder`](scorecard-explorations/mechanics/playerbot-progression-ladder.md) | Canonical P → B → L → A → N → G → T grading frame, sprint classifications, loop dependencies, golden path (planning/docs only) |
-| [`PlayerBot Progression Framework`](PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md) | Architectural audit, visual feature matrix, farming H-gate root cause diagnosis, and GOAP rollout policy |
-| [`PlayerBot Target Architecture v1`](PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md) | Ratified Option A minimal extension architecture, B2 thresholds, 14 locked invariants, Phase 0 evidence/integrity gates |
+| [`PlayerBot Capability Matrix`](scorecard-explorations/mechanics/playerbot-capability-matrix.md) | Dated Perceive / Decide / Act / Verify rows; use the developed baseline for current inventory |
+| [`PlayerBot Progression Ladder`](scorecard-explorations/mechanics/playerbot-progression-ladder.md) | Retained P → B → L → A → N → G → T definitions; not a universal parity-first dispatch gate |
+| [`PlayerBot Progression Framework`](PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md) | Historical audit/diagnoses and ladder reference; findings require current reproduction |
+| [`PlayerBot Target Architecture v1`](PLAYERBOT_TARGET_ARCHITECTURE_CONSOLIDATED_V1.md) | Retained execution invariants and named B/B2 definitions; dated phase/deferral instructions are not current wiring |
 
 ### Scope map
 
@@ -288,15 +363,41 @@ service health/throughput/recovery result).
 
 ## Bot Decision Architecture
 
+### Current PlayerBot ownership contract
+
+**2026-10-11 — current-use contract, grounded in E132.** Production binds
+`BotGoalArbiterStepExecutor` around `BotRoamStepExecutor`. Activity arbitration
+chooses the active domain; the existing domain owner retains its objective.
+QuestBootstrap carries its selected quest and receives terminal feedback.
+`BotBehaviorRuntime` currently hosts quest behavior only. NeedsFarm retains its
+own execution discipline; homestead hosts a separate GOAP runner/plan/request.
+These are source facts, not proof that every activity uses one GOAP runtime.
+
+Require one retained-goal owner and explicit precedence for the selected activity.
+Planning answers how to achieve that owner's chosen goal; do not add a third
+strategic selector or make a new GOAP framework mandatory. Preserve existing
+planning and bounded executors, then reconcile cross-family handoff one proved
+boundary at a time. Exact actor request/generation and observed authoritative
+outcome determine completion, retry/replan, abandonment and subsequent selection.
+The scheduler owns cadence, GameplayActor adapts actions, and Character/managers
+own legality, resources, effects and persistence. Restart uses real saved state
+and fresh requests, never resurrection of an old in-flight request.
+
+The dated ownership/closeout checkpoint below is historical. Its universal
+GOAP-owner and core-extraction prohibition do not set current inventory or override
+the approved integration/core contracts. Valid one-lifecycle/ordinary-rule
+invariants and named unresolved action boundaries remain; this is not a claim
+that ownership reconciliation or gameplay convergence is complete.
+
 Reuse the existing `BotGoalArbiter`, schedules, scenario runners,
 `GameplayActor`, and `Character` services. Use an FSM/state machine for
 lifecycle and legality; use utility/goal scoring to choose among currently
 legal objectives (such as hunger, HP, full bag, or travel only where ordinary
 services expose those signals). 
 
-**GOAP rollout policy (reconciled 2026-09-15):** Preserve the committed planner
-foundation; its presence is not proof of production integration or autonomy.
-Runtime work in the dirty tree is work in progress, not a shipped failure or exit.
+**Historical GOAP rollout policy (2026-09-15; not current inventory/dispatch):**
+Preserve the planner foundation. E132 now records hosted homestead GOAP and
+distinct production activity/quest paths; that wiring is not broad autonomy proof.
 Integrate one verified action chain at a time. First prove resource-aware search
 identity, truthful observations, concrete target binding, and the existing single
 action lifecycle. Then compare a bounded planner-driven loop with the deterministic
@@ -307,6 +408,10 @@ claims retain their requirements; supported autonomy follows the
 [supported-capability contract](#playerbot-supported-capability-contract), with existing architecture invariants retained.
 
 ### PlayerBot ownership checkpoint — 2026-09-16
+
+> Historical 2026-09-16 checkpoint — superseded for current ownership/dispatch
+> by the contract above. Preserve the following wording as the dated decision,
+> not a claim of universal production GOAP wiring or a ban on approved core repairs.
 
 One strategic decision authority does not imply one monolithic executor. GOAP owns
 goal selection, plan selection, replanning, and abandonment. Bounded executors own
@@ -370,11 +475,11 @@ claim that it has already happened.
 | **M5 actor decision/action loop** | **Unknown (H/client gate where applicable)** | **Unknown/Open (universal decision loop)** | **A/R:** `BotDecisionProposal`/`BotDecisionSelector`/`BotDecisionCycle` at `263ecc66c474ca1c5f4b085e86ef3e47f49fd1` provide immutable observed context, legality-before-preference, bounded candidates, deterministic fixed-priority/personality/tie-break selection, terminal postcondition, and existing `GameplayActor` dispatch in `LevelingLoop`'s quest-accept choice; `BotDecisionProposalTests` 5/5. This is a decision primitive plus scoped quest consumer, not universal bot autonomy; broad M5 policy remains open. | **A:** extend scoped consumers beyond the quest-accept choice; **H:** only where a consumer has a client-feel gate. | M5 lane; Josh only for human-relevant consumer feel | [ROADMAP M5](ROADMAP.md) + [M5 ledger row](EVIDENCE-LEDGER.md) |
 | **M6 human/exit gate — B4 restart** | **N/A (restart gate)** | **Unknown/Open (harness-driven lifecycle; autonomous decision closure not demonstrated)** | **A/R:** recorded lifecycle evidence stands (cancellation `950cfd279`, population isolation `c97909f4f`, default-skipped six-hour leg `155c82c66`); B4 metadata persistence recorded; A5 CLOSED per the 2026-09-08 conjunction. M6 full-exit remains unclaimed; H/UAT separate. | **A/R:** scheduler-driven full-exit evidence only; **H:** N/A for the operational restart/soak criterion (separate visibility/feel caveats live in the ledger). | M6 lane | [ROADMAP M6](ROADMAP.md) + [M6 ledger rows](EVIDENCE-LEDGER.md) |
 | **M7 adventurer/party loop** | **Unknown (H/client gate open)** | **Unknown/Open (A/R rig/proxy only; broad autonomous decision closure not demonstrated)** | **A/R:** current focused M7 evidence is **147/147** no-fail/no-skip: primary 36/36 (Adventurer 12, PartySpike 4, PartyLifecycleFaultMatrix 4, PartyFollowAssist 4, DeathWatch 5, LevelingLoop 7) plus actor support 111/111. Hunt kill uses real `DoOnMonsterHuntEvents` with fixture HP=0; Party spike is synthetic/fixture. | **L/H:** no current live authenticated-client run or H/UAT; keep bounded LevelingLoop 254→255 only. Broad decision closure, real damage/Npc.DoDie, scheduler-driven route, party roles/regroup/restart/disconnect, mount/travel remain open. | M7 bot lane; Josh for H | [M7 roadmap reconciliation](ROADMAP.md) + [capability matrix](scorecard-explorations/mechanics/playerbot-capability-matrix.md) |
-| **M8 — Living Village gate** | **Unknown (H open)** | **Unknown/Open (no autonomous village loop demonstrated)** | **A/R/L:** QUALIFIED engineering/runtime exit 2026-09-08 (24/24 ledger, 4/4 kill-9, scheduler VALID, physics/autosave PASS, one accepted 1112 ms transient, DB-volume INVALID by design; tested `a4d35fee8`); H UNKNOWN. Village activity is scenario/rig-driven; no fresh-character-to-village autonomous loop. | **L/H:** day-scale coexistence + feel with human-owned home/farm; **A/R:** autonomous profession cycling. | Village lane; Josh for H | [ROADMAP M8](#m8--living-village-first-true-vision-release-aaemu-living-village) + [STATUS 2026-09-08](STATUS.md) |
-| **M9 — Emergent systems direction** | **Unknown (H open)** | **Unknown (no propagation demonstrated)** | **Proposed substrate only:** R1 rumor graph → N1 needs/composer → J1 theft/report/justice; R2/R3 later. No per-system exit test has run. | **A/R:** per-system propagation proof (A's output changes B's behavior); **H:** real-player feel once systems interact. | M9 lanes; Josh for H | [ROADMAP M9](#m9--emergent-world-systems-the-world-simulator-layer) |
+| **M8 — Living Village gate** | **Unknown (H open)** | **Unknown/Open (no autonomous village loop demonstrated)** | **A/R/L:** QUALIFIED engineering/runtime exit 2026-09-08 (24/24 ledger, 4/4 kill-9, scheduler VALID, physics/autosave PASS, one accepted 1112 ms transient, DB-volume INVALID by design; tested `a4d35fee8`); H UNKNOWN. Village activity is scenario/rig-driven; no fresh-character-to-village autonomous loop. | **L/H:** day-scale coexistence + feel with human-owned home/farm; **A/R:** autonomous profession cycling. | Village lane; Josh for H | [ROADMAP M8](ROADMAP.md#m8--living-village-first-true-vision-release-aaemu-living-village) + [STATUS 2026-09-08](STATUS.md) |
+| **M9 — Emergent systems direction** | **Unknown (H open)** | **Unknown (no propagation demonstrated)** | **Proposed substrate only:** R1 rumor graph → N1 needs/composer → J1 theft/report/justice; R2/R3 later. No per-system exit test has run. | **A/R:** per-system propagation proof (A's output changes B's behavior); **H:** real-player feel once systems interact. | M9 lanes; Josh for H | [ROADMAP M9](ROADMAP.md#m9--emergent-world-systems-the-world-simulator-layer) |
 | **Post-M7 readiness — PB-001 routed navigation track** | **Unknown (live/H open)** | **Unknown (contract/nav coverage; autonomous loop open)** | **A/R:** landed `IGameplayActor.NavigateTo` and `NavigateToUnit`; wired into `LevelingLoopScenario` for hunt prey, grind targets, talk NPCs, turn-in reporters, and gather doodads. Tracked `GameplayActorNavigateTests` eight-test run (8/8) passes and `BaiNavigationRigTests` (6/6) covers GeoData/navmesh. | **L/H:** exercise interior and cross-region routes on the live stack and have Josh assess movement feel; broad coverage is still open. | Navigation lane; Josh for H | [Blocker PB-001](scorecard-explorations/playerbot-blockers.md) + focused test result in [STATUS](STATUS.md) |
 | **Post-M7 readiness — PB-002 autonomous progression track** | **Unknown (broad route open)** | **Unknown (broad autonomous loop open)** | **A/R rig/proxy only:** landed objective families are interaction, item-use, item-group use/gather, Sphere, Craft, Cinema, MonsterHunt/MonsterGroupHunt, Aggro (partial), ZoneKill, EtcItemObtain, CompleteQuest, Level, MateLevel, and AbilityLevel. Focused results: LevelingLoopScenarioRigTests 35/35, QuestActObjAggroTests 2/2, QuestEtcItemObtainRigTests 3/3, QuestZoneKillVictimRigTests 2/2, PvpFlaggingRigTests 11/11; Game/UnitTests Release builds 0 errors. 70 component-only forms without engage tie deferred to specialized tracks (68 Ayanad Library bounties, 10 Prologue sequence chains, 6 Honor / 2 Rift events, 4 minigame/title/festival) — fail-closed and excluded from ordinary leveling acceptance. | **Next:** live authenticated progression; human/client evidence. | Quest/playerbot lane; Josh for H | [PB-002 status](STATUS.md) |
-| **Post-M7 readiness — PB-005 NPC grounding track** | **N/A (audit outcome)** | **N/A (audit outcome)** | **A:** terrain replay corrected 593 non-whitelisted severe-positive rows; 702 intentional whitelist rows are unchanged. Cave/interior, submerged classification, and duplicate ownership remain unresolved. | **H:** Josh runs the W4-5 grounding tour and records coordinates/screenshots; engineering then classifies cave/deck/submerged findings and duplicate rows. | Server/data lane; Josh for H | [Grounding audit](scorecard-explorations/generated/npc-grounding-audit-2026-08-25.md) + [W4-5 packet](Docs/JOSH-QA-WAVE4.md) |
+| **Post-M7 readiness — PB-005 NPC grounding track** | **N/A (audit outcome)** | **N/A (audit outcome)** | **A:** terrain replay corrected 593 non-whitelisted severe-positive rows; 702 intentional whitelist rows are unchanged. Cave/interior, submerged classification, and duplicate ownership remain unresolved. | **H:** Josh runs the W4-5 grounding tour and records coordinates/screenshots; engineering then classifies cave/deck/submerged findings and duplicate rows. | Server/data lane; Josh for H | [Grounding audit](scorecard-explorations/generated/npc-grounding-audit-2026-08-25.md) + [W4-5 packet](Docs/JOSH-QAT-WAVE4.md) |
 | **Post-M7 readiness — PB-007 narrow PvP track** | **Unknown (H open)** | **Unknown (live login, not PlayerBot parity)** | **L:** isolated real-login E2E passes the flagged-aggression handshake and Peace block; this closes only the narrow handshake. | **L/H:** run the deferred WAR-HONOR (>251 hostile kills plus conflict timer) and broader PvP/honor/client-feel scope; do not reuse the handshake pass. | PvP lane; Josh for H | [PB-007 report](scorecard-explorations/generated/pvp-handshake-e2e-2026-08-27.md) + W4-4 packet |
 | **Post-M7 readiness — A5 / Tier-3 dormancy gate** | **N/A (load gate)** | **N/A (load gate)** | **A/R/L:** A5 CLOSED 2026-09-08 — (a) SHAPE re-shown 4/4 at engine `a23cdc33e` (1000/1000 registered, 50 embodied, RSS Δ -12.9%, wake p95 256.2 ms); (b1) soak #2 PASS 2026-09-05; (b2) asserted soak + bounded restart PASS 2026-09-06/05. Earlier 12h-soak timing RCA and memory-pressure diagnosis remain linked history, not current actions. | **A/R/L:** none open for this gate; new regressions get their own scoped card. No H claim is needed for this load gate. | Scaling/rig lane | [G2-A5 report](scorecard-explorations/generated/g2-a5-acceptance-report.md) + [A5 stall dossier](scorecard-explorations/mechanics/a5-physics-stall-investigation-2026-09-01.md) |
 | **Mail** | **Unknown (client/UAT open)** | **Unknown (no PlayerBot parity recorded)** | **L:** Mail S3 authenticated restart E2E passed equipment/copper persistence, ownership, unread count, take, and delete. | **L/H:** capture the real-client return opcode (0x0a2 remains strongly inferred), run W4-1/W4-2 ownership UI checks, and close COD plus expiry/bounce follow-ups. | Mail lane; Josh for client capture | [Mail dossier](scorecard-explorations/mechanics/mail-domain.md) + [W4 mail packet](Docs/JOSH-QAT-WAVE4.md) + S3 note in [STATUS](STATUS.md) |

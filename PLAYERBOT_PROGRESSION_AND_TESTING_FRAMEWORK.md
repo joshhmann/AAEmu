@@ -1,16 +1,21 @@
 # AAEmu PlayerBot Progression, Architecture & Testing Framework
 
-> **Historical audit, not current dispatch (2026-09-15 reconciliation).** Keep
-> dated findings below as their original evidence scope. Current grades live in
-> SCORECARD.md; current sequence and GOAP policy live in
-> [ROADMAP](ROADMAP.md#current-delivery-direction) and
-> [PROJECT-CONTROL](PROJECT-CONTROL.md#bot-decision-architecture). Reproduce a finding
-> against current source before fixing it; do not treat every old diagnosis as open.
->
-> **Current scope — user-approved 2026-10-10:** apply the sole
-> [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
-> Ladder definitions and historical evidence remain unchanged; B/B2 comparisons
-> are claim-specific, not blanket prerequisites to every supported autonomy loop.
+> **Current-use precedence — 2026-10-11:** Bootstrap through
+> [START-HERE](START-HERE.md#new-session-bootstrap) and
+> [current state](.omp/state/CURRENT.md#session-resume). Use the
+> [approved integration direction](PROJECT-CONTROL.md#playerbot-integration-direction),
+> [current ownership contract](PROJECT-CONTROL.md#current-playerbot-ownership-contract),
+> [developed capability baseline](ROADMAP.md#current-developed-capability-baseline)
+> and [approved extension roadmap](ROADMAP.md#playerbot-extension-roadmap).
+> This framework's grades, diagnoses and sprint instructions remain dated evidence,
+> not fresh current-HEAD verification, universal prerequisites or dispatch.
+> Preserve ladder/B/B2 meanings and thresholds; compare only the named supported scope,
+> not exhaustive human coverage. Existing source, opt-in policy and historical proof
+> are distinguished in [E132 comparison](.omp/state/artifacts/playerbot-variation-comparison/comparison.json).
+> Do not assume every activity shares GOAP or recreate fixed enrollment instrumentation.
+> Necessary shared-core repair follows the current contract, not old core prohibitions.
+> Earlier Muse/P0/loop launch instructions are historical. No Muse owner; Vibe is OFF,
+> but useful bounded native OMP delegation is allowed without ratifying old `/loop` recipes.
 
 ## Comprehensive Feature-by-Feature Loop Audit, Orchestrator Dashboard, and H-Gate Diagnosis
 

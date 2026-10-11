@@ -14,19 +14,34 @@
 > autonomy score, merge or deployment is advanced by this branch.
 
 
+**Source integration — E145 / D40, 2026-10-11:** User-approved recovery
+branch and quest atlas/navigation dependency are merged into develop. Review
+reproduced two removal/reaccept timing failures; bounded instance-owned removal
+claim preserves the active acceptance fence through cleanup and lets replacement
+instances finish independently. Six focused controls pass. Full combined gate
+4450pass/0fail/1named live-opt-in skip; full archaeology163/163/all MCPsmokes; pure
+setup7, shell5, parser125, productive25, continuation25, atlas7/geography5/work44
+pass. Tested composed source bytes match merged checkout, with inherited44
+modified/9untracked files preserved. Merge HEAD `9a930c4a32508bf4e6ace50aa902e858a8722969`.
+No shared deployment, new live quest/navigation proof, H or grade/milestone
+promotion. E142 continuation/persistence failure remains unresolved. See
+[merge receipt](.omp/state/artifacts/navigation-atlas-merge/merge-receipt.json).
+
 ## Current PlayerBot policy checkpoint
 
-**2026-10-10 — USER-APPROVED / CANONICAL policy; documentation/control only.**
-Apply the sole [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
-[Current evidence and allocation limits](STATUS.md#current-playerbot-policy-checkpoint):
-E-121 code GREEN is not live acceptance; E-124 third run FAILED/CLOSED, cancellation
-cause UNKNOWN; E-125–E-126 are research/source reconciliation only. Existing grades,
-locked historical exits and bounded results stand; seven general autonomy criteria
-remain unclosed. No new source/runtime capability, implementation or live campaign.
+**2026-10-11 — USER-APPROVED goals and roadmap, grounded in E132.**
+Reuse the [developed capability baseline](#current-developed-capability-baseline)
+under the sole [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+and [integration direction](PROJECT-CONTROL.md#playerbot-integration-direction).
+Existing grades, invariants, historical exits and bounded results stand; seven
+general autonomy criteria remain unclosed. Current mode/ownership:
+[CURRENT](.omp/state/CURRENT.md#session-resume) and
+[STATUS](STATUS.md#current-playerbot-policy-checkpoint). Approval sets engineering
+direction, not a new runtime pass, automatic merge, deployment or campaign.
 
 ### Next bounded PlayerBot priority
 
-**Ready for bounded reproduction, not allocated here:** demonstrate finite EXISTING
+**Approved first engineering priority; bounded implementation/live card not allocated by this documentation wave:** demonstrate finite EXISTING
 goal-owner retirement/handoff from unsupported or stuck A to supported eligible B,
 including another quest at the same NPC. Declare the objective-family denominator
 and authoritative signals; preserve AdvanceEnter's existing give-up guard/counter.
@@ -36,12 +51,177 @@ Release the owner only on actual give-up/named blocker; A's completed-memory sta
 false and interrupted/resolvable under-budget work is not prematurely abandoned.
 No whole-giver suppression, second timer or duplicate brain.
 
-Following distinct future work proves an actual chosen objective pattern
-(kill/loot/gather or another supported pattern), ordinary full completion including
-turn-in if required, then next choice. Earned resource→seed→farm is a separate
+
+**Continuation check — E140–E142 / D38, 2026-10-11:** New evidence-only
+consumer and 25 controls pass; production quest behavior unchanged. One isolated
+run failed before324:251 reached2/3, thirdboar killed without a thirdLootrequest.
+Actual corpse contents/effective loot rate remain unknown. OBSERVE canceled; full
+frozen-END position conservation failed at release and325s flush. Registry/session
+release and owned cleanup observed. E139 earlier passing run remains historical
+proof; no324 completion, robustness, general loop, H or grade/milestone promotion.
+Next gameplay dependency: actual corpse-generation/selection evidence. Atlas
+integration was subsequently merged under E145; shared deployment remains unchanged.
+See [E142 final receipt](.omp/state/artifacts/quest-continuation/final-receipt.json).
+
+**Productive quest checkpoint — D35 / [E139](.omp/state/EVIDENCE.md#e-139--remote-npc-loot-travel-withdrawal-repaired-productive-live-proof-pending), 2026-10-11:**
+E138 reproduced quest251 trying ineffective objective actions instead of walking
+onward to known distant boars. The existing travel now takes over in that bounded
+case. On an isolated real server the bot independently accepted251, recovered one
+exact travel interruption, killed/looted three boars (item4058 and objective0→1→2→3),
+returned and completed251, then independently accepted324 atNPC3513. Normal cleanup/
+reward and full frozen-END release plus325s persistence checks passed; live1/1.
+Eight behavioral checks, unchanged parser125/125, new proof controls25/25, full
+gate4426pass/0fail/1named opt-in skip and archaeology163/163/both MCP surfaces pass.
+Source develop`aa057ffc3bb4596f4a6972eb4f012994970e163a` + dirty inherited/bounded repair.
+Level10 starter body/equipment and one enrollment wake are setup; no assigned quest,
+credit/reward/prerequisite injection. Same-NPC reselection remains E136 seeded proof.
+No324 completion/restart/general loop/H/grade/parent milestone claim, merge or shared
+deployment. Next dependency: bounded productive324 completion; not launched.
+
+**Finite handoff checkpoint — D32 / [E136](.omp/state/EVIDENCE.md#e-136--finite-exhausted-quest-owner-handoff-repaired-and-accepted-in-seeded-integration):**
+E135 reproduced exhausted unfinished A retaining the owner despite eligible B.
+The existing owner now consumes earned GiveUps and defers only A while its facts
+are unchanged; ordinary discovery selects/accepts B at the same NPC. A stays
+uncompleted. Seeded production-path tests4/4 include interruption, source return,
+ineligible offers and finite no-follow-up recovery. Full gate4422pass/0fail/1named
+live-opt-in skip; full archaeology163/163, both MCP surfaces PASS. Source develop
+`aa057ffc3bb4596f4a6972eb4f012994970e163a` plus dirty bounded repair/inherited changes.
+Historical E136 limits: no B completion/full productive loop/live/H or grade/milestone
+promotion. Its next productive dependency is now exercised narrowly by E139 above.
+
+
+E139 now proves one actual NPC-loot objective pattern through ordinary completion/
+turn-in and independent next choice. Distinct future work extends supported patterns
+and proves the newly selected324 through productive completion. Earned resource→seed→farm is a separate
 future slice. Quest251/farm instances are reusable-capability evidence, not the
-entire project objective. Activity-Spine is not ratified. Main owns future allocation;
-this priority does not launch implementation, tests or live work.
+entire project objective. Activity-Spine's detailed campaign is not ratified. Main
+owns integration; each implementation/live card names scope, proof and owned resources.
+
+Execution control: the [dashboard delivery/session workflow](Scripts/playertrace-coverage/README.md#delivery--sessions-workflow)
+maintains bounded dependency cards, feature references and saved work briefs.
+The initial queue kept handoff at Needs evidence; E135/D32 reconciled readiness,
+reproduced and repaired its bounded failure, and E136 accepts seeded handoff only.
+E139 accepts only the bounded productive251 card; earned-resource remains Backlog; UI statuses are reported operational state,
+not new gameplay/grade/H acceptance. Main allocates the exact next card from
+CURRENT and corroborates its references before execution; no automatic campaign.
+
+## PlayerBot extension roadmap
+
+**2026-10-11 UTC — USER-APPROVED canonical goals and dependency order (D30).**
+Build our own AAEmu-native capabilities by reusing existing implementations, not
+one port per AzerothCore repository. The user adopts this direction after E132's
+current-capability comparison; E131's earlier PROPOSED status is superseded for
+planning only. The [core-change authorization](PROJECT-CONTROL.md#server-core-integration-authorization)
+permits necessary engine repairs; supported scope, ordinary rules, seven autonomy
+criteria, grades and milestone exits are unchanged. Main integrates native OMP
+slices; Vibe is off. Approval does not implement a wave or launch a campaign.
+Independent recovery branch `review/branch-recovery-2026-10-10` at
+`8024926a718a11f754abd2d92716e1c421fc22ce` remains unmerged pending user decision.
+Last source-comparison baseline: `develop`
+`aa057ffc3bb4596f4a6972eb4f012994970e163a` plus inherited projection/docUI changes.
+New sessions must record their actual checkout, not inherit this as a fresh gate.
+
+### Current developed capability baseline
+
+**E132 — current source/textual comparison, not a fresh gameplay run.** Reuse the
+existing foundations below; missing loop evidence is not missing every action.
+[Detailed comparison and source anchors](.omp/state/artifacts/playerbot-variation-comparison/comparison.json)
+retain implementation/policy/observed-outcome distinctions. Historical live results
+keep their own revision, setup, coverage and limits; no row promotes a grade.
+
+| Family | Existing implementation / recorded proof | Next integration or proof boundary |
+|---|---|---|
+| Shared autonomy | Character lifecycle/generation, scheduler, activity arbiter/roam, ActorRequest/GameplayActor; quest behavior runtime and hosted homestead GOAP | One retained owner/result contract per active activity; cross-family ownership is not yet a universal GOAP runtime |
+| Quests | Opt-in discovery/retained choice, supported legs, travel/action/turn-in feedback; E95 bounded two completions/recovery/next acceptance, E96 qualified restart/progress | E136 same-NPC seeded handoff; E139 isolated live251 productive completion→fresh324 acceptance and exact interruption/full-END persistence; uncommitted. Broader patterns,324 completion/restart/H and independently measured reporter reach remain unproved |
+| Public farming | NeedsFarm policy observes soil/crops, travels, plants, waits, harvests/replants; seed purchase and surplus sale already coded; E106 seeded two-harvest/recovery/persistence | Earned acquisition/sustainment, strategic handoff, restart and applicable action semantics remain unproved |
+| Private homestead | Homestead GOAP/activity, ordinary plot/construction adapters; historical provisioned claim→construct/conservation/repeat/restart | Kit/resource acquisition and ordinary travel/full owned-plot livelihood are not proved by supplied kit/setup |
+| Crafting/artisan | Real CharacterCraft request/material/bench/labor guards and crafter/merchant/hauler cycles | Useful recipe choice, material sourcing, customer agreement, paid delivery and follow-up |
+| Trade/AH/specialty | Vendor, direct-trade, auction/mail, specialty-sale actions; historical live transaction/restart scenarios | Autonomous selection/pricing/acquisition-to-sale; operator liquidity is separate |
+| Cooperative adventure | Invite/accept/follow/assist, production party handling and historical elite-kill party scenario | Independent group task/leadership/readiness/progression/recovery policy; scenarios are not self-selected adventures |
+| PvP/Dominion | Production same-zone ConflictJoin and ordinary combat; bounded skirmish scenario | Travel-to-war/event coordination/Dominion policy and native-mechanic proof, not Wintergrasp porting |
+| Presence/social | Roam, Home/Work/Travel/Rest schedules, bounded chatter and farm leisure | Useful subordinate social/service choices; visible motion/messages are not fulfilled work |
+| Expedition | Ordinary actions and historical five-bot formation/membership proof | Independent membership choice/recruitment/continuing group purpose |
+| Persistence/population | Character/metadata persistence, fidelity/dormancy/materialization; E96 qualified quest restart, E106 farm flush, accepted historical A5 scale conjunction | Durable cross-domain purpose and fresh-request reconciliation; cost control is not abstract earned simulation |
+
+Do not repeat the full audit or replace existing systems before examining the
+selected consumer. Maintain ordinary legality/conservation; historical seeded or
+scripted successes remain useful execution evidence, not acquisition or universal
+autonomy. [Current ownership](PROJECT-CONTROL.md#current-playerbot-ownership-contract)
+and [session bootstrap](START-HERE.md#new-session-bootstrap) govern integration.
+
+### Separate the shared spine from activity policy
+
+| Boundary | Owner / reuse | Required proof before depending on it |
+|---|---|---|
+| Lifecycle | Ordinary Character enrollment, headless session, existing scheduler/game-thread boundary | Production enrollment, teardown and re-enrollment without leaked actors or stale requests |
+| Knowledge | Perception and bounded opportunity providers | Observed target/eligibility/source facts; unknown or unscanned is not unavailable |
+| Choice | Activity arbitration selects the domain; its retained-goal owner selects the objective | Explicit precedence, finite retirement and one active owner; unsupported A does not hide eligible B at the same giver |
+| Planning | Existing domain planning / GOAP where actually wired | Plans use supported actions and fresh facts; no assumption every domain already shares one GOAP path |
+| Execution | GameplayActor owns the asynchronous request; shared engine services validate effects | Accepted/queued is not completed; exact request/generation and authoritative postconditions correlate |
+| Recovery | Existing owner handles interruption, retry/replan/abandon and resource cleanup | Bounded budgets, no duplicate dispatch, no fake completion, no second timer or competing director |
+| Continuity | Existing character persistence plus only justified intent metadata | Restart reconciles real world state and creates fresh requests; it never resurrects an old in-flight request |
+
+These seams exist in part, not as proof of a fully unified runtime. `IBotActivityModule`
+and `BotGoalArbiterStepExecutor` already provide activity/wake extension points;
+`BotBehaviorRuntime` currently hosts the quest slice, while GOAP retains separate
+primary/interrupt state. Cross-family precedence and production wiring must be
+verified before adding another policy. A new plugin framework, reservation registry,
+brain or scheduler is not a prerequisite.
+
+### Dependency-ordered delivery waves
+
+| Wave | Reviewable outcome | Acceptance / stopping point |
+|---|---|---|
+| 0 — Baseline and pattern cards | Select the actual source baseline and document one reusable mechanism at a time | Source/pin/license, owner, inputs, observed result, failure/cleanup, dependencies and proof limits recorded; pending branch merge remains separate |
+| 1 — Individual autonomy | Prove the existing goal-owner loop before adding activity breadth | Production bot discovers/selects supported work, executes normally, observes completion, handles interruption OR failure and selects a distinct next goal; finite A→B same-giver reproduction first, repair only observed failure |
+| 2 — Needed action substrate | Strengthen only the travel, combat, loot, interaction and recovery legs the next capability requires | Legal successful and failing actions, observed consequences and cancellation/resource cleanup; do not wait for every combat or movement variant |
+| 3A — Livelihood and commerce | Ordinary acquisition, farm/craft services and inventory-backed transactions | Materials/money/labor/output reconcile; shortages and retry/restart do not mint or duplicate value; seeded transaction proof may precede acquisition but cannot claim self-sufficiency |
+| 3B — Cooperative activity | Party roles, observed leadership/membership, shared targets and bounded adventure/PvP tasks | Leadership request is not ownership; participants cooperate through ordinary services, recover/regroup or report partial failure, then release ownership |
+| 3C — Presence and social services | Ambient movement, truthful service advertising and ordinary Expedition membership | Cannot steal a busy bot; advertised capability is actually available; messages or administrative membership are not fulfilled work |
+| 4 — Cross-domain continuation | Connect already-proved activity families through existing arbitration | Bot chooses its next useful activity from fresh opportunities after completion/abandonment, without a scripted sequence or new decision owner |
+| 5 — Optional population policy | Later operator-defined population distribution or abstract simulation | Explicit opt-in, isolated policy and disclosed seeding/simulation; not earned progression or seven-criterion proof; no live character mutation or synthetic rewards authorized here |
+
+Waves 2 and 3 are dependency-driven branches, not a compulsory serial checklist.
+Commerce correctness and resource-acquisition research can proceed independently;
+their full earned loop joins only after both are proved. Group activity needs its
+specific action/recovery contracts, not completion of farming or the whole economy.
+Thin truthful social presentation may proceed independently, but is not the autonomy
+critical path. Parallel slices must own different files; one integration owner owns
+shared goal/result semantics and resolves changes to core services.
+
+### External pattern families and our variations
+
+| External references (all 15 supplied catalogue IDs) | Our variation / boundary |
+|---|---|
+| AH Bot Plus `868234006`; Auctioneer `1413181712` | Separate operator market liquidity from ordinary Character inventory-backed selling/buying/mail; reference pricing does not prove acquisition. Auctioneer is a replacement Playerbots fork, not assumed additive |
+| Dungeon Clear `1252795216`; Dungeon Lead `1367140787` | Bounded party/adventure policy using ordinary travel/combat, readiness, observed leadership and partial outcomes; no copied routes, teleport rescue or whole-dungeon competence claim |
+| Artisans `1287638788`, `1403027120` | Separate recipe/service discovery and advertising from actual material acquisition, crafting, payment and delivery |
+| City Life `1360532895`, `1403018344` | Ambient presence/social policy subordinate to useful-work ownership; visible occupation is not economic or quest progress |
+| PvP Life `1359243337`, `1403020883`; World PvP `1287636988` | Bounded duel/hotspot/group policies on ordinary combat/faction/recovery services; similarly named variants are not assumed compatible or independent |
+| Wintergrasp `1357388339` | Study event enrollment/objective/vehicle coordination only; any Dominion or other 1.2 adaptation needs its own archaeology and ordinary-rule proof, not a WoW mechanic port |
+| Auto Guild `1239632567` | Ordinary Expedition membership/social integration; operator assignment is distinct from autonomous membership choice |
+| Level Brackets `933978271`; Dungeon Sim `1279590851` | Optional future population administration/abstract simulation, separate from earned individual progression; README preservation, simulated rewards and unresolved dependencies are not live proof |
+
+Catalogue inclusion is topic discovery, not certification. READMEs can be stale:
+same-pin Artisans source uses canonical `BotActivityMgr`/`SayToChannel`, contrary
+to its copied-header/direct-channel claims, and implements messaging rather than
+craft fulfillment. Dungeon Lead separates queued leadership from observed ownership,
+but normal entry is human-directed and some recovery teleports bots. Extract the
+mechanism, not the shortcut or unverified feature claim. The persisted
+[pattern inventory](.omp/state/artifacts/playerbot-variation-roadmap/catalogue-inventory.json)
+and [source review](.omp/state/artifacts/playerbot-variation-roadmap/catalogue-source-review.txt)
+retain exact external pins, URLs and limitations.
+
+**Next three bounded priorities:** (1) finite existing-owner A→eligible B reproduction,
+including same NPC and under-budget recovery controls; (2) one supported productive
+objective pattern through ordinary full completion/turn-in if required and next
+selection; (3) one conservation-checked resource→farm/craft/trade increment using
+proved services. Select necessary core repairs inside those outcomes, not as a
+standalone “rewrite core” initiative. Activity-Spine remains an unratified campaign;
+this roadmap neither launches it nor turns the owned-plot journey into a universal
+quest-autonomy gate. E131 records the original proposal, E132 the developed comparison;
+D30 records user adoption. Documentation/UI verification is separate from gameplay proof.
+
 
 ## 2026-10-10 — Bounded seeded public-farm proof COMPLETE (E-106)
 
@@ -212,15 +392,17 @@ Commands/source identities: [manifest](.omp/state/artifacts/sol-remaining-2026-1
 
 ## Current delivery direction
 
-**2026-09-15 planning reconciliation.** This is the current dispatch view, superseding
-older proposed queue order below, not historical evidence or locked milestone exits.
-Source checkpoint: `d0d58e5848829b7a85da3847d03da00a90cb7c68` plus existing uncommitted
-GOAP/runtime work. No engineering, live, or human grade is promoted by this plan.
-Product commitments: [VISION](VISION.md#product-commitments-current-direction-2026-09-15).
-Agent operating rules: [delivery contract](PROJECT-CONTROL.md#delivery-contract).
-Current bot scope follows the [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract);
-the [next bounded priority](#next-bounded-playerbot-priority) governs present
-planning, not the older queues' authorization language.
+**Current dispatch direction — user-approved 2026-10-11:** use the
+[developed baseline](#current-developed-capability-baseline),
+[approved extension roadmap](#playerbot-extension-roadmap) and
+[next bounded priority](#next-bounded-playerbot-priority), with
+[CURRENT](.omp/state/CURRENT.md#session-resume) for actual mode/allocation.
+The 2026-09-15 queue and source checkpoint
+`d0d58e5848829b7a85da3847d03da00a90cb7c68` below remain historical journey/dependency
+context, not universal farm/parity-first dispatch. Preserve milestone exits and
+[product commitments](VISION.md#product-commitments-current-direction-2026-09-15).
+The [delivery contract](PROJECT-CONTROL.md#playerbot-integration-direction) applies;
+no engineering, live, human or capability grade is promoted by roadmap adoption.
 
 ### Repeatable expansion protocol
 
@@ -235,7 +417,7 @@ Use existing mechanic/zone ledgers and stable IDs, not a second milestone system
 
 ### First owned small plot journey
 
-**Current product target, clarified by Josh 2026-09-16:** one ordinary new bot
+**Retained livelihood target, clarified by Josh 2026-09-16; not the universal current dispatch:** one ordinary new bot
 progresses from its starting zone to a genuinely owned, usable small scarecrow plot,
 plants a crop, receives its harvest and starts the next cycle without intervention.
 Planning corridor: **one Nuian/Solzreed character**, not all races/regions at once.
@@ -465,7 +647,7 @@ their existing definitions. Full 1.2.4 fidelity remains a coverage program, not 
 
 ### Near-term slice queue
 
-> Current selection guard: OPEN below is a roadmap state, not work authorization. Consult [current policy/allocation limits](STATUS.md#current-playerbot-policy-checkpoint) and the [next bounded priority](#next-bounded-playerbot-priority). Historical conversion backlog and owned-plot rows remain requirements context, not automatic permission to implement or launch live work.
+> Historical journey queue, not current dispatch: consult the [approved extension roadmap](#playerbot-extension-roadmap), [developed baseline](#current-developed-capability-baseline), [current allocation limits](STATUS.md#current-playerbot-policy-checkpoint) and [next bounded priority](#next-bounded-playerbot-priority). OPEN below is a dated roadmap state, not automatic permission or proof that later implemented actions are absent.
 
 | Slice / parent | Observable acceptance | Readiness and next dependency |
 |---|---|---|

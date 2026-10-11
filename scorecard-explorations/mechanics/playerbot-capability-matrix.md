@@ -1,5 +1,25 @@
 # PlayerBot Capability Matrix (Perceive / Decide / Act / Verify)
 
+> **Current-use precedence — 2026-10-11:** Bootstrap through
+> [START-HERE](../../START-HERE.md#new-session-bootstrap) and
+> [current state](../../.omp/state/CURRENT.md#session-resume). The
+> [approved integration direction](../../PROJECT-CONTROL.md#playerbot-integration-direction),
+> [current ownership contract](../../PROJECT-CONTROL.md#current-playerbot-ownership-contract),
+> [developed capability baseline](../../ROADMAP.md#current-developed-capability-baseline)
+> and [approved extension roadmap](../../ROADMAP.md#playerbot-extension-roadmap)
+> govern inventory/dispatch. Rows, grades, current-position/GOAP claims and operator
+> recipes below remain dated, not fresh verification or universal prerequisites.
+> [E132 comparison](../../.omp/state/artifacts/playerbot-variation-comparison/comparison.json)
+> distinguishes implemented source, wired opt-in policy and historical live proof:
+> seed purchase/surplus sale already exist; provisioned housing claim/construct/restart
+> has historical proof; commerce/group scenarios are not autonomous policy.
+> Preserve A5 historical closure and B/B2 meanings; no grade is promoted here.
+> Neither exhaustive human coverage nor universal GOAP wiring is required.
+> Necessary shared-core repairs follow the current contract. Old Muse/P0/loop
+> instructions do not dispatch work or require recreating fixed enrollment instrumentation.
+> No Muse owner; Vibe is OFF, while useful bounded native OMP delegation remains
+> allowed without ratifying old `/loop` recipes.
+
 > **Provenance correction (2026-10-01).** The header previously read *"Populated from
 > implementation reality at local source/test HEAD
 > `da0fdc61a72a15111fddc8ac627a164a5f050558`"*, which was a **third** SHA that
@@ -83,7 +103,7 @@ do not authorize a new implementation or live campaign.
   blockers.
 - **Farming Loop Diagnostics & PB-FARM-01 (2026-09-13):** Audit of live farming H-gate failures identified three code bottlenecks in `BotRoamStepExecutor.cs`: 3m merchant discovery range (`ResolveSeedMerchant`), 150m soil horizon (`ResolveSoilTarget`), and maturation patrol fallthrough (`WaitingMaturity` clearing `NeedsLegActive`). Recorded as `PB-FARM-01` in [playerbot-blockers](../playerbot-blockers.md); full architecture and testing analysis documented in [PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md](../../PLAYERBOT_PROGRESSION_AND_TESTING_FRAMEWORK.md).
 - **GOAP Rollout Policy (2026-09-13):** Full A* GOAP planning is postponed until core loops (Questing, Farming, Trade Packs) achieve verified `L = 2` closure. Loops are structured with explicit preconditions and effects (`BotProposalPrecondition`), routed via a simple priority arbiter.
-- **PlayerBot Architecture Realignment & EntryPath Contract (2026-09-14):** PlayerBots are backed by real `Character` records, but actions historically entered the stack below human player controllers, causing robotic presentation (e.g. 25m telekinetic harvesting, zero-cast doodad placement, missing interaction states). **Corrected 2026-10-01 — this line previously read "Adopted new scorecard dimension", which was never true of the ledger.** `EntryPath: SHARED | PARTIAL | BOT-SPECIFIC | UNKNOWN` is a **PROPOSED, non-scoring** provenance label, recorded as an open decision in [`SCORECARD.md`](../../SCORECARD.md#open-dimension-proposal-entrypath-decision-required-not-adopted-2026-10-01) and **not added** to the C/W/H/A/R/S dimension set; no grade is affected and no cell carries it. Stated policy: every capability must trace the human packet path and share the lowest common player semantic seam. The value definitions are restated below as a definition only — see the status note there.
+- **PlayerBot Architecture Realignment & EntryPath Contract (2026-09-14):** PlayerBots are backed by real `Character` records, but actions historically entered the stack below human player controllers, causing robotic presentation (e.g. 25m telekinetic harvesting, zero-cast doodad placement, missing interaction states). **Corrected 2026-10-01 — this line previously read "Adopted new scorecard dimension", which was never true of the ledger.** `EntryPath: SHARED | PARTIAL | BOT-SPECIFIC | UNKNOWN` is a **PROPOSED, non-scoring** provenance label, recorded as an open decision in [`SCORECARD.md`](../../SCORECARD.md#open-dimension-proposal--entrypath--decision-required-not-adopted-2026-10-01) and **not added** to the C/W/H/A/R/S dimension set; no grade is affected and no cell carries it. Stated policy: every capability must trace the human packet path and share the lowest common player semantic seam. The value definitions are restated below as a definition only — see the status note there.
 
 #### EntryPath — definition of record (restated 2026-10-01 for self-containment)
 

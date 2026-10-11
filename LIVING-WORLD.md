@@ -4,6 +4,19 @@
 > philosophy + architecture reference for the Living World project. The
 > roadmap (ROADMAP.md) operationalizes it; this doc is the why.
 
+> **Current-use boundary — user-approved 2026-10-11:** this remains the long-term
+> philosophy, not a current implementation inventory or dispatch recipe. Start at
+> [START-HERE bootstrap](START-HERE.md#new-session-bootstrap) /
+> [CURRENT](.omp/state/CURRENT.md#session-resume), then the
+> [developed baseline](ROADMAP.md#current-developed-capability-baseline) and
+> [approved roadmap](ROADMAP.md#playerbot-extension-roadmap).
+> Reuse existing bot capabilities and shared gameplay; necessary core repairs are
+> allowed under the [integration contract](PROJECT-CONTROL.md#playerbot-integration-direction).
+> First prove supported individual goal-to-goal autonomy, not all human activities,
+> optional LLMs or abstract population simulation. Module/layer/tier examples below
+> are inspiration; they neither prohibit core changes nor prove autonomous production.
+> Operator-seeded liquidity stays separate from earned player economy.
+
 ## Core Philosophy
 
 **PlayerBots are not the feature. The living world is the feature.**

@@ -1,6 +1,20 @@
 # Muse handoff for PlayerBot rework
 
-For persistent execution, use the [OMP loop handoff](astra-playerbot-omp-loop-handoff-2026-10-07.md). Its freshness note updates this guide's E-48 starting point to E-49; always check the newest ledger before acting.
+> **Historical handoff; not executable current assignment — 2026-10-11.**
+> New sessions use [START-HERE](../../START-HERE.md#new-session-bootstrap) and
+> [current state](../../.omp/state/CURRENT.md#session-resume), then the
+> [approved integration direction](../../PROJECT-CONTROL.md#playerbot-integration-direction),
+> [ownership contract](../../PROJECT-CONTROL.md#current-playerbot-ownership-contract),
+> [developed capability baseline](../../ROADMAP.md#current-developed-capability-baseline)
+> and [approved extension roadmap](../../ROADMAP.md#playerbot-extension-roadmap).
+> The Muse messages, P0 enrollment first task and loop pointers below are retained
+> as dated history: do not launch Muse or recreate fixed enrollment instrumentation.
+> No Muse owner; Vibe is OFF. Useful bounded native OMP delegation remains allowed;
+> this does not ratify old `/loop` recipes. Consult only focused audit references
+> needed by the current bounded task, not a repeat full audit.
+> [E132 comparison](../../.omp/state/artifacts/playerbot-variation-comparison/comparison.json)
+> distinguishes existing source, wired opt-in policy and historical live proof.
+> Current supported autonomy does not require exhaustive human coverage or universal GOAP.
 
 Author: Astra. Date: 2026-10-07. Scope: evidence-led execution guidance for the existing audit and P0–P6 path.
 

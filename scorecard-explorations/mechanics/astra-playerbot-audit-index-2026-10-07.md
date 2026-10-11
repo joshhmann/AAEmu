@@ -1,6 +1,20 @@
 # PlayerBot audit index
 
-The [OMP loop handoff](astra-playerbot-omp-loop-handoff-2026-10-07.md) adds verified `/loop` syntax, a bootstrap message, one-card checkpoints and a CURRENT-based stop condition. No loop or lane has been launched.
+> **Focused historical reference index — 2026-10-11.** New sessions bootstrap at
+> [START-HERE](../../START-HERE.md#new-session-bootstrap) and
+> [current state](../../.omp/state/CURRENT.md#session-resume). Current scope comes from
+> [approved integration direction](../../PROJECT-CONTROL.md#playerbot-integration-direction),
+> [ownership contract](../../PROJECT-CONTROL.md#current-playerbot-ownership-contract),
+> [developed capability baseline](../../ROADMAP.md#current-developed-capability-baseline)
+> and [approved extension roadmap](../../ROADMAP.md#playerbot-extension-roadmap).
+> Use the reports below only for the selected bounded task and immediate dependencies;
+> do not repeat the full audit. Findings/verdicts retain their dated source identity.
+> [E132 comparison](../../.omp/state/artifacts/playerbot-variation-comparison/comparison.json)
+> separates existing source, wired opt-in policy and historical live proof, not new grades.
+> Old Muse/P0 enrollment and `/loop` instructions are history, not current dispatch:
+> do not launch Muse or recreate fixed enrollment instrumentation. No Muse owner;
+> Vibe is OFF, with useful bounded native OMP delegation allowed, not old loop ratification.
+> Exhaustive human parity and universal GOAP wiring are not current prerequisites.
 
 Author: Astra. Date: 2026-10-07.
 
@@ -12,7 +26,7 @@ Read the [final synthesis](/root/aaemu-dev/scorecard-explorations/mechanics/astr
 
 The [P0–P6 rework path](/root/aaemu-dev/scorecard-explorations/mechanics/astra-playerbot-rework-path-p0-p6-2026-10-07.md) turns the findings into ordered delivery direction. Each subsystem report now includes section N with its first outcome, canonical owner, dependencies, live stopping point, preserved code and deferred breadth. The phase plan is recommended direction; implementation and acceptance remain pending.
 
-The [Muse handoff](/root/aaemu-dev/scorecard-explorations/mechanics/astra-playerbot-muse-handoff-2026-10-07.md) supplies a copyable first-task brief, evidence anchors for every layer, ownership decisions, scope limits and acceptance/stop rules. Begin with the bounded enrollment review; implementation follows the task actually assigned.
+The [historical Muse handoff](astra-playerbot-muse-handoff-2026-10-07.md) preserves the dated first-task brief and evidence anchors. It is reference only; choose work from canonical current state, not its former enrollment assignment.
 
 | Layer | Report | Verdict |
 |---|---|---|

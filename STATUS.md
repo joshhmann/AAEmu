@@ -14,12 +14,27 @@
 > autonomy score, merge or deployment is advanced by this branch.
 
 
+**Source integration — E145 / D40, 2026-10-11:** User-approved recovery
+branch and quest atlas/navigation dependency are merged into develop. Review
+reproduced two removal/reaccept timing failures; bounded instance-owned removal
+claim preserves the active acceptance fence through cleanup and lets replacement
+instances finish independently. Six focused controls pass. Full combined gate
+4450pass/0fail/1named live-opt-in skip; full archaeology163/163/all MCPsmokes; pure
+setup7, shell5, parser125, productive25, continuation25, atlas7/geography5/work44
+pass. Tested composed source bytes match merged checkout, with inherited44
+modified/9untracked files preserved. Merge HEAD `9a930c4a32508bf4e6ace50aa902e858a8722969`.
+No shared deployment, new live quest/navigation proof, H or grade/milestone
+promotion. E142 continuation/persistence failure remains unresolved. See
+[merge receipt](.omp/state/artifacts/navigation-atlas-merge/merge-receipt.json).
+
 ## Current PlayerBot policy checkpoint
 
-**2026-10-10 — USER-APPROVED / CANONICAL, documentation and control only.**
+**2026-10-11 — USER-APPROVED reuse-first goals/roadmap; documentation/control pivot.**
 The sole policy owner is the [PlayerBot supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract).
-Useful supported autonomy, ordinary engine correctness and independent human/H
-commitments govern current planning; existing B/B2 definitions and grades are unchanged.
+Use the [integration direction](PROJECT-CONTROL.md#playerbot-integration-direction)
+and [developed baseline](ROADMAP.md#current-developed-capability-baseline) before
+choosing work. Useful supported autonomy, ordinary engine correctness and separate
+human/H commitments govern delivery; existing B/B2 definitions/grades are unchanged.
 
 Evidence remains layer-bound: [E-121](.omp/state/EVIDENCE.md#e-121--d26-current-corrected-code-redgreen-not-live-acceptance)
 records code GREEN, not live acceptance; [E-124](.omp/state/EVIDENCE.md#e-124--third-actual-native-failedclosed-cancellation-cause-unknown-no-gameplaysave-defect-inference)
@@ -30,19 +45,79 @@ not a gameplay/save-defect diagnosis. Owned cleanup completed and all foreign
 and [E-126](.omp/state/EVIDENCE.md#e-126--existing-research-reconciliation-complete-main-read-only-realignment-review-accepted-no-new-capability)
 are bounded source/research reconciliation, not executed capability.
 
-The [next bounded engineering priority](ROADMAP.md#next-bounded-playerbot-priority)
-is reproduction-first finite existing-owner A→eligible B handoff, including same NPC,
-not a named-quest campaign. Ready for bounded reproduction does not allocate source
-or live work here. Main is sole owner; no Muse handoff. Gameplay C# writers and
-game-server campaigns remain held; documentation/dashboard work does not allocate
-gameplay implementation. The seven general autonomy criteria remain unclosed;
-historical bounded passes retain their denominators. No grade, locked milestone exit,
-standing freeze, H, deployment or runtime-capability promotion follows.
+The approved first engineering priority is [finite existing-owner A→eligible B
+handoff](ROADMAP.md#next-bounded-playerbot-priority), including same NPC, not a
+named-quest campaign. Main is sole integrator; native OMP workers have bounded
+nonoverlapping scope, Vibe is off and there is no Muse handoff. Active mode, files,
+owned resources and stop are in [CURRENT](.omp/state/CURRENT.md#session-resume).
+The onboarding pivot and current dashboard control-plane task do not automatically
+launch gameplay implementation/live cards. Seven general
+autonomy criteria remain unclosed; historical bounded passes retain their scope.
+No grade, milestone exit, H, deployment or runtime-capability promotion follows.
 
 The owned-plot livelihood journey remains future work, not a universal gate before
 supported quest autonomy. Activity-Spine remains an unratified proposal.
 Current policy/priority supersedes older next-work recommendations only; dated
 results and the historical conversion-dispatch ruling below remain intact.
+
+**Grounded capability checkpoint — E132:** production lifecycle/arbitration/action
+seams, quest/NeedsFarm policies, homestead GOAP, commerce/group actions, presence
+and population controls already exist. Historical E95/E96/E106 and provisioned
+housing/transaction/party/A5 results are retained, not rerun at current HEAD.
+Seed buying/surplus sale and housing are not absent merely because earned loops
+are unproved. The user now adopts the [extension roadmap](ROADMAP.md#playerbot-extension-roadmap)
+as the fork's goals/dependency order (D30), superseding E131's proposal status and
+older next-work recommendations only. Necessary [core repairs](PROJECT-CONTROL.md#server-core-integration-authorization)
+remain greenlit inside shared ordinary gameplay. E133 records onboarding/UI proof
+separately; it is not new gameplay acceptance. E130's recovery branch remains
+unmerged pending user decision.
+
+**Control-plane delivered — D31 / [E134](.omp/state/EVIDENCE.md#e-134--dashboard-delivery-session-continuity-and-feature-references):**
+the [dashboard delivery/session workflow](Scripts/playertrace-coverage/README.md#delivery--sessions-workflow)
+now stores bounded cards, resumable/fresh work records and 14-feature/138-reference
+bibliography. Python84/84, actual HTTP/browser persistence/conflict/drift and served
+surface verified; standard gate4418pass/1live-opt-in skip, both MCP smokes PASS.
+Records do not launch OMP or promote canonical proof. No new gameplay/grade/live/H.
+
+
+**Continuation check — E140–E142 / D38, 2026-10-11:** New evidence-only
+consumer and 25 controls pass; production quest behavior unchanged. One isolated
+run failed before324:251 reached2/3, thirdboar killed without a thirdLootrequest.
+Actual corpse contents/effective loot rate remain unknown. OBSERVE canceled; full
+frozen-END position conservation failed at release and325s flush. Registry/session
+release and owned cleanup observed. E139 earlier passing run remains historical
+proof; no324 completion, robustness, general loop, H or grade/milestone promotion.
+Next gameplay dependency: actual corpse-generation/selection evidence. Atlas
+integration was subsequently merged under E145; shared deployment remains unchanged.
+See [E142 final receipt](.omp/state/artifacts/quest-continuation/final-receipt.json).
+
+**Productive quest checkpoint — D35 / [E139](.omp/state/EVIDENCE.md#e-139--remote-npc-loot-travel-withdrawal-repaired-productive-live-proof-pending), 2026-10-11:**
+E138 reproduced quest251 trying ineffective objective actions instead of walking
+onward to known distant boars. The existing travel now takes over in that bounded
+case. On an isolated real server the bot independently accepted251, recovered one
+exact travel interruption, killed/looted three boars (item4058 and objective0→1→2→3),
+returned and completed251, then independently accepted324 atNPC3513. Normal cleanup/
+reward and full frozen-END release plus325s persistence checks passed; live1/1.
+Eight behavioral checks, unchanged parser125/125, new proof controls25/25, full
+gate4426pass/0fail/1named opt-in skip and archaeology163/163/both MCP surfaces pass.
+Source develop`aa057ffc3bb4596f4a6972eb4f012994970e163a` + dirty inherited/bounded repair.
+Level10 starter body/equipment and one enrollment wake are setup; no assigned quest,
+credit/reward/prerequisite injection. Same-NPC reselection remains E136 seeded proof.
+No324 completion/restart/general loop/H/grade/parent milestone claim, merge or shared
+deployment. Next dependency: bounded productive324 completion; not launched.
+
+**Finite handoff checkpoint — D32 / [E136](.omp/state/EVIDENCE.md#e-136--finite-exhausted-quest-owner-handoff-repaired-and-accepted-in-seeded-integration):**
+E135 reproduced exhausted unfinished A retaining the owner despite eligible B.
+The existing owner now consumes earned GiveUps and defers only A while its facts
+are unchanged; ordinary discovery selects/accepts B at the same NPC. A stays
+uncompleted. Seeded production-path tests4/4 include interruption, source return,
+ineligible offers and finite no-follow-up recovery. Full gate4422pass/0fail/1named
+live-opt-in skip; full archaeology163/163, both MCP surfaces PASS. Source develop
+`aa057ffc3bb4596f4a6972eb4f012994970e163a` plus dirty bounded repair/inherited changes.
+Historical E136 limits: no B completion/full productive loop/live/H or grade/milestone
+promotion. Its next productive dependency is now exercised narrowly by E139 above.
+
+
 
 ## 2026-10-10 — Seeded public-farm two-harvest proof COMPLETE (E-106)
 

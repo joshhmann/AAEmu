@@ -14,13 +14,27 @@
 > autonomy score, merge or deployment is advanced by this branch.
 
 
+**Source integration — E145 / D40, 2026-10-11:** User-approved recovery
+branch and quest atlas/navigation dependency are merged into develop. Review
+reproduced two removal/reaccept timing failures; bounded instance-owned removal
+claim preserves the active acceptance fence through cleanup and lets replacement
+instances finish independently. Six focused controls pass. Full combined gate
+4450pass/0fail/1named live-opt-in skip; full archaeology163/163/all MCPsmokes; pure
+setup7, shell5, parser125, productive25, continuation25, atlas7/geography5/work44
+pass. Tested composed source bytes match merged checkout, with inherited44
+modified/9untracked files preserved. Merge HEAD `9a930c4a32508bf4e6ace50aa902e858a8722969`.
+No shared deployment, new live quest/navigation proof, H or grade/milestone
+promotion. E142 continuation/persistence failure remains unresolved. See
+[merge receipt](.omp/state/artifacts/navigation-atlas-merge/merge-receipt.json).
+
 ## Current PlayerBot policy checkpoint
 
-**2026-10-10 — USER-APPROVED / CANONICAL, documentation/control only.**
+**2026-10-11 — USER-APPROVED reuse-first goals/roadmap; no grade changes.**
 The sole [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract)
-governs bot coverage; B/B2 comparison definitions, C/W/H/A/R/S grades, presentation
-evidence and independent human/H commitments remain unchanged. Supported autonomy
-is not contingent on exhaustive human coverage or blanket B2 across action families.
+and [integration direction](PROJECT-CONTROL.md#playerbot-integration-direction)
+govern coverage. B/B2 comparison definitions, C/W/H/A/R/S grades, presentation
+and human/H commitments are unchanged; exhaustive human coverage or blanket B2
+is not a prerequisite to supported autonomy.
 
 [Current layer-bound evidence](STATUS.md#current-playerbot-policy-checkpoint):
 E-121 code GREEN is not live acceptance; E-124 third run FAILED/CLOSED, OBSERVE
@@ -29,10 +43,63 @@ Seven general autonomy criteria remain unclosed; historical bounded passes and
 locked milestone exits retain their original scope. No evidence/grade/milestone,
 standing-freeze, deployment or runtime-capability promotion.
 
-The [finite existing-owner handoff reproduction priority](ROADMAP.md#next-bounded-playerbot-priority)
-is not an implementation/live allocation. Future artifacts require the relevant
-authoritative outcomes/correlation for their named denominator, not universally
-all 119 body fields; historical full-copy oracles and receipts are not weakened.
+The approved first priority is [finite existing-owner handoff reproduction](ROADMAP.md#next-bounded-playerbot-priority).
+Actual implementation/live allocation is recorded in [CURRENT](.omp/state/CURRENT.md#session-resume),
+not inferred from this documentation wave. Future artifacts require relevant
+authoritative outcomes/correlation, not universally all119 fields; historical
+full-copy oracles and receipts are not weakened.
+
+**Developed baseline / approved roadmap:** [E132's inventory](ROADMAP.md#current-developed-capability-baseline)
+distinguishes implemented actions, wired opt-in policy and historical live proof.
+The [extension roadmap](ROADMAP.md#playerbot-extension-roadmap) is now user-approved
+direction (D30), superseding E131's earlier proposal status, not its evidence.
+Existing housing/farm/commerce/group/population proof stays scoped; E133 onboarding/
+UI verification adds no grade, milestone or runtime capability. External modules
+are pattern references, not AAEmu compatibility or live evidence.
+
+D31's dashboard cards/session briefs and feature bibliography are control-plane
+delivery, not mechanics or autonomy evidence. E134 records its exercised Python/
+HTTP/browser layer only; seven criteria and every grade/live/H boundary stay unchanged.
+
+
+**Continuation check — E140–E142 / D38, 2026-10-11:** New evidence-only
+consumer and 25 controls pass; production quest behavior unchanged. One isolated
+run failed before324:251 reached2/3, thirdboar killed without a thirdLootrequest.
+Actual corpse contents/effective loot rate remain unknown. OBSERVE canceled; full
+frozen-END position conservation failed at release and325s flush. Registry/session
+release and owned cleanup observed. E139 earlier passing run remains historical
+proof; no324 completion, robustness, general loop, H or grade/milestone promotion.
+Next gameplay dependency: actual corpse-generation/selection evidence. Atlas
+integration was subsequently merged under E145; shared deployment remains unchanged.
+See [E142 final receipt](.omp/state/artifacts/quest-continuation/final-receipt.json).
+
+**Productive quest checkpoint — D35 / [E139](.omp/state/EVIDENCE.md#e-139--remote-npc-loot-travel-withdrawal-repaired-productive-live-proof-pending), 2026-10-11:**
+E138 reproduced quest251 trying ineffective objective actions instead of walking
+onward to known distant boars. The existing travel now takes over in that bounded
+case. On an isolated real server the bot independently accepted251, recovered one
+exact travel interruption, killed/looted three boars (item4058 and objective0→1→2→3),
+returned and completed251, then independently accepted324 atNPC3513. Normal cleanup/
+reward and full frozen-END release plus325s persistence checks passed; live1/1.
+Eight behavioral checks, unchanged parser125/125, new proof controls25/25, full
+gate4426pass/0fail/1named opt-in skip and archaeology163/163/both MCP surfaces pass.
+Source develop`aa057ffc3bb4596f4a6972eb4f012994970e163a` + dirty inherited/bounded repair.
+Level10 starter body/equipment and one enrollment wake are setup; no assigned quest,
+credit/reward/prerequisite injection. Same-NPC reselection remains E136 seeded proof.
+No324 completion/restart/general loop/H/grade/parent milestone claim, merge or shared
+deployment. Next dependency: bounded productive324 completion; not launched.
+
+**Finite handoff checkpoint — D32 / [E136](.omp/state/EVIDENCE.md#e-136--finite-exhausted-quest-owner-handoff-repaired-and-accepted-in-seeded-integration):**
+E135 reproduced exhausted unfinished A retaining the owner despite eligible B.
+The existing owner now consumes earned GiveUps and defers only A while its facts
+are unchanged; ordinary discovery selects/accepts B at the same NPC. A stays
+uncompleted. Seeded production-path tests4/4 include interruption, source return,
+ineligible offers and finite no-follow-up recovery. Full gate4422pass/0fail/1named
+live-opt-in skip; full archaeology163/163, both MCP surfaces PASS. Source develop
+`aa057ffc3bb4596f4a6972eb4f012994970e163a` plus dirty bounded repair/inherited changes.
+Historical E136 limits: no B completion/full productive loop/live/H or grade/milestone
+promotion. Its next productive dependency is now exercised narrowly by E139 above.
+
+
 
 ## 2026-10-10 — Seeded execution, whole durable proof and cleanup (E-106)
 
@@ -349,7 +416,7 @@ silently absent.
 
 - **What it measures.** `EntryPath` records *where in the stack a PlayerBot
   action enters relative to a human player's controller path*. The rationale is
-  documented in [`playerbot-capability-matrix.md`](scorecard-explorations/mechanics/playerbot-capability-matrix.md#entrypath-definition-of-record-restated-2026-10-01-for-self-containment)
+  documented in [`playerbot-capability-matrix.md`](scorecard-explorations/mechanics/playerbot-capability-matrix.md#entrypath--definition-of-record-restated-2026-10-01-for-self-containment)
   (dated 2026-09-14, EntryPath contract restated 2026-10-01): "PlayerBots are
   backed by real `Character` records, but actions historically entered the stack
   below human player controllers, causing robotic presentation (e.g. 25m

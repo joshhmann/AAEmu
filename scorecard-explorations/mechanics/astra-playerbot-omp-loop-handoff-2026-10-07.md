@@ -1,5 +1,20 @@
 # Muse handoff through OMP /loop
 
+> **Historical loop recipe; not executable current assignment — 2026-10-11.**
+> Bootstrap via [START-HERE](../../START-HERE.md#new-session-bootstrap) and
+> [current state](../../.omp/state/CURRENT.md#session-resume). Follow the
+> [approved integration direction](../../PROJECT-CONTROL.md#playerbot-integration-direction),
+> [current ownership contract](../../PROJECT-CONTROL.md#current-playerbot-ownership-contract),
+> [developed capability baseline](../../ROADMAP.md#current-developed-capability-baseline)
+> and [approved extension roadmap](../../ROADMAP.md#playerbot-extension-roadmap).
+> The Muse selection, bootstrap prompt, P0 enrollment and `/loop` commands below
+> are dated records, not instructions to run now or recreate fixed instrumentation.
+> No Muse owner; Vibe is OFF. Useful bounded native OMP delegation is allowed,
+> without approving these old loop recipes. Reuse implemented foundations;
+> [E132 comparison](../../.omp/state/artifacts/playerbot-variation-comparison/comparison.json)
+> separates source, wired opt-in policy and historical proof. Neither exhaustive
+> human coverage nor universal GOAP wiring is a current prerequisite.
+
 Date: 2026-10-07. Status: instructions prepared; no loop launched.
 
 OMP repeats a bounded instruction. The existing `.omp/state/` files retain the objective, active card, evidence and next action. The [Muse handoff](astra-playerbot-muse-handoff-2026-10-07.md) supplies engineering direction; the [P0–P6 path](astra-playerbot-rework-path-p0-p6-2026-10-07.md) supplies dependencies. Use one outcome per loop.

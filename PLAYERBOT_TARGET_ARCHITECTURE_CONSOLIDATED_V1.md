@@ -1,16 +1,25 @@
 # PlayerBot Target Architecture — Consolidated v1 Candidate
 
-> **Current-use note (2026-09-15):** Retain the architecture invariants below.
-> Dated authorization/Phase 0 and GOAP-deferral language is historical, not today's
-> dispatch queue. The committed planner foundation is retained; bounded integration
-> follows [PROJECT-CONTROL](PROJECT-CONTROL.md#bot-decision-architecture) and the
-> [current slices](ROADMAP.md#near-term-slice-queue). This is not an autonomy exit,
-> a waiver of action parity, or permission to deploy.
->
-> **Current applicability — user-approved 2026-10-10:** the sole
-> [supported-capability contract](PROJECT-CONTROL.md#playerbot-supported-capability-contract)
-> governs coverage/autonomy. Retain ordinary correctness, B/B2 definitions and
-> invariants; blanket parity migration is not a prerequisite to all supported autonomy.
+> **Current-use precedence — 2026-10-11:** New sessions start at
+> [START-HERE](START-HERE.md#new-session-bootstrap) and
+> [current state](.omp/state/CURRENT.md#session-resume), not this dated design's Phase 0.
+> The [approved integration direction](PROJECT-CONTROL.md#playerbot-integration-direction),
+> [current ownership contract](PROJECT-CONTROL.md#current-playerbot-ownership-contract)
+> and [developed capability baseline](ROADMAP.md#current-developed-capability-baseline)
+> govern current inventory and dispatch; the
+> [approved extension roadmap](ROADMAP.md#playerbot-extension-roadmap) is direction,
+> not allocation or completed proof.
+> Retain locked correctness invariants, B/B2 thresholds and ladder meanings below.
+> Dated blanket GOAP deferrals, pure-plugin/core prohibitions and universal GOAP
+> ownership/wiring claims do not override that contract: necessary shared-core
+> repairs are allowed, existing foundations are reused, and supported goal-to-goal
+> autonomy does not require exhaustive human parity or porting every external module.
+> [E132 comparison](.omp/state/artifacts/playerbot-variation-comparison/comparison.json)
+> separates implemented source, wired opt-in policy and historical live proof;
+> no fresh gameplay verification or grade promotion is claimed here.
+> Earlier Muse/P0/loop launch instructions are historical, not a current assignment.
+> No Muse owner; Vibe is OFF. Useful bounded native OMP delegation remains allowed,
+> without ratifying old `/loop` recipes.
 
 > RESEARCH / DESIGN ONLY. No AAEmu code modified, built, tested, or committed for this draft.
 > Merges: `playerbot-target-architecture-proposal.md` (Muse proposal) + `playerbot-target-architecture-independent-review.md`

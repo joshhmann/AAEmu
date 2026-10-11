@@ -7,6 +7,17 @@
 > own lane on joshhmann/AAEmu. This rule
 > sits above every other process rule in this repo.
 
+> **Current PlayerBot direction — user-approved 2026-10-11:** new sessions use
+> [START-HERE bootstrap](START-HERE.md#new-session-bootstrap) and
+> [CURRENT](.omp/state/CURRENT.md#session-resume), then the
+> [integration contract](PROJECT-CONTROL.md#playerbot-integration-direction),
+> [developed baseline](ROADMAP.md#current-developed-capability-baseline) and
+> [approved extension roadmap](ROADMAP.md#playerbot-extension-roadmap).
+> Reuse existing capabilities to prove supported individual goal-to-goal autonomy;
+> necessary shared-core repairs are greenlit. Population/LLM/full human parity are
+> not prerequisites. Historical role/phase recipes below do not override Main's
+> native OMP integration ownership; approval is direction, not a new runtime pass.
+
 ## The vision
 
 **PlayerBots are not the feature. The living world is the feature.**
@@ -79,8 +90,8 @@ by parallel development.
 
 ## Division routing (the whole Hyrax division runs this)
 
-This is a DIVISION operation, not a solo project. Every task routes through
-the sisters — each has a lane and a handoff contract:
+Historical division routing, retained as the prior model. Current PlayerBot work
+is owned by Main with bounded native OMP workers, not mandatory sister/Muse handoffs:
 
 | Sister | Lane | Owns | Handoff out |
 |--------|------|------|-------------|
@@ -136,6 +147,6 @@ Rules:
 
 ## Reference
 
-- AzerothCore Playerbots: https://github.com/trickerer/Trinity-Bots
+- AzerothCore PlayerBots references: [Playerbot core fork](https://github.com/mod-playerbots/azerothcore-wotlk/tree/Playerbot) and [mod-playerbots](https://github.com/mod-playerbots/mod-playerbots). Distinct from Trinity NPCBots.
 - Our scorecard (SCORECARD.md) — the feature gap map the bots will fill
 - Our explorations (scorecard-explorations/) — per-domain nitty-gritty

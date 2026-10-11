@@ -1,7 +1,7 @@
 # Project Status — "ArcheAge Slums" fork milestones
 
 - Audience: Contributors, players, and testers
-- Last verified against: policy-reviewed 2026-10-10 at `fix/npc-spawner-population-count` / `e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d` plus inherited dirty work (unmerged; documentation only, no fresh gameplay verification)
+- Last verified against: documentation-reviewed 2026-10-11 at `develop` / `aa057ffc3bb4596f4a6972eb4f012994970e163a` plus inherited projection/E131 docUI dirty work; no fresh gameplay verification
 - Prerequisites: None
 
 Status of the fork's milestone plan (joshhmann/AAEmu). The canonical plan
@@ -9,13 +9,32 @@ lives in the repo: ROADMAP.md; this page is the short public status.
 
 ## Current PlayerBot policy
 
-User-approved bot scope is owned by the [supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract),
-not this public summary. [Current checkpoint/allocation limits](../../STATUS.md#current-playerbot-policy-checkpoint)
-and [finite goal handoff reproduction priority](../../ROADMAP.md#next-bounded-playerbot-priority)
-promote no runtime capability, grade, milestone or H verdict. Historical parity
-and human-playability requirements retain their named scope.
+Start with the [new-session bootstrap](../../START-HERE.md#new-session-bootstrap)
+and [current session state](../../.omp/state/CURRENT.md#session-resume).
+The user-approved direction is reuse-first supported goal-to-goal autonomy, grounded in
+the [E132 current developed capability baseline](../../ROADMAP.md#current-developed-capability-baseline),
+not exhaustive human parity or a module-by-module AzerothCore port.
+The [supported-capability contract](../../PROJECT-CONTROL.md#playerbot-supported-capability-contract)
+retains all seven criteria, including recovery from an interruption **or** failed action.
+The [integration direction](../../PROJECT-CONTROL.md#playerbot-integration-direction),
+[current ownership contract](../../PROJECT-CONTROL.md#current-playerbot-ownership-contract),
+[core authorization](../../PROJECT-CONTROL.md#server-core-integration-authorization)
+and [approved extension roadmap](../../ROADMAP.md#playerbot-extension-roadmap)
+govern reuse and necessary shared-core repairs; future cards, gates and campaigns are
+not completed or allocated by this documentation update.
 
-## First bot product journey (2026-09-16)
+The next [bounded priority](../../ROADMAP.md#next-bounded-playerbot-priority) remains
+finite existing-owner goal A → eligible goal B, including the same NPC: preserve
+the `AdvanceEnter` guard/counter and repair only an observed failure.
+[Current checkpoint/allocation limits](../../STATUS.md#current-playerbot-policy-checkpoint)
+promote no runtime capability, grade, milestone or H verdict. Historical A5 closure
+and human evidence retain their named scope; farm/private-plot ownership is not a
+universal quest-autonomy gate. The detailed Activity-Spine campaign remains unratified.
+E130 recovery branch `review/branch-recovery-2026-10-10` at
+`8024926a718a11f754abd2d92716e1c421fc22ce` remains unmerged pending the user's decision.
+
+
+## Historical first bot product journey (2026-09-16; not current dispatch)
 
 One ordinary starter earns, owns and farms a small scarecrow plot. This is not a
 house/construction-pack or ten-bot village exit. The
@@ -26,25 +45,27 @@ proof of live execution. All implementation follows the
 This retained future livelihood journey is not a universal prerequisite to
 supported quest autonomy; the historical queue below is not current allocation.
 
-## High-priority correction (2026-09-16)
+## Historical high-priority correction (2026-09-16; not current dispatch)
 
 The [corrective queue](../../ROADMAP.md#high-priority-corrective-queue--2026-09-16)
-precedes additional homestead/GOAP breadth. The new ten-bot homestead report is
-synthetic orchestration evidence, not proof of actual gameplay. Agents must state
-every missing/unproved required loop leg and its next task; a synthetic pass cannot
-close a real loop. Seven corrective briefs are OPEN, not implemented by this docs
-update. Existing independently verified mechanics and human evidence retain their scope.
+recorded the then-priority before additional homestead/GOAP breadth. Its ten-bot
+homestead report was synthetic orchestration evidence, not proof of actual gameplay.
+The requirement to state missing/unproved loop legs remains valid: a synthetic pass
+cannot close a real loop. Seven corrective briefs were recorded OPEN; this docs
+update does not implement them or make them current allocation. Existing independently
+verified mechanics and human evidence retain their scope.
 
-## Current delivery direction (2026-09-15)
+## Historical delivery direction (2026-09-15; superseded queue)
 
-The fork now plans explicitly for two outcomes: dependable human-playable 1.2.4
-journeys and persistent PlayerBots using those same rules. Execution has three
-lanes: human playability, bot parity/autonomy, and population/society. The current
-[roadmap queue](../../ROADMAP.md#near-term-slice-queue) starts with operational
+This planning record described two outcomes: dependable human-playable 1.2.4
+journeys and persistent PlayerBots using those same rules, with human playability,
+bot parity/autonomy, and population/society lanes. Its
+[roadmap queue](../../ROADMAP.md#near-term-slice-queue) began with operational
 safety, a bounded human corridor, shared action parity, then seeded execution →
-unseeded livelihood → real producer/consumer interaction. See the
-[agent slice contract](../../PROJECT-CONTROL.md#delivery-contract).
-This is a planning update, not fresh gameplay verification or a grade promotion.
+unseeded livelihood → real producer/consumer interaction. Retain the named human
+requirements and [agent slice contract](../../PROJECT-CONTROL.md#delivery-contract),
+but do not dispatch this old parity-first queue instead of the current policy above.
+The record was a planning update, not fresh gameplay verification or a grade promotion.
 
 ## Recorded milestone horizon (2026-09-14)
 
@@ -131,7 +152,7 @@ Progress to date:
 - Remaining M1: doodad phase/interaction objectives (quests 922/3889/3447),
   triage of the 11 zone fails (current census), BUG-006 deploy decision.
 
-## The golden route concept
+## Historical golden route concept (named human journey, not universal bot gate)
 
 The project builds ONE dependable classic-ArcheAge life loop first, then
 expands outward: create character → starter progression (Solzreed) → unlock
@@ -140,6 +161,10 @@ transport → sell → return home. All work is judged against that path
 ("the golden path is the product"). Bots will later master the same slice
 (M5-M8). M2 defines and baselines it; M3 repairs homestead integrity, and M4
 is the first integrated human-playable release gate.
+
+This retained golden-path requirement describes its historical human/milestone scope.
+It does not require every supported bot quest to acquire a farm or finish all human
+activities before goal-to-goal autonomy can be accepted under the current contract.
 
 ## Related
 

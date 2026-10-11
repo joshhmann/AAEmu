@@ -27,7 +27,9 @@ labels to understand the work. Include exact commands when they need to run them
 Plain language must preserve accuracy: distinguish what was observed, what is
 suspected, and what still needs checking. Do not present a likely cause as proven.
 
-> **Onboarding & Domain Lanes:** New agents should first consult [`START-HERE.md`](START-HERE.md) to review the Universal Gateway and select their specific Domain Lane (Core Engine, PlayerBots, Tracing/Dashboard, Archaeology, or Devops) before picking up tasks.
+> **New-session entry:** Read [`.omp/state/CURRENT.md`](.omp/state/CURRENT.md#session-resume), relevant decisions/evidence, then [`START-HERE.md`](START-HERE.md#new-session-bootstrap) before selecting a Domain Lane. The user-approved [reuse-first PlayerBot direction](PROJECT-CONTROL.md#playerbot-integration-direction), [developed capability baseline](ROADMAP.md#current-developed-capability-baseline) and [extension roadmap](ROADMAP.md#playerbot-extension-roadmap) govern current bot work; dated audits/queues are reference, not automatic dispatch.
+>
+> Necessary [shared-core repairs](PROJECT-CONTROL.md#server-core-integration-authorization) are greenlit inside bounded supported-capability outcomes. Preserve ordinary gameplay and one Character/scheduler/action path; no exhaustive human-parity prerequisite or replacement brain. Main owns integration, native OMP workers have nonoverlapping scope, Vibe is off and there is no Muse handoff. Roadmap approval is not a merge, deploy, live-campaign or completion verdict.
 
 ## What this repo is
 
