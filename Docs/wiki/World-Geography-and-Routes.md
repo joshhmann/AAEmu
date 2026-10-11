@@ -4,6 +4,7 @@ The atlas can show named areas, housing polygons, editor road shapes, configured
 NPC services and other configured NPC placements. Enable the layers in **World
 Map & Atlas**. Click a place to see its source and what that source can establish.
 NPC dots appear at closer zoom levels; purple dots show configured services.
+Missing spawn altitude stays unknown; it is never replaced with a guessed height.
 
 Prepare the data with [WorldGeographyExport](../../Tools/WorldGeographyExport/README.md).
 The normal dashboard reads `.client_files/dashboard-map/geography.json` through
@@ -85,11 +86,9 @@ There is no new brain, scheduler, transport simulation or goal-selection owner.
 
 The isolated implementation starts at `aa057ffc3bb4596f4a6972eb4f012994970e163a`.
 The bounded extraction in this environment found 181 root area files, two editor
-layers, 380 housing shapes, 920 subzone shapes and 45 road objects. Its clean
-source snapshot contains 24,160 configured NPC records. Counts are coverage of
-these inputs, not a whole-world or live population claim. The earlier main-tree
-survey used a different spawn-file snapshot; its higher placement count must not
-be silently substituted here.
+layers, 380 housing shapes, 920 subzone shapes and 45 road objects. The source snapshot contains 24,421 configured NPC records, including 261 with
+no altitude supplied. These remain visible in two dimensions with unknown Z.
+Counts are coverage of these inputs, not a whole-world or live population claim.
 
 Unit tests use synthetic evidenced topology and explicitly supplied danger and
 connector observations. They establish geometry, cost, world/direction checks,

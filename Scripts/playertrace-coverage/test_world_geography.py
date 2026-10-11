@@ -23,6 +23,11 @@ class GeographyTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 geography.vector(value)
 
+    def test_npc_without_altitude_remains_visible_without_invented_height(self):
+        self.assertEqual(geography.spawn_point({'X': 100, 'Y': 200}), [100, 200, None])
+        self.assertIsNone(geography.spawn_point({'X': 100}))
+        self.assertIsNone(geography.spawn_point({'X': 100, 'Y': float('inf')}))
+
     def test_reference_database_mismatch_stops_export(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

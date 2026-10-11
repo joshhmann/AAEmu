@@ -1248,7 +1248,8 @@ async function toggleGeographyLayer() {
                 throw Error('Unsupported geography data.');
             for (const feature of data.features) {
                 if (!Array.isArray(feature.points) || !feature.points.length ||
-                    feature.points.some(p => p.length !== 3 || !p.every(Number.isFinite)))
+                    feature.points.some(p => p.length !== 3 || !p.slice(0,2).every(Number.isFinite) ||
+                        !(Number.isFinite(p[2]) || (feature.kind === 'npc' && p[2] === null))))
                     throw Error('Invalid geography coordinates.');
                 feature.bounds = {minX: Math.min(...feature.points.map(p=>p[0])),
                     maxX: Math.max(...feature.points.map(p=>p[0])),
@@ -1322,5 +1323,6 @@ function inspectGeography(point) {
     const services=geographyData.features.filter(f=>f.kind==='npc' && (f.services.length || mapEl('layerNpcPlacements')?.checked) &&
         Math.hypot(f.points[0][0]-point.x,f.points[0][1]-point.y)<=30);
     element.textContent=[...areas,...services].slice(0,6).map(f=>`${f.name || f.kind}: ${f.verification}. Source: ${f.source}`+
-        (f.kind==='housing' ? `; housing rule IDs: ${f.housing_rule_ids.join(', ') || 'unmatched'}` : '')).join(' | ');
+        (f.kind==='housing' ? `; housing rule IDs: ${f.housing_rule_ids.join(', ') || 'unmatched'}` : '') +
+        (f.kind==='npc' && !f.altitude_known ? '; altitude not supplied by this spawn record' : '')).join(' | ');
 }

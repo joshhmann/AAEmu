@@ -38,6 +38,15 @@ def world_point(local, position, origin, cell=(0, 0)):
             round(local[2] + position[2], 6)]
 
 
+def spawn_point(position):
+    point = [position.get(k) for k in ('X', 'Y', 'Z')]
+    if not all(type(n) in (int, float) and math.isfinite(n) for n in point[:2]):
+        return None
+    if point[2] is not None and (type(point[2]) not in (int, float) or not math.isfinite(point[2])):
+        return None
+    return point  # Missing altitude stays unknown; never manufacture Z=0.
+
+
 def build(repo, extracted, database):
     if hashlib.md5(database.read_bytes()).hexdigest() != DB_MD5:
         raise ValueError('Reference database differs from the recorded ArcheAge 1.2 baseline')
@@ -111,13 +120,14 @@ def build(repo, extracted, database):
             template = npcs.get(spawn['UnitId'], {})
             services = [s for s in SERVICES if str(template.get(s, '')).lower() in ('t', '1', 'true')]
             pos = spawn.get('Position', {})
-            point = [pos.get(k) for k in ('X', 'Y', 'Z')]
-            if not all(isinstance(n, (int, float)) and math.isfinite(n) for n in point):
+            point = spawn_point(pos)
+            if point is None:
                 omitted.append({'path': source, 'entry': index, 'reason': 'Invalid spawn coordinates'})
                 continue
             features.append({'id': f'{source}#{index}', 'kind': 'npc', 'world_id': 0,
                 'npc_template_id': spawn['UnitId'], 'name': names.get(('npcs', 'name', spawn['UnitId']), template.get('name')),
                 'level': template.get('level'), 'services': services, 'points': [point], 'source': source,
+                'altitude_known': point[2] is not None,
                 'confidence': 'exact', 'verification': 'Configured NPC placement; availability and hostility require live observation',
                 'usable_for_navigation': False})
     return {'schema_version': 1, 'world_id': 0, 'client_version': '1.2 r208022 (asset label)',
