@@ -335,6 +335,8 @@ public static class Program
                     // module's completed-memory (module unset = no-op sink).
                     executor.QuestTerminalSink = (characterId, questId, completed) =>
                         questModule.Value?.NotifyQuestTerminal(characterId, questId, completed);
+                    executor.QuestGiveUpSink = (characterId, giveUp) =>
+                        questModule.Value?.NotifyQuestGiveUp(characterId, giveUp);
                     // HIGH 1: carry the module's retained choice into the
                     // existing execution path (module unset = 0 = unscoped).
                     executor.QuestChosenProvider = characterId =>

@@ -1,6 +1,7 @@
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Quests.Director;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -125,6 +126,9 @@ public sealed class BotBehaviorRuntime
     /// </summary>
     public Action<uint, uint, bool>? QuestCompletedSink { get; set; }
 
+    /// <summary>Earned bounded retirement, distinct from authoritative quest completion.</summary>
+    public Action<uint, QuestGiveUp>? QuestGiveUpSink { get; set; }
+
     /// <summary>
     /// Feeds quest terminals into the owning module: every quest id is
     /// reported, with engine-confirmed completion (never inferred from the
@@ -210,6 +214,15 @@ public sealed class BotBehaviorRuntime
         var result = QuestDirector.Run(actor, nearbyNpcs, options);
         LastResult = result;
         CurrentActorRequest = result.Request;
+
+        // A live request still owns execution. Only an earned verdict with no
+        // running work may release the retained goal; interruption itself never
+        // counts as give-up, and completion memory remains engine-owned.
+        if (result.Request?.IsTerminal != false && actor.ActiveRequest?.IsTerminal != false)
+        {
+            foreach (var giveUp in result.GiveUps)
+                QuestGiveUpSink?.Invoke(actor.Character.Id, giveUp);
+        }
 
         // A dispatched-but-running Move leg IS landed work (the pursuit,
         // return, loot-approach and gather/interact closes take many wakes).

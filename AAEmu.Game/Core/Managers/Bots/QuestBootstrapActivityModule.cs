@@ -1,5 +1,8 @@
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Quests;
+using AAEmu.Game.Models.Game.Quests.Director;
+using AAEmu.Game.Models.Game.Quests.Static;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -76,6 +79,21 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
     /// <summary>Latest terminal outcome per bot (completed quest ids feed the next pick).</summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, System.Collections.Generic.HashSet<uint>> _completedQuests = new();
 
+    // Deferral belongs to this existing goal owner, not to the giver or the
+    // gameplay quest. It lasts only while the observed quest/source facts are
+    // unchanged and is discarded on lifecycle generation change or Forget.
+    private sealed record DeferredQuest(Quest Quest, QuestStatus Status, QuestComponentKind Step,
+        int[] Objectives, bool SourceAvailable, QuestGiveUp Outcome);
+
+    private sealed class QuestDeferrals(ulong generation)
+    {
+        public ulong Generation { get; } = generation;
+        public BotOpportunityListing.OpportunityListing? LastListing { get; set; }
+        public System.Collections.Concurrent.ConcurrentDictionary<uint, DeferredQuest> Quests { get; } = new();
+    }
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, QuestDeferrals> _deferrals = new();
+
     // Admission memory, not spawner knowledge: a busy actor can only retain
     // discovery already elected for this activation. Unknown offers never
     // create a new discovery disposition.
@@ -91,6 +109,7 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         _chosenQuest.TryRemove(characterId, out _);
         _completedQuests.TryRemove(characterId, out _);
         _discoveryGeneration.TryRemove(characterId, out _);
+        _deferrals.TryRemove(characterId, out _);
     }
 
     /// <summary>
@@ -109,6 +128,50 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         _chosenQuest.TryRemove(characterId, out _);
     }
 
+
+    /// <summary>
+    /// Retires only the currently retained quest after its existing budget
+    /// emits a named verdict. No quest is dropped or marked completed. Stale
+    /// results for another quest and unearned verdicts cannot release the owner.
+    /// </summary>
+    public void NotifyQuestGiveUp(uint characterId, QuestGiveUp giveUp)
+    {
+        if (giveUp.Threshold <= 0 || giveUp.Wakes < giveUp.Threshold
+            || string.IsNullOrWhiteSpace(giveUp.Reason)
+            || GetChosenQuest(characterId) != giveUp.QuestId
+            || !_deferrals.TryGetValue(characterId, out var deferred)
+            || QuestLegActor.Resolve(characterId)?.Character.Quests.ActiveQuests.GetValueOrDefault(giveUp.QuestId) is not { } quest)
+            return;
+
+        deferred.Quests[giveUp.QuestId] = new DeferredQuest(quest, quest.Status, quest.Step,
+            [.. quest.Objectives], SourceAvailable(deferred.LastListing, giveUp.QuestId), giveUp);
+        _chosenQuest.TryRemove(characterId, out _);
+    }
+
+    private static bool SourceAvailable(BotOpportunityListing.OpportunityListing? listing, uint questId)
+        => listing != null && (listing.ViableHunts.Any(h => h.QuestId == questId)
+            || listing.ActiveWork.Any(w => w.QuestId == questId
+                && (w.Reason.EndsWith("-source-perceived", StringComparison.Ordinal)
+                    || w.Reason.EndsWith("-target-perceived", StringComparison.Ordinal))));
+
+    private static void RefreshDeferrals(Character character, QuestDeferrals deferred,
+        BotOpportunityListing.OpportunityListing listing)
+    {
+        foreach (var (questId, saved) in deferred.Quests)
+        {
+            var quest = character.Quests.ActiveQuests.GetValueOrDefault(questId);
+            var sourceAvailable = SourceAvailable(listing, questId);
+            if (!ReferenceEquals(quest, saved.Quest) || quest == null
+                || quest.Status != saved.Status || quest.Step != saved.Step
+                || !quest.Objectives.SequenceEqual(saved.Objectives)
+                || (!saved.SourceAvailable && sourceAvailable
+                    && saved.Outcome.Reason.StartsWith("GIVE-UP/UNRESOLVED-TARGET", StringComparison.Ordinal)))
+                deferred.Quests.TryRemove(questId, out _);
+            else if (saved.SourceAvailable && !sourceAvailable)
+                deferred.Quests.TryUpdate(questId, saved with { SourceAvailable = false }, saved);
+        }
+        deferred.LastListing = listing;
+    }
 
     /// <inheritdoc />
     public BotActivityDecision CanActivate(BotActivityContext context)
@@ -158,6 +221,10 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         // is held (not cleared, not re-picked) until an authoritative scan.
         // A genuinely blocked quest (named blocker) releases immediately.
         var characterId = bot.CharacterId;
+        var deferred = _deferrals.AddOrUpdate(characterId,
+            _ => new QuestDeferrals(bot.Generation),
+            (_, prior) => prior.Generation == bot.Generation ? prior : new QuestDeferrals(bot.Generation));
+        RefreshDeferrals(character, deferred, listing);
         if (_discoveryGeneration.TryGetValue(characterId, out var discoveryGeneration)
             && discoveryGeneration != bot.Generation)
             _discoveryGeneration.TryRemove(characterId, out _);
@@ -209,7 +276,7 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
                 && !listing.ViableHunts.Any(h => h.QuestId == kept))))
             _chosenQuest.TryRemove(characterId, out _);
 
-        var pick = PickQuest(characterId, listing);
+        var pick = PickQuest(characterId, listing, deferred);
         if (pick == 0)
         {
             if (listing.QuestOffersUnknown)
@@ -242,9 +309,10 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
     /// pin the bot). Completed quests (terminal feedback) and blocked quests
     /// (named blockers) never re-pick.
     /// </summary>
-    private uint PickQuest(uint characterId, BotOpportunityListing.OpportunityListing listing)
+    private uint PickQuest(uint characterId, BotOpportunityListing.OpportunityListing listing, QuestDeferrals deferred)
     {
         var blocked = new HashSet<uint>(listing.BlockedWork.Select(b => b.QuestId));
+        blocked.UnionWith(deferred.Quests.Keys);
         var hunted = new HashSet<uint>(listing.ViableHunts.Select(h => h.QuestId));
         var hunt = listing.ViableHunts
             .Where(h => !IsCompleted(characterId, h.QuestId) && h.HaveCount < h.NeedCount && !blocked.Contains(h.QuestId))

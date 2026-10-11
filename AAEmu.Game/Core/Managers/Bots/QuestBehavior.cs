@@ -2811,7 +2811,7 @@ public static class QuestBehavior
     /// withdraw instead of a generic skip.
     ///
     /// Link-1 withdraw: a steady Progress quest whose uncredited gather/interact
-    /// objective's doodad source is known yet lies outside the 25 m perception
+    /// objective's source is known yet lies outside the 25 m perception
     /// census also withdraws the advance — the step machine would no-op on the
     /// steady step while the quest-travel arm walks the actor to the spawner.
     /// Real Start/Supply-drain and credit-then-advance wakes keep landing: the
@@ -2851,12 +2851,13 @@ public static class QuestBehavior
 
     /// <summary>
     /// True when the quest sits at a steady Progress step whose uncredited
-    /// gather/interact objective's doodad source is known (a spawner exists)
+    /// gather/interact objective's source is known (a spawner exists)
     /// yet lies outside the 25 m perception census — the branch-1b arm
     /// condition. Same reads as the travel fallback's objective-source
     /// resolver (fixture templates + credit counters + spawner scan), never a
-    /// second scan discipline: KillX/Start/Supply/Deliver rows carry no doodad
-    /// template and read false here, so pursuit and drain wakes keep landing.
+    /// second scan discipline. The NPC-loot arm uses the same derived prey,
+    /// living nearby census and first-spawner lookup as ordinary quest travel.
+    /// Start/Supply/Deliver drain and credited-objective wakes keep landing.
     /// Fail-closed: an unreadable quest, fixture, world, or spawner surface
     /// reads false (the advance keeps landing) rather than withdrawing work
     /// the step machine could do.
@@ -2887,6 +2888,44 @@ public static class QuestBehavior
         {
             if (TryNearestDoodadSpawnerPosition(world, row.InteractDoodadTemplate, here, out var interactPos)
                 && MathUtil.CalculateDistance(here, interactPos, false) > GameplayActor.MaxInteractRange)
+                return true;
+        }
+        // The same NPC-loot source arm as ordinary quest travel. A steady,
+        // unfinished objective cannot advance while its prey is still outside
+        // perception; leave that wake to the existing travel fallback.
+        if (row.GatherActId != 0 && row.PreyTemplate != 0
+            && row.ObjectivePattern != AAEmu.Game.Models.Game.Quests.Director.QuestPattern.Deliver
+            && !GatherCredited(context.QuestId, quest, row)
+            && (!HasGatherTemplates(row) || ResolveGatherDoodad(context, row).ObjId == 0)
+            && !HasPerceivedLivingPrey(context.Actor,
+                context.Observation ?? BotObservedContext.Capture(context.Actor), row.PreyTemplate)
+            && TryNpcSpawnerPosition(world, row.PreyTemplate) is { } preyPos
+            && MathUtil.CalculateDistance(here, preyPos, false) > GameplayActor.MaxInteractRange)
+            return true;
+        return false;
+    }
+
+    // Shared by the Advance entry gate and ordinary quest travel. Preserve the
+    // existing first-matching spawner policy; unknown tables remain unknown.
+    internal static Vector3? TryNpcSpawnerPosition(WorldInstance world, uint npcTemplateId)
+    {
+        var allSpawners = world.SpawnManager?.GetAllSpawners();
+        if (allSpawners == null)
+            return null;
+        var spawner = allSpawners
+            .SelectMany(s => s.Value)
+            .FirstOrDefault(s => s.UnitId == npcTemplateId);
+        return spawner == null
+            ? null
+            : new Vector3(spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
+    }
+
+    internal static bool HasPerceivedLivingPrey(IGameplayActor actor, BotObservedContext snapshot, uint preyTemplate)
+    {
+        var world = actor.Character.ParentWorld;
+        foreach (var objId in snapshot.NearbyNpcObjIds)
+        {
+            if (world?.GetNpc(objId) is { Hp: > 0 } live && live.TemplateId == preyTemplate)
                 return true;
         }
         return false;

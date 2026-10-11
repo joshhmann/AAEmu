@@ -370,6 +370,9 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// </summary>
     public Action<uint, uint, bool>? QuestTerminalSink { get; set; }
 
+    /// <summary>Returns an earned quest retirement to the existing retained owner.</summary>
+    public Action<uint, QuestGiveUp>? QuestGiveUpSink { get; set; }
+
     /// <summary>
     /// Chosen-quest purpose feed (HIGH 1): the owning module's retained choice
     /// per bot (0 = none). Read once per quest wake and carried on
@@ -2254,7 +2257,7 @@ public enum NeedsFarmLoopPhase
             NearbyNpcProvider ?? DefaultNearbyNpcs;
         if (!_questRuntimes.TryGetValue(bot.CharacterId, out var runtime) || !_questRuntimeGenerations.TryGetValue(bot.CharacterId, out var runtimeGen) || runtimeGen != state.Generation)
         {
-            runtime = new BotBehaviorRuntime(() => TimeProvider.GetUtcNow()) { QuestCompletedSink = QuestTerminalSink };
+            runtime = new BotBehaviorRuntime(() => TimeProvider.GetUtcNow()) { QuestCompletedSink = QuestTerminalSink, QuestGiveUpSink = QuestGiveUpSink };
             _questRuntimes[bot.CharacterId] = runtime;
             _questRuntimeGenerations[bot.CharacterId] = state.Generation;
         }
@@ -2805,17 +2808,7 @@ public enum NeedsFarmLoopPhase
     /// unknown rather than throwing — the travel arm then idles instead of
     /// crashing the wake.</summary>
     private static Vector3? TrySpawnerPosition(WorldInstance world, uint npcTemplateId)
-    {
-        var allSpawners = world.SpawnManager?.GetAllSpawners();
-        if (allSpawners == null)
-            return null;
-        var spawner = allSpawners
-            .SelectMany(s => s.Value)
-            .FirstOrDefault(s => s.UnitId == npcTemplateId);
-        return spawner == null
-            ? null
-            : new Vector3(spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
-    }
+        => QuestBehavior.TryNpcSpawnerPosition(world, npcTemplateId);
 
     /// <summary>
     /// Branch 1b: the nearest spawner position for an active non-Ready quest's
@@ -2870,16 +2863,6 @@ public enum NeedsFarmLoopPhase
         // rejects `Hp <= 0` as `dead`), so it must not suppress this arm
         // either — a corpse standing in the census is what suppressed it and
         // sent the bot to an offerer instead of back to the prey spawner.
-        bool PerceivedPrey(BotObservedContext snapshot, uint preyTemplate)
-        {
-            foreach (var objId in snapshot.NearbyNpcObjIds)
-            {
-                if (world.GetNpc(objId) is { Hp: > 0 } live && live.TemplateId == preyTemplate)
-                    return true;
-            }
-            return false;
-        }
-
         foreach (var (questId, quest) in quests.ActiveQuests.OrderBy(kv => kv.Key))
         {
             if (chosenQuestId != 0 && questId != chosenQuestId)
@@ -2996,7 +2979,7 @@ public enum NeedsFarmLoopPhase
             if (row.GatherActId != 0 && row.PreyTemplate != 0
                 && row.ObjectivePattern != AAEmu.Game.Models.Game.Quests.Director.QuestPattern.Deliver
                 && !QuestBehavior.GatherCredited(questId, quest, row)
-                && !PerceivedPrey(BotObservedContext.Capture(actor), row.PreyTemplate)
+                && !QuestBehavior.HasPerceivedLivingPrey(actor, BotObservedContext.Capture(actor), row.PreyTemplate)
                 && TrySpawnerPosition(world, row.PreyTemplate) is { } preyPos)
             {
                 source = preyPos;

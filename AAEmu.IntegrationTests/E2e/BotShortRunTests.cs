@@ -50,18 +50,30 @@ public class BotShortRunTests
 
     [Fact]
     [Trait("Category", "e2e")]
-    public async Task QuestPurposeHeadless15Min()
+    public Task QuestPurposeHeadless15Min() => RunHeadless(productive: false);
+
+    [Fact]
+    [Trait("Category", "e2e")]
+    public Task ProductiveQuestHeadless15Min() => RunHeadless(productive: true);
+
+    [Fact]
+    [Trait("Category", "e2e")]
+    public Task QuestContinuationHeadless15Min() => RunHeadless(productive: true, continuation: true);
+
+    private async Task RunHeadless(bool productive, bool continuation = false)
     {
-        if (Environment.GetEnvironmentVariable("BOT_SHORT_RUN") != "1")
+        var optIn = continuation ? "BOT_CONTINUATION_RUN" : productive ? "BOT_PRODUCTIVE_RUN" : "BOT_SHORT_RUN";
+        if (Environment.GetEnvironmentVariable(optIn) != "1")
         {
-            Assert.Skip("BOT_SHORT_RUN=1 and an already-ready owned lane are required.");
+            Assert.Skip($"{optIn}=1 and an already-ready owned lane are required.");
             return;
         }
         RequirePrivateLane();
         var runId = DateTime.UtcNow.ToString("yyyyMMddTHHmmssfffZ", CultureInfo.InvariantCulture)
             + "-" + Guid.NewGuid().ToString("N")[..8];
         var botName = "Qp" + Guid.NewGuid().ToString("N")[..12];
-        var directory = Path.Combine(E2eStack.E2eRoot, "logs", "quest-purpose-" + runId);
+        var scenario = continuation ? "quest-continuation" : productive ? "productive-quest" : "quest-purpose";
+        var directory = Path.Combine(E2eStack.E2eRoot, "logs", scenario + "-" + runId);
         Directory.CreateDirectory(directory);
         if (!OperatingSystem.IsWindows())
             File.SetUnixFileMode(directory, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
@@ -239,6 +251,19 @@ public class BotShortRunTests
             Raw(new { query = "full owned durable snapshot", characterId }, result);
             return result;
         }
+        bool ObjectiveProved() => proof != null && (continuation
+            ? QuestContinuationEvidence.Proved(proof)
+            : productive ? ProductiveQuestEvidence.Proved(proof) : proof.PurposeProved);
+        string? StopReason(double elapsed)
+        {
+            if (!productive) return proof!.StopReason(elapsed);
+            if (proof!.EvidenceFault != null) return "EVIDENCE_FAULT";
+            if (ObjectiveProved()) return continuation ? "QUEST_CONTINUATION_COMPLETE" : "PRODUCTIVE_QUEST_COMPLETE";
+            if (elapsed >= BotShortRunEvidence.MaximumSeconds) return "MAXIMUM_WINDOW";
+            if (elapsed - proof.LastProvedProgressSeconds >= BotShortRunEvidence.NoProgressSeconds)
+                return "NO_PROVED_PROGRESS";
+            return null;
+        }
         try
         {
             RequirePrivateLane();
@@ -303,16 +328,16 @@ public class BotShortRunTests
                 var audit = start.Value.GetProperty("actorAudit");
                 if (audit.GetArrayLength() > 0) auditAfterTraceId = Id(audit[audit.GetArrayLength() - 1], "trace_id")!.Value;
             }
-            while ((endReason = proof.StopReason(watch.Elapsed.TotalSeconds)) == null)
+            while ((endReason = StopReason(watch.Elapsed.TotalSeconds)) == null)
             {
                 await Task.Delay(TimeSpan.FromSeconds(Math.Min(PollSeconds, proof.RemainingSeconds(watch.Elapsed.TotalSeconds))));
                 Marker();
-                if ((endReason = proof.StopReason(watch.Elapsed.TotalSeconds)) != null) break;
+                if ((endReason = StopReason(watch.Elapsed.TotalSeconds)) != null) break;
                 object request = auditAfterTraceId.HasValue
                     ? new { cmd = "quest", bot = botName, sub = "observe", auditAfterTraceId = auditAfterTraceId.Value }
                     : new { cmd = "quest", bot = botName, sub = "observe" };
                 var observation = await Bridge(request);
-                if ((endReason = proof.StopReason(watch.Elapsed.TotalSeconds)) != null) break;
+                if ((endReason = StopReason(watch.Elapsed.TotalSeconds)) != null) break;
                 proof.Observe(watch.Elapsed.TotalSeconds, observation);
                 latestProofAccepted = proof.EvidenceFault == null && proof.JoinedAt.HasValue
                     && proof.ActorId == UInt(observation, "actorObjId") && proof.Generation == Long(observation, "enrollmentGeneration");
@@ -321,14 +346,14 @@ public class BotShortRunTests
                     var audit = observation.GetProperty("actorAudit");
                     if (audit.GetArrayLength() > 0) auditAfterTraceId = Id(audit[audit.GetArrayLength() - 1], "trace_id")!.Value;
                 }
-                if ((endReason = proof.StopReason(watch.Elapsed.TotalSeconds)) != null) break;
+                if ((endReason = StopReason(watch.Elapsed.TotalSeconds)) != null) break;
                 if (proof.ControlTraceId.HasValue && !proof.ControlCompleted)
                 {
                     proof.ObserveControl(await Api(HttpMethod.Get, $"/api/actors/actions/{proof.ControlTraceId.Value:D}"));
-                    if ((endReason = proof.StopReason(watch.Elapsed.TotalSeconds)) != null) break;
+                    if ((endReason = StopReason(watch.Elapsed.TotalSeconds)) != null) break;
                 }
                 var candidate = proof.GetInterruptCandidate(observation);
-                if (candidate == null) continue;
+                if (candidate == null || (productive && candidate.QuestId != 251)) continue;
                 proof.DeclareInterrupt(candidate, DateTime.UtcNow);
                 interruptRequests++;
                 var acknowledgment = await Api(HttpMethod.Post, "/api/actors/interrupt",
@@ -429,7 +454,7 @@ public class BotShortRunTests
             control?.Dispose();
         }
         if (File.Exists(markerPath)) Fault(new InvalidDataException("Runner fault marker: no promotion; cleanup retained"));
-        var passed = proof?.PurposeProved == true && releaseProved && flushProved
+        var passed = ObjectiveProved() && releaseProved && flushProved
             && registryRemoved && sessionReleased && registryAbsent && wakeCount == 1 && interruptRequests == 1
             && waitSeconds >= FlushSeconds && failures.Count == 0 && end.HasValue
             && latestRawPersisted && latestProofAccepted && latestCopyFault == null;
@@ -446,7 +471,7 @@ public class BotShortRunTests
         } : null;
         var report = JsonSerializer.Serialize(new
         {
-            scenario = "quest-purpose", runId, botName, characterId, passed, endReason, endUtc,
+            scenario, runId, botName, characterId, passed, endReason, endUtc,
             frozenEndRetained = end.HasValue, rawPersisted = latestRawPersisted, proofAccepted = latestProofAccepted,
             endCopyProvenance, latestCopyFault,
             autonomousSeconds = watch.Elapsed.TotalSeconds, configuration,
@@ -468,13 +493,22 @@ public class BotShortRunTests
             flushBookkeeping = end.HasValue && bodyAfterFlush != null && sqlCodec != null
                 ? QuestBookkeepingEvidence(bodyAfterFlush, end.Value, sqlCodec, endUtc!.Value) : null,
             work = proof?.QuestWork, recoveries = proof?.Recoveries, evidenceFault = proof?.EvidenceFault,
+            productiveRootQuest = productive ? 251u : (uint?)null,
+            productiveCompletionProved = productive && proof != null && ProductiveQuestEvidence.Proved(proof),
+            continuationQuest = continuation ? 324u : (uint?)null,
+            continuationCompletionProved = continuation && ObjectiveProved(),
+            completedGoals = proof?.CompletedGoals,
             wakeCount, interruptRequests, registryRemoved, sessionReleased, registryAbsent, releaseProved, flushProved,
             provenance = new { source = E2eStack.MeasuredSourceIdentity, E2eStack.PublishSourceIdentity,
                 testAssemblySha256 = Sha256(typeof(BotShortRunTests).Assembly.Location),
                 runtimeGameSha256 = Sha256(Path.Combine(E2eStack.RuntimeGameDir, "AAEmu.Game.dll")),
                 scope = "Runner frozen build receipts join measured dirty sources to adopted binaries" },
             canonicalMd5, runtimeMd5, identityPath, markerPath, failures,
-            scope = "Immutable fallback Move purpose, own Running interrupt, fresh autonomous reselection, request-parented Loot numeric objective+item gain and full frozen-END durability. No Q251 completion/restart/general gameplay claim."
+            scope = continuation
+                ? "Unchanged productive251 proof, then independently accepted supplied-item324, ordinary NPC report/completion and fresh distinct acceptance beyond251/324; frozen-END release/325sflush. Level10 starter setup; no324 harvesting, further quest completion, restart/general loop/H claim."
+                : productive
+                ? "One independently accepted Q251 with request-parented Loot numeric/item gain, same-root interruption/recovery, actual ordinary Q251 completion/turn-in then distinct fresh quest acceptance and unchanged full frozen-END durability. Seeded natural level10 body; no subsequent quest completion, restart, general loop or H claim."
+                : "Immutable fallback Move purpose, own Running interrupt, fresh autonomous reselection, request-parented Loot numeric objective+item gain and full frozen-END durability. No Q251 completion/restart/general gameplay claim."
         }, Indented);
         try { budget.ReserveFinal(report); }
         catch (InvalidDataException ex)
@@ -484,7 +518,7 @@ public class BotShortRunTests
             flushProved = false;
             var originalEndReason = endReason;
             endReason = "FINAL_REPORT_CAP_FAILED_END";
-            report = JsonSerializer.Serialize(new { scenario = "quest-purpose", passed, characterId, endReason,
+            report = JsonSerializer.Serialize(new { scenario, passed, characterId, endReason,
                 originalEndReason, originalFault = failures.FirstOrDefault(), endUtc, frozenEndRetained = false,
                 rawPersisted = latestRawPersisted, proofAccepted = latestProofAccepted, endCopyProvenance, latestCopyFault,
                 scope = "NOT_PROVED: full frozen-END values/custody unavailable in bounded final report; conservation UNKNOWN",
@@ -495,8 +529,8 @@ public class BotShortRunTests
         await File.WriteAllTextAsync(reportPath, report, new UTF8Encoding(false));
         if (!OperatingSystem.IsWindows())
             File.SetUnixFileMode(reportPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
-        Console.WriteLine("QUEST-PURPOSE-REPORT " + reportPath);
-        Assert.True(passed, $"Quest purpose NOT_PROVED ({endReason}); {reportPath}");
+        Console.WriteLine((continuation ? "QUEST-CONTINUATION-REPORT " : productive ? "PRODUCTIVE-QUEST-REPORT " : "QUEST-PURPOSE-REPORT ") + reportPath);
+        Assert.True(passed, $"{scenario} NOT_PROVED ({endReason}); {reportPath}");
     }
 
     internal static bool OverallProved(bool purpose, bool persistence, bool cleanup, bool noInfrastructureFault)
