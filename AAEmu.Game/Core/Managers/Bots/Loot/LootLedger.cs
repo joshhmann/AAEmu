@@ -45,7 +45,10 @@ public static class LootLedger
         uint CorpseObjId,
         LootDisposition Disposition,
         LootReason Cause,
-        DateTime RecordedUtc);
+        DateTime RecordedUtc)
+    {
+        internal long CorpseToken { get; init; }
+    }
 
     private static readonly ConcurrentDictionary<(uint ActorObjId, uint CorpseObjId), Entry> Entries = new();
 
@@ -57,21 +60,41 @@ public static class LootLedger
     /// A <see cref="LootDisposition.Take"/> write is monotonic: once a corpse is
     /// banked as taken, a later skip can never overwrite it (a refilled container
     /// after a successful take is not a reason to re-decide the corpse).
+    /// Internal callers identify the NPC instance; a replacement instance may
+    /// bank a new disposition at the same object number.
     /// </summary>
     public static bool Bank(uint actorObjId, uint corpseObjId, LootDisposition disposition, LootReason cause, DateTime nowUtc)
+        => Bank(actorObjId, corpseObjId, 0, disposition, cause, nowUtc);
+
+    internal static bool Bank(uint actorObjId, uint corpseObjId, long corpseToken,
+        LootDisposition disposition, LootReason cause, DateTime nowUtc)
     {
         if (actorObjId == 0 || corpseObjId == 0 || disposition == LootDisposition.Undecided)
             return false;
 
         var key = (actorObjId, corpseObjId);
-        if (Entries.TryGetValue(key, out var prior) && prior.Disposition == LootDisposition.Take)
-            return false;
-
         if (Entries.Count >= MemoryBound && !Entries.ContainsKey(key))
             Entries.Clear();
 
-        Entries[key] = new Entry(actorObjId, corpseObjId, disposition, cause, nowUtc);
-        return true;
+        var next = new Entry(actorObjId, corpseObjId, disposition, cause, nowUtc)
+        {
+            CorpseToken = corpseToken
+        };
+        while (true)
+        {
+            if (!Entries.TryGetValue(key, out var prior))
+            {
+                if (Entries.TryAdd(key, next))
+                    return true;
+                continue;
+            }
+            // A legacy entry has no instance proof, so it remains conservative.
+            var sameCorpse = corpseToken == 0 || prior.CorpseToken == 0 || prior.CorpseToken == corpseToken;
+            if (sameCorpse && prior.Disposition == LootDisposition.Take)
+                return false;
+            if (Entries.TryUpdate(key, next, prior))
+                return true;
+        }
     }
 
     /// <summary>Reads a corpse's banked disposition (false when nothing was banked for it).</summary>
@@ -85,6 +108,12 @@ public static class LootLedger
     /// </summary>
     public static (LootDisposition Disposition, LootReason Cause) Read(uint actorObjId, uint corpseObjId)
         => TryGet(actorObjId, corpseObjId, out var entry)
+            ? (entry.Disposition, entry.Cause)
+            : (LootDisposition.Undecided, LootReason.None);
+
+    internal static (LootDisposition Disposition, LootReason Cause) Read(uint actorObjId, uint corpseObjId, long corpseToken)
+        => TryGet(actorObjId, corpseObjId, out var entry)
+           && (corpseToken == 0 || entry.CorpseToken == 0 || entry.CorpseToken == corpseToken)
             ? (entry.Disposition, entry.Cause)
             : (LootDisposition.Undecided, LootReason.None);
 

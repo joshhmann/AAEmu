@@ -5,6 +5,7 @@ using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Team;
+using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Utils;
 
 namespace AAEmu.Game.Core.Managers.Bots.Loot;
@@ -39,6 +40,19 @@ public static class LootBrainPlanner
         LootDecision Decision,
         LootClaimEvidence Evidence)
     {
+        internal Character? ExpectedCharacter { get; init; }
+        internal Npc? ExpectedCorpse { get; init; }
+        internal WorldInstance? ExpectedWorld { get; init; }
+        internal long CorpseToken { get; init; }
+
+        internal bool IsCurrent => CorpseResolved && ExpectedCharacter != null && ExpectedCorpse != null
+            && ExpectedWorld != null && CorpseToken != 0
+            && ExpectedCharacter.ObjId == Inputs.ActorObjId
+            && ReferenceEquals(ExpectedCharacter.ParentWorld, ExpectedWorld)
+            && ReferenceEquals(ExpectedWorld.GetNpc(Inputs.CorpseObjId), ExpectedCorpse)
+            && ExpectedCorpse.Hp <= 0
+            && LootCorpseIdentity.GetToken(ExpectedCorpse) == CorpseToken;
+
         /// <summary>True when the corpse resolved to the dead shape this wake (the container tally is then meaningful).</summary>
         public bool CorpseResolved => Inputs.CorpseState == LootCorpseState.Dead;
 
@@ -130,7 +144,8 @@ public static class LootBrainPlanner
         var space = ReadSpace(character);
 
         // ------------------------------------------------------------ ledger
-        var (priorDisposition, priorCause) = LootLedger.Read(actor.ActorId, corpseObjId);
+        var corpseToken = LootCorpseIdentity.GetToken(corpse);
+        var (priorDisposition, priorCause) = LootLedger.Read(actor.ActorId, corpseObjId, corpseToken);
 
         var inputs = new LootBrainInputs(
             ActorObjId: actor.ActorId,
@@ -153,7 +168,13 @@ public static class LootBrainPlanner
             PriorReason: priorCause,
             NowUtc: request.NowUtc);
 
-        return new Prepared(inputs, LootBrain.Decide(inputs), evidence);
+        return new Prepared(inputs, LootBrain.Decide(inputs), evidence)
+        {
+            ExpectedCharacter = character,
+            ExpectedCorpse = corpse,
+            ExpectedWorld = character?.ParentWorld,
+            CorpseToken = corpseToken
+        };
     }
 
     /// <summary>
@@ -166,8 +187,9 @@ public static class LootBrainPlanner
     /// </summary>
     public static bool PublishSkip(in Prepared prepared, DateTime nowUtc)
         => prepared.Decision.Disposition == LootDisposition.Skipped
+           && prepared.IsCurrent
            && LootLedger.Bank(
-               prepared.Inputs.ActorObjId, prepared.Inputs.CorpseObjId,
+               prepared.Inputs.ActorObjId, prepared.Inputs.CorpseObjId, prepared.CorpseToken,
                LootDisposition.Skipped, prepared.Decision.Reason, nowUtc);
 
     /// <summary>
@@ -178,6 +200,11 @@ public static class LootBrainPlanner
     /// </summary>
     public static bool PublishTake(uint actorObjId, uint corpseObjId, DateTime nowUtc)
         => LootLedger.Bank(actorObjId, corpseObjId, LootDisposition.Take, LootReason.Emitted, nowUtc);
+
+    internal static bool PublishTake(in Prepared prepared, DateTime nowUtc)
+        => prepared.IsCurrent && LootLedger.Bank(
+            prepared.Inputs.ActorObjId, prepared.Inputs.CorpseObjId, prepared.CorpseToken,
+            LootDisposition.Take, LootReason.Emitted, nowUtc);
 
     // ------------------------------------------------------------- live reads
 

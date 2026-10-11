@@ -1829,12 +1829,24 @@ public class GameplayActor : IGameplayActor
 
 
     public ActorRequest Loot(uint lootOwnerObjId, string? idempotencyKey = null)
+        => LootCore(lootOwnerObjId, idempotencyKey, null);
+
+    // Quest proposals bind the observed NPC, while public Loot retains its
+    // ordinary object-number API. Both use the same request and OpenBag path.
+    internal ActorRequest Loot(in Loot.LootBrainPlanner.Prepared prepared, string? idempotencyKey)
+        => LootCore(prepared.Inputs.CorpseObjId, idempotencyKey, prepared);
+
+    private ActorRequest LootCore(uint lootOwnerObjId, string? idempotencyKey, Loot.LootBrainPlanner.Prepared? expected)
     {
         var request = NewRequest(ActorActionType.Loot, lootOwnerObjId, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "loot"))
             return request;
 
+        if (expected is { } binding && (!binding.IsCurrent || !ReferenceEquals(Character, binding.ExpectedCharacter)))
+            return Reject(request, ActorFailureReason.StateTransition, "Observed corpse was replaced before Loot dispatch.");
         var owner = Character.ParentWorld?.GetBaseUnit(lootOwnerObjId);
+        if (expected is { } observed && !ReferenceEquals(owner, observed.ExpectedCorpse))
+            return Reject(request, ActorFailureReason.StateTransition, "Observed corpse was replaced during Loot resolution.");
         if (owner == null)
             return Reject(request, ActorFailureReason.RejectedAction, $"loot owner {lootOwnerObjId} not found in world");
         if (MathUtil.CalculateDistance(Character.Transform.World.Position, owner.Transform.World.Position, false) > LootingContainer.MaxLootingRange)

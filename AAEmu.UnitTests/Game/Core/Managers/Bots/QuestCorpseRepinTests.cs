@@ -3,6 +3,7 @@ using System.Reflection;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.Bots.Loot;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
@@ -135,6 +136,134 @@ public class QuestCorpseRepinTests
         await Assert.That(actor.AuditTrace.Last(r => r.Action == ActorActionType.Loot).TargetId).IsEqualTo(fresh);
     }
 
+
+    [Test]
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task FreshNpc_ReusesLootedObjectNumber_LootsWithFreshRequest(bool observeAlive)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("corpse-reused-number");
+        var objId = SpawnBoar(session, actor, Vector3.Zero, new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(objId);
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "old-live" });
+        var old = session.World.GetNpc(objId)!;
+        GameplayActorTestRig.SeedItemTemplate(Meat4058);
+        GameplayActorTestRig.SeedLootContainer(old, (Meat4058, 1));
+        old.Hp = 0;
+        var first = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "old-dead" });
+        await Assert.That(first.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, Meat4058)).IsEqualTo(1);
+        var firstTake = actor.AuditTrace.Last(r => r.Action == ActorActionType.Loot);
+
+        // A new ordinary NPC object, not a refill or revival of the old corpse.
+        old.Region?.RemoveObject(old);
+        session.World.RemoveObject(old);
+        var fresh = new Npc
+        {
+            ObjId = objId, TemplateId = Boar3475,
+            Template = new NpcTemplate { Id = Boar3475, Scale = 1f },
+            Hp = 100, MaxHp = 100, IsVisible = true,
+        };
+        fresh.Transform.Local.SetPosition(new Vector3(2, 0, 0));
+        session.World.AddObject(fresh);
+        var region = session.World.GetRegionByPos(fresh.Transform.World.Position)!;
+        region.AddObject(fresh);
+        fresh.Region = region;
+        actor.Character.CurrentTarget = fresh;
+        if (observeAlive)
+            _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+                new QuestDecisionScenario.QuestOptions { CycleId = "fresh-live" });
+        GameplayActorTestRig.SeedLootContainer(fresh, (Meat4058, 1));
+        fresh.Hp = 0;
+        // This seeded death only sets HP; use the public verb to tear down the
+        // attack started by the optional alive wake, as ordinary death would.
+        if (observeAlive) actor.StopAutoAttack();
+        var second = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "fresh-dead" });
+        await Assert.That(second.SelectedAction).IsEqualTo(ActorActionType.Loot);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, Meat4058)).IsEqualTo(2);
+        var secondTake = actor.AuditTrace.Last(r => r.Action == ActorActionType.Loot);
+        await Assert.That(secondTake.TraceId == firstTake.TraceId).IsFalse();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(2);
+
+        // Unchanged corpse/refilled container must still never grant a second time.
+        GameplayActorTestRig.SeedLootContainer(fresh, (Meat4058, 1));
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "same-refill" });
+        await Assert.That(GameplayActorTestRig.BagCount(actor, Meat4058)).IsEqualTo(2);
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot)).IsEqualTo(2);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task ReplacedCorpse_PreparedTakeOrSkip_CannotPublishOrDispatch(bool skip)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("stale-corpse-proposal");
+        var objId = SpawnBoar(session, actor, Vector3.Zero, new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        var old = session.World.GetNpc(objId)!;
+        GameplayActorTestRig.SeedItemTemplate(Meat4058);
+        GameplayActorTestRig.SeedLootContainer(old, (Meat4058, 1));
+        old.Hp = 0;
+        var prepared = LootBrainPlanner.Prepare(actor, BotObservedContext.Capture(actor),
+            new LootBrainPlanner.Request(objId, Boar3475, skip ? long.MaxValue : 0,
+                false, false, 5, DateTime.UtcNow));
+        await Assert.That(prepared.IsCurrent).IsTrue();
+        await Assert.That(prepared.Decision.Disposition).IsEqualTo(skip ? LootDisposition.Skipped : LootDisposition.Take);
+        var oldToken = prepared.CorpseToken;
+        old.Region?.RemoveObject(old);
+        session.World.RemoveObject(old);
+        var fresh = new Npc { ObjId = objId, TemplateId = Boar3475,
+            Template = new NpcTemplate { Id = Boar3475, Scale = 1f }, Hp = 0, MaxHp = 100, IsVisible = true };
+        fresh.Transform.Local.SetPosition(new Vector3(2, 0, 0));
+        session.World.AddObject(fresh);
+        GameplayActorTestRig.SeedLootContainer(fresh, (Meat4058, 1));
+        await Assert.That(LootCorpseIdentity.GetToken(fresh) == oldToken).IsFalse();
+        await Assert.That(prepared.IsCurrent).IsFalse();
+        await Assert.That(LootBrainPlanner.PublishSkip(prepared, DateTime.UtcNow)).IsFalse();
+        await Assert.That(LootBrainPlanner.PublishTake(prepared, DateTime.UtcNow)).IsFalse();
+        var proposal = new BotDecisionProposal(goal: "quest-loot", action: ActorActionType.Loot,
+            targetId: objId, expectedPostcondition: new BotProposalPostcondition("take", _ => true),
+            idempotencyKey: $"stale:{oldToken}", timeout: TimeSpan.FromSeconds(30),
+            rationale: "stale corpse negative control", policyVersion: "test", payload: prepared);
+        var dispatch = typeof(QuestBehavior).GetMethod("DispatchLoot", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var rejected = (ActorRequest)dispatch.Invoke(null, [actor, proposal])!;
+        await Assert.That(rejected.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, Meat4058)).IsEqualTo(0);
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Loot && r.Result == ActorLifecycleState.Rejected)).IsEqualTo(1);
+        await Assert.That(LootLedger.Read(actor.ActorId, objId, LootCorpseIdentity.GetToken(fresh)).Disposition).IsEqualTo(LootDisposition.Undecided);
+    }
+
+    [Test]
+    public async Task AnotherActorsPreparedCorpse_RefusedWithoutPublishingEitherActorsTake()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("corpse-owner-a");
+        var (other, _) = GameplayActorTestRig.CreateActor("corpse-owner-b");
+        GameplayActorTestRig.JoinActorWorld(session, other);
+        var objId = SpawnBoar(session, actor, Vector3.Zero, new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        var npc = session.World.GetNpc(objId)!;
+        GameplayActorTestRig.SeedItemTemplate(Meat4058);
+        GameplayActorTestRig.SeedLootContainer(npc, (Meat4058, 1));
+        npc.Hp = 0;
+        var prepared = LootBrainPlanner.Prepare(actor, BotObservedContext.Capture(actor),
+            new LootBrainPlanner.Request(objId, Boar3475, 0, false, false, 5, DateTime.UtcNow));
+        await Assert.That(prepared.IsCurrent).IsTrue();
+        var proposal = new BotDecisionProposal("quest-loot", ActorActionType.Loot, objId,
+            new BotProposalPostcondition("take", _ => true), "wrong-actor", TimeSpan.FromSeconds(30),
+            "foreign prepared control", "test", payload: prepared);
+        var dispatch = typeof(QuestBehavior).GetMethod("DispatchLoot", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var rejected = (ActorRequest)dispatch.Invoke(null, [other, proposal])!;
+        await Assert.That(rejected.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(QuestBehavior.IsLootDispatched(actor.ActorId, objId)).IsFalse();
+        await Assert.That(QuestBehavior.IsLootDispatched(other.ActorId, objId)).IsFalse();
+        await Assert.That(LootLedger.Read(actor.ActorId, objId, prepared.CorpseToken).Disposition).IsEqualTo(LootDisposition.Undecided);
+        await Assert.That(GameplayActorTestRig.BagCount(other, Meat4058)).IsEqualTo(0);
+    }
 
     // ------------------------------------------------------------ fixture
 

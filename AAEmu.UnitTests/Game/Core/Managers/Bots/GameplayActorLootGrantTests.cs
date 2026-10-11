@@ -13,6 +13,8 @@ using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.UnitTests.Game.Quests.Playerbot;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -161,6 +163,128 @@ public class GameplayActorLootGrantTests
         await Assert.That(entries.Length).IsEqualTo(1);
         await Assert.That(entries[0].Item.TemplateId).IsEqualTo(BoarMeatTemplateId);
         await Assert.That(entries[0].Item.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    public Task Loot_Generation_CanonicalQuestPack_Active251YieldsExactlyOne4058()
+        => VerifyCanonicalBoarGeneration(hasQuest: true, worldLootRate: 1, expectedMeat: 1);
+
+    [Test]
+    public Task Loot_Generation_CanonicalQuestPack_Absent251Excludes4058()
+        => VerifyCanonicalBoarGeneration(hasQuest: false, worldLootRate: 1, expectedMeat: 0);
+
+    [Test]
+    public Task Loot_Generation_CanonicalQuestPack_ZeroRateDoesNotForceQuestDrop()
+        => VerifyCanonicalBoarGeneration(hasQuest: true, worldLootRate: 0, expectedMeat: 0,
+            expectedOptional: 0);
+
+    [Test]
+    public Task Loot_Generation_Optional8055DoesNotRequire251()
+        // The canonical 20% group chance becomes certain at multiplier 5.
+        // This deterministic rate control keeps the pack's chance unchanged.
+        => VerifyCanonicalBoarGeneration(hasQuest: false, worldLootRate: 5, expectedMeat: 0,
+            expectedOptional: 1);
+
+    private static async Task VerifyCanonicalBoarGeneration(bool hasQuest, double worldLootRate,
+        int expectedMeat, int? expectedOptional = null)
+    {
+        const uint optionalPackId = 8055;
+        const uint optionalItemId = 29203;
+        const uint corpseTemplateId = 91_425;
+
+        // Reuse the canonical quest acceptance fixture, not injected active
+        // membership or objective credit. Loot packs below are explicit mirrors
+        // of reference rows: this does not reproduce NPC death or corpse tags.
+        PlayerbotPilotRig.SeedPilotSingletons();
+        var (actor, session) = GameplayActorTestRig.CreateActor($"q4-canonical-{hasQuest}-{worldLootRate}");
+        actor.Character.Level = 2;
+        GameplayActorTestRig.SeedItemTemplate(BoarMeatTemplateId);
+        GameplayActorTestRig.SeedItemTemplate(optionalItemId);
+        AppConfiguration.Instance.World ??= new WorldConfig();
+        var world = AppConfiguration.Instance.World;
+        var previousRate = world.LootRate;
+        var meatTemplate = ItemManager.Instance.GetTemplate(BoarMeatTemplateId);
+        var optionalTemplate = ItemManager.Instance.GetTemplate(optionalItemId);
+        var previousMeatQuest = meatTemplate.LootQuestId;
+        var previousOptionalQuest = optionalTemplate.LootQuestId;
+        EnsureLootMaps();
+        const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        var packs = (Dictionary<uint, LootPack>)typeof(LootGameData)
+            .GetField("_lootPacks", flags)!.GetValue(LootGameData.Instance)!;
+        var mappings = (Dictionary<uint, List<LootPackDroppingNpc>>)typeof(ItemManager)
+            .GetField("_lootPackDroppingNpc", flags)!.GetValue(ItemManager.Instance)!;
+        packs.TryGetValue(BoarPackMirrorId, out var previousMeatPack);
+        packs.TryGetValue(optionalPackId, out var previousOptionalPack);
+        mappings.TryGetValue(corpseTemplateId, out var previousMapping);
+
+        try
+        {
+            world.LootRate = worldLootRate;
+            meatTemplate.LootQuestId = 251;
+            optionalTemplate.LootQuestId = 0;
+            await Assert.That(actor.Character.DropRateMul).IsEqualTo(0f);
+            if (hasQuest)
+            {
+                var accept = actor.AcceptQuest(251, QuestAcceptorType.Npc, 3512);
+                await Assert.That(accept.State).IsEqualTo(ActorLifecycleState.Completed);
+            }
+            await Assert.That(actor.Character.Quests.HasQuest(251)).IsEqualTo(hasQuest);
+
+            // Canonical row 10014: pack4530/group0, 4058, chance10000000,
+            // amount1..1, grade0, AlwaysDrop=false. No loot-group row.
+            SeedDeterministicPack(BoarPackMirrorId, BoarMeatTemplateId, count: 1, alwaysDrop: false);
+            packs[BoarPackMirrorId].Loots[0].Id = 10014;
+            // Canonical row73470's raw chance1 is normalized to10000000 by
+            // LootGameData.Load. Its group829 retains chance2000000 (20%).
+            var optional = new Loot
+            {
+                Id = 73470, Group = 1, ItemId = optionalItemId, DropRate = 10_000_000,
+                MinAmount = 1, MaxAmount = 1, LootPackId = optionalPackId,
+                GradeId = 0, AlwaysDrop = false
+            };
+            packs[optionalPackId] = new LootPack
+            {
+                Id = optionalPackId, Loots = [optional], GroupCount = 1,
+                LootsByGroupNo = new Dictionary<uint, List<Loot>> { [1] = [optional] },
+                Groups = new Dictionary<uint, LootGroups>
+                {
+                    [1] = new() { Id = 829, PackId = optionalPackId, GroupNo = 1, DropRate = 2_000_000 }
+                },
+                ActabilityGroups = []
+            };
+            SeedNpcLootMapping(corpseTemplateId, BoarPackMirrorId);
+            mappings[corpseTemplateId].Add(new LootPackDroppingNpc
+            {
+                Id = 79421, NpcId = corpseTemplateId, LootPackId = optionalPackId, DefaultPack = false
+            });
+            var npc = session.World.GetNpc(session.SpawnNpc(corpseTemplateId));
+            npc.CharacterTagging = new Tagging(npc);
+            npc.LootingContainer.GenerateLoot(actor.Character);
+
+            var entries = npc.LootingContainer.Items.Values.ToArray();
+            var meat = entries.Where(e => e.Item.TemplateId == BoarMeatTemplateId).ToArray();
+            var extras = entries.Where(e => e.Item.TemplateId == optionalItemId).ToArray();
+            await Assert.That(meat.Length).IsEqualTo(expectedMeat);
+            await Assert.That(meat.All(e => e.Item.Count == 1)).IsTrue();
+            await Assert.That(extras.Length <= 1 && extras.All(e => e.Item.Count == 1)).IsTrue();
+            if (expectedOptional.HasValue)
+                await Assert.That(extras.Length).IsEqualTo(expectedOptional.Value);
+            await Assert.That(entries.Length).IsEqualTo(meat.Length + extras.Length);
+            // Generation fills the corpse; it does not grant or credit items.
+            await Assert.That(GameplayActorTestRig.BagCount(actor, BoarMeatTemplateId)).IsEqualTo(0);
+        }
+        finally
+        {
+            world.LootRate = previousRate;
+            meatTemplate.LootQuestId = previousMeatQuest;
+            optionalTemplate.LootQuestId = previousOptionalQuest;
+            if (previousMeatPack == null) packs.Remove(BoarPackMirrorId);
+            else packs[BoarPackMirrorId] = previousMeatPack;
+            if (previousOptionalPack == null) packs.Remove(optionalPackId);
+            else packs[optionalPackId] = previousOptionalPack;
+            if (previousMapping == null) mappings.Remove(corpseTemplateId);
+            else mappings[corpseTemplateId] = previousMapping;
+        }
     }
 
     #endregion

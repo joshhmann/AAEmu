@@ -626,7 +626,10 @@ public static class QuestBehavior
     /// same discipline as <c>LastStopHold</c>/<c>LastPursuitIssue</c>: keyed by
     /// ActorId, bounded by full clear. Never dispatches, never mutates.
     /// </summary>
-    internal sealed record QuestCorpseRecord(uint ObjId, uint TemplateId, uint QuestId, string CycleId, DateTimeOffset DetectedUtc);
+    internal sealed record QuestCorpseRecord(uint ObjId, uint TemplateId, uint QuestId, string CycleId, DateTimeOffset DetectedUtc)
+    {
+        internal long InstanceToken { get; init; }
+    }
     private static readonly Dictionary<uint, QuestCorpseRecord> LastCorpse = new();
     private const int CorpseMemoryBound = 256;
     /// <summary>Bound for the give-up streak map (one entry per actor+quest; full clear when exceeded).</summary>
@@ -642,7 +645,7 @@ public static class QuestBehavior
     internal static void NotePinnedCorpse(uint actorId, uint objId, uint templateId, uint questId, string cycleId)
         => NotePinnedCorpse(actorId, objId, templateId, QuestFixtureRow.FromQuestData(questId), cycleId);
 
-    private static void NotePinnedCorpse(uint actorId, uint objId, uint templateId, QuestFixtureRow fixture, string cycleId)
+    private static void NotePinnedCorpse(uint actorId, uint objId, uint templateId, QuestFixtureRow fixture, string cycleId, long instanceToken = 0)
     {
         if (objId == 0 || templateId != fixture.PreyTemplate)
             return;
@@ -656,9 +659,9 @@ public static class QuestBehavior
             // fresh corpse must never inherit the old one's spent repath budget), while
             // a same-ObjId re-pin keeps that journey's counters. Owner-scoped, so no
             // other leg's journey on this actor is dropped.
-            if (LastCorpse.TryGetValue(actorId, out var prior) && prior.ObjId != objId)
+            if (LastCorpse.TryGetValue(actorId, out var prior) && (prior.ObjId != objId || prior.InstanceToken != instanceToken))
                 LootTravelDispatch.EndJourneyForPin(actorId);
-            LastCorpse[actorId] = new QuestCorpseRecord(objId, templateId, fixture.QuestId, cycleId ?? "-", DateTimeOffset.UtcNow);
+            LastCorpse[actorId] = new QuestCorpseRecord(objId, templateId, fixture.QuestId, cycleId ?? "-", DateTimeOffset.UtcNow) { InstanceToken = instanceToken };
         }
     }
     internal static bool TryGetCorpse(uint actorId, out QuestCorpseRecord? record)
@@ -672,19 +675,33 @@ public static class QuestBehavior
             LastCorpse.Clear();
     }
     /// <summary>
-    /// G7c loot-once memory: (actor, corpse ObjId) pairs whose Loot verb has
-    /// already run its terminal course. The proposal withholds any recorded
+    /// G7c loot-once memory: (actor, corpse ObjId) entries bound to the NPC instance whose Loot verb has
+    /// already run its terminal course. A fresh NPC at a recycled object number
+    /// is independent; the same instance remains spent. The proposal withholds any recorded
     /// corpse present here, so the SAME corpse never re-dispatches across
     /// re-ticks — even if its container refills. Keyed stable per corpse
     /// (never per wake); the dispatch idempotency key mirrors it. Memory-only
     /// wake cache, same discipline as <c>LastCorpse</c>: keyed by ActorId,
     /// bounded by full clear. Records dispatches only, never policy.
     /// </summary>
-    private static readonly HashSet<(uint ActorId, uint ObjId)> LootedCorpses = new();
+    private static readonly Dictionary<(uint ActorId, uint ObjId), long> LootedCorpses = new();
     internal static bool IsLootDispatched(uint actorId, uint objId)
     {
         lock (PursuitSync)
-            return LootedCorpses.Contains((actorId, objId));
+            return LootedCorpses.ContainsKey((actorId, objId));
+    }
+    private static bool IsLootDispatched(uint actorId, Npc? npc)
+    {
+        if (npc == null) return false;
+        var token = LootCorpseIdentity.GetToken(npc);
+        lock (PursuitSync)
+        {
+            var key = (actorId, npc.ObjId);
+            if (!LootedCorpses.TryGetValue(key, out var prior)) return false;
+            if (prior == token) return true;
+            LootedCorpses.Remove(key);
+            return false;
+        }
     }
     internal static void ClearLootMemory()
     {
@@ -773,7 +790,7 @@ public static class QuestBehavior
     {
         if (npc.Hp > 0 || npc.TemplateId != funnel.Fixture.PreyTemplate)
             return "";
-        NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId);
+        NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId, LootCorpseIdentity.GetToken(npc));
         var probe = ProbeCorpse(actor.Character, npc);
         return FormatCorpseFragment(npc.ObjId, probe.ItemCount, probe.Lootable);
     }
@@ -824,6 +841,19 @@ public static class QuestBehavior
             if (LastPursuitIssue.TryGetValue(actor.ActorId, out var last))
                 pin = last.TargetObjId;
         }
+        // A reused object number can name a fresh NPC even on its first dead wake.
+        // End only the old corpse's approach; never reset the new NPC's loot facts.
+        if (stale is { InstanceToken: not 0 } && character?.ParentWorld?.GetNpc(stale.ObjId) is { } replacement
+            && stale.InstanceToken != LootCorpseIdentity.GetToken(replacement))
+        {
+            lock (PursuitSync)
+            {
+                LastCorpse.Remove(actor.ActorId);
+                LastApproachIssue.Remove(actor.ActorId);
+            }
+            LootTravelDispatch.EndJourneyForPin(actor.ActorId);
+            stale = null;
+        }
         // A hold is only ABANDONED in favour of a pursuit issue record that has
         // something to say: the hold memory is SHARED by all five Stop legs
         // (pursuit, return, gather, interact, talk), so "the last Stop landed" is
@@ -850,13 +880,13 @@ public static class QuestBehavior
         // and the fresh-corpse arms below never run. Same owner-scoped fact as
         // the pin-resolve arm and the census scan — the pin falls through.
         if (pin != 0 && (stale == null || pin != stale.ObjId)
-            && !IsLootDispatched(actor.ActorId, pin))
+            && !IsLootDispatched(actor.ActorId, character?.ParentWorld?.GetNpc(pin)))
         {
             var fresh = character?.ParentWorld?.GetNpc(pin);
             if (fresh != null && fresh.Hp <= 0 && fresh.TemplateId == funnel.Fixture.PreyTemplate
                 && !IsTerminalEmptyCorpse(character, fresh))
             {
-                NotePinnedCorpse(actor.ActorId, fresh.ObjId, fresh.TemplateId, funnel.Fixture, opts.CycleId);
+                NotePinnedCorpse(actor.ActorId, fresh.ObjId, fresh.TemplateId, funnel.Fixture, opts.CycleId, LootCorpseIdentity.GetToken(fresh));
                 var freshProbe = ProbeCorpse(character, fresh);
                 return FormatCorpseFragment(fresh.ObjId, freshProbe.ItemCount, freshProbe.Lootable);
             }
@@ -932,7 +962,7 @@ public static class QuestBehavior
                 // gone arms release it (this actor's record only, approach journey
                 // ended with it), so this wake continues into the ordinary fresh-
                 // corpse resolution instead of reporting the corpse already taken.
-                if (IsLootDispatched(actor.ActorId, stale.ObjId) || IsTerminalEmptyCorpse(character, cur))
+                if (IsLootDispatched(actor.ActorId, cur) || IsTerminalEmptyCorpse(character, cur))
                 {
                     lock (PursuitSync)
                         LastCorpse.Remove(actor.ActorId);
@@ -966,10 +996,10 @@ public static class QuestBehavior
             // same exclusion as the census scan — the pin falls through to the
             // ordinary arms instead of shadowing them.
             if (npc != null && npc.Hp <= 0 && npc.TemplateId == funnel.Fixture.PreyTemplate
-                && !IsLootDispatched(actor.ActorId, npc.ObjId)
+                && !IsLootDispatched(actor.ActorId, npc)
                 && !IsTerminalEmptyCorpse(character, npc))
             {
-                NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId);
+                NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId, LootCorpseIdentity.GetToken(npc));
                 var probeNow = ProbeCorpse(character, npc);
                 return FormatCorpseFragment(npc.ObjId, probeNow.ItemCount, probeNow.Lootable);
             }
@@ -1069,7 +1099,7 @@ public static class QuestBehavior
             // dead gates here: an already-taken corpse is not a candidate. A
             // corpse anyone ELSE took is untouched — this is owner-scoped, and
             // the engine's own ownership gates still decide such a corpse.
-            if (IsLootDispatched(actor.ActorId, objId))
+            if (IsLootDispatched(actor.ActorId, npc))
                 continue;
             // TERMINAL-EMPTY EXCLUSION (contended-corpse race: a second
             // actor pins a corpse ANY killer already emptied — container
@@ -1095,7 +1125,7 @@ public static class QuestBehavior
 
         if (corpse == null || bestDistance >= nearerThanM)
             return "";
-        NotePinnedCorpse(actor.ActorId, corpse.ObjId, corpse.TemplateId, funnel.Fixture, opts.CycleId);
+        NotePinnedCorpse(actor.ActorId, corpse.ObjId, corpse.TemplateId, funnel.Fixture, opts.CycleId, LootCorpseIdentity.GetToken(corpse));
         var probe = ProbeCorpse(character, corpse);
         return FormatCorpseFragment(corpse.ObjId, probe.ItemCount, probe.Lootable);
     }
@@ -4061,9 +4091,7 @@ public static class QuestBehavior
             LastCorpse.TryGetValue(actor.ActorId, out rec);
         QuestCorpseRecord? candidate = rec != null && rec.QuestId == fixture.QuestId ? rec : null;
 
-        bool already;
-        lock (PursuitSync)
-            already = candidate != null && LootedCorpses.Contains((actor.ActorId, candidate.ObjId));
+        var already = candidate != null && IsLootDispatched(actor.ActorId, actor.Character?.ParentWorld?.GetNpc(candidate.ObjId));
 
         var character = actor.Character;
         var prepared = LootBrainPlanner.Prepare(
@@ -4094,7 +4122,7 @@ public static class QuestBehavior
         // Flat, bracket-free key list (nested brackets would nest inside the
         // DECIDE/loot brackets a lane parser scans, so the brain's own fragment
         // joins them as siblings rather than a block).
-        var brainFrag = $":lootBrain={LootBrain.Describe(decision)}:{prepared.DescribeOwnership()}";
+        var brainFrag = $":lootBrain={LootBrain.Describe(decision)}:{prepared.DescribeOwnership()}:corpseInstance={prepared.CorpseToken}";
         // The container tally the funnel scanners read is the probe's own
         // reading; a corpse that never resolved reports an explicit "-" exactly
         // as the pre-brain arm did.
@@ -4187,14 +4215,16 @@ public static class QuestBehavior
             expectedPostcondition: new BotProposalPostcondition(
                 $"looted quest {fixture.QuestId} corpse {decision.CorpseObjId}",
                 _ => true),
-            idempotencyKey: $"quest:{actor.ActorId}:loot:{fixture.QuestId}:{decision.CorpseObjId}",
+            idempotencyKey: $"quest:{actor.ActorId}:loot:{fixture.QuestId}:{decision.CorpseObjId}:instance:{prepared.CorpseToken}",
             timeout: TimeSpan.FromSeconds(30),
             rationale: $"quest {fixture.QuestId} loot: dead {fixture.PreyTemplate} {decision.CorpseObjId} container={prepared.Inputs.ContainerItemCount} — Loot once ({LootBrain.Describe(decision)})",
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectiveLootPriority,
             tieBreakKey: $"loot:{fixture.QuestId}:{decision.CorpseObjId:D10}",
+            payload: prepared,
             hardPreconditions:
             [
+                new BotProposalPrecondition("corpse-instance-current", _ => prepared.IsCurrent),
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
                     observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
                 SurvivalVetoClear(actor)
@@ -5100,19 +5130,34 @@ public static class QuestBehavior
     /// </summary>
     private static ActorRequest DispatchLoot(IGameplayActor gameplayActor, BotDecisionProposal proposal)
     {
-        var request = gameplayActor.Loot(proposal.TargetId, proposal.IdempotencyKey);
-        if (request.IsTerminal)
+        var prepared = proposal.Payload is LootBrainPlanner.Prepared value ? value : default;
+        ActorRequest request;
+        if (gameplayActor is GameplayActor concrete)
+            request = concrete.Loot(prepared, proposal.IdempotencyKey);
+        else if (prepared.IsCurrent && ReferenceEquals(gameplayActor.Character, prepared.ExpectedCharacter))
+            request = gameplayActor.Loot(proposal.TargetId, proposal.IdempotencyKey);
+        else
+        {
+            request = new ActorRequest(ActorActionType.Loot, proposal.TargetId, null, 0, null,
+                idempotencyKey: proposal.IdempotencyKey);
+            request.Accept("loot proposal validation");
+            request.Reject(ActorFailureReason.StateTransition, "Observed corpse was replaced before Loot dispatch.");
+        }
+        if (request.IsTerminal && prepared.IsCurrent
+            && ReferenceEquals(gameplayActor.Character, prepared.ExpectedCharacter)
+            && gameplayActor.ActorId == prepared.Inputs.ActorObjId
+            && proposal.TargetId == prepared.Inputs.CorpseObjId)
         {
             lock (PursuitSync)
             {
                 if (LootedCorpses.Count >= 256)
                     LootedCorpses.Clear();
-                LootedCorpses.Add((gameplayActor.ActorId, proposal.TargetId));
+                LootedCorpses[(gameplayActor.ActorId, proposal.TargetId)] = prepared.CorpseToken;
             }
             // The decision layer's own bank of the same fact: a take is recorded
             // only for a Loot verb that actually ran its terminal course, so the
             // ledger never claims a take the actor refused.
-            LootBrainPlanner.PublishTake(gameplayActor.ActorId, proposal.TargetId, DateTime.UtcNow);
+            LootBrainPlanner.PublishTake(prepared, DateTime.UtcNow);
             // The corpse this leg was walking to is DONE: the approach journey is over
             // (owner-scoped, so no other leg's journey on this actor is dropped), and a
             // later re-pin of the same objId arms clean rather than inheriting a banked
