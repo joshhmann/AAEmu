@@ -1,5 +1,21 @@
 # ArcheAge Slums — Roadmap & Milestones (locked-shape 2026-08-03; version number retired 2026-08-04 — v1/v4/v6/v7 label drift, the date is canonical)
 
+**Nearby quest prey — E151 / D45 (2026-10-11, local source/rig proof):**
+Bots with active quests can find living NPC-loot quest prey within100m, select the
+nearest suitable uncommitted target and retain useful committed work. With no
+suitable prey seen, they choose a nearest finite matching spawn in the same world.
+Deferred-owner recovery uses the same suitability checks; corpse/interaction
+observation remains25m. Focused19/19 and held-out5/5 pass; final gate4470pass/
+0fail/1named live opt-in skip, compiler0errors/0warnings; archaeology163/163 and
+all required MCP smokes pass. Production16fb3c2c plus test-only7cc7188d, on
+unmergedc23 corpse checkpoint; develop2f93 unchanged. Independent review is
+textual; seeded tests do not prove live kills/loot/completion or route reachability.
+E149 failed2510/3/no324 and strictEND position gap remain. No new live run,
+merge/push/shareddeploy, H/grade/parent promotion. Single next dependency:
+a separately allocated bounded private-server validation of useful prey acquisition.
+[Scope, fixtures and exact validation](scorecard-explorations/quest-prey-source-ranking.md).
+
+
 **Local corpse repair — E147–E149 (2026-10-11):** source3cf0ebbd binds corpse
 loot memory, terminal decisions and request keys to the actual NPC instance.
 Seeded replacement/same-corpse/stale/actor controls pass;fullgate4459pass/0fail/
