@@ -107,6 +107,70 @@ public class QuestBootstrapRetainTests
     private static BotActivityContext Ctx(PlayerBotRuntime bot) => new() { Bot = bot, GameHour = 12f };
 
     [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task FreshActiveChoice_CreditedProgressBeatsMissingSource_RegardlessOfIds(bool swapIds)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("useful-active-progress");
+        Place(actor, session);
+        const uint lower = 93_151, higher = 93_152, giver = 93_153;
+        var credited = swapIds ? lower : higher;
+        var waiting = swapIds ? higher : lower;
+        SeedGatherShape(waiting, 93_154, 93_155, giver, 93_158);
+        SeedGatherShape(credited, 93_156, 93_157, giver, 93_159);
+        Accept(actor, waiting, giver, "choice-waiting");
+        Accept(actor, credited, giver, "choice-credited");
+        // Explicit credited-objective fixture: choice proof, not earned credit.
+        actor.Character.Quests.ActiveQuests[credited].Objectives[0] = 3;
+        var listing = BotOpportunityListing.List(actor);
+        await Assert.That(listing.ActiveWork.Single(q => q.QuestId == credited).Leg).IsEqualTo("advance");
+        await Assert.That(listing.ActiveWork.Single(q => q.QuestId == waiting).Leg).IsEqualTo("wait");
+        var (module, bot) = Wired(actor);
+        await Assert.That(module.CanActivate(Ctx(bot)).CanActivate).IsTrue();
+        Console.WriteLine($"CHOICE active credited={credited} missing-source={waiting} chosen={module.GetChosenQuest(bot.CharacterId)}");
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(credited);
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(credited)).IsFalse();
+        // Relevant facts change, but a valid purpose is retained until released.
+        actor.Character.Quests.ActiveQuests[credited].Objectives[0] = 0;
+        actor.Character.Quests.ActiveQuests[waiting].Objectives[0] = 3;
+        await Assert.That(module.CanActivate(Ctx(bot)).CanActivate).IsTrue();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(credited);
+        // Explicit terminal-feedback seam; not an earned live completion.
+        module.NotifyQuestTerminal(bot.CharacterId, credited, completed: false);
+        await Assert.That(module.CanActivate(Ctx(bot)).CanActivate).IsTrue();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(waiting);
+    }
+
+    [Test]
+    public async Task FreshActiveChoice_PerceivedTalkTargetBeatsMissingTarget_ThenRetainsPurpose()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("useful-active-source");
+        Place(actor, session);
+        const uint low = 99_101, high = 99_102, giver = 99_103, lowTarget = 99_104, highTarget = 99_105;
+        GameplayActorTestRig.SeedQuestTalkObjective(low, 99_111, 99_112, giver, lowTarget, level: 1);
+        GameplayActorTestRig.SeedQuestTalkObjective(high, 99_113, 99_114, giver, highTarget, level: 1);
+        QuestFixtureRow.InvalidateAll();
+        Accept(actor, low, giver, "source-low");
+        Accept(actor, high, giver, "source-high");
+        var targetId = session.SpawnNpc(highTarget);
+        var target = session.World.GetNpc(targetId)!;
+        target.TemplateId = highTarget;
+        target.Hp = 100;
+        GameplayActorTestRig.SetNpcPosition(session, targetId, SeedPos + new Vector3(2, 0, 0));
+        actor.Character.Region.AddObject(target);
+        target.Region = actor.Character.Region;
+        var listing = BotOpportunityListing.List(actor);
+        await Assert.That(listing.ActiveWork.Single(q => q.QuestId == high).Reason).EndsWith("-target-perceived");
+        await Assert.That(listing.ActiveWork.Single(q => q.QuestId == low).Reason).EndsWith("-no-perceived-target");
+        var (module, bot) = Wired(actor);
+        await Assert.That(module.CanActivate(Ctx(bot)).CanActivate).IsTrue();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(high);
+        GameplayActorTestRig.SetNpcPosition(session, targetId, SeedPos + new Vector3(100, 0, 0));
+        await Assert.That(module.CanActivate(Ctx(bot)).CanActivate).IsTrue();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(high);
+    }
+
+    [Test]
     public async Task AcceptedTalkQuest_NoOfferNoPrey_RemainsPicked_LegTalk()
     {
         const uint q = 93_101; const uint start = 93_111; const uint prog = 93_112;

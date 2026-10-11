@@ -132,6 +132,89 @@ public class QuestGoalOwnerTests
     }
 
     [Test]
+    [Arguments(false, false)]
+    [Arguments(true, false)]
+    [Arguments(false, true)]
+    [Arguments(true, true)]
+    public async Task FreshOffers_NearerSupportedQuestWins_RegardlessOfIds(bool swapIds, bool swapPositions)
+    {
+        var (actor, session) = CreateAreaActor("useful-offer-distance");
+        var seed = 98_400u + (swapIds ? 100u : 0u) + (swapPositions ? 200u : 0u);
+        var nearQuest = seed + (swapIds ? 1u : 2u);
+        var farQuest = seed + (swapIds ? 2u : 1u);
+        var nearGiver = seed + 3;
+        var farGiver = seed + 4;
+        GameplayActorTestRig.SeedQuestHunt(farQuest, seed + 5, seed + 6,
+            seed + 7, farGiver, PreyTemplate, ReportNpcTemplate, huntCount: 3, level: 1);
+        GameplayActorTestRig.SeedQuestHunt(nearQuest, seed + 8, seed + 9, seed + 10,
+            nearGiver, PreyTemplate, ReportNpcTemplate, huntCount: 3, level: 1);
+        QuestFixtureRow.InvalidateAll();
+        SpawnAreaNpc(session, farGiver, SpawnPos + new Vector3(swapPositions ? 3 : 18, 0, 0));
+        SpawnAreaNpc(session, nearGiver, SpawnPos + new Vector3(swapPositions ? 18 : 3, 0, 0));
+        QuestLegActor.Stage(actor.Character.Id, actor);
+        var listing = BotOpportunityListing.List(actor);
+        await Assert.That(listing.EligibleQuests.Single(q => q.QuestId == nearQuest).DistanceM).IsEqualTo(swapPositions ? 18f : 3f);
+        await Assert.That(listing.EligibleQuests.Single(q => q.QuestId == farQuest).DistanceM).IsEqualTo(swapPositions ? 3f : 18f);
+        var module = EnabledModule();
+        await Assert.That(module.CanActivate(ContextFor(NewBot(actor))).CanActivate).IsTrue();
+        var expected = swapPositions ? farQuest : nearQuest;
+        Console.WriteLine($"CHOICE offers expected-nearest={expected}/3m chosen={module.GetChosenQuest(actor.Character.Id)} ids-swapped={swapIds} positions-swapped={swapPositions}");
+        await Assert.That(module.GetChosenQuest(actor.Character.Id)).IsEqualTo(expected);
+        await Assert.That(actor.Character.Quests.ActiveQuests.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task FreshOffers_NearerIneligibleOfferCannotWin()
+    {
+        var (actor, session) = CreateAreaActor("useful-offer-eligibility");
+        GameplayActorTestRig.SeedQuestHunt(98_801, 98_811, 98_812, 98_813,
+            98_821, PreyTemplate, ReportNpcTemplate, huntCount: 3, level: 50);
+        GameplayActorTestRig.SeedQuestComponentLevelRequirement(98_811, 50);
+        GameplayActorTestRig.SeedQuestHunt(98_802, 98_814, 98_815, 98_816,
+            98_822, PreyTemplate, ReportNpcTemplate, huntCount: 3, level: 1);
+        QuestFixtureRow.InvalidateAll();
+        SpawnAreaNpc(session, 98_821, SpawnPos + new Vector3(2, 0, 0));
+        SpawnAreaNpc(session, 98_822, SpawnPos + new Vector3(18, 0, 0));
+        QuestLegActor.Stage(actor.Character.Id, actor);
+        await Assert.That(BotOpportunityListing.List(actor).EligibleQuests.Any(q => q.QuestId == 98_801)).IsFalse();
+        var module = EnabledModule();
+        await Assert.That(module.CanActivate(ContextFor(NewBot(actor))).CanActivate).IsTrue();
+        await Assert.That(module.GetChosenQuest(actor.Character.Id)).IsEqualTo(98_802u);
+    }
+
+    [Test]
+    public async Task FreshOffers_EqualDistanceUsesQuestId_ThenRetainsRunningPurpose()
+    {
+        var (actor, session) = CreateAreaActor("useful-offer-tie-retain");
+        GameplayActorTestRig.SeedQuestHunt(98_901, 98_911, 98_912, 98_913,
+            98_921, PreyTemplate, ReportNpcTemplate, huntCount: 3, level: 1);
+        GameplayActorTestRig.SeedQuestHunt(98_902, 98_914, 98_915, 98_916,
+            98_922, PreyTemplate, ReportNpcTemplate, huntCount: 3, level: 1);
+        QuestFixtureRow.InvalidateAll();
+        SpawnAreaNpc(session, 98_921, SpawnPos + new Vector3(5, 0, 0));
+        var other = SpawnAreaNpc(session, 98_922, SpawnPos + new Vector3(5, 0, 0));
+        QuestLegActor.Stage(actor.Character.Id, actor);
+        var module = EnabledModule();
+        var bot = NewBot(actor);
+        await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(98_901u);
+        GameplayActorTestRig.SetNpcPosition(session, other, SpawnPos + new Vector3(1, 0, 0));
+        // A newly cheaper candidate does not steal the existing purpose.
+        await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(98_901u);
+        var running = actor.MoveTo(SpawnPos + new Vector3(10, 0, 0), 1f);
+        for (var wake = 0; wake < 3; wake++)
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+        await Assert.That(actor.ActiveRequest).IsEqualTo(running);
+        await Assert.That(running.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(98_901u);
+        await Assert.That(actor.Interrupt(running.TraceId)).IsTrue();
+        await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(98_901u);
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == running.TraceId)).IsEqualTo(1);
+    }
+
+    [Test]
     public async Task Purpose_TwoLegalQuests_ChosenDeterminesDispatchedIdentity()
     {
         // HIGH 1(a): with two legal quests, the recorded choice determines

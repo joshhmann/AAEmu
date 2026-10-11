@@ -45,6 +45,7 @@ public sealed record QuestBootstrapModuleOptions
 /// </summary>
 public sealed class QuestBootstrapActivityModule : IBotActivityModule
 {
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
     public string Name => "QuestBootstrap";
 
     public int Priority { get; } = 58;
@@ -301,10 +302,11 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
     /// Small deterministic policy over the listing (no new selector, no
     /// second scan). Order: (1) an ACTIVE quest with a viable hunt and unmet
     /// need (nearest hunt wins — ordinary hunting where mechanics permit);
-    /// (2) accepted work with a named NON-HUNT leg (lowest quest id —
+    /// (2) accepted work with a named NON-HUNT leg (credited progress,
+    /// perceived source/target, supported resource legs, then unresolved work —
     /// talk/delivery/gather/return/wait legs continue without another offer
-    /// or live prey); (3) the lowest eligible quest id (useful quest
-    /// progression — deterministic). A hunt-leg row without live prey never
+    /// or live prey); (3) the nearest observed eligible offer. Quest ids
+    /// settle equal usefulness/cost. A hunt-leg row without live prey never
     /// outranks a quest with prey or an offer (a prey-less hunt hold would
     /// pin the bot). Completed quests (terminal feedback) and blocked quests
     /// (named blockers) never re-pick.
@@ -320,20 +322,46 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
             .ThenBy(h => h.TargetObjId)
             .FirstOrDefault();
         if (hunt != null)
+        {
+            Logger.Debug("Quest choice bot {CharacterId}: quest {QuestId}, unmet hunt {Have}/{Need}, target distance {DistanceM}m",
+                characterId, hunt.QuestId, hunt.HaveCount, hunt.NeedCount, hunt.DistanceM);
             return hunt.QuestId;
-        var work = listing.ActiveWork
+        }
+        var workCandidates = listing.ActiveWork
             .Where(q => !IsCompleted(characterId, q.QuestId) && !blocked.Contains(q.QuestId))
             .Where(q => q.Leg != "hunt" || hunted.Contains(q.QuestId))
-            .OrderBy(q => q.QuestId)
-            .FirstOrDefault();
+            .OrderByDescending(WorkUsefulness)
+            .ThenBy(q => q.QuestId)
+            .ToArray();
+        var work = workCandidates.FirstOrDefault();
         if (work != null)
+        {
+            Logger.Debug("Quest choice bot {CharacterId}: quest {QuestId}, active {Leg}, usefulness {Usefulness}, fact {Reason}; alternatives {Alternatives}",
+                characterId, work.QuestId, work.Leg, WorkUsefulness(work), work.Reason,
+                string.Join("; ", workCandidates.Skip(1).Take(8).Select(q => $"quest {q.QuestId}: usefulness {WorkUsefulness(q)}, {q.Reason}")));
             return work.QuestId;
-        var eligible = listing.EligibleQuests
+        }
+        var offerCandidates = listing.EligibleQuests
             .Where(q => !IsCompleted(characterId, q.QuestId) && !blocked.Contains(q.QuestId))
-            .OrderBy(q => q.QuestId)
-            .FirstOrDefault();
+            .OrderBy(q => float.IsFinite(q.DistanceM) && q.DistanceM >= 0 ? q.DistanceM : float.PositiveInfinity)
+            .ThenBy(q => q.QuestId)
+            .ToArray();
+        var eligible = offerCandidates.FirstOrDefault();
+        if (eligible != null)
+            Logger.Debug("Quest choice bot {CharacterId}: quest {QuestId}, eligible offer distance {DistanceM}m, fact {Reason}; alternatives {Alternatives}",
+                characterId, eligible.QuestId, eligible.DistanceM, eligible.Reason,
+                string.Join("; ", offerCandidates.Skip(1).Take(8).Select(q => $"quest {q.QuestId}: distance {q.DistanceM}m, {q.Reason}")));
         return eligible?.QuestId ?? 0;
     }
+
+    // Only already-observed facts: Ready/credited is progress, not completion;
+    // source perception is availability, not reachability or a safe-fight estimate.
+    // Retention above this policy always wins over a newly better candidate.
+    private static int WorkUsefulness(BotOpportunityListing.ActiveQuestWork work)
+        => work.Leg is "advance" or "return" or "turn-in" ? 3
+            : work.Reason.EndsWith("-source-perceived", StringComparison.Ordinal)
+                || work.Reason.EndsWith("-target-perceived", StringComparison.Ordinal) ? 2
+            : work.Leg is "delivery" or "use-item" or "gather" ? 1 : 0;
 
     private bool IsCompleted(uint characterId, uint questId)
     {
