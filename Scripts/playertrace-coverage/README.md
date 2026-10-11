@@ -2,7 +2,20 @@
 
 Coverage-guided human action trace analysis utility for AAEmu.
 
-## Shared handoff — current execution order
+## Current delivery workflow — 2026-10-11
+
+Use [CURRENT](../../.omp/state/CURRENT.md#session-resume),
+[PROJECT-CONTROL](../../PROJECT-CONTROL.md#priority-ownership-and-cadence) and the
+[approved roadmap](../../ROADMAP.md#next-bounded-playerbot-priority). Main owns
+integration/state; native OMP workers get bounded nonoverlapping scopes, Vibe is
+off and there is no Muse handoff. The dashboard's
+[Delivery & Sessions workflow](#delivery--sessions-workflow) owns operational
+cards/checkpoints only; older recipes below are preserved historical evidence.
+
+## Historical shared handoff — September 2026 (superseded dispatch)
+
+The dated handoff and tooling sequences below are historical, not current owner,
+mode, priority or permission. Follow CURRENT and the selected bounded card.
 
 User-supplied Muse handoff supersedes treating the gate and discovery work as
 independent backlogs. Reported handoff: G7c START correction provisionally proved,
@@ -29,7 +42,7 @@ Guide corpus does not yet exist; use engine/data/trace sources before broad scra
 
 The tooling sequence below supports this shared order. It does not supersede it.
 
-## Current delivery sequence — 2026-09-23
+## Historical delivery sequence — 2026-09-23
 
 This is the tooling/discovery execution order supporting the existing PlayerBot
 capability matrix, not a replacement milestone plan. Muse owns the active gameplay
@@ -146,6 +159,78 @@ Access in your browser:
 - LAN / Remote: `http://192.168.0.187:8085`
 - Localhost: `http://localhost:8085`
 
+
+### Delivery & Sessions workflow
+
+This server-backed tab is the work-control surface, not a gameplay controller.
+The separate Bot Capability / Roadmap / Scorecard panes remain rendered canonical
+records; Human Trace Tasks remain client/packet evidence and are not overwritten.
+Standalone generated HTML is a presentation snapshot; operational controls require
+the HTTP server and `/api/work` routes.
+
+1. **Choose a grounded feature.** The initial bibliography covers E132's 11 developed
+   families plus three separately denominated travel/combat/loot-recovery substrates.
+   Read relevant implementation, historical evidence, research/corpus/policy and gaps.
+   Source previews show the registered original revision/layer/limits and actual
+   current SHA256/line bounds/truncation. Numeric locators are historical hints,
+   not proof that code still behaves the same. A missing source is unavailable,
+   not missing implementation; external links are not fetched.
+2. **Create one bounded card.** Name parent/outcome, mode, owner/verifier, files and
+   exclusive resources, non-goals, acceptance/proof layer, references/dependencies,
+   actual baseline SHA and next action. Ready needs a complete contract and accepted
+   dependencies. Backlog/Needs evidence are not automatic execution allocation.
+3. **Record actual work.** Starting a named record saves its contract/context; it
+   does not launch OMP. One primary plus one independent secondary active record
+   is the starting WIP cap. Recorded owner/file-prefix/resource overlaps are rejected;
+   this is not a sandbox enforcing code edits outside the board.
+4. **Continue while coherent.** Checkpoint confirmed/unknown, evidence and concrete
+   next action. Before pause/close, stop or checkpoint actual workers/processes yourself:
+   record controls do not control those processes. Resume the paused record when its
+   contract still matches, reacquiring claims and explicitly reviewing changed context.
+5. **Fresh only with a reason.** Finish the card, encounter incompatible scope/source
+   context, or lose useful task coherence: checkpoint/pause/close, then create a fresh
+   record with a reason. Its brief preserves the predecessor checkpoint as attributed
+   historical reports. Only a compatible next action is inherited; prior confirmed
+   facts are not promoted automatically. Copy/export the saved brief into a new native
+   OMP session; do not start another broad architecture audit. The CURRENT excerpt
+   excludes historical tails while retaining the full canonical source digest.
+6. **Review before acceptance.** Active contracts cannot be silently narrowed.
+   Accepted needs no active record, satisfied dependencies, actual scenario/limits
+   and evidence citations. These are operator reports, not proof validation or grade,
+   live/H, merge or deployment authority. Main reconciles canonical records.
+
+Persistence: ignored `playertrace-coverage/work_board.json`, revision-checked writes,
+cross-process lock and atomic replacement; no localStorage fallback. A rejected
+write preserves its editor. A committed update with directory-sync uncertainty
+shows a storage warning and the real saved state, not a false rejection.
+Do not treat a loaded record as crash-durability or gameplay proof.
+
+Canonical objective/scope/evidence remain Markdown; the service does not rewrite
+CURRENT/DECISIONS/EVIDENCE or launch shell, agent, Game/DB, merge or deployment.
+Detected drift covers HEAD/branch, tracked dirty-status and canonical hashes,
+not a comprehensive byte audit of arbitrary uncommitted/untracked source.
+Record actual relevant dirty paths/source identities when dispatching.
+
+Optional local environment (not shared config):
+
+```bash
+export AAEMU_BOT_RESEARCH_ROOT=/path/to/aaemu-bot-research
+python3 Scripts/playertrace-coverage/dashboard_server.py --port 8085 --host 0.0.0.0 --repo-root .
+```
+
+Research paths stay relative in the catalog. Without that configured root, previews
+are explicitly unavailable. `AAEMU_WORK_DATA_FILE` overrides the operational store
+for isolated verification; never point a smoke run at the live board. New work routes
+accept loopback/private/Tailscale IPs, localhost/local hostname, or explicit
+`AAEMU_WORK_ALLOWED_HOSTS` comma-separated aliases. Same-origin/token checks are
+CSRF controls, **not authentication**; host only on trusted LAN/Tailscale, not Internet.
+The new work backend requires POSIX flock/directory-descriptor support (Linux target).
+Unsupported platforms return 503 for work operations; legacy dashboard import/routes
+remain available. Windows work-board support and actual Windows execution are not claimed.
+Registered source surfaces exclude secrets, runtime assets, raw auth/network captures,
+databases, symlink escapes and unreviewed artifact receipts; approve sanitized receipt
+paths deliberately before adding them. Use archaeology/corpus tooling for actual data/
+capture questions, not a generic file browser or a bibliography as a proof substitute.
 ---
 
 ## Automated Task Evaluation
@@ -268,7 +353,7 @@ checks. Producer build and gameplay correctness remain UNKNOWN; these dispositio
 neither verify bot capability nor promote H. FastPing/FastPong are removed from
 normalized sequences while retained in raw packet counts.
 
-### Current tooling slice (2026-09-23)
+### Historical tooling slice (2026-09-23)
 
 Parent: discovery-to-delivery corpus workflow supporting PlayerBot capability work.
 Outcome: prevent redundant capture requests and route specification/evidence problems
@@ -366,7 +451,7 @@ passed. No full .NET rerun for these catalog/report changes; the failed full gat
 above remains the last gate result. Independent review pending; not deployed;
 no gameplay or H promotion. Muse's gameplay/gate files were untouched.
 
-### Current worklist after scanner repair (2026-09-23)
+### Historical worklist after scanner repair (2026-09-23)
 
 The scanner now recognizes direct `GamePacket`/`LoginPacket`/`PacketBase`
 inheritance even when a class name omits `Packet`; ordinary helper classes remain

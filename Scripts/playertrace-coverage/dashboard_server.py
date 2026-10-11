@@ -19,9 +19,12 @@ from dataclasses import asdict
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import glob
 import heapq
+import ipaddress
 import json
 import math
 import os
+import secrets
+import socket
 import subprocess
 import sys
 from typing import Any, Dict, List, Optional
@@ -29,6 +32,7 @@ import urllib.parse
 import urllib.request as urlreq
 
 from task_evaluator import evaluate_trace_file, find_latest_trace_for_scenario
+from work_dashboard import WorkDashboard, WorkError
 
 
 DEFAULT_TASKS = [
@@ -1174,14 +1178,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <!-- ==================== TAB 2: BOT CAPABILITY ==================== -->
         <div class="tab-pane" id="tabPane-capabilities">
             <div class="info-card" id="playerbot-supported-capability-contract" style="margin-bottom:20px;scroll-margin-top:200px">
-                <div class="info-card-header"><div class="info-card-title">PlayerBot supported-capability contract — USER APPROVED 2026-10-10</div></div>
+                <div class="info-card-header"><div class="info-card-title">PlayerBot goals and supported-capability contract — USER APPROVED 2026-10-11</div></div>
                 <p class="task-desc">Deliver a useful explicitly supported gameplay subset with autonomous discovery → choice/planning → ordinary execution → observed authoritative completion → recovery → next goal. Exhaustive human capability coverage, every quest/tutorial, exact UI/packet choreography or animation, and identical activity choice are not the completion target.</p>
                 <p class="task-desc">Supported actions still require applicable ordinary engine legality, eligibility, reach/range, timing, resource conservation, ownership, rewards and persistence. No fake credit, grants or teleport shortcuts. Skip unsupported quest A with a named reason, not false completion; do not exclude its whole NPC when supported quest B at the same giver is eligible.</p>
                 <p class="task-desc">Existing B/B2 comparison grades, H (human/client acceptance), and presentation/activity-choice axes remain distinct with unchanged meanings and grades. B2 is not a universal prerequisite for every bot family; optional parity/presentation breadth never excuses incorrect ordinary engine effects. Human playability remains an independent commitment; H remains UNKNOWN.</p>
                 <p class="task-desc"><strong>Evidence boundary:</strong> E121 code checks GREEN are not live acceptance. E124 latest third live run FAILED/CLOSED after OperationCanceledException; cause UNKNOWN. E126 accepted read-only reconciliation is not a new capability. Original seven goals remain UNCLOSED; no Stage 2, grade, deployment or human-acceptance promotion. Historical checkpoints below retain their dated evidence, not current dispatch authority.</p>
-                <p class="task-desc"><strong>Next engineering outcome — PROPOSED, not allocated:</strong> reproduce finite existing retained-goal owner handoff A → eligible B, including the same giver. Preserve AdvanceEnter's existing guard/counter; repair only a reproduced failure. No new source implementation or live campaign is allocated.</p>
+                <p class="task-desc"><strong>Approved first engineering priority:</strong> reproduce finite existing retained-goal owner handoff A → eligible B, including the same giver. Preserve AdvanceEnter's guard/counter; repair only a reproduced failure. Roadmap direction is ratified; this onboarding wave implements no gameplay or live campaign. The active CURRENT card owns mode, files, resources and acceptance.</p>
                 <div class="meta-row"><span>Canonical policy</span><span class="meta-val"><code>PROJECT-CONTROL.md#playerbot-supported-capability-contract</code></span></div>
-                <div class="meta-row"><span>Policy freshness (not a gate)</span><span class="meta-val">2026-10-10 · HEAD e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d + inherited dirty tree</span></div>
+                <p class="task-desc" data-checkpoint="E145"><strong>Source integration — E145 / reviewed merge:</strong> recovery quest safety plus atlas/navigation merged into develop 9a930c4a32508bf4e6ace50aa902e858a8722969. Two removal/reaccept races reproduced and fixed with an instance-owned claim; six focused tests pass. Combined gate4450 passed/0 failed/1 named live opt-in skip, archaeology163/163 and both MCP surfaces pass. Inherited44 modified/9untracked files preserved. Code/fixture evidence only; no new live quest or road proof/H/grade promotion. E142 failure unchanged; shared dashboard not reloaded.</p>
+                <p class="task-desc" data-checkpoint="E142"><strong>Continuation check — E142 / failed isolated run:</strong> quest251 reached2/3; thirdboar killed without thirdLootrequest. Actual corpse contents/effective rate unknown;324 never accepted. OBSERVE canceled; full frozen-END position conservation failed release/325s flush. Owned cleanup completed. Evidence-only controls25/25; prior E139 passing run preserved, no repeatability/general loop/H promotion. Next gameplay dependency: actual corpse-generation/selection evidence. Atlas integration subsequently merged under E145; shared dashboard not reloaded.</p>
+                <p class="task-desc" data-checkpoint="E139"><strong>Productive quest — E139 / isolated real server, 2026-10-11:</strong> bot walked toward required boars, recovered one controlled quest251 travel interruption, killed/looted three boars and completed251 through ordinary return/report, then independently accepted324. Normal reward/cleanup and full frozen-END release plus325s persistence passed; live1/1, behavioral8/8, parser125/125, proof controls25/25; gate4426 passed /0 failed /1 named opt-in skip, archaeology163/163 and both MCP surfaces pass. Source develop aa057ffc3bb4596f4a6972eb4f012994970e163a + dirty inherited/bounded repair. Level10 starter/equipment and one wake are setup; no quest assignment or credit/reward/prerequisite injection. Same-NPC remains E136 seeded proof; no324 completion/restart/general loop/H/grade/milestone claim or shared deployment. Historical next dependency: attempted separately in E142 above, still unproved. <a href="#tabPane-work" onclick="switchMainTab('work')">Delivery &amp; Sessions: exact proof and limits</a>.</p>
+                <p class="task-desc" data-checkpoint="E136"><strong>Finite handoff — E136 / seeded integration, 2026-10-11:</strong> exhausted unfinished A now releases its owner after the existing earned GiveUp; ordinary discovery selects and accepts eligible B at the same NPC. A remains uncompleted. Four behavior checks pass; standard gate 4422 passed / 0 failed / 1 named live opt-in skip, full archaeology 163/163 and both MCP surfaces pass. Source: develop aa057ffc3bb4596f4a6972eb4f012994970e163a + dirty bounded repair and inherited changes. No B completion, productive full loop, live/client/H, grade or milestone promotion. Historical next dependency: now exercised narrowly by E139 above. <a href="#tabPane-work" onclick="switchMainTab('work')">Delivery &amp; Sessions: quest references include exact proof, seeds and limits</a>.</p>
+                <div class="meta-row"><span>Onboarding freshness (not a gate)</span><span class="meta-val">2026-10-11 · D30 / E132 developed baseline · develop aa057ffc3bb4596f4a6972eb4f012994970e163a + inherited projection/docUI changes · seven general criteria unclosed</span></div>
             </div>
             <div class="info-card" style="margin-bottom:20px" data-checkpoint="E106">
                 <div class="info-card-header"><div class="info-card-title">Seeded public-farm two actual harvests COMPLETE — 2026-10-10 (E-106)</div></div>
@@ -1210,6 +1218,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header"><div class="info-card-title">Bot capability evidence</div></div>
                 <p class="task-desc">This lane reports PlayerBot capability separately from Human Trace Tasks. A captured player trace corroborates an ordinary action shape; it does not prove bot perception, strategic choice, travel, completion, recovery, or autonomous progression.</p>
+                <p class="task-desc"><strong>Reuse-first developed baseline — E132:</strong> lifecycle/arbitration/actor requests, quest and NeedsFarm policy, hosted homestead GOAP, crafting/commerce/group actions, schedules/chatter and population dormancy already exist. Seed purchase/surplus sale is coded; provisioned housing has historical claim→construct/restart proof. Historical transaction/party scenarios prove execution, not autonomous selection. New sessions start at START-HERE's bootstrap and CURRENT's session resume, not a full audit or old Muse queue.</p>
                 <div class="meta-row"><span>Authoritative records</span><span class="meta-val">SCORECARD.md · ROADMAP.md · playerbot-progression-ladder.md</span></div>
                 <div class="meta-row"><span>Current progression claim</span><span class="meta-val">PB-002 broad autonomous progression: OPEN</span></div>
             </div>
@@ -1224,7 +1233,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <thead><tr><th style="text-align:left;padding:8px">Lane</th><th style="text-align:left;padding:8px">Current evidence boundary</th><th style="text-align:left;padding:8px">Next proof</th></tr></thead>
                     <tbody>
                         <tr><td style="padding:8px">Perceive</td><td style="padding:8px">Core-backed observations exist alongside fixture/proxy facts.</td><td style="padding:8px">Authoritative target eligibility, reach, ownership, and inventory observations.</td></tr>
-                        <tr><td style="padding:8px">Decide</td><td style="padding:8px">GOAP may choose strategic goals; current branches remain transitional adapters.</td><td style="padding:8px">One legal goal selected from observed candidates.</td></tr>
+                        <tr><td style="padding:8px">Decide</td><td style="padding:8px">Production activity arbiter/roam elects work; quest/NeedsFarm owners and hosted homestead GOAP retain distinct goal/plan state.</td><td style="padding:8px">One retained legal goal and explicit handoff from fresh opportunities; no universal GOAP-wiring assumption.</td></tr>
                         <tr><td style="padding:8px">Execute</td><td style="padding:8px">ActorRequest and GameplayActor dispatch bounded actions through core seams.</td><td style="padding:8px">Bounded combat, navigation, and interaction execution with observed outcomes.</td></tr>
                         <tr><td style="padding:8px">Verify / recover</td><td style="padding:8px">Action and rig assertions exist; broad loop recovery is unproved.</td><td style="padding:8px">Authoritative postcondition, refusal, recovery, repeat, and restart evidence.</td></tr>
                         <tr><td style="padding:8px">Scale</td><td style="padding:8px">Embodiment, dormancy, and scheduler evidence are retained.</td><td style="padding:8px">Coexistence after a single-bot autonomous capability is proved.</td></tr>
@@ -1233,16 +1242,40 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
             <div class="info-card">
                 <div class="info-card-header"><div class="info-card-title">Ownership checkpoint</div></div>
-                <p class="task-desc">GOAP owns strategic decision and replanning. Bounded combat, navigation, and interaction executors own their internal state. ActorRequest owns lifecycle and audit. GameplayActor is the adapter. Character and existing managers own gameplay effects. Packet-owned purchase, planting, housing, and merchant semantics remain unresolved and unavailable to autonomous claims.</p>
+                <p class="task-desc">Current ownership: one retained-goal owner per active activity; planning answers how, actor requests own exact asynchronous results, the scheduler owns cadence, and Character/managers own ordinary effects. Quest behavior runtime and homestead GOAP are distinct existing paths, not a proved universal runtime. Necessary shared-core repair is greenlit inside bounded outcomes; no second brain or parallel gameplay. Earlier universal-GOAP/core-extraction prohibitions are historical, not current dispatch.</p>
             </div>
         </div>
 
         <!-- ==================== TAB 2: ROADMAP & SCORECARD ==================== -->
         <div class="tab-pane" id="tabPane-milestones">
             <div class="info-card" style="margin-bottom:20px">
-                <div class="info-card-header"><div class="info-card-title">Current scope and next priority — 2026-10-10</div></div>
+                <div class="info-card-header"><div class="info-card-title">Canonical goals and new-session direction — USER APPROVED 2026-10-11</div></div>
                 <p class="task-desc">USER APPROVED: useful supported PlayerBot capability and autonomy, not exhaustive human parity. Applicable ordinary engine rules remain mandatory; H and optional action-family/presentation parity stay separate. <a href="#playerbot-supported-capability-contract" onclick="switchMainTab('capabilities')">Read the supported-capability policy and current evidence boundary</a>.</p>
-                <p class="task-desc">Next engineering outcome remains PROPOSED: reproduction-first finite existing owner A → eligible B handoff, preserving AdvanceEnter's guard/counter; no source/live allocation. E121 code GREEN is not live acceptance; E124 FAILED/CLOSED/cause UNKNOWN; E126 reconciliation adds no capability. Original seven goals remain UNCLOSED, H UNKNOWN, no Stage 2 promotion. Historical cards below remain unchanged.</p>
+                <p class="task-desc">Approved direction: reuse existing capabilities, prove supported goal-to-goal autonomy, then expand dependency-ready livelihood/commerce, cooperation and truthful social presence. First priority is finite existing-owner A → eligible B, preserving AdvanceEnter's guard/counter. E132 is source comparison, not fresh live proof; E121 code GREEN and E124 FAILED/CLOSED/cause UNKNOWN remain historical. Original seven goals remain UNCLOSED, H UNKNOWN; no Stage 2 promotion. CURRENT owns the actual card; no automatic recovery-branch merge or campaign.</p>
+            </div>
+                <p class="task-desc" data-checkpoint="E145"><strong>Source integration — E145 / reviewed merge:</strong> recovery quest safety plus atlas/navigation merged into develop 9a930c4a32508bf4e6ace50aa902e858a8722969. Two removal/reaccept races reproduced and fixed with an instance-owned claim; six focused tests pass. Combined gate4450 passed/0 failed/1 named live opt-in skip, archaeology163/163 and both MCP surfaces pass. Inherited44 modified/9untracked files preserved. Code/fixture evidence only; no new live quest or road proof/H/grade promotion. E142 failure unchanged; shared dashboard not reloaded.</p>
+                <p class="task-desc" data-checkpoint="E142"><strong>Continuation check — E142 / failed isolated run:</strong> quest251 reached2/3; thirdboar killed without thirdLootrequest. Actual corpse contents/effective rate unknown;324 never accepted. OBSERVE canceled; full frozen-END position conservation failed release/325s flush. Owned cleanup completed. Evidence-only controls25/25; prior E139 passing run preserved, no repeatability/general loop/H promotion. Next gameplay dependency: actual corpse-generation/selection evidence. Atlas integration subsequently merged under E145; shared dashboard not reloaded.</p>
+                <p class="task-desc" data-checkpoint="E139"><strong>Productive quest — E139 / isolated real server, 2026-10-11:</strong> bot walked toward required boars, recovered one controlled quest251 travel interruption, killed/looted three boars and completed251 through ordinary return/report, then independently accepted324. Normal reward/cleanup and full frozen-END release plus325s persistence passed; live1/1, behavioral8/8, parser125/125, proof controls25/25; gate4426 passed /0 failed /1 named opt-in skip, archaeology163/163 and both MCP surfaces pass. Source develop aa057ffc3bb4596f4a6972eb4f012994970e163a + dirty inherited/bounded repair. Level10 starter/equipment and one wake are setup; no quest assignment or credit/reward/prerequisite injection. Same-NPC remains E136 seeded proof; no324 completion/restart/general loop/H/grade/milestone claim or shared deployment. Historical next dependency: attempted separately in E142 above, still unproved. <a href="#tabPane-work" onclick="switchMainTab('work')">Delivery &amp; Sessions: exact proof and limits</a>.</p>
+                <p class="task-desc" data-checkpoint="E136"><strong>Finite handoff — E136 / seeded integration, 2026-10-11:</strong> exhausted unfinished A now releases its owner after the existing earned GiveUp; ordinary discovery selects and accepts eligible B at the same NPC. A remains uncompleted. Four behavior checks pass; standard gate 4422 passed / 0 failed / 1 named live opt-in skip, full archaeology 163/163 and both MCP surfaces pass. Source: develop aa057ffc3bb4596f4a6972eb4f012994970e163a + dirty bounded repair and inherited changes. No B completion, productive full loop, live/client/H, grade or milestone promotion. Historical next dependency: now exercised narrowly by E139 above. <a href="#tabPane-work" onclick="switchMainTab('work')">Delivery &amp; Sessions: quest references include exact proof, seeds and limits</a>.</p>
+            <div class="info-card" id="playerbot-extension-roadmap" style="margin-bottom:20px;scroll-margin-top:200px">
+                <div class="info-card-header"><div class="info-card-title">PlayerBot extension roadmap — USER APPROVED / REUSE FIRST</div></div>
+                <p class="task-desc">The user adopts these goals and dependency order (D30), grounded in E132's developed capability baseline. Necessary shared-engine repairs are authorized, not a pure-plugin constraint. Preserve ordinary legality, costs, rewards, persistence and one Character/scheduler/actor path. Approval is not implementation, proof, merge or live campaign; grades/seven criteria remain unchanged. Main integrates native OMP slices; Vibe is off, no Muse handoff.</p>
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead><tr><th style="text-align:left;padding:8px">Wave</th><th style="text-align:left;padding:8px">Outcome / dependency</th></tr></thead>
+                    <tbody>
+                        <tr><td style="padding:8px">0 · Baseline + patterns</td><td style="padding:8px">Reuse E132; record actual checkout/owner/result/failure contracts, not another full audit; recovery review branch unmerged</td></tr>
+                        <tr><td style="padding:8px">1 · Individual autonomy</td><td style="padding:8px">Finite existing-owner A → eligible B handoff, same giver included; normal completion, interruption OR failure and next choice</td></tr>
+                        <tr><td style="padding:8px">2 · Needed actions</td><td style="padding:8px">Only required legal travel/combat/loot/interaction/recovery legs; observed results and cleanup</td></tr>
+                        <tr><td style="padding:8px">3A · Livelihood + commerce</td><td style="padding:8px">Ordinary farm/craft/trade and inventory/labor/money conservation; seeded proof is not acquisition</td></tr>
+                        <tr><td style="padding:8px">3B · Cooperation</td><td style="padding:8px">Party leadership/roles, bounded adventure/PvP; queued ownership is not confirmed ownership</td></tr>
+                        <tr><td style="padding:8px">3C · Presence + social</td><td style="padding:8px">Truthful services, ambient movement, Expedition membership; never steal busy bots</td></tr>
+                        <tr><td style="padding:8px">4 · Cross-domain continuation</td><td style="padding:8px">Choose among proved activity families without scripted sequences or a second brain</td></tr>
+                        <tr><td style="padding:8px">5 · Optional population policy</td><td style="padding:8px">Later explicit operator policy; seeding/simulation is not earned autonomy or permission for synthetic rewards</td></tr>
+                    </tbody>
+                </table>
+                <p class="task-desc">Action/domain slices can run in parallel when dependencies and file ownership permit. No universal “finish all combat/economy” gate; one integration owner retains shared goal/result semantics. External modules are design references, not certified compatibility or AAEmu capability.</p>
+                <div class="meta-row"><span>Canonical owners</span><span class="meta-val"><code>ROADMAP.md#playerbot-extension-roadmap</code> · <code>PROJECT-CONTROL.md#playerbot-integration-direction</code></span></div>
+                <div class="meta-row"><span>Session entry / evidence</span><span class="meta-val"><code>START-HERE.md#new-session-bootstrap</code> → <code>.omp/state/CURRENT.md#session-resume</code> · D30 / E132 / E133 docsUI · no fresh gameplay verdict</span></div>
             </div>
             <div class="info-card" style="margin-bottom:20px" data-checkpoint="E106">
                 <div class="info-card-header"><div class="info-card-title">Seeded public-farm two actual harvests COMPLETE — 2026-10-10 (E-106)</div></div>
@@ -1292,8 +1325,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 </div>
             <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header">
-                <div class="info-card-title">First exit — ordinary starter → owned small plot → harvest/replant</div>
+                <div class="info-card-title">Retained livelihood journey — owned small plot → harvest/replant</div>
                 </div>
+                <p class="task-desc">Historical journey/dependency record, not the universal first bot exit or current dispatch. The approved reuse-first roadmap and CURRENT's active card govern work; supplied housing kits and E106's seeded public farm have separate bounded proof, not earned private-plot completion.</p>
                 <p class="task-desc">One Nuian/Solzreed bot, ordinary progression and no in-run grants or repair. Earn the design, claim and complete the small plot, grow and harvest a real crop, replant, then prove restart ownership/state. This is not a house-building or ten-bot village exit. Tax renewal is the next sustainment slice.</p>
                 <details id="farmRoute" style="padding:10px 0">
                     <summary>Canonical route and missing prerequisites</summary>
@@ -1303,8 +1337,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 </div>
             <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header">
-                <div class="info-card-title">P1 corrective queue — before additional homestead/GOAP breadth</div>
+                <div class="info-card-title">Historical P1 corrective queue — 2026-09-16 / closeout 2026-09-18</div>
                 </div>
+                <p class="task-desc">Preserve the dated proof and invariant/freeze boundaries below as recorded. They are not current capability inventory or automatic dispatch; the approved integration contract, E132 baseline and active card govern new work. No later action is declared missing solely because this historical loop did not cover it.</p>
                 <p class="task-desc">Wave One closeout: all eight items DONE at their acceptance criteria, VERIFIED by independent second-session re-run 2026-09-18. Evidence: step-8 dossier + live b1housing report (107/107 unit, 1/1 step-7 E2E, 1/1 step-8 loop).</p>
                 <ol>
                     <li>DONE — delivery records reconciled.</li>
@@ -1342,9 +1377,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 </div>
             <div class="info-card" style="margin-bottom:20px">
                 <div class="info-card-header">
-                <div class="info-card-title">Zoom in — next slices and weakest links</div>
+                <div class="info-card-title">Historical journey queue — retained dependency briefs</div>
                 </div>
-                <p class="task-desc">Expand a slice for acceptance and dependencies. Full briefs: ROADMAP.md#near-term-slice-queue. Assign an implementer and independent verifier before dispatch.</p>
+                <p class="task-desc">Reference: ROADMAP.md#near-term-slice-queue. This older order is superseded for bot dispatch by the approved extension roadmap and CURRENT; do not launch its ready-to-scope recipes or repeat fixed planner/enrollment work as a new-session default.</p>
                 <details style="padding:10px 0">
                 <summary>1. Schema delivery safety — ready to scope</summary>
                 <p class="task-desc">Core operations: ship or explicitly mount migration files. Prove isolated fresh/existing DB startup, exactly-once application and restart persistence. Backup and table verification precede separately authorized deployment.</p>
@@ -1443,7 +1478,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 </div>
                 <div class="banner-stat">
                     <h3>Master Router</h3>
-                    <p>START-HERE.md & AGENTS.md</p>
+                    <p>CURRENT session resume → START-HERE bootstrap → AGENTS</p>
                 </div>
                 <div class="banner-stat">
                     <h3>Rule #9 & #10</h3>
@@ -1471,9 +1506,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         <div class="info-card-title">Lane B · Living World & PlayerBots</div>
                         <span class="status-badge status-closed">Autonomous AI</span>
                     </div>
-                    <div class="task-desc">Autonomous bot decision trees, combat rotations, leveling loop, dormancy/restoration, scheduling, and bot GM commands.</div>
-                    <div class="meta-row"><span>Primary Docs</span><span class="meta-val">PLAYERBOT_TARGET_ARCHITECTURE_V1.md, LIVING-WORLD.md</span></div>
-                    <div class="meta-row"><span>Where Backlog Lives</span><span class="meta-val">playerbot-blockers.md, deferred-not-now.md (Sec 12-18)</span></div>
+                    <div class="task-desc">Reuse existing bot capabilities to prove supported individual goal-to-goal autonomy; needed shared-core repairs are greenlit, with no second brain or parallel gameplay.</div>
+                    <div class="meta-row" style="display:block"><span>Current Entry</span><p class="task-desc">.omp/state/CURRENT.md#session-resume · START-HERE.md#new-session-bootstrap · PROJECT-CONTROL.md#playerbot-integration-direction</p></div>
+                    <div class="meta-row" style="display:block"><span>Baseline / Next Work</span><p class="task-desc">ROADMAP.md#current-developed-capability-baseline · #playerbot-extension-roadmap; older architecture/vision/blocker docs are references, not dispatch</p></div>
                     <div class="meta-row"><span>Code Scope</span><span class="meta-val">AAEmu.Game/Core/Managers/Bots/, Scripts/Commands/BotCmd.cs</span></div>
                     <div class="code-box">./scripts/gate.sh BotActionControllerRouteTests</div>
                 </div>
@@ -1967,7 +2002,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             updateStats();
             fetchCoverageStats();
 
-            const savedTab = localStorage.getItem('aaemu_active_tab') || 'tasks';
+            const savedTab = localStorage.getItem('aaemu_active_tab') || 'work';
             switchMainTab(savedTab);
 
         }
@@ -2330,6 +2365,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         window.onload = init;
     </script>
     <script src="/api/map/script"></script>
+    <script src="/api/work/script"></script>
 </body>
 </html>
 """
@@ -2338,13 +2374,36 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 class DashboardRequestHandler(BaseHTTPRequestHandler):
     tasks_file: str = "playertrace-coverage/dashboard_tasks.json"
     repo_root: str = "."
+    work_service: Optional[WorkDashboard] = None
+    work_write_token: str = ""
+
+    def _work_host_allowed(self) -> bool:
+        try:
+            parsed = urllib.parse.urlparse("//" + self.headers.get("Host", ""))
+            if parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment:
+                return False
+            host = (parsed.hostname or "").lower()
+            aliases = {"localhost", socket.gethostname().lower()}
+            aliases.update(name.strip().lower() for name in
+                           os.environ.get("AAEMU_WORK_ALLOWED_HOSTS", "").split(",") if name.strip())
+            if host in aliases:
+                return True
+            address = ipaddress.ip_address(host)
+            return address.is_private or address.is_loopback or (
+                address.version == 4 and address in ipaddress.ip_network("100.64.0.0/10"))
+        except ValueError:
+            return False
 
     def _set_headers(self, status: int = 200, content_type: str = "application/json"):
         self.send_response(status)
         self.send_header("Content-Type", content_type)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        if not urllib.parse.urlparse(self.path).path.startswith("/api/work"):
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        else:
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
         self.end_headers()
 
     def do_OPTIONS(self):
@@ -2353,6 +2412,36 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
+        if path.startswith("/api/work") and not self._work_host_allowed():
+            self._work_json(403, {"error": "Work routes require a trusted dashboard host"})
+            return
+        if path == "/api/work/script":
+            script_path = os.path.join(os.path.dirname(__file__), "dashboard_work.js")
+            with open(script_path, "rb") as stream:
+                self._set_headers(200, "text/javascript; charset=utf-8")
+                self.wfile.write(stream.read())
+            return
+
+        if path in ("/api/work", "/api/work/reference", "/api/work/brief"):
+            try:
+                if self.work_service is None:
+                    raise WorkError(503, "Work dashboard is not configured")
+                query = urllib.parse.parse_qs(parsed.query)
+                if path == "/api/work":
+                    data = self.work_service.snapshot()
+                    data["write_token"] = self.work_write_token
+                elif path == "/api/work/reference":
+                    data = self.work_service.reference(
+                        query.get("feature", [""])[0], query.get("ref", [""])[0])
+                else:
+                    data = self.work_service.brief(query.get("session", [""])[0])
+                self._work_json(200, data)
+            except WorkError as ex:
+                self._work_json(ex.status, {"error": ex.message})
+            except Exception as ex:
+                self._work_json(500, {"error": str(ex)})
+            return
+
 
         if path == "/" or path == "/index.html":
             self._set_headers(200, "text/html; charset=utf-8")
@@ -2565,6 +2654,40 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
         path = parsed.path
+        if path == "/api/work":
+            try:
+                if not self._work_host_allowed():
+                    raise WorkError(403, "Work routes require a trusted dashboard host")
+                origin = self.headers.get("Origin")
+                if origin and urllib.parse.urlparse(origin).netloc != self.headers.get("Host"):
+                    raise WorkError(403, "Work writes require the dashboard's origin")
+                supplied_token = self.headers.get("X-Work-Token", "")
+                if not supplied_token.isascii() or not self.work_write_token or not secrets.compare_digest(
+                        supplied_token, self.work_write_token):
+                    raise WorkError(403, "Reload the work dashboard before writing")
+                if self.headers.get_content_type() != "application/json":
+                    raise WorkError(415, "Work writes require application/json")
+                try:
+                    content_length = int(self.headers.get("Content-Length", "0"))
+                except ValueError:
+                    raise WorkError(400, "Invalid Content-Length")
+                if not 0 < content_length <= 262144:
+                    raise WorkError(413, "Work request must be between 1 and 262144 bytes")
+                if self.work_service is None:
+                    raise WorkError(503, "Work dashboard is not configured")
+                try:
+                    payload = json.loads(self.rfile.read(content_length))
+                except (ValueError, UnicodeDecodeError):
+                    raise WorkError(400, "Invalid JSON work request")
+                data = self.work_service.mutate(payload)
+                data["write_token"] = self.work_write_token
+                self._work_json(200, data)
+            except WorkError as ex:
+                self._work_json(ex.status, {"error": ex.message})
+            except Exception as ex:
+                self._work_json(500, {"error": str(ex)})
+            return
+
 
         if path == "/api/tasks/update":
             content_length = int(self.headers.get("Content-Length", 0))
@@ -2755,6 +2878,10 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
         self._set_headers(404, "text/plain")
         self.wfile.write(b"Not Found")
 
+    def _work_json(self, status: int, data: Dict[str, Any]) -> None:
+        self._set_headers(status, "application/json; charset=utf-8")
+        self.wfile.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
+
     def _get_routes_summary(self):
         routes_dir = os.path.join(self.repo_root, "AAEmu.Game", "Data", "Routes")
         routes = []
@@ -2875,6 +3002,11 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
 
 def run_server(port: int = 8085, host: str = "0.0.0.0", repo_root: str = "."):
     DashboardRequestHandler.repo_root = os.path.abspath(repo_root)
+    DashboardRequestHandler.work_service = WorkDashboard(
+        DashboardRequestHandler.repo_root,
+        data_file=os.environ.get("AAEMU_WORK_DATA_FILE"),
+        research_root=os.environ.get("AAEMU_BOT_RESEARCH_ROOT"))
+    DashboardRequestHandler.work_write_token = secrets.token_hex(32)
     server_address = (host, port)
     httpd = HTTPServer(server_address, DashboardRequestHandler)
     print(f"================================================================")

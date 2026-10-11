@@ -31,3 +31,8 @@ traces/bot-trajectories/
 # Local linked worktrees and Python bytecode
 .worktrees/
 Scripts/playertrace-coverage/__pycache__/
+
+# Local delivery cards and operator session checkpoints
+playertrace-coverage/work_board.json
+playertrace-coverage/work_board.json.lock
+playertrace-coverage/work_board.json.*.tmp

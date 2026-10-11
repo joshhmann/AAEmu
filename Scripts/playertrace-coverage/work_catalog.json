@@ -1,0 +1,2100 @@
+{
+  "features": [
+    {
+      "id": "shared-autonomy",
+      "title": "Shared autonomy spine",
+      "track": "E132 established families (11 total)",
+      "summary": "Ordinary Character lifecycle/generation, scheduler, activity arbiter/decorator, GameplayActor/ActorRequest, quest-specific behavior runtime and separate homestead GOAP state",
+      "gaps": [
+        "Production arbitration is wired; not one universal behavior/GOAP/result owner. Reuse existing seams rather than build a replacement framework.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-1",
+          "label": "E132 source anchor AAEmu.Game/Program.cs:305-403 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Program.cs",
+          "line_start": 305,
+          "line_end": 403,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Production arbitration is wired; not one universal behavior/GOAP/result owner. Reuse existing seams rather than build a replacement framework."
+        },
+        {
+          "id": "implementation-2",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/PlayerBotRuntime.cs:21-65 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/PlayerBotRuntime.cs",
+          "line_start": 21,
+          "line_end": 65,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Production arbitration is wired; not one universal behavior/GOAP/result owner. Reuse existing seams rather than build a replacement framework."
+        },
+        {
+          "id": "implementation-3",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/BotBehaviorRuntime.cs:7-43 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/BotBehaviorRuntime.cs",
+          "line_start": 7,
+          "line_end": 43,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Production arbitration is wired; not one universal behavior/GOAP/result owner. Reuse existing seams rather than build a replacement framework."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Production arbitration is wired; not one universal behavior/GOAP/result owner. Reuse existing seams rather than build a replacement framework."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: invest-async-scale.md",
+          "kind": "research",
+          "source": "research",
+          "path": "invest-async-scale.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "work-contract",
+          "label": "Dashboard work-orchestration bounded contract",
+          "kind": "policy",
+          "source": "repo",
+          "path": ".omp/state/artifacts/dashboard-work-orchestration/contract.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Operational workflow only. No automatic OMP launch, shell execution or canonical evidence promotion."
+        },
+        {
+          "id": "work-e134",
+          "label": "E134 delivery/session control-plane verification",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/EVIDENCE.md",
+          "line_start": 3315,
+          "line_end": 3400,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a + local control-plane changes",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Python, actual dashboard HTTP/browser and standard gate evidence only. No new gameplay autonomy, live/H proof or automatic worker launch."
+        },
+        {
+          "id": "canonical-current",
+          "label": "Canonical current ownership/objective",
+          "kind": "policy",
+          "source": "repo",
+          "path": ".omp/state/CURRENT.md",
+          "url": "",
+          "revision": "UNKNOWN (working canonical document)",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Current canonical control source, not historical gameplay proof.",
+          "anchor": "session-resume"
+        },
+        {
+          "id": "archaeology-spec",
+          "label": "Existing archaeology MCP acceptance specification",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/archaeology-mcp-acceptance.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Source/data corroboration contract; no new query run or database facts claimed."
+        },
+        {
+          "id": "research-corpus-tooling",
+          "label": "Existing research corpus MCP index",
+          "kind": "corpus",
+          "source": "research",
+          "path": "mcp/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Research retrieval tooling only; availability depends on configured external-local root. Not a gameplay capture."
+        }
+      ]
+    },
+    {
+      "id": "quest-autonomy",
+      "title": "Quest autonomy",
+      "track": "E132 established families (11 total)",
+      "summary": "Opt-in opportunity selection/retained purpose, supported objective legs, quest travel/action/result handling and terminal feedback",
+      "gaps": [
+        "Broader supported-objective completion and finite A-to-eligible-B same-giver recovery/handoff need bounded proof; 251 completion and numeric reporter reach not proved by those records.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-1",
+          "label": "E132 source anchor AAEmu.Game/Program.cs:327-341 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Program.cs",
+          "line_start": 327,
+          "line_end": 341,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Broader supported-objective completion and finite A-to-eligible-B same-giver recovery/handoff need bounded proof; 251 completion and numeric reporter reach not proved by those records."
+        },
+        {
+          "id": "implementation-2",
+          "label": "E132 source anchor .omp/state/EVIDENCE.md:2010-2069 (historical line hint)",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/EVIDENCE.md",
+          "line_start": 2010,
+          "line_end": 2069,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Broader supported-objective completion and finite A-to-eligible-B same-giver recovery/handoff need bounded proof; 251 completion and numeric reporter reach not proved by those records."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Broader supported-objective completion and finite A-to-eligible-B same-giver recovery/handoff need bounded proof; 251 completion and numeric reporter reach not proved by those records."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: invest-quest-exec.md",
+          "kind": "research",
+          "source": "research",
+          "path": "invest-quest-exec.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-05-quest-execution-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "e95",
+          "label": "E95 historical ledger section",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/EVIDENCE.md",
+          "url": "",
+          "revision": "e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "E95 historical bounded 330/6198 completion, Move interruption/recovery and independent Q251 acceptance; not Q251 completion, legal numeric reach or immutable purpose. Dirty tested source identity retained; not rerun at E132 baseline.",
+          "anchor": "e-95--main-accepts-fresh-bounded-original-seven-live-regression"
+        },
+        {
+          "id": "e96",
+          "label": "E96 historical ledger section",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/EVIDENCE.md",
+          "url": "",
+          "revision": "e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "E96 opt-in restart/log-backed Q251 progress; strict same-History-row purpose oracle NOT MET; post-window work separate; no durable cross-domain plan or Q251 completion. Dirty tested source identity retained; not rerun at E132 baseline.",
+          "anchor": "e-96--main-accepts-qualified-automatic-restartprogress-strict-purpose-oracle-not-met"
+        },
+        {
+          "id": "e95-receipt",
+          "label": "E95 bounded attempt summary",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/autonomy-priorities-2026-10-09/live-seven-gates/attempt-summary.json",
+          "url": "",
+          "revision": "e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "Historical provisioned run receipt only; retains disclosed setup and narrower purpose/reach limits."
+        }
+      ]
+    },
+    {
+      "id": "public-farming",
+      "title": "Public farming",
+      "track": "E132 established families (11 total)",
+      "summary": "Production NeedsFarm state machine with observation, soil travel, plant, maturity wait, harvest/replant, seed purchase and surplus sale paths; GOAP farming actions also exist separately",
+      "gaps": [
+        "Not earned acquisition, self-sufficiency, private plot, cross-domain handoff or restart proof. Purchase/sale code exists; do not call those mechanics missing merely because the unseeded loop is unproved.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-1",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs:3108-3241 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs",
+          "line_start": 3108,
+          "line_end": 3241,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Not earned acquisition, self-sufficiency, private plot, cross-domain handoff or restart proof. Purchase/sale code exists; do not call those mechanics missing merely because the unseeded loop is unproved."
+        },
+        {
+          "id": "implementation-2",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs:3641-3715 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs",
+          "line_start": 3641,
+          "line_end": 3715,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Not earned acquisition, self-sufficiency, private plot, cross-domain handoff or restart proof. Purchase/sale code exists; do not call those mechanics missing merely because the unseeded loop is unproved."
+        },
+        {
+          "id": "implementation-3",
+          "label": "E132 source anchor AAEmu.Game/Program.cs:386-389 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Program.cs",
+          "line_start": 386,
+          "line_end": 389,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Not earned acquisition, self-sufficiency, private plot, cross-domain handoff or restart proof. Purchase/sale code exists; do not call those mechanics missing merely because the unseeded loop is unproved."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Not earned acquisition, self-sufficiency, private plot, cross-domain handoff or restart proof. Purchase/sale code exists; do not call those mechanics missing merely because the unseeded loop is unproved."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: knowledge-corpus/START_HERE.md",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/START_HERE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-11-acquisition-economy-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "e106",
+          "label": "E106 seeded public-farm evidence dossier",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/autonomous-farm-2026-10-09/README.md",
+          "url": "",
+          "revision": "e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "Seeded level/seed/labor/site/rate setup; two real crop lifetimes/harvests, recovery and ordinary persistence. Not earned acquisition/private plot/restart/self-sufficiency or full harvest client parity; H UNKNOWN."
+        }
+      ]
+    },
+    {
+      "id": "private-homestead",
+      "title": "Private homestead",
+      "track": "E132 established families (11 total)",
+      "summary": "Production opt-in homestead activity and per-bot GOAP runner; ordinary claim/build/construction adapters",
+      "gaps": [
+        "Labeled kit/setup position; not traversal, ordinary acquisition or full tax-sustained farm journey. Housing is not merely proposed or entirely unproved.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-1",
+          "label": "E132 source anchor AAEmu.Game/Program.cs:379-381 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Program.cs",
+          "line_start": 379,
+          "line_end": 381,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Labeled kit/setup position; not traversal, ordinary acquisition or full tax-sustained farm journey. Housing is not merely proposed or entirely unproved."
+        },
+        {
+          "id": "implementation-2",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs:3044-3058 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs",
+          "line_start": 3044,
+          "line_end": 3058,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Labeled kit/setup position; not traversal, ordinary acquisition or full tax-sustained farm journey. Housing is not merely proposed or entirely unproved."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Labeled kit/setup position; not traversal, ordinary acquisition or full tax-sustained farm journey. Housing is not merely proposed or entirely unproved."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: knowledge-corpus/START_HERE.md",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/START_HERE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/step8-bot-loop-dossier-2026-09-17.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "housing-record",
+          "label": "Provisioned housing two historical revisions and restart limits",
+          "kind": "evidence",
+          "source": "repo",
+          "path": "STATUS.md",
+          "url": "",
+          "revision": "533bfcae5becc0264946dbdd1ecde3141595b8b3; d0bea9e6a011d97d60157718996cfea7013ea7af",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "Historical line hints. Supplied kit/setup positioning; claim\u2192construct/conservation/repeat/restart only, not traversal/acquisition; H UNKNOWN. Raw lane-local report is not registered here.",
+          "line_start": 287,
+          "line_end": 338
+        }
+      ]
+    },
+    {
+      "id": "crafting-artisan",
+      "title": "Crafting/artisan",
+      "track": "E132 established families (11 total)",
+      "summary": "Concrete Craft request through CharacterCraft with material/bench/labor guards; crafter/merchant/hauler cycle consumers",
+      "gaps": [
+        "Scenario/work-cycle execution does not prove autonomous useful-recipe choice, material sourcing, customer agreement, paid delivery and continuation. External Artisans messaging is not fulfillment either.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-1",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs:462-479 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/IGameplayActor.cs",
+          "line_start": 462,
+          "line_end": 479,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Scenario/work-cycle execution does not prove autonomous useful-recipe choice, material sourcing, customer agreement, paid delivery and continuation. External Artisans messaging is not fulfillment either."
+        },
+        {
+          "id": "implementation-2",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/GameplayActor.cs:3916-4015 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/GameplayActor.cs",
+          "line_start": 3916,
+          "line_end": 4015,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Scenario/work-cycle execution does not prove autonomous useful-recipe choice, material sourcing, customer agreement, paid delivery and continuation. External Artisans messaging is not fulfillment either."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Scenario/work-cycle execution does not prove autonomous useful-recipe choice, material sourcing, customer agreement, paid delivery and continuation. External Artisans messaging is not fulfillment either."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: knowledge-corpus/START_HERE.md",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/START_HERE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-11-acquisition-economy-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "external-patterns",
+          "label": "Revision-pinned external module pattern inventory",
+          "kind": "research",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-roadmap/catalogue-inventory.json",
+          "url": "",
+          "revision": "UNKNOWN (per-module original pins retained in artifact)",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "15 catalog IDs; 13 pinned/two branch-only. External WoW patterns are not ArcheAge authority, compatibility or earned gameplay proof."
+        }
+      ]
+    },
+    {
+      "id": "commerce",
+      "title": "Trade/AH/specialty commerce",
+      "track": "E132 established families (11 total)",
+      "summary": "Buy/sell, direct trade, auction/mail settlement and specialty pack sale access and scenarios",
+      "gaps": [
+        "Transaction/scenario proof is not autonomous partner selection, pricing, acquisition-to-sale or market-making. No operator-liquidity policy is established by this bounded review.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-1",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/GameplayActor.cs:2939-3058 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/GameplayActor.cs",
+          "line_start": 2939,
+          "line_end": 3058,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Transaction/scenario proof is not autonomous partner selection, pricing, acquisition-to-sale or market-making. No operator-liquidity policy is established by this bounded review."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Transaction/scenario proof is not autonomous partner selection, pricing, acquisition-to-sale or market-making. No operator-liquidity policy is established by this bounded review."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: knowledge-corpus/START_HERE.md",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/START_HERE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-11-acquisition-economy-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "historical-record",
+          "label": "Historical STATUS bounded record (line hints)",
+          "kind": "evidence",
+          "source": "repo",
+          "path": "STATUS.md",
+          "url": "",
+          "revision": "c7351b242 (abbreviated historical identity) + dirty",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "Historical direct-trade/specialty-sale scenario receipts, not autonomous pricing or acquisition; raw report availability not asserted. Not rerun at current baseline.",
+          "line_start": 505,
+          "line_end": 517
+        },
+        {
+          "id": "auction-restart-record",
+          "label": "Historical auction restart and settlement scenario (line hints)",
+          "kind": "evidence",
+          "source": "repo",
+          "path": "STATUS.md",
+          "url": "",
+          "revision": "8c198f13d → f3bb787ce (historical sweep abbreviated identities; precise test tip UNKNOWN)",
+          "layer": "live",
+          "confidence": "historical ledger record",
+          "limits": "Post/buy/settle/expiry-mail across kill -9 scenario; not autonomous market-making, acquisition or current-baseline proof. Raw report availability not asserted; H UNKNOWN.",
+          "line_start": 1984,
+          "line_end": 2012
+        },
+        {
+          "id": "external-patterns",
+          "label": "Revision-pinned external module pattern inventory",
+          "kind": "research",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-roadmap/catalogue-inventory.json",
+          "url": "",
+          "revision": "UNKNOWN (per-module original pins retained in artifact)",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "15 catalog IDs; 13 pinned/two branch-only. External WoW patterns are not ArcheAge authority, compatibility or earned gameplay proof."
+        }
+      ]
+    },
+    {
+      "id": "cooperative-adventure",
+      "title": "Cooperative adventure",
+      "track": "E132 established families (11 total)",
+      "summary": "Invite/accept/follow/assist actor/scenario machinery, production party handling and historical 3-bot rally/assist/elite-kill scenario",
+      "gaps": [
+        "No general autonomous dungeon/adventure leadership/readiness/progression policy established in bounded Bots source search. Engine party capability and scripted cooperative success are real but distinct.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-2",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/PartyDecisionScenario.cs (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/PartyDecisionScenario.cs",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "No general autonomous dungeon/adventure leadership/readiness/progression policy established in bounded Bots source search. Engine party capability and scripted cooperative success are real but distinct."
+        },
+        {
+          "id": "implementation-3",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/PartySpikeScenario.cs (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/PartySpikeScenario.cs",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "No general autonomous dungeon/adventure leadership/readiness/progression policy established in bounded Bots source search. Engine party capability and scripted cooperative success are real but distinct."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "No general autonomous dungeon/adventure leadership/readiness/progression policy established in bounded Bots source search. Engine party capability and scripted cooperative success are real but distinct."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: playerbot-prior-art-architecture-study.md",
+          "kind": "research",
+          "source": "research",
+          "path": "playerbot-prior-art-architecture-study.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-13-shared-world-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "historical-record",
+          "label": "Historical STATUS bounded record (line hints)",
+          "kind": "evidence",
+          "source": "repo",
+          "path": "STATUS.md",
+          "url": "",
+          "revision": "c98da8a53 (abbreviated historical identity)",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "Party mechanics/rig and historical three-bot elite-kill scenario, not autonomous leadership or dungeon competence. Not rerun at current baseline.",
+          "line_start": 1942,
+          "line_end": 1982
+        },
+        {
+          "id": "external-patterns",
+          "label": "Revision-pinned external module pattern inventory",
+          "kind": "research",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-roadmap/catalogue-inventory.json",
+          "url": "",
+          "revision": "UNKNOWN (per-module original pins retained in artifact)",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "15 catalog IDs; 13 pinned/two branch-only. External WoW patterns are not ArcheAge authority, compatibility or earned gameplay proof."
+        }
+      ]
+    },
+    {
+      "id": "pvp-dominion",
+      "title": "PvP/Dominion",
+      "track": "E132 established families (11 total)",
+      "summary": "Production ConflictJoin same-zone active-conflict readiness/personality policy, ordinary attackability/combat, bounded skirmish scenario",
+      "gaps": [
+        "Not travel-to-war, coordinated event objectives or proved Dominion autonomy. No dedicated Dominion bot policy established in scoped search; no claim that server Dominion mechanics are absent.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-1",
+          "label": "E132 source anchor AAEmu.Game/Program.cs:369-370 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Program.cs",
+          "line_start": 369,
+          "line_end": 370,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Not travel-to-war, coordinated event objectives or proved Dominion autonomy. No dedicated Dominion bot policy established in scoped search; no claim that server Dominion mechanics are absent."
+        },
+        {
+          "id": "implementation-2",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/ConflictJoinActivityModule.cs:12-24,50-88 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/ConflictJoinActivityModule.cs",
+          "line_start": 12,
+          "line_end": 88,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Not travel-to-war, coordinated event objectives or proved Dominion autonomy. No dedicated Dominion bot policy established in scoped search; no claim that server Dominion mechanics are absent."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Not travel-to-war, coordinated event objectives or proved Dominion autonomy. No dedicated Dominion bot policy established in scoped search; no claim that server Dominion mechanics are absent."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: knowledge-corpus/START_HERE.md",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/START_HERE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-07-combat-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "external-patterns",
+          "label": "Revision-pinned external module pattern inventory",
+          "kind": "research",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-roadmap/catalogue-inventory.json",
+          "url": "",
+          "revision": "UNKNOWN (per-module original pins retained in artifact)",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "15 catalog IDs; 13 pinned/two branch-only. External WoW patterns are not ArcheAge authority, compatibility or earned gameplay proof."
+        }
+      ]
+    },
+    {
+      "id": "presence-social",
+      "title": "City/presence/social",
+      "track": "E132 established families (11 total)",
+      "summary": "Presence roam, Home/Work/Travel/Rest schedules, bounded combat-suppressed chatter and farm leisure",
+      "gaps": [
+        "Visible activity/chatter is not fulfilled work or a unified needs-driven city life. Use existing ownership/cooldowns rather than add a second timer/controller.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-1",
+          "label": "E132 source anchor AAEmu.Game/Program.cs:356-369 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Program.cs",
+          "line_start": 356,
+          "line_end": 369,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Visible activity/chatter is not fulfilled work or a unified needs-driven city life. Use existing ownership/cooldowns rather than add a second timer/controller."
+        },
+        {
+          "id": "implementation-3",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs:3583-3586 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs",
+          "line_start": 3583,
+          "line_end": 3586,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Visible activity/chatter is not fulfilled work or a unified needs-driven city life. Use existing ownership/cooldowns rather than add a second timer/controller."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Visible activity/chatter is not fulfilled work or a unified needs-driven city life. Use existing ownership/cooldowns rather than add a second timer/controller."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: player-personas-and-daily-life.md",
+          "kind": "research",
+          "source": "research",
+          "path": "player-personas-and-daily-life.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-03-arbitration-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "external-patterns",
+          "label": "Revision-pinned external module pattern inventory",
+          "kind": "research",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-roadmap/catalogue-inventory.json",
+          "url": "",
+          "revision": "UNKNOWN (per-module original pins retained in artifact)",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "15 catalog IDs; 13 pinned/two branch-only. External WoW patterns are not ArcheAge authority, compatibility or earned gameplay proof."
+        }
+      ]
+    },
+    {
+      "id": "expedition",
+      "title": "Expedition/auto-guild analogue",
+      "track": "E132 established families (11 total)",
+      "summary": "Ordinary Expedition actor actions and formation scenario",
+      "gaps": [
+        "Formation does not prove independent membership choice, recruitment or continuing group purpose.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-2",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/ExpeditionFormationScenario.cs (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/ExpeditionFormationScenario.cs",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Formation does not prove independent membership choice, recruitment or continuing group purpose."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Formation does not prove independent membership choice, recruitment or continuing group purpose."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: nulight-family-tools.md",
+          "kind": "research",
+          "source": "research",
+          "path": "nulight-family-tools.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-13-shared-world-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "historical-record",
+          "label": "Historical STATUS bounded record (line hints)",
+          "kind": "evidence",
+          "source": "repo",
+          "path": "STATUS.md",
+          "url": "",
+          "revision": "c7351b242 (abbreviated historical identity) + dirty",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "Historical five-bot party-to-Expedition formation/membership scenario, not independent choice/recruitment/continuing purpose. Not rerun at current baseline.",
+          "line_start": 505,
+          "line_end": 517
+        },
+        {
+          "id": "external-patterns",
+          "label": "Revision-pinned external module pattern inventory",
+          "kind": "research",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-roadmap/catalogue-inventory.json",
+          "url": "",
+          "revision": "UNKNOWN (per-module original pins retained in artifact)",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "15 catalog IDs; 13 pinned/two branch-only. External WoW patterns are not ArcheAge authority, compatibility or earned gameplay proof."
+        }
+      ]
+    },
+    {
+      "id": "persistence-population",
+      "title": "Persistence/population/simulation",
+      "track": "E132 established families (11 total)",
+      "summary": "Ordinary character persistence, metadata/home/personality/schedule storage, generations, proximity/pressure fidelity and real dormancy/materialization",
+      "gaps": [
+        "Persistent data is not durable cross-domain chosen purpose or restored in-flight requests. Population cost control is not abstract earned farming/economy; level redistribution/synthetic dungeon rewards remain optional proposed policy.",
+        "Per-feature fresh current-baseline gameplay/client coverage is UNKNOWN; select a bounded scenario before claiming it."
+      ],
+      "references": [
+        {
+          "id": "implementation-1",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/PlayerBotMetadataStore.cs:13-44 (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/PlayerBotMetadataStore.cs",
+          "line_start": 13,
+          "line_end": 44,
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Persistent data is not durable cross-domain chosen purpose or restored in-flight requests. Population cost control is not abstract earned farming/economy; level redistribution/synthetic dungeon rewards remain optional proposed policy."
+        },
+        {
+          "id": "implementation-2",
+          "label": "E132 source anchor AAEmu.Game/Core/Managers/Bots/PopulationDirector.cs (historical line hint)",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/PopulationDirector.cs",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Persistent data is not durable cross-domain chosen purpose or restored in-flight requests. Population cost control is not abstract earned farming/economy; level redistribution/synthetic dungeon rewards remain optional proposed policy."
+        },
+        {
+          "id": "comparison",
+          "label": "E132: 11 established feature families; historical baseline",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-comparison/comparison.json",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/documentary",
+          "limits": "Persistent data is not durable cross-domain chosen purpose or restored in-flight requests. Population cost control is not abstract earned farming/economy; level redistribution/synthetic dungeon rewards remain optional proposed policy."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved baseline and bounded dependency order",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Approved planning only; not implemented waves or new gameplay proof.",
+          "anchor": "current-developed-capability-baseline"
+        },
+        {
+          "id": "research-index",
+          "label": "Historical research workspace topic index: invest-async-scale.md",
+          "kind": "research",
+          "source": "research",
+          "path": "invest-async-scale.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "External-local research; revision UNKNOWN. Dated study/index, not canonical policy or live proof. Research root must be configured; unavailable otherwise."
+        },
+        {
+          "id": "version-scope",
+          "label": "Player knowledge corpus 1.2 version boundaries",
+          "kind": "research",
+          "source": "research",
+          "path": "knowledge-corpus/VERSION_SCOPE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Era-qualified knowledge, not engine authority, runtime trace or current corpus count."
+        },
+        {
+          "id": "trace-tooling",
+          "label": "Existing trace corpus tooling and limitations",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/README.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Historical tooling description; reported census and some receipts unresolved. No per-feature raw capture asserted; tooling is not execution proof."
+        },
+        {
+          "id": "capture-spec",
+          "label": "Existing task specification and evaluation protocol",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Capture/evaluation specification only; no new capture or automatic acceptance."
+        },
+        {
+          "id": "repo-dossier",
+          "label": "Historical repo review/dossier",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-12-persistence-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical bounded review; source pins and layers inside the dossier must be retained, not rebound to current HEAD."
+        },
+        {
+          "id": "e95",
+          "label": "E95 historical ledger section",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/EVIDENCE.md",
+          "url": "",
+          "revision": "e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "E95 historical bounded 330/6198 completion, Move interruption/recovery and independent Q251 acceptance; not Q251 completion, legal numeric reach or immutable purpose. Dirty tested source identity retained; not rerun at E132 baseline.",
+          "anchor": "e-95--main-accepts-fresh-bounded-original-seven-live-regression"
+        },
+        {
+          "id": "e96",
+          "label": "E96 historical ledger section",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/EVIDENCE.md",
+          "url": "",
+          "revision": "e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "E96 opt-in restart/log-backed Q251 progress; strict same-History-row purpose oracle NOT MET; post-window work separate; no durable cross-domain plan or Q251 completion. Dirty tested source identity retained; not rerun at E132 baseline.",
+          "anchor": "e-96--main-accepts-qualified-automatic-restartprogress-strict-purpose-oracle-not-met"
+        },
+        {
+          "id": "e106",
+          "label": "E106 seeded public-farm evidence dossier",
+          "kind": "evidence",
+          "source": "repo",
+          "path": ".omp/state/artifacts/autonomous-farm-2026-10-09/README.md",
+          "url": "",
+          "revision": "e6e401129ffe4b5a3bb37f9d0ea521ee40f1e28d",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "Seeded level/seed/labor/site/rate setup; two real crop lifetimes/harvests, recovery and ordinary persistence. Not earned acquisition/private plot/restart/self-sufficiency or full harvest client parity; H UNKNOWN."
+        },
+        {
+          "id": "historical-record",
+          "label": "Historical STATUS bounded record (line hints)",
+          "kind": "evidence",
+          "source": "repo",
+          "path": "STATUS.md",
+          "url": "",
+          "revision": "a23cdc33eef55af18bfb1535f32ca9fc3ed62834; 322390b32; 02903804b (latter two abbreviated)",
+          "layer": "live",
+          "confidence": "textual/documentary",
+          "limits": "Preserve accepted historical A5 shape/soak conjunction at its named revisions; 1000 dormant/50 embodied; not abstract earned simulation or H. Not rerun at current baseline.",
+          "line_start": 555,
+          "line_end": 591
+        },
+        {
+          "id": "external-patterns",
+          "label": "Revision-pinned external module pattern inventory",
+          "kind": "research",
+          "source": "repo",
+          "path": ".omp/state/artifacts/playerbot-variation-roadmap/catalogue-inventory.json",
+          "url": "",
+          "revision": "UNKNOWN (per-module original pins retained in artifact)",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "15 catalog IDs; 13 pinned/two branch-only. External WoW patterns are not ArcheAge authority, compatibility or earned gameplay proof."
+        }
+      ]
+    },
+    {
+      "id": "travel",
+      "title": "Travel and movement substrate",
+      "track": "Distinct substrate reference areas (3; outside E132 denominator)",
+      "summary": "Move/route ownership and ordinary request interruption underpin quest/farm travel.",
+      "gaps": [
+        "Required legal reach/cancellation and numeric NPC reach remain scenario-specific; no universal terrain/mount/vehicle proof."
+      ],
+      "references": [
+        {
+          "id": "implementation",
+          "label": "GameplayActor ordinary action implementation",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/GameplayActor.cs",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Required legal reach/cancellation and numeric NPC reach remain scenario-specific; no universal terrain/mount/vehicle proof."
+        },
+        {
+          "id": "dossier",
+          "label": "Historical bounded substrate review",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-06-travel-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical source review; not a fresh live result."
+        },
+        {
+          "id": "research",
+          "label": "Historical action/request study",
+          "kind": "research",
+          "source": "research",
+          "path": "invest-cast-move.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "UNKNOWN original revision; patterns only, configured research root required."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved needed-substrate boundary",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Only actions needed by the selected capability; not a blanket action rewrite.",
+          "anchor": "dependency-ordered-delivery-waves"
+        },
+        {
+          "id": "capture-spec",
+          "label": "Concrete task specification/evaluation tooling",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Specification, not a capture. Relevant raw per-feature capture coverage is UNKNOWN; no packet logs exposed by this catalog."
+        }
+      ]
+    },
+    {
+      "id": "combat",
+      "title": "Combat substrate",
+      "track": "Distinct substrate reference areas (3; outside E132 denominator)",
+      "summary": "Ordinary GameplayActor combat and historical party/skirmish scenarios are reusable action substrate.",
+      "gaps": [
+        "Authoritative hit/effect, attackability, interruption and recovery need selected-pattern proof; no all-combat gate or general PvP strategy."
+      ],
+      "references": [
+        {
+          "id": "implementation",
+          "label": "GameplayActor ordinary action implementation",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/GameplayActor.cs",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Authoritative hit/effect, attackability, interruption and recovery need selected-pattern proof; no all-combat gate or general PvP strategy."
+        },
+        {
+          "id": "dossier",
+          "label": "Historical bounded substrate review",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-07-combat-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical source review; not a fresh live result."
+        },
+        {
+          "id": "research",
+          "label": "Historical action/request study",
+          "kind": "research",
+          "source": "research",
+          "path": "invest-cast-move.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "UNKNOWN original revision; patterns only, configured research root required."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved needed-substrate boundary",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Only actions needed by the selected capability; not a blanket action rewrite.",
+          "anchor": "dependency-ordered-delivery-waves"
+        },
+        {
+          "id": "capture-spec",
+          "label": "Concrete task specification/evaluation tooling",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Specification, not a capture. Relevant raw per-feature capture coverage is UNKNOWN; no packet logs exposed by this catalog."
+        }
+      ]
+    },
+    {
+      "id": "loot-recovery",
+      "title": "Loot, death and recovery substrate",
+      "track": "Distinct substrate reference areas (3; outside E132 denominator)",
+      "summary": "Loot/action outcomes and E96 log-backed ordinary Q251 loot progress are distinct from strict retained-purpose proof.",
+      "gaps": [
+        "Missing dedicated raw Loot capture remains UNKNOWN; combat captures do not substitute. Exact attribution, corpse/recovery and multi-Q behavior require bounded proof."
+      ],
+      "references": [
+        {
+          "id": "implementation",
+          "label": "GameplayActor ordinary action implementation",
+          "kind": "implementation",
+          "source": "repo",
+          "path": "AAEmu.Game/Core/Managers/Bots/GameplayActor.cs",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "source",
+          "confidence": "textual/code",
+          "limits": "Missing dedicated raw Loot capture remains UNKNOWN; combat captures do not substitute. Exact attribution, corpse/recovery and multi-Q behavior require bounded proof."
+        },
+        {
+          "id": "dossier",
+          "label": "Historical bounded substrate review",
+          "kind": "research",
+          "source": "repo",
+          "path": "scorecard-explorations/mechanics/astra-playerbot-layer-08-death-loot-2026-10-07.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "Historical source review; not a fresh live result."
+        },
+        {
+          "id": "research",
+          "label": "Historical action/request study",
+          "kind": "research",
+          "source": "research",
+          "path": "invest-quest-exec.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "research",
+          "confidence": "textual/documentary",
+          "limits": "UNKNOWN original revision; patterns only, configured research root required."
+        },
+        {
+          "id": "roadmap",
+          "label": "Approved needed-substrate boundary",
+          "kind": "policy",
+          "source": "repo",
+          "path": "ROADMAP.md",
+          "url": "",
+          "revision": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+          "layer": "control",
+          "confidence": "textual/documentary",
+          "limits": "Only actions needed by the selected capability; not a blanket action rewrite.",
+          "anchor": "dependency-ordered-delivery-waves"
+        },
+        {
+          "id": "capture-spec",
+          "label": "Concrete task specification/evaluation tooling",
+          "kind": "corpus",
+          "source": "repo",
+          "path": "Scripts/playertrace-coverage/TASK_SPEC_AND_EVALUATION_GUIDE.md",
+          "url": "",
+          "revision": "UNKNOWN",
+          "layer": "tooling",
+          "confidence": "textual/documentary",
+          "limits": "Specification, not a capture. Relevant raw per-feature capture coverage is UNKNOWN; no packet logs exposed by this catalog."
+        }
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "id": "dashboard-work-orchestration",
+      "feature_id": "shared-autonomy",
+      "title": "Dashboard bounded delivery and resumable work records",
+      "parent": "Approved PlayerBot roadmap / bounded delivery",
+      "outcome": "Existing dashboard exposes bounded feature bibliography, dependency cards and explicit continue/fresh work records with checkpoints, drift and pasteable briefs.",
+      "mode": "Implement",
+      "slot": "primary",
+      "status": "Ready",
+      "priority": "High",
+      "owner": "Main",
+      "verifier": "Main",
+      "scope": [
+        "Scripts/playertrace-coverage/dashboard_server.py",
+        "Scripts/playertrace-coverage/work_dashboard.py",
+        "Scripts/playertrace-coverage/test_work_dashboard.py",
+        "Scripts/playertrace-coverage/dashboard_work.js",
+        "Scripts/playertrace-coverage/work_catalog.json",
+        "playertrace-coverage/dashboard.html",
+        ".omp/state/CURRENT.md",
+        ".omp/state/DECISIONS.md",
+        ".omp/state/EVIDENCE.md",
+        ".omp/state/README.md",
+        ".gitignore",
+        "START-HERE.md",
+        "PROJECT-CONTROL.md",
+        "STATUS.md",
+        "ROADMAP.md",
+        "SCORECARD.md",
+        "Scripts/playertrace-coverage/README.md",
+        "Scripts/playertrace-coverage/DASHBOARD_MAINTENANCE.md"
+      ],
+      "resources": [
+        "dashboard-http-service"
+      ],
+      "non_goals": [
+        "No automatic agent launch or gameplay authorization",
+        "No merge, push, deploy or evidence/grade promotion",
+        "No replacement brain, scheduler or whole-giver suppression"
+      ],
+      "acceptance": [
+        "Meet contract backend mutation, dependency/readiness, persistence, WIP and drift gates without launching processes.",
+        "Safe registered bibliography previews show provenance and limits; current/future cards do not fabricate Accepted results or sessions.",
+        "Main exercises isolated HTTP/browser lifecycle and production read-only smoke; preserves existing human task/projection bytes.",
+        "Only truthful Main work record/checkpoint; no gameplay, DB or canonical evidence promotion."
+      ],
+      "evidence_layer": "control",
+      "reference_ids": [
+        "work-contract",
+        "canonical-current",
+        "roadmap"
+      ],
+      "dependencies": [],
+      "baseline_sha": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+      "next_action": "Review E134 and the actual workspace baseline, validate the served control workflow, close its record and reconcile canonical state before allocating goal-owner research.",
+      "unknowns": [
+        "Seed readiness is not acceptance on a new workspace; actual context and validation must be recorded.",
+        "Inherited dirty paths remain user-owned; E134 and historical results retain their source identities and proof limits."
+      ],
+      "evidence_refs": [],
+      "blocker": "",
+      "acceptance_note": ""
+    },
+    {
+      "id": "goal-owner-handoff",
+      "feature_id": "quest-autonomy",
+      "title": "Finite existing-owner A to eligible B handoff",
+      "parent": "Approved PlayerBot roadmap / bounded delivery",
+      "outcome": "Reproduce unsupported/stuck A retirement to supported eligible B including another quest at the same NPC, preserving under-budget recovery.",
+      "mode": "Research",
+      "slot": "primary",
+      "status": "Needs evidence",
+      "priority": "High",
+      "owner": "Main",
+      "verifier": "Main",
+      "scope": [
+        "AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs"
+      ],
+      "resources": [],
+      "non_goals": [
+        "No automatic agent launch or gameplay authorization",
+        "No merge, push, deploy or evidence/grade promotion",
+        "No replacement brain, scheduler or whole-giver suppression"
+      ],
+      "acceptance": [
+        "Declare supported objective-family denominator and authoritative outcome signals before execution.",
+        "Reproduce finite A\u2192eligible B including same giver, with A completed-memory false and retained AdvanceEnter give-up guard/counter.",
+        "Show interrupted/resolvable under-budget work is not prematurely abandoned; repair only demonstrated failure under a separately bounded release."
+      ],
+      "evidence_layer": "control",
+      "reference_ids": [
+        "comparison",
+        "roadmap",
+        "e95",
+        "e96"
+      ],
+      "dependencies": [
+        "dashboard-work-orchestration"
+      ],
+      "baseline_sha": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+      "next_action": "Main reconciles actual baseline/ownership and selects finite same-giver reproduction plus negative controls before allocating any gameplay/source execution.",
+      "unknowns": [
+        "No current-baseline reproduction or diagnosed failing boundary.",
+        "Exact fixture, source/test ownership and live resources not allocated."
+      ],
+      "evidence_refs": [],
+      "blocker": "",
+      "acceptance_note": ""
+    },
+    {
+      "id": "productive-objective",
+      "feature_id": "quest-autonomy",
+      "title": "One supported productive objective through completion and next choice",
+      "parent": "Approved PlayerBot roadmap / bounded delivery",
+      "outcome": "Prove one actually chosen supported objective pattern through ordinary full completion, turn-in where required and distinct next selection.",
+      "mode": "Validate",
+      "slot": "primary",
+      "status": "Backlog",
+      "priority": "High",
+      "owner": "Main",
+      "verifier": "Main",
+      "scope": [
+        "AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs"
+      ],
+      "resources": [],
+      "non_goals": [
+        "No automatic agent launch or gameplay authorization",
+        "No merge, push, deploy or evidence/grade promotion",
+        "No replacement brain, scheduler or whole-giver suppression"
+      ],
+      "acceptance": [
+        "Name one supported kill/loot/gather or other pattern and authoritative completion denominator.",
+        "Observe normal discovery/choice/action/consequence/full completion and turn-in if applicable, then distinct next choice.",
+        "Preserve exact purpose/request attribution and disclosed setup; do not substitute Q251 acceptance/progress for completion."
+      ],
+      "evidence_layer": "live",
+      "reference_ids": [
+        "comparison",
+        "roadmap",
+        "e95",
+        "e96"
+      ],
+      "dependencies": [
+        "goal-owner-handoff"
+      ],
+      "baseline_sha": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+      "next_action": "After accepted bounded handoff, Main selects the supported pattern, evidence design and exact owned resources before releasing execution.",
+      "unknowns": [
+        "Selected objective/fixture and exact file/resource contract unresolved.",
+        "Historical Q251 completion/numeric reach/strict purpose proof remain unproved by cited receipts."
+      ],
+      "evidence_refs": [],
+      "blocker": "",
+      "acceptance_note": ""
+    },
+    {
+      "id": "earned-resource-increment",
+      "feature_id": "public-farming",
+      "title": "Conservation-checked earned resource to livelihood increment",
+      "parent": "Approved PlayerBot roadmap / bounded delivery",
+      "outcome": "Demonstrate one ordinary earned resource\u2192seed\u2192farm increment using existing supported services with complete conservation.",
+      "mode": "Research",
+      "slot": "primary",
+      "status": "Backlog",
+      "priority": "High",
+      "owner": "Main",
+      "verifier": "Main",
+      "scope": [
+        "AAEmu.Game/Core/Managers/Bots/BotRoamStepExecutor.cs"
+      ],
+      "resources": [],
+      "non_goals": [
+        "No automatic agent launch or gameplay authorization",
+        "No merge, push, deploy or evidence/grade promotion",
+        "No replacement brain, scheduler or whole-giver suppression"
+      ],
+      "acceptance": [
+        "Name one acquisition route and inventory/money/labor/output ledger before execution.",
+        "Earn required resources through ordinary services; distinguish acquired inputs from provisioned E106 setup.",
+        "Reconcile acquisition, seed purchase and bounded farm output without minting/duplication; shortages and recovery remain explicit.",
+        "Do not claim private plot, self-sufficiency, full harvest client parity or cross-domain continuation beyond observed scenario."
+      ],
+      "evidence_layer": "live",
+      "reference_ids": [
+        "comparison",
+        "roadmap",
+        "e106",
+        "repo-dossier"
+      ],
+      "dependencies": [
+        "goal-owner-handoff",
+        "productive-objective"
+      ],
+      "baseline_sha": "aa057ffc3bb4596f4a6972eb4f012994970e163a",
+      "next_action": "Research ordinary acquisition and ledger design now; Main releases bounded implementation/live allocation only after declared dependencies and service proofs.",
+      "unknowns": [
+        "Acquisition fixture, ordinary seed funding and output denominator not selected.",
+        "Exact scope/resources require Main allocation; broad file ownership is not an active lease.",
+        "E106 seeded proof is reusable service evidence, not earned inputs."
+      ],
+      "evidence_refs": [],
+      "blocker": "",
+      "acceptance_note": ""
+    }
+  ]
+}
