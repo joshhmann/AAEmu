@@ -1,5 +1,8 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
+**Private live checkpoint — E157 / D51 (2026-10-11):** the unchanged candidate independently completed eight quests, including real251loot0→1→2→3 and turn-in→324accept/turn-in→2532accept. It discovered/completed2255→2256 at the same live NPC44382/template10581. Eligible giver distances explain251choice0.365m versus2532 16.574m. **Overall testFAILED1/1:** no qualifying fallback-travel interruption;900s deadline canceled final poll; strict frozenENDXYZ differs~1.26m at release/325sflush. Oracle unchanged; private resources cleaned, foreign stacks preserved. Level10 starter setup disclosed;324used ordinary supplied items, not harvesting. No gameplay edits/merge/shareddeploy/H/grade/parent promotion. Next: qualify actual quest-request interruption and final-state freeze/release in the existing observer. [Receipt](scorecard-explorations/quest-useful-choice-live-2026-10-11.md).
+
+
 **Useful fresh quest choice — E155 (2026-10-11, source/seeded rig):**
 The existing owner now chooses nearer observed eligible offers instead of choosing
 by quest ID alone. Among accepted non-hunt work it prefers credited progress or
