@@ -240,14 +240,15 @@ public class HeldoutRecoveryTests
     /// route executor dispatch/tick, not activity-owner or full autonomy proof.
     /// </summary>
     [Test]
-    public async Task Scenario10_TravelArm_PreyAt26m_TravelsToAdvertisedSource()
+    public async Task Scenario10_TravelArm_PreyBeyondQuestScan_TravelsToAdvertisedSource()
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor("heldB-travel26");
-        var source = new Vector3(26, 0, 0);
+        var (actor, session) = GameplayActorTestRig.CreateActor("heldB-travel101");
+        var source = new Vector3(101, 0, 0);
         var npcObjId = SpawnPrey(session, actor, Vector3.Zero, source);
         StageQuest(actor);
         SeedNpcSpawner(actor, PreyTemplate, source);
         await Assert.That(actor.Observe().NearbyNpcObjIds.Contains(npcObjId)).IsFalse();
+        await Assert.That(actor.Observe().NearbyLivingNpcObjIds.Contains(npcObjId)).IsFalse();
         var (resolved, position, template, isPrey) = Resolve(actor);
         await Assert.That(resolved).IsTrue();
         await Assert.That(isPrey).IsTrue();

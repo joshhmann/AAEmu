@@ -72,9 +72,9 @@ public class LoopRedispatchTests
         await Assert.That(loopTarget).IsEqualTo(aObjId);
 
         // Switch funnel selection to B by moving A out of perception and B to contact:
-        // nearest-first funnel then selects B; Target leg re-points CurrentTarget=B
+        // A is beyond the 100 m quest scan; the funnel selects B; Target leg re-points CurrentTarget=B
         // while the loop's struck target still names A (stale loop). Allow up to 3 wakes.
-        GameplayActorTestRig.SetNpcPosition(session, aObjId, new Vector3(60, 0, 0));
+        GameplayActorTestRig.SetNpcPosition(session, aObjId, new Vector3(101, 0, 0));
         GameplayActorTestRig.SetNpcPosition(session, bObjId, new Vector3(2, 0, 0));
         QuestDecisionScenario.QuestRunResult? last = null;
         var redispatched = false;
