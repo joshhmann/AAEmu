@@ -120,8 +120,8 @@ public class GameplayActor : IGameplayActor
 
     /// <summary>
     /// Seam for deterministic rig tests: how long a Running Move leg may
-    /// sit without meaningful positional progress (displacement from the
-    /// last progress mark over <see cref="ArrivalRadius"/>) before the
+    /// sit without meaningful progress toward its current waypoint
+    /// (distance improvement over <see cref="ArrivalRadius"/>) before the
     /// actor declares the leg stuck and acts. Set to
     /// <see cref="TimeSpan.Zero"/> to disable stuck detection entirely —
     /// the leg then rides its full timeout budget exactly like before
@@ -481,8 +481,8 @@ public class GameplayActor : IGameplayActor
                 {
                     _moveWaypoints = new Queue<Vector3>(path);
                     _moveSpeed = speed;
-                    ResetMoveProgressTracking();
                     _moveTarget = _moveWaypoints.Dequeue();
+                    ResetMoveProgressTracking();
                     request.Start($"navigating route ({path.Count} waypoints)");
                     LogMoveStart(request, "navigate-route", destination, speed);
                     return request;
@@ -502,8 +502,8 @@ public class GameplayActor : IGameplayActor
             {
                 _moveWaypoints = new Queue<Vector3>(detour);
                 _moveSpeed = speed;
-                ResetMoveProgressTracking();
                 _moveTarget = _moveWaypoints.Dequeue();
+                ResetMoveProgressTracking();
                 request.Start($"navigating obstacle detour ({detour.Count} waypoints)");
                 LogMoveStart(request, "navigate-detour", destination, speed);
                 return request;
@@ -575,8 +575,8 @@ public class GameplayActor : IGameplayActor
 
         _moveWaypoints = new Queue<Vector3>(route);
         _moveSpeed = speed;
-        ResetMoveProgressTracking();
         _moveTarget = _moveWaypoints.Dequeue();
+        ResetMoveProgressTracking();
         request.Start($"navigating test route ({route.Count} waypoints)");
         return request;
     }
@@ -4242,11 +4242,11 @@ public class GameplayActor : IGameplayActor
     private float _moveCurrentSpeed;
 
     // M7 hardening #5 (movement stuck detection): progress tracking for the
-    // active Move leg. _lastProgressPosition/_noProgressElapsed sample
-    // whether the character actually displaces; _unstickWaypoint is a short
+    // active Move leg. Best distance to the current waypoint, rather than
+    // displacement, distinguishes useful progress from lateral oscillation; _unstickWaypoint is a short
     // lateral recovery leg walked before resuming the original destination;
     // _unstickAttempts bounds the recovery budget per request.
-    private Vector3 _lastProgressPosition;
+    private float _bestWaypointDistance;
     private TimeSpan _noProgressElapsed;
     private int _unstickAttempts;
     private Vector3? _unstickWaypoint;
@@ -4402,7 +4402,7 @@ public class GameplayActor : IGameplayActor
                 legTarget = _moveTarget.Value;
                 flatDistance = MathUtil.CalculateDistance(position, legTarget, false);
                 zDistance = Math.Abs(legTarget.Z - position.Z);
-                _lastProgressPosition = position;
+                _bestWaypointDistance = Vector3.Distance(position, _moveTarget!.Value);
                 _noProgressElapsed = TimeSpan.Zero;
             }
 
@@ -4413,7 +4413,7 @@ public class GameplayActor : IGameplayActor
                     // Recovery waypoint reached — resume the original leg
                     // with fresh progress tracking.
                     _unstickWaypoint = null;
-                    _lastProgressPosition = position;
+                    _bestWaypointDistance = Vector3.Distance(position, _moveTarget!.Value);
                     _noProgressElapsed = TimeSpan.Zero;
                     return;
                 }
@@ -4422,7 +4422,7 @@ public class GameplayActor : IGameplayActor
                 {
                     // Waypoint reached in routed navigation — advance to next waypoint
                     _moveTarget = _moveWaypoints.Dequeue();
-                    _lastProgressPosition = position;
+                    _bestWaypointDistance = Vector3.Distance(position, _moveTarget!.Value);
                     _noProgressElapsed = TimeSpan.Zero;
                     _unstickWaypoint = null;
                     return;
@@ -4435,7 +4435,7 @@ public class GameplayActor : IGameplayActor
                 return;
             }
 
-            // Stuck detection: no meaningful displacement over the window
+            // Stuck detection: no meaningful approach to the current waypoint
             // fails the leg fast (before the navigation budget burns) after
             // at most MaxUnstickNudges bounded recovery legs.
             if (UpdateMoveStuckState(request, position, elapsed))
@@ -4575,7 +4575,7 @@ public class GameplayActor : IGameplayActor
     /// </summary>
     private void ResetMoveProgressTracking()
     {
-        _lastProgressPosition = Character.Transform.World.Position;
+        _bestWaypointDistance = Vector3.Distance(Character.Transform.World.Position, _moveTarget!.Value);
         _noProgressElapsed = TimeSpan.Zero;
         _unstickAttempts = 0;
         _unstickWaypoint = null;
@@ -4584,7 +4584,7 @@ public class GameplayActor : IGameplayActor
 
     /// <summary>
     /// One stuck-detection sample for a Running Move leg (M7 hardening #5):
-    /// displacement from the last progress mark over the arrival radius
+    /// improvement toward the current waypoint over the arrival radius
     /// resets the no-progress timer; otherwise the timer accumulates and,
     /// once it exceeds <see cref="NoProgressWindow"/>, either a bounded
     /// unstick nudge is scheduled (<see cref="MaxUnstickNudges"/>) or the
@@ -4610,9 +4610,10 @@ public class GameplayActor : IGameplayActor
         if (NoProgressWindow <= TimeSpan.Zero)
             return false;
 
-        if (Vector3.Distance(position, _lastProgressPosition) > ArrivalRadius)
+        var distance = Vector3.Distance(position, _unstickWaypoint ?? _moveTarget!.Value);
+        if (distance + ArrivalRadius < _bestWaypointDistance)
         {
-            _lastProgressPosition = position;
+            _bestWaypointDistance = distance;
             _noProgressElapsed = TimeSpan.Zero;
             return false;
         }
@@ -4627,7 +4628,7 @@ public class GameplayActor : IGameplayActor
         {
             _unstickAttempts++;
             _unstickWaypoint = BuildUnstickWaypoint(position);
-            _lastProgressPosition = position;
+            _bestWaypointDistance = Vector3.Distance(position, _unstickWaypoint.Value);
             _noProgressElapsed = TimeSpan.Zero;
             return false;
         }

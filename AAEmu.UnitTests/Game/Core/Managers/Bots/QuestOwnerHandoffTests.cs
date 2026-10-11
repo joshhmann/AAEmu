@@ -43,6 +43,8 @@ public class QuestOwnerHandoffTests
     private const uint Meat4058 = 4058;
     private static readonly Vector3 Origin = new(32, 32, 0);
     private static uint s_extraNpcId = 0x97100;
+    private WorldTemplate? _recoveryWorldTemplate;
+    private uint[,]? _previousRecoveryZones;
 
     [Before(Test)]
     public void SetUp()
@@ -63,6 +65,8 @@ public class QuestOwnerHandoffTests
         QuestLegActor.ClearAll();
         QuestLegActor.SetResolver(null);
         QuestBehavior.ClearGiveUpMemory();
+        if (_recoveryWorldTemplate != null)
+            _recoveryWorldTemplate.ZoneKeyByRegions = _previousRecoveryZones;
     }
 
     [Test]
@@ -250,6 +254,300 @@ public class QuestOwnerHandoffTests
         {
             actor.PreemptCurrent("remote-source regression teardown");
         }
+    }
+
+    [Test]
+    public async Task RepeatedStuckQuestTravel_RecoversOnceWithoutCompletingQuest()
+    {
+        var (actor, module, executor, steps, bot, clock, _, _) = CreateRig("owner-stuck-recovery", groundHeight: 1f);
+        SeedRecoveryZone(actor);
+        var start = Origin + new Vector3(0, 0, 1);
+        GameplayActorTestRig.SetPosition(actor, start);
+        var source = start + new Vector3(80, 0, 0);
+        SeedNpcSource(actor, source);
+        actor.NoProgressWindow = TimeSpan.FromMilliseconds(200);
+        actor.MaxUnstickNudges = 1;
+        await Step(steps, bot, clock);
+        await Step(steps, bot, clock);
+        var first = actor.ActiveRequest!;
+        var waypoint = first.Destination!.Value;
+        var recovered = false;
+        for (var wake = 0; wake < 24; wake++)
+        {
+            // Disclosed blocked-ground fixture, not an actual collision engine.
+            GameplayActorTestRig.SetPosition(actor, start);
+            await Step(steps, bot, clock);
+            if (Vector3.Distance(actor.Character.Transform.World.Position, waypoint) < 0.5f)
+            {
+                recovered = true;
+                break;
+            }
+        }
+
+        await Assert.That(recovered).IsTrue();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(FirstQuest);
+        await Assert.That(actor.Character.Quests.ActiveQuests[FirstQuest].Objectives[0]).IsEqualTo(0);
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
+        await Assert.That(first.State).IsEqualTo(ActorLifecycleState.TimedOut);
+        await Assert.That(first.Failure).IsEqualTo(ActorFailureReason.Navigation);
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == first.TraceId)).IsEqualTo(1);
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move
+            && r.Result == ActorLifecycleState.TimedOut && r.Detail!.Contains("stuck"))).IsGreaterThanOrEqualTo(2);
+        await Assert.That(executor.GetRoamRoute(bot.CharacterId)).IsNull();
+        await Assert.That(actor.ActiveRequest).IsNull();
+        await Assert.That(actor.CurrentMoveOwner).IsEqualTo("QUEST_STUCK_RECOVERY");
+        var state = executor.GetBotState(bot.CharacterId)!;
+        var quest = actor.Character.Quests.ActiveQuests[FirstQuest];
+        await Assert.That(state.QuestStuckRecoveries.TryGetValue(quest, out var recovery)).IsTrue();
+        await Assert.That(recovery!.Used).IsTrue();
+        var auditCount = actor.AuditTrace.Count;
+        await Step(steps, bot, clock);
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(FirstQuest);
+        await Assert.That(actor.AuditTrace.Skip(auditCount).Any(r => r.Action == ActorActionType.AdvanceQuest
+            && r.TraceId != first.TraceId && r.DecisionQuestId == FirstQuest)).IsTrue();
+        await Assert.That(quest.Objectives[0]).IsEqualTo(0);
+        // Explicit source relocation models changed reference availability. Ordinary
+        // selection discovers the new source; the same quest cannot teleport again.
+        var recoveredAt = actor.Character.Transform.World.Position;
+        SeedNpcSource(actor, recoveredAt + new Vector3(80, 0, 0));
+        await Step(steps, bot, clock);
+        var fresh = actor.ActiveRequest!;
+        await Assert.That(fresh is { IsTerminal: false, MoveOwner: "QUEST_TRAVEL" }).IsTrue();
+        await Assert.That(fresh.TraceId).IsNotEqualTo(first.TraceId);
+        await Assert.That(fresh.DecisionQuestId).IsEqualTo(FirstQuest);
+        var recoveryUtc = state.LastQuestStuckRecoveryUtc;
+        var giveUps = new List<QuestGiveUp>();
+        for (var wake = 0; wake < 60; wake++)
+        {
+            GameplayActorTestRig.SetPosition(actor, recoveredAt);
+            await Step(steps, bot, clock);
+            await Assert.That(Vector3.Distance(actor.Character.Transform.World.Position, recoveredAt)).IsLessThan(2f);
+            executor.TryGetQuestRuntime(bot.CharacterId, out var observedRuntime);
+            giveUps.AddRange((observedRuntime?.LastResult?.GiveUps ?? []).Where(g => !giveUps.Contains(g)));
+        }
+        Console.WriteLine($"STUCK-END chosen={module.GetChosenQuest(bot.CharacterId)} hp={actor.Character.Hp} active={actor.Character.Quests.ActiveQuests.ContainsKey(FirstQuest)} arms={state.QuestObjectiveSourceArms} moves={actor.AuditTrace.Count(r => r.Action == ActorActionType.Move)} giveups={string.Join(';', giveUps.Select(g => g.Reason))}");
+        await Assert.That(state.LastQuestStuckRecoveryUtc).IsEqualTo(recoveryUtc);
+        await Assert.That(giveUps.Any(g => g.QuestId == FirstQuest)).IsTrue();
+        var earned = giveUps.First(g => g.QuestId == FirstQuest);
+        await Assert.That(earned.Wakes).IsEqualTo(10);
+        await Assert.That(earned.Threshold).IsEqualTo(10);
+        await Assert.That(earned.Reason).StartsWith("GIVE-UP/UNRESOLVED-TARGET");
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(0u);
+        var moves = actor.AuditTrace.Count(r => r.Action == ActorActionType.Move);
+        for (var wake = 0; wake < 10; wake++)
+            await Step(steps, bot, clock);
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move)).IsEqualTo(moves);
+        await Assert.That(quest.Objectives[0]).IsEqualTo(0);
+        actor.PreemptCurrent("stuck recovery regression teardown");
+    }
+
+    [Test]
+    [Arguments("dead")]
+    [Arguments("combat")]
+    [Arguments("autoattack")]
+    [Arguments("attached")]
+    [Arguments("disabled-position")]
+    [Arguments("foreign-request")]
+    [Arguments("changed-owner")]
+    [Arguments("reaccepted-quest")]
+    [Arguments("changed-status")]
+    [Arguments("changed-world")]
+    [Arguments("stale-generation")]
+    [Arguments("cooldown")]
+    [Arguments("unknown-ground")]
+    [Arguments("nonfinite-ground")]
+    [Arguments("unsafe-height")]
+    [Arguments("water")]
+    [Arguments("unknown-zone")]
+    [Arguments("different-zone")]
+    public async Task StuckQuestRecovery_UnsafeOrStaleStateDoesNotRelocate(string guard)
+    {
+        var ground = 1f;
+        var (actor, _, executor, steps, bot, clock, _, _) = CreateRig("recovery-" + guard,
+            groundProvider: (_, _) => ground);
+        SeedRecoveryZone(actor);
+        var start = Origin + new Vector3(0, 0, 1);
+        GameplayActorTestRig.SetPosition(actor, start);
+        SeedNpcSource(actor, start + new Vector3(80, 0, 0));
+        actor.NoProgressWindow = TimeSpan.FromMilliseconds(200);
+        await Step(steps, bot, clock);
+        await Step(steps, bot, clock);
+        var state = executor.GetBotState(bot.CharacterId)!;
+        var first = FailQuestMove(actor, state, start);
+        await Assert.That(executor.HandleStuckQuestTravel(bot, state, clock.GetUtcNow().UtcDateTime)).IsFalse();
+        var second = IssueAndFailQuestMove(executor, actor, state, start);
+        ActorRequest? foreign = null;
+        var originalQuest = actor.Character.Quests.ActiveQuests[FirstQuest];
+        switch (guard)
+        {
+            case "dead": actor.Character.Hp = 0; break;
+            case "combat": actor.Character.IsInBattle = true; break;
+            case "autoattack": actor.Character.IsAutoAttack = true; break;
+            case "attached": actor.Character.AttachedPoint = AAEmu.Game.Models.Game.DoodadObj.Static.AttachPointKind.Passenger0; break;
+            case "disabled-position": actor.Character.DisabledSetPosition = true; break;
+            case "foreign-request": foreign = actor.MoveTo(start + new Vector3(3, 0, 0)); break;
+            case "changed-owner": executor.QuestChosenProvider = _ => SecondQuest; break;
+            case "reaccepted-quest": actor.Character.Quests.ActiveQuests[FirstQuest] = new Quest(actor.Character)
+                { TemplateId = FirstQuest, Status = QuestStatus.Progress, Step = QuestComponentKind.Progress, Objectives = [0, 0, 0, 0, 0] }; break;
+            case "changed-status": originalQuest.Status = QuestStatus.Ready; break;
+            case "changed-world": typeof(Transform).GetField("_instanceId", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .SetValue(actor.Character.Transform, actor.Character.ParentWorld.Id + 1u); break;
+            case "stale-generation": state.Generation++; break;
+            case "cooldown": state.LastQuestStuckRecoveryUtc = clock.GetUtcNow().UtcDateTime; break;
+            case "unknown-ground": ground = 0; break;
+            case "nonfinite-ground": ground = float.NaN; break;
+            case "unsafe-height": ground = 10; break;
+            case "water": actor.Character.ParentWorld.Water.OceanLevel = 2; break;
+            case "unknown-zone": typeof(Transform).GetField("_zoneId", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .SetValue(actor.Character.Transform, 0u); break;
+            case "different-zone": actor.Character.ParentWorld.Template.ZoneKeyByRegions[
+                (int)(second.Destination!.Value.X / WorldManager.REGION_SIZE),
+                (int)(second.Destination!.Value.Y / WorldManager.REGION_SIZE)] = 8; break;
+        }
+        var before = actor.Character.Transform.World.Position;
+        _ = executor.HandleStuckQuestTravel(bot, state, clock.GetUtcNow().UtcDateTime);
+        await Assert.That(actor.Character.Transform.World.Position).IsEqualTo(before);
+        await Assert.That(actor.CurrentMoveOwner == "QUEST_STUCK_RECOVERY").IsFalse();
+        await Assert.That(originalQuest.Objectives[0]).IsEqualTo(0);
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == first.TraceId)).IsEqualTo(1);
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == second.TraceId)).IsEqualTo(1);
+        if (foreign != null)
+        {
+            await Assert.That(actor.ActiveRequest).IsSameReferenceAs(foreign);
+            await Assert.That(foreign.State).IsEqualTo(ActorLifecycleState.Running);
+        }
+        actor.PreemptCurrent("negative stuck recovery teardown");
+    }
+
+    [Test]
+    public async Task StuckQuestRecovery_SameTerminalCannotCountTwice_AndFailureWindowExpires()
+    {
+        var (actor, _, executor, steps, bot, clock, _, _) = CreateRig("recovery-dedup", groundHeight: 1f);
+        SeedRecoveryZone(actor);
+        var start = Origin + new Vector3(0, 0, 1);
+        GameplayActorTestRig.SetPosition(actor, start);
+        SeedNpcSource(actor, start + new Vector3(80, 0, 0));
+        actor.NoProgressWindow = TimeSpan.FromMilliseconds(200);
+        await Step(steps, bot, clock);
+        await Step(steps, bot, clock);
+        var state = executor.GetBotState(bot.CharacterId)!;
+        var first = FailQuestMove(actor, state, start);
+        var now = clock.GetUtcNow().UtcDateTime;
+        await Assert.That(executor.HandleStuckQuestTravel(bot, state, now)).IsFalse();
+        await Assert.That(executor.HandleStuckQuestTravel(bot, state, now)).IsFalse();
+        var quest = actor.Character.Quests.ActiveQuests[FirstQuest];
+        await Assert.That(state.QuestStuckRecoveries.GetValue(quest, _ => throw new Exception()).Failures).IsEqualTo(1);
+        var second = IssueAndFailQuestMove(executor, actor, state, start);
+        await Assert.That(second.TraceId).IsNotEqualTo(first.TraceId);
+        await Assert.That(executor.HandleStuckQuestTravel(bot, state,
+            now + BotRoamStepExecutor.QuestStuckRecoveryCooldown + TimeSpan.FromSeconds(1))).IsFalse();
+        await Assert.That(state.QuestStuckRecoveries.GetValue(quest, _ => throw new Exception()).Failures).IsEqualTo(1);
+        await Assert.That(state.LastQuestStuckRecoveryUtc).IsNull();
+    }
+
+    [Test]
+    [Arguments("nan")]
+    [Arguments("infinite")]
+    [Arguments("negative")]
+    [Arguments("world-boundary")]
+    [Arguments("too-far")]
+    [Arguments("already-there")]
+    [Arguments("missing-dimensions")]
+    [Arguments("missing-zone-grid")]
+    [Arguments("height-gap")]
+    public async Task QuestRecoveryDestination_UnknownOrInvalidLocationIsRefused(string invalid)
+    {
+        var (actor, _, executor, _, _, _, _, _) = CreateRig("recovery-position-" + invalid, groundHeight: 1);
+        SeedRecoveryZone(actor);
+        var start = Origin + new Vector3(0, 0, 1);
+        GameplayActorTestRig.SetPosition(actor, start);
+        var target = start + new Vector3(25, 0, 0);
+        var template = actor.Character.ParentWorld.Template;
+        var cells = template.CellX;
+        try
+        {
+            switch (invalid)
+            {
+                case "nan": target.X = float.NaN; break;
+                case "infinite": target.Y = float.PositiveInfinity; break;
+                case "negative": target.X = -0.1f; break;
+                case "world-boundary": target.X = template.CellX * WorldManager.CELL_SIZE; break;
+                case "too-far": target = start + new Vector3(76, 0, 0); break;
+                case "already-there": target = start; break;
+                case "missing-dimensions": template.CellX = 0; break;
+                case "missing-zone-grid": template.ZoneKeyByRegions = null; break;
+                case "height-gap": target.Z = 20; break;
+            }
+            await Assert.That(executor.TryResolveQuestRecoveryPosition(actor.Character, target, out _)).IsFalse();
+            await Assert.That(actor.Character.Transform.World.Position).IsEqualTo(start);
+        }
+        finally { template.CellX = cells; }
+    }
+
+    [Test]
+    [Arguments(0f, 2f, true)]
+    [Arguments(5f, 0f, false)]
+    public async Task QuestRecoveryFailureCounter_DistinguishesSidewaysDisplacementFromApproach(float dx, float dy, bool shouldRecover)
+    {
+        var (actor, _, executor, steps, bot, clock, _, _) = CreateRig("recovery-approach", groundHeight: 1);
+        SeedRecoveryZone(actor);
+        var start = Origin + new Vector3(0, 0, 1);
+        GameplayActorTestRig.SetPosition(actor, start);
+        SeedNpcSource(actor, start + new Vector3(60, 0, 0));
+        actor.NoProgressWindow = TimeSpan.FromMilliseconds(200);
+        await Step(steps, bot, clock);
+        await Step(steps, bot, clock);
+        var state = executor.GetBotState(bot.CharacterId)!;
+        _ = FailQuestMove(actor, state, start);
+        await Assert.That(executor.HandleStuckQuestTravel(bot, state, clock.GetUtcNow().UtcDateTime)).IsFalse();
+        var moved = start + new Vector3(dx, dy, 0);
+        GameplayActorTestRig.SetPosition(actor, moved);
+        _ = IssueAndFailQuestMove(executor, actor, state, moved);
+        await Assert.That(executor.HandleStuckQuestTravel(bot, state, clock.GetUtcNow().UtcDateTime)).IsEqualTo(shouldRecover);
+        await Assert.That(state.LastQuestStuckRecoveryUtc.HasValue).IsEqualTo(shouldRecover);
+        actor.PreemptCurrent("approach control teardown");
+    }
+
+    [Test]
+    public async Task QuestRecovery_InterruptedMoveDoesNotCountAsStuckFailure()
+    {
+        var (actor, module, executor, steps, bot, clock, _, _) = CreateRig("recovery-interrupted", groundHeight: 1);
+        SeedRecoveryZone(actor);
+        var start = Origin + new Vector3(0, 0, 1);
+        GameplayActorTestRig.SetPosition(actor, start);
+        SeedNpcSource(actor, start + new Vector3(80, 0, 0));
+        await Step(steps, bot, clock);
+        await Step(steps, bot, clock);
+        var state = executor.GetBotState(bot.CharacterId)!;
+        var move = actor.ActiveRequest!;
+        await Assert.That(actor.Interrupt(move.TraceId)).IsTrue();
+        await Assert.That(executor.HandleStuckQuestTravel(bot, state, clock.GetUtcNow().UtcDateTime)).IsFalse();
+        await Assert.That(state.LastQuestStuckRecoveryUtc).IsNull();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(FirstQuest);
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == move.TraceId)).IsEqualTo(1);
+    }
+
+    private static ActorRequest FailQuestMove(GameplayActor actor, BotRoamStepExecutor.BotRoamState state, Vector3 pinned)
+    {
+        var request = state.PendingLeg!;
+        for (var tick = 0; tick < 16 && !request.IsTerminal; tick++)
+        {
+            GameplayActorTestRig.SetPosition(actor, pinned);
+            actor.Tick(TimeSpan.FromMilliseconds(200));
+        }
+        if (request.State != ActorLifecycleState.TimedOut || request.Failure != ActorFailureReason.Navigation)
+            throw new InvalidOperationException("fixture did not produce an ordinary stuck Navigation terminal");
+        return request;
+    }
+
+    private static ActorRequest IssueAndFailQuestMove(BotRoamStepExecutor executor, GameplayActor actor,
+        BotRoamStepExecutor.BotRoamState state, Vector3 pinned)
+    {
+        // Component seam: ordinary owned Move dispatcher/actor tick, not a second scheduler.
+        state.PendingLeg = (ActorRequest)typeof(BotRoamStepExecutor)
+            .GetMethod("IssueRouteMove", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .Invoke(executor, [actor, state, state.Path!.CurrentTarget])!;
+        return FailQuestMove(actor, state, pinned);
     }
 
     [Test]
@@ -569,6 +867,22 @@ public class QuestOwnerHandoffTests
         return npc.ObjId;
     }
 
+    private void SeedRecoveryZone(GameplayActor actor)
+    {
+        // Explicit fixture zone grid and dry nonzero ground. No live map alteration.
+        var template = actor.Character.ParentWorld.Template;
+        _recoveryWorldTemplate = template;
+        _previousRecoveryZones = template.ZoneKeyByRegions;
+        var zones = new uint[template.CellX * WorldManager.SECTORS_PER_CELL,
+            template.CellY * WorldManager.SECTORS_PER_CELL];
+        for (var x = 0; x < zones.GetLength(0); x++)
+        for (var y = 0; y < zones.GetLength(1); y++)
+            zones[x, y] = 7;
+        template.ZoneKeyByRegions = zones;
+        typeof(Transform).GetField("_zoneId", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .SetValue(actor.Character.Transform, 7u);
+    }
+
     private static async Task Step(BotGoalArbiterStepExecutor steps, PlayerBotRuntime bot, FakeTimeProvider clock)
     {
         clock.Advance(TimeSpan.FromMilliseconds(100));
@@ -576,7 +890,7 @@ public class QuestOwnerHandoffTests
     }
 
     private static (GameplayActor Actor, QuestBootstrapActivityModule Module, BotRoamStepExecutor Executor,
-        BotGoalArbiterStepExecutor Steps, PlayerBotRuntime Bot, FakeTimeProvider Clock, uint GiverObjId, HeadlessSession Session) CreateRig(string name, bool eligibleFollowUp = true)
+        BotGoalArbiterStepExecutor Steps, PlayerBotRuntime Bot, FakeTimeProvider Clock, uint GiverObjId, HeadlessSession Session) CreateRig(string name, bool eligibleFollowUp = true, float groundHeight = 0f, Func<Vector3, uint, float>? groundProvider = null)
     {
         GameplayActorTestRig.SeedQuestHunt(FirstQuest, 97_201, 97_202, 97_203, Giver, Boar3475, Giver, level: 1);
         var component = QuestManager.Instance.GetTemplate(FirstQuest)!.GetComponents(QuestComponentKind.Progress).Single();
@@ -619,7 +933,7 @@ public class QuestOwnerHandoffTests
         var executor = new BotRoamStepExecutor
         {
             ActorFactory = _ => actor, TimeProvider = clock, ActiveCadence = TimeSpan.FromMilliseconds(100),
-            EnableWildlifeHunt = false, EnableWildlifeButcher = false, GroundHeightProvider = (_, _) => 0f,
+            EnableWildlifeHunt = false, EnableWildlifeButcher = false, GroundHeightProvider = groundProvider ?? ((_, _) => groundHeight),
             ActiveActivityProvider = arbiter.GetActiveActivity, NearbyDoodadProvider = (_, _) => [],
             QuestChosenProvider = module.GetChosenQuest, QuestTerminalSink = module.NotifyQuestTerminal,
             QuestGiveUpSink = module.NotifyQuestGiveUp

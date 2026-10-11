@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 using AAEmu.Game.GameData;
 using AAEmu.Game.Core.Managers;
@@ -533,6 +534,9 @@ public enum NeedsFarmLoopPhase
         public string? QuestTravelDecisionPolicy { get; set; }
         public string? QuestTravelDecisionCycleId { get; set; }
         public QuestStatus? QuestTravelDecisionStatus { get; set; }
+        public Quest? QuestTravelDecisionQuest { get; set; }
+        public ConditionalWeakTable<Quest, QuestStuckRecovery> QuestStuckRecoveries { get; } = new();
+        public DateTime? LastQuestStuckRecoveryUtc { get; set; }
 
         /// <summary>
         /// Branch-1b re-arm bound: the last armed objective-source spawner
@@ -917,6 +921,7 @@ public enum NeedsFarmLoopPhase
         state.QuestTravelDecisionPolicy = null;
         state.QuestTravelDecisionCycleId = null;
         state.QuestTravelDecisionStatus = null;
+        state.QuestTravelDecisionQuest = null;
     }
 
     private static void CaptureQuestTravelPurpose(BotRoamState state, GameplayActor actor,
@@ -930,7 +935,10 @@ public enum NeedsFarmLoopPhase
         state.QuestTravelDecisionPolicy = band.PolicyVersion;
         state.QuestTravelDecisionCycleId = band.CycleId;
         if (actor.Character.Quests.ActiveQuests.TryGetValue(band.ChosenQuestId, out var quest))
+        {
             state.QuestTravelDecisionStatus = quest.Status;
+            state.QuestTravelDecisionQuest = quest;
+        }
     }
 
     private void ValidateQuestTravelAuthorization(PlayerBotRuntime bot, BotRoamState state)
@@ -1706,6 +1714,11 @@ public enum NeedsFarmLoopPhase
 
         ValidateQuestTravelAuthorization(bot, state);
         actor.Tick(elapsed);
+
+        // Read the exact failed quest Move before route turnover consumes it.
+        // Recovery relocates only after ordinary nudge/failure/retry, never credits arrival.
+        if (!handledByParty && !questOwnedHold && HandleStuckQuestTravel(bot, state, now))
+            return Task.FromResult<TimeSpan?>(ActiveCadence);
 
         // 3a. Flat arrival owns the leg for ground-clamped walkers (only when roaming)
         if (!state.SurvivalWakeOwned
@@ -2497,6 +2510,147 @@ public enum NeedsFarmLoopPhase
         Logger.Debug("Roam quest travel armed for bot {CharacterId}: walking toward pending quest target at ({X:F0},{Y:F0})",
             bot.CharacterId, target.Value.X, target.Value.Y);
         return true;
+    }
+
+    internal sealed class QuestStuckRecovery
+    {
+        public Guid? LastTrace { get; set; }
+        public Vector3? Waypoint { get; set; }
+        public Vector3? Position { get; set; }
+        public uint WorldInstanceId { get; set; }
+        public QuestStatus Status { get; set; }
+        public DateTime LastFailureUtc { get; set; }
+        public int Failures { get; set; }
+        public bool Used { get; set; }
+    }
+
+    internal static readonly TimeSpan QuestStuckRecoveryCooldown = TimeSpan.FromSeconds(60);
+    internal const float QuestStuckRecoveryMaxDistance = 75f;
+
+    /// <summary>
+    /// User-authorized, disclosed local recovery, not ordinary walking success.
+    /// Two distinct stuck terminals must name the same retained quest and waypoint.
+    /// The quest instance permits one relocation, and the bot has a cooldown across quests.
+    /// Weak keys avoid retaining old quest instances after ordinary quest removal.
+    /// </summary>
+    internal bool HandleStuckQuestTravel(PlayerBotRuntime bot, BotRoamState state, DateTime now)
+    {
+        if (state.Generation != bot.Generation || state.Actor is not GameplayActor actor
+            || !ReferenceEquals(actor.Character, bot.Character)
+            || state.PendingMoveOwner != QuestTravelMoveOwner
+            || state.PendingLeg is not { Action: ActorActionType.Move, State: ActorLifecycleState.TimedOut,
+                Failure: ActorFailureReason.Navigation, Destination: { } waypoint } failed
+            || failed.MoveOwner != QuestTravelMoveOwner
+            || failed.Detail?.StartsWith("Navigation: stuck:", StringComparison.Ordinal) != true
+            || state.Path is not { IsFinished: false } path || path.CurrentTarget != waypoint
+            || state.QuestTravelDecisionQuestId is not { } questId || failed.DecisionQuestId != questId
+            || QuestChosenProvider?.Invoke(bot.CharacterId) != questId
+            || !actor.Character.Quests.ActiveQuests.TryGetValue(questId, out var quest)
+            || !ReferenceEquals(state.QuestTravelDecisionQuest, quest)
+            || !QuestTravelPhaseAuthorized(actor, state, questId)
+            || actor.ActiveRequest is { IsTerminal: false }
+            || state.SurvivalWakeOwned || state.NeedsLegActive || state.QuestLegActive
+            || state.HomesteadLegActive || state.TargetNpcObjId != 0 || state.TargetButcherDoodadObjId != 0)
+            return false;
+
+        var character = actor.Character;
+        var world = character.ParentWorld;
+        if (world == null || world.Id != character.Transform.InstanceId)
+            return false;
+        var position = character.Transform.World.Position;
+        var recovery = state.QuestStuckRecoveries.GetValue(quest, _ => new QuestStuckRecovery());
+        if (recovery.LastTrace == failed.TraceId)
+            return false;
+        recovery.LastTrace = failed.TraceId;
+        if (recovery.Waypoint != waypoint || recovery.WorldInstanceId != world.Id
+            || recovery.Status != quest.Status || now - recovery.LastFailureUtc > QuestStuckRecoveryCooldown
+            || recovery.Position is not { } previous || MathUtil.CalculateDistance(previous, waypoint, false)
+                - MathUtil.CalculateDistance(position, waypoint, false) > 1f)
+            recovery.Failures = 0;
+        recovery.Waypoint = waypoint;
+        recovery.WorldInstanceId = world.Id;
+        recovery.Status = quest.Status;
+        recovery.Position = position;
+        recovery.LastFailureUtc = now;
+        recovery.Failures++;
+        if (recovery.Failures < 2)
+            return false;
+        if (recovery.Used || character.IsDead || character.Hp <= 0
+            || character.IsInBattle || character.IsAutoAttack || character.InParty || character.IsUnderWater
+            || character.DisabledSetPosition || character.Transform.Parent != null
+            || character.Transform.StickyParent != null || (int)character.AttachedPoint != 0
+            || state.LastQuestStuckRecoveryUtc is { } last && now - last < QuestStuckRecoveryCooldown)
+        {
+            SupersedeQuestTravelRoute(state, "stuck recovery unavailable or already used");
+            return true; // Keep source-arm bounds; do not retry this route forever.
+        }
+
+        if (!TryResolveQuestRecoveryPosition(character, waypoint, out var destination))
+        {
+            SupersedeQuestTravelRoute(state, "stuck recovery destination unqualified");
+            return true;
+        }
+        // Recheck the mutable owner/request/world immediately before ordinary relocation.
+        if (actor.ActiveRequest is { IsTerminal: false } || !ReferenceEquals(character.ParentWorld, world)
+            || QuestChosenProvider?.Invoke(bot.CharacterId) != questId
+            || !character.Quests.ActiveQuests.TryGetValue(questId, out var current)
+            || !ReferenceEquals(current, quest) || !QuestTravelPhaseAuthorized(actor, state, questId))
+            return false;
+
+        recovery.Used = true; // Also bound a failed/no-op relocation attempt.
+        state.LastQuestStuckRecoveryUtc = now;
+        character.SetPosition(destination.X, destination.Y, destination.Z,
+            character.Transform.Local.Rotation.X, character.Transform.Local.Rotation.Y,
+            character.Transform.Local.Rotation.Z);
+        var applied = character.Transform.World.Position;
+        actor.NoteExternalPositionWrite("QUEST_STUCK_RECOVERY", applied);
+        BroadcastStandstill(character);
+        SupersedeQuestTravelRoute(state, "bounded stuck recovery relocation");
+        ResetObjectiveSourceArms(state, "");
+        state.LastTickPosition = applied;
+        var arrived = ReferenceEquals(character.ParentWorld, world)
+            && Vector3.Distance(applied, destination) <= GameplayActor.ArrivalRadius;
+        Logger.Warn("Quest stuck recovery bot {CharacterId} quest {QuestId} failed Move {TraceId}: " +
+            "relocated={Relocated} from {From} to {To}; quest credit unchanged",
+            bot.CharacterId, questId, failed.TraceId, arrived, position, applied);
+        return true;
+    }
+
+    internal bool TryResolveQuestRecoveryPosition(Character character, Vector3 waypoint, out Vector3 destination)
+    {
+        destination = default;
+        var world = character.ParentWorld;
+        var position = character.Transform.World.Position;
+        if (world?.Template is not { CellX: > 0, CellY: > 0 } template
+            || !float.IsFinite(position.X) || !float.IsFinite(position.Y) || !float.IsFinite(position.Z)
+            || !float.IsFinite(waypoint.X) || !float.IsFinite(waypoint.Y) || !float.IsFinite(waypoint.Z)
+            || waypoint.X < 0 || waypoint.Y < 0
+            || waypoint.X >= (double)template.CellX * WorldManager.CELL_SIZE
+            || waypoint.Y >= (double)template.CellY * WorldManager.CELL_SIZE)
+            return false;
+        var distance = MathUtil.CalculateDistance(position, waypoint, false);
+        if (!float.IsFinite(distance) || distance <= GameplayActor.ArrivalRadius
+            || distance > Math.Min(QuestTravelChunkMeters, QuestStuckRecoveryMaxDistance))
+            return false;
+        var region = world.GetRegionByPos(waypoint);
+        var sx = (int)(waypoint.X / WorldManager.REGION_SIZE);
+        var sy = (int)(waypoint.Y / WorldManager.REGION_SIZE);
+        var zones = template.ZoneKeyByRegions;
+        if (region == null || zones == null || sx >= zones.GetLength(0) || sy >= zones.GetLength(1)
+            || character.Transform.ZoneId == 0 || zones[sx, sy] != character.Transform.ZoneId)
+            return false;
+        float ground;
+        try
+        {
+            ground = GroundHeightProvider != null
+                ? GroundHeightProvider(waypoint, character.Transform.ZoneId)
+                : world.GetHeight(waypoint.X, waypoint.Y);
+        }
+        catch { return false; }
+        if (!float.IsFinite(ground) || ground == 0f || Math.Abs(ground - waypoint.Z) > 3f)
+            return false;
+        destination = new Vector3(waypoint.X, waypoint.Y, ground);
+        return !world.IsWater(destination);
     }
 
     /// <summary>

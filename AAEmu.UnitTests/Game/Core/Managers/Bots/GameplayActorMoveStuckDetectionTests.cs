@@ -207,6 +207,50 @@ public class GameplayActorMoveStuckDetectionTests
     }
 
     [Test]
+    public async Task Move_OscillatesWithoutApproachingWaypoint_FailsFastAfterBoundedNudge()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("stuck-oscillates");
+        SeedMovementSingletons();
+        actor.NoProgressWindow = TimeSpan.FromMilliseconds(400);
+        actor.MaxUnstickNudges = 1;
+        var start = new Vector3(512, 512, 0);
+        GameplayActorTestRig.SetPosition(actor, start);
+        var request = actor.MoveTo(new Vector3(612, 512, 0), speed: 5f,
+            timeout: TimeSpan.FromSeconds(30));
+
+        // Model back-and-forth displacement after each ordinary movement tick.
+        // Every sample moves > ArrivalRadius, but never closes the waypoint gap.
+        for (var tick = 0; tick < 20 && !request.IsTerminal; tick++)
+        {
+            GameplayActorTestRig.SetPosition(actor,
+                start + new Vector3(0, tick % 2 == 0 ? 5 : -5, 0));
+            actor.Tick(TimeSpan.FromMilliseconds(200));
+        }
+
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.TimedOut);
+        await Assert.That(request.Failure).IsEqualTo(ActorFailureReason.Navigation);
+        await Assert.That(request.Detail!).Contains("stuck");
+        await Assert.That(request.Elapsed).IsLessThanOrEqualTo(TimeSpan.FromSeconds(4));
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == request.TraceId)).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task Move_RoutedDetourMayMoveAwayFromFinalDestination_StillCompletes()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("stuck-route-detour");
+        SeedMovementSingletons();
+        GameplayActorTestRig.SetPosition(actor, new Vector3(512, 512, 0));
+        actor.NoProgressWindow = TimeSpan.FromMilliseconds(400);
+        var request = actor.NavigateRoutedForTest(
+            [new Vector3(502, 512, 0), new Vector3(502, 522, 0), new Vector3(552, 522, 0)], speed: 5f);
+        for (var tick = 0; tick < 400 && !request.IsTerminal; tick++)
+            actor.Tick(TimeSpan.FromMilliseconds(100));
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.Detail).IsEqualTo("arrived");
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == request.TraceId)).IsEqualTo(1);
+    }
+
+    [Test]
     public async Task Move_SecondStuckDeclaration_AfterNudge_FailsTheLeg()
     {
         // One nudge did not help (still pinned) — the NEXT stuck
