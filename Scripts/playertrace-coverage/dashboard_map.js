@@ -280,9 +280,9 @@ function setupMapEvents() {
                 redrawMap();
             }
         }
-        const wp = screenToWorld(p.x,p.y), hub = nearestMapHub(wp);
+        const wp = screenToWorld(p.x,p.y), hub = nearestMapTarget(wp);
         mapEl('hudCoords').textContent = `X ${wp.x.toFixed(2)} · Y ${wp.y.toFixed(2)}`;
-        mapEl('hudElev').textContent = hub ? `Nearby hub Z ${hub.z.toFixed(2)} (only at hub)` : 'Z unknown';
+        mapEl('hudElev').textContent = Number.isFinite(hub?.z) ? `Nearby marker Z ${hub.z.toFixed(2)} (only at marker)` : 'Z unknown';
     });
     canvas.addEventListener('pointerup', event => {
         if (mapDrag?.id !== event.pointerId) return;
@@ -340,6 +340,7 @@ function redrawMap() {
     const inView = p => p.x >= -10 && p.y >= -10 && p.x <= width+10 && p.y <= height+10;
     if (mapEl('layerGrid').checked) drawMapGrid(ctx,width,height);
     drawGeography(ctx, width, height);
+    drawQuestAtlas(ctx, width, height);
     if (mapEl('layerZones').checked) {
         ctx.strokeStyle = '#24648c'; ctx.lineWidth = 1;
         for (const m of mapAtlasData.map_manifest.maps.filter(m=>m.kind==='zone')) {
@@ -601,6 +602,7 @@ function drawMapGrid(ctx,width,height) {
 
 function selectMapPoint(point) {
     inspectGeography(point);
+    inspectQuestAtlas(point);
     selectedTarget = {...point};
     for (const axis of ['x','y','z']) mapEl('inspect'+axis.toUpperCase()).value = point[axis] ?? '';
     mapEl('inspectName').textContent = point.label || 'World coordinate';
@@ -1325,4 +1327,139 @@ function inspectGeography(point) {
     element.textContent=[...areas,...services].slice(0,6).map(f=>`${f.name || f.kind}: ${f.verification}. Source: ${f.source}`+
         (f.kind==='housing' ? `; housing rule IDs: ${f.housing_rule_ids.join(', ') || 'unmatched'}` : '') +
         (f.kind==='npc' && !f.altitude_known ? '; altitude not supplied by this spawn record' : '')).join(' | ');
+}
+
+// Quest reference data share the existing world-coordinate map and inspector.
+let questAtlas = null;
+let questAtlasLoading = null;
+let selectedAtlasQuest = null;
+let questGiverPlacements = [];
+let selectedQuestMarks = [];
+let questSearchSequence = 0;
+async function loadQuestAtlas() {
+    if (!questAtlasLoading) questAtlasLoading = (async () => {
+        const response = await fetch('/api/map/quests');
+        if (!response.ok) throw Error('Quest atlas not prepared (HTTP ' + response.status + ').');
+        const data = await response.json();
+        if (data.schema_version !== 1 || data.world_id !== 0 || data.database_md5 !== mapAtlasData?.map_manifest.database_md5 || !data.quests || !data.placements)
+            throw Error('Quest atlas does not match this map.');
+        for (const p of Object.values(data.placements)) {
+            if (!Array.isArray(p.point) || p.point.length !== 3 || !p.point.slice(0,2).every(finiteMapNumber) || !(p.point[2] === null || finiteMapNumber(p.point[2])))
+                throw Error('Invalid quest placement coordinates.');
+        }
+        for (const q of Object.values(data.quests)) {
+            for (const o of [...q.givers, ...q.reporters, ...q.objectives]) {
+                if (o.placement_ids.some(id=>!data.placements[id])) throw Error('Quest placement reference missing.');
+                for (const a of o.areas) {
+                    if (!Array.isArray(a.point) || a.point.length !== 3 || !a.point.every(finiteMapNumber) || !finiteMapNumber(a.radius) || a.radius<=0)
+                        throw Error('Invalid quest area coordinates.');
+                }
+            }
+        }
+        questAtlas = data;
+        questGiverPlacements = Object.values(data.placements).filter(p=>p.kind==='npc' && data.giver_quests[p.template_id]);
+        const c=data.coverage;
+        mapEl('questAtlasStatus').textContent = `${c.quests} quests · ${c.giver_placements} giver placements · ${c.objectives_with_locations}/${c.objectives} objective acts located. Click a yellow giver or search.`;
+    })();
+    try { await questAtlasLoading; redrawMap(); return true; }
+    catch(error) { mapEl('questAtlasStatus').textContent=error.message; questAtlasLoading=null; return false; }
+}
+function questAtlasButton(q, target) {
+    const button=document.createElement('button');
+    button.className='map-btn'; button.style.cssText='display:block;width:100%;text-align:left;margin:3px 0';
+    button.textContent=`${q.id} · ${q.name} (level ${q.level ?? '?'})`;
+    button.onclick=()=>selectQuestAtlas(q.id);
+    target.append(button);
+}
+async function searchQuestAtlas() {
+    const sequence=++questSearchSequence;
+    if (!await loadQuestAtlas() || sequence !== questSearchSequence) return;
+    const value=mapEl('questSearch').value.trim().toLowerCase(), results=mapEl('questSearchResults');
+    results.replaceChildren();
+    if (!value) return;
+    const matches=Object.values(questAtlas.quests).filter(q=>String(q.id)===value || q.name.toLowerCase().includes(value));
+    matches.sort((a,b)=>(String(b.id)===value)-(String(a.id)===value) || a.level-b.level || a.id-b.id);
+    for (const q of matches.slice(0,30)) questAtlasButton(q,results);
+    const note=document.createElement('p'); note.className='map-note';
+    note.textContent=matches.length>30 ? `Showing 30 of ${matches.length}; narrow the search.` : `${matches.length} matches.`;
+    results.append(note);
+}
+function selectQuestAtlas(id) {
+    const q=questAtlas?.quests[id]; if (!q) return;
+    selectedAtlasQuest=q; selectedQuestMarks=[];
+    const panel=mapEl('questDetails'); panel.replaceChildren();
+    const title=document.createElement('strong'); title.textContent=`${q.name} · ${q.id}`; panel.append(title);
+    for (const [key,color,label] of [['givers','#facc15','Accept'],['reporters','#4ade80','Turn in'],['objectives','#fb7185','Objective']]) {
+        for (const [index,o] of q[key].entries()) {
+            const names=[...new Set(o.placement_ids.map(id=>questAtlas.placements[id].name))];
+            const note=document.createElement('p'); note.className='map-note';
+            const type=o.type.replace(/^QuestAct(?:Obj|Con)/,'').replace(/([a-z])([A-Z])/g,'$1 $2');
+            note.textContent=`${label} ${index+1}: ${o.display_alias || type}${o.details.count ? ' × '+o.details.count : ''} · ${names.join(', ') || 'No named placement'} · ${o.placement_ids.length} placements, ${o.areas.length} circles. ${o.notes.join(' ')}`;
+            note.style.borderLeft=`3px solid ${color}`; note.style.paddingLeft='5px';
+            panel.append(note);
+            for (const id of o.placement_ids) selectedQuestMarks.push({...questAtlas.placements[id],color,role:label});
+            for (const a of o.areas) selectedQuestMarks.push({...a,color:'#38bdf8',role:'Client component area',name:q.name});
+        }
+    }
+    const requirements=q.start_requirements.filter(r=>r.kind_id===31);
+    if (requirements.length) {
+        const note=document.createElement('p'); note.className='map-note';
+        note.textContent='Completed-quest references (other start conditions still apply):'; panel.append(note);
+        for (const r of requirements) {
+            const previous=questAtlas.quests[r.value1];
+            if (previous) questAtlasButton(previous,panel);
+        }
+    }
+    if (q.followups.length) {
+        const note=document.createElement('p'); note.className='map-note'; note.textContent='Quests referring to completion of this quest:'; panel.append(note);
+        for (const id of new Set(q.followups.map(r=>r.quest_id))) questAtlasButton(questAtlas.quests[id],panel);
+    }
+    mapEl('questSearchResults').replaceChildren(); redrawMap();
+}
+function clearQuestAtlas() {
+    ++questSearchSequence; selectedAtlasQuest=null; selectedQuestMarks=[];
+    for (const id of ['questSearchResults','questGiverResults','questDetails']) mapEl(id).replaceChildren();
+    redrawMap();
+}
+function focusQuestAtlas() {
+    if (!selectedQuestMarks.length) return mapNotice('This quest has no mapped main-world locations.');
+    const bounds=activeMap.bounds;
+    // Locate one actual placement; never draw an enormous invented objective box.
+    const p=selectedQuestMarks.find(m=>m.point[0]>=bounds.min_x && m.point[0]<=bounds.max_x && m.point[1]>=bounds.min_y && m.point[1]<=bounds.max_y) || selectedQuestMarks[0];
+    // Choose artwork that covers this point; these bounds are image extents, not zone borders.
+    const maps=mapAtlasData.map_manifest.maps.filter(m=>m.world_id===0 && m.kind==='zone' &&
+        p.point[0]>=m.bounds.min_x && p.point[0]<=m.bounds.max_x && p.point[1]>=m.bounds.min_y && p.point[1]<=m.bounds.max_y);
+    maps.sort((a,b)=>(a.bounds.max_x-a.bounds.min_x)*(a.bounds.max_y-a.bounds.min_y)-(b.bounds.max_x-b.bounds.min_x)*(b.bounds.max_y-b.bounds.min_y));
+    if (maps.length && activeMap.key!==maps[0].key) chooseMap(maps[0].key);
+    mapView.x=p.point[0]; mapView.y=p.point[1]; mapView.scale=Math.max(mapView.scale,0.35); redrawMap();
+}
+function drawQuestAtlas(ctx,width,height) {
+    if (!questAtlas || activeMap.world_id!==0) return;
+    const enabled=mapEl('layerQuestGivers')?.checked;
+    ctx.save();
+    const draw=(p,color,radius=0)=>{
+        const s=worldToScreen(p.point[0],p.point[1]), r=radius*mapView.scale;
+        if (s.x+r<-10 || s.y+r<-10 || s.x-r>width+10 || s.y-r>height+10) return;
+        ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2;
+        if (radius) {
+            ctx.beginPath();ctx.arc(s.x,s.y,Math.max(r,2),0,Math.PI*2);ctx.globalAlpha=.12;ctx.fill();ctx.globalAlpha=1;ctx.stroke();
+        } else {
+            ctx.beginPath();ctx.arc(s.x,s.y,4,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#111827';ctx.stroke();
+        }
+    };
+    if (enabled) for (const p of questGiverPlacements) draw(p,'#facc15');
+    for (const p of selectedQuestMarks) draw(p,p.color,p.radius || 0);
+    ctx.restore();
+}
+function inspectQuestAtlas(point) {
+    const panel=mapEl('questGiverResults'); if (!panel || !questAtlas) return;
+    panel.replaceChildren();
+    const maxDistance=10 / mapView.scale;
+    const hits=questGiverPlacements.map(p=>({p,d:Math.hypot(point.x-p.point[0],point.y-p.point[1])})).filter(h=>h.d<=maxDistance).sort((a,b)=>a.d-b.d);
+    if (!hits.length) return;
+    const ids=new Set();
+    for (const {p} of hits.slice(0,5)) {
+        const title=document.createElement('strong');title.textContent=p.name+' · configured quest giver'; panel.append(title);
+        for (const id of questAtlas.giver_quests[p.template_id]) if (!ids.has(id)) { ids.add(id);questAtlasButton(questAtlas.quests[id],panel); }
+    }
 }

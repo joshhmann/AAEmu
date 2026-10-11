@@ -107,3 +107,57 @@ penalties. During a second trip, change a real obstruction or observed danger;
 the bot must retain its destination, use the supported alternate path and arrive
 without teleport, injected completion or manual movement driving. A road-drawing
 fixture or a mocked cost change cannot close that proof.
+
+## Quest givers and objective areas
+
+Enable **Quest givers**, then click a yellow NPC dot to list its quests. Search by
+quest name or ID to select a quest directly. **Locate selection** opens matching
+zone artwork around a known placement. The selected quest shows green turn-in
+placements, red target placements and blue client component circles. Clicking a
+completed-quest reference selects that related quest. **Clear selection** removes
+these highlights without changing a developer route or live radar.
+
+NPC quest links come from typed accept/report acts, not from every NPC or the
+mostly empty `quest_components.npc_id`. Hunt and talk groups expand through their
+actual membership tables. Doodad interaction markers use configured placements;
+required phase, availability and legality remain ordinary server decisions.
+All objective acts are retained, including objectives with no mapped location.
+Item sources and dynamically spawned targets are explicitly unresolved.
+
+The client supplies `quest_sign_sphere.g` files. Their positions use the server's
+zone origin transform (origin cell × 1,024 metres plus local position). Like the
+server, the exporter attaches geometry by component ID; raw client quest IDs may
+be stale. Blue circles represent the client component marker, not an invented
+boundary containing every eligible target. NPC-relative sphere triggers are not
+shown as fixed circles. Completed-quest requirements preserve their component's
+AND/OR setting and other start conditions; they do not prove a quest is currently
+available or form a single linear storyline. Within-quest `next_component` links
+are never presented as links to another quest.
+
+Build the additional reference data after preparing geography and map images:
+
+```bash
+dotnet run --project Tools/WorldGeographyExport -c Release -- \
+  /path/to/game_pak /path/to/empty/quest-area-input --quest-areas
+python3 Scripts/playertrace-coverage/prepare_quest_atlas.py \
+  --quest-areas /path/to/empty/quest-area-input
+```
+
+This reads the canonical database without writing it and saves local
+`.client_files/dashboard-map/quests.json`. The dashboard serves it through
+`/api/map/quests` with a 32 MiB bound. Missing data leave other map controls usable.
+The extracted reference files and prepared JSON stay out of Git.
+
+Coverage of the supplied sources: 4,876 quests, 1,744 giver templates, 2,633
+configured giver placements, 3,848 objective acts, 2,258 acts with mapped
+placements or circles, and 2,453 raw client area records. Raw area records may
+include components outside the current quest table; their total is not a claim
+that every area becomes a selected quest's objective. No PlayerBot quest
+selection, completion behavior or gameplay service is changed.
+
+For road mapping, a visual match to the dark brown paths in the zone artwork is
+useful evidence. NPC placements, named areas and other map assets help check the
+alignment and infer connections. Walking each road is not a prerequisite for
+displaying or reviewing that map layer. The separate claim that a bot can travel
+it still needs ordinary server movement to succeed; a map image cannot establish
+collision clearance, bridge transitions or current danger.

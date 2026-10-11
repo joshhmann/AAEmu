@@ -1612,6 +1612,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             <label><input type="checkbox" id="layerEditorRoads" onchange="toggleGeographyLayer()"> Editor roads (unverified)</label>
                             <label><input type="checkbox" id="layerNpcPlacements" onchange="toggleGeographyLayer()"> NPC placements (configured)</label>
                             <label><input type="checkbox" id="layerNpcServices" onchange="toggleGeographyLayer()"> NPC services (configured)</label>
+                            <label><input type="checkbox" id="layerQuestGivers" onchange="loadQuestAtlas()"> Quest givers</label>
                             <label><input type="checkbox" id="layerGrid" onchange="redrawMap()"> Meter grid</label>
                         </div>
                         <div class="map-toolbar-group">
@@ -1641,6 +1642,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             <p class="map-note" id="inspectSub">North is +Y; east is +X. All coordinates are in-game world meters.</p>
                             <p class="map-note" id="geographyStatus">Reference layers show source geography, not live availability, PvP safety or walkability.</p>
                             <p class="map-note" id="geographyInspect"></p>
+                            <details id="questAtlasPanel" open>
+                                <summary>Quests on this map</summary>
+                                <p class="map-note">Yellow: quest giver · green: turn-in · red: target placement · blue: client objective area. Locations are reference data; the server decides availability.</p>
+                                <input class="form-control" id="questSearch" type="search" placeholder="Quest name or ID" aria-label="Search quests" oninput="searchQuestAtlas()">
+                                <div class="map-actions"><button class="btn" onclick="searchQuestAtlas()">Find quests</button><button class="btn" onclick="clearQuestAtlas()">Clear selection</button><button class="btn" onclick="focusQuestAtlas()">Locate selection</button></div>
+                                <p class="map-note" id="questAtlasStatus">Search or enable quest givers to load quest locations.</p>
+                                <div id="questSearchResults"></div>
+                                <div id="questGiverResults"></div>
+                                <div id="questDetails"></div>
+                            </details>
                             <div class="map-coordinate-fields">
                                 <label>X<input class="form-control" id="inspectX" type="number" step="any" aria-label="World X"></label>
                                 <label>Y<input class="form-control" id="inspectY" type="number" step="any" aria-label="World Y"></label>
@@ -2368,6 +2379,21 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
             else:
                 self._set_headers(404)
                 self.wfile.write(json.dumps({"error": "Client map not prepared; run prepare_map_assets.py"}).encode("utf-8"))
+            return
+
+        if path == "/api/map/quests":
+            quest_path = os.path.join(self.repo_root, ".client_files", "dashboard-map", "quests.json")
+            if not os.path.isfile(quest_path):
+                self._set_headers(404)
+                self.wfile.write(b'{"error":"Quest atlas not prepared. Run prepare_quest_atlas.py."}')
+                return
+            if os.path.getsize(quest_path) > 32 * 1024 * 1024:
+                self._set_headers(413)
+                self.wfile.write(b'{"error":"Quest atlas exceeds the 32MB serving bound"}')
+                return
+            self._set_headers(200)
+            with open(quest_path, "rb") as stream:
+                self.wfile.write(stream.read())
             return
 
         if path == "/api/map/geography":

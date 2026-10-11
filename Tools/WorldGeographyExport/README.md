@@ -20,3 +20,9 @@ and ignored by Git; do not commit the archive, extracted XML or client artwork.
 
 Read [World geography and routes](../../Docs/wiki/World-Geography-and-Routes.md)
 for the evidence boundaries and route-data contract.
+
+For quest areas, pass `--quest-areas` as the third argument. This extracts only
+root main-world `quest_sign_sphere.g` files and `world.xml`, using the same bounds
+and empty-output rule. Feed that separate directory to
+`Scripts/playertrace-coverage/prepare_quest_atlas.py --quest-areas <directory>`.
+Do not feed quest-area extraction to the geography XML importer.

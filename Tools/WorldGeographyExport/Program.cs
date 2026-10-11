@@ -3,13 +3,14 @@ using System.Text.RegularExpressions;
 using AAEmu.Commons.Utils.AAPak;
 
 // Offline, bounded, read-only extraction. No game managers or world are started.
-if (args.Length != 2)
-    throw new ArgumentException("Usage: WorldGeographyExport <game_pak> <empty-output-directory>");
+if (args.Length is < 2 or > 3 || (args.Length == 3 && args[2] != "--quest-areas"))
+    throw new ArgumentException("Usage: WorldGeographyExport <game_pak> <empty-output-directory> [--quest-areas]");
 var output = Path.GetFullPath(args[1]);
 if (Directory.Exists(output) && Directory.EnumerateFileSystemEntries(output).Any())
     throw new IOException("Output directory must be empty; existing files will not be overwritten.");
 Directory.CreateDirectory(output);
-var pattern = new Regex(@"^game/worlds/main_world/(world\.xml|level_design/zone/[0-9]+/client/(housing|subzone)_area\.xml|zone/[0-9]+/layers/[^/]+\.lyr)$", RegexOptions.CultureInvariant);
+var questAreas = args.Length == 3;
+var pattern = new Regex(questAreas ? @"^game/worlds/main_world/(world\.xml|level_design/zone/[0-9]+/client/quest_sign_sphere\.g)$" : @"^game/worlds/main_world/(world\.xml|level_design/zone/[0-9]+/client/(housing|subzone)_area\.xml|zone/[0-9]+/layers/[^/]+\.lyr)$", RegexOptions.CultureInvariant);
 var pak = new AAPak(args[0], true, false);
 if (!pak.isOpen)
     throw new IOException("Cannot open game_pak read-only.");
@@ -35,7 +36,7 @@ try
     File.WriteAllText(Path.Combine(output, "inventory.json"), JsonSerializer.Serialize(new
     {
         world = "main_world", read_only = true, entries,
-        scope = "root client area XML, world XML, all packaged zone/layers XML; locale overrides excluded"
+        scope = questAreas ? "root quest sign spheres and world XML; locale overrides excluded" : "root client area XML, world XML, all packaged zone/layers XML; locale overrides excluded"
     }, new JsonSerializerOptions { WriteIndented = true }));
     Console.WriteLine($"Extracted {selected.Length} bounded geography entries read-only; source archive unchanged.");
 }
