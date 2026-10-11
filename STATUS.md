@@ -1,5 +1,17 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
+**Local corpse repair — E147–E149 (2026-10-11):** source3cf0ebbd binds corpse
+loot memory, terminal decisions and request keys to the actual NPC instance.
+Seeded replacement/same-corpse/stale/actor controls pass;fullgate4459pass/0fail/
+1namedskip,archaeology163/163,all required MCP/consumer checks pass.
+[Slice receipt and limits](scorecard-explorations/quest-corpse-lifetime-2026-10-11.md).
+One private live validation failed NO_PROVED_PROGRESS before boars:251 independently
+accepted but0/3;324notreached;strict frozen-END conservation fails on XYZ. Owned
+cleanup complete,no merge/push/shareddeploy. Next dependency: reproduce first-
+matching-spawner ordering and rank valid same-world quest prey sources by distance.
+No live corpse/full-loop/H/grade/parent promotion; develop checkpoint below remains
+the published baseline. E139 historical pass and E142 failure are preserved.
+
 **Source checkpoint — E146 (2026-10-11):** reviewed quest/dashboard work is committed; fresh source/fixture checks and preservation details are in [the checkpoint receipt](scorecard-explorations/checkpoint-2026-10-11.md). E142 thirdcorpse evidence remains the next gameplay dependency. No new live/H/grade/milestone or deployment acceptance.
 
 > Quest atlas review branch, 2026-10-10: quest-giver links, explicit completed-quest
