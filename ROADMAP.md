@@ -1,5 +1,7 @@
 # ArcheAge Slums — Roadmap & Milestones (locked-shape 2026-08-03; version number retired 2026-08-04 — v1/v4/v6/v7 label drift, the date is canonical)
 
+**Source checkpoint — E146 (2026-10-11):** reviewed quest/dashboard work is committed; fresh source/fixture checks and preservation details are in [the checkpoint receipt](scorecard-explorations/checkpoint-2026-10-11.md). E142 thirdcorpse evidence remains the next gameplay dependency. No new live/H/grade/milestone or deployment acceptance.
+
 > Quest atlas review branch, 2026-10-10: quest-giver links, explicit completed-quest
 > references and configured objective locations are available for map review.
 > This is reference-data tooling, not bot autonomy or live quest completion evidence.

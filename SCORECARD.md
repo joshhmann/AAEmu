@@ -1,5 +1,7 @@
 # ArcheAge Slums — Data-Wiring and Evidence Scorecard (enriched)
 
+**Source checkpoint — E146 (2026-10-11):** reviewed quest/dashboard work is committed; fresh source/fixture checks and preservation details are in [the checkpoint receipt](scorecard-explorations/checkpoint-2026-10-11.md). E142 thirdcorpse evidence remains the next gameplay dependency. No new live/H/grade/milestone or deployment acceptance.
+
 > Quest atlas review branch, 2026-10-10: quest-giver links, explicit completed-quest
 > references and configured objective locations are available for map review.
 > This is reference-data tooling, not bot autonomy or live quest completion evidence.
