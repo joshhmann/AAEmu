@@ -19,6 +19,22 @@ The card enumerated a subset from an earlier read. The live census + DB cross-ch
 | QUEST_NO_COMPONENTS: 1391 | **96 quests**: 315, 1391, 1576, 1728, 2046, 2148–2229 (82), 3748, 3750–3757 (10) |
 | Orphaned quest_contexts: 8 (745, 1421, 1954–1958, 2140) | **28 orphaned quest_context_ids** (116 orphan `quest_components` rows). The 8 listed are all verified; 20 more exist (1697, 1961, 2141–2143, 2146, 3233–3236, 5133, 5765, 6014, 6015, 6019, 6230, 6350, 6371, 6420, 6635) |
 
+### Loader boundary rechecked during branch recovery (2026-10-10)
+
+The original census above covers loaded templates, not every SQLite quest.
+`QuestManager.LoadQuestTemplates` skips category 45 (tutorial) contexts. A bounded
+read-only MCP query against canonical 1.2 data found 184 contexts with no components,
+including 88 in category 45: 96 remain outside that exclusion. This explains the
+historical denominator; it does not change the loader policy or mark those quests playable.
+
+Source baseline: `aa057ffc3bb4596f4a6972eb4f012994970e163a`,
+`AAEmu.Game/Core/Managers/QuestManager.cs` (`QuestCategoryTutorial` and template insertion).
+Query: `SELECT COUNT(*) AS all_empty, SUM(CASE WHEN q.category_id=45 THEN 1 ELSE 0 END) AS tutorial_empty FROM quest_contexts q WHERE NOT EXISTS(SELECT 1 FROM quest_components c WHERE c.quest_context_id=q.id)`.
+MCP provenance: `query_sql`, source `compact.sqlite3`, version `1.2 r208022`,
+MD5 `78b3bdbf038db3b927056106efdf91af`, exact data, two aggregate counts,
+no bounds hit. Code exclusion is textual evidence, not live/client acceptance.
+See [read-only evidence contract](mechanics/archaeology-mcp-acceptance.md).
+
 ## 1. Verdict legend
 
 - **(a) fixable data** — concrete rows (table + id) to UPDATE/DELETE/INSERT; no engine change.

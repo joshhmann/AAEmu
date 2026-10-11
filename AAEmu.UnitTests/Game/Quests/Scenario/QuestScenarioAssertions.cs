@@ -161,7 +161,8 @@ public static class QuestScenarioAssertions
                 // Strong round-trip: re-serialized state must be byte-identical to the snapshot.
                 var roundTripped = persistFreshQuest.WriteData();
                 if (!roundTripped.SequenceEqual(persistSnapshotData))
-                    failures.Add("WriteData -> ReadData round-trip changed quest state (byte mismatch)");
+                    failures.Add("WriteData -> ReadData round-trip changed quest state (byte mismatch): "
+                        + DescribePersistDiff(persistSnapshotData, roundTripped));
 
                 // Readable equality checks against the captured snapshot state (the live
                 // quest may have been dropped by the REWARD stage by now).
@@ -216,11 +217,37 @@ public static class QuestScenarioAssertions
         }
 
         if (failures.Count > 0)
-            return new QuestScenarioStageVerdict { Stage = stage.Name, Outcome = StageOutcome.Fail, Reason = string.Join("; ", failures) };
+            return new QuestScenarioStageVerdict { Stage = stage.Name, Outcome = StageOutcome.Fail, Reason = string.Join("; ", failures)
+                + $" [observed step={quest.Step}, status={quest.Status}, objectives=[{string.Join(",", quest.Objectives)}]]" };
 
         if (!expect.HasAnyExpectation)
             return new QuestScenarioStageVerdict { Stage = stage.Name, Outcome = StageOutcome.Skip, Reason = "no expectations defined - stage ran without error" };
 
         return new QuestScenarioStageVerdict { Stage = stage.Name, Outcome = StageOutcome.Pass };
     }
+
+    // Quest.WriteData currently writes five int32 objectives, two bytes,
+    // two uint32 IDs, then an eight-byte time. Unknown sizes keep raw offsets.
+    internal static string DescribePersistDiff(byte[] before, byte[] after)
+    {
+        if (before.Length != after.Length)
+            return $"length {before.Length} -> {after.Length} bytes";
+        for (var i = 0; i < before.Length; i++)
+        {
+            if (before[i] == after[i])
+                continue;
+            var field = before.Length != 38 ? "unknown layout" : i switch
+            {
+                < 20 => $"objective[{i / 4}]",
+                20 => "step",
+                21 => "acceptorType",
+                <= 25 => "componentId",
+                <= 29 => "acceptorId",
+                _ => "time"
+            };
+            return $"first diff at byte {i} (field {field}: byte {before[i]} -> {after[i]})";
+        }
+        return "no byte difference";
+    }
+
 }
