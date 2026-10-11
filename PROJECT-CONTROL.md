@@ -21,6 +21,13 @@ and older queues are historical checkpoints, not fresh gates or present dispatch
 M8's qualified engineering/runtime exit and independent human acceptance remain
 unchanged. Current evidence: [STATUS](STATUS.md#current-playerbot-policy-checkpoint).
 
+**Current bounded slice — E154/E155:** user selects useful fresh quest choice
+inside the existing retained owner after the nearby-prey/stuck-recovery stopping
+point. Eligibility, retained intent, running requests and earned recovery stay
+in their current owners. Only evidenced fresh preference changes; source/seeded
+proof does not promote live autonomy or authorize merge/deployment.
+[Contract and exact limits](scorecard-explorations/quest-useful-choice.md).
+
 ## Delivery contract
 
 Current operating direction — user-approved 2026-10-11. The outcome-first contract

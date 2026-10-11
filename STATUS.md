@@ -1,5 +1,30 @@
 # STATUS — ArcheAge Slums (fork joshhmann/AAEmu)
 
+**Useful fresh quest choice — E155 (2026-10-11, source/seeded rig):**
+The existing owner now chooses nearer observed eligible offers instead of choosing
+by quest ID alone. Among accepted non-hunt work it prefers credited progress or
+Ready return/turn-in, then perceived sources/targets, then supported resource legs,
+then unresolved work. IDs settle equal usefulness or offer distance. Existing
+nearest-hunt precedence, accepted-work precedence, valid retained purposes, running
+requests, eligibility, earned GiveUp and source readmission remain unchanged.
+Debug diagnostics name selected facts and up to eight same-tier alternatives.
+E154 reproduced both inferior choices before repair. Source a8d28cdf; focused
+owner17/17, retain9/9 and handoff/stuck51/51 pass. Fullgate4513pass/0fail/
+1named live opt-in skip, compiler0errors/0warnings; archaeology163/163 and all
+required MCP smokes pass. Exact commands, dirty state and limits are recorded in
+[the slice receipt](scorecard-explorations/quest-useful-choice.md). This is preference
+from current observed facts, not a new planner or danger estimate. Offer distance
+is giver distance; Ready is quest stage, not proved reporter reach. Delivery's
+resource-leg rank is its existing Supply shape, not newly verified bag sufficiency.
+Seeded credit and explicit terminal feedback test choice, not earned completion.
+Main develop2f93 remains unchanged; corpse/prey/stuck/choice branches are local
+and unmerged. E130 recovery was already merged under E145/D40 (current ancestry
+confirmed); E153's contrary old-hold wording is corrected by E154.
+No fresh live run, merge/push/deployment, H/grade/parent or full autonomous-loop
+claim. Next dependency: a separately allocated bounded private-server scenario
+of independent useful choice, productive progress or earned retirement, and next
+choice, disclosing any recovery relocation and checking frozen-END persistence.
+
 **Bounded stuck quest travel recovery — E153 (2026-10-11, source/seeded rig):**
 Bots now measure whether they approach the current waypoint. Sideways oscillation
 no longer resets the stuck timer; ordinary bounded nudges and Navigation failures
