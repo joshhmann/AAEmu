@@ -1,5 +1,28 @@
 # ArcheAge Slums — Data-Wiring and Evidence Scorecard (enriched)
 
+**Bounded stuck quest travel recovery — E153 (2026-10-11, source/seeded rig):**
+Bots now measure whether they approach the current waypoint. Sideways oscillation
+no longer resets the stuck timer; ordinary bounded nudges and Navigation failures
+remain. Two distinct stuck quest Move failures can permit one disclosed relocation
+to the current waypoint, at most75m, with a60s cooldown across quests. The retained
+quest instance, owner, world and phase must still match. Alive, noncombat,
+unattached bots require a known same-zone, dry, qualified terrain destination;
+unknown or unsafe conditions refuse recovery. Ordinary Character.SetPosition
+updates position and visibility; failed requests stay failed and quest credit is
+unchanged. Fresh ordinary decisions resume afterward. Further failure exercises
+the existing ten-wake GiveUp, releasing ownership and deferring the unfinished
+quest; ten later wakes dispatch no further Move in the rig. No new GiveUp threshold.
+Source470852f4: movement7/7, quest51/51, fullgate4504pass/0fail/1named
+live opt-in skip; compiler0errors/0warnings, archaeology163/163 and all required
+MCP smokes pass. Exact commands and dirty state are in the linked receipt. Main develop2f93 remains unchanged; this local
+branch and its nearby-prey/corpse predecessors remain unmerged. Seeded blocked
+positions, terrain and zone fixtures do not prove real obstruction, collision-free
+landing, quest251 completion, walking parity, live/client/H or parent milestones.
+E149 failed live run and strictEND position gap remain. No new live run, merge,
+push or shared deployment. Single next dependency: a separately allocated bounded
+private-server test of useful prey acquisition and recovery.
+[Exact checks, fixtures and limits](scorecard-explorations/quest-stuck-recovery.md).
+
 **Nearby quest prey — E151 / D45 (2026-10-11, local source/rig proof):**
 Bots with active quests can find living NPC-loot quest prey within100m, select the
 nearest suitable uncommitted target and retain useful committed work. With no

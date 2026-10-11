@@ -70,6 +70,14 @@ eligibility, reach, required timing, ownership, costs, rewards, conservation and
 persistence. A genuine shared-rule bypass blocks the affected supported action;
 reduced coverage is not permission to waive correctness. No fake quest credit,
 GM grants, teleport shortcuts or synthetic completion may stand in for ordinary work.
+User-approved exception (2026-10-11, E152/D46; bounded E153): after two distinct
+stuck quest travel failures, one disclosed local relocation through ordinary
+Character.SetPosition may recover a retained quest waypoint under the documented
+owner/world/phase, terrain, dry same-zone, noncombat and cooldown guards. It is
+recovery evidence, never walking success, quest credit, prerequisite bypass or a
+substitute for productive quest acceptance. Once used, further unresolved work
+still follows the existing bounded GiveUp/defer policy. No general teleport or
+human-parity claim. [Slice and proof](scorecard-explorations/quest-stuck-recovery.md).
 Unsupported quests/objectives may be deferred or skipped with a named reason,
 without marking them completed or suppressing an entire NPC when another quest
 there is eligible. Recovery is bounded and has one owner; retain one ordinary
