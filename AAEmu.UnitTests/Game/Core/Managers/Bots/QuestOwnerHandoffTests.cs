@@ -10,6 +10,8 @@ using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Faction;
+using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Director;
@@ -40,6 +42,7 @@ public class QuestOwnerHandoffTests
     private const uint Pack4530 = 4530;
     private const uint Meat4058 = 4058;
     private static readonly Vector3 Origin = new(32, 32, 0);
+    private static uint s_extraNpcId = 0x97100;
 
     [Before(Test)]
     public void SetUp()
@@ -141,7 +144,9 @@ public class QuestOwnerHandoffTests
     }
 
     [Test]
-    public async Task UnchangedFacts_DoNotRetryRetiredQuest_SourceReturnAllowsFreshChoice()
+    [Arguments(20f)]
+    [Arguments(55f)]
+    public async Task UnchangedFacts_DoNotRetryRetiredQuest_SourceReturnAllowsFreshChoice(float range)
     {
         var (actor, module, executor, steps, bot, clock, _, session) = CreateRig("owner-source-return", eligibleFollowUp: false);
         // With B legally unavailable, source return can reconsider A without
@@ -156,7 +161,7 @@ public class QuestOwnerHandoffTests
         await Assert.That(actor.AuditTrace.Count(r => r.DecisionQuestId == FirstQuest)).IsEqualTo(retiredRequests);
         await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsNotEqualTo(FirstQuest);
         await Assert.That(actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
-        SpawnPrey(session);
+        SpawnPrey(session, Origin + new Vector3(range, 0, 0));
         for (var wake = 0; wake < 6 && module.GetChosenQuest(bot.CharacterId) != FirstQuest; wake++)
             await Step(steps, bot, clock);
         await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(FirstQuest);
@@ -245,6 +250,179 @@ public class QuestOwnerHandoffTests
         {
             actor.PreemptCurrent("remote-source regression teardown");
         }
+    }
+
+    [Test]
+    public async Task FarFirstPreySource_TravelChoosesNearest_RegardlessOfSpawnerOrder()
+    {
+        var (actor, module, executor, steps, bot, clock, _, _) = CreateRig("owner-source-order");
+        var near = Origin + new Vector3(80, 0, 0);
+        var far = Origin + new Vector3(1400, 0, 0);
+        SeedNpcSources(actor, far, near);
+        await Step(steps, bot, clock);
+        try
+        {
+            await Step(steps, bot, clock);
+            await Assert.That(actor.ActiveRequest is { IsTerminal: false, MoveOwner: "QUEST_TRAVEL" }).IsTrue();
+            await Assert.That(executor.GetRoamRoute(bot.CharacterId)!.Waypoints.Last()).IsEqualTo(near);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(FirstQuest);
+            var first = actor.ActiveRequest!;
+            await Assert.That(actor.Interrupt(first.TraceId)).IsTrue();
+            SeedNpcSources(actor, near, far);
+            await Step(steps, bot, clock);
+            await Step(steps, bot, clock);
+            await Assert.That(executor.GetRoamRoute(bot.CharacterId)!.Waypoints.Last()).IsEqualTo(near);
+            await Assert.That(actor.ActiveRequest!.TraceId).IsNotEqualTo(first.TraceId);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(FirstQuest);
+            await Assert.That(actor.Character.Quests.ActiveQuests[FirstQuest].Objectives[0]).IsEqualTo(0);
+        }
+        finally
+        {
+            actor.PreemptCurrent("source-order regression teardown");
+        }
+    }
+
+    [Test]
+    public async Task LivingQuestPreyBeyondInteractionRange_IsSelectedBeforeRemoteSpawnTravel()
+    {
+        var (actor, module, executor, steps, bot, clock, _, session) = CreateRig("owner-prey-scan");
+        SeedNpcSources(actor, Origin + new Vector3(1400, 0, 0));
+        await Step(steps, bot, clock);
+        var far = SpawnPrey(session, Origin + new Vector3(70, 0, 0));
+        var near = SpawnExtraPrey(session, Origin + new Vector3(55, 0, 0));
+        try
+        {
+            var snapshot = BotObservedContext.Capture(actor);
+            await Assert.That(snapshot.NearbyNpcObjIds.Contains(near)).IsFalse();
+            var row = QuestFixtureRow.FromQuestData(FirstQuest);
+            var selected = QuestObjectiveTargetSelector.Evaluate(actor.Character, snapshot, "scan-regression", row);
+            await Assert.That(selected.SelectedObjId).IsEqualTo(near);
+            await Assert.That(selected.SelectedObjId).IsNotEqualTo(far);
+            await Step(steps, bot, clock);
+            await Assert.That(actor.Character.CurrentTarget?.ObjId).IsEqualTo(near);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(FirstQuest);
+            await Assert.That(actor.ActiveRequest is { IsTerminal: false, MoveOwner: "QUEST_TRAVEL" }).IsFalse();
+        }
+        finally
+        {
+            actor.PreemptCurrent("prey-scan regression teardown");
+        }
+    }
+
+    [Test]
+    [Arguments("dead")]
+    [Arguments("hidden")]
+    [Arguments("wrong-template")]
+    [Arguments("friendly")]
+    [Arguments("outside-scan")]
+    public async Task UnsuitablePrey_DoesNotSuppressNearestSpawnTravel(string reason)
+    {
+        var (actor, module, executor, steps, bot, clock, _, session) = CreateRig("owner-prey-" + reason);
+        var source = Origin + new Vector3(200, 0, 0);
+        SeedNpcSources(actor, Origin + new Vector3(1400, 0, 0), source);
+        await Step(steps, bot, clock);
+        var prey = SpawnPrey(session, Origin + new Vector3(reason == "outside-scan" ? 101 : 55, 0, 0));
+        var npc = session.World.GetNpc(prey)!;
+        switch (reason)
+        {
+            case "dead": npc.Hp = 0; break;
+            case "hidden": npc.IsVisible = false; break;
+            case "wrong-template": npc.TemplateId = 97_999; break;
+            case "friendly":
+                actor.Character.Faction = null;
+                npc.Faction = new SystemFaction { Id = FactionsEnum.Friendly };
+                await Assert.That(CombatDecisionTree.IsHostileTarget(actor.Character, npc)).IsFalse();
+                break;
+        }
+        try
+        {
+            var snapshot = BotObservedContext.Capture(actor);
+            var row = QuestFixtureRow.FromQuestData(FirstQuest);
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character, snapshot, "negative", row).SelectedObjId).IsEqualTo(0u);
+            await Assert.That(QuestBehavior.HasPerceivedLivingPrey(actor, snapshot, Boar3475)).IsFalse();
+            await Step(steps, bot, clock);
+            await Assert.That(executor.GetRoamRoute(bot.CharacterId)!.Waypoints.Last()).IsEqualTo(source);
+            await Assert.That(actor.ActiveRequest!.MoveOwner).IsEqualTo("QUEST_TRAVEL");
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(FirstQuest);
+            await Assert.That(actor.Character.Quests.ActiveQuests[FirstQuest].Objectives[0]).IsEqualTo(0);
+        }
+        finally
+        {
+            actor.PreemptCurrent("unsuitable-prey regression teardown");
+        }
+    }
+
+    [Test]
+    public async Task WiderLivingScan_IsBoundedAndCopied_WithoutWideningInteractionOrCorpseCensus()
+    {
+        var (actor, _, _, steps, bot, clock, _, session) = CreateRig("owner-scan-bounds");
+        var boundary = SpawnPrey(session, Origin + new Vector3(99, 0, 0));
+        var edge = SpawnExtraPrey(session, Origin + new Vector3(100, 0, 0));
+        var outside = SpawnExtraPrey(session, Origin + new Vector3(101, 0, 0));
+        var dead = SpawnExtraPrey(session, Origin + new Vector3(55, 0, 0));
+        session.World.GetNpc(dead)!.Hp = 0;
+        await Assert.That(actor.Observe().NearbyLivingNpcObjIds).IsEmpty();
+        await Step(steps, bot, clock);
+        var observation = actor.Observe();
+        await Assert.That(observation.NearbyLivingNpcObjIds.Contains(boundary)).IsTrue();
+        await Assert.That(observation.NearbyLivingNpcObjIds.Contains(outside)).IsFalse();
+        await Assert.That(observation.NearbyLivingNpcObjIds.Contains(edge)).IsFalse();
+        await Assert.That(observation.NearbyLivingNpcObjIds.Contains(dead)).IsFalse();
+        await Assert.That(observation.NearbyNpcObjIds.Contains(boundary)).IsFalse();
+        await Assert.That(observation.NearbyNpcObjIds.Contains(dead)).IsFalse();
+        var snapshot = BotObservedContext.From(observation);
+        ((List<uint>)observation.NearbyLivingNpcObjIds).Clear();
+        await Assert.That(snapshot.NearbyLivingNpcObjIds.Contains(boundary)).IsTrue();
+        var row = QuestFixtureRow.FromQuestData(FirstQuest);
+        await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character, snapshot, "boundary", row).SelectedObjId).IsEqualTo(boundary);
+        GameplayActorTestRig.SetNpcPosition(session, boundary, Origin + new Vector3(101, 0, 0));
+        await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character, snapshot, "moved-out", row).SelectedObjId).IsEqualTo(0u);
+        await Assert.That(QuestBehavior.HasPerceivedLivingPrey(actor, snapshot, Boar3475)).IsFalse();
+    }
+
+    [Test]
+    public async Task ValidCommittedPrey_IsRetainedUntilInvalid_ThenNearestSuitablePreyWins()
+    {
+        var (actor, _, _, steps, bot, clock, _, session) = CreateRig("owner-scan-commitment");
+        await Step(steps, bot, clock);
+        var farther = SpawnPrey(session, Origin + new Vector3(70, 0, 0));
+        var nearer = SpawnExtraPrey(session, Origin + new Vector3(55, 0, 0));
+        actor.Character.CurrentTarget = session.World.GetNpc(farther);
+        var row = QuestFixtureRow.FromQuestData(FirstQuest);
+        var snapshot = BotObservedContext.Capture(actor);
+        await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character, snapshot, "commit", row).SelectedObjId).IsEqualTo(farther);
+        session.World.GetNpc(farther)!.Hp = 0;
+        await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character, snapshot, "reselect", row).SelectedObjId).IsEqualTo(nearer);
+    }
+
+    [Test]
+    public async Task SpawnFallback_RejectsInvalidAndWrongTemplates_UsesStableTieAndOnlyOwnWorld()
+    {
+        var (actor, _, _, _, _, _, _, _) = CreateRig("owner-spawn-controls");
+        var left = Origin + new Vector3(-80, 0, 0);
+        var right = Origin + new Vector3(80, 0, 0);
+        SeedNpcSources(actor, new Vector3(float.NaN, 0, 0), right, left,
+            new Vector3(0, 0, float.PositiveInfinity));
+        var world = actor.Character.ParentWorld!;
+        var sources = (Dictionary<uint, List<NpcSpawner>>)typeof(SpawnManager)
+            .GetProperty("NpcSpawners", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(world.SpawnManager)!;
+        sources[97_301] = [new NpcSpawner { Id = 97_301, UnitId = 97_999,
+            Position = new WorldSpawnPosition { X = Origin.X + 1, Y = Origin.Y, Z = 0 } }];
+        await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, Boar3475, Origin)).IsEqualTo((Vector3?)left);
+        sources[97_300].Reverse();
+        await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, Boar3475, Origin)).IsEqualTo((Vector3?)left);
+        // The reporter's legacy first-match lookup is deliberately unchanged.
+        await Assert.That(QuestBehavior.TryNpcSpawnerPosition(world, 97_999)).IsEqualTo((Vector3?)(Origin + new Vector3(1, 0, 0)));
+        await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, 0, Origin)).IsNull();
+        await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, Boar3475, new Vector3(float.NaN, 0, 0))).IsNull();
+        var (other, _) = GameplayActorTestRig.CreateActor("other-world-source");
+        SeedNpcSources(other, Origin + new Vector3(1, 0, 0));
+        sources[97_300].Clear();
+        await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, Boar3475, Origin)).IsNull();
+        SeedNpcSources(actor, new Vector3(float.MaxValue, 0, 0));
+        await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, Boar3475, Origin)).IsNull();
+        await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(other.Character.ParentWorld!, Boar3475, Origin)).IsNotNull();
     }
 
     [Test]
@@ -345,18 +523,50 @@ public class QuestOwnerHandoffTests
         }];
     }
 
-    private static void SpawnPrey(HeadlessSession session)
+    private static void SeedNpcSources(GameplayActor actor, params Vector3[] positions)
+    {
+        SeedNpcSource(actor, positions[0]);
+        var spawners = (Dictionary<uint, List<NpcSpawner>>)typeof(SpawnManager)
+            .GetProperty("NpcSpawners", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(actor.Character.ParentWorld!.SpawnManager)!;
+        spawners[97_300] = positions.Select((p, i) => new NpcSpawner
+        {
+            Id = (uint)(97_300 + i), UnitId = Boar3475,
+            Position = new WorldSpawnPosition { X = p.X, Y = p.Y, Z = p.Z }
+        }).ToList();
+    }
+
+    private static uint SpawnPrey(HeadlessSession session, Vector3? at = null)
     {
         var objId = session.SpawnNpc(Boar3475);
         var npc = session.World.GetNpc(objId)!;
         npc.Template = new NpcTemplate { Id = Boar3475, Scale = 1f };
         npc.Hp = npc.MaxHp = 100;
         npc.IsVisible = true;
-        var position = Origin + new Vector3(20, 0, 0);
+        var position = at ?? Origin + new Vector3(20, 0, 0);
         GameplayActorTestRig.SetNpcPosition(session, objId, position);
         var region = session.World.GetRegionByPos(position)!;
         region.AddObject(npc);
         npc.Region = region;
+        return objId;
+    }
+
+    // SpawnNpc deduplicates by template; use the existing multiple-candidate
+    // rig pattern for a distinct second NPC, never overwrite the first one.
+    private static uint SpawnExtraPrey(HeadlessSession session, Vector3 position)
+    {
+        var npc = new Npc
+        {
+            ObjId = s_extraNpcId++, TemplateId = Boar3475,
+            Template = new NpcTemplate { Id = Boar3475, Scale = 1f },
+            Hp = 100, MaxHp = 100, IsVisible = true
+        };
+        npc.Transform.Local.SetPosition(position);
+        session.World.AddObject(npc);
+        var region = session.World.GetRegionByPos(position)!;
+        region.AddObject(npc);
+        npc.Region = region;
+        return npc.ObjId;
     }
 
     private static async Task Step(BotGoalArbiterStepExecutor steps, PlayerBotRuntime bot, FakeTimeProvider clock)

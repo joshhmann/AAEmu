@@ -14,7 +14,7 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///
 /// Shape: the scenario-only <c>LevelingLoopScenario.SelectHuntTarget</c> precedent,
 /// production-owned. Candidates come ONLY from the immutable observation snapshot
-/// (<c>NearbyNpcObjIds</c> — never a world scan); per-candidate truth (template,
+/// (<c>NearbyNpcObjIds</c> plus the bounded living-NPC census — never a global world scan); per-candidate truth (template,
 /// liveness, hostility, visibility, distance) resolves live via
 /// <c>ParentWorld.GetNpc</c> at proposal time — never stored, never cached (pure
 /// function per wake).
@@ -48,6 +48,27 @@ public static class QuestObjectiveTargetSelector
 {
     /// <summary>Diagnostic-only per-candidate funnel bound (selection itself is unbounded).</summary>
     public const int CandidatesShown = 12;
+
+    /// <summary>Bounded living quest-prey sight range. Does not grant interaction or attack reach.</summary>
+    public const float LivingPreyScanRadiusM = 100f;
+
+    internal static IEnumerable<uint> PreyCandidates(BotObservedContext snapshot)
+        => snapshot.NearbyNpcObjIds.Concat(snapshot.NearbyLivingNpcObjIds).Distinct();
+
+    // The same ordinary legality gates decide both target selection and whether
+    // observed prey can own the wake instead of travel. No new combat rules.
+    internal static bool IsSuitableLivingPrey(Character character, Npc npc, uint templateId)
+        => LivingPreyRejection(character, npc, templateId) == "-";
+
+    private static string LivingPreyRejection(Character character, Npc npc, uint templateId)
+    {
+        if (npc.Hp <= 0) return "dead";
+        if (npc.TemplateId != templateId) return "template";
+        if (!CombatDecisionTree.IsHostileTarget(character, npc)) return "hostile";
+        if (!character.CanAttack(npc)) return "attack";
+        if (!character.CanSeeTarget(npc)) return "stealth";
+        return "-";
+    }
 
     /// <summary>Per-candidate funnel row: separate relevance/legality flags, distance, first failing predicate.</summary>
     public sealed record CandidateFunnel(
@@ -153,7 +174,7 @@ public static class QuestObjectiveTargetSelector
         // other way too — HP damage resets the watchdog inside its counter,
         // so a target being killed is never demoted.
         const byte staleTier = 3;
-        foreach (var objId in observation?.NearbyNpcObjIds ?? [])
+        foreach (var objId in observation == null ? [] : PreyCandidates(observation))
         {
             rawCount++;
             var npc = character?.ParentWorld?.GetNpc(objId);
@@ -180,40 +201,21 @@ public static class QuestObjectiveTargetSelector
             else
             {
                 distance = MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false);
-                if (npc.Hp <= 0)
+                reject = LivingPreyRejection(character!, npc, fixture.PreyTemplate);
+                // A target can move after capture. The widened band is still
+                // bounded at selection time; ordinary 25m fixture snapshots keep
+                // their existing semantics.
+                if (reject == "-" && !observation!.NearbyNpcObjIds.Contains(objId)
+                    && (!double.IsFinite(distance) || distance >= LivingPreyScanRadiusM))
+                    reject = "scan-range";
+                combatLegal = reject == "-";
+                switch (reject)
                 {
-                    reject = "dead";
-                    rejectDead++;
-                    combatLegal = false;
-                }
-                else if (!templateMatch)
-                {
-                    reject = "template";
-                    rejectTemplate++;
-                    combatLegal = false;
-                }
-                else if (!CombatDecisionTree.IsHostileTarget(character!, npc))
-                {
-                    reject = "hostile";
-                    rejectHostile++;
-                    combatLegal = false;
-                }
-                else if (!character!.CanAttack(npc))
-                {
-                    reject = "attack";
-                    rejectAttack++;
-                    combatLegal = false;
-                }
-                else if (!character.CanSeeTarget(npc))
-                {
-                    reject = "stealth";
-                    rejectStealth++;
-                    combatLegal = false;
-                }
-                else
-                {
-                    reject = "-";
-                    combatLegal = true;
+                    case "dead": rejectDead++; break;
+                    case "template": rejectTemplate++; break;
+                    case "hostile": rejectHostile++; break;
+                    case "attack": rejectAttack++; break;
+                    case "stealth": rejectStealth++; break;
                 }
             }
 

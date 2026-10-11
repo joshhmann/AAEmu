@@ -2855,14 +2855,9 @@ public enum NeedsFarmLoopPhase
         if (world?.SpawnManager == null || quests == null)
             return false;
         var here = character.Transform.World.Position;
-        // True when a prey template is already inside the perception census —
-        // i.e. QuestObjectiveTargetSelector would already consider it a
-        // candidate, so the funnel owns this wake and travel must not preempt it.
-        // LIVENESS, not identity: a DEAD prey-template NPC is not a candidate
-        // the selector would take (QuestObjectiveTargetSelector.cs:181-186
-        // rejects `Hp <= 0` as `dead`), so it must not suppress this arm
-        // either — a corpse standing in the census is what suppressed it and
-        // sent the bot to an offerer instead of back to the prey spawner.
+        // Suitable living prey in the bounded observation belongs to the
+        // quest target/pursuit legs. Dead, hidden or unattackable prey must not
+        // suppress the nearest-source search destination.
         foreach (var (questId, quest) in quests.ActiveQuests.OrderBy(kv => kv.Key))
         {
             if (chosenQuestId != 0 && questId != chosenQuestId)
@@ -2971,8 +2966,8 @@ public enum NeedsFarmLoopPhase
             //     Same two disciplines as the arms above: a perceived prey means
             //     the funnel owns this wake — travel never preempts it (its own
             //     capture, exactly as each arm above takes its own); and the
-            //     spawner lookup is the SAME helper arm 1 uses
-            //     (TrySpawnerPosition), not a second scan. Fail-closed: no
+            //     spawner ranking is shared with the Advance entry gate.
+            //     Fail-closed: no
             //     gather act, a credited objective, no prey template, a Deliver
             //     shape, or a prey with no spawner all fall through to the same
             //     `false` as before.
@@ -2980,7 +2975,7 @@ public enum NeedsFarmLoopPhase
                 && row.ObjectivePattern != AAEmu.Game.Models.Game.Quests.Director.QuestPattern.Deliver
                 && !QuestBehavior.GatherCredited(questId, quest, row)
                 && !QuestBehavior.HasPerceivedLivingPrey(actor, BotObservedContext.Capture(actor), row.PreyTemplate)
-                && TrySpawnerPosition(world, row.PreyTemplate) is { } preyPos)
+                && QuestBehavior.TryNearestNpcPreySpawnerPosition(world, row.PreyTemplate, here) is { } preyPos)
             {
                 source = preyPos;
                 sourceTemplate = row.PreyTemplate;

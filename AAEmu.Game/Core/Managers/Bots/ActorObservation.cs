@@ -42,6 +42,9 @@ public sealed class ActorObservation
     /// <summary>Nearby NPCs (region graph, direct query).</summary>
     public IReadOnlyList<uint> NearbyNpcObjIds { get; init; } = [];
 
+    /// <summary>Living NPCs within 100m for active quest prey selection only; interactions keep their own range.</summary>
+    public IReadOnlyList<uint> NearbyLivingNpcObjIds { get; init; } = [];
+
     /// <summary>Nearby doodads (region graph, direct query).</summary>
     public IReadOnlyList<uint> NearbyDoodadObjIds { get; init; } = [];
 

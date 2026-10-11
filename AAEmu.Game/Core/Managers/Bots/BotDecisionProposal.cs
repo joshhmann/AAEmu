@@ -24,6 +24,9 @@ public sealed record BotObservedContext
     public int MaxMp { get; init; }
     public IReadOnlyList<uint> NearbyCharacterObjIds { get; init; } = [];
     public IReadOnlyList<uint> NearbyNpcObjIds { get; init; } = [];
+
+    /// <summary>Living NPCs within 100m for active quest prey selection only; interactions keep their own range.</summary>
+    public IReadOnlyList<uint> NearbyLivingNpcObjIds { get; init; } = [];
     public IReadOnlyList<uint> NearbyDoodadObjIds { get; init; } = [];
     public IReadOnlyList<uint> ActiveQuestIds { get; init; } = [];
 
@@ -78,6 +81,7 @@ public sealed record BotObservedContext
             MaxMp = observation.MaxMp,
             NearbyCharacterObjIds = Copy(observation.NearbyCharacterObjIds),
             NearbyNpcObjIds = Copy(observation.NearbyNpcObjIds),
+            NearbyLivingNpcObjIds = Copy(observation.NearbyLivingNpcObjIds),
             NearbyDoodadObjIds = Copy(observation.NearbyDoodadObjIds),
             ActiveQuestIds = Copy(observation.ActiveQuestIds),
             Money = observation.Money,

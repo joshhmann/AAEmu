@@ -498,7 +498,8 @@ public static class BotOpportunityListing
                 var preyTemplate = row.PreyTemplate;
                 var doodadTemplates = row.GatherDoodadTemplates;
                 var perceived = CensusHasDoodad(character, doodadTemplates)
-                    || (preyTemplate != 0 && CensusHasNpcTarget(character, preyTemplate, 0))
+                    || (preyTemplate != 0 && WorldManager.GetAround<Npc>(character, QuestObjectiveTargetSelector.LivingPreyScanRadiusM)
+                        .Any(n => QuestObjectiveTargetSelector.IsSuitableLivingPrey(character, n, preyTemplate)))
                     || hunts.Any(h => h.QuestId == questId);
                 if (perceived)
                     return ObjectiveVerdict.Work("gather", $"gather-objective-pending-item-{gather.ItemId}-source-perceived");

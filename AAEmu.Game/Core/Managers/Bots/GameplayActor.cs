@@ -300,6 +300,10 @@ public class GameplayActor : IGameplayActor
             MaxMp = Character.MaxMp,
             NearbyCharacterObjIds = WorldManager.GetAround<Character>(Character, 25f).Select(c => c.ObjId).ToList(),
             NearbyNpcObjIds = WorldManager.GetAround<Npc>(Character, 25f).Select(n => n.ObjId).ToList(),
+            NearbyLivingNpcObjIds = Character.Quests?.ActiveQuests.Count > 0
+                ? WorldManager.GetAround<Npc>(Character, QuestObjectiveTargetSelector.LivingPreyScanRadiusM)
+                    .Where(n => n.Hp > 0).Select(n => n.ObjId).ToList()
+                : [],
             NearbyDoodadObjIds = WorldManager.GetAround<Doodad>(Character, 25f).Select(d => d.ObjId).ToList(),
             ActiveQuestIds = Character.Quests?.ActiveQuests.Keys.ToList() ?? [],
             Money = Character.Money,

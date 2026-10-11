@@ -2929,14 +2929,14 @@ public static class QuestBehavior
             && (!HasGatherTemplates(row) || ResolveGatherDoodad(context, row).ObjId == 0)
             && !HasPerceivedLivingPrey(context.Actor,
                 context.Observation ?? BotObservedContext.Capture(context.Actor), row.PreyTemplate)
-            && TryNpcSpawnerPosition(world, row.PreyTemplate) is { } preyPos
+            && TryNearestNpcPreySpawnerPosition(world, row.PreyTemplate, here) is { } preyPos
             && MathUtil.CalculateDistance(here, preyPos, false) > GameplayActor.MaxInteractRange)
             return true;
         return false;
     }
 
-    // Shared by the Advance entry gate and ordinary quest travel. Preserve the
-    // existing first-matching spawner policy; unknown tables remain unknown.
+    // Reporter lookup retains its existing first-matching policy. Quest prey
+    // travel uses the distance-ranked helper below; unknown tables stay unknown.
     internal static Vector3? TryNpcSpawnerPosition(WorldInstance world, uint npcTemplateId)
     {
         var allSpawners = world.SpawnManager?.GetAllSpawners();
@@ -2950,12 +2950,40 @@ public static class QuestBehavior
             : new Vector3(spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
     }
 
+    /// <summary>
+    /// A configured prey location is a search destination, not proof of a live
+    /// mob or a walkable route. Rank only this world's matching finite sources;
+    /// equal distances use coordinates and ID so load order cannot decide.
+    /// Reporter lookup above deliberately retains its existing policy.
+    /// </summary>
+    internal static Vector3? TryNearestNpcPreySpawnerPosition(WorldInstance world, uint npcTemplateId, Vector3 here)
+    {
+        if (npcTemplateId == 0 || !float.IsFinite(here.X) || !float.IsFinite(here.Y) || !float.IsFinite(here.Z))
+            return null;
+        var all = world.SpawnManager?.GetAllSpawners();
+        if (all == null)
+            return null;
+        return all.SelectMany(s => s.Value)
+            .Where(s => s.UnitId == npcTemplateId && s.Position != null)
+            .Select(s => (s.Id, Position: new Vector3(s.Position.X, s.Position.Y, s.Position.Z)))
+            .Where(s => float.IsFinite(s.Position.X) && float.IsFinite(s.Position.Y) && float.IsFinite(s.Position.Z))
+            .Select(s => (s.Id, s.Position, Distance: MathUtil.CalculateDistance(here, s.Position, false)))
+            .Where(s => float.IsFinite(s.Distance))
+            .OrderBy(s => s.Distance)
+            .ThenBy(s => s.Position.X).ThenBy(s => s.Position.Y).ThenBy(s => s.Position.Z).ThenBy(s => s.Id)
+            .Select(s => (Vector3?)s.Position)
+            .FirstOrDefault();
+    }
+
     internal static bool HasPerceivedLivingPrey(IGameplayActor actor, BotObservedContext snapshot, uint preyTemplate)
     {
         var world = actor.Character.ParentWorld;
-        foreach (var objId in snapshot.NearbyNpcObjIds)
+        foreach (var objId in QuestObjectiveTargetSelector.PreyCandidates(snapshot))
         {
-            if (world?.GetNpc(objId) is { Hp: > 0 } live && live.TemplateId == preyTemplate)
+            if (world?.GetNpc(objId) is { } live
+                && QuestObjectiveTargetSelector.IsSuitableLivingPrey(actor.Character, live, preyTemplate)
+                && MathUtil.CalculateDistance(actor.Character.Transform.World.Position, live.Transform.World.Position, false)
+                    < QuestObjectiveTargetSelector.LivingPreyScanRadiusM)
                 return true;
         }
         return false;
