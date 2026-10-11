@@ -339,6 +339,7 @@ function redrawMap() {
     }
     const inView = p => p.x >= -10 && p.y >= -10 && p.x <= width+10 && p.y <= height+10;
     if (mapEl('layerGrid').checked) drawMapGrid(ctx,width,height);
+    drawGeography(ctx, width, height);
     if (mapEl('layerZones').checked) {
         ctx.strokeStyle = '#24648c'; ctx.lineWidth = 1;
         for (const m of mapAtlasData.map_manifest.maps.filter(m=>m.kind==='zone')) {
@@ -599,6 +600,7 @@ function drawMapGrid(ctx,width,height) {
 }
 
 function selectMapPoint(point) {
+    inspectGeography(point);
     selectedTarget = {...point};
     for (const axis of ['x','y','z']) mapEl('inspect'+axis.toUpperCase()).value = point[axis] ?? '';
     mapEl('inspectName').textContent = point.label || 'World coordinate';
@@ -1231,3 +1233,94 @@ async function submitGenerateCandidateRoute() {
     }
 }
 
+
+
+// Reference geography is deliberately separate from the executable road network.
+let geographyData = null;
+let geographyLoading = null;
+async function toggleGeographyLayer() {
+    if (!geographyData) {
+        if (!geographyLoading) geographyLoading = (async () => {
+            const response = await fetch('/api/map/geography');
+            if (!response.ok) throw Error('Geography not prepared (HTTP ' + response.status + ').');
+            const data = await response.json();
+            if (data.schema_version !== 1 || data.world_id !== 0 || !Array.isArray(data.features))
+                throw Error('Unsupported geography data.');
+            for (const feature of data.features) {
+                if (!Array.isArray(feature.points) || !feature.points.length ||
+                    feature.points.some(p => p.length !== 3 || !p.every(Number.isFinite)))
+                    throw Error('Invalid geography coordinates.');
+                feature.bounds = {minX: Math.min(...feature.points.map(p=>p[0])),
+                    maxX: Math.max(...feature.points.map(p=>p[0])),
+                    minY: Math.min(...feature.points.map(p=>p[1])), maxY: Math.max(...feature.points.map(p=>p[1]))};
+            }
+            geographyData = data;
+            mapEl('geographyStatus').textContent = `${data.coverage.area_files} area files · ${data.features.filter(f=>f.kind==='road').length} editor roads · configured NPC placements. Locale overrides excluded. No live safety or walkability proof.`;
+        })();
+        try { await geographyLoading; }
+        catch(error) { mapNotice(error.message); geographyLoading = null; return; }
+    }
+    redrawMap();
+}
+
+function drawGeography(ctx, width, height) {
+    if (!geographyData || activeMap.world_id !== 0) return;
+    const lower = screenToWorld(0,height), upper = screenToWorld(width,0);
+    const visible = f => f.bounds.maxX >= lower.x && f.bounds.minX <= upper.x &&
+        f.bounds.maxY >= lower.y && f.bounds.minY <= upper.y;
+    const labels = [];
+    for (const feature of geographyData.features) {
+        if (!visible(feature)) continue;
+        const kind = feature.kind;
+        const enabled = kind === 'housing' ? 'layerHousing' : kind === 'subzone' ? 'layerPlaces' :
+            kind === 'road' ? 'layerEditorRoads' : 'layerNpcServices';
+        if (!mapEl(enabled)?.checked && !(kind === 'npc' && mapEl('layerNpcPlacements')?.checked)) continue;
+        if (kind === 'npc') {
+            const service = feature.services.length > 0 && mapEl('layerNpcServices')?.checked;
+            if (mapView.scale < (service ? .06 : .18)) continue;
+            const p = worldToScreen(...feature.points[0]);
+            ctx.fillStyle=service ? '#c084fc' : '#cbd5e1';
+            const size=service ? 6 : 3; ctx.fillRect(p.x-size/2,p.y-size/2,size,size);
+            if (mapView.scale > (service ? .3 : .7)) {ctx.font='10px sans-serif'; ctx.fillText(feature.name || `NPC ${feature.npc_template_id}`,p.x+6,p.y);}
+            continue;
+        }
+        ctx.beginPath();
+        feature.points.forEach((p,i)=> {const s=worldToScreen(p[0],p[1]); if(i)ctx.lineTo(s.x,s.y);else ctx.moveTo(s.x,s.y);});
+        if (kind !== 'road') ctx.closePath();
+        ctx.strokeStyle = kind === 'housing' ? '#34d399' : kind === 'road' ? '#fb923c' : '#67e8f9';
+        ctx.lineWidth = kind === 'road' ? 2 : 1;
+        ctx.setLineDash(kind === 'road' ? [5,4] : []); ctx.stroke(); ctx.setLineDash([]);
+        if (kind === 'housing') { ctx.fillStyle='rgba(52,211,153,.08)'; ctx.fill(); }
+        if (feature.name && mapView.scale > .07 && kind === 'subzone'
+            && (feature.bounds.maxX-feature.bounds.minX)*mapView.scale > 60
+            && (feature.bounds.maxY-feature.bounds.minY)*mapView.scale > 25) {
+            const p=worldToScreen((feature.bounds.minX+feature.bounds.maxX)/2,(feature.bounds.minY+feature.bounds.maxY)/2);
+            ctx.font='11px sans-serif';
+            const box = {x:p.x,y:p.y-12,w:ctx.measureText(feature.name).width+8,h:18};
+            if (p.x >= 0 && p.y >= 0 && p.x < width && p.y < height &&
+                !labels.some(b=>box.x<b.x+b.w && box.x+box.w>b.x && box.y<b.y+b.h && box.y+box.h>b.y)) {
+                labels.push(box);ctx.fillStyle='rgba(8,12,20,.65)';ctx.fillRect(box.x-3,box.y,box.w,box.h);
+                ctx.fillStyle='#a5f3fc';ctx.fillText(feature.name,p.x,p.y);
+            }
+        }
+    }
+}
+
+function geographyContains(points, x, y) {
+    let inside=false;
+    for (let i=0,j=points.length-1;i<points.length;j=i++) {
+        const a=points[i],b=points[j];
+        if ((a[1]>y)!==(b[1]>y) && x < (b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]) inside=!inside;
+    }
+    return inside;
+}
+
+function inspectGeography(point) {
+    const element=mapEl('geographyInspect'); if (!element) return;
+    element.textContent=''; if (!geographyData) return;
+    const areas=geographyData.features.filter(f=>(f.kind==='housing'||f.kind==='subzone') && geographyContains(f.points,point.x,point.y));
+    const services=geographyData.features.filter(f=>f.kind==='npc' && (f.services.length || mapEl('layerNpcPlacements')?.checked) &&
+        Math.hypot(f.points[0][0]-point.x,f.points[0][1]-point.y)<=30);
+    element.textContent=[...areas,...services].slice(0,6).map(f=>`${f.name || f.kind}: ${f.verification}. Source: ${f.source}`+
+        (f.kind==='housing' ? `; housing rule IDs: ${f.housing_rule_ids.join(', ') || 'unmatched'}` : '')).join(' | ');
+}

@@ -1,5 +1,13 @@
 # ArcheAge Slums — Data-Wiring and Evidence Scorecard (enriched)
 
+> Navigation review branch, 2026-10-11: atlas reference geography and evidenced
+> walking-route selection/travel-cache support are implemented in isolation.
+> See [World geography and routes](Docs/wiki/World-Geography-and-Routes.md).
+> Current callers still use ordinary local/unit movement; no candidate road was
+> certified, no risk-aware live road journey was proved, and no parent milestone,
+> autonomy score, merge or deployment is advanced by this branch.
+
+
 ## Current PlayerBot policy checkpoint
 
 **2026-10-10 — USER-APPROVED / CANONICAL, documentation/control only.**

@@ -76,6 +76,7 @@ public static class TravelIntentStore
         /// budget), exactly as a different target objId is.
         /// </summary>
         public string LegOwner { get; init; } = "";
+        public long? RoadRevision { get; init; }
         /// <summary>True when this intent already reached a terminal (arrival or one of the three abandonments).</summary>
         public bool IsSettled => Terminal != TravelTerminal.None;
 
@@ -117,6 +118,7 @@ public static class TravelIntentStore
         var mode = TravelMode.None;
         var priorDestination = destination;
         IReadOnlyList<Vector3> route = [];
+        long? roadRevision = null;
         if (Intents.TryGetValue(key, out var prior)
             && prior.Kind == kind
             && prior.TargetObjId == targetObjId
@@ -129,6 +131,7 @@ public static class TravelIntentStore
             mode = prior.Mode;
             priorDestination = prior.PriorDestination;
             route = prior.Route;
+            roadRevision = prior.RoadRevision;
         }
 
         Intents[key] = new Intent(
@@ -136,7 +139,8 @@ public static class TravelIntentStore
             repathBudget, attempts, repaths, mode, priorDestination, TravelTerminal.None,
             TravelReason.None, route)
         {
-            LegOwner = legOwner ?? ""
+            LegOwner = legOwner ?? "",
+            RoadRevision = roadRevision
         };
         return fresh;
     }
@@ -205,12 +209,12 @@ public static class TravelIntentStore
     }
 
     /// <summary>Caches the resolved road route for the intent (the head is walked first).</summary>
-    public static void SetRoute(uint actorObjId, IReadOnlyList<Vector3> waypoints, string legOwner = "")
+    public static void SetRoute(uint actorObjId, IReadOnlyList<Vector3> waypoints, string legOwner = "", long? revision = null)
     {
         var key = (actorObjId, legOwner ?? "");
         if (!Intents.TryGetValue(key, out var current))
             return;
-        Intents[key] = current with { Route = waypoints };
+        Intents[key] = current with { Route = waypoints.ToArray(), RoadRevision = revision };
     }
 
     /// <summary>

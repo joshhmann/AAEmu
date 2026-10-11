@@ -33,7 +33,10 @@ public class RoadNetworkService : Singleton<RoadNetworkService>, IRoadNetworkSer
     private readonly Dictionary<string, RoadJunction> _junctionsById = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, List<(RoadJunction Neighbor, float Cost)>> _adjacency = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<(int CellX, int CellY), List<RoadJunction>> _spatialGrid = new();
+    private readonly Dictionary<string, List<RoadTravelSegment>> _travelEdges = new(StringComparer.OrdinalIgnoreCase);
     private readonly float _gridCellSize;
+
+    public int VerifiedTravelEdgeCount => _travelEdges.Values.Sum(e => e.Count);
     private int _edgeCount;
 
     public int JunctionCount => _junctions.Count;
@@ -166,6 +169,142 @@ public class RoadNetworkService : Singleton<RoadNetworkService>, IRoadNetworkSer
         return _junctionsById.GetValueOrDefault(id);
     }
 
+    private void LoadTravelEdge(MapAtlasEdgeModel edge, RoadJunction from, RoadJunction to)
+    {
+        if (!edge.WorldId.HasValue || from.WorldId != edge.WorldId || to.WorldId != edge.WorldId
+            || edge.TravelMode != "walk" || string.IsNullOrWhiteSpace(edge.NavigationEvidence)
+            || string.IsNullOrWhiteSpace(edge.Route) || edge.Points is not { Count: >= 2 and <= 10000 })
+            return;
+        if (edge.Points.Any(p => p.Length != 3 || p.Any(n => !float.IsFinite(n))))
+            return;
+        var points = edge.Points.Select(p => new Vector3(p[0], p[1], p[2])).ToArray();
+        // Near-looking endpoints are not joins. Exported segments must terminate at their actual junctions.
+        if (Vector3.Distance(points[0], from.Position) > 0.01f || Vector3.Distance(points[^1], to.Position) > 0.01f)
+            return;
+        if (!float.IsFinite(Length(points)))
+            return;
+        var segment = new RoadTravelSegment(edge.Route, edge.WorldId.Value, from.Id, to.Id,
+            points, Length(points), edge.ZoneKeys.ToArray(), edge.NavigationEvidence);
+        _travelEdges[from.Id].Add(segment);
+        if (edge.Bidirectional)
+            _travelEdges[to.Id].Add(segment with { From = to.Id, To = from.Id, Points = points.Reverse().ToArray() });
+    }
+
+    public RoadTravelRoute? FindTravelRoute(Vector3 start, Vector3 destination, RoadTravelQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        if (!Finite(start) || !Finite(destination) || !float.IsFinite(query.SpeedMps) || query.SpeedMps <= 0
+            || !float.IsFinite(query.MaxConnectorDistanceM) || query.MaxConnectorDistanceM <= 0)
+            return null;
+        // Bound connector work. A failed nearest approach does not conceal another usable nearby junction.
+        var starts = Candidates(start, query).Select(j => (Junction: j, Connector: Connector(start, j.Position, query)))
+            .Where(c => c.Connector != null).ToArray();
+        var ends = Candidates(destination, query).Select(j => (Junction: j, Connector: Connector(j.Position, destination, query)))
+            .Where(c => c.Connector != null).ToDictionary(c => c.Junction.Id, c => c.Connector!, StringComparer.OrdinalIgnoreCase);
+        if (starts.Length == 0 || ends.Count == 0)
+            return null;
+
+        var queue = new PriorityQueue<string, (float Cost, long Sequence)>();
+        var costs = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
+        var previous = new Dictionary<string, RoadTravelSegment>(StringComparer.OrdinalIgnoreCase);
+        var approaches = new Dictionary<string, IReadOnlyList<Vector3>>(StringComparer.OrdinalIgnoreCase);
+        long sequence = 0;
+        foreach (var candidate in starts)
+        {
+            var cost = Length(candidate.Connector!.Points) / query.SpeedMps + candidate.Connector.AdditionalSeconds;
+            costs[candidate.Junction.Id] = cost;
+            approaches[candidate.Junction.Id] = candidate.Connector!.Points;
+            queue.Enqueue(candidate.Junction.Id, (cost, sequence++));
+        }
+        string? bestEnd = null;
+        var bestCost = float.PositiveInfinity;
+        // Zero heuristic: additional costs are seconds and can vary by character/world state.
+        while (queue.TryDequeue(out var current, out var priority))
+        {
+            if (priority.Cost != costs[current])
+                continue;
+            if (priority.Cost > bestCost)
+                break;
+            if (ends.TryGetValue(current, out var departure))
+            {
+                var total = priority.Cost + Length(departure.Points) / query.SpeedMps + departure.AdditionalSeconds;
+                if (total < bestCost) { bestCost = total; bestEnd = current; }
+            }
+            foreach (var edge in _travelEdges[current])
+            {
+                if (edge.WorldId != query.WorldId)
+                    continue;
+                var extra = query.AdditionalSeconds?.Invoke(edge);
+                if (!extra.HasValue || !float.IsFinite(extra.Value) || extra.Value < 0)
+                    continue;
+                var next = priority.Cost + edge.LengthM / query.SpeedMps + extra.Value;
+                if (!float.IsFinite(next) || (costs.TryGetValue(edge.To, out var old) && old <= next))
+                    continue;
+                costs[edge.To] = next;
+                previous[edge.To] = edge;
+                queue.Enqueue(edge.To, (next, sequence++));
+            }
+        }
+        if (bestEnd == null)
+            return null;
+        var segments = new List<RoadTravelSegment>();
+        var cursor = bestEnd;
+        while (previous.TryGetValue(cursor, out var edge)) { segments.Add(edge); cursor = edge.From; }
+        segments.Reverse();
+        var routePoints = new List<Vector3>();
+        Append(routePoints, approaches[cursor]);
+        foreach (var segment in segments) Append(routePoints, segment.Points);
+        Append(routePoints, ends[bestEnd].Points);
+        return new RoadTravelRoute(routePoints.ToArray(), segments.Select(s => s.Id).ToArray(),
+            Length(routePoints), bestCost, query.Revision);
+    }
+
+    private IEnumerable<RoadJunction> Candidates(Vector3 position, RoadTravelQuery query)
+    {
+        // Geometry is cached at startup. The bounded spatial buckets avoid a world scan per wake.
+        var radius = Math.Min(query.MaxConnectorDistanceM, 2000f);
+        var minX = (int)MathF.Floor((position.X - radius) / _gridCellSize);
+        var maxX = (int)MathF.Floor((position.X + radius) / _gridCellSize);
+        var minY = (int)MathF.Floor((position.Y - radius) / _gridCellSize);
+        var maxY = (int)MathF.Floor((position.Y + radius) / _gridCellSize);
+        var found = new List<RoadJunction>();
+        for (var x = minX; x <= maxX; x++)
+            for (var y = minY; y <= maxY; y++)
+                if (_spatialGrid.TryGetValue((x, y), out var bucket))
+                    found.AddRange(bucket.Where(j => j.WorldId == query.WorldId
+                        && Vector3.Distance(position, j.Position) <= radius));
+        return found.OrderBy(j => Vector3.DistanceSquared(position, j.Position))
+            .ThenBy(j => j.Id, StringComparer.Ordinal).Take(8);
+    }
+
+    private static RoadTravelConnector? Connector(Vector3 from, Vector3 to, RoadTravelQuery query)
+    {
+        if (Vector3.Distance(from, to) <= 0.01f)
+            return new RoadTravelConnector(new[] { from, to }, 0);
+        var connector = query.FindConnector?.Invoke(from, to);
+        var points = connector?.Points;
+        if (connector == null || !float.IsFinite(connector.AdditionalSeconds) || connector.AdditionalSeconds < 0
+            || points is not { Count: >= 2 and <= 10000 } || points.Any(p => !Finite(p))
+            || Vector3.Distance(from, points[0]) > 0.01f || Vector3.Distance(to, points[^1]) > 0.01f)
+            return null;
+        return new RoadTravelConnector(points.ToArray(), connector.AdditionalSeconds);
+    }
+
+    private static void Append(List<Vector3> target, IReadOnlyList<Vector3> points)
+    {
+        foreach (var point in points)
+            if (target.Count == 0 || target[^1] != point) target.Add(point);
+    }
+
+    private static float Length(IReadOnlyList<Vector3> points)
+    {
+        var length = 0f;
+        for (var i = 1; i < points.Count; i++) length += Vector3.Distance(points[i - 1], points[i]);
+        return length;
+    }
+
+    private static bool Finite(Vector3 point) => float.IsFinite(point.X) && float.IsFinite(point.Y) && float.IsFinite(point.Z);
+
     private static float DistanceSquared(Vector3 pos, RoadJunction j)
     {
         var dx = pos.X - j.X;
@@ -225,6 +364,7 @@ public class RoadNetworkService : Singleton<RoadNetworkService>, IRoadNetworkSer
             _junctions.Add(j);
             _junctionsById[j.Id] = j;
             _adjacency[j.Id] = [];
+            _travelEdges[j.Id] = [];
 
             var cellX = (int)MathF.Floor(j.X / _gridCellSize);
             var cellY = (int)MathF.Floor(j.Y / _gridCellSize);
@@ -247,7 +387,9 @@ public class RoadNetworkService : Singleton<RoadNetworkService>, IRoadNetworkSer
                 {
                     var cost = Vector3.Distance(fromJunction.Position, toJunction.Position);
 
-                    // Road network is bidirectional
+                    LoadTravelEdge(edge, fromJunction, toJunction);
+
+                    // Legacy candidate inspection graph is bidirectional
                     _adjacency[edge.From].Add((toJunction, cost));
                     _adjacency[edge.To].Add((fromJunction, cost));
                 }
@@ -344,5 +486,13 @@ public class RoadNetworkService : Singleton<RoadNetworkService>, IRoadNetworkSer
         [property: JsonPropertyName("from")] string From,
         [property: JsonPropertyName("to")] string To,
         [property: JsonPropertyName("route")] string? Route
-    );
+    )
+    {
+        [JsonPropertyName("world_id")] public uint? WorldId { get; init; }
+        [JsonPropertyName("points")] public List<float[]>? Points { get; init; }
+        [JsonPropertyName("navigation_evidence")] public string? NavigationEvidence { get; init; }
+        [JsonPropertyName("travel_mode")] public string? TravelMode { get; init; }
+        [JsonPropertyName("bidirectional")] public bool Bidirectional { get; init; }
+        [JsonPropertyName("zone_keys")] public List<uint> ZoneKeys { get; init; } = [];
+    }
 }

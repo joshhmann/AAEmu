@@ -1306,6 +1306,11 @@
                             <label><input type="checkbox" id="layerRoads" checked onchange="redrawMap()"> Reference hubs</label>
                             <label title="Straight candidate connections, not recorded road geometry"><input type="checkbox" id="layerLinks" onchange="redrawMap()"> Candidate links</label>
                             <label title="Map image extents, not physical zone borders"><input type="checkbox" id="layerZones" onchange="redrawMap()"> Map extents</label>
+                            <label><input type="checkbox" id="layerPlaces" onchange="toggleGeographyLayer()"> Named areas</label>
+                            <label><input type="checkbox" id="layerHousing" onchange="toggleGeographyLayer()"> Housing areas</label>
+                            <label><input type="checkbox" id="layerEditorRoads" onchange="toggleGeographyLayer()"> Editor roads (unverified)</label>
+                            <label><input type="checkbox" id="layerNpcPlacements" onchange="toggleGeographyLayer()"> NPC placements (configured)</label>
+                            <label><input type="checkbox" id="layerNpcServices" onchange="toggleGeographyLayer()"> NPC services (configured)</label>
                             <label><input type="checkbox" id="layerGrid" onchange="redrawMap()"> Meter grid</label>
                         </div>
                         <div class="map-toolbar-group">
@@ -1333,6 +1338,8 @@
                         <div id="sidebarInspectPanel">
                             <strong id="inspectName">Select a point or enter /position coordinates</strong>
                             <p class="map-note" id="inspectSub">North is +Y; east is +X. All coordinates are in-game world meters.</p>
+                            <p class="map-note" id="geographyStatus">Reference layers show source geography, not live availability, PvP safety or walkability.</p>
+                            <p class="map-note" id="geographyInspect"></p>
                             <div class="map-coordinate-fields">
                                 <label>X<input class="form-control" id="inspectX" type="number" step="any" aria-label="World X"></label>
                                 <label>Y<input class="form-control" id="inspectY" type="number" step="any" aria-label="World Y"></label>

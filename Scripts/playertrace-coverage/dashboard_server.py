@@ -1607,6 +1607,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                             <label><input type="checkbox" id="layerRoads" checked onchange="redrawMap()"> Reference hubs</label>
                             <label title="Straight candidate connections, not recorded road geometry"><input type="checkbox" id="layerLinks" onchange="redrawMap()"> Candidate links</label>
                             <label title="Map image extents, not physical zone borders"><input type="checkbox" id="layerZones" onchange="redrawMap()"> Map extents</label>
+                            <label><input type="checkbox" id="layerPlaces" onchange="toggleGeographyLayer()"> Named areas</label>
+                            <label><input type="checkbox" id="layerHousing" onchange="toggleGeographyLayer()"> Housing areas</label>
+                            <label><input type="checkbox" id="layerEditorRoads" onchange="toggleGeographyLayer()"> Editor roads (unverified)</label>
+                            <label><input type="checkbox" id="layerNpcPlacements" onchange="toggleGeographyLayer()"> NPC placements (configured)</label>
+                            <label><input type="checkbox" id="layerNpcServices" onchange="toggleGeographyLayer()"> NPC services (configured)</label>
                             <label><input type="checkbox" id="layerGrid" onchange="redrawMap()"> Meter grid</label>
                         </div>
                         <div class="map-toolbar-group">
@@ -1634,6 +1639,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         <div id="sidebarInspectPanel">
                             <strong id="inspectName">Select a point or enter /position coordinates</strong>
                             <p class="map-note" id="inspectSub">North is +Y; east is +X. All coordinates are in-game world meters.</p>
+                            <p class="map-note" id="geographyStatus">Reference layers show source geography, not live availability, PvP safety or walkability.</p>
+                            <p class="map-note" id="geographyInspect"></p>
                             <div class="map-coordinate-fields">
                                 <label>X<input class="form-control" id="inspectX" type="number" step="any" aria-label="World X"></label>
                                 <label>Y<input class="form-control" id="inspectY" type="number" step="any" aria-label="World Y"></label>
@@ -2361,6 +2368,21 @@ class DashboardRequestHandler(BaseHTTPRequestHandler):
             else:
                 self._set_headers(404)
                 self.wfile.write(json.dumps({"error": "Client map not prepared; run prepare_map_assets.py"}).encode("utf-8"))
+            return
+
+        if path == "/api/map/geography":
+            geography_path = os.path.join(self.repo_root, ".client_files", "dashboard-map", "geography.json")
+            if not os.path.isfile(geography_path):
+                self._set_headers(404)
+                self.wfile.write(json.dumps({"error": "Geography not prepared. Run prepare_world_geography.py."}).encode())
+                return
+            if os.path.getsize(geography_path) > 32 * 1024 * 1024:
+                self._set_headers(413)
+                self.wfile.write(b'{"error":"Geography exceeds the 32MB serving bound"}')
+                return
+            self._set_headers(200)
+            with open(geography_path, "rb") as stream:
+                self.wfile.write(stream.read())
             return
 
         if path == "/api/map/data":
