@@ -290,7 +290,9 @@ public class HeldoutRecoveryTests
         await Assert.That(move!.Action).IsEqualTo(ActorActionType.Move);
         await Assert.That(move.State).IsEqualTo(ActorLifecycleState.Running);
         await Assert.That(move.MoveOwner).IsEqualTo(BotRoamStepExecutor.QuestTravelMoveOwner);
-        await Assert.That(move.Destination!.Value).IsEqualTo(source);
+        // At 2 m/s with the existing 60 s budget and half-budget margin,
+        // the first leg is 60 m; the final route waypoint above remains the source.
+        await Assert.That(move.Destination!.Value).IsEqualTo(new Vector3(60, 0, 0));
         await Assert.That(move.Timeout.HasValue && move.Timeout.Value > TimeSpan.Zero).IsTrue();
         await Assert.That(state.PendingLeg!.TraceId).IsEqualTo(move.TraceId);
         var after = actor.Character.Transform.World.Position;
