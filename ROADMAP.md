@@ -1,5 +1,19 @@
 # ArcheAge Slums — Roadmap & Milestones (locked-shape 2026-08-03; version number retired 2026-08-04 — v1/v4/v6/v7 label drift, the date is canonical)
 
+> Quest atlas review branch, 2026-10-10: quest-giver links, explicit completed-quest
+> references and configured objective locations are available for map review.
+> This is reference-data tooling, not bot autonomy or live quest completion evidence.
+> See [Quest givers and objective areas](Docs/wiki/World-Geography-and-Routes.md#quest-givers-and-objective-areas).
+
+
+> Navigation review branch, 2026-10-11: atlas reference geography and evidenced
+> walking-route selection/travel-cache support are implemented in isolation.
+> See [World geography and routes](Docs/wiki/World-Geography-and-Routes.md).
+> Current callers still use ordinary local/unit movement; no candidate road was
+> certified, no risk-aware live road journey was proved, and no parent milestone,
+> autonomy score, merge or deployment is advanced by this branch.
+
+
 ## Current PlayerBot policy checkpoint
 
 **2026-10-10 — USER-APPROVED / CANONICAL policy; documentation/control only.**

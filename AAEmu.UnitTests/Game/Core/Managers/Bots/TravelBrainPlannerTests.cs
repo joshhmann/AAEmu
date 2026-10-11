@@ -149,33 +149,20 @@ public class TravelBrainPlannerTests
     }
 
     [Test]
-    public async Task PositionIntent_FarDestinationWithTheRealRoadNetwork_WalksTheFirstJunction()
+    public async Task PositionIntent_CandidateAtlasDoesNotAuthorizeRoadTravel()
     {
-        // The process's own road atlas (136 junctions / 603 edges) is a real data
-        // read: a far Arcum Iris hop routes through junctions, and the leg walks the
-        // FIRST waypoint of that route rather than straight-lining the whole way.
         var roads = new RoadNetworkService();
         var (actor, _) = GameplayActorTestRig.CreateActor("travel-route");
-        var start = new Vector3(21602.44f, 7325.04f, 236.39f); // Arcum Iris J1
+        var start = new Vector3(21602.44f, 7325.04f, 236.39f);
         GameplayActorTestRig.SetPosition(actor, start);
-        var destination = new Vector3(21602.44f, 7325.04f, 236.39f) + new Vector3(4000f, 1500f, 0f);
-
+        var destination = start + new Vector3(4000f, 1500f, 0f);
         TravelBrainPlanner.Arm(actor.ActorId, TravelTargetKind.Position, 0, destination, false);
-        var prepared = TravelBrainPlanner.Prepare(
-            actor, Request(actor, TravelTargetKind.Position, 0, destination, allowRoute: true), roads);
-
-        await Assert.That(prepared.Decision.Mode).IsEqualTo(TravelMode.Route);
-        await Assert.That(prepared.Decision.Arm).IsEqualTo(TravelArm.Route);
-        await Assert.That(prepared.Decision.Verb).IsEqualTo(TravelVerb.MoveTo);
-        await Assert.That(prepared.Route.Count).IsGreaterThan(0);
-        await Assert.That(prepared.Decision.Destination!.Value).IsEqualTo(prepared.Route[0]);
-        await Assert.That(prepared.Decision.WaypointCount).IsEqualTo(prepared.Route.Count);
-
-        // The route is not thrown away: the next wake holds the live leg, and the
-        // intent store carries the remaining waypoints.
-        TravelBrainPlanner.Publish(actor.ActorId, prepared);
-        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var armed)).IsTrue();
-        await Assert.That(armed.Route.Count).IsEqualTo(prepared.Route.Count);
+        var prepared = TravelBrainPlanner.Prepare(actor,
+            Request(actor, TravelTargetKind.Position, 0, destination, allowRoute: true), roads);
+        await Assert.That(roads.VerifiedTravelEdgeCount).IsEqualTo(0);
+        await Assert.That(prepared.Route.Count).IsEqualTo(0);
+        await Assert.That(prepared.Decision.Mode).IsEqualTo(TravelMode.Local);
+        await Assert.That(prepared.Decision.Destination!.Value).IsEqualTo(destination);
     }
 
     [Test]
@@ -264,6 +251,39 @@ public class TravelBrainPlannerTests
         await Assert.That(spent.RepathCount).IsEqualTo(1);
         await Assert.That(spent.Route.Count).IsEqualTo(0);
         await Assert.That(spent.Mode).IsEqualTo(TravelMode.Route);
+    }
+
+    [Test]
+    public async Task EvidencedRoad_UsesCurveAndRefreshesAtLegBoundaryPreservingJourney()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("travel-evidenced");
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 10));
+        var destination = new Vector3(100, 0, 10);
+        var roads = RoadTravelRouteTests.Network();
+        var world = actor.Character.ParentWorld?.Template?.Id ?? actor.Character.Transform.WorldId;
+        var instance = actor.Character.Transform.InstanceId;
+        var query = RoadTravelRouteTests.Query(1) with { WorldId = world, InstanceId = instance };
+        var request = Request(actor, TravelTargetKind.Position, 0, destination,
+            destWorldKnown: true, destWorldId: world, destInstanceId: instance, allowRoute: true);
+        TravelBrainPlanner.Arm(actor.ActorId, TravelTargetKind.Position, 0, destination, false);
+        var first = TravelBrainPlanner.Prepare(actor, request, roads, roadQuery: query);
+        await Assert.That(first.Decision.Mode).IsEqualTo(TravelMode.Route);
+        TravelBrainPlanner.Publish(actor.ActorId, first);
+        var changed = query with { Revision = 2, AdditionalSeconds = e => e.Id == "direct" ? 100 : 0 };
+        var live = TravelBrainPlanner.Prepare(actor, request with { LegLive = true }, roads, roadQuery: changed);
+        await Assert.That(live.RoadRevision).IsEqualTo(1);
+        await Assert.That(live.Route[0]).IsEqualTo(first.Route[0]);
+        var next = TravelBrainPlanner.Prepare(actor, request, roads, roadQuery: changed);
+        await Assert.That(next.Route[0]).IsEqualTo(new Vector3(50, 100, 10));
+        await Assert.That(next.RoadRevision).IsEqualTo(2);
+        TravelBrainPlanner.Publish(actor.ActorId, next);
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var intent)).IsTrue();
+        await Assert.That(intent.Destination).IsEqualTo(destination);
+        await Assert.That(intent.RepathCount).IsEqualTo(0);
+        await Assert.That(intent.Terminal).IsEqualTo(TravelTerminal.None);
+        var mismatched = TravelBrainPlanner.Prepare(actor, request, roads,
+            roadQuery: changed with { InstanceId = instance + 1 });
+        await Assert.That(mismatched.Route.Count).IsEqualTo(0);
     }
 
     private static TravelBrainPlanner.Request Request(

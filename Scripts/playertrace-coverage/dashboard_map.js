@@ -280,9 +280,9 @@ function setupMapEvents() {
                 redrawMap();
             }
         }
-        const wp = screenToWorld(p.x,p.y), hub = nearestMapHub(wp);
+        const wp = screenToWorld(p.x,p.y), hub = nearestMapTarget(wp);
         mapEl('hudCoords').textContent = `X ${wp.x.toFixed(2)} · Y ${wp.y.toFixed(2)}`;
-        mapEl('hudElev').textContent = hub ? `Nearby hub Z ${hub.z.toFixed(2)} (only at hub)` : 'Z unknown';
+        mapEl('hudElev').textContent = Number.isFinite(hub?.z) ? `Nearby marker Z ${hub.z.toFixed(2)} (only at marker)` : 'Z unknown';
     });
     canvas.addEventListener('pointerup', event => {
         if (mapDrag?.id !== event.pointerId) return;
@@ -339,6 +339,8 @@ function redrawMap() {
     }
     const inView = p => p.x >= -10 && p.y >= -10 && p.x <= width+10 && p.y <= height+10;
     if (mapEl('layerGrid').checked) drawMapGrid(ctx,width,height);
+    drawGeography(ctx, width, height);
+    drawQuestAtlas(ctx, width, height);
     if (mapEl('layerZones').checked) {
         ctx.strokeStyle = '#24648c'; ctx.lineWidth = 1;
         for (const m of mapAtlasData.map_manifest.maps.filter(m=>m.kind==='zone')) {
@@ -599,6 +601,8 @@ function drawMapGrid(ctx,width,height) {
 }
 
 function selectMapPoint(point) {
+    inspectGeography(point);
+    inspectQuestAtlas(point);
     selectedTarget = {...point};
     for (const axis of ['x','y','z']) mapEl('inspect'+axis.toUpperCase()).value = point[axis] ?? '';
     mapEl('inspectName').textContent = point.label || 'World coordinate';
@@ -1231,3 +1235,231 @@ async function submitGenerateCandidateRoute() {
     }
 }
 
+
+
+// Reference geography is deliberately separate from the executable road network.
+let geographyData = null;
+let geographyLoading = null;
+async function toggleGeographyLayer() {
+    if (!geographyData) {
+        if (!geographyLoading) geographyLoading = (async () => {
+            const response = await fetch('/api/map/geography');
+            if (!response.ok) throw Error('Geography not prepared (HTTP ' + response.status + ').');
+            const data = await response.json();
+            if (data.schema_version !== 1 || data.world_id !== 0 || !Array.isArray(data.features))
+                throw Error('Unsupported geography data.');
+            for (const feature of data.features) {
+                if (!Array.isArray(feature.points) || !feature.points.length ||
+                    feature.points.some(p => p.length !== 3 || !p.slice(0,2).every(Number.isFinite) ||
+                        !(Number.isFinite(p[2]) || (feature.kind === 'npc' && p[2] === null))))
+                    throw Error('Invalid geography coordinates.');
+                feature.bounds = {minX: Math.min(...feature.points.map(p=>p[0])),
+                    maxX: Math.max(...feature.points.map(p=>p[0])),
+                    minY: Math.min(...feature.points.map(p=>p[1])), maxY: Math.max(...feature.points.map(p=>p[1]))};
+            }
+            geographyData = data;
+            mapEl('geographyStatus').textContent = `${data.coverage.area_files} area files · ${data.features.filter(f=>f.kind==='road').length} editor roads · configured NPC placements. Locale overrides excluded. No live safety or walkability proof.`;
+        })();
+        try { await geographyLoading; }
+        catch(error) { mapNotice(error.message); geographyLoading = null; return; }
+    }
+    redrawMap();
+}
+
+function drawGeography(ctx, width, height) {
+    if (!geographyData || activeMap.world_id !== 0) return;
+    const lower = screenToWorld(0,height), upper = screenToWorld(width,0);
+    const visible = f => f.bounds.maxX >= lower.x && f.bounds.minX <= upper.x &&
+        f.bounds.maxY >= lower.y && f.bounds.minY <= upper.y;
+    const labels = [];
+    for (const feature of geographyData.features) {
+        if (!visible(feature)) continue;
+        const kind = feature.kind;
+        const enabled = kind === 'housing' ? 'layerHousing' : kind === 'subzone' ? 'layerPlaces' :
+            kind === 'road' ? 'layerEditorRoads' : 'layerNpcServices';
+        if (!mapEl(enabled)?.checked && !(kind === 'npc' && mapEl('layerNpcPlacements')?.checked)) continue;
+        if (kind === 'npc') {
+            const service = feature.services.length > 0 && mapEl('layerNpcServices')?.checked;
+            if (mapView.scale < (service ? .06 : .18)) continue;
+            const p = worldToScreen(...feature.points[0]);
+            ctx.fillStyle=service ? '#c084fc' : '#cbd5e1';
+            const size=service ? 6 : 3; ctx.fillRect(p.x-size/2,p.y-size/2,size,size);
+            if (mapView.scale > (service ? .3 : .7)) {ctx.font='10px sans-serif'; ctx.fillText(feature.name || `NPC ${feature.npc_template_id}`,p.x+6,p.y);}
+            continue;
+        }
+        ctx.beginPath();
+        feature.points.forEach((p,i)=> {const s=worldToScreen(p[0],p[1]); if(i)ctx.lineTo(s.x,s.y);else ctx.moveTo(s.x,s.y);});
+        if (kind !== 'road') ctx.closePath();
+        ctx.strokeStyle = kind === 'housing' ? '#34d399' : kind === 'road' ? '#fb923c' : '#67e8f9';
+        ctx.lineWidth = kind === 'road' ? 2 : 1;
+        ctx.setLineDash(kind === 'road' ? [5,4] : []); ctx.stroke(); ctx.setLineDash([]);
+        if (kind === 'housing') { ctx.fillStyle='rgba(52,211,153,.08)'; ctx.fill(); }
+        if (feature.name && mapView.scale > .07 && kind === 'subzone'
+            && (feature.bounds.maxX-feature.bounds.minX)*mapView.scale > 60
+            && (feature.bounds.maxY-feature.bounds.minY)*mapView.scale > 25) {
+            const p=worldToScreen((feature.bounds.minX+feature.bounds.maxX)/2,(feature.bounds.minY+feature.bounds.maxY)/2);
+            ctx.font='11px sans-serif';
+            const box = {x:p.x,y:p.y-12,w:ctx.measureText(feature.name).width+8,h:18};
+            if (p.x >= 0 && p.y >= 0 && p.x < width && p.y < height &&
+                !labels.some(b=>box.x<b.x+b.w && box.x+box.w>b.x && box.y<b.y+b.h && box.y+box.h>b.y)) {
+                labels.push(box);ctx.fillStyle='rgba(8,12,20,.65)';ctx.fillRect(box.x-3,box.y,box.w,box.h);
+                ctx.fillStyle='#a5f3fc';ctx.fillText(feature.name,p.x,p.y);
+            }
+        }
+    }
+}
+
+function geographyContains(points, x, y) {
+    let inside=false;
+    for (let i=0,j=points.length-1;i<points.length;j=i++) {
+        const a=points[i],b=points[j];
+        if ((a[1]>y)!==(b[1]>y) && x < (b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]) inside=!inside;
+    }
+    return inside;
+}
+
+function inspectGeography(point) {
+    const element=mapEl('geographyInspect'); if (!element) return;
+    element.textContent=''; if (!geographyData) return;
+    const areas=geographyData.features.filter(f=>(f.kind==='housing'||f.kind==='subzone') && geographyContains(f.points,point.x,point.y));
+    const services=geographyData.features.filter(f=>f.kind==='npc' && (f.services.length || mapEl('layerNpcPlacements')?.checked) &&
+        Math.hypot(f.points[0][0]-point.x,f.points[0][1]-point.y)<=30);
+    element.textContent=[...areas,...services].slice(0,6).map(f=>`${f.name || f.kind}: ${f.verification}. Source: ${f.source}`+
+        (f.kind==='housing' ? `; housing rule IDs: ${f.housing_rule_ids.join(', ') || 'unmatched'}` : '') +
+        (f.kind==='npc' && !f.altitude_known ? '; altitude not supplied by this spawn record' : '')).join(' | ');
+}
+
+// Quest reference data share the existing world-coordinate map and inspector.
+let questAtlas = null;
+let questAtlasLoading = null;
+let selectedAtlasQuest = null;
+let questGiverPlacements = [];
+let selectedQuestMarks = [];
+let questSearchSequence = 0;
+async function loadQuestAtlas() {
+    if (!questAtlasLoading) questAtlasLoading = (async () => {
+        const response = await fetch('/api/map/quests');
+        if (!response.ok) throw Error('Quest atlas not prepared (HTTP ' + response.status + ').');
+        const data = await response.json();
+        if (data.schema_version !== 1 || data.world_id !== 0 || data.database_md5 !== mapAtlasData?.map_manifest.database_md5 || !data.quests || !data.placements)
+            throw Error('Quest atlas does not match this map.');
+        for (const p of Object.values(data.placements)) {
+            if (!Array.isArray(p.point) || p.point.length !== 3 || !p.point.slice(0,2).every(finiteMapNumber) || !(p.point[2] === null || finiteMapNumber(p.point[2])))
+                throw Error('Invalid quest placement coordinates.');
+        }
+        for (const q of Object.values(data.quests)) {
+            for (const o of [...q.givers, ...q.reporters, ...q.objectives]) {
+                if (o.placement_ids.some(id=>!data.placements[id])) throw Error('Quest placement reference missing.');
+                for (const a of o.areas) {
+                    if (!Array.isArray(a.point) || a.point.length !== 3 || !a.point.every(finiteMapNumber) || !finiteMapNumber(a.radius) || a.radius<=0)
+                        throw Error('Invalid quest area coordinates.');
+                }
+            }
+        }
+        questAtlas = data;
+        questGiverPlacements = Object.values(data.placements).filter(p=>p.kind==='npc' && data.giver_quests[p.template_id]);
+        const c=data.coverage;
+        mapEl('questAtlasStatus').textContent = `${c.quests} quests · ${c.giver_placements} giver placements · ${c.objectives_with_locations}/${c.objectives} objective acts located. Click a yellow giver or search.`;
+    })();
+    try { await questAtlasLoading; redrawMap(); return true; }
+    catch(error) { mapEl('questAtlasStatus').textContent=error.message; questAtlasLoading=null; return false; }
+}
+function questAtlasButton(q, target) {
+    const button=document.createElement('button');
+    button.className='map-btn'; button.style.cssText='display:block;width:100%;text-align:left;margin:3px 0';
+    button.textContent=`${q.id} · ${q.name} (level ${q.level ?? '?'})`;
+    button.onclick=()=>selectQuestAtlas(q.id);
+    target.append(button);
+}
+async function searchQuestAtlas() {
+    const sequence=++questSearchSequence;
+    if (!await loadQuestAtlas() || sequence !== questSearchSequence) return;
+    const value=mapEl('questSearch').value.trim().toLowerCase(), results=mapEl('questSearchResults');
+    results.replaceChildren();
+    if (!value) return;
+    const matches=Object.values(questAtlas.quests).filter(q=>String(q.id)===value || q.name.toLowerCase().includes(value));
+    matches.sort((a,b)=>(String(b.id)===value)-(String(a.id)===value) || a.level-b.level || a.id-b.id);
+    for (const q of matches.slice(0,30)) questAtlasButton(q,results);
+    const note=document.createElement('p'); note.className='map-note';
+    note.textContent=matches.length>30 ? `Showing 30 of ${matches.length}; narrow the search.` : `${matches.length} matches.`;
+    results.append(note);
+}
+function selectQuestAtlas(id) {
+    const q=questAtlas?.quests[id]; if (!q) return;
+    selectedAtlasQuest=q; selectedQuestMarks=[];
+    const panel=mapEl('questDetails'); panel.replaceChildren();
+    const title=document.createElement('strong'); title.textContent=`${q.name} · ${q.id}`; panel.append(title);
+    for (const [key,color,label] of [['givers','#facc15','Accept'],['reporters','#4ade80','Turn in'],['objectives','#fb7185','Objective']]) {
+        for (const [index,o] of q[key].entries()) {
+            const names=[...new Set(o.placement_ids.map(id=>questAtlas.placements[id].name))];
+            const note=document.createElement('p'); note.className='map-note';
+            const type=o.type.replace(/^QuestAct(?:Obj|Con)/,'').replace(/([a-z])([A-Z])/g,'$1 $2');
+            note.textContent=`${label} ${index+1}: ${o.display_alias || type}${o.details.count ? ' × '+o.details.count : ''} · ${names.join(', ') || 'No named placement'} · ${o.placement_ids.length} placements, ${o.areas.length} circles. ${o.notes.join(' ')}`;
+            note.style.borderLeft=`3px solid ${color}`; note.style.paddingLeft='5px';
+            panel.append(note);
+            for (const id of o.placement_ids) selectedQuestMarks.push({...questAtlas.placements[id],color,role:label});
+            for (const a of o.areas) selectedQuestMarks.push({...a,color:'#38bdf8',role:'Client component area',name:q.name});
+        }
+    }
+    const requirements=q.start_requirements.filter(r=>r.kind_id===31);
+    if (requirements.length) {
+        const note=document.createElement('p'); note.className='map-note';
+        note.textContent='Completed-quest references (other start conditions still apply):'; panel.append(note);
+        for (const r of requirements) {
+            const previous=questAtlas.quests[r.value1];
+            if (previous) questAtlasButton(previous,panel);
+        }
+    }
+    if (q.followups.length) {
+        const note=document.createElement('p'); note.className='map-note'; note.textContent='Quests referring to completion of this quest:'; panel.append(note);
+        for (const id of new Set(q.followups.map(r=>r.quest_id))) questAtlasButton(questAtlas.quests[id],panel);
+    }
+    mapEl('questSearchResults').replaceChildren(); redrawMap();
+}
+function clearQuestAtlas() {
+    ++questSearchSequence; selectedAtlasQuest=null; selectedQuestMarks=[];
+    for (const id of ['questSearchResults','questGiverResults','questDetails']) mapEl(id).replaceChildren();
+    redrawMap();
+}
+function focusQuestAtlas() {
+    if (!selectedQuestMarks.length) return mapNotice('This quest has no mapped main-world locations.');
+    const bounds=activeMap.bounds;
+    // Locate one actual placement; never draw an enormous invented objective box.
+    const p=selectedQuestMarks.find(m=>m.point[0]>=bounds.min_x && m.point[0]<=bounds.max_x && m.point[1]>=bounds.min_y && m.point[1]<=bounds.max_y) || selectedQuestMarks[0];
+    // Choose artwork that covers this point; these bounds are image extents, not zone borders.
+    const maps=mapAtlasData.map_manifest.maps.filter(m=>m.world_id===0 && m.kind==='zone' &&
+        p.point[0]>=m.bounds.min_x && p.point[0]<=m.bounds.max_x && p.point[1]>=m.bounds.min_y && p.point[1]<=m.bounds.max_y);
+    maps.sort((a,b)=>(a.bounds.max_x-a.bounds.min_x)*(a.bounds.max_y-a.bounds.min_y)-(b.bounds.max_x-b.bounds.min_x)*(b.bounds.max_y-b.bounds.min_y));
+    if (maps.length && activeMap.key!==maps[0].key) chooseMap(maps[0].key);
+    mapView.x=p.point[0]; mapView.y=p.point[1]; mapView.scale=Math.max(mapView.scale,0.35); redrawMap();
+}
+function drawQuestAtlas(ctx,width,height) {
+    if (!questAtlas || activeMap.world_id!==0) return;
+    const enabled=mapEl('layerQuestGivers')?.checked;
+    ctx.save();
+    const draw=(p,color,radius=0)=>{
+        const s=worldToScreen(p.point[0],p.point[1]), r=radius*mapView.scale;
+        if (s.x+r<-10 || s.y+r<-10 || s.x-r>width+10 || s.y-r>height+10) return;
+        ctx.strokeStyle=color; ctx.fillStyle=color; ctx.lineWidth=2;
+        if (radius) {
+            ctx.beginPath();ctx.arc(s.x,s.y,Math.max(r,2),0,Math.PI*2);ctx.globalAlpha=.12;ctx.fill();ctx.globalAlpha=1;ctx.stroke();
+        } else {
+            ctx.beginPath();ctx.arc(s.x,s.y,4,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#111827';ctx.stroke();
+        }
+    };
+    if (enabled) for (const p of questGiverPlacements) draw(p,'#facc15');
+    for (const p of selectedQuestMarks) draw(p,p.color,p.radius || 0);
+    ctx.restore();
+}
+function inspectQuestAtlas(point) {
+    const panel=mapEl('questGiverResults'); if (!panel || !questAtlas) return;
+    panel.replaceChildren();
+    const maxDistance=10 / mapView.scale;
+    const hits=questGiverPlacements.map(p=>({p,d:Math.hypot(point.x-p.point[0],point.y-p.point[1])})).filter(h=>h.d<=maxDistance).sort((a,b)=>a.d-b.d);
+    if (!hits.length) return;
+    const ids=new Set();
+    for (const {p} of hits.slice(0,5)) {
+        const title=document.createElement('strong');title.textContent=p.name+' · configured quest giver'; panel.append(title);
+        for (const id of questAtlas.giver_quests[p.template_id]) if (!ids.has(id)) { ids.add(id);questAtlasButton(questAtlas.quests[id],panel); }
+    }
+}

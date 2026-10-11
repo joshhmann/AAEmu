@@ -28,6 +28,9 @@ public sealed record RoadJunction
     [JsonPropertyName("routes")]
     public IReadOnlyList<string> Routes { get; init; } = [];
 
+    [JsonPropertyName("world_id")]
+    public uint? WorldId { get; init; }
+
     [JsonIgnore]
     public Vector3 Position => new(X, Y, Z);
 
@@ -61,6 +64,9 @@ public interface IRoadNetworkService
     /// Total number of road edges loaded in the network.
     /// </summary>
     int EdgeCount { get; }
+
+    /// <summary>Returns only evidenced, walkable geometry; candidate atlas links are excluded.</summary>
+    RoadTravelRoute? FindTravelRoute(Vector3 start, Vector3 destination, RoadTravelQuery query) => null;
 
     /// <summary>
     /// Finds the nearest road junction to the given position within <paramref name="maxRadius"/> meters.

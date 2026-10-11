@@ -49,6 +49,9 @@ public static class TravelBrainPlanner
         TravelDecision Decision,
         IReadOnlyList<Vector3> Route)
     {
+        /// <summary>The observation revision used for the cached road route.</summary>
+        public long? RoadRevision { get; init; }
+
         /// <summary>True when this wake produced a leg the caller must dispatch.</summary>
         public bool HasLeg => Decision.HasVerb;
 
@@ -118,7 +121,7 @@ public static class TravelBrainPlanner
     /// </param>
     public static Prepared Prepare(
         IGameplayActor actor, in Request request, IRoadNetworkService? roads = null,
-        string legOwner = "")
+        string legOwner = "", RoadTravelQuery? roadQuery = null)
     {
         ArgumentNullException.ThrowIfNull(actor);
 
@@ -157,12 +160,29 @@ public static class TravelBrainPlanner
             ? float.NaN
             : MathUtil.CalculateDistance(selfPosition, destination, false);
 
-        // ------------------------------------------------------ road route
+        // Road artwork and candidate atlas links are observations, not executable paths.
+        // Only a query bound to this actor's world instance may supply evidenced road geometry.
         var route = intent.Route;
-        if (route.Count == 0 && request.Kind == TravelTargetKind.Position && request.AllowRoute
-            && !float.IsNaN(distance) && distance > LocalThreshold(request.LocalModeMaxM))
+        var revision = intent.RoadRevision;
+        var actorWorldId = character?.ParentWorld?.Template?.Id ?? character?.Transform.WorldId ?? 0;
+        var actorInstanceId = character?.Transform.InstanceId ?? 0;
+        var queryMatches = roadQuery != null && character != null && destWorldKnown
+            && roadQuery.WorldId == actorWorldId && roadQuery.InstanceId == actorInstanceId
+            && destWorldId == actorWorldId && destInstanceId == actorInstanceId;
+        // A changed danger/capability observation is reconsidered at the ordinary leg boundary.
+        // Never replace a live actor request just because Prepare ran again.
+        if (!request.LegLive && revision.HasValue && (!queryMatches || revision != roadQuery!.Revision))
         {
-            route = BuildRoute(roads ?? RoadNetworkService.PeekInstance, selfPosition, destination);
+            route = [];
+            revision = null;
+        }
+        if (route.Count == 0 && !request.LegLive && queryMatches
+            && request.Kind == TravelTargetKind.Position && request.AllowRoute
+            && float.IsFinite(distance) && distance > LocalThreshold(request.LocalModeMaxM))
+        {
+            var resolved = BuildRoute(roads ?? RoadNetworkService.PeekInstance, selfPosition, destination, roadQuery!);
+            route = resolved?.Points.SkipWhile(p => Vector3.Distance(selfPosition, p) <= TravelBrain.DefaultArrivalRadiusM).ToArray() ?? [];
+            revision = resolved?.Revision;
         }
 
         var inputs = new TravelBrainInputs(
@@ -197,7 +217,7 @@ public static class TravelBrainPlanner
             ThreatObjId: request.ThreatObjId,
             ThreatPosition: request.ThreatPosition);
 
-        return new Prepared(inputs, TravelBrain.Decide(inputs), route);
+        return new Prepared(inputs, TravelBrain.Decide(inputs), route) { RoadRevision = revision };
     }
 
     /// <summary>
@@ -278,8 +298,7 @@ public static class TravelBrainPlanner
             return;
         }
 
-        if (prepared.Route.Count > 0)
-            TravelIntentStore.SetRoute(actorObjId, prepared.Route, legOwner);
+        TravelIntentStore.SetRoute(actorObjId, prepared.Route, legOwner, prepared.RoadRevision);
 
         if (prepared.Inputs.TargetKind != TravelTargetKind.Unit)
             return;
@@ -327,38 +346,16 @@ public static class TravelBrainPlanner
 
     /// <summary>
     /// The road route from the actor's position to the destination, as the ordered
-    /// waypoint list the intent walks (junction vectors only — the destination
+    /// waypoint list the intent walks (full evidenced geometry — the destination
     /// itself is the intent's own goal). Empty when no network is available or the
     /// two ends route through no junction — which reads as "no route", never as
     /// unreachability.
     /// </summary>
-    private static List<Vector3> BuildRoute(
-        IRoadNetworkService? roads, Vector3 start, Vector3 destination)
+    private static RoadTravelRoute? BuildRoute(
+        IRoadNetworkService? roads, Vector3 start, Vector3 destination, RoadTravelQuery query)
     {
-        if (roads == null)
-            return [];
-
-        IReadOnlyList<RoadJunction> path;
-        try
-        {
-            path = roads.FindRoadPath(start, destination);
-        }
-        catch
-        {
-            // A host whose network is malformed cannot route: the caller keeps its
-            // local leg rather than seeing a navigation failure.
-            return [];
-        }
-
-        var waypoints = new List<Vector3>(path.Count);
-        foreach (var junction in path)
-        {
-            var position = junction.Position;
-            if (Vector3.Distance(start, position) <= TravelBrain.DefaultArrivalRadiusM)
-                continue; // already in this junction's neighbourhood — never walk back to it
-            waypoints.Add(position);
-        }
-        return waypoints;
+        try { return roads?.FindTravelRoute(start, destination, query); }
+        catch { return null; } // ordinary local movement retains the destination
     }
 
     private static float LocalThreshold(float localModeMaxM)
