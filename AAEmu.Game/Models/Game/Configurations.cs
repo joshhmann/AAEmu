@@ -87,6 +87,14 @@ public class WorldConfig
     public int NpcRespawnMinSeconds { get; set; } = 90;
 
     /// <summary>
+    /// Explicit respawn interval for Normal/Weak NPCs from known single-member
+    /// spawners. Zero keeps the existing authored delays and floors. This is
+    /// intended for an opt-in testing profile; elite/boss and mixed/group
+    /// spawners retain their existing timing and population rules.
+    /// </summary>
+    public int NpcRespawnNormalOverrideSeconds { get; set; }
+
+    /// <summary>
     /// As NpcRespawnMinSeconds, but for NPCs whose npc_grade_id is at or above NpcRespawnEliteMinGrade. 0 disables
     /// (elites then use NpcRespawnMinSeconds).
     /// Configure in <c>AAEmu.Game/Configurations/World.json</c> under <c>World.NpcRespawnMinSecondsElite</c>.

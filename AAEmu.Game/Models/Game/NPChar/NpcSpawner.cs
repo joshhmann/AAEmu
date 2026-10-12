@@ -741,6 +741,23 @@ public class NpcSpawner : Spawner<Npc>
     }
 
     /// <summary>
+    /// Resolves an opted-in ordinary NPC interval without changing the shared
+    /// spawner timer. Mixed/group or unreadable definitions keep their original
+    /// timing, as do every elite/boss grade. Existing population and disabled
+    /// respawn guards remain at the scheduling call sites.
+    /// </summary>
+    private int GetRespawnDelaySeconds(Npc npc)
+    {
+        var interval = AppConfiguration.Instance.World?.NpcRespawnNormalOverrideSeconds ?? 0;
+        if (interval > 0
+            && npc?.Template is { Id: not 0, NpcGradeId: NpcGradeType.Normal or NpcGradeType.Weak } template
+            && Template?.Npcs is [{ MemberType: "Npc", MemberId: var memberId }]
+            && memberId == template.Id)
+            return interval;
+        return RespawnTime;
+    }
+
+    /// <summary>
     /// Decreases the spawn count and handles respawn logic for the specified NPC.
     /// </summary>
     internal void DoDespawn(Npc npc)
@@ -756,7 +773,10 @@ public class NpcSpawner : Spawner<Npc>
                     IncrementCount(true);
                     //Logger.Info($"Scheduled respawn for NPC {UnitId}:{SpawnerId}:{npc.ObjId} in {RespawnTime} seconds.");
                     var deathTime = npc.DeadTime == DateTime.MinValue ? DateTime.UtcNow : npc.DeadTime;
-                    npc.Respawn = deathTime.AddSeconds(RespawnTime);
+                    var delaySeconds = GetRespawnDelaySeconds(npc);
+                    npc.Respawn = deathTime.AddSeconds(delaySeconds);
+                    if (delaySeconds != RespawnTime)
+                        Logger.Info($"NPC respawn interval override: template={npc.TemplateId} spawner={SpawnerId} delaySeconds={delaySeconds} originalSeconds={RespawnTime} due={npc.Respawn:O}");
                     npc.ParentWorld.SpawnManager.AddRespawn(npc);
                 }
                 else
@@ -821,7 +841,7 @@ public class NpcSpawner : Spawner<Npc>
         // Schedules respawn if necessary
         if (RespawnTime > 0 && AreOtherNpcsInSpawnZone().Item2 < Template.MaxPopulation)
         {
-            npc.Respawn = DateTime.UtcNow.AddSeconds(RespawnTime);
+            npc.Respawn = DateTime.UtcNow.AddSeconds(GetRespawnDelaySeconds(npc));
             npc.ParentWorld.SpawnManager.AddRespawn(npc);
             // Логика изменения _scheduledCount (если требуется) остаётся неизменной
             var newScheduledCount = Interlocked.Increment(ref _scheduledCount);
