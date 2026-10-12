@@ -1930,7 +1930,11 @@ public class GameplayActor : IGameplayActor
         var caster = new SkillItem(Character.ObjId, item.Id, item.TemplateId);
         var castTarget = SkillCastTarget.GetByType(SkillCastTargetType.Unit);
         castTarget.ObjId = target.ObjId;
-        var result = skill.Use(Character, caster, castTarget, null, false, out _);
+        // Retain the ordinary skill-object metadata through both cast paths.
+        // Skill.Use only normalizes its local argument; passing null again to
+        // the manual completion would omit the fired packet's mandatory flag.
+        var skillObject = new SkillObject();
+        var result = skill.Use(Character, caster, castTarget, skillObject, false, out _);
         if (result != SkillResult.Success)
             return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} use refused by engine: {result}");
 
@@ -1946,7 +1950,7 @@ public class GameplayActor : IGameplayActor
         if (Character.SkillTask != null)
         {
             Character.SkillTask = null;
-            skill.Cast(Character, caster, target, castTarget, null);
+            skill.Cast(Character, caster, target, castTarget, skillObject);
             skill.Cancelled = true;
         }
 
