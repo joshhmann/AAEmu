@@ -331,7 +331,7 @@ public class LootingContainer(IBaseUnit owner)
                     if (LootOwner is Npc npc)
                     {
                         if (npc.Spawner != null)
-                            minimumDespawnTime = CreationTime.AddSeconds(npc.Spawner.DespawnTime);
+                            minimumDespawnTime = CreationTime.AddSeconds(npc.Spawner.GetEmptyCorpseDespawnDelaySeconds(npc));
                         if (minimumDespawnTime < DateTime.UtcNow)
                             minimumDespawnTime = DateTime.UtcNow.AddSeconds(PostLootMinimumDespawnTime);
                         npc.Despawn = minimumDespawnTime;

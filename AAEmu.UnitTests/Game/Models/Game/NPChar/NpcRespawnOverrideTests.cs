@@ -4,6 +4,8 @@ using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.NPChar;
+using AAEmu.Game.Models.Game.Items.Containers;
+using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -155,6 +157,72 @@ public class NpcRespawnOverrideTests
         npc.Respawn = DateTime.UtcNow.AddSeconds(-1);
         await Assert.That(Ready(manager)).Contains(npc);
         await Assert.That(spawner.RespawnTime).IsEqualTo(48);
+    }
+
+    [Test]
+    [Arguments(NpcGradeType.Normal, 15, 48, 15)]
+    [Arguments(NpcGradeType.Normal, 15, 0, 20)]
+    [Arguments(NpcGradeType.Normal, 0, 48, 20)]
+    [Arguments(NpcGradeType.BossA, 15, 48, 20)]
+    public async Task EmptyCorpse_UsesIntervalWithoutChangingSharedCleanup(
+        NpcGradeType grade, int normalOverride, int originalDelay, int expectedDelay)
+    {
+        var (npc, spawner, _) = Create(grade, originalDelay, normalOverride);
+        npc.Hp = 0;
+        var before = DateTime.UtcNow;
+        spawner.DoDespawn(npc);
+        var after = DateTime.UtcNow;
+        await Assert.That(npc.Despawn >= before.AddSeconds(expectedDelay)
+            && npc.Despawn <= after.AddSeconds(expectedDelay)).IsTrue();
+        await Assert.That(spawner.DespawnTime).IsEqualTo(20);
+        await Assert.That((bool)typeof(NpcSpawner).GetMethod("HasCorpse",
+            BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(spawner, null)!).IsTrue();
+    }
+
+    [Test]
+    [Arguments(NpcGradeType.Normal)]
+    [Arguments(NpcGradeType.BossA)]
+    public async Task CorpseWithLoot_KeepsFullOriginalRetention(NpcGradeType grade)
+    {
+        var (npc, spawner, _) = Create(grade, 48);
+        var loot = new LootingContainer(npc);
+        loot.Items.Add(0, new LootingContainerItemEntry { Owner = loot, ItemIndex = 0 });
+        typeof(Npc).GetProperty("LootingContainer")!.SetValue(npc, loot);
+        var before = DateTime.UtcNow;
+        spawner.DoDespawn(npc);
+        var after = DateTime.UtcNow;
+        var retained = 20 + LootingContainer.LootDespawnExtensionTime;
+        await Assert.That(npc.Despawn >= before.AddSeconds(retained)
+            && npc.Despawn <= after.AddSeconds(retained)).IsTrue();
+        await Assert.That(loot.Items.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    [Arguments(NpcGradeType.Normal, 15, 10, 15)]
+    [Arguments(NpcGradeType.Normal, 0, 10, 20)]
+    [Arguments(NpcGradeType.BossA, 15, 10, 20)]
+    [Arguments(NpcGradeType.Normal, 15, 30, 2)]
+    public async Task NativeEmptyLootUpdate_PreservesGraceAndProtectedGrades(
+        NpcGradeType grade, int normalOverride, int age, int expectedDelay)
+    {
+        var (npc, spawner, _) = Create(grade, 48, normalOverride);
+        var loot = new LootingContainer(npc);
+        var created = DateTime.UtcNow.AddSeconds(-age);
+        typeof(LootingContainer).GetProperty("CreationTime",
+            BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(loot, created);
+        var ownerType = typeof(LootingContainer).GetProperty("LootOwnerType",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+        ownerType.SetValue(loot, Enum.Parse(ownerType.PropertyType, "Npc"));
+        var before = DateTime.UtcNow;
+        typeof(LootingContainer).GetMethod("UpdateLootState",
+            BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(loot, null);
+        var after = DateTime.UtcNow;
+        if (age == 30)
+            await Assert.That(npc.Despawn >= before.AddSeconds(expectedDelay)
+                && npc.Despawn <= after.AddSeconds(expectedDelay)).IsTrue();
+        else
+            await Assert.That(npc.Despawn).IsEqualTo(created.AddSeconds(expectedDelay));
+        await Assert.That(spawner.DespawnTime).IsEqualTo(20);
     }
 
     [Test]

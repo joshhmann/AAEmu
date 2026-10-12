@@ -746,7 +746,7 @@ public class NpcSpawner : Spawner<Npc>
     /// timing, as do every elite/boss grade. Existing population and disabled
     /// respawn guards remain at the scheduling call sites.
     /// </summary>
-    private int GetRespawnDelaySeconds(Npc npc)
+    private int GetNormalRespawnOverrideSeconds(Npc npc)
     {
         var interval = AppConfiguration.Instance.World?.NpcRespawnNormalOverrideSeconds ?? 0;
         if (interval > 0
@@ -754,7 +754,26 @@ public class NpcSpawner : Spawner<Npc>
             && Template?.Npcs is [{ MemberType: "Npc", MemberId: var memberId }]
             && memberId == template.Id)
             return interval;
-        return RespawnTime;
+        return 0;
+    }
+
+    private int GetRespawnDelaySeconds(Npc npc)
+    {
+        var interval = GetNormalRespawnOverrideSeconds(npc);
+        return interval > 0 ? interval : RespawnTime;
+    }
+
+    /// <summary>
+    /// Empty corpses may clear at the opted-in ordinary respawn interval.
+    /// Corpses still holding loot retain their original lifetime; callers use
+    /// this only when no items remain. Shared spawner timing is unchanged.
+    /// </summary>
+    internal int GetEmptyCorpseDespawnDelaySeconds(Npc npc)
+    {
+        var interval = GetNormalRespawnOverrideSeconds(npc);
+        return RespawnTime > 0 && interval > 0
+            ? Math.Min(DespawnTime, interval)
+            : DespawnTime;
     }
 
     /// <summary>
@@ -776,7 +795,7 @@ public class NpcSpawner : Spawner<Npc>
                     var delaySeconds = GetRespawnDelaySeconds(npc);
                     npc.Respawn = deathTime.AddSeconds(delaySeconds);
                     if (delaySeconds != RespawnTime)
-                        Logger.Info($"NPC respawn interval override: template={npc.TemplateId} spawner={SpawnerId} delaySeconds={delaySeconds} originalSeconds={RespawnTime} due={npc.Respawn:O}");
+                        Logger.Info($"NPC respawn interval override: template={npc.TemplateId} spawner={SpawnerId} delaySeconds={delaySeconds} originalSeconds={RespawnTime} due={npc.Respawn:O} died={npc.DeadTime:O} hp={npc.Hp} oldObj={npc.ObjId} world={npc.ParentWorld?.Id} x={Position?.X:R} y={Position?.Y:R}");
                     npc.ParentWorld.SpawnManager.AddRespawn(npc);
                 }
                 else
@@ -794,6 +813,13 @@ public class NpcSpawner : Spawner<Npc>
                 {
                     npc.Despawn += TimeSpan.FromSeconds(LootingContainer.LootDespawnExtensionTime);
                     //Logger.Info($"Extended despawn time in {LootingContainer.LootDespawnExtensionTime} seconds for NPC {UnitId}:{SpawnerId}:{npc.ObjId} due to items in looting container.");
+                }
+
+                else
+                {
+                    var emptyCorpseDelay = GetEmptyCorpseDespawnDelaySeconds(npc);
+                    if (emptyCorpseDelay != DespawnTime)
+                        npc.Despawn = DateTime.UtcNow.AddSeconds(emptyCorpseDelay);
                 }
 
                 // Adds the NPC to the despawn list
@@ -1037,6 +1063,13 @@ public class NpcSpawner : Spawner<Npc>
 
         // Update spawn count
         DecrementCount(spawnedNpcs);
+        // Report the resulting native world object, not just a queued deadline
+        // or the creation attempt logged before Npc.Spawn. This is limited to
+        // the opted-in ordinary testing interval.
+        foreach (var npc in spawnedNpcs)
+            if (GetNormalRespawnOverrideSeconds(npc) > 0
+                && ReferenceEquals(npc.ParentWorld.GetNpc(npc.ObjId), npc))
+                Logger.Info($"NPC ordinary spawn confirmed: template={npc.TemplateId} spawner={SpawnerId} newObj={npc.ObjId} hp={npc.Hp} world={npc.ParentWorld?.Id} x={Position?.X:R} y={Position?.Y:R}");
         //Logger.Debug($"[Spawn] Updated spawn count for SpawnerId={SpawnerId}, Current count={CurrentSpawnCount}");
     }
 
