@@ -1,5 +1,7 @@
 # ArcheAge Slums — Roadmap & Milestones (locked-shape 2026-08-03; version number retired 2026-08-04 — v1/v4/v6/v7 label drift, the date is canonical)
 
+**Current .165 rollout — E171 / D66:** the user authorized replacement of the active cohort and25freshself-directedbots. The first verified Gameimage failed before enrollment while loading existing persistentDoodads; previousGameimage was restored. Old25bots left normally and all269characterrecords were preserved. The narrow repair keeps a supplied world reference during startup while preserving publication only after full initialization. Newcohort/deployment acceptance remains pending; no quest/target assignment, fakeprogress, H or parentpromotion. [Deployment and startup repair](scorecard-explorations/playerbot-testing-deploy-2026-10-11.md).
+
 E168 combined integration checks passed on the preserved candidate and inherited develop changes. All ten pending code/test files are byte-identical to the tested candidate; docs and dashboard reconciliation preserves E167boundedPASS/E163FAILED/H/parent limits. Full4513unitpass/1namedskip, archaeology163pass, focused240pass, dashboard44/7/5/privatebrowser0errors. This is local checkpoint evidence, not deployment. Next: prepare a bounded .165 rollout preserving its263registered/25active population and dirty runtime configuration, with verified image, backup/rollback and existing dashboard connection. [Checkpoint](scorecard-explorations/quest-integration-checkpoint-2026-10-11.md).
 
 

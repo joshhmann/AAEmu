@@ -1,5 +1,7 @@
 # AAEmu project control
 
+**Current .165 rollout — E171 / D66:** the user authorized replacement of the active cohort and25freshself-directedbots. The first verified Gameimage failed before enrollment while loading existing persistentDoodads; previousGameimage was restored. Old25bots left normally and all269characterrecords were preserved. The narrow repair keeps a supplied world reference during startup while preserving publication only after full initialization. Newcohort/deployment acceptance remains pending; no quest/target assignment, fakeprogress, H or parentpromotion. [Deployment and startup repair](scorecard-explorations/playerbot-testing-deploy-2026-10-11.md).
+
 **Placement:** this is the repository-root working page for the current control
 rollup. `STATUS.md`, `ROADMAP.md`, `SCORECARD.md`, and `EVIDENCE-LEDGER.md`
 are the authoritative records; this page links to them and keeps the objective

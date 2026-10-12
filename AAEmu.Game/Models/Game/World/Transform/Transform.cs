@@ -72,10 +72,17 @@ public class Transform : IDisposable
                 _instanceId = value;
                 if (GameObject != null)
                 {
-                    GameObject.ParentWorld = WorldManager.PeekInstance?.GetWorld(value);
-                    WorldId = GameObject.ParentWorld?.Template?.Id ?? WorldManager.DefaultWorldTemplateId;
+                    // ParentWorld also synchronizes InstanceId. A world still
+                    // loading persistent Doodads is not published yet, so retain
+                    // that explicit reference instead of looking it up again.
+                    if (GameObject.ParentWorld?.Id != value)
+                        GameObject.ParentWorld = WorldManager.PeekInstance?.GetWorld(value);
                 }
             }
+            // An explicit ParentWorld rebind can keep the instance ID while
+            // replacing its template; synchronize that cache as well.
+            if (GameObject != null)
+                WorldId = GameObject.ParentWorld?.Template?.Id ?? WorldManager.DefaultWorldTemplateId;
         }
     }
 
