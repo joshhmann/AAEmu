@@ -2,6 +2,10 @@
 
 The packet repair is deployed on .165, and all 25 original bots remain active with saved progress (E179/D70). The fresh bounded server observation completed at its absolute 15-minute deadline. The generic human client error still needs a client recheck. The earlier interrupted window and failed startup remain historical failures/partial evidence, not retroactively accepted.
 
+## Server-log follow-up — E180
+
+The user has no client debugging output. A read-only check through 2026-10-12 02:36:35 UTC found no packet-writing exception in Game Docker logs (36,690 lines; 100,000-line bound not hit), Login logs (107 lines; 5,000 bound not hit), or the native Game error file (five lines; 1,000 bound not hit). The repaired server has logged 15 ordinary uses of item 7738/skill 11596. Five partial inventory-deletion errors recur about five minutes apart; their cause and client relationship remain unknown. Login disconnect records contain no exceptions; no named Asssaa Game session appears after redeployment. The old saved log contains the 01:30:37 packet-writing null exception near Qocte's quest-item use. No client debugger is needed, but server logs alone still cannot certify the client's interpretation of every packet. No runtime changes or new acceptance grades. Raw logs and review receipt are in the existing artifact root as `packet-followup-*.log` and `packet-followup-log-review.json`.
+
 ## Final observation and delivery
 
 The fixed window contains 30 complete snapshots at 30-second intervals, last at elapsed 870 seconds. The deadline watcher terminated the exact collector at 02:32:43.255505 UTC; the next sample was in flight, so there is no natural collector-ended receipt. An independent 02:33:00 runtime/DB check confirms all 25 active, original IDs, 294 total characters, prior completed flags preserved, appearance unchanged and levels not reset. Every complete snapshot reports 25 active, zero API errors and no container/resource-cap fault. No restart, OOM or observed stuck recovery relocation. This is bounded authenticated real-server evidence, not a formal new Tier 2 test or human acceptance.
