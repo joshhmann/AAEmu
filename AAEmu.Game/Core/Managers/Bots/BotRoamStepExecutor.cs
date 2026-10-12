@@ -249,8 +249,8 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>Actor factory seam (tests inject a recording actor).</summary>
     public Func<Character, IGameplayActor> ActorFactory { get; init; } = c => new GameplayActor(c);
 
-    /// <summary>Walk speed for roam legs (m/s — walking pace, matches ActorFlags walk).</summary>
-    public float RoamSpeed { get; init; } = 2.5f;
+    /// <summary>Default running pace for ordinary and quest routes; explicit slower routes remain supported.</summary>
+    public float RoamSpeed { get; init; } = 5f;
 
     /// <summary>Per-leg navigation budget (longer than the actor default so a full route leg never times out mid-walk).</summary>
     public TimeSpan RoamLegTimeout { get; init; } = TimeSpan.FromSeconds(60);
@@ -259,9 +259,10 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// The distance one quest-travel leg can HONESTLY walk: the leg's own
     /// constants (<see cref="RoamSpeed"/> m/s x <see cref="RoamLegTimeout"/>
     /// seconds) cut by <see cref="BotPath.TravelChunkEnvelopeMargin"/>. At the
-    /// production defaults that is 2.5 x 60 x 0.5 = 75 m of leg.
+    /// production defaults the derived 150 m is capped by the existing
+    /// 75 m stuck-recovery envelope, so every chunk remains recoverable.
     ///
-    /// WHY THE MARGIN IS 0.5. The raw product (150 m) is the reach of a leg
+    /// WHY THE MARGIN IS 0.5. The raw product (300 m) is the reach of a leg
     /// that walks in a straight line at full speed from a standing start and
     /// arrives exactly as the budget expires. A real leg never does: the bot
     /// re-arms, turns and accelerates from rest on every waypoint, and the
@@ -279,9 +280,9 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// This is a DISTANCE, not a policy change: the budget itself is
     /// untouched and still correctly halts a leg mid-flight.
     /// </summary>
-    internal float QuestTravelChunkMeters => (float)(
+    internal float QuestTravelChunkMeters => Math.Min(QuestStuckRecoveryMaxDistance, (float)(
         RoamSpeed * (RoamLegTimeout > TimeSpan.Zero ? RoamLegTimeout.TotalSeconds : 0d)
-        * BotPath.TravelChunkEnvelopeMargin);
+        * BotPath.TravelChunkEnvelopeMargin));
 
     /// <summary>
     /// Builds a quest-travel ROUTE from <paramref name="from"/> (the bot's live

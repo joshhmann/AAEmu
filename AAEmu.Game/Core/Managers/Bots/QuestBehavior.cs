@@ -854,6 +854,21 @@ public static class QuestBehavior
             LootTravelDispatch.EndJourneyForPin(actor.ActorId);
             stale = null;
         }
+        // A remembered foreign claim is unavailable while the container is
+        // closed. Release only this approach/pin, without marking it looted:
+        // eligible alternatives can win now and ordinary Public can readmit it.
+        if (stale != null && character != null &&
+            character.ParentWorld?.GetNpc(stale.ObjId) is { Hp: <= 0 } unavailable &&
+            unavailable.LootingContainer.GetNpcLootPermission(character) == false)
+        {
+            lock (PursuitSync)
+            {
+                LastCorpse.Remove(actor.ActorId);
+                LastApproachIssue.Remove(actor.ActorId);
+            }
+            LootTravelDispatch.EndJourneyForPin(actor.ActorId);
+            stale = null;
+        }
         // A hold is only ABANDONED in favour of a pursuit issue record that has
         // something to say: the hold memory is SHARED by all five Stop legs
         // (pursuit, return, gather, interact, talk), so "the last Stop landed" is
@@ -884,7 +899,8 @@ public static class QuestBehavior
         {
             var fresh = character?.ParentWorld?.GetNpc(pin);
             if (fresh != null && fresh.Hp <= 0 && fresh.TemplateId == funnel.Fixture.PreyTemplate
-                && !IsTerminalEmptyCorpse(character, fresh))
+                && !IsTerminalEmptyCorpse(character, fresh)
+                && (character == null || fresh.LootingContainer.GetNpcLootPermission(character) != false))
             {
                 NotePinnedCorpse(actor.ActorId, fresh.ObjId, fresh.TemplateId, funnel.Fixture, opts.CycleId, LootCorpseIdentity.GetToken(fresh));
                 var freshProbe = ProbeCorpse(character, fresh);
@@ -997,7 +1013,8 @@ public static class QuestBehavior
             // ordinary arms instead of shadowing them.
             if (npc != null && npc.Hp <= 0 && npc.TemplateId == funnel.Fixture.PreyTemplate
                 && !IsLootDispatched(actor.ActorId, npc)
-                && !IsTerminalEmptyCorpse(character, npc))
+                && !IsTerminalEmptyCorpse(character, npc)
+                && (character == null || npc.LootingContainer.GetNpcLootPermission(character) != false))
             {
                 NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId, LootCorpseIdentity.GetToken(npc));
                 var probeNow = ProbeCorpse(character, npc);
@@ -1100,6 +1117,11 @@ public static class QuestBehavior
             // corpse anyone ELSE took is untouched — this is owner-scoped, and
             // the engine's own ownership gates still decide such a corpse.
             if (IsLootDispatched(actor.ActorId, npc))
+                continue;
+            // Generated NPC eligibility survives cleared death tags. Withhold a
+            // closed foreign corpse without banking a terminal skip; Public
+            // release can make this same corpse useful on a later observation.
+            if (npc.LootingContainer.GetNpcLootPermission(character) == false)
                 continue;
             // TERMINAL-EMPTY EXCLUSION (contended-corpse race: a second
             // actor pins a corpse ANY killer already emptied — container
@@ -4699,7 +4721,7 @@ public static class QuestBehavior
         static string Num(double value)
             => double.IsNaN(value) ? "NA" : value.ToString("F1", CultureInfo.InvariantCulture);
         var rows = funnel.Candidates.Select(c =>
-            $"{c.ObjId}:{c.TemplateId}:{(c.QuestRelevant ? 1 : 0)}:{(c.CombatLegal ? 1 : 0)}:{Num(c.DistanceM)}:{c.Reject}");
+            $"{c.ObjId}:{c.TemplateId}:{(c.QuestRelevant ? 1 : 0)}:{(c.CombatLegal ? 1 : 0)}:{Num(c.DistanceM)}:{c.Reject}:claim={(c.HasCompetingClaim ? 1 : 0)}");
         SweepDiagLog.Info(
             "QuestObjectiveTargetDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} objective=[{Objective}] source=[{Source}] " +
             "relevance={Relevance} have={Have} need={Need} raw={Raw} relevant={Relevant} legal={Legal} " +
@@ -5151,7 +5173,7 @@ public static class QuestBehavior
     /// G7c loot dispatch: the quest-owned corpse take through the live actor's
     /// canonical <c>Loot</c> verb (the exact CSLootOpenBagPacket lootAll call)
     /// with the per-corpse idempotency key. A terminal outcome (Completed or
-    /// Rejected — the verb ran its course) records the loot-once memory so the
+    /// Rejected — except a pre-execution permission denial) records the loot-once memory so the
     /// proposal withholds this corpse on every later wake. A non-terminal
     /// outcome (a live leg holds the actor) records nothing, so the next wake
     /// retries cleanly. Public actor verbs only.
@@ -5162,6 +5184,14 @@ public static class QuestBehavior
         ActorRequest request;
         if (gameplayActor is GameplayActor concrete)
             request = concrete.Loot(prepared, proposal.IdempotencyKey);
+        else if (prepared.IsCurrent && ReferenceEquals(gameplayActor.Character, prepared.ExpectedCharacter)
+            && !prepared.HasLootPermission)
+        {
+            request = new ActorRequest(ActorActionType.Loot, proposal.TargetId, null, 0, null,
+                idempotencyKey: proposal.IdempotencyKey);
+            request.Accept("loot permission validation");
+            request.Reject(ActorFailureReason.RejectedAction, GameplayActor.LootPermissionDenied);
+        }
         else if (prepared.IsCurrent && ReferenceEquals(gameplayActor.Character, prepared.ExpectedCharacter))
             request = gameplayActor.Loot(proposal.TargetId, proposal.IdempotencyKey);
         else
@@ -5171,7 +5201,7 @@ public static class QuestBehavior
             request.Accept("loot proposal validation");
             request.Reject(ActorFailureReason.StateTransition, "Observed corpse was replaced before Loot dispatch.");
         }
-        if (request.IsTerminal && prepared.IsCurrent
+        if (request.IsTerminal && !GameplayActor.IsLootPermissionDenial(request) && prepared.IsCurrent
             && ReferenceEquals(gameplayActor.Character, prepared.ExpectedCharacter)
             && gameplayActor.ActorId == prepared.Inputs.ActorObjId
             && proposal.TargetId == prepared.Inputs.CorpseObjId)
@@ -5183,8 +5213,8 @@ public static class QuestBehavior
                 LootedCorpses[(gameplayActor.ActorId, proposal.TargetId)] = prepared.CorpseToken;
             }
             // The decision layer's own bank of the same fact: a take is recorded
-            // only for a Loot verb that actually ran its terminal course, so the
-            // ledger never claims a take the actor refused.
+            // for the existing terminal course, excluding permission denials
+            // before engine execution so ordinary Public can readmit that key.
             LootBrainPlanner.PublishTake(prepared, DateTime.UtcNow);
             // The corpse this leg was walking to is DONE: the approach journey is over
             // (owner-scoped, so no other leg's journey on this actor is dropped), and a

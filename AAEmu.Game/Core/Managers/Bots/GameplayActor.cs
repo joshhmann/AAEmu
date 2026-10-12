@@ -1835,6 +1835,13 @@ public class GameplayActor : IGameplayActor
     public ActorRequest Loot(uint lootOwnerObjId, string? idempotencyKey = null)
         => LootCore(lootOwnerObjId, idempotencyKey, null);
 
+    internal const string LootPermissionDenied = "Generated NPC loot is not yet available to this character.";
+
+    internal static bool IsLootPermissionDenial(ActorRequest request)
+        => request.Action == ActorActionType.Loot && request.State == ActorLifecycleState.Rejected &&
+           request.Failure == ActorFailureReason.RejectedAction &&
+           request.Detail == $"{ActorFailureReason.RejectedAction}: {LootPermissionDenied}";
+
     // Quest proposals bind the observed NPC, while public Loot retains its
     // ordinary object-number API. Both use the same request and OpenBag path.
     internal ActorRequest Loot(in Loot.LootBrainPlanner.Prepared prepared, string? idempotencyKey)
@@ -1848,6 +1855,8 @@ public class GameplayActor : IGameplayActor
 
         if (expected is { } binding && (!binding.IsCurrent || !ReferenceEquals(Character, binding.ExpectedCharacter)))
             return Reject(request, ActorFailureReason.StateTransition, "Observed corpse was replaced before Loot dispatch.");
+        if (expected is { } permission && !permission.HasLootPermission)
+            return Reject(request, ActorFailureReason.RejectedAction, LootPermissionDenied);
         var owner = Character.ParentWorld?.GetBaseUnit(lootOwnerObjId);
         if (expected is { } observed && !ReferenceEquals(owner, observed.ExpectedCorpse))
             return Reject(request, ActorFailureReason.StateTransition, "Observed corpse was replaced during Loot resolution.");

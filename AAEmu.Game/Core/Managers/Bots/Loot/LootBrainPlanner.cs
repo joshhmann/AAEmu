@@ -45,6 +45,9 @@ public static class LootBrainPlanner
         internal WorldInstance? ExpectedWorld { get; init; }
         internal long CorpseToken { get; init; }
 
+        internal bool HasLootPermission => ExpectedCharacter != null &&
+            ExpectedCorpse?.LootingContainer.GetNpcLootPermission(ExpectedCharacter) != false;
+
         internal bool IsCurrent => CorpseResolved && ExpectedCharacter != null && ExpectedCorpse != null
             && ExpectedWorld != null && CorpseToken != 0
             && ExpectedCharacter.ObjId == Inputs.ActorObjId
@@ -135,6 +138,17 @@ public static class LootBrainPlanner
 
         // ------------------------------------------------------------ claims
         var evidence = ReadClaimEvidence(character, corpse, actor.ActorId);
+        // Death clears live tags, but the generated container retains earned
+        // eligibility. Read that authority first; raw fixtures keep the existing
+        // tagging classifier. Public access is the container's own transition.
+        var permission = character != null && corpse != null
+            ? corpse.LootingContainer.GetNpcLootPermission(character) : null;
+        var ownership = permission switch
+        {
+            false => LootOwnership.Foreign,
+            true => LootOwnership.Self,
+            null => LootBrain.ClassifyOwnership(evidence, corpseIsOurPinnedCorpse: corpseObjId != 0)
+        };
 
         // ------------------------------------------------------------ safety
         var (safetyResolved, safe, nearestHostile, corpseDistance) =
@@ -152,7 +166,7 @@ public static class LootBrainPlanner
             CorpseObjId: corpseObjId,
             SurvivalVetoed: survivalVetoed,
             CorpseState: corpseState,
-            Ownership: LootBrain.ClassifyOwnership(evidence, corpseIsOurPinnedCorpse: corpseObjId != 0),
+            Ownership: ownership,
             ContainerReadable: containerReadable,
             ContainerItemCount: containerCount,
             ContainerInRange: containerInRange,

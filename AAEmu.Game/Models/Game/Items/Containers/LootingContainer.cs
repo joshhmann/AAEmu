@@ -121,9 +121,9 @@ public class LootingContainer(IBaseUnit owner)
             var lootGoldRate = 1f;
 
             // Check all people with a claim on the NPC
-            EligiblePlayers.Clear();
+            var eligiblePlayers = new HashSet<Character>();
             KillerTeam = TeamManager.Instance.GetActiveTeam(npc.CharacterTagging.TagTeam);
-            TeamLootingRule = KillerTeam?.LootingRule.Clone() ?? new LootingRule
+            var teamLootingRule = KillerTeam?.LootingRule.Clone() ?? new LootingRule
             {
                 LootMethod = LootingRuleMethod.FreeForAll,
             };
@@ -144,36 +144,36 @@ public class LootingContainer(IBaseUnit owner)
                         if (member.Character.GetDistanceTo(npc) <= MaxLootingRange)
                         {
                             //This player is in range of the mob and in a group with tagging rights.
-                            EligiblePlayers.Add(member.Character);
+                            eligiblePlayers.Add(member.Character);
                         }
                     }
                 }
                 else if (npc.CharacterTagging.Tagger != null)
                 {
                     // If a team tag, but no valid team found then use the tagger
-                    EligiblePlayers.Add(npc.CharacterTagging.Tagger);
+                    eligiblePlayers.Add(npc.CharacterTagging.Tagger);
                 }
             }
             else if (npc.CharacterTagging.Tagger != null)
             {
                 // Set to FreeForAll when only the tagger has rights
-                TeamLootingRule = new LootingRule
+                teamLootingRule = new LootingRule
                 {
                     LootMethod = LootingRuleMethod.FreeForAll,
                     MinimumGrade = 0,
                     LootMaster = (Killer as Character)?.Id ?? 0
                 };
                 // A player has tag rights
-                EligiblePlayers.Add(npc.CharacterTagging.Tagger);
+                eligiblePlayers.Add(npc.CharacterTagging.Tagger);
             }
 
             // Calculate required drop-rate multipliers
-            if (EligiblePlayers.Count > 0)
+            if (eligiblePlayers.Count > 0)
             {
                 var maxDropRateMul = -100f;
                 var maxLootGoldMul = -100f;
 
-                foreach (var pl in EligiblePlayers)
+                foreach (var pl in eligiblePlayers)
                 {
                     var aggroDropMul = (100f + pl.DropRateMul) / 100f;
                     var aggroGoldMul = (100f + pl.LootGoldMul) / 100f;
@@ -204,7 +204,16 @@ public class LootingContainer(IBaseUnit owner)
                 lootDropRate *= (100f + player.DropRateMul) / 100f;
                 lootGoldRate *= (100f + player.LootGoldMul) / 100f;
                 Logger.Info($"Unit killed without aggro: {npc.ObjId} ({npc.TemplateId}) by {player.Name}");
-                EligiblePlayers.Add(player);
+                eligiblePlayers.Add(player);
+            }
+
+            // Publish a complete claim snapshot. Permission readers must not
+            // enumerate a party HashSet while generation is still filling it.
+            lock (ItemsLock)
+            {
+                TeamLootingRule = teamLootingRule;
+                EligiblePlayers.Clear();
+                EligiblePlayers.UnionWith(eligiblePlayers);
             }
 
             // Base ID used for identifying the loot
@@ -346,6 +355,11 @@ public class LootingContainer(IBaseUnit owner)
         KeyValuePair<ushort, LootingContainerItemEntry>[] lootItems = [];
         lock (ItemsLock)
         {
+            if (GetNpcLootPermissionLocked(player) == false)
+            {
+                player.SendErrorMessage(ErrorMessageType.NoPermissionToLoot);
+                return;
+            }
             OpenedBy.Add(player);
 
             if (lootAll)
@@ -402,6 +416,24 @@ public class LootingContainer(IBaseUnit owner)
         }
     }
 
+    // The generated container retains the earned claim after NPC death clears
+    // live tagging. Null means this container has no NPC claim snapshot; keep
+    // its existing rules. Public loot still enforces each item's quest/roll rules.
+    internal bool? GetNpcLootPermission(Character player)
+    {
+        lock (ItemsLock)
+            return GetNpcLootPermissionLocked(player);
+    }
+
+    private bool? GetNpcLootPermissionLocked(Character player)
+    {
+        if (LootOwnerType != LootOwnerType.Npc || !AlreadyGenerated ||
+            EligiblePlayers.Count == 0 || TeamLootingRule == null)
+            return null;
+        return TeamLootingRule.LootMethod == LootingRuleMethod.Public ||
+               EligiblePlayers.Any(eligible => eligible.Id == player.Id);
+    }
+
     private bool TryTakeLootLocked(Character player, ushort itemIndex, LootingContainerItemEntry itemEntry, bool didLootAll)
     {
         var lootTarget = player;
@@ -411,6 +443,14 @@ public class LootingContainer(IBaseUnit owner)
         // Invalid item?
         if (itemEntry == null)
             return false;
+
+        // Direct item requests must respect the same claim as opening the bag.
+        if (GetNpcLootPermissionLocked(player) == false)
+        {
+            player.SendPacket(new SCLootItemFailedPacket(ErrorMessageType.NoPermissionToLoot,
+                LootOwnerType, LootOwner.ObjId, itemEntry.ItemIndex, itemEntry.Item.TemplateId));
+            return false;
+        }
 
         // Check if it's already claimed by somebody else
         if (itemEntry.HighestRoller > 0 && itemEntry.HighestRoller != player.Id)
@@ -806,12 +846,13 @@ public class LootingContainer(IBaseUnit owner)
         {
             if (Items.Count <= 0)
                 return;
-        }
 
-        // Force full public looting for all non-claimed items
-        TeamLootingRule.LootMethod = LootingRuleMethod.Public;
-        TeamLootingRule.MinimumGrade = 0;
-        TeamLootingRule.RollForBindOnPickup = false;
+            // Publish the public rule atomically with permission checks/taking.
+            // Existing roll winners and item quest requirements still apply.
+            TeamLootingRule.LootMethod = LootingRuleMethod.Public;
+            TeamLootingRule.MinimumGrade = 0;
+            TeamLootingRule.RollForBindOnPickup = false;
+        }
 
         // Broadcast the new state it to everybody nearby
         LootOwner?.BroadcastPacket(new SCLootableStatePacket(LootOwnerType, LootOwner.ObjId, true), false);

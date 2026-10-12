@@ -113,10 +113,17 @@ public class QuestTravelRouteChunkingTests
     {
         await Assert.That(new BotRoamStepExecutor().QuestTravelChunkMeters)
             .IsEqualTo(ProductionChunkMeters);
+        await Assert.That(new BotRoamStepExecutor { RoamSpeed = 20f }.QuestTravelChunkMeters)
+            .IsEqualTo(ProductionChunkMeters);
+        await Assert.That(new BotRoamStepExecutor { RoamSpeed = 2.5f, RoamLegTimeout = TimeSpan.FromSeconds(30) }.QuestTravelChunkMeters)
+            .IsEqualTo(37.5f);
+        // Historical walking fixtures retain their 75 m budget.
+        await Assert.That(new BotRoamStepExecutor { RoamSpeed = ProductionSpeed }.QuestTravelChunkMeters)
+            .IsEqualTo(ProductionChunkMeters);
         await Assert.That(new BotRoamStepExecutor { RoamSpeed = 2f }.QuestTravelChunkMeters)
             .IsEqualTo(60f);
         await Assert.That(new BotRoamStepExecutor { RoamLegTimeout = TimeSpan.FromSeconds(30) }.QuestTravelChunkMeters)
-            .IsEqualTo(37.5f);
+            .IsEqualTo(75f);
         // Degenerate configuration fails closed to "no chunk" — which the route
         // builder reads as "emit the ordinary single-leg route", never as an
         // infinite or zero-length subdivision.

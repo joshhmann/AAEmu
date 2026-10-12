@@ -796,6 +796,71 @@ public class GameplayActorTests
     }
 
     [Test]
+    [Arguments(0f, "QUEST_TRAVEL")]
+    [Arguments(0f, "ROAM")]
+    [Arguments(2.5f, "QUEST_TRAVEL")]
+    public async Task OrdinaryRoute_DefaultRuns_ExplicitWalkPreservesMovementAndStop(float explicitSpeed, string owner)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("route-gait-" + owner);
+        SeedMovementSingletons();
+        var capture = AttachCapture(actor);
+        PlaceInWorld(session, actor, new Vector3(512, 512, 0));
+        var clock = new Microsoft.Extensions.Time.Testing.FakeTimeProvider();
+        var executor = new BotRoamStepExecutor
+        {
+            ActorFactory = _ => actor,
+            TimeProvider = clock,
+            RoamSpeed = explicitSpeed > 0 ? explicitSpeed : new BotRoamStepExecutor().RoamSpeed,
+            GroundHeightProvider = (_, _) => 0f,
+            BroadcastInterval = TimeSpan.FromMilliseconds(200),
+        };
+        var runtime = new PlayerBotRuntime(actor.Character, "gait-rig");
+        executor.SetRoamRoute(actor.Character, BotPath.PathTo(new Vector3(612, 512, 0)));
+        executor.GetBotState(runtime.CharacterId)!.PendingMoveOwner = owner;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var request = actor.ActiveRequest!;
+        await Assert.That(request.MoveOwner).IsEqualTo(owner);
+        var before = actor.Character.Transform.World.Position;
+        clock.Advance(TimeSpan.FromSeconds(1));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var after = actor.Character.Transform.World.Position;
+        var expectedSpeed = explicitSpeed > 0 ? explicitSpeed : 5f;
+        await Assert.That(Math.Abs(Vector3.Distance(before, after) - expectedSpeed)).IsLessThan(0.01f);
+        await Assert.That(actor.ActiveRequest).IsSameReferenceAs(request);
+
+        UnitMoveType? payload = null;
+        foreach (var bytes in capture.CapturedPackets)
+        {
+            var wire = new PacketStream(bytes);
+            wire.ReadUInt16();
+            wire.ReadByte(); wire.ReadByte(); wire.ReadByte(); wire.ReadByte();
+            if (wire.ReadUInt16() != SCOffsets.SCOneUnitMovementPacket) continue;
+            await Assert.That(wire.ReadBc()).IsEqualTo(actor.Character.ObjId);
+            await Assert.That(wire.ReadByte()).IsEqualTo((byte)MoveTypeEnum.Unit);
+            var move = new UnitMoveType();
+            move.Read(wire);
+            await Assert.That(wire.LeftBytes).IsEqualTo(0);
+            if (move.Flags.HasFlag(MoveTypeFlags.Moving)) payload = move;
+        }
+        await Assert.That(payload).IsNotNull();
+        await Assert.That(payload!.ActorFlags).IsEqualTo((byte)(explicitSpeed > 0 ? 5 : 4));
+        await Assert.That(payload.DeltaMovement[1]).IsEqualTo((sbyte)(explicitSpeed > 0 ? 63 : 127));
+        await Assert.That(Math.Abs(Math.Sqrt(payload.VelX * payload.VelX + payload.VelY * payload.VelY) / 1000 - expectedSpeed)).IsLessThan(0.02);
+        var stop = actor.Stop();
+        await Assert.That(stop.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Interrupted);
+        actor.Tick(TimeSpan.FromSeconds(1));
+        await Assert.That(actor.Character.Transform.World.Position).IsEqualTo(after);
+        // A longer 150 m native leg still arrives within the unchanged 60 s budget.
+        var arrival = actor.MoveTo(after + new Vector3(150, 0, 0), timeout: TimeSpan.FromSeconds(60));
+        for (var tick = 0; tick < 60 && !arrival.IsTerminal; tick++) actor.Tick(TimeSpan.FromSeconds(1));
+        await Assert.That(arrival.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.ActiveRequest).IsNull();
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Interrupted);
+    }
+
+    [Test]
     public async Task BuildStopMove_ZeroVelocity_StoppingFlag_AtHaltPosition()
     {
         var stop = VehicleMovementModel.BuildStopMove(new Vector3(1, 2, 3), 42);

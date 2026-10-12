@@ -77,7 +77,10 @@ public static class QuestObjectiveTargetSelector
         bool QuestRelevant,
         bool CombatLegal,
         double DistanceM,
-        string Reject);
+        string Reject)
+    {
+        public bool HasCompetingClaim { get; init; }
+    }
 
     /// <summary>
     /// Full wake funnel: objective/source resolution, relevance,
@@ -219,15 +222,19 @@ public static class QuestObjectiveTargetSelector
                 }
             }
 
+            var competingClaim = questRelevant && combatLegal && HasCompetingClaim(character!, npc);
             if (combatLegal)
                 legalCount++;
             if (candidates.Count < CandidatesShown)
-                candidates.Add(new CandidateFunnel(objId, npc.TemplateId, questRelevant, combatLegal, distance, reject));
+                candidates.Add(new CandidateFunnel(objId, npc.TemplateId, questRelevant, combatLegal, distance, reject)
+                {
+                    HasCompetingClaim = competingClaim,
+                });
             // Nearest-first flat with an ObjId tiebreak (G3 doctrine:
             // deterministic before any cut), raised to tiers:
             //   0  the actor's OWN committed prey — never diverted;
             //   1  prey no sibling is committed to;
-            //   2  prey a sibling is already on.
+            //   2  prey a sibling is already on or another player has tagged.
             // A converged group therefore spreads across the census instead of
             // piling onto one boar, while a lone bot — or any bot with nothing
             // contested to avoid — still takes the nearest legal prey exactly
@@ -248,7 +255,7 @@ public static class QuestObjectiveTargetSelector
                 var tier = objId == selfTargetObjId
                     ? (byte)(QuestBehavior.IsLeashStaleTarget(character?.ObjId ?? 0, objId) ? staleTier : 0)
                     : (byte)(QuestBehavior.IsLeashStaleTarget(character?.ObjId ?? 0, objId) ? staleTier
-                        : contested.Contains(objId) ? 2 : 1);
+                        : contested.Contains(objId) || competingClaim ? 2 : 1);
                 if (tier < bestTier
                     || (tier == bestTier && (distance < bestDistance
                         || (distance == bestDistance && objId < bestObjId))))
@@ -271,6 +278,20 @@ public static class QuestObjectiveTargetSelector
             candidates,
             fixture);
 
+    }
+
+    // A living tag is competition evidence, not a new attack or loot rule.
+    // Read ordinary team membership; managed accounts alone do not form a party.
+    private static bool HasCompetingClaim(Character character, Npc npc)
+    {
+        if (ReferenceEquals(npc.CurrentAggroTarget, character))
+            return false; // Defending against this NPC remains useful.
+        var tagging = npc.CharacterTagging;
+        if (tagging.TagTeam != 0 && TeamManager.Instance.GetActiveTeam(tagging.TagTeam) is { } team)
+            return !team.IsMember(character.Id);
+        var tagger = tagging.Tagger;
+        return tagger != null && tagger.Id != character.Id
+            && !(character.InParty && TeamManager.Instance.AreTeamMembers(character.Id, tagger.Id));
     }
 
     /// <summary>

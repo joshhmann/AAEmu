@@ -294,6 +294,81 @@ public class QuestTargetDeconflictionTests
         await Assert.That(funnel.SelectedObjId).IsEqualTo(far);
     }
 
+    [Test]
+    public async Task TwoFreshActors_BeforeEitherCommits_SelectTheSameNearestPrey()
+    {
+        var (first, session) = GameplayActorTestRig.CreateActor("fresh-competition-a");
+        var (second, _) = GameplayActorTestRig.CreateActor("fresh-competition-b");
+        JoinSiblingToRegion(session, second, new Vector3(2, 0, 0));
+        var near = SpawnBoar(session, first, Vector3.Zero, new Vector3(3, 0, 0));
+        _ = SpawnExtraBoar(session, new Vector3(12, 0, 0));
+        Activate251(first.Character);
+        Activate251(second.Character);
+        // Characterize the uncommitted window; selection itself reserves nothing.
+        var a = QuestObjectiveTargetSelector.Evaluate(first.Character, BotObservedContext.From(first.Observe()), "fresh-a", Fixture());
+        var b = QuestObjectiveTargetSelector.Evaluate(second.Character, BotObservedContext.From(second.Observe()), "fresh-b", Fixture());
+        await Assert.That(a.SelectedObjId).IsEqualTo(near);
+        await Assert.That(b.SelectedObjId).IsEqualTo(near);
+        await Assert.That(first.Character.CurrentTarget).IsNull();
+        await Assert.That(second.Character.CurrentTarget).IsNull();
+    }
+
+    [Test]
+    public async Task ForeignTagWithoutVisibleCurrentTarget_PrefersUnclaimedAlternative()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("foreign-claim-choice");
+        var (tagger, _) = GameplayActorTestRig.CreateActor("foreign-claim-owner");
+        JoinSiblingToRegion(session, tagger, new Vector3(2, 0, 0));
+        var near = SpawnBoar(session, actor, Vector3.Zero, new Vector3(3, 0, 0));
+        var far = SpawnExtraBoar(session, new Vector3(12, 0, 0));
+        Activate251(actor.Character);
+        var npc = session.World.GetNpc(near)!;
+        npc.CharacterTagging.AddTagger(tagger.Character, 60);
+        await Assert.That(npc.CharacterTagging.Tagger).IsSameReferenceAs(tagger.Character);
+        await Assert.That(tagger.Character.CurrentTarget).IsNull();
+        var selected = QuestObjectiveTargetSelector.Evaluate(actor.Character, BotObservedContext.From(actor.Observe()), "foreign-claim", Fixture());
+        await Assert.That(selected.SelectedObjId).IsEqualTo(far);
+        await Assert.That(selected.Candidates.Any(c => c.ObjId == near && c.CombatLegal)).IsTrue();
+        await Assert.That(selected.Candidates.Single(c => c.ObjId == near).HasCompetingClaim).IsTrue();
+        npc.CharacterTagging.ClearAllTaggers();
+        await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character, BotObservedContext.From(actor.Observe()), "claim-released", Fixture()).SelectedObjId).IsEqualTo(near);
+        // Claim preference does not invent an attack prohibition or loot permission.
+    }
+
+    [Test]
+    [Arguments("all-contested")]
+    [Arguments("own-tag")]
+    [Arguments("committed")]
+    [Arguments("self-defense")]
+    [Arguments("real-party")]
+    public async Task ClaimPreference_PreservesSupportedFallbacksAndOwnership(string control)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("claim-control-" + control);
+        var (owner, _) = GameplayActorTestRig.CreateActor("claim-control-owner");
+        JoinSiblingToRegion(session, owner, new Vector3(2, 0, 0));
+        var near = SpawnBoar(session, actor, Vector3.Zero, new Vector3(3, 0, 0));
+        var far = SpawnExtraBoar(session, new Vector3(12, 0, 0));
+        Activate251(actor.Character);
+        var npc = session.World.GetNpc(near)!;
+        if (control == "real-party")
+        {
+            GameplayActorTestRig.ForceSeedTeamManager();
+            await Assert.That(actor.PartyInvite(owner.Character.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(owner.PartyAccept().State).IsEqualTo(ActorLifecycleState.Completed);
+        }
+        npc.CharacterTagging.AddTagger(control == "own-tag" ? actor.Character : owner.Character, 60);
+        if (control == "all-contested") session.World.GetNpc(far)!.CharacterTagging.AddTagger(owner.Character, 60);
+        if (control == "committed") actor.SetTarget(near);
+        if (control == "self-defense") npc.CurrentAggroTarget = actor.Character;
+        var running = actor.MoveTo(new Vector3(100, 0, 0));
+        var chosen = QuestObjectiveTargetSelector.Evaluate(actor.Character, BotObservedContext.From(actor.Observe()), "claim-control", Fixture());
+        await Assert.That(chosen.SelectedObjId).IsEqualTo(near);
+        await Assert.That(chosen.LegalCount).IsEqualTo(2);
+        await Assert.That(actor.ActiveRequest).IsSameReferenceAs(running);
+        await Assert.That(running.State).IsEqualTo(ActorLifecycleState.Running);
+        actor.Stop();
+    }
+
     // --------------------------------------------------------------- fixture
 
     private static QuestFixtureRow Fixture()
