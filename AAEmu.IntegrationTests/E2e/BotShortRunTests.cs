@@ -71,7 +71,10 @@ public class BotShortRunTests
         RequirePrivateLane();
         var runId = DateTime.UtcNow.ToString("yyyyMMddTHHmmssfffZ", CultureInfo.InvariantCulture)
             + "-" + Guid.NewGuid().ToString("N")[..8];
-        var botName = "Qp" + Guid.NewGuid().ToString("N")[..12];
+        // This exact name must also be present in the privately allocated Game
+        // process. A shared/default bridge never permits scheduler shutdown.
+        var botName = Environment.GetEnvironmentVariable("E2E_QUEST_END_BOT");
+        Assert.True(!string.IsNullOrWhiteSpace(botName), "Explicit E2E_QUEST_END_BOT required in runner and owned Game process");
         var scenario = continuation ? "quest-continuation" : productive ? "productive-quest" : "quest-purpose";
         var directory = Path.Combine(E2eStack.E2eRoot, "logs", scenario + "-" + runId);
         Directory.CreateDirectory(directory);
@@ -117,6 +120,7 @@ public class BotShortRunTests
         double waitSeconds = 0;
         DateTime? waitStartedAtUtc = null;
         DateTime? endUtc = null;
+        BotShortRunEndCapture.Result? endPreparation = null;
         string? canonicalMd5 = null, runtimeMd5 = null;
         var canonicalPath = Path.Combine(E2eStack.RepoRoot, "AAEmu.Game/Data/compact.sqlite3");
         object? configuration = null;
@@ -135,7 +139,7 @@ public class BotShortRunTests
                 ?? Math.Min(MaximumSeconds - watch.Elapsed.TotalSeconds, NoProgressSeconds - watch.Elapsed.TotalSeconds)
                 : phase == "FIXTURE_BASELINE" ? 360 - fixture.Elapsed.TotalSeconds : 5;
             if (remaining <= 0) throw new TimeoutException("Declared phase deadline reached");
-            return new CancellationTokenSource(TimeSpan.FromSeconds(Math.Min(5, remaining)));
+            return new CancellationTokenSource(TimeSpan.FromSeconds(Math.Min(BotShortRunObservationBudget.OperationSeconds, remaining)));
         }
         void Identity(string state)
         {
@@ -183,7 +187,7 @@ public class BotShortRunTests
                 characterId = UInt(result, "id");
                 Identity("returned-binding");
             }
-            if (phase == "OBSERVE")
+            if (phase is "OBSERVE" or "PRE_END_CAPTURE")
             {
                 var begin = Time(result, "snapshotStartedAtUtc");
                 var copiedEnd = Time(result, "observedAtUtc");
@@ -223,14 +227,18 @@ public class BotShortRunTests
                 values["fullAccountProof"] = JsonSerializer.SerializeToElement(
                     "Owned read-only game-account SQL row; separate copied interval, not passive cache or atomic gameplay snapshot");
                 result = JsonSerializer.SerializeToElement(values);
-                latestOwnedCopy = result;
-                latestCopyCapturedAtUtc = DateTime.UtcNow;
-                latestRawPersisted = false;
-                latestProofAccepted = false;
-                latestCopyFault = null;
+                if (phase == "OBSERVE")
+                {
+                    latestOwnedCopy = result;
+                    latestCopyCapturedAtUtc = DateTime.UtcNow;
+                    latestRawPersisted = false;
+                    latestProofAccepted = false;
+                    latestCopyFault = null;
+                }
             }
             var rawPersisted = Raw(request, result);
             if (phase == "OBSERVE") latestRawPersisted = rawPersisted;
+            if (phase == "PRE_END_CAPTURE") Require(rawPersisted, "Prepared END raw evidence unavailable");
             return result;
         }
         async Task<JsonElement> Api(HttpMethod method, string path, object? body = null)
@@ -264,6 +272,12 @@ public class BotShortRunTests
                 return "NO_PROVED_PROGRESS";
             return null;
         }
+        string? OperationStopReason()
+        {
+            var elapsed = watch.Elapsed.TotalSeconds;
+            return BotShortRunObservationBudget.StopReason(elapsed, proof!.LastProvedProgressSeconds,
+                StopReason(elapsed));
+        }
         try
         {
             RequirePrivateLane();
@@ -282,6 +296,7 @@ public class BotShortRunTests
             control.DefaultRequestHeaders.Add("X-Auth-Token", token);
             var ready = await Api(HttpMethod.Get, "/api/bots/status");
             Require(Bool(ready, "Success") == true && ready.GetProperty("Bots").ValueKind == JsonValueKind.Array, "Authenticated registry unavailable");
+            Require(ready.GetProperty("Bots").GetArrayLength() == 0, "Final scheduler shutdown requires an initially empty owned registry");
             using (var deadline = Deadline())
                 bridge = await Task.Run(() => new BotDriveClient(E2eStack.BridgePort,
                     NeedsFarmLoopE2eTests.MaximumResponseBytes), deadline.Token).WaitAsync(deadline.Token);
@@ -328,11 +343,11 @@ public class BotShortRunTests
                 var audit = start.Value.GetProperty("actorAudit");
                 if (audit.GetArrayLength() > 0) auditAfterTraceId = Id(audit[audit.GetArrayLength() - 1], "trace_id")!.Value;
             }
-            while ((endReason = StopReason(watch.Elapsed.TotalSeconds)) == null)
+            while ((endReason = OperationStopReason()) == null)
             {
                 await Task.Delay(TimeSpan.FromSeconds(Math.Min(PollSeconds, proof.RemainingSeconds(watch.Elapsed.TotalSeconds))));
                 Marker();
-                if ((endReason = StopReason(watch.Elapsed.TotalSeconds)) != null) break;
+                if ((endReason = OperationStopReason()) != null) break;
                 object request = auditAfterTraceId.HasValue
                     ? new { cmd = "quest", bot = botName, sub = "observe", auditAfterTraceId = auditAfterTraceId.Value }
                     : new { cmd = "quest", bot = botName, sub = "observe" };
@@ -349,11 +364,13 @@ public class BotShortRunTests
                 if ((endReason = StopReason(watch.Elapsed.TotalSeconds)) != null) break;
                 if (proof.ControlTraceId.HasValue && !proof.ControlCompleted)
                 {
+                    if ((endReason = OperationStopReason()) != null) break;
                     proof.ObserveControl(await Api(HttpMethod.Get, $"/api/actors/actions/{proof.ControlTraceId.Value:D}"));
                     if ((endReason = StopReason(watch.Elapsed.TotalSeconds)) != null) break;
                 }
                 var candidate = proof.GetInterruptCandidate(observation);
                 if (candidate == null || (productive && candidate.QuestId != 251)) continue;
+                if ((endReason = OperationStopReason()) != null) break;
                 proof.DeclareInterrupt(candidate, DateTime.UtcNow);
                 interruptRequests++;
                 var acknowledgment = await Api(HttpMethod.Post, "/api/actors/interrupt",
@@ -367,9 +384,32 @@ public class BotShortRunTests
         catch (Exception ex) { endReason ??= "FIRST_FAULT_FAILED_END"; Fault(ex); }
         finally
         {
-            endUtc = DateTime.UtcNow;
-            end = latestOwnedCopy;
             watch.Stop();
+            // Freeze only after new work and owned movement stop. A failed
+            // preparation has no substitute END; cleanup still runs below.
+            phase = "PRE_END_PREPARATION";
+            try
+            {
+                Require(characterId != 0 && proof?.JoinedAt != null, "Owned joined actor unavailable for END preparation");
+                bridge?.Dispose();
+                bridge = null;
+                using (var deadline = Deadline())
+                    bridge = await Task.Run(() => new BotDriveClient(E2eStack.BridgePort,
+                        NeedsFarmLoopE2eTests.MaximumResponseBytes), deadline.Token).WaitAsync(deadline.Token);
+                using var endDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                endPreparation = await BotShortRunEndCapture.CaptureAsync(characterId, proof!.ActorId, proof.Generation,
+                    () => Bridge(new { cmd = "quest", bot = botName, sub = "prepare-end", generation = proof.Generation }),
+                    () => Api(HttpMethod.Post, "/api/actors/stop", new { bot = characterId.ToString(CultureInfo.InvariantCulture) }),
+                    id => Api(HttpMethod.Get, $"/api/actors/actions/{id:D}"),
+                    async () =>
+                    {
+                        phase = "PRE_END_CAPTURE";
+                        return await Bridge(new { cmd = "quest", bot = botName, sub = "observe" });
+                    }, endDeadline.Token);
+                end = endPreparation.Copy;
+                endUtc = DateTime.UtcNow;
+            }
+            catch (Exception ex) { Fault(ex); }
             phase = "POST_END_OWNED_CLEANUP";
             if (characterId != 0)
             {
@@ -460,18 +500,22 @@ public class BotShortRunTests
             && latestRawPersisted && latestProofAccepted && latestCopyFault == null;
         var endCopyProvenance = end.HasValue ? new
         {
-            source = "Latest validated owned complete passive observation plus separately copied full SQL rows",
-            latestCopyCapturedAtUtc, rawPersisted = latestRawPersisted, proofAccepted = latestProofAccepted,
-            latestCopyFault, id = UInt(end.Value, "id"), actorCharId = UInt(end.Value, "actorCharId"),
+            source = "Fresh full owned passive+SQL END after isolated scheduler shutdown and exact completed ordinary Stop; no gameplay credit",
+            rawPersisted = endPreparation != null, preparationProved = endPreparation != null,
+            gameplayCopyCapturedAtUtc = latestCopyCapturedAtUtc,
+            gameplayRawPersisted = latestRawPersisted, gameplayProofAccepted = latestProofAccepted,
+            gameplayCopyFault = latestCopyFault, id = UInt(end.Value, "id"), actorCharId = UInt(end.Value, "actorCharId"),
             actorObjId = UInt(end.Value, "actorObjId"), enrollmentGeneration = Long(end.Value, "enrollmentGeneration"),
             snapshotStartedAtUtc = Time(end.Value, "snapshotStartedAtUtc"), observedAtUtc = Time(end.Value, "observedAtUtc"),
             sqlSnapshotStartedAtUtc = Time(end.Value.GetProperty("ownedSqlCopy"), "SnapshotStartedAtUtc"),
             sqlObservedAtUtc = Time(end.Value.GetProperty("ownedSqlCopy"), "ObservedAtUtc"),
-            progressCredit = latestRawPersisted && latestProofAccepted ? "Accepted persisted copy only" : "NOT_PROGRESS_CREDIT"
+            progressCredit = "NOT_PROGRESS_CREDIT: final preparation never enters gameplay evidence consumer"
         } : null;
         var report = JsonSerializer.Serialize(new
         {
             scenario, runId, botName, characterId, passed, endReason, endUtc,
+            endPreparation = endPreparation is { } prepared
+                ? new { prepared.StopTraceId, prepared.Scheduler, prepared.Stop } : null,
             frozenEndRetained = end.HasValue, rawPersisted = latestRawPersisted, proofAccepted = latestProofAccepted,
             endCopyProvenance, latestCopyFault,
             autonomousSeconds = watch.Elapsed.TotalSeconds, configuration,

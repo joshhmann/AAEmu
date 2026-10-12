@@ -76,7 +76,13 @@ Supported actions MUST retain applicable authoritative engine rules: legality,
 eligibility, reach, required timing, ownership, costs, rewards, conservation and
 persistence. A genuine shared-rule bypass blocks the affected supported action;
 reduced coverage is not permission to waive correctness. No fake quest credit,
-GM grants, teleport shortcuts or synthetic completion may stand in for ordinary work.
+GM grants or synthetic completion may stand in for ordinary work.
+User clarification — stuck-bot teleport recovery is permitted as a recorded recovery
+policy. Preserve purpose and confirm subsequent gameplay through ordinary server
+outcomes. Relocation does not complete an objective or establish walked navigation.
+Historical no-teleport run criteria and failed receipts remain unchanged.
+
+Current bounded implementation (E152/D46; E153 proof):
 User-approved exception (2026-10-11, E152/D46; bounded E153): after two distinct
 stuck quest travel failures, one disclosed local relocation through ordinary
 Character.SetPosition may recover a retained quest waypoint under the documented
@@ -153,9 +159,11 @@ Unproved acquisition/continuation is not evidence that seed purchase, housing,
 crafting, trade, parties or other action implementations are absent.
 
 The immediate product outcome remains the original seven-criterion supported
-goal-to-goal loop. First reproduce finite existing-owner A→eligible B handoff;
-then prove one supported productive objective and follow-up, and one ordinary
-resource→farm/craft/trade increment with conservation. Extend livelihood/commerce,
+goal-to-goal loop. The original sequence was finite existing-owner A→eligible B
+handoff, supported productive completion/follow-up, then an ordinary conservation-
+checked resource→farm/craft/trade increment. Some bounded predecessors now have
+evidence; review STATUS and the owned candidate rather than restarting that sequence.
+Only CURRENT names the active task and its remaining dependency. Extend livelihood/commerce,
 cooperation and truthful social presence as dependency-driven families; connect
 proved families through existing arbitration. Optional population administration
 or abstract simulation is later, not a prerequisite or synthetic-reward shortcut.
@@ -179,9 +187,10 @@ New-session entry: [START-HERE](START-HERE.md#new-session-bootstrap).
 Retained future livelihood journey: [one ordinary starter → one owned small farm plot →
 first harvest and repeat](ROADMAP.md#first-owned-small-plot-journey), not a universal
 gate before supported quest autonomy, a house, construction-pack economy or ten-bot village.
-GOAP is the intended choice mechanism;
-a deterministic reference scenario proves the same ordinary actions without faking
-their results. Follow the
+For this homestead journey, reuse its existing hosted GOAP planning where appropriate;
+that does not make GOAP the global goal owner or a prerequisite for quest choice.
+A deterministic reference scenario checks the same ordinary actions without faking
+their results, but does not establish autonomous selection. Follow the
 [common implementation template](.kanban-templates/implementation.md) for all domains.
 Canonical eligibility and existing service gaps determine the next slice, not a
 speculative goal chain. Data/code verification is not loop completion.
@@ -404,8 +413,9 @@ the approved integration/core contracts. Valid one-lifecycle/ordinary-rule
 invariants and named unresolved action boundaries remain; this is not a claim
 that ownership reconciliation or gameplay convergence is complete.
 
-Reuse the existing `BotGoalArbiter`, schedules, scenario runners,
-`GameplayActor`, and `Character` services. Use an FSM/state machine for
+Reuse the existing `BotGoalArbiter`, schedules, `GameplayActor`, and `Character`
+services. Scenario runners remain validation tools; their manual pumps/drivers are
+not production AI scheduling or evidence of independent choice. Use an FSM/state machine for
 lifecycle and legality; use utility/goal scoring to choose among currently
 legal objectives (such as hunger, HP, full bag, or travel only where ordinary
 services expose those signals). 

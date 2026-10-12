@@ -29,7 +29,8 @@ This document is the **single authoritative router** for agents and developers e
 2. Record the actual checkout SHA, branch, relevant dirty paths, worktrees and
    active file/process ownership. The inspected baseline above is a reference,
    not a substitute for your session's baseline. Preserve user work; E130's
-   recovery branch is separate and unmerged until the user decides otherwise.
+   recovery/atlas work was merged under E145/D40. The newer quest/observer candidate
+   has separate local changes; read CURRENT for its actual integration status.
    Open the dashboard's [Delivery & Sessions workflow](Scripts/playertrace-coverage/README.md#delivery--sessions-workflow),
    select the active bounded card and relevant feature bibliography, then use its
    saved checkpoint/brief. These are operational records, not automatic OMP launches
@@ -46,8 +47,10 @@ This document is the **single authoritative router** for agents and developers e
    runtime. Reconcile only the chosen slice and immediate dependencies, not another
    full architecture audit. Use archaeology and relevant corpus for disputed facts;
    external module source is a pattern reference, never ArcheAge gameplay authority.
-5. The first approved engineering priority is [finite existing-owner A→eligible B
-   handoff](ROADMAP.md#next-bounded-playerbot-priority), including the same giver.
+5. Select the bounded assignment from the first active section of CURRENT. The
+   [original handoff priority](ROADMAP.md#next-bounded-playerbot-priority) now has
+   scoped evidence; do not reproduce it or useful quest choice again merely because
+   an old brief calls it “first”. Review existing work and the remaining proof gap.
    Before implementation, record one bounded card: reusable outcome, source/dirty
    baseline, owner/files, supported denominator, failure hypothesis, authoritative
    result, interruption OR failure recovery, follow-up choice, proof layer and stop.
@@ -69,7 +72,12 @@ dependencies; child cards prove bounded outcomes. For each next zone/variant, re
 proved shared mechanics and verify the local differences. Farm is the current
 application, not the limit of this process.
 
-## Immediate dispatch priority — 2026-09-16 (SUPERSEDED as dispatch source by `STATUS.md`, 2026-10-01)
+## Historical dispatch priority — 2026-09-16 (not current work selection)
+
+> The queue and freeze wording below record the September/October 1 checkpoint.
+> They do not select today’s task or impose a blanket prerequisite on the approved
+> supported-capability direction. Preserve named milestone/test requirements and
+> explicit current scope restrictions; consult CURRENT for the actual assignment.
 
 First product journey: [ordinary starter → owned small plot → harvest/replant](ROADMAP.md#first-owned-small-plot-journey).
 Current priority/allocation limits are in [STATUS](STATUS.md#current-playerbot-policy-checkpoint);
@@ -98,7 +106,7 @@ top of this file and in [`STATUS.md`](STATUS.md).
 
 Open-source **ArcheAge 1.2** (`r208022`) server emulator in .NET 10 (`AAEmu.Login`, `AAEmu.Game`, shared `AAEmu.Commons`). Use the actual session baseline and [current task state](.omp/state/CURRENT.md#session-resume); older planning/source SHAs retain their historical scope.
 * **Product Doctrine:** *The living world is the feature; PlayerBots are just the mechanism that gives it life.*
-* **Current priority:** [finite existing-owner handoff reproduction](ROADMAP.md#next-bounded-playerbot-priority) inside the approved reuse-first roadmap. [STATUS](STATUS.md#current-playerbot-policy-checkpoint) and the active CURRENT card distinguish direction from a specific implementation/live allocation.
+* **Current priority:** the first active section of [CURRENT](.omp/state/CURRENT.md#session-resume). [STATUS](STATUS.md#current-playerbot-policy-checkpoint) records capability evidence; [ROADMAP](ROADMAP.md#playerbot-extension-roadmap) describes direction, not a second task queue.
 * **Milestone Horizon:** M8 (Living Village) → M9 (Emergent world systems) → M10 (Territory & siege).
 ```text
 Dev box (/root/aaemu-dev, origin = writable fork)

@@ -909,6 +909,9 @@ public class PlayerBotSchedulerTests
         rig.Pump(); // scan pops the due entry; workers marshal it (async)
 
         await rig.Scheduler.StopAsync();
+        // Unsubscribe is processed at the next tick, so the current tick may
+        // still call its already-listed drain after shutdown/ordinary Stop.
+        rig.Scheduler.DrainTickQueue();
         await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(0);
         await Assert.That(rig.Scheduler.IsRunning).IsFalse();
         await Assert.That(ExecutionBoundary.ViolationCount).IsEqualTo(violationsBefore);

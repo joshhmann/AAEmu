@@ -11,13 +11,15 @@ internal sealed class BotShortRunEvidence
 {
     internal const int MaximumAuditRows = 512;
     internal const int MaximumWorkWitnesses = 128;
+    internal const int MaximumRecoveryResponses = 3;
     internal const double MaximumSeconds = 900;
     internal const double NoProgressSeconds = 300;
 
     internal sealed record Work(double T, Guid TraceId, uint QuestId, string Action,
         DateTime RequestedAt, DateTime CompletedAt, string DecisionGoal, string Policy, string Cycle);
     internal sealed record InterruptCandidate(uint QuestId, Guid VictimTraceId,
-        DateTime RequestedAt, DateTime ObservedAt, double RouteX, double RouteY);
+        DateTime RequestedAt, DateTime ObservedAt, double? RouteX, double? RouteY,
+        string MoveOwner = "QUEST_TRAVEL", uint TargetId = 0);
     internal sealed record Recovery(uint QuestId, Guid? ControlTraceId, Guid? VictimTraceId,
         Guid ResponseTraceId, Guid ConsequenceTraceId, string Scope);
     private sealed record QuestState(string Step, string Status);
@@ -50,6 +52,11 @@ internal sealed class BotShortRunEvidence
     private DateTime? _freshRequestedAt;
     private bool _freshRequestOwnerVerified;
     private bool _recoveryScopeLost;
+    private DateTime? _retiredResponseAt;
+    private readonly HashSet<Guid> _recoveryResponseIds = [];
+    private readonly HashSet<Guid> _retiredResponseIds = [];
+    private readonly HashSet<string> _recoveryResponseCycles = [];
+
     private JsonElement? _previousObservation;
     private readonly Dictionary<Guid, JsonElement> _running = [];
     private JsonElement? _victimPurpose;
@@ -202,6 +209,31 @@ internal sealed class BotShortRunEvidence
             BreakContinuity();
             return;
         }
+        // Rows naming an observed recovery request cannot disappear through the
+        // general foreign/malformed-row filter and leave a Running witness valid.
+        var recoveryTerminals = new HashSet<Guid>();
+        foreach (var row in audit.EnumerateArray())
+        {
+            var id = Id(row, "trace_id");
+            if (id == null || _stimulus == null
+                || id != _stimulus.VictimTraceId && !_recoveryResponseIds.Contains(id.Value))
+                continue;
+            if (!recoveryTerminals.Add(id.Value) || !OwnedTerminal(row, copiedEnd.Value)
+                || String(row, "result") is not ("Completed" or "Interrupted" or "TimedOut" or "Rejected")
+                || (String(row, "result") is "Completed" or "Interrupted")
+                    && row.TryGetProperty("failure", out var failure) && failure.ValueKind != JsonValueKind.Null
+                || !_running.TryGetValue(id.Value, out var purpose) || !SamePurpose(purpose, row))
+            {
+                EvidenceFault ??= "Recovery request terminal is malformed or foreign";
+                BreakContinuity();
+                return;
+            }
+            // A failed movement ending during a copied interval cannot provide
+            // an unambiguous retirement boundary for the replacement chain.
+            if (id == _freshRequest && String(row, "result") == "TimedOut"
+                && Time(row, "completed_at") > begin && Time(row, "completed_at") <= copiedEnd)
+                _recoveryScopeLost = true;
+        }
         var fresh = audit.EnumerateArray().Where(r => OwnedTerminal(r, begin.Value)
                 && Time(r, "completed_at") > _previous.At)
             .GroupBy(r => Id(r, "trace_id")).Where(g => g.Count() == 1).Select(g => g.Single())
@@ -266,8 +298,10 @@ internal sealed class BotShortRunEvidence
             QuestWork.Add(work);
             // A real fresh autonomous quest effect can replace the interrupted
             // route without issuing another Move. Missing route fields are not retirement.
-            if (!_freshRequest.HasValue && _stimulus != null && !_recoveryScopeLost && _victimOwnerVerified
+            if (!_freshRequest.HasValue && _recoveryResponseIds.Count == 0
+                && _stimulus != null && !_recoveryScopeLost && _victimOwnerVerified
                 && IsQuestAction(work.Action)
+                && (_stimulus.MoveOwner != "PURSUIT_MOVE_TO_UNIT" || work.QuestId == _stimulus.QuestId)
                 && work.RequestedAt > _victimCompletedAt && work.TraceId != _stimulus.VictimTraceId
                 && ExplicitNull(observation, "questTravelTargetX") && ExplicitNull(observation, "questTravelTargetY"))
             {
@@ -318,8 +352,7 @@ internal sealed class BotShortRunEvidence
             || UInt(observation, "actorObjId") != _actorId || UInt(observation, "actorCharId") != _characterId
             || Time(observation, "observedAtUtc") != _previous.At
             || String(observation, "liveAction") != "Move" || String(observation, "liveState") != "Running"
-            || String(observation, "liveMoveOwner") != "QUEST_TRAVEL"
-            || String(observation, "liveDecisionGoal") != "quest.progress"
+            || !IsQualifiedQuestMove(observation)
             || String(observation, "liveDecisionPolicy") != "quest-v1"
             || string.IsNullOrWhiteSpace(String(observation, "liveDecisionCycleId"))
             || UInt(observation, "liveDecisionQuestId") == 0
@@ -332,10 +365,23 @@ internal sealed class BotShortRunEvidence
         var y = Number(observation, "liveDestinationY");
         if (!id.HasValue || !requested.HasValue || requested < _joinedAt || requested > _previous.At
             || requested > Time(observation, "snapshotStartedAtUtc")
-            || !x.HasValue || !y.HasValue || !Number(observation, "liveDestinationZ").HasValue
             || !_running.ContainsKey(id.Value)) return null;
-        return new(UInt(observation, "liveDecisionQuestId"), id.Value, requested.Value, _previous.At, x.Value, y.Value);
+        return new(UInt(observation, "liveDecisionQuestId"), id.Value, requested.Value, _previous.At, x, y,
+            String(observation, "liveMoveOwner"), UInt(observation, "liveTargetId"));
     }
+
+    // Point travel and unit-relative pursuit are distinct production request
+    // shapes. A pursuit target has no immutable point destination to invent.
+    private static bool IsQualifiedQuestMove(JsonElement live)
+        => String(live, "liveAction") == "Move" && (
+            String(live, "liveMoveOwner") == "QUEST_TRAVEL"
+                && String(live, "liveDecisionGoal") == "quest.progress"
+                && Number(live, "liveDestinationX").HasValue
+                && Number(live, "liveDestinationY").HasValue
+                && Number(live, "liveDestinationZ").HasValue
+            || String(live, "liveMoveOwner") == "PURSUIT_MOVE_TO_UNIT"
+                && String(live, "liveDecisionGoal") == "quest.objective-pursuit"
+                && UInt(live, "liveTargetId") != 0);
 
     public void DeclareInterrupt(InterruptCandidate candidate, DateTime declaredAt)
     {
@@ -431,6 +477,8 @@ internal sealed class BotShortRunEvidence
             && String(live, "liveDecisionCycleId") == String(row, "decision_cycle_id")
             && Time(live, "liveRequestedAtUtc") == Time(row, "requested_at")
             && String(live, "liveAction") == String(row, "action")
+            && (String(live, "liveAction") != "Move"
+                || String(live, "liveMoveOwner") == String(row, "move_owner"))
             && UInt(live, "liveTargetId") == UInt(row, "target_id")
             && Id(live, "liveTraceId") == Id(row, "trace_id");
 
@@ -511,6 +559,8 @@ internal sealed class BotShortRunEvidence
                     || String(earlier, "liveDecisionGoal") != String(observation, "liveDecisionGoal")
                     || String(earlier, "liveDecisionPolicy") != String(observation, "liveDecisionPolicy")
                     || String(earlier, "liveAction") != String(observation, "liveAction")
+                    || String(observation, "liveAction") == "Move"
+                        && String(earlier, "liveMoveOwner") != String(observation, "liveMoveOwner")
                     || UInt(earlier, "liveTargetId") != UInt(observation, "liveTargetId")
                     || Time(earlier, "liveRequestedAtUtc") != requested))
                 EvidenceFault ??= "Running request purpose changed";
@@ -519,6 +569,7 @@ internal sealed class BotShortRunEvidence
             else _running.TryAdd(id.Value, JsonSerializer.SerializeToElement(new
             {
                 liveTraceId = id, liveRequestedAtUtc = requested, liveAction = String(observation, "liveAction"),
+                liveMoveOwner = String(observation, "liveMoveOwner"),
                 liveTargetId = UInt(observation, "liveTargetId"), liveDecisionQuestId = UInt(observation, "liveDecisionQuestId"),
                 liveDecisionGoal = String(observation, "liveDecisionGoal"),
                 liveDecisionPolicy = String(observation, "liveDecisionPolicy"),
@@ -535,19 +586,35 @@ internal sealed class BotShortRunEvidence
         }
         else if (id != _liveBefore?.TraceId || !running)
             _liveBefore = null;
+        if (id.HasValue && running && _retiredResponseIds.Contains(id.Value))
+        {
+            EvidenceFault ??= "Retired recovery response resumed";
+            _recoveryScopeLost = true;
+            return;
+        }
         if (_stimulus != null && _victimCompletedAt.HasValue && id == _stimulus.VictimTraceId && running)
             EvidenceFault ??= "Interrupted victim resumed";
         if (_stimulus == null || _recoveryScopeLost || _freshRequest.HasValue || !_victimCompletedAt.HasValue
-            || String(observation, "liveAction") != "Move" || String(observation, "liveMoveOwner") != "QUEST_TRAVEL"
-            || String(observation, "liveDecisionGoal") != "quest.progress"
+            || !IsQualifiedQuestMove(observation)
             || String(observation, "liveState") != "Running" || id == null || id == _stimulus.VictimTraceId
-            || requested <= _victimCompletedAt || requested > current.At
+            || requested <= (_retiredResponseAt ?? _victimCompletedAt) || requested > current.At
             || UInt(observation, "liveDecisionQuestId") == 0
+            || _stimulus.MoveOwner == "PURSUIT_MOVE_TO_UNIT"
+                && UInt(observation, "liveDecisionQuestId") != _stimulus.QuestId
             || UInt(observation, "liveDecisionQuestId") != current.Chosen
             || String(observation, "liveDecisionPolicy") != "quest-v1"
             || string.IsNullOrWhiteSpace(String(observation, "liveDecisionCycleId"))
             || String(observation, "liveDecisionCycleId") == String(_victimPurpose!.Value, "liveDecisionCycleId"))
             return;
+        var cycle = String(observation, "liveDecisionCycleId");
+        // Failed responses remain failed. Only a separately observed, new request
+        // after their exact terminal can continue this finite proof chain.
+        if (_recoveryResponseIds.Count >= MaximumRecoveryResponses
+            || !_recoveryResponseIds.Add(id.Value) || !_recoveryResponseCycles.Add(cycle))
+        {
+            _recoveryScopeLost = true;
+            return;
+        }
         _freshRequest = id;
         _freshRequestedAt = requested;
         _freshRequestOwnerVerified = true;
@@ -561,17 +628,29 @@ internal sealed class BotShortRunEvidence
         {
             _victimCompletedAt = Time(row, "completed_at");
             _victimOwnerVerified = String(row, "action") == "Move" && String(row, "result") == "Interrupted"
-                && Time(row, "requested_at") == _stimulus.RequestedAt && String(row, "move_owner") == "QUEST_TRAVEL"
+                && Time(row, "requested_at") == _stimulus.RequestedAt
                 && _victimPurpose.HasValue && SamePurpose(_victimPurpose.Value, row);
             if (!_victimOwnerVerified) _recoveryScopeLost = true;
         }
         if (id == _freshRequest)
         {
-            _freshRequestOwnerVerified = String(row, "action") == "Move"
-                && String(row, "result") is "Completed" or "Interrupted"
-                && Time(row, "requested_at") == _freshRequestedAt && String(row, "move_owner") == "QUEST_TRAVEL"
+            var immutable = String(row, "action") == "Move"
+                && Time(row, "requested_at") == _freshRequestedAt
                 && _running.TryGetValue(id!.Value, out var purpose) && SamePurpose(purpose, row);
-            if (!_freshRequestOwnerVerified) _recoveryScopeLost = true;
+            _freshRequestOwnerVerified = immutable && String(row, "result") is "Completed" or "Interrupted";
+            if (immutable) _retiredResponseIds.Add(id!.Value);
+            if (immutable && String(row, "result") == "TimedOut" && String(row, "failure") == "Navigation")
+            {
+                // Terminal retirement is not recovery credit. A later qualified
+                // response must have its own GUID/cycle and real quest effect.
+                _retiredResponseAt = Time(row, "completed_at");
+                _freshRequest = null;
+                _freshRequestedAt = null;
+                if (_recoveryResponseIds.Count >= MaximumRecoveryResponses)
+                    _recoveryScopeLost = true;
+            }
+            else if (!_freshRequestOwnerVerified)
+                _recoveryScopeLost = true;
         }
     }
 
@@ -588,13 +667,14 @@ internal sealed class BotShortRunEvidence
     {
         if (IsQuestAction(consequence.Action) && _stimulus != null && !_recoveryScopeLost && Recoveries.Count == 0
             && _queueTrue && _victimOwnerVerified && _freshRequestOwnerVerified
+            && (_stimulus.MoveOwner != "PURSUIT_MOVE_TO_UNIT" || consequence.QuestId == _stimulus.QuestId)
             && _victimCompletedAt >= _controlRequestedAt && _victimCompletedAt <= _controlCompletedAt
             && _freshRequestedAt > _victimCompletedAt
             && (consequence.RequestedAt > _freshRequestedAt
                 || consequence.TraceId == _freshRequest && consequence.RequestedAt == _freshRequestedAt))
             Recoveries.Add(new(consequence.QuestId, _controlTrace, _stimulus.VictimTraceId,
                 _freshRequest!.Value, consequence.TraceId,
-                "PROVEN: immutable own fallback Move, exact queued interruption, retired arm and fresh autonomous reselection with an authoritative request-local quest effect; root-Q Loot is independently required"));
+                "PROVEN: immutable own quest Move, exact queued interruption, retired arm and fresh autonomous reselection with an authoritative request-local quest effect; root-Q Loot is independently required"));
     }
     private static bool FreshCompletion(Snapshot before, Snapshot after, uint quest)
         => before.Quests.ContainsKey(quest) && before.Completion.TryGetValue(quest, out var oldFlag) && !oldFlag

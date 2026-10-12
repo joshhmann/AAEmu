@@ -753,11 +753,16 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     /// </summary>
     internal void DrainTickQueue()
     {
+        // Unsubscribe takes effect at the next tick. A callback already listed
+        // for this tick must not execute queued work after shutdown.
+        if (Volatile.Read(ref _stopped) != 0)
+            return;
+
         // Pin the boundary on first drain: production = the tick thread;
         // the rig = its test thread (or an explicit test pin).
         ExecutionBoundary.RegisterExecutionThread();
 
-        while (_tickQueue.TryDequeue(out var step))
+        while (Volatile.Read(ref _stopped) == 0 && _tickQueue.TryDequeue(out var step))
             ExecuteStepOnExecutionBoundary(step);
     }
 

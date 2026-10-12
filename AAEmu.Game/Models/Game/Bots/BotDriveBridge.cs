@@ -4542,6 +4542,41 @@ public sealed class BotDriveBridge
         if (manager == null || scheduler == null || executor == null)
             return Err("quest: bot scheduler/registry unavailable in DI");
 
+        // Final observation preparation only. StopAsync shuts down the whole
+        // scheduler; never expose this as a per-bot pause or ordinary admin action.
+        if (string.Equals(sub, "prepare-end", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.Equals(Environment.GetEnvironmentVariable("E2E_QUEST_END_BOT"), character!.Name,
+                    StringComparison.Ordinal) || PersistentBotSessions.Count != 1 ||
+                !PersistentBotSessions.TryGetValue(character.Name, out var session) ||
+                !ReferenceEquals(session.Character, character) || manager.Count != 1 ||
+                !manager.TryGet(character.Id, out var owned) || owned == null ||
+                !ReferenceEquals(owned.Character, character) || owned.State != PlayerBotState.Active ||
+                !root.TryGetProperty("generation", out var expected) ||
+                !expected.TryGetUInt64(out var generation) || owned.Generation != generation ||
+                executor.GetBotState(character.Id) is not { } ownedState || ownedState.Generation != generation ||
+                ownedState.Actor is not { } ownedActor ||
+                !ReferenceEquals(ownedActor.Character, character))
+                return Err("NOT_PROVED prepare-end: explicitly opted-in sole persistent enrollment required");
+
+            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            scheduler.StopAsync(deadline.Token).GetAwaiter().GetResult();
+            // Shutdown is not a game-thread barrier. The caller MUST next enqueue
+            // ordinary Stop and await its exact terminal before copying END.
+            if (scheduler.IsRunning || manager.Count != 1 ||
+                !manager.TryGet(character.Id, out var afterStop) || !ReferenceEquals(afterStop, owned) ||
+                afterStop.Generation != generation || afterStop.State != PlayerBotState.Active ||
+                !ReferenceEquals(executor.GetBotState(character.Id), ownedState) ||
+                !ReferenceEquals(ownedState.Actor, ownedActor))
+                return Err("NOT_PROVED prepare-end: enrollment changed during scheduler shutdown");
+            return Ok(new
+            {
+                id = character.Id, actorObjId = ownedActor.ActorId,
+                enrollmentGeneration = generation, schedulerRunning = scheduler.IsRunning,
+                privateEndPreparation = true,
+            });
+        }
+
         long before = scheduler.GetMetrics().TotalStepsRun;
         var stepped = false;
         if (string.Equals(sub, "wake", StringComparison.OrdinalIgnoreCase))
@@ -4984,6 +5019,12 @@ public sealed class BotDriveBridge
             // G6 combat-gate reads (additive, read-only): the auto-attack
             // loop flag + pinned target straight off the character.
             isAutoAttack = character!.IsAutoAttack,
+            // Refuse a movement-only END claim while independent gameplay work
+            // remains. This is not an atomic freeze of the world or all effects.
+            endPreparationIdle = !character.IsAutoAttack && character.AutoAttackTask == null &&
+                !character.IsInBattle && character.SkillTask == null && character.ActiveSkillController == null &&
+                character.ActivePlotState == null && character.Craft is { IsCraftQueueActive: false } &&
+                !character.IsInPatrol,
             currentTargetObjId = character!.CurrentTarget?.ObjId ?? 0u,
             // Last copied scalar: END encloses every projected array/blob and
             // member above; serialization below reads only frozen local data.

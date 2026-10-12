@@ -1,7 +1,32 @@
 # ArcheAge Slums — Data-Wiring and Evidence Scorecard (enriched)
 
-**Private live checkpoint — E157 / D51 (2026-10-11):** the unchanged candidate independently completed eight quests, including real251loot0→1→2→3 and turn-in→324accept/turn-in→2532accept. It discovered/completed2255→2256 at the same live NPC44382/template10581. Eligible giver distances explain251choice0.365m versus2532 16.574m. **Overall testFAILED1/1:** no qualifying fallback-travel interruption;900s deadline canceled final poll; strict frozenENDXYZ differs~1.26m at release/325sflush. Oracle unchanged; private resources cleaned, foreign stacks preserved. Level10 starter setup disclosed;324used ordinary supplied items, not harvesting. No gameplay edits/merge/shareddeploy/H/grade/parent promotion. Next: qualify actual quest-request interruption and final-state freeze/release in the existing observer. [Receipt](scorecard-explorations/quest-useful-choice-live-2026-10-11.md).
+E168 combined integration checks passed on the preserved candidate and inherited develop changes. All ten pending code/test files are byte-identical to the tested candidate; docs and dashboard reconciliation preserves E167boundedPASS/E163FAILED/H/parent limits. Full4513unitpass/1namedskip, archaeology163pass, focused240pass, dashboard44/7/5/privatebrowser0errors. This is local checkpoint evidence, not deployment. Next: prepare a bounded .165 rollout preserving its263registered/25active population and dirty runtime configuration, with verified image, backup/rollback and existing dashboard connection. [Checkpoint](scorecard-explorations/quest-integration-checkpoint-2026-10-11.md).
 
+
+E167 / D61 fresh bounded live PASS: one private bot recovered after its controlled pursuit interruption and first resumed Navigation timeout, collected4058quantity0→1→2→3, completed251 and independently accepted324. Strict stoppedEND/bodyXYZ/release325s matched; one live test passed, owned runtime/DB removed.324completionnotexercised; sameNPC/eligibility controls remain historical/local. E163FAILED preserved; no generalfull-loop/H/grade/parent promotion, merge/push/deploy. Tested candidate1da6ede3+19dirtysource/documentation paths unchanged; twentieth dossier added afterrun, Main7dirty preserved. Next dependency: clean integration-checkpoint review of owned candidate and inherited develop changes. [Outcome](.omp/state/artifacts/quest-recovery-validation-20261011/outcome.md); only [CURRENT](.omp/state/CURRENT.md#session-resume) selects work.
+
+
+E165 / D59 local recovery-proof checkpoint: the evidence consumer now follows at most three distinctly owned responses after a verified Navigation timeout, and requires real ordinary same-quest progress. Red2/2 reproduced; focused240/240 (including unchanged E163 offline replay), full units4513pass/0fail/1named live-only skip, compiler0/0, BotControl44/archgate24, full archaeology163/163+24smoke pass. Retired-request resurrection and malformed/duplicate/contradictory terminals refuse proof. No production gameplay change or new live run; E163 FAILED, H, grades and parent criteria remain unchanged. Replay reconstructs declaration/readiness/time context, so it is historical-input consumer evidence. Next dependency: qualify fresh bounded private validation against immutable bytes and current resources. [CURRENT](.omp/state/CURRENT.md#session-resume) alone selects work. Details: scorecard-explorations/quest-recovery-chain.md in the owned candidate and Main artifacts/quest-recovery-chain-20261011/outcome.md.
+
+
+E164 research checkpoint: the captured bot continued quest 251 after a real navigation-budget timeout, completed it and independently accepted 324. Current source releases the failed movement request; the recovery consumer permanently rejects its first resumed timeout and cannot attribute later work. E163 remains FAILED; capability and live/H/milestone grades are unchanged. No gameplay code, new run or deployment in this investigation. Next dependency is deterministic bounded-chain reproduction with negative attribution/exhaustion controls before observer-repair readiness. [Investigation](.omp/state/artifacts/quest-recovery-investigation-20261011/investigation.md); only [CURRENT](.omp/state/CURRENT.md#session-resume) selects permitted work.
+
+
+> **Current assignment:** read the first active section of [CURRENT](.omp/state/CURRENT.md#session-resume), then its decisions/evidence and the owned candidate branch. This file describes direction and recorded proof; dated checkpoints and their old “next” recommendations are history, not dispatch.
+
+**Historical quest checkpoint — E163 / D56, 2026-10-11:** the private run completed six ordinary quests, including 251 → 324 → 2532, and passed its final full-state release/save checks. The overall live test FAILED: the first resumed pursuit request ended TimedOut/Navigation, and controlled recovery was not proved by the existing consumer. Later gameplay progress is real; it does not turn that failed verdict green. Nearby-prey selection, stuck recovery, useful choice and observer changes remain in [the owned candidate](.omp/state/CURRENT.md#session-resume), separate from published develop. No new run, merge, deployment, full-autonomy or human-acceptance claim follows. The next evidence qualification is stated only in CURRENT.
+
+**Source checkpoint — E146 (2026-10-11):** reviewed quest/dashboard work is committed; fresh source/fixture checks and preservation details are in [the checkpoint receipt](scorecard-explorations/checkpoint-2026-10-11.md). E142 recorded the then-next corpse dependency; later checkpoints are linked above. No new live/H/grade/milestone or deployment acceptance.
+
+## Historical candidate evidence checkpoints — preserved
+
+**Controlled quest recovery run — E163 / D55 (2026-10-11, private live partial proof):** the bot independently completed330/6198/2531/251/324/2532. Quest251had ordinary loot0→1→2→3 and turn-in, then independent324accept/completion and2532choice/completion. The exact pursuit interruption was delivered once; its first fresh pursuit timed out on navigation, so the strict consumer permanently lost its recovery witness despite later same-quest progress. **Overall live FAILED1/1; no recovery acceptance.** Observation ended normally at895.496s with an explicit operation-margin reason; no evidence/copy fault. Fresh post-scheduler-stop/ordinaryStop fullEND matched complete savedbody/XYZ at release and after325s, differences empty. Owned stack/DB/volume/network/monitor removed, foreign stacks preserved. Level10starter/equipment/onewake are setup;324uses supplieditems, noharvest. No freshsameNPCpair (historicalE157/seededE136 retained), no retry/merge/push/shareddeploy/H/grade/parent promotion. Next dependency: prove finite same-quest failure-and-reselection after the first resumed navigation timeout. [Receipt](scorecard-explorations/quest-recovery-sprint.md).
+
+**Controlled quest recovery — E162 / D54 (2026-10-11, local source/fixtures):** the observer recognizes actual NPC pursuit as well as point travel, preserving exact request purpose/owner/target and one controlled interruption. Pursuit recovery requires fresh same-quest ordinary progress; fallback independent reselection stays supported. Five-second operation admission remains inside900/300-second caps, with explicit early-margin ending and genuine faults preserved. Actual-shaped rejection reproduced1/1 before repair; focused219/219, full4513pass/0fail/1named opt-in skip, archaeology163/163 and required MCP smokes pass; dashboard44/7/5/private browser0errors. E160strict END/XYZ/release325s and E157FAILED preserved. Exactly one newly owned private run now qualified under D54; live result remains unproved. No merge/push/shareddeploy/H/grade/parent promotion. [Receipt](scorecard-explorations/quest-recovery-sprint.md).
+
+**Stable final observation — E160 / D52 (2026-10-11, local checks):** the observer now stops its explicitly opted-in, sole-bot private scheduler, waits for the exact ordinary Stop action, and then freezes a fresh full owned live/SQL END before release. A reproduced scheduler shutdown bug allowed a late tick callback to execute queued work after StopAsync; the existing drain now refuses work after shutdown. Exact full body/XYZ and325s persistence checks remain unchanged, prior faults remain failures, and final preparation earns no quest-progress credit. Focused validation and required gates are recorded in [the receipt](scorecard-explorations/quest-stable-end.md). E157 remains FAILED; no new live run, merge/push/deploy, H/grade/parent promotion. Next dependency: qualify interruption of an actual nearby quest request and bounded observer polling before a separately authorized live run.
+
+**Private live checkpoint — E157 / D51 (2026-10-11):** the unchanged candidate independently completed eight quests, including real251loot0→1→2→3 and turn-in→324accept/turn-in→2532accept. It discovered/completed2255→2256 at the same live NPC44382/template10581. Eligible giver distances explain251choice0.365m versus2532 16.574m. **Overall testFAILED1/1:** no qualifying fallback-travel interruption;900s deadline canceled final poll; strict frozenENDXYZ differs~1.26m at release/325sflush. Oracle unchanged; private resources cleaned, foreign stacks preserved. Level10 starter setup disclosed;324used ordinary supplied items, not harvesting. No gameplay edits/merge/shareddeploy/H/grade/parent promotion. Next: qualify actual quest-request interruption and final-state freeze/release in the existing observer. [Receipt](scorecard-explorations/quest-useful-choice-live-2026-10-11.md).
 
 **Useful fresh quest choice — E155 (2026-10-11, source/seeded rig):**
 The existing owner now chooses nearer observed eligible offers instead of choosing
@@ -66,7 +91,6 @@ merge/push/shareddeploy, H/grade/parent promotion. Single next dependency:
 a separately allocated bounded private-server validation of useful prey acquisition.
 [Scope, fixtures and exact validation](scorecard-explorations/quest-prey-source-ranking.md).
 
-
 **Local corpse repair — E147–E149 (2026-10-11):** source3cf0ebbd binds corpse
 loot memory, terminal decisions and request keys to the actual NPC instance.
 Seeded replacement/same-corpse/stale/actor controls pass;fullgate4459pass/0fail/
@@ -87,12 +111,13 @@ the published baseline. E139 historical pass and E142 failure are preserved.
 > See [Quest givers and objective areas](Docs/wiki/World-Geography-and-Routes.md#quest-givers-and-objective-areas).
 
 
-> Navigation review branch, 2026-10-11: atlas reference geography and evidenced
+> Historical navigation branch snapshot, before E145 integration: atlas reference geography and evidenced
 > walking-route selection/travel-cache support are implemented in isolation.
 > See [World geography and routes](Docs/wiki/World-Geography-and-Routes.md).
 > Current callers still use ordinary local/unit movement; no candidate road was
 > certified, no risk-aware live road journey was proved, and no parent milestone,
-> autonomy score, merge or deployment is advanced by this branch.
+> autonomy score, merge or deployment was advanced by that branch snapshot;
+> the subsequent source merge is recorded under E145 below.
 
 
 **Source integration — E145 / D40, 2026-10-11:** User-approved recovery
@@ -124,7 +149,8 @@ Seven general autonomy criteria remain unclosed; historical bounded passes and
 locked milestone exits retain their original scope. No evidence/grade/milestone,
 standing-freeze, deployment or runtime-capability promotion.
 
-The approved first priority is [finite existing-owner handoff reproduction](ROADMAP.md#next-bounded-playerbot-priority).
+The [original handoff priority](ROADMAP.md#next-bounded-playerbot-priority) has
+scoped evidence. It is not current dispatch; read CURRENT before selecting work.
 Actual implementation/live allocation is recorded in [CURRENT](.omp/state/CURRENT.md#session-resume),
 not inferred from this documentation wave. Future artifacts require relevant
 authoritative outcomes/correlation, not universally all119 fields; historical
@@ -412,13 +438,18 @@ H claim is promoted; the historic `PASS` wording stays withdrawn.
 
 ## PlayerBot execution realignment — 2026-09-16
 
+> Historical ownership checkpoint, not today’s global GOAP contract. Current
+> [ownership](PROJECT-CONTROL.md#current-playerbot-ownership-contract) distinguishes
+> activity arbitration, retained domain goals and domain planning. Preserve the
+> evidence below; do not recreate missing actions from a dated inventory.
+
 This scorecard now treats human traces as parity evidence, not a journey script or
 autonomy verdict. A trace can corroborate a player-facing packet/action shape; it
 cannot establish a bot's perception, legal goal choice, target discovery, route,
 completion, recovery, or repeat. Those bot capability legs are recorded separately
 with their core seam, observed postcondition, fixture disclosure, and next proof.
 
-GOAP owns strategic decisions and replanning. Bounded combat, navigation, and
+The September design assigned strategic decisions and replanning to GOAP. Bounded combat, navigation, and
 interaction executors own execution within a request. `ActorRequest` owns lifecycle
 and audit; `GameplayActor` adapts into ordinary `Character`/manager paths. Existing
 population embodiment, scheduler, dormancy, and persistence evidence is retained.

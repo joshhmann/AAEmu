@@ -666,6 +666,378 @@ public class BotShortRunEvidenceTests
         return JsonSerializer.SerializeToElement(values);
     }
 
+    private static JsonElement PursuitObservation(double seconds, int live = 10, double requested = 4,
+        int objective = 0, int items = 0, object[]? audit = null, uint target = 44293)
+    {
+        var value = PurposeObservation(seconds, objective: objective, items: items,
+            live: live, liveRequested: requested, audit: audit ?? []);
+        value = Changed(value, "liveMoveOwner", "PURSUIT_MOVE_TO_UNIT");
+        value = Changed(value, "liveDecisionGoal", "quest.objective-pursuit");
+        value = Changed(value, "liveTargetId", target);
+        foreach (var field in new[] { "liveDestinationX", "liveDestinationY", "liveDestinationZ" })
+            value = Changed(value, field, null);
+        return value;
+    }
+
+    [Fact]
+    public void ActualShapedNpcPursuitCanBeInterruptedWithoutInventingDestinationCoordinates()
+    {
+        var proof = new BotShortRunEvidence(7, PurposeObservation(), protocolReady: true);
+        var running = PursuitObservation(5);
+        Feed(proof, 5, running);
+        var candidate = proof.GetInterruptCandidate(running);
+        Assert.NotNull(candidate);
+        Assert.Equal(251u, candidate.QuestId);
+        Assert.Equal(Trace(10), candidate.VictimTraceId);
+    }
+
+    private static JsonElement PursuitAudit(int trace, double requested, double completed,
+        string result = "Completed", uint target = 44293)
+    {
+        var row = PurposeAudit(trace, action: "Move", target: target,
+            cycle: $"opaque-decision-{trace}", requested: requested, completed: completed);
+        row = Changed(row, "move_owner", "PURSUIT_MOVE_TO_UNIT");
+        row = Changed(row, "decision_goal", "quest.objective-pursuit");
+        return Changed(row, "result", result);
+    }
+
+    [Fact]
+    public void ExactPursuitInterruptionFreshPursuitAndOrdinaryLootProveRecovery()
+    {
+        var proof = new BotShortRunEvidence(7, PurposeObservation(), protocolReady: true);
+        var running = PursuitObservation(5);
+        Feed(proof, 5, running);
+        var candidate = Assert.IsType<BotShortRunEvidence.InterruptCandidate>(proof.GetInterruptCandidate(running));
+        Assert.Null(candidate.RouteX);
+        Assert.Null(candidate.RouteY);
+        Assert.Equal(44293u, candidate.TargetId);
+        proof.DeclareInterrupt(candidate, Start.AddSeconds(5.1));
+        proof.AcknowledgeInterrupt(Trace(11));
+        proof.ObserveControl(Control());
+        Feed(proof, 6, PurposeObservation(6, audit: [PursuitAudit(10, 4, 5.3, "Interrupted")]));
+        Feed(proof, 8, PursuitObservation(8, live: 12, requested: 7));
+        Assert.False(proof.PurposeProved); // Recovery movement gives no quest credit.
+        Feed(proof, 10, PurposeObservation(10, objective: 1, items: 1,
+            audit: [PursuitAudit(12, 7, 9), PurposeAudit(201, requested: 9.2, completed: 9.3)]));
+        Assert.Null(proof.EvidenceFault);
+        Assert.True(proof.PurposeProved);
+        Assert.Equal(251u, Assert.Single(proof.Recoveries).QuestId);
+        Assert.Equal("Loot", Assert.Single(proof.QuestWork).Action);
+    }
+
+    private static BotShortRunEvidence InterruptedPursuit()
+    {
+        var proof = new BotShortRunEvidence(7, PurposeObservation(), protocolReady: true);
+        var running = PursuitObservation(5);
+        Feed(proof, 5, running);
+        var candidate = Assert.IsType<BotShortRunEvidence.InterruptCandidate>(proof.GetInterruptCandidate(running));
+        proof.DeclareInterrupt(candidate, Start.AddSeconds(5.1));
+        proof.AcknowledgeInterrupt(Trace(11));
+        proof.ObserveControl(Control());
+        Feed(proof, 6, PurposeObservation(6, audit: [PursuitAudit(10, 4, 5.3, "Interrupted")]));
+        return proof;
+    }
+
+    private static void TimedOutResponse(BotShortRunEvidence proof, int trace, double requested,
+        string? failure = "Navigation")
+    {
+        Feed(proof, requested + 1, PursuitObservation(requested + 1, live: trace, requested: requested));
+        var terminal = Changed(PursuitAudit(trace, requested, requested + 2, "TimedOut"), "failure", failure);
+        Feed(proof, requested + 3, PurposeObservation(requested + 3, audit: [terminal]));
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void FailedResumedPursuitNeedsDistinctResponseAndOrdinaryLoot(int failedResponses)
+    {
+        var proof = InterruptedPursuit();
+        for (var n = 0; n < failedResponses; n++)
+            TimedOutResponse(proof, 12 + n, 7 + n * 4);
+        Assert.False(proof.PurposeProved);
+        Assert.Empty(proof.Recoveries); // Failed movement is not progress.
+        var requested = 7 + failedResponses * 4;
+        var response = 12 + failedResponses;
+        Feed(proof, requested + 1, PursuitObservation(requested + 1, live: response, requested: requested, target: 44294));
+        Feed(proof, requested + 3, PurposeObservation(requested + 3, objective: 1, items: 1,
+            audit: [PursuitAudit(response, requested, requested + 2, target: 44294),
+                PurposeAudit(301, requested: requested + 2.2, completed: requested + 2.3)]));
+        Assert.Null(proof.EvidenceFault);
+        Assert.True(proof.PurposeProved);
+        Assert.Equal(Trace(response), Assert.Single(proof.Recoveries).ResponseTraceId);
+        Assert.Equal("Loot", Assert.Single(proof.QuestWork).Action);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("Starvation")]
+    public void FailedResponseRequiresAuthoritativeNavigationFailure(string? failure)
+    {
+        var proof = InterruptedPursuit();
+        TimedOutResponse(proof, 12, 7, failure);
+        Feed(proof, 12, PursuitObservation(12, live: 13, requested: 11));
+        Feed(proof, 14, PurposeObservation(14, objective: 1, items: 1,
+            audit: [PursuitAudit(13, 11, 13), PurposeAudit(302, requested: 13.2, completed: 13.3)]));
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Fact]
+    public void FailedResponseCannotBorrowUnobservedLaterLootAsItsReplacement()
+    {
+        var proof = InterruptedPursuit();
+        TimedOutResponse(proof, 12, 7);
+        var after = PurposeObservation(12, objective: 1, items: 1,
+            audit: [PurposeAudit(303, requested: 11, completed: 11.3)]);
+        after = Changed(Changed(after, "questTravelTargetX", null), "questTravelTargetY", null);
+        Feed(proof, 12, after);
+        Assert.Single(proof.QuestWork); // Real progress, no verified replacement response.
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Theory]
+    [InlineData("guid")]
+    [InlineData("cycle")]
+    [InlineData("before-retirement")]
+    [InlineData("other-quest")]
+    [InlineData("other-owner")]
+    public void FailedResponseReplacementCannotReuseOrBorrowPurpose(string invalid)
+    {
+        var proof = InterruptedPursuit();
+        TimedOutResponse(proof, 12, 7);
+        var trace = invalid == "guid" ? 12 : 13;
+        var requested = invalid == "before-retirement" ? 8.5 : 11;
+        var replacement = PursuitObservation(12, live: trace, requested: requested);
+        replacement = invalid switch
+        {
+            "cycle" => Changed(replacement, "liveDecisionCycleId", "opaque-decision-12"),
+            "other-quest" => Changed(Changed(replacement, "liveDecisionQuestId", 2u), "chosenQuestId", 2u),
+            "other-owner" => Changed(replacement, "liveMoveOwner", "OTHER_MOVE"),
+            _ => replacement,
+        };
+        Feed(proof, 12, replacement);
+        Feed(proof, 14, PurposeObservation(14, objective: 1, items: 1,
+            audit: [PurposeAudit(304, requested: 13, completed: 13.3)]));
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Fact]
+    public void FailedResponseChainStopsAtItsDeclaredBound()
+    {
+        var proof = InterruptedPursuit();
+        for (var n = 0; n < BotShortRunEvidence.MaximumRecoveryResponses; n++)
+            TimedOutResponse(proof, 12 + n, 7 + n * 4);
+        Feed(proof, 20, PursuitObservation(20, live: 15, requested: 19));
+        Feed(proof, 22, PurposeObservation(22, objective: 1, items: 1,
+            audit: [PursuitAudit(15, 19, 21), PurposeAudit(305, requested: 21.2, completed: 21.3)]));
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Fact]
+    public void FailedResponseChainLosesProofOnSnapshotDiscontinuity()
+    {
+        var proof = InterruptedPursuit();
+        TimedOutResponse(proof, 12, 7);
+        proof.BreakContinuity();
+        Feed(proof, 12, PursuitObservation(12, live: 13, requested: 11));
+        Feed(proof, 14, PurposeObservation(14, objective: 1, items: 1,
+            audit: [PursuitAudit(13, 11, 13), PurposeAudit(306, requested: 13.2, completed: 13.3)]));
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Fact]
+    public void RetiredResponseCannotResumeItsOriginalRunningTupleBeforeLaterRecovery()
+    {
+        var proof = InterruptedPursuit();
+        TimedOutResponse(proof, 12, 7);
+        Feed(proof, 11, PursuitObservation(11, live: 12, requested: 7));
+        Feed(proof, 13, PursuitObservation(13, live: 13, requested: 12));
+        Feed(proof, 15, PurposeObservation(15, objective: 1, items: 1,
+            audit: [PursuitAudit(13, 12, 14), PurposeAudit(307, requested: 14.2, completed: 14.3)]));
+        Assert.Equal("Retired recovery response resumed", proof.EvidenceFault);
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Theory]
+    [InlineData("completed_at", null)]
+    [InlineData("actor_id", 99u)]
+    [InlineData("result", "Running")]
+    [InlineData("requested_at", null)]
+    public void MalformedRecoveryTerminalCannotRemainARunningWitness(string field, object? value)
+    {
+        var proof = InterruptedPursuit();
+        Feed(proof, 8, PursuitObservation(8, live: 12, requested: 7));
+        var terminal = Changed(Changed(PursuitAudit(12, 7, 9, "TimedOut"), "failure", "Navigation"), field, value);
+        Feed(proof, 10, PurposeObservation(10, audit: [terminal]));
+        Feed(proof, 12, PurposeObservation(12, objective: 1, items: 1,
+            audit: [PurposeAudit(308, requested: 11, completed: 11.3)]));
+        Assert.NotNull(proof.EvidenceFault);
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Fact]
+    public void DuplicateRecoveryTerminalCannotRemainARunningWitness()
+    {
+        var proof = InterruptedPursuit();
+        Feed(proof, 8, PursuitObservation(8, live: 12, requested: 7));
+        var terminal = Changed(PursuitAudit(12, 7, 9, "TimedOut"), "failure", "Navigation");
+        // Feed deliberately deduplicates fixture tails; preserve these two rows
+        // explicitly to exercise the malformed server projection instead.
+        var rows = BotShortRunEvidence.Array(proof.LastObservation!.Value, "actorAudit")
+            .Concat(new[] { terminal, terminal }).ToArray();
+        proof.Observe(10, Changed(PurposeObservation(10), "actorAudit", rows));
+        Feed(proof, 12, PurposeObservation(12, objective: 1, items: 1,
+            audit: [PurposeAudit(309, requested: 11, completed: 11.3)]));
+        Assert.NotNull(proof.EvidenceFault);
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Theory]
+    [InlineData("Completed")]
+    [InlineData("Interrupted")]
+    public void SuccessfulRecoveryTerminalCannotAlsoCarryAFailure(string result)
+    {
+        var proof = InterruptedPursuit();
+        Feed(proof, 8, PursuitObservation(8, live: 12, requested: 7));
+        var terminal = Changed(PursuitAudit(12, 7, 9, result), "failure", "Navigation");
+        Feed(proof, 10, PurposeObservation(10, audit: [terminal]));
+        Feed(proof, 12, PurposeObservation(12, objective: 1, items: 1,
+            audit: [PurposeAudit(310, requested: 11, completed: 11.3)]));
+        Assert.NotNull(proof.EvidenceFault);
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Fact]
+    public void CapturedRecoveryChainReplayUsesOnlyPersistedObservations()
+    {
+        // Explicit offline opt-in: no provisioning, HTTP, scheduler or gameplay.
+        var directory = Environment.GetEnvironmentVariable("BOT_RECOVERY_REPLAY_DIRECTORY");
+        if (string.IsNullOrWhiteSpace(directory))
+            Assert.Skip("BOT_RECOVERY_REPLAY_DIRECTORY is required for captured offline recovery replay.");
+        var rawPath = Path.Combine(directory!, "live-run", "observations.jsonl");
+        Assert.InRange(new FileInfo(rawPath).Length, 1, 64 * 1024 * 1024);
+        using var report = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory!, "live-report.json")));
+        using var chain = JsonDocument.Parse(File.ReadAllText(Path.Combine(directory!, "actual-chain.json")));
+        var start = report.RootElement.GetProperty("start");
+        var controlEvents = chain.RootElement.GetProperty("control");
+        var victim = Guid.Parse(controlEvents[0].GetProperty("request").GetProperty("body").GetProperty("traceId").GetString()!);
+        var acknowledgment = controlEvents[0].GetProperty("output");
+        var control = controlEvents[1].GetProperty("output");
+        var controlRequested = BotShortRunEvidence.Time(control, "requested_at")!.Value;
+        var controlObserved = BotShortRunEvidence.Time(controlEvents[1], "recordedAtUtc")!.Value;
+        var started = BotShortRunEvidence.Time(start, "observedAtUtc")!.Value;
+        var proof = new BotShortRunEvidence(BotShortRunEvidence.UInt(start, "id"), start, protocolReady: true);
+        var declared = false;
+        var controlDelivered = false;
+        var observations = 0;
+        foreach (var line in File.ReadLines(rawPath))
+        {
+            using var document = JsonDocument.Parse(line);
+            var entry = document.RootElement;
+            if (BotShortRunEvidence.String(entry, "phase") != "OBSERVE") continue;
+            var request = entry.GetProperty("request");
+            if (BotShortRunEvidence.String(request, "cmd") != "quest"
+                || BotShortRunEvidence.String(request, "sub") != "observe") continue;
+            Assert.InRange(++observations, 1, 2000);
+            var observation = entry.GetProperty("output");
+            var observed = BotShortRunEvidence.Time(observation, "observedAtUtc")!.Value;
+            proof.Observe((observed - started).TotalSeconds, observation);
+            if (!declared && BotShortRunEvidence.Id(observation, "liveTraceId") == victim)
+            {
+                var candidate = Assert.IsType<BotShortRunEvidence.InterruptCandidate>(proof.GetInterruptCandidate(observation));
+                proof.DeclareInterrupt(candidate, controlRequested);
+                proof.AcknowledgeInterrupt(BotShortRunEvidence.Id(acknowledgment, "trace_id")!.Value);
+                declared = true;
+            }
+            if (declared && !controlDelivered && BotShortRunEvidence.Time(entry, "recordedAtUtc") >= controlObserved)
+            {
+                proof.ObserveControl(control);
+                controlDelivered = true;
+            }
+        }
+        Assert.True(declared && controlDelivered);
+        Assert.Null(proof.EvidenceFault);
+        Assert.True(proof.PurposeProved);
+        var recovery = Assert.Single(proof.Recoveries);
+        Assert.Equal(251u, recovery.QuestId);
+        Assert.NotEqual(Guid.Parse("ff041409-2f17-4572-9d5f-6477e1e0e2af"), recovery.ResponseTraceId);
+        Assert.Contains(proof.QuestWork, w => w.Action == "Loot" && w.QuestId == 251);
+        var completed = Assert.Single(proof.CompletedGoals.Where(w => w.QuestId == 251));
+        Assert.Contains(proof.QuestWork, w => w.Action == "AcceptQuest" && w.QuestId == 324
+            && w.RequestedAt > completed.CompletedAt);
+    }
+
+    [Theory]
+    [InlineData("liveMoveOwner", "OTHER_MOVE")]
+    [InlineData("liveMoveOwner", "QUEST_TRAVEL")]
+    [InlineData("liveDecisionGoal", "quest.progress")]
+    [InlineData("liveDecisionPolicy", "other")]
+    public void PursuitCannotBorrowAnotherMoveOwnerGoalOrPolicy(string field, string value)
+    {
+        var proof = new BotShortRunEvidence(7, PurposeObservation(), protocolReady: true);
+        var running = Changed(PursuitObservation(5), field, value);
+        Feed(proof, 5, running);
+        Assert.Null(proof.GetInterruptCandidate(running));
+    }
+
+    [Fact]
+    public void PursuitRequiresObservedNonzeroTarget()
+    {
+        var proof = new BotShortRunEvidence(7, PurposeObservation(), protocolReady: true);
+        var running = Changed(PursuitObservation(5), "liveTargetId", 0u);
+        Feed(proof, 5, running);
+        Assert.Null(proof.GetInterruptCandidate(running));
+    }
+
+    [Theory]
+    [InlineData("liveMoveOwner", "OTHER_MOVE")]
+    [InlineData("liveTargetId", 44294u)]
+    [InlineData("liveDecisionGoal", "quest.progress")]
+    public void RunningPursuitPurposeCannotChangeUnderSameRequest(string field, object value)
+    {
+        var proof = new BotShortRunEvidence(7, PurposeObservation(), protocolReady: true);
+        Feed(proof, 5, PursuitObservation(5));
+        Feed(proof, 6, Changed(PursuitObservation(6), field, value));
+        Assert.Equal("Running request purpose changed", proof.EvidenceFault);
+        Assert.False(proof.PurposeProved);
+    }
+
+    [Fact]
+    public void PursuitRecoveryCannotBorrowAnUnrelatedQuestResponse()
+    {
+        var proof = new BotShortRunEvidence(7, PurposeObservation(), protocolReady: true);
+        var running = PursuitObservation(5);
+        Feed(proof, 5, running);
+        proof.DeclareInterrupt(proof.GetInterruptCandidate(running)!, Start.AddSeconds(5.1));
+        proof.AcknowledgeInterrupt(Trace(11));
+        proof.ObserveControl(Control());
+        Feed(proof, 6, PurposeObservation(6, audit: [PursuitAudit(10, 4, 5.3, "Interrupted")]));
+        var other = PurposeObservation(8, chosen: 2,
+            audit: [PurposeAudit(214, action: "AcceptQuest", target: 2, parent: 2, requested: 7, completed: 7.5)]);
+        other = Changed(other, "activeQuests", new object[]
+        {
+            new { questId = 251u, status = "Progress", step = "Progress", objectives = new[] { 0, 0, 0, 0, 0 } },
+            Quest(2, "Progress")
+        });
+        other = Changed(Changed(other, "questTravelTargetX", null), "questTravelTargetY", null);
+        Feed(proof, 8, other);
+        // A later root effect cannot use the other quest's response as its own.
+        Feed(proof, 10, PurposeObservation(10, objective: 1, items: 1,
+            audit: [PurposeAudit(201, requested: 9.2, completed: 9.3)]));
+        Assert.Null(proof.EvidenceFault);
+        Assert.Equal(2, proof.QuestWork.Count);
+        Assert.Empty(proof.Recoveries);
+        Assert.False(proof.PurposeProved);
+    }
+
     private static BotShortRunEvidence InterruptedPurpose(string? terminalCycle = null, uint terminalParent = 251,
         bool rootLootBefore = false)
     {

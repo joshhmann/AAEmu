@@ -596,9 +596,13 @@ Before any task work, read [`.omp/state/CURRENT.md`](.omp/state/CURRENT.md) — 
 record of the current objective, status, confirmed facts, unverified items and next action.
 Consult [`.omp/state/DECISIONS.md`](.omp/state/DECISIONS.md) and
 [`.omp/state/EVIDENCE.md`](.omp/state/EVIDENCE.md) for prior decisions and recorded results.
-The main agent is the state arbiter: subagents report findings, they do not rewrite state.
+The integrating agent owns active task state; subagents report findings rather than rewriting it.
+Only the first active section of CURRENT selects work. Preserve its stable session-resume
+anchor; later checkpoints are history. Inspect the owned candidate and dirty paths, not
+only published develop, before concluding that an implementation is missing.
 The full lifecycle contract lives in [`.omp/state/README.md`](.omp/state/README.md).
-Live autonomy proof is PROPOSED as the [Activity-Spine Campaign](Docs/wiki/Activity-Spine-Campaign.md) (untracked design, no lane verdicts; see STATUS 2026-10-06 note) — quest, farm, and trade legs sharing primitives, first-failure format, DB proof per leg. It does not replace conversion backlog §E dispatch until ratified.
+Live autonomy proof is PROPOSED as the [Activity-Spine Campaign](Docs/wiki/Activity-Spine-Campaign.md) (untracked design, no lane verdicts; see STATUS 2026-10-06 note) — quest, farm, and trade legs sharing primitives, first-failure format, DB proof per leg. It is not a dispatch source. Current work comes from CURRENT under the approved
+reuse-first direction; the old conversion backlog is historical reference.
 
 ### Outcome-first dispatch contract (2026-09-15)
 
@@ -649,8 +653,9 @@ chains, item identities, runtime targets and feature flags before design; do not
 add merchant stock or bypass prerequisites without an explicit product decision.
 
 Mandatory for agents, test writers, evaluators, dashboards, commit messages and
-handoffs. Current corrective work takes precedence over additional homestead/GOAP
-breadth: [ROADMAP corrective queue](ROADMAP.md#high-priority-corrective-queue--2026-09-16).
+handoffs. The active bounded task in [CURRENT](.omp/state/CURRENT.md#session-resume)
+takes precedence over unrelated breadth. The [September corrective queue](ROADMAP.md#high-priority-corrective-queue--2026-09-16)
+is historical evidence/dependency context, not a current assignment.
 
 - Synthetic tests are valuable **contract/orchestration evidence**, never proof of
   a real gameplay loop. Fake actors, mocked services, manual request completion,
@@ -659,6 +664,9 @@ breadth: [ROADMAP corrective queue](ROADMAP.md#high-priority-corrective-queue--2
   run proves only that seeded scope; it does not prove acquisition or self-sufficiency.
 - A live-loop claim requires real ordinary services, authoritative postconditions,
   applicable conservation/recovery/persistence checks, and no in-run GM/DB/state repair.
+  User-approved stuck-bot teleport recovery is a distinct, recorded bot recovery policy;
+  it does not award objective credit or prove walking, and cannot retroactively change
+  a historical run whose acceptance excluded teleporting.
   A test name containing "integration", "E2E", "deployment" or "10 bots" is not evidence
   of its execution environment. Ten fake actors remain synthetic evidence.
 - Never convert success-sounding log text, predicted effects or heuristic inference
