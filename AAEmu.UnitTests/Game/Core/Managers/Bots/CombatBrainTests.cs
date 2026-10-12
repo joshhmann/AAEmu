@@ -1377,6 +1377,54 @@ public class CombatBrainTests
         await Assert.That(advanced.CommittedUtc).IsEqualTo(banked.CommittedUtc);
     }
 
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task ThePlanner_OnlyMeasuresDriftFromTheSameMob(bool changedTarget)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("quest-target-leash-identity");
+        actor.Character.Ability1 = AAEmu.Game.Models.Game.Skills.AbilityType.Fight;
+        var previousPosition = new Vector3(100f, 100f, 10f);
+        var nextPosition = previousPosition + new Vector3(550f, 0f, 0f);
+        GameplayActorTestRig.SetPosition(actor, nextPosition - new Vector3(2f, 0f, 0f));
+        var region = session.World.GetRegionByPos(actor.Character.Transform.World.Position);
+        region!.AddObject(actor.Character);
+        actor.Character.Region = region;
+
+        var previousId = session.SpawnNpc(3475u);
+        var selectedId = changedTarget ? session.SpawnNpc(3484u) : previousId;
+        var selected = session.World.GetNpc(selectedId)!;
+        selected.Template = new AAEmu.Game.Models.Game.NPChar.NpcTemplate
+        {
+            Id = changedTarget ? 3484u : 3475u, Scale = 1f, ReturnDistance = 50f
+        };
+        selected.Hp = 100;
+        selected.MaxHp = 100;
+        selected.IsVisible = true;
+        GameplayActorTestRig.SetNpcPosition(session, selectedId, nextPosition);
+        CombatBrainEngagement.Publish(actor.ActorId, previousId, 1000,
+            previousPosition, 50f, false, false, Wake);
+        CombatBrainEngagement.PublishSkillUsed(actor.ActorId, 10399u, Wake);
+
+        var prepared = CombatBrainPlanner.Prepare(actor, null, selectedId,
+            allowSkillCasts: false, Wake.AddSeconds(1));
+        var decision = CombatBrainPlanner.Decide(prepared);
+        await Assert.That(prepared.Inputs.IncumbentLeashDriftM)
+            .IsEqualTo(changedTarget ? 0f : 550f);
+        await Assert.That(decision.DisengageReason == CombatDisengageReason.LeashEdge)
+            .IsEqualTo(!changedTarget);
+        if (changedTarget)
+        {
+            await Assert.That(prepared.Inputs.Candidates.Single().LeashDistanceM).IsEqualTo(0f);
+            await Assert.That(decision.TargetObjId).IsEqualTo(selectedId);
+        }
+        // Preparing a new opportunity cannot publish it or reset the old rotation.
+        await Assert.That(CombatBrainEngagement.TryGet(actor.ActorId, out var stored)).IsTrue();
+        await Assert.That(stored.IncumbentObjId).IsEqualTo(previousId);
+        await Assert.That(stored.CommittedUtc).IsEqualTo(Wake);
+        await Assert.That(stored.LastSkillUsed).IsEqualTo(10399u);
+    }
+
     // ------------------------------------------------------------ the two exported facts
 
     [Test]

@@ -136,7 +136,7 @@ public static class CombatBrainPlanner
                     // is the strict side, and that one is on the engine's metric
                     // (`QuestBehavior.CombatAdmissionRadiusM`).
                     leashBudget = LeashBudgetOf(incumbentNpc);
-                    incumbentDrift = DriftFromAnchor(actor.ActorId, incumbentPosition);
+                    incumbentDrift = DriftFromAnchor(actor.ActorId, incumbentObjId, incumbentPosition);
                     // The leash frame is a MEASUREMENT, so it advances on every
                     // readable wake — not only on the wakes that dispatch. The
                     // drift above is measured against the previous frame; the
@@ -282,7 +282,7 @@ public static class CombatBrainPlanner
             npc.Template?.Level ?? 0,
             npc.MaxHp > 0 ? (float)npc.Hp / npc.MaxHp : float.NaN,
             QuestRelevant: questRelevant || observation?.CurrentTargetObjId == objId,
-            DriftFromAnchor(actorObjId, npc.Transform.World.Position));
+            DriftFromAnchor(actorObjId, objId, npc.Transform.World.Position));
 
     /// <summary>
     /// Runs the decision for a prepared wake WITHOUT publishing. The caller
@@ -404,11 +404,14 @@ public static class CombatBrainPlanner
     /// The prey's drift from the engagement's leash anchor — which is the position
     /// the prey was last SEEN at, refreshed by every publish, so this is the
     /// distance it has covered since that frame. Before an anchor is published the
-    /// drift reads 0 (there is nothing to be far from), which is the fail-closed
-    /// direction: no fabricated "about to reset".
+    /// drift reads 0 (there is nothing to be far from). A different NPC also has
+    /// no prior frame: its distance from the previous prey is not movement by
+    /// this prey. Target identity must match before comparing positions. This is
+    /// the fail-closed direction: no fabricated "about to reset".
     /// </summary>
-    private static float DriftFromAnchor(uint actorObjId, Vector3 targetPosition)
+    private static float DriftFromAnchor(uint actorObjId, uint targetObjId, Vector3 targetPosition)
         => CombatBrainEngagement.TryGet(actorObjId, out var engagement)
+           && engagement.IncumbentObjId == targetObjId
            && engagement.LeashAnchor != Vector3.Zero
             ? MathUtil.CalculateDistance(engagement.LeashAnchor, targetPosition, false)
             : 0f;
@@ -436,7 +439,7 @@ public static class CombatBrainPlanner
             incumbentNpc.Template?.Level ?? 0,
             incumbentNpc.MaxHp > 0 ? (float)incumbentNpc.Hp / incumbentNpc.MaxHp : float.NaN,
             QuestRelevant: observation?.CurrentTargetObjId == incumbentObjId,
-            DriftFromAnchor(actorObjId, incumbentNpc.Transform.World.Position));
+            DriftFromAnchor(actorObjId, incumbentObjId, incumbentNpc.Transform.World.Position));
         return CombatTargetScorer.Score(row, character?.Level ?? 0, CombatBrain.AggroBandM);
     }
 
