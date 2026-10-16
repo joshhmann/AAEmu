@@ -471,7 +471,19 @@ public enum NeedsFarmLoopPhase
 
     internal sealed class BotRoamState
     {
+        /// <summary>Generation stamp of the activation this state belongs to.
+        /// States created by route arming (<see cref="SetRoamRoute"/>,
+        /// <see cref="SetBotCadence"/>) are created before any step runs and
+        /// carry <see cref="GenerationBound"/> = false: the first step binds
+        /// them to the live generation instead of evicting them, so the armed
+        /// route, its actor and the staged decision trace survive the wake they
+        /// were armed in. A state that already ran a step is bound, so a later
+        /// activation still evicts it.</summary>
         public ulong Generation { get; set; }
+
+        /// <summary>False until the state has been bound to an activation
+        /// generation (by its first step, or by the step that recreated it).</summary>
+        public bool GenerationBound { get; set; }
         public required IGameplayActor Actor { get; init; }
         public BotPath? Path { get; set; }
         public ActorRequest? PendingLeg { get; set; }
@@ -1038,7 +1050,15 @@ public enum NeedsFarmLoopPhase
         cancellationToken.ThrowIfCancellationRequested();
 
         var now = TimeProvider.GetUtcNow().UtcDateTime;
-        if (!_states.TryGetValue(bot.CharacterId, out var state) || state.Generation != bot.Generation)
+        var knownState = _states.TryGetValue(bot.CharacterId, out var state);
+        if (knownState && !state!.GenerationBound)
+        {
+            // Armed pre-step (SetRoamRoute / SetBotCadence): bind the state to
+            // the live activation and keep the route, actor and staged trace.
+            state.Generation = bot.Generation;
+            state.GenerationBound = true;
+        }
+        else if (!knownState || state!.Generation != bot.Generation)
         {
             if (state != null)
                 RetireQuestDiscovery(state, "discovery activation changed");
@@ -1055,7 +1075,7 @@ public enum NeedsFarmLoopPhase
             _homesteadGenerations.TryRemove(bot.CharacterId, out _);
             _questTurnInWithheld.TryRemove(bot.CharacterId, out _);
             _lastStepUtc.TryRemove(bot.CharacterId, out _);
-            state = new BotRoamState { Actor = ActorFactory(bot.Character), Generation = bot.Generation };
+            state = new BotRoamState { Actor = ActorFactory(bot.Character), Generation = bot.Generation, GenerationBound = true };
             _states[bot.CharacterId] = state;
         }
         var actor = state.Actor;

@@ -84,7 +84,10 @@ public sealed class FishingContestActivityModule : IBotActivityModule
         if (now < _options.OpensAt || now > _options.ClosesAt)
             return BotActivityDecision.Deny("contest not open");
 
-        return BotActivityDecision.Allow(ActivityName);
+        // Drawn motivation: the contest is a time-boxed event, available only
+        // while its window is open — a modest draw that a band-mate with an
+        // unmet need (e.g. a bot with no homestead plot) can outbid.
+        return BotActivityDecision.Allow(ActivityName, BotActivityMotivation.Wants);
     }
 
     /// <inheritdoc />

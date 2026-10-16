@@ -51,12 +51,17 @@ public sealed class HomesteadActivityModule : IBotActivityModule
 
         // If bot already completed full house construction, yield to ordinary living world loops
         var housing = HousingManager.PeekInstance;
-        if (housing != null && housing.GetAllHouses().Any(h => h.OwnerId == character.Id && h.CurrentStep == -1 && h.Template != null && h.Template.MainModelId > 0))
+        var ownHouses = housing?.GetAllHouses().Where(h => h.OwnerId == character.Id).ToList();
+        if (ownHouses != null && ownHouses.Any(h => h.CurrentStep == -1 && h.Template != null && h.Template.MainModelId > 0))
         {
             return BotActivityDecision.Deny("homestead completed: home fully constructed");
         }
 
-        return BotActivityDecision.Allow(ActivityName);
+        // Drawn motivation: owning no plot at all is an unmet need this activity
+        // exists to serve; continuing an already-started build is a weaker draw
+        // that a band-mate can outbid.
+        return BotActivityDecision.Allow(ActivityName,
+            ownHouses is { Count: > 0 } ? BotActivityMotivation.Wants : BotActivityMotivation.Needs);
     }
 
     /// <inheritdoc />

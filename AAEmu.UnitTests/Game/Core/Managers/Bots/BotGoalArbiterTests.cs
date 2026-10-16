@@ -26,6 +26,7 @@ public class BotGoalArbiterTests
         public int Priority { get; }
         public BotActivityDecision Decision { get; set; }
         public int Activations { get; private set; }
+        public int Probes { get; private set; }
 
         public FakeModule(string name, int priority, BotActivityDecision decision)
         {
@@ -34,7 +35,11 @@ public class BotGoalArbiterTests
             Decision = decision;
         }
 
-        public BotActivityDecision CanActivate(BotActivityContext context) => Decision;
+        public BotActivityDecision CanActivate(BotActivityContext context)
+        {
+            Probes++;
+            return Decision;
+        }
 
         public BotActivity Activate(BotActivityContext context)
         {
@@ -210,6 +215,100 @@ public class BotGoalArbiterTests
         await Assert.That(module.Activations).IsEqualTo(2);
         await Assert.That(arbiter.GetActiveActivity(botA.CharacterId)).IsEqualTo("shared.act");
         await Assert.That(arbiter.GetActiveActivity(botB.CharacterId)).IsEqualTo("shared.act");
+    }
+
+    [Test]
+    public async Task Arbitrate_WeightRanksInsideBand_HeavierBandMateWins()
+    {
+        var idle = new FakeModule("Idle", 50, BotActivityDecision.Allow("idle.act", BotActivityMotivation.Satisfied));
+        var driven = new FakeModule("Driven", 50, BotActivityDecision.Allow("driven.act", BotActivityMotivation.Needs));
+        var arbiter = new BotGoalArbiter();
+        arbiter.Register(idle);
+        arbiter.Register(driven);
+        var bot = NewBot("weight-bot");
+
+        var result = arbiter.Arbitrate(bot, gameHour: 12f);
+
+        await Assert.That(result.Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+        await Assert.That(result.Activity!.ModuleName, "the heavier band-mate outranks registration order")
+            .IsEqualTo("Driven");
+        await Assert.That(driven.Activations).IsEqualTo(1);
+        await Assert.That(idle.Activations).IsEqualTo(0);
+        await Assert.That(result.Candidates).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task Arbitrate_WeightNeverPromotesAcrossBands_LowerBandsNeverAsked()
+    {
+        var high = new FakeModule("High", 100, BotActivityDecision.Allow("high.act", BotActivityMotivation.Satisfied));
+        var low = new FakeModule("Low", 10, BotActivityDecision.Allow("low.act", int.MaxValue));
+        var arbiter = new BotGoalArbiter([low, high]);
+        var bot = NewBot("band-bot");
+
+        var result = arbiter.Arbitrate(bot, gameHour: 12f);
+
+        await Assert.That(result.Activity!.ModuleName, "priority stays the safety ordering").IsEqualTo("High");
+        await Assert.That(low.Activations).IsEqualTo(0);
+        await Assert.That(low.Probes, "a band below the winner is never even probed").IsEqualTo(0);
+        await Assert.That(result.Candidates, "only the deciding band's allowances are candidates").IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task Arbitrate_IncumbentHeld_WithinBandAgainstMarginalChallenger()
+    {
+        var incumbent = new FakeModule("Incumbent", 50, BotActivityDecision.Allow("inc.act", BotActivityMotivation.Needs));
+        var challenger = new FakeModule("Challenger", 50, BotActivityDecision.Deny("not yet"));
+        // The challenger is registered FIRST on purpose: it is the allowance the
+        // old first-allowance-wins scan would have taken, so this test fails
+        // without the commitment branch instead of passing by registration order.
+        var arbiter = new BotGoalArbiter([challenger, incumbent]);
+        var bot = NewBot("commit-bot");
+
+        await Assert.That(arbiter.Arbitrate(bot, 12f).Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+
+        // 110 < 100 + 25% margin → the incumbent keeps the activity.
+        challenger.Decision = BotActivityDecision.Allow("chal.act", BotActivityMotivation.Needs + 10);
+        var held = arbiter.Arbitrate(bot, 12f);
+
+        await Assert.That(held.Outcome).IsEqualTo(BotArbitrationOutcome.Unchanged);
+        await Assert.That(held.Activity!.Name).IsEqualTo("inc.act");
+        await Assert.That(challenger.Activations, "a marginal challenger never activates").IsEqualTo(0);
+        await Assert.That(arbiter.GetActiveActivity(bot.CharacterId)).IsEqualTo("inc.act");
+    }
+
+    [Test]
+    public async Task Arbitrate_ChallengerAboveMargin_TakesActivity()
+    {
+        var incumbent = new FakeModule("Incumbent", 50, BotActivityDecision.Allow("inc.act", BotActivityMotivation.Needs));
+        var challenger = new FakeModule("Challenger", 50, BotActivityDecision.Deny("not yet"));
+        var arbiter = new BotGoalArbiter([incumbent, challenger]);
+        var bot = NewBot("preempt-bot");
+
+        await Assert.That(arbiter.Arbitrate(bot, 12f).Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+
+        // 125 >= 100 + 25 → the band-mate outbids the incumbent.
+        challenger.Decision = BotActivityDecision.Allow("chal.act", BotActivityMotivation.Needs + 25);
+        var taken = arbiter.Arbitrate(bot, 12f);
+
+        await Assert.That(taken.Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+        await Assert.That(taken.Activity!.ModuleName).IsEqualTo("Challenger");
+        await Assert.That(challenger.Activations).IsEqualTo(1);
+        await Assert.That(arbiter.GetActiveActivity(bot.CharacterId)).IsEqualTo("chal.act");
+    }
+
+    [Test]
+    public async Task Arbitrate_RefusalsSurfaced_WhyNotFromHighestPriorityDenial()
+    {
+        var denied = new FakeModule("Denied", 100, BotActivityDecision.Deny("gate off"));
+        var allowed = new FakeModule("Allowed", 50, BotActivityDecision.Allow("fallback.act"));
+        var arbiter = new BotGoalArbiter([denied, allowed]);
+        var bot = NewBot("whynot-bot");
+
+        var result = arbiter.Arbitrate(bot, gameHour: 12f);
+
+        await Assert.That(result.WhyNot, "the highest-priority refusal is reported").IsEqualTo("gate off");
+        await Assert.That(result.Rejections).IsEqualTo(1);
+        await Assert.That(result.Candidates).IsEqualTo(1);
     }
 
     #endregion

@@ -60,13 +60,40 @@ public sealed class BotActivityContext
 }
 
 /// <summary>Result of <see cref="IBotActivityModule.CanActivate"/>.</summary>
-public sealed record BotActivityDecision(bool CanActivate, string? ActivityName = null, string? WhyNot = null)
+public sealed record BotActivityDecision(bool CanActivate, string? ActivityName = null, string? WhyNot = null, int Weight = 0)
 {
-    /// <summary>Allows activation under the given stable activity name.</summary>
-    public static BotActivityDecision Allow(string activityName) => new(true, activityName);
+    /// <summary>
+    /// Allows activation under the given stable activity name.
+    /// <paramref name="weight"/> is the module's DRAWN MOTIVATION for this
+    /// wake — how strongly it wants this activity right now (0 = eligible but
+    /// unmotivated, the default for every module that draws nothing).
+    ///
+    /// Weight orders the CANDIDATES OF ONE PRIORITY BAND only. Priority stays
+    /// the safety ordering: a heavier module can never outrank a higher
+    /// priority band, so survival/recovery bands keep their precedence.
+    /// </summary>
+    public static BotActivityDecision Allow(string activityName, int weight = 0) => new(true, activityName, null, weight);
 
     /// <summary>Declines with a diagnostics reason (falls through to the next module).</summary>
     public static BotActivityDecision Deny(string whyNot) => new(false, WhyNot: whyNot);
+}
+
+/// <summary>
+/// Shared motivation scale for <see cref="BotActivityDecision.Allow"/> weights.
+/// Weights are only ever compared between modules inside ONE priority band, so
+/// every module that shares a band must draw on this same scale — otherwise the
+/// comparison is meaningless.
+/// </summary>
+public static class BotActivityMotivation
+{
+    /// <summary>The activity is already satisfied — hold cheaply.</summary>
+    public const int Satisfied = 0;
+
+    /// <summary>A modest draw: worth doing, or already under way.</summary>
+    public const int Wants = 40;
+
+    /// <summary>An unmet need this activity exists to serve.</summary>
+    public const int Needs = 100;
 }
 
 /// <summary>An activated activity handle (identity only — behavior lives in the module).</summary>

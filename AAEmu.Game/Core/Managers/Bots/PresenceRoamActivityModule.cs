@@ -48,7 +48,12 @@ public sealed class PresenceRoamActivityModule : IBotActivityModule
         if (context.Bot.Character.IsInBattle)
             return BotActivityDecision.Deny("bot in battle");
 
-        return BotActivityDecision.Allow("presence.roam");
+        // Drawn motivation: a route-less bot wants its patrol loop armed (the
+        // activity's whole reason for existing); a bot already walking one has
+        // the activity satisfied and holds cheaply.
+        var hasLiveRoute = _stepExecutor.GetRoamRoute(context.Bot.CharacterId) is { IsFinished: false };
+        return BotActivityDecision.Allow("presence.roam",
+            hasLiveRoute ? BotActivityMotivation.Satisfied : BotActivityMotivation.Needs);
     }
 
     /// <inheritdoc />
