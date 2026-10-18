@@ -688,6 +688,9 @@ public enum NeedsFarmLoopPhase
         public DateTime LastPvpCastUtc { get; set; } = DateTime.MinValue;
         public uint LastPvpSkillUsed { get; set; }
 
+        /// <summary>The attacker self-defence is fighting (0 = not defending).</summary>
+        public uint DefendTargetObjId { get; set; }
+
         public uint TargetButcherDoodadObjId { get; set; }
         public DateTime LastButcherScanUtc { get; set; } = DateTime.MinValue;
 
@@ -2295,6 +2298,27 @@ public enum NeedsFarmLoopPhase
             pvpEngaged = StepPvpEngagement(bot, actor, state, now);
         }
 
+        // 0a. Self-defence (the Fighting mode owner): while the arbiter holds
+        // defend.self the bot fights whoever is attacking it, through the same
+        // engagement step as the conflict leg. The fight owns this wake exactly
+        // like a conflict engagement, so every later leg stands aside. When the
+        // election moves on, the fight's auto-attack and target are released.
+        if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
+            && ActiveActivityProvider?.Invoke(bot.CharacterId) is string defendActivity
+            && BotActivityDispatchSurface.Resolve(defendActivity) == BotActivityCarrier.Defend)
+        {
+            pvpEngaged = StepSelfDefence(bot, actor, state, now);
+        }
+        else if (state.DefendTargetObjId != 0)
+        {
+            // A conflict engagement that took this wake keeps its own
+            // auto-attack; only a fight nobody owns any more is released.
+            if (pvpEngaged)
+                state.DefendTargetObjId = 0;
+            else
+                EndSelfDefence(bot, actor, state);
+        }
+
         // 0d. Operator assignment leg (plan T1): a live assignment walks its
         // destination through the ordinary route layer, with its own move-owner
         // tag. Deliberately NOT gated on the elected activity name — the
@@ -2808,7 +2832,10 @@ public enum NeedsFarmLoopPhase
         // 2. Issue the next leg when idle, not in party, not hunting, not butchering, not work-legged, not waiting for crop, and a route is active.
         // P0.4: an owned Running job also holds the route sites while the
         // quest leg defers to the hold (QuestLegActive only covers landed).
-        if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !questOwnedHold
+        // A fight (conflict or self-defence) owns the wake: between swings the
+        // actor is often idle, and issuing a route leg would walk the bot out
+        // of its own fight (self-defence review, P1).
+        if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !questOwnedHold
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false }
             && !IsUnreachableRouteLeg(state))
@@ -2884,7 +2911,7 @@ public enum NeedsFarmLoopPhase
             LogQuestTravelTurnover(bot, state, "skip", skipTarget, null, skipCount < 0 || skipIndex < 0 ? -1 : skipCount - 1 - skipIndex, skippedArticle);
         }
         ValidateQuestTravelAuthorization(bot, state);
-        if (!state.SurvivalWakeOwned
+        if (!pvpEngaged && !state.SurvivalWakeOwned
             && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !questOwnedHold
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0
@@ -5799,73 +5826,7 @@ public enum NeedsFarmLoopPhase
 
         if (target != null)
         {
-            if (bot.Character.CurrentTarget?.ObjId != target.ObjId)
-            {
-                bot.Character.CurrentTarget = target;
-                bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, target.ObjId), true);
-            }
-
-            var dist = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, target.Transform.World.Position, false);
-            var role = CombatDecisionTree.InferRole(bot.Character);
-            var engageRange = role == CombatRole.Melee ? HuntMeleeRange : 15.0f;
-
-            if (dist > engageRange)
-            {
-                var needsMove = actor.ActiveRequest is not { IsTerminal: false, Action: ActorActionType.Move };
-                if (needsMove)
-                {
-                    if (actor.ActiveRequest is { IsTerminal: false })
-                    {
-                        // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
-                        LogQuestTravelHaltCaller(bot, state, "other", "pvp-engage-retrack");
-                        _ = actor.Stop();
-                    }
-                    StageMoveOwner(actor, "OTHER:pvp-engage");
-                    state.PendingLeg = actor.MoveToUnit(target.ObjId, HuntChaseSpeed, TimeSpan.FromSeconds(10));
-                }
-            }
-            else
-            {
-                if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
-                {
-                    // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
-                    LogQuestTravelHaltCaller(bot, state, "settle", "pvp-engage-range");
-                    _ = actor.Stop();
-                    state.PendingLeg = null;
-                }
-
-                var angle = MathUtil.CalculateAngleFrom(bot.Character.Transform.World.Position, target.Transform.World.Position);
-                bot.Character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
-                bot.Character.Transform.FinalizeTransform();
-
-                if (!bot.Character.IsAutoAttack)
-                {
-                    actor.AutoAttack(target.ObjId);
-                }
-
-                if (now - state.LastPvpCastUtc >= HuntCastInterval)
-                {
-                    var skillId = CombatDecisionTree.SelectPrioritizedSkill(
-                        bot.Character,
-                        target,
-                        role,
-                        null,
-                        state.LastPvpSkillUsed);
-                    if (skillId > 0)
-                    {
-                        var castResult = actor.Cast(skillId, target.ObjId);
-                        if (castResult.State != ActorLifecycleState.Rejected)
-                        {
-                            state.LastPvpSkillUsed = skillId;
-                            state.LastPvpCastUtc = now;
-                        }
-                        else
-                        {
-                            state.LastPvpSkillUsed = 0;
-                        }
-                    }
-                }
-            }
+            EngageTarget(bot, actor, state, target, now, "OTHER:pvp-engage", "pvp-engage");
             return true;
         }
 
@@ -5905,6 +5866,140 @@ public enum NeedsFarmLoopPhase
             return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// The shared fight step for one wake against <paramref name="target"/>:
+    /// keep it targeted, approach it with a unit-relative move when out of
+    /// range, otherwise face it, keep auto-attack running and cast the
+    /// prioritised skill on the cast interval. Used by the conflict engagement
+    /// (players) and by self-defence (whoever is attacking the bot).
+    /// </summary>
+    private void EngageTarget(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state, Unit target,
+        DateTime now, string moveOwner, string haltLabel)
+    {
+        if (bot.Character.CurrentTarget?.ObjId != target.ObjId)
+        {
+            bot.Character.CurrentTarget = target;
+            bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, target.ObjId), true);
+        }
+
+        var dist = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, target.Transform.World.Position, false);
+        var role = CombatDecisionTree.InferRole(bot.Character);
+        var engageRange = role == CombatRole.Melee ? HuntMeleeRange : 15.0f;
+
+        if (dist > engageRange)
+        {
+            var needsMove = actor.ActiveRequest is not { IsTerminal: false, Action: ActorActionType.Move };
+            if (needsMove)
+            {
+                if (actor.ActiveRequest is { IsTerminal: false })
+                {
+                    // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+                    LogQuestTravelHaltCaller(bot, state, "other", haltLabel + "-retrack");
+                    _ = actor.Stop();
+                }
+                StageMoveOwner(actor, moveOwner);
+                state.PendingLeg = actor.MoveToUnit(target.ObjId, HuntChaseSpeed, TimeSpan.FromSeconds(10));
+            }
+            return;
+        }
+
+        if (actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
+        {
+            // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+            LogQuestTravelHaltCaller(bot, state, "settle", haltLabel + "-range");
+            _ = actor.Stop();
+            state.PendingLeg = null;
+        }
+
+        var angle = MathUtil.CalculateAngleFrom(bot.Character.Transform.World.Position, target.Transform.World.Position);
+        bot.Character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
+        bot.Character.Transform.FinalizeTransform();
+
+        if (!bot.Character.IsAutoAttack)
+        {
+            actor.AutoAttack(target.ObjId);
+        }
+
+        if (now - state.LastPvpCastUtc >= HuntCastInterval)
+        {
+            var skillId = CombatDecisionTree.SelectPrioritizedSkill(
+                bot.Character,
+                target,
+                role,
+                null,
+                state.LastPvpSkillUsed);
+            if (skillId > 0)
+            {
+                var castResult = actor.Cast(skillId, target.ObjId);
+                if (castResult.State != ActorLifecycleState.Rejected)
+                {
+                    state.LastPvpSkillUsed = skillId;
+                    state.LastPvpCastUtc = now;
+                }
+                else
+                {
+                    state.LastPvpSkillUsed = 0;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Self-defence for one wake (the Fighting mode owner, see
+    /// <see cref="SelfDefenceActivityModule"/>): keep fighting the held
+    /// attacker while it is still attacking, otherwise pick the nearest
+    /// attacker; with none left, end the fight. Returns true while fighting.
+    /// </summary>
+    private bool StepSelfDefence(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state, DateTime now)
+    {
+        Unit? target = null;
+        if (state.DefendTargetObjId != 0)
+        {
+            target = (UnitResolver != null
+                ? UnitResolver(bot.Character, state.DefendTargetObjId)
+                : bot.Character.ParentWorld?.GetUnit(state.DefendTargetObjId)) as Unit;
+            if (!BotAttackers.IsAttacker(bot.Character, target))
+                target = null;
+        }
+
+        target ??= BotAttackers.FindNearest(bot.Character, HuntPerceptionRadius,
+            NearbyNpcProvider?.Invoke(bot.Character, HuntPerceptionRadius),
+            NearbyCharacterProvider?.Invoke(bot.Character, HuntPerceptionRadius));
+        if (target == null)
+        {
+            EndSelfDefence(bot, actor, state);
+            return false;
+        }
+
+        if (state.DefendTargetObjId != target.ObjId)
+        {
+            state.DefendTargetObjId = target.ObjId;
+            state.LastPvpSkillUsed = 0;
+        }
+        EngageTarget(bot, actor, state, target, now, "OTHER:self-defence", "self-defence");
+        return true;
+    }
+
+    /// <summary>
+    /// Leaves a fight the bot was defending: stop auto-attack and drop the
+    /// target, the same cleanup the conflict engagement does on target loss,
+    /// so a bot whose fight ended is not left swinging at nothing.
+    /// </summary>
+    private static void EndSelfDefence(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
+    {
+        if (state.DefendTargetObjId == 0)
+            return;
+        if (bot.Character.IsAutoAttack)
+            actor.StopAutoAttack();
+        if (bot.Character.CurrentTarget?.ObjId == state.DefendTargetObjId)
+        {
+            bot.Character.CurrentTarget = null;
+            bot.Character.BroadcastPacket(new SCTargetChangedPacket(bot.Character.ObjId, 0), true);
+        }
+        state.DefendTargetObjId = 0;
+        state.LastPvpSkillUsed = 0;
     }
 
     private bool IsAttackablePlayer(Character me, Character foe)

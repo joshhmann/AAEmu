@@ -46,9 +46,11 @@ internal static class BotActivityDispatchValidation
         var moduleCount = 0;
         var declared = 0;
 
+        var served = new HashSet<BotMode>();
         foreach (var module in modules ?? [])
         {
             moduleCount++;
+            served.UnionWith(module.ServedModes);
             var names = module.DeclaredActivities;
             if (names.Count == 0)
             {
@@ -62,6 +64,19 @@ internal static class BotActivityDispatchValidation
                 declared++;
                 if (!BotActivityDispatchSurface.IsCarried(name))
                     gaps.Add(new BotActivityDispatchGap(module.Name, name, "no dispatch owner carries this activity"));
+            }
+        }
+
+        // The mode layer: every mode the arbiter fills needs an owner, or a bot
+        // in that mode elects nothing (run 11: nobody owned a fight). Only
+        // checked for a non-empty set, so an empty registry stays "nothing here".
+        if (moduleCount > 0)
+        {
+            foreach (var mode in BotModes.ArbiterModes)
+            {
+                if (!served.Contains(mode))
+                    gaps.Add(new BotActivityDispatchGap($"(mode {mode})", null,
+                        "no registered module serves this mode, so a bot in it elects nothing"));
             }
         }
 

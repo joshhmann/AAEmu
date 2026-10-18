@@ -1720,6 +1720,31 @@ public class BotShortRunEvidenceTests
     }
 
     [Fact]
+    public void AuditRowMayOnlyFillInItsPendingCastEffect()
+    {
+        // T10 run 12: a Cast row was observed before its effect window resolved,
+        // then again with target_hp_before/after, effect_observed and
+        // effect_wait_ms filled in (ActorAuditRecord: null = window pending).
+        var pending = JsonSerializer.SerializeToElement(new
+        {
+            trace_id = "48050121-f274-47a1-abd1-570a35073822", action = "Cast", result = "Completed",
+            target_hp_before = (int?)null, target_hp_after = (int?)null,
+            effect_observed = (bool?)null, effect_wait_ms = (double?)null,
+        });
+        var resolved = Changed(Changed(Changed(Changed(pending, "target_hp_before", 157), "target_hp_after", 286),
+            "effect_observed", true), "effect_wait_ms", 1183.4674);
+
+        Assert.True(BotShortRunEvidence.SameAuditRow(pending, pending));
+        Assert.True(BotShortRunEvidence.SameAuditRow(pending, resolved));
+        // Anything else is still a rewritten row.
+        Assert.False(BotShortRunEvidence.SameAuditRow(pending, Changed(resolved, "result", "Rejected")));
+        Assert.False(BotShortRunEvidence.SameAuditRow(resolved, Changed(resolved, "target_hp_after", 1)));
+        Assert.False(BotShortRunEvidence.SameAuditRow(resolved, pending));
+        // The enrichment fills all four at once; a partial fill is a rewrite.
+        Assert.False(BotShortRunEvidence.SameAuditRow(pending, Changed(pending, "target_hp_after", 286)));
+    }
+
+    [Fact]
     public void OnlineCountersGrowOnlyWithinTheExactEndToReleaseInterval()
     {
         // T10 runs 7 and 9: the counters advanced by one 5 s tracking jump

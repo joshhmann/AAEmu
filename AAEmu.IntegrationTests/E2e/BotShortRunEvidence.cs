@@ -149,9 +149,9 @@ internal sealed class BotShortRunEvidence
             var priorRows = Array(_previousObservation.Value, "actorAudit").ToArray();
             var rows = Array(observation, "actorAudit").ToArray();
             if ((priorRows.Length > 0 && !rows.Any(r => Id(r, "trace_id") == Id(priorRows[^1], "trace_id")
-                    && JsonElement.DeepEquals(r, priorRows[^1])))
+                    && SameAuditRow(priorRows[^1], r)))
                 || priorRows.Any(p => rows.Any(r => Id(r, "trace_id") == Id(p, "trace_id")
-                    && !JsonElement.DeepEquals(r, p))))
+                    && !SameAuditRow(p, r))))
             {
                 EvidenceFault ??= "Actor audit tail overlap lost";
                 BreakContinuity();
@@ -723,6 +723,47 @@ internal sealed class BotShortRunEvidence
         => value.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : "";
     internal static bool? Bool(JsonElement value, string name)
         => value.TryGetProperty(name, out var v) && v.ValueKind is JsonValueKind.True or JsonValueKind.False ? v.GetBoolean() : null;
+    /// <summary>
+    /// The v2 cast-effect fields an audit record fills in after its terminal
+    /// row is first published (ActorAuditRecord: null = "window still pending").
+    /// </summary>
+    private static readonly string[] LateEffectFields =
+        ["target_hp_before", "target_hp_after", "effect_observed", "effect_wait_ms"];
+
+    /// <summary>
+    /// True when <paramref name="next"/> is the same audit row as
+    /// <paramref name="prior"/>: identical, or identical except that ALL four
+    /// pending cast-effect fields were filled in together (null to a value,
+    /// the one enrichment GameplayActor.AttachCastEffectObservation makes),
+    /// never changed or cleared. T10 run 12: a Cast row observed before its
+    /// effect window resolved was otherwise counted as a rewritten row.
+    /// </summary>
+    internal static bool SameAuditRow(JsonElement prior, JsonElement next)
+    {
+        if (JsonElement.DeepEquals(prior, next))
+            return true;
+        if (prior.ValueKind != JsonValueKind.Object || next.ValueKind != JsonValueKind.Object)
+            return false;
+        foreach (var field in LateEffectFields)
+        {
+            if (!prior.TryGetProperty(field, out var pending) || pending.ValueKind != JsonValueKind.Null
+                || !next.TryGetProperty(field, out var filled) || filled.ValueKind == JsonValueKind.Null)
+                return false;
+        }
+        var names = prior.EnumerateObject().Select(p => p.Name).Concat(next.EnumerateObject().Select(p => p.Name)).Distinct();
+        foreach (var name in names)
+        {
+            var hadPrior = prior.TryGetProperty(name, out var before);
+            var hasNext = next.TryGetProperty(name, out var after);
+            if (hadPrior && hasNext && JsonElement.DeepEquals(before, after))
+                continue;
+            var pendingBefore = !hadPrior || before.ValueKind == JsonValueKind.Null;
+            if (!LateEffectFields.Contains(name) || !pendingBefore || !hasNext)
+                return false;
+        }
+        return true;
+    }
+
     internal static Guid? Id(JsonElement value, string name)
         => Guid.TryParse(String(value, name), out var id) && id != Guid.Empty ? id : null;
     internal static DateTime? Time(JsonElement value, string name)

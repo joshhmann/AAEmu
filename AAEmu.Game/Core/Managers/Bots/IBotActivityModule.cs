@@ -57,6 +57,14 @@ public interface IBotActivityModule
     IReadOnlyList<string> DeclaredActivities => [];
 
     /// <summary>
+    /// The modes (<see cref="BotMode"/>) this module can be elected in. The
+    /// startup dispatch check reports any arbiter mode no registered module
+    /// serves, so a gap like run 11's "nobody owns a fight" is found at boot.
+    /// Default = Free: almost every module denies while the bot is in battle.
+    /// </summary>
+    IReadOnlyList<BotMode> ServedModes => [BotMode.Free];
+
+    /// <summary>
     /// Asks this module to RELEASE whatever the activity it is losing still
     /// owns (a live actor request, an armed route, a held reservation).
     /// Called by the arbiter when this module's activity is superseded, BEFORE

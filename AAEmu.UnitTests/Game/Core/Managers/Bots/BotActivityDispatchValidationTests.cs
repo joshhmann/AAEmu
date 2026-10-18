@@ -22,7 +22,10 @@ public class BotActivityDispatchValidationTests
         public BotActivity Activate(BotActivityContext context) => new(Name, Name);
     }
 
-    /// <summary>The ten modules Program.cs registers, built with their real types.</summary>
+    /// <summary>The Fighting mode's owner, so stub sets only report their own gaps.</summary>
+    private static IBotActivityModule FightingOwner() => new SelfDefenceActivityModule(_ => null);
+
+    /// <summary>The eleven modules Program.cs registers, built with their real types.</summary>
     private static List<IBotActivityModule> RealModuleSet()
     {
         var stepExecutor = new BotRoamStepExecutor();
@@ -40,6 +43,7 @@ public class BotActivityDispatchValidationTests
             new NeedsFarmActivityModule(new NeedsFarmModuleOptions()),
             new AssignedTravelActivityModule(new BotAssignmentRegistry(), stepExecutor),
             new IdleActivityModule(stepExecutor),
+            new SelfDefenceActivityModule(_ => null),
         ];
     }
 
@@ -48,8 +52,8 @@ public class BotActivityDispatchValidationTests
     {
         var report = BotActivityDispatchValidation.Validate(RealModuleSet());
 
-        await Assert.That(report.ModuleCount).IsEqualTo(10);
-        await Assert.That(report.DeclaredActivityCount).IsEqualTo(11);
+        await Assert.That(report.ModuleCount).IsEqualTo(11);
+        await Assert.That(report.DeclaredActivityCount).IsEqualTo(12);
         await Assert.That(report.IsClean).IsFalse();
         await Assert.That(report.Gaps.Count).IsEqualTo(1);
         await Assert.That(report.Gaps[0].ModuleName).IsEqualTo("FishingContest");
@@ -72,7 +76,7 @@ public class BotActivityDispatchValidationTests
     [Test]
     public async Task Validate_ModuleDeclaringAnUncarriedActivity_ReportsIt()
     {
-        var report = BotActivityDispatchValidation.Validate([new StubModule("Adventurer", "adventure.explore")]);
+        var report = BotActivityDispatchValidation.Validate([new StubModule("Adventurer", "adventure.explore"), FightingOwner()]);
 
         await Assert.That(report.Gaps.Count).IsEqualTo(1);
         await Assert.That(report.Gaps[0].ModuleName).IsEqualTo("Adventurer");
@@ -82,7 +86,7 @@ public class BotActivityDispatchValidationTests
     [Test]
     public async Task Validate_ModuleDeclaringNothing_IsReported()
     {
-        var report = BotActivityDispatchValidation.Validate([new StubModule("Mystery")]);
+        var report = BotActivityDispatchValidation.Validate([new StubModule("Mystery"), FightingOwner()]);
 
         await Assert.That(report.Gaps.Count).IsEqualTo(1);
         await Assert.That(report.Gaps[0].Activity, "a module that declares nothing names no activity").IsNull();
@@ -96,11 +100,12 @@ public class BotActivityDispatchValidationTests
         [
             new StubModule("Farm", "needs.farm"),
             new StubModule("Schedules", SchedulePhaseActivityModule.ActivityPrefix),
+            FightingOwner(),
         ]);
 
         await Assert.That(report.IsClean).IsTrue();
-        await Assert.That(report.ModuleCount).IsEqualTo(2);
-        await Assert.That(report.DeclaredActivityCount).IsEqualTo(2);
+        await Assert.That(report.ModuleCount).IsEqualTo(3);
+        await Assert.That(report.DeclaredActivityCount).IsEqualTo(3);
     }
 
     [Test]

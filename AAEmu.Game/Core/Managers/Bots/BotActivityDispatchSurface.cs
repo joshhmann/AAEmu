@@ -10,6 +10,9 @@ internal enum BotActivityCarrier
     /// <summary>The executor's conflict engagement step.</summary>
     Conflict,
 
+    /// <summary>The executor's self-defence step (the Fighting mode owner).</summary>
+    Defend,
+
     /// <summary>The executor's needs (survival/farm) leg.</summary>
     Needs,
 
@@ -77,6 +80,7 @@ internal static class BotActivityDispatchSurface
     private static readonly BotActivityDispatchRule[] Rules =
     [
         new(ConflictPrefix, true, BotActivityCarrier.Conflict, "the executor's conflict engagement step"),
+        new(SelfDefenceActivityModule.ActivityName, false, BotActivityCarrier.Defend, "the executor's self-defence step"),
         new(NeedsPrefix, true, BotActivityCarrier.Needs, "the executor's needs (survival) leg"),
         new(QuestPrefix, true, BotActivityCarrier.Quest, "the executor's quest leg"),
         new(HomesteadPrefix, true, BotActivityCarrier.Homestead, "the executor's homestead leg"),

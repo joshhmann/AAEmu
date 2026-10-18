@@ -370,6 +370,7 @@ public static class Program
                 // The existing behaviors are the first modules:
                 //   AssignedTravel(110) — operator assignment band (plan T1)
                 //   Schedules(100) — C1 phase behavior when EnableSchedules is on
+                //   SelfDefence(90) — Fighting mode owner: fight back while attacked
                 //   ConflictJoin(75) — war-horn join in active-conflict zones
                 //   FishingContest(60) — M9.5 scheduled contest window (default OFF)
                 //   QuestBootstrap(58) — copper-bootstrap quest driver (default OFF)
@@ -399,6 +400,7 @@ public static class Program
                 services.AddSingleton<IBotActivityModule>(sp => sp.GetRequiredService<OutOfCombatRecoveryModule>());
                 services.AddSingleton<IBotActivityModule, PresenceRoamActivityModule>();
                 services.AddSingleton<IBotActivityModule, ConflictJoinActivityModule>();
+                services.AddSingleton<IBotActivityModule>(_ => new SelfDefenceActivityModule());
                 // The four pressure-gated modules are constructed with the real
                 // server-pressure band; registered by concrete type here because
                 // their Func<ServerPressure> parameter is what carries the probe

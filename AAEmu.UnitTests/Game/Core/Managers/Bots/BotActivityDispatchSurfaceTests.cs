@@ -49,8 +49,8 @@ public class BotActivityDispatchSurfaceTests
     {
         var rules = BotActivityDispatchSurface.DeclaredRules;
 
-        await Assert.That(rules.Count).IsEqualTo(10);
-        await Assert.That(rules.Select(rule => rule.Carrier).Distinct().Count()).IsEqualTo(9);
+        await Assert.That(rules.Count).IsEqualTo(11);
+        await Assert.That(rules.Select(rule => rule.Carrier).Distinct().Count()).IsEqualTo(10);
         await Assert.That(rules.All(rule => !string.IsNullOrWhiteSpace(rule.Value))).IsTrue();
         await Assert.That(rules.All(rule => !string.IsNullOrWhiteSpace(rule.CarriedBy))).IsTrue();
     }
