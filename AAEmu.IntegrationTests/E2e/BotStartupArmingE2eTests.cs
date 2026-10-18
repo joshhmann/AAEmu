@@ -281,7 +281,7 @@ public class BotStartupArmingE2eTests
 
     // --------------------------------------------------------------- reads
 
-    private static async Task<JsonElement> GetJsonAsync(HttpClient client, string path)
+    internal static async Task<JsonElement> GetJsonAsync(HttpClient client, string path)
     {
         using var response = await client.GetAsync(path);
         var text = await response.Content.ReadAsStringAsync();
@@ -291,7 +291,7 @@ public class BotStartupArmingE2eTests
         return doc.RootElement.Clone();
     }
 
-    private static async Task<List<(string Name, uint Id, string State)>> StatusBotsAsync(HttpClient client)
+    internal static async Task<List<(string Name, uint Id, string State)>> StatusBotsAsync(HttpClient client)
     {
         var status = await GetJsonAsync(client, "/api/bots/status");
         var bots = new List<(string Name, uint Id, string State)>();
@@ -309,7 +309,7 @@ public class BotStartupArmingE2eTests
         return bots;
     }
 
-    private static async Task<List<(string Name, uint Id, string State)>> WaitForActiveBotsAsync(
+    internal static async Task<List<(string Name, uint Id, string State)>> WaitForActiveBotsAsync(
         HttpClient client, int count, TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;
@@ -325,7 +325,7 @@ public class BotStartupArmingE2eTests
         return last.Where(b => b.State == "Active").ToList();
     }
 
-    private static async Task<JsonElement> GetBrainAsync(HttpClient client, string bot)
+    internal static async Task<JsonElement> GetBrainAsync(HttpClient client, string bot)
     {
         using var response = await client.GetAsync($"/api/bots/brain/{bot}");
         var text = await response.Content.ReadAsStringAsync();
@@ -365,20 +365,20 @@ public class BotStartupArmingE2eTests
         return new MoveSample(false, from, ReadPosition(last), wakeStart, WakeOf(last), Str(last, "Activity") ?? activity);
     }
 
-    private static (float X, float Y, float Z) ReadPosition(JsonElement brain)
+    internal static (float X, float Y, float Z) ReadPosition(JsonElement brain)
         => (brain.GetProperty("X").GetSingle(), brain.GetProperty("Y").GetSingle(), brain.GetProperty("Z").GetSingle());
 
-    private static long WakeOf(JsonElement brain)
+    internal static long WakeOf(JsonElement brain)
         => brain.TryGetProperty("WakeSequence", out var wake) && wake.ValueKind == JsonValueKind.Number
             ? wake.GetInt64()
             : 0;
 
-    private static string? Str(JsonElement element, string name)
+    internal static string? Str(JsonElement element, string name)
         => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
             ? value.GetString()
             : null;
 
-    private static float Dist((float X, float Y, float Z) a, (float X, float Y, float Z) b)
+    internal static float Dist((float X, float Y, float Z) a, (float X, float Y, float Z) b)
     {
         var dx = a.X - b.X;
         var dy = a.Y - b.Y;
@@ -424,7 +424,7 @@ public class BotStartupArmingE2eTests
 
     // -------------------------------------------------------------- helpers
 
-    private static HttpClient NewClient(string token)
+    internal static HttpClient NewClient(string token)
     {
         var client = new HttpClient { BaseAddress = new Uri(WebApiBase), Timeout = TimeSpan.FromSeconds(60) };
         client.DefaultRequestHeaders.Add("X-Auth-Token", token);
@@ -442,7 +442,7 @@ public class BotStartupArmingE2eTests
         return doc.RootElement.Clone();
     }
 
-    private static async Task WaitForWebApiAsync(TimeSpan timeout)
+    internal static async Task WaitForWebApiAsync(TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;
         while (DateTime.UtcNow < deadline)
@@ -462,7 +462,7 @@ public class BotStartupArmingE2eTests
         throw new TimeoutException("WebApi never came up on port " + E2eStack.WebApiPort);
     }
 
-    private static async Task<string?> WaitForLogLineAsync(string logPath, string needle, TimeSpan timeout)
+    internal static async Task<string?> WaitForLogLineAsync(string logPath, string needle, TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;
         while (DateTime.UtcNow < deadline)
