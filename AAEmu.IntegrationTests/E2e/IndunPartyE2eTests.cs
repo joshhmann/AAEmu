@@ -51,6 +51,7 @@ public class IndunPartyE2eTests
     private const string MemberBotName = "IndunMember";
     private const string LeaderAccountName = "e2eindunleader";
     private const string MemberAccountName = "e2eindunmember";
+    private const string OperatorToken = "e2e-indun-party-operator";
 
     /// <summary>Hadir Farm zone GROUP id (indun_zones.zone_group_id).</summary>
     private const uint HadirZoneGroupId = 46;
@@ -111,6 +112,14 @@ public class IndunPartyE2eTests
         Directory.CreateDirectory(EvidenceDir);
 
         // ------------------------------------------------------- STAGE: STACK
+        // T0 operator-plane gate: the generic /api/commands route now sits behind
+        // the same gate as the bot plane, so this lane arms it before boot and
+        // RunWebCommand sends the matching X-Auth-Token header. A token another
+        // lane already exported is reused so a shared stack keeps one value.
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AAEMU_BOT_CTRL_TOKEN")))
+            Environment.SetEnvironmentVariable("AAEMU_BOT_CTRL_TOKEN", OperatorToken);
+        Environment.SetEnvironmentVariable("AAEMU_BOT_CTRL", "1");
+
         E2eStack.EnsureUp();
         var patchApplied = EnsureCompletionPatchApplied();
         Record("COMPLETION-PATCH", patchApplied,
@@ -440,6 +449,8 @@ public class IndunPartyE2eTests
             leader?.Disconnect();
             member?.Disconnect();
             E2eStack.CleanupBotRows(LeaderAccountName, MemberAccountName);
+            Environment.SetEnvironmentVariable("AAEMU_BOT_CTRL", null);
+            Environment.SetEnvironmentVariable("AAEMU_BOT_CTRL_TOKEN", null);
         }
 
         // ------------------------------------------------------------ VERDICT
@@ -675,6 +686,9 @@ public class IndunPartyE2eTests
         try
         {
             using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            var token = Environment.GetEnvironmentVariable("AAEMU_BOT_CTRL_TOKEN");
+            if (!string.IsNullOrEmpty(token))
+                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Auth-Token", token);
             var payload = JsonSerializer.Serialize(new { character, arguments });
             var response = client.PostAsync(
                 new Uri($"http://127.0.0.1:{E2eStack.WebApiPort}/api/commands/{command}"),

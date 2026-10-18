@@ -20,8 +20,8 @@ The configuration structure is as follows:
     "Port": 1250
 },
 "WebApiNetwork": {
-    "Host": "*",
-    "Port": 1280
+    "Host": "127.0.0.1",                <-- loopback by default; set "*" in Config.Local.json
+    "Port": 1280                        <-- to expose the operator API on the LAN
 },
 "LoginNetwork": {
     "Host": "%login_host%",             <-- the IP address of the login server

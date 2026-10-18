@@ -42,6 +42,7 @@ public class JusticeCrimeE2eTests
     // Hyphen-free: NameManager rejects '-' in character names.
     private const string BotA = "JusticeA";
     private const string BotB = "JusticeB";
+    private const string OperatorToken = "e2e-justice-operator";
     private const string AccountA = "e2ejusticea";
     private const string AccountB = "e2ejusticeb";
 
@@ -62,6 +63,14 @@ public class JusticeCrimeE2eTests
             stages.Add((stage, passed, detail));
             Console.WriteLine($"[justice] {(passed ? "PASS" : "FAIL")} {stage}: {detail}");
         }
+
+        // T0 operator-plane gate: the generic /api/commands route now sits behind
+        // the same gate as the bot plane, so this lane arms it before boot and
+        // RunWebCommand sends the matching X-Auth-Token header. A token another
+        // lane already exported is reused so a shared stack keeps one value.
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AAEMU_BOT_CTRL_TOKEN")))
+            Environment.SetEnvironmentVariable("AAEMU_BOT_CTRL_TOKEN", OperatorToken);
+        Environment.SetEnvironmentVariable("AAEMU_BOT_CTRL", "1");
 
         E2eStack.EnsureUp();
         Directory.CreateDirectory(EvidenceDir);
@@ -329,6 +338,8 @@ public class JusticeCrimeE2eTests
         {
             botA?.Dispose();
             botB?.Dispose();
+            Environment.SetEnvironmentVariable("AAEMU_BOT_CTRL", null);
+            Environment.SetEnvironmentVariable("AAEMU_BOT_CTRL_TOKEN", null);
         }
     }
 
@@ -513,6 +524,9 @@ public class JusticeCrimeE2eTests
         try
         {
             using var client = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            var token = Environment.GetEnvironmentVariable("AAEMU_BOT_CTRL_TOKEN");
+            if (!string.IsNullOrEmpty(token))
+                client.DefaultRequestHeaders.TryAddWithoutValidation("X-Auth-Token", token);
             var payload = JsonSerializer.Serialize(new { character, arguments });
             var response = client.PostAsync(
                 new Uri($"http://127.0.0.1:{E2eStack.WebApiPort}/api/commands/{command}"),
