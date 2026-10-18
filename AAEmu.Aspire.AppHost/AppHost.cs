@@ -1,12 +1,27 @@
 ﻿using System.Net.Sockets;
 
+using Microsoft.Extensions.Configuration;
+
 var builder = DistributedApplication.CreateBuilder(args);
+var projectRoot = builder.Configuration["Development:ProjectRoot"];
+var loginProjectPath = projectRoot == null
+    ? new Projects.AAEmu_Login().ProjectPath
+    : Path.Join(projectRoot, "AAEmu.Login", "AAEmu.Login.csproj");
+var gameProjectPath = projectRoot == null
+    ? new Projects.AAEmu_Game().ProjectPath
+    : Path.Join(projectRoot, "AAEmu.Game", "AAEmu.Game.csproj");
 
 var mySql = builder
-    .AddMySql("db")
+    .AddMySql("db", port: builder.Configuration.GetValue<int?>("Development:MySqlPort"))
     .WithImageTag("8.0")
     .WithLifetime(ContainerLifetime.Persistent)
-    .WithDataVolume();
+    .WithDataVolume(builder.Configuration["Development:MySqlDataVolume"]);
+
+var databaseContainerName = builder.Configuration["Development:MySqlContainerName"];
+if (!string.IsNullOrWhiteSpace(databaseContainerName))
+{
+    mySql.WithContainerName(databaseContainerName);
+}
 
 // Idempotent creation script for login database
 var loginInitScriptPath = Path.Join(Path.GetDirectoryName(typeof(Program).Assembly.Location), "init_aaemu_login.sql");
@@ -22,7 +37,7 @@ var mySqlGameDb = mySql
     .AddDatabase("aaemu-game", "aaemu_game")
     .WithCreationScript(gameInitScript);
 
-var loginServer = builder.AddProject<Projects.AAEmu_Login>("login-server")
+var loginServer = builder.AddProject("login-server", loginProjectPath)
     .WithEndpoint(name: "login-public", port: 1237, targetPort: 1237, isProxied: false, protocol: ProtocolType.Tcp,
         isExternal: true)
     .WithEndpoint(name: "login-internal", port: 1234, targetPort: 1234, isProxied: false, protocol: ProtocolType.Tcp,
@@ -37,14 +52,14 @@ var loginServer = builder.AddProject<Projects.AAEmu_Login>("login-server")
     .WithEnvironment("Connections__MySQLProvider__Password", mySql.Resource.PasswordParameter)
     .WithEnvironment("Connections__AutoApplyUpdates", "true")
     .WithEnvironment("GameServers__0__ID", "1")
-    .WithEnvironment("GameServers__0__Name", "AAEmu.Game")
-    .WithEnvironment("GameServers__0__Host", "127.0.0.1")
+    .WithEnvironment("GameServers__0__Name", builder.Configuration["Development:GameServerName"] ?? "AAEmu.Game")
+    .WithEnvironment("GameServers__0__Host", builder.Configuration["Development:GameServerHost"] ?? "127.0.0.1")
     .WithEnvironment("GameServers__0__Port", "1239")
     .WithReference(mySqlLoginDb)
     .WaitFor(mySqlLoginDb)
     .WithOtlpExporter();
 
-var gameServer = builder.AddProject<Projects.AAEmu_Game>("game-server")
+var gameServer = builder.AddProject("game-server", gameProjectPath)
     .WithEndpoint(name: "game-public", port: 1239, targetPort: 1239, isProxied: false, protocol: ProtocolType.Tcp,
         isExternal: true)
     .WithEndpoint(name: "game-stream-public", port: 1250, targetPort: 1250, isProxied: false,

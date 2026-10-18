@@ -1,7 +1,7 @@
 # Documentation Maintenance
 
 - Audience: Contributors
-- Last verified against: `develop` on August 5, 2026
+- Last verified against: documentation-reviewed 2026-10-14 at `develop` / `26612d5902ff24d860bbf99be7dbcb3f5c3b76e8` plus preserved dirty work; no new gameplay verification
 - Prerequisites: None
 
 ## Goal
@@ -34,6 +34,26 @@ editing surface to maintain.
 
 **Every touch bumps the `Last verified against` stamp** — the stamp is the
 wiki's currency signal, so even a one-line edit must refresh it.
+
+## After design reviews and grilling sessions
+
+Record the decisions and useful findings, not a transcript dump. Update the
+existing records in the same work:
+
+| Outcome of the discussion | Record |
+|---|---|
+| Confirmed choice, reason and non-goals | [DECISIONS](../../.omp/state/DECISIONS.md) |
+| Verified finding, source/query and evidence limits | [EVIDENCE](../../.omp/state/EVIDENCE.md) |
+| Approved next outcome, dependencies and remaining gaps | [ROADMAP](../../ROADMAP.md), the existing delivery card and [CURRENT](../../.omp/state/CURRENT.md#session-resume) |
+| Changed capability or evidence boundary | [STATUS](../../STATUS.md) and [SCORECARD](../../SCORECARD.md); retain historical results |
+| Implemented player/bot behavior, setup or configuration | Relevant wiki page, with its verified layer and deployment state |
+
+Keep open ideas and external design inspiration labelled as proposals. Approval
+of a direction does not mean its features are implemented or deployed; unit or
+fixture proof does not establish live play or human acceptance. Link the original
+decision/evidence rather than copying it into every document. Before starting
+code, use the [existing discovery-to-delivery contract](../../.kanban-templates/implementation.md)
+to turn a sufficiently grounded decision into one bounded outcome.
 
 ## Writing conventions
 

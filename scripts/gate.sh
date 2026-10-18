@@ -6,14 +6,17 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo "== 1/3 Release build =="
-dotnet build --configuration Release AAEmu.slnx 2>&1 | tail -2
+LOG_DIR="$(mktemp -d /tmp/aaemu-gate.XXXXXX)"
+echo "Full gate logs: $LOG_DIR"
 
-echo "== 2/3 compiler-check (in-game scripts must compile) =="
-dotnet run --configuration Release --no-build --project AAEmu.Game/AAEmu.Game.csproj compiler-check 2>&1 | tail -2
+echo "== 1/5 Release build =="
+dotnet build --configuration Release --verbosity normal AAEmu.slnx 2>&1 | tee "$LOG_DIR/build.log"
+
+echo "== 2/5 compiler-check (in-game scripts must compile) =="
+dotnet run --configuration Release --no-build --project AAEmu.Game/AAEmu.Game.csproj compiler-check 2>&1 | tee "$LOG_DIR/compiler-check.log"
 
 FILTER="${1:-}"
-OUT_FILE="$(mktemp /tmp/aaemu-gate-tests.XXXXXX.log)"
+OUT_FILE="$LOG_DIR/tests.log"
 TEST_ARGS=(dotnet test --project AAEmu.UnitTests/AAEmu.UnitTests.csproj --configuration Release --no-build)
 if [ -n "$FILTER" ]; then
   # MTP runner (global.json: Microsoft.Testing.Platform) uses treenode-filter.
@@ -21,8 +24,9 @@ if [ -n "$FILTER" ]; then
   TEST_ARGS+=(--treenode-filter "/*/*/${FILTER}/*")
 fi
 
+echo "== 3/5 Unit tests =="
 RC=0
-"${TEST_ARGS[@]}" 2>&1 | tee "$OUT_FILE" | tail -5 || RC=${PIPESTATUS[0]}
+"${TEST_ARGS[@]}" 2>&1 | tee "$OUT_FILE" || RC=$?
 
 echo "== Failing tests =="
 if grep -E '^ *failed ' "$OUT_FILE"; then
@@ -33,10 +37,10 @@ fi
 
 if [ -z "$FILTER" ] && [ $RC -eq 0 ]; then
   echo "== 4/5 MCP stdio protocol smoke =="
-  bash ./Scripts/mcp-stdio-smoke.sh
+  bash ./Scripts/mcp-stdio-smoke.sh 2>&1 | tee "$LOG_DIR/botcontrol-smoke.log"
 
   echo "== 5/5 MCP archaeology gate smoke =="
-  bash ./Scripts/mcp-archaeology-gate-smoke.sh
+  bash ./Scripts/mcp-archaeology-gate-smoke.sh 2>&1 | tee "$LOG_DIR/archaeology-smoke.log"
 fi
 
 echo "== GATE DONE =="

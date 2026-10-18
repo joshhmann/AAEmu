@@ -12,6 +12,8 @@ off and there is no Muse handoff. The dashboard's
 [Delivery & Sessions workflow](#delivery--sessions-workflow) owns operational
 cards/checkpoints only; older recipes below are preserved historical evidence.
 
+Use the [all-agent PlayerBot local-repair contract](../../PROJECT-CONTROL.md#playerbot-local-repair-contract) and [brief fields](../../.kanban-templates/implementation.md#bounded-local-repair-brief). D117 supersedes D116's local blocking rule: request bounded Jev plan/results assistance, record unavailable/invalid/UNKNOWN outcomes, and continue otherwise authorized local checks. Deterministic results, independent review, explicit holds and live permissions remain authoritative; historical E300 reviews are not rerun or relabelled. Documentation verified 2026-10-15 at `26612d5902ff24d860bbf99be7dbcb3f5c3b76e8` plus dirty work; no new runner/gameplay verification.
+
 ## Historical shared handoff — September 2026 (superseded dispatch)
 
 The dated handoff and tooling sequences below are historical, not current owner,
@@ -179,6 +181,12 @@ the HTTP server and `/api/work` routes.
    exclusive resources, non-goals, acceptance/proof layer, references/dependencies,
    actual baseline SHA and next action. Ready needs a complete contract and accepted
    dependencies. Backlog/Needs evidence are not automatic execution allocation.
+   Populate the [bounded local-repair brief](../../.kanban-templates/implementation.md#bounded-local-repair-brief)
+   in existing fields: outcome/non-goals carry local authority and escalation;
+   acceptance separates supplied development setup from earned-loop criteria;
+   checkpoints carry actual results and Jev availability. Export the saved brief
+   and verify that another agent can determine allowed work and unproved claims.
+   No new tracker fields or per-edit approval records are required.
 3. **Record actual work.** Starting a named record saves its contract/context; it
    does not launch OMP. One primary plus one independent secondary active record
    is the starting WIP cap. Recorded owner/file-prefix/resource overlaps are rejected;

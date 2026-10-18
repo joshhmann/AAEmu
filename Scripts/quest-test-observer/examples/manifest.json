@@ -1,0 +1,26 @@
+{
+  "schema": "aaemu.quest-observer/v1",
+  "run_id": "observer-synthetic-example",
+  "bot_id": 297,
+  "bot_name": "Qrunaa",
+  "source_sha": "0000000000000000000000000000000000000000",
+  "database_id": "game-1",
+  "evidence_layer": "synthetic rig",
+  "acceptance": {
+    "quest_id": 251,
+    "item_id": 4058,
+    "item_count": 3,
+    "require_followup": true,
+    "independent_selection": true
+  },
+  "thresholds": {
+    "inactivity_seconds": 30,
+    "repeated_failures": 3,
+    "scheduler_stall_seconds": 20,
+    "max_gap_seconds": 15
+  },
+  "started_utc": "2026-10-12T00:00:00+00:00",
+  "collection_mode": "historical-replay",
+  "input_format": "normalized-events",
+  "choices_unassigned": true
+}

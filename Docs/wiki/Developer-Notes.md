@@ -1,8 +1,50 @@
 # Developer Notes
 
 - Audience: Contributors
-- Last verified against: `develop` on August 5, 2026
+- Last verified against: local focused-check commands on 2026-10-16, `develop` / `26612d5902ff24d860bbf99be7dbcb3f5c3b76e8` plus dirty work; not full qualification or gameplay acceptance
 - Prerequisites: None
+
+## Fast focused development checks
+
+During a bounded local repair, compile and test the affected class without
+waiting for full static analysis on every edit:
+
+```bash
+./scripts/dev-test.sh unit BotActionCommandQueueTests
+./scripts/dev-test.sh integration BotShortRunObservationBudgetTests
+```
+
+Both arguments are required. The command builds the selected project and its
+dependencies in Release, then runs only its isolated test module. It selects
+TUnit's `--treenode-filter` for unit tests and xUnit's `--filter-query` for
+integration tests. Choose a specific class; quote any intentional wildcard.
+Tests that require a live server still need their separately authorized,
+isolated prerequisites. This command does not supply them or authorize a run.
+
+Static diagnostic analyzers are deferred **only for this command** using
+`RunAnalyzersDuringBuild=false`. Compilation, compiler diagnostics and source
+generators still run. Build/test failures and zero-test selections fail the
+command. Skipped tests count toward the minimum selection: inspect the reported
+pass/fail/skip counts; an all-skipped run proves no behavior.
+
+Reusable outputs and intermediates live in `.artifacts/dev-test/`, separate
+from ordinary `bin/` and `obj/`. Each invocation prints its persistent log
+directory under `.artifacts/dev-test/logs/` and streams build/test stdout and
+stderr. Run one development build at a time per checkout because the cache is
+shared across projects. Cold builds cost more than subsequent focused runs.
+
+**This is not the qualification gate.** Once the candidate is stable, run:
+
+```bash
+./scripts/gate.sh
+```
+
+Normal analyzer policy is unchanged. The gate retains full stage logs in its
+printed `/tmp/aaemu-gate.*` directory and still includes the in-game script
+compiler, full unit suite and MCP smokes. Required domain checks, including the
+archaeology cycle when applicable, still apply. Fast-check success cannot
+replace final qualification or earned player/bot-loop acceptance. The known
+analyzer runtime problem remains unresolved.
 
 ## August 2026 — M0/M1-era notes (fork)
 

@@ -58,6 +58,33 @@ Aspire passes runtime configuration through environment variables, including:
 This means local startup no longer requires manually inserting game server
 listing rows into MySQL.
 
+### Persistent development server and LAN access
+
+AppHost accepts these optional configuration values; ordinary local defaults
+remain unchanged. Set them in private local configuration or environment
+variables (`Development__GameServerHost`, for example), not shared config.
+
+| Configuration key | Purpose |
+|---|---|
+| `Development:GameServerHost` | Address advertised to clients; defaults to `127.0.0.1`. Use the reachable LAN address for another machine. |
+| `Development:GameServerName` | World-list name; defaults to `AAEmu.Game`. |
+| `Development:MySqlPort` | Aspire's host-facing MySQL endpoint; the container's loopback port can differ. |
+| `Development:MySqlContainerName` | Explicit owned container name. |
+| `Development:MySqlDataVolume` | Explicit persistent MySQL volume name. Keep it unchanged across restarts. |
+| `Development:ProjectRoot` | Optional separate source tree containing `AAEmu.Login` and `AAEmu.Game`. This keeps running server binaries/logs separate from repository builds and gates. |
+
+Keep database credentials and the matching Login/Game `SecretKey` private.
+The selected project tree needs its own `Config.Local.json`, reference data,
+and access to the existing `game_pak`; an alternate project root does not copy
+them automatically.
+
+Do not run reset/drop or single-actor fixture scripts against a persistent
+server used by players. Use separate database/container/volume names and ports
+for destructive integration tests. A fresh development database does not
+migrate characters from another server. Before replacing an owned server,
+check connected players and preserve its database; never stop an unrelated
+listener merely to free a port.
+
 ## Debugging with Aspire
 
 Running AppHost in Debug still allows breakpoints in `AAEmu.Login` and `AAEmu.Game`.

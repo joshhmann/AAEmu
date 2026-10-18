@@ -4,6 +4,7 @@
 bin/
 obj/
 publish/
+/.artifacts/dev-test/
 **/hmap.dat
 **/Config.Local.json
 *.old

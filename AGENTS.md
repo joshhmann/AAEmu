@@ -31,6 +31,8 @@ suspected, and what still needs checking. Do not present a likely cause as prove
 >
 > Necessary [shared-core repairs](PROJECT-CONTROL.md#server-core-integration-authorization) are greenlit inside bounded supported-capability outcomes. Preserve ordinary gameplay and one Character/scheduler/action path; no exhaustive human-parity prerequisite or replacement brain. Main owns integration, native OMP workers have nonoverlapping scope, Vibe is off and there is no Muse handoff. Roadmap approval is not a merge, deploy, live-campaign or completion verdict.
 
+> **All-agent PlayerBot development:** Follow the [bounded local-repair contract](PROJECT-CONTROL.md#playerbot-local-repair-contract) and [saved brief fields](.kanban-templates/implementation.md#bounded-local-repair-brief). Within an approved scope, own local reproduction, edits and focused checks without per-edit approval. Supplied isolated prerequisites are development evidence, not earned-loop acceptance. Jev unavailability/UNKNOWN does not block authorized local work; explicit holds, ownership, independent review and live permissions still apply.
+
 ## What this repo is
 
 Open-source **ArcheAge** server emulator in **.NET** (`AAEmu.Login`, `AAEmu.Game`, shared `AAEmu.Commons`). Preferred local orchestration is **.NET Aspire** (`AAEmu.Aspire.AppHost`). Branch of record for active work: **`develop`**.
@@ -366,14 +368,17 @@ Per-character / world mutable state → managers + MySQL.
 ## Build and test
 
 ```bash
-# Tier 1 — Standard gate (every change, ~1 min):
+# Tier 1 — Required stable-candidate gate before integration (not every diagnostic edit):
 ./scripts/gate.sh
 
 # Tier 1 with targeted class filter:
 ./scripts/gate.sh BotActionControllerRouteTests
 
 # Tier 2 — Targeted Integration / E2E scenario (seconds):
-dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --treenode-filter "/*/*/BotControlActionMcpE2eTests/*"
+# AAEmu.IntegrationTests is xUnit v3 on the MTP runner: filter with --filter-class (or
+# --filter-query "/*/*/Class/*"). --treenode-filter is TUnit-only (AAEmu.UnitTests) and
+# runs ZERO tests here ("Unknown option '--treenode-filter'").
+dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --configuration Release --filter-class "*BotControlActionMcpE2eTests"
 
 # Tier 3 — Heavy soak / storm probes (milestone validation, 35-45+ min):
 # Runs unfiltered AAEmu.IntegrationTests (GateSoakRunner, scale probes)
@@ -382,7 +387,7 @@ dotnet test --project AAEmu.IntegrationTests/AAEmu.IntegrationTests.csproj --con
 - SDK: .NET **10** (`global.json`).
 - Solution: `AAEmu.slnx`.
 - **Tier 1 (Fast Gate — `./scripts/gate.sh`):** Release build + ScriptCompiler + `AAEmu.UnitTests` + MCP stdio protocol smoke.
-- **Tier 2 (Targeted Integration):** Specific network, MCP API, or restart persistence scenarios via treenode filter.
+- **Tier 2 (Targeted Integration):** Specific network, MCP API, or restart persistence scenarios via `--filter-class` (integration project; `--treenode-filter` is TUnit-only, for `AAEmu.UnitTests`).
 - **Tier 3 (Heavy Soak / Probes):** Unfiltered `AAEmu.IntegrationTests` for milestone exits and scale benchmarking.
 - Test projects: `AAEmu.UnitTests` (primary), `AAEmu.IntegrationTests`, `AAEmu.Login.IntegrationTests`.
 - Unit test bases: `TestBase`, `SqliteTestBase`, `IntegrationTestBase`; mocks under `Utils/Mocks/`.

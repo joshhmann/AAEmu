@@ -56,6 +56,11 @@ This document is the **single authoritative router** for agents and developers e
    result, interruption OR failure recovery, follow-up choice, proof layer and stop.
    Preserve AdvanceEnter's guard/counter; reproduce first and repair only a shown
    failure. Do not dispatch a new planner or require every tutorial/quest.
+   Use the [local-repair contract](PROJECT-CONTROL.md#playerbot-local-repair-contract)
+   and [brief fields](.kanban-templates/implementation.md#bounded-local-repair-brief)
+   for every agent and loop. One authorized local edit/check cycle needs no per-patch
+   approval; isolated setup does not prove earned acceptance. Escalate scope or
+   ownership changes; unavailable/UNKNOWN Jev is advisory, not a local stop.
 6. Main integrates disjoint native OMP slices and owns final acceptance. Verify the
    changed behavior at its required layer, record actual results/limits, update
    canonical records and dashboard, then select the next dependency. Historical

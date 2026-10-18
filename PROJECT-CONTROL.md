@@ -1,4 +1,96 @@
-> Current ordinary respawn work (D76/E197): minimum15 preserved all30 characters on .165 but authored boar3475 delays remain48 seconds. A disabled-by-default interval in the existing NPC schedule is being checked; explicit15 is limited to matching single-member Normal/Weak spawners. Elite/boss/strong, mixed/unknown sources, population limits and ordinary loot/quest rules are preserved. Native scheduling checks pass22/22; actual15-second live spawn cadence and the next immutable deployment are pending. D72 useful-work outcome and human acceptance remain open.
+> **Current development policy — D117:** All agents and all PlayerBot loops use the [bounded local-repair contract](#playerbot-local-repair-contract). Isolated development is separate from earned acceptance; Jev is advisory for authorized local checks. This supersedes D116's local blocking rule, not historical results or live-execution permissions. Current task/holds remain in [CURRENT](.omp/state/CURRENT.md#session-resume).
+
+> **Food supply10436c69414e FAILED native Farm-observe NullReferenceException; all owned services stopped0.** ExactSTART07:08:01.6095028Z/elapsed703.5577954; real server stack Enumerable.ToArray→HandleFarmOp (inner line unknown), not the anticipated progress timeout. Preserve700/LP96/XP32/original14+raw11/item16777244+byproduct1/item16777245/no crops and actual saved poses. Four paid seeds/two later fresh live-grown harvests are evidenced; knife0/downstreamfood/healing/refill/325 remain false. Source101 coordinate preservation PASS is separate; no retry/repair/source change. Main routes bounded NRE/churn findings.
+
+> D112 / [E294](.omp/state/EVIDENCE.md#e294--ordinary-native-harvest-qualified-no-seed-acquisition-loop): ordinary native harvest correction qualified source79/79d2c913 owned18/6950; native9/9, unique142, full4706/4705pass0fail1namedskip/compiler0/0/MCP44+24 and archaeology163/full24. Main acceptance/closure pending on ACTIVE20dc...; no new task dispatch. Native crop-only labor guard/exact pending cancellation/common Tick terminal drain, Skill pure formula reuse only. No acquisition policy/live/H/deploy.
+
+> D112 / [E291](.omp/state/EVIDENCE.md#e291--bounded-barley-resource-grounding-and-native-proof-ownership): bounded Validate child `barley-native-harvest-proof` ACTIVE `work-5bd8ae8609c24bcf8b6537dff65d8a38` rev434/ready:true after Accepted E290. BarleyHarvestProof owns rootbuild/isolatedsmoke/native artifacts only; source read-only, no reserved edit rights. BarleyScopeControl owns exact merchant/land/resource findings and docs/control; MainDirector accepts actual proof. Research stays PAUSED; native result pending, no policy/live/H/deploy.
+
+> D112 / [E290](.omp/state/EVIDENCE.md#e290--owned-craft-cancellation-qualified-supplied-input-production-only): Main accepts only exact owned-craft cancellation and isolated supplied-input production/healing. Source68/a2256197, native8/8, focused62/62, full4688/4687pass0fail1namedskip/compiler0/0/MCP44+24 and archaeology163/full24 qualified; independent review was SOURCE ONLY. No acquisition policy, purchase/harvest, self-acquisition, live/H or deployment. Next: actual grain/seed harvest phase-loot/guard/resources/legal access and bounded policy wiring, not implemented. Earlier pending notes below are historical.
+
+> D112 / E289 scope successor: ACTIVE `work-45d3847e5deb43458f6b308a573bee7f` rev426/ready:true now owns existing BotActionCommandQueueTests.cs for pending Craft external expiry, replacing unused new-file reservation only. Other contract/outcome unchanged; predecessor archived, research paused. Native after-proof/gates and independent source review pending.
+
+> D112 / E289 ownership update: existing public WorkDashboard service executed locally under explicit director transport authorization, unchanged validation/locking/persistence. Research PAUSED; `owned-craft-cancellation` ACTIVE `work-a5ca889341574304ac51767524c9283b` rev423/ready:true. Exact scoped native prerequisite only; correction/review pending, HTTP/browser unavailable. No direct store edit/server restart/acquisition enablement.
+
+> [D112 / E289](.omp/state/EVIDENCE.md#e289--d112-native-production-lead-reproduces-late-craft-after-interruption): Main selects exact actor-owned craft cancellation prerequisite after native reproduction: interrupted bot craft still spends materials/labor and grants bread later. AcquisitionNativeProof implements only scoped skill/task/queue cancellation after ownership activation; foreign/human craft and acquisition policy unchanged. Research persisted ACTIVE/rev420; dashboard unavailable, child NOT ACTIVE. Correction/review/gates pending; no acquisition/deploy/score/H promotion.
+
+> [D112](.omp/state/DECISIONS.md#d112--pursue-legitimate-recovery-supply-acquisition-and-document-grilling-outcomes) / [E288](.omp/state/EVIDENCE.md#e288--d112-legitimate-recovery-source-discovery-native-proof-pending): acquisition research active; ordinary knife seller and grain-processing/bread chain are design leads, not implemented recovery acquisition. Native proof pending; actor funds/materials/labor, legal access, outputs and replenishment unproved. Confirmed grilling choices, observed evidence and implemented behavior stay separate. Session-only developer Vibe/director authorization supersedes older VibeOFF execution notes; no config/policy/deploy/score/H promotion.
+
+> D111 / E287: first owned-healing/rest/resume card accepted locally. Actual ordinary callback smoke and retained-quest attack-startup fixture pass; full4678/4677pass0fail1namedskip/compiler0/0/MCP44+24 and archaeology163/full24 qualify exact65-source e7d77368. No synthetic points, forced synchronous cast, grants or replacement brain. Independent source-review blockers repaired; seeded/runtime proof is not live/H. Acquisition remains separate and unready; no deployment, campaign, merge/push or parent promotion.
+
+> D110 / E285: truthful recovery proposal grounded at current static/canonical-data layer, no implementation approval. Ordinary instantHP potion and delayedbread verified; drinkMaxMana/potatostomachache are not refill/heal evidence. Current recovery injects points and lacks continuous executor handling; ordinary pending timing/resumption prerequisites named. Proposed owned-supply/rest recovery card plus separate blocked acquisition card; canonical merchant listing query for known candidates returns0. Full acquisition loop/H not proved; no server/gameplay change.
+
+> D109 / E283–E284: bounded Jev reporting slice accepted at its limits. Exact event/trace/source refs, first discrepancy and competing authored checks preserved; ambiguous cases UNKNOWN and telemetry zero-call abstention. Python75/Bun12 and final full4637/4636pass0fail1namedskip/compiler0/0/MCP44+24 pass. Independent3boundary blockers corrected and targeted follow-ups clear. Actual provider saved-evidence review/synthetic cleanup/SDK503+307/largepipe proof, not new live gameplay/cause accuracy/time savings. Servers unchanged; no parent/H upgrade. Next reuse-first unused-capability/external-pattern grilling, no automatic feature enablement.
+
+> E281–E282 / D108: .187 owned persistent development/play server passes real authentication/LAN world listing/create/spawn/reconnect and byte-equal saved-character restart checks. Runtime binaries/logs isolated from root gates; full4637/4636pass0fail1namedskip/compiler0/0/MCP44+24/arch163/full24 passes. Foreign services and .165 state preserved; .165 only qualified major releases. Human/client and independent setup acceptance not run. Strict302 combat remains STALLED; separate293 native kill/owncredit/next-prey witness does not prove bow-fix causality or parent/H closure. Next explicit Jev/grilling authorization, no automatic enablement.
+
+> E280 / D108: the already-started .165 update completed with all31 saved states/IDs preserved, but its changed-source combat check is STALLED/no266credit; no new combat/H/parent verdict. User now selects .187 for development and human login, .165 only qualified major releases. Known local assets reused, foreign services preserved; .187 setup and earliest combat evidence review next. No further .165 development rollout or unchanged rerun.
+
+> E278 / D107: the wildlife fixture now supplies its missing NPC template/scale; assertions and E277 production code unchanged. Exact candidate27 qualifies: targeted1/1, full4,636pass/0fail/1named live-opt-in skip, compiler0/0/MCP44+24, archaeology163/full24. Bow fix remains undeployed; fresh .165 healthy31 preserved. Next immutable qualification and progress-preserving changed-source proof. E277FAILED/E275STALLED remain historical; no damage/defeat/parent/H acceptance. Jev improvements follow combat.
+
+> E277 / D106 checkpoint: equipped-bow combat decisions pass 51 quest-combat and 188 broad combat checks. Full gate is FAILED (4,635 pass / 1 missing-NPC-template fixture failure / 1 named live-opt-in skip); downstream MCP smokes did not run. Candidate26 is undeployed. E275 live STALLED remains preserved; real damage/defeat/quest continuation and parent/H acceptance remain open. Next: repair that fixture without weakening assertions, then exact qualification. [Handoff](.omp/state/artifacts/quest-area-readiness-20261012/combat-basis/HANDOFF.md).
+
+> E273/E274: Exact combat-arrival source20/1b38 qualified (full4620pass1namedskip/compiler0/0/MCP44+24/arch163+24), image0e75 deployed with all31 saved-state bodies and IDs preserved. One short automatic observation is active; real damage/defeat/parent continuation unproved. Jev adapter supports current native API; no grade/H/parent promotion.
+
+> E272: Scoped pursuit arrival uses ordinary combat distance; corrected red and12travel/2quest controls pass. Elevated inaccessible prey now reaches existing finite retirement; ground attack submission remains. Native fixtures do not prove damage/defeat. Full exact gates pending; E266 runtime unchanged, no new combat/grade/H acceptance.
+
+> D102/E269: Combat parity mission active: compare existing NPC, Character and bot execution, repair the earliest reproduced connection, then qualify real damage/defeat/parent continuation. E267 stalled before attack; E268 geometry discriminator failed finite recovery. No production repair or new gameplay acceptance yet; E266 runtime remains healthy. [Current task](.omp/state/CURRENT.md#session-resume).
+
+> E262: Initial known-hunt search accepted locally at19-source22cc:4native/631quest/full4616pass1namedskip/compiler0/0/MCP44+24/arch163+24. Ordinarytravel preservespurpose/request anddoesnotfakeavailability/credit; broaderarea/live266/H unproved. .165 E252 healthy31 unchanged. Next: observer nativehuntcriterion andimmutableimage preparation beforepreservingupdate/liveproof.
+
+> E266–E267: Qualified hunt image0e76/source19 deployed with all31 saved-state bodies preserved. The actual test stopped after122s with STALLED, three movement timeouts and no native quest credit; Jev agrees. Bots remain healthy. Next: reproduce the ground-versus-elevated-target range failure before repair. No new hunt completion, follow-up or H/parent promotion.
+
+> E264: Native hunt observer accepted locally:52Pythonchecks/full4616pass1namedskip/compiler0/0/MCP44+24/arch163/full24. Exact nativecredit/ordinarycompletion/independentfollowup and latecredit/negative controls pass; actualJev agrees five bounded synthetic cases in~2seconds each. No newlivequest/autonomy/H claim. Image19/22cc built separately; E252 current31 untouched. Next: progress-preserving qualified update and timely nativehunt test.
+
+> E261: Known hunt-source search passes4native/631quest controls: ordinary quest travel, actual cruise movement onflatfixture, retainedrequest, zero searchcredit, source/readiness negatives and actual-prey readmission. Exact fullgates pending; .165 E252 healthy31 unchanged. Setup isdisclosed, no new live266completion/area/H/parent claim.
+
+> E259: Supported hunt execution, scored readiness and interrupted-request recovery accepted locally at19-source276f94da:3native/630quest/full4615pass1namedskip/compiler0/0/MCP44+24/arch163+24. Fixtures are disclosed; no new live266/2990completion. Source is undeployed and .165 E252 healthy31 unchanged. Next: reproduce and qualify bounded known-location hunt search. Parent/H criteria remain open.
+
+> E258: Native scored hunt and shared-prey controls pass3/3; quest regressions630/630. The bot keeps2990 useful at25of100points, respects its own withdrawn component and sees both quests on the same mob. Exact19-source full gates pending; .165 E252 healthy31 unchanged. Disclosed fixtures are not live completion; known-location search remains next.
+
+> E255: Two native checks now prove hunt target/pursuit, interrupted-move recovery without patrol takeover, ordinary kill credit and withdrawal at server readiness. Quest266 uses20points per kill toward100, not20required kills. Positions/acceptance/damage are fixture inputs; live266completion remains unproved. Exact full gates are running; .165 stays E252/healthy31. Next dependency: bounded known-location hunt search when useful prey is absent.
+
+> E252: D94 source/native repair deployed as16-file6c1b/Gamea137/image068; all31 saved/coldboot state byte-equal/sameIDs resumed. Liveforeignfinalhit remains unproved; next single dependency is accepted-quest source-search admission, with normal ROAM arrival Stops distinguished from thrash. No H/parent/general autonomy upgrade.
+
+> E250: D94 ordinary questdrop eligibility follows native entitled recipients; 18 native controls/full4612pass1namedskip/fullarch163+MCP44/24 pass at16-file6c1b5888. Deliberate quest-only group crash fixed; legacy unresolved fallback retained. Not deployed yet/live foreignfinalhit unproved; D93 progression E248 accepted only at its bounded layer.
+
+> E248: D93 bounded real-server260→same-NPC261 credit/completion accepted from native chronology+saved state; late observer/Jev remain STALLED. Existing31/source d736 preserved. Next: entitled-recipient/final-killer quest-drop mismatch; broader reliability/H/parent criteria remain open.
+
+
+
+> E246/E247 currentsource d736/image d1a0/Gamee7a preserved31 and demonstrated ordinary8128×3→260turnin→sameNPC3593 independent261accept/useItem/nativecompletion/newbits, two returntimeouts recovered, finite2762GiveUp10 then266selection. Fullnativechronology+savedbaseline supply these facts. Separate late260observer remains **STALLED** (beganaftercompletion), never countedgreen; raw/cleanup retained. No universalQuest/H/parent/sevencriteria promotion. Next exactacceptance packet then actual entitledrecipient/finalkiller questdrop eligibility case; current266ROAM is a separate lead.
+
+> E244/E245 D93 exact15file d736eeab qualified:149focused/full4605total4604pass1namedskip/compiler0/0/MCP44+24 and arch163/full24. Imaged1a0/DLL5fc6/.NET10.0.12 built0, current31/privateprofile/backup/rollback preflight passed; replacement not yet exercised. No new livecredit/completion/B/H/parent acceptance; E238STALLED/E242INCONCLUSIVE retained. Next progress-preserving current31 update then bounded actualprogress proof.
+
+> E243 D93 current local slice: retained supported quest now prefers its actionable own corpse over a fresh fight, preserving valid combat/native old-loop ending/permission/safety/once/recovery. 149focused native checks passed; fullgates pending on15-file d736eeab. Runtime E241imageb841/Gamefd3 stillsource7101695d/healthy31; E242generated8128 for sole302 after8s, strict questoracle/JevINCONCLUSIVE. No actualtransfer/completion/B/full-loop/H/parent upgrade. Next exactgates/image/progresspreservation then bounded ordinaryprogress witness.
+
+> E239 D92 local evidence link: one bounded ordinary NPC generation log added; fifteen-file7101695d source qualified full4598/4597pass/one namedskip/compiler0/0/MCP44+24 and archaeology163/full24. Actual corpse items/eligible recipients still UNKNOWN; E238 remains STALLED. Current E237 runtime unchanged while exact image qualifies. No loot/search/combat policy change or parent/H promotion.
+> E238 current check: existing31/new-source bounded600s observation ended **STALLED**, not accepted quest progression. Bots selected/fought alternate7675/3497;302 earned other kill progress/XP but no8128,260completion or independently acceptedB. Raw600samples/hash/resource custody and deterministic/Jev agreement retained. No active collector/rerun; deployed E237 unchanged. Next: reproduce ordinary kill/drop/recipient mismatch before quest-area policy. Source/native checks remain E235; no parent/H upgrade.
+> Latest E237: exact checked db8347c9 all-source repair is deployed on .165 image3bdc09/Gamee44e48. One normal31 save/stableSQL/coldboot full-state equality and same-ID adoption passed; all31 progress, Login/DB/privateordinary15/targetdirty preserved. No new bot, assignedquest/target/credit or state repair. This accepts preservation only; restart-cleared memories are not recovery/questing proof. Next is a reviewed bounded existing-cohort engineering check under standing D64/D72; no new campaign/lane/merge/push/H or parent promotion. [Deployment](.omp/state/artifacts/quest-area-readiness-20261012/multiple-drop-sources/qualification/deployment.json); [active task](.omp/state/CURRENT.md#session-resume).
+
+> Latest E235: the exact all-source repair passed132 focused native controls and full4,597unit tests/one named live-only skip, compiler0/0, MCP44+24 and archaeology163/full24. Main accepts local selection/travel/ordinary alternate-source loot-credit scope only; disclosed native state/death/navigation fixtures are not earned combat or live completion. D90 is qualifying immutable db8347c9 and the existing31 progress-preserving Game-only update under standing D64/D72. .165 still runs E232520b while the image builds; no new live campaign/merge/push/H or parent promotion. [Checked source](.omp/state/artifacts/quest-area-readiness-20261012/multiple-drop-sources/local-checks.json); only [CURRENT](.omp/state/CURRENT.md#session-resume) selects work.
+
+> Latest D89/E233–E234: a native test reproduced the bot ignoring two legitimate sources of quest260's item8128 and selecting a farther Strong NPC. Local repair retains all sources in the existing cached quest row and carries actual NPC identity through targeting, travel and looting. Fifteen selection controls, one cache control and three native travel/permission/loot controls pass; each alternate's own death-generated loot gives recipient bag/counter0→1, foreign no grant, no repeat credit. Accepted-state/reference/region/scripted-death fixtures are disclosed. Full preservation/gate/archaeology/qualification are pending; new source undeployed, .165 remains E232520b with31 preserved characters. No earned combat/completion/followup/live/full-loop/H or parent promotion; E227 remains INCONCLUSIVE. [Active work](.omp/state/CURRENT.md#session-resume); [contract](.omp/state/artifacts/quest-area-readiness-20261012/multiple-drop-sources/contract.md).
+
+> Latest E232: testing .165 now runs checked520b/image9e22 with all31 existing characters and their saved progress preserved through normal save/coldboot/resumption. No new bot, goal, target or credit was supplied. This proves deployment/preservation; live progression remains unproved and E227 stays INCONCLUSIVE. Next targeted lead: canonical8128 drops from three NPC types, while current quest target derivation keeps one; native reproduction is underway before any repair. [Deployment receipt](.omp/state/artifacts/quest-area-readiness-20261012/competition-control/qualification/deployment.json); [active task](.omp/state/CURRENT.md#session-resume).
+
+> Latest E229–E230: local source now lets deferred supported quests yield to the existing search for other work. Discovery walks toward an eligible giver instead of retrying the retired objective; a native movement test independently accepts B at the same giver while A stays incomplete and C is refused. Known-busy observations preserve unknown eligibility without flooding action history. Exact520b combined source passed4,592 tests/one live-only skip, compiler0/0, MCP44+24 and archaeology163/full24. Testing .165 still runs c612 with31 characters preserved; the new image is being qualified, not deployed. E227 remains INCONCLUSIVE; no new credit/completion/full-loop/H or milestone claim. [Checked source](.omp/state/artifacts/quest-area-readiness-20261012/competition-control/combined-checks.json); only [CURRENT](.omp/state/CURRENT.md#session-resume) selects work.
+
+> Current E225–E227: the qualified c612 pursuit repair is deployed on testing .165 with all31 characters and saved progress preserved. Native logs show quest260 safely retired after ten unchanged failed approaches; completion and subsequent useful work remain unproved. The sole600s observer ended cleanly but returned INCONCLUSIVE because rolling action history lost overlap. Jev preserved that verdict. No rerun, merge/push, full-loop/H or milestone promotion. Next: reproduce deferred-work discovery admission inside the existing quest owner. [Receipts](.omp/state/artifacts/quest-area-readiness-20261012/all-failed-source/qualification-final/live-receipts/main-review.json); [active task](.omp/state/CURRENT.md#session-resume).
+
+> Local recovery checkpoint D80–D81/E208–E210: observer and ordinary15 prerequisites retain their recorded acceptance. Fresh bot302 has13 saved completed quests; current260 has alive/unclaimed prey but exhausted pursuit, followed by repeated nonprogressing advances. Reproduced two owner/readmission failures and repaired using existing travel/quest state. Final4581unitpass/one existingskip/compiler0/0/MCP44+24; fullarch163/24. Local repair uncommitted/undeployed; post-repair live credit/follow-up remains the next proof dependency. No autonomy promotion. [Current contract](.omp/state/artifacts/quest-area-readiness-20261012/contract.md).
+
+Latest E223/E224 recovery checkpoint: the bot can retire unchanged failed approaches through the existing quest owner, preserve useful alternatives/ranged combat, and start independently selected same-prey B with fresh movement ownership. These are disclosed native rig controls, with63 owner/9 existing pursuit checks; final full4590total/4589pass/one existing live-only skip/compiler0/0/MCP44+24 and archaeology163/full24 passed. All failed receipts remain preserved. Qualified imagef2/c612 is entering one normal save/restart/resume on the existing31 .165 characters under standing authority, with private backup/rollback and unchanged ordinary15 profile. Coldboot/adoption and the not-yet-started600s live window remain pending. No new live credit/full-loop/H/parent promotion, merge or push; inherited observer work remains separate. Only CURRENT selects work.
+
+
+Historical recovery checkpoint E213–E216 / D84: all31 existing .165 characters were saved, verified byte-equal after coldboot and resumed with the same IDs. The first-wave image4975 is live. Ranged correction E215 passed56 focused/4582 full-unit plus one existing skip, compiler and both MCP checks; full archaeology163/24 and corrected image57539 were qualified but not deployed. A private exact-source native control then reproduced two independently selected blocked prey alternating without finite retirement (80wakes/27owned moves). The existing movement intent now retains bounded failed approaches; preliminary59 owner checks pass. Review requires quest-specific failure attribution and a same-prey follow-up control before final checks/rollout. The first600s live recovery window has not started. No new quest credit, loop, H or parent milestone acceptance follows; inherited observer work remains preserved and separately uncommitted. Only CURRENT selects the next action.
+
+
+> Current checkpoint (D79/E203–E207): the observer correction was already present; original30/current37/native32 checks passed with negative completion assertion retained. Ordinary15 source26612 is deployed to .165: two actual boar replacements took15.86s/15.28s. Existing30 progress survived normal save/coldboot; one native fresh tester brought the approved cohort to31, with no assignedquest/target/credit. Fullgate4577pass/one namedskip/compiler0/0/MCP44+24 and fullarch163/24 passed; failed/inconclusive predecessors remain. Observer changes remain separately uncommitted/undeployed; no new quest-loop/H/parent claim or quest-area sourcechange. [Evidence](.omp/state/artifacts/observer-review-respawn-resume-20261012/final-receipt.json); only [CURRENT](.omp/state/CURRENT.md#session-resume) selects the next targeted quest-source investigation.
+
+> Historical testing integration (D78/E200–E202): existing quest tests now have an automatic supervised executor, deterministic progress/failure/stall assertions, cooperative cleanup and one bounded native Jev review. 37 fast checks and five automatic synthetic cases passed their expected outcomes; historical E163 progression-only replay passed while its original overall FAILED remains unchanged. E202 fullgate4577pass/one namedskip/compiler0/0/MCP44+24 and fullarch163/24 passed; Release0errors/6existingNU1903warnings. Fresh native-server integration remains unproved. .165 stays b069 with all30 preserved; local native empty-corpse15s repair remains undeployed. No new autonomy/H/parent promotion. [Operations](Docs/wiki/Quest-Test-Observer.md); only [CURRENT](.omp/state/CURRENT.md#session-resume) selects work.
+
+> Historical ordinary respawn checkpoint (D76/E197): minimum15 preserved all30 characters on .165 but authored boar3475 delays remain48 seconds. A disabled-by-default interval in the existing NPC schedule is being checked; explicit15 is limited to matching single-member Normal/Weak spawners. Elite/boss/strong, mixed/unknown sources, population limits and ordinary loot/quest rules are preserved. Native scheduling checks pass22/22; actual15-second live spawn cadence and the next immutable deployment are pending. D72 useful-work outcome and human acceptance remain open.
 
 # AAEmu project control
 
@@ -231,6 +323,84 @@ For bot cards, additionally record perception → choice → ordinary action →
 postcondition. A planned effect is not proof of success. Use the existing action
 lifecycle and scheduler; preserve intent if needed, never resurrect a terminal request.
 Seeded replay proves execution under those preconditions, not autonomous acquisition.
+
+### PlayerBot local-repair contract
+
+**User-approved 2026-10-15 — D117.** Applies to every coding agent and every
+PlayerBot loop, independent of model, provider or activity. This section owns the
+operating rules; the [implementation brief](.kanban-templates/implementation.md#bounded-local-repair-brief)
+records each assignment.
+
+1. **Authorize one bounded outcome.** Agree the behavior, source/dirty baseline,
+   owned files and isolated resources, implementer/verifier, checks, evidence limits
+   and stop conditions once. Within that boundary the agent owns investigation,
+   reproduction, edits and focused checks without per-edit or exact-patch approval.
+   Escalate scope/product changes, unavailable prerequisites, ownership conflicts
+   or repeated failure of the same diagnosis. Explicit user holds still apply;
+   a paused assignment needs a reviewed handoff before resuming.
+2. **Separate development from earned acceptance.** Isolated development may supply
+   inventory, injury, quest state or other declared prerequisites before execution.
+   Exercise the real production behavior under test; do not fabricate its effects,
+   callbacks or completion. Report the supplied setup and proved boundary.
+   Final acceptance retains the agreed initial state and applicable acquisition,
+   discovery, travel, costs, consequences, recovery, continuation and persistence.
+   A seeded check cannot prove an earned journey, independent choice or human feel.
+3. **Make failures cheaper to investigate.** Classify the observed failure as
+   gameplay, setup, observation or cleanup; keep uncertainty when evidence cannot
+   distinguish them. Use a focused production-behavior reproduction or preserved
+   evidence replay before repeating an expensive journey. If a real runtime is
+   necessary, name the missing observation and smallest discriminating run.
+   Every expensive rerun must state what changed, the question it answers and why
+   a smaller check cannot answer it. Do not repeat unchanged failures for reassurance.
+4. **Qualify the stable candidate.** Focused checks belong inside local iteration;
+   required broad gates run at the stable-candidate integration/release boundary,
+   not after every diagnostic edit. Relevant source, configuration or fixture changes
+   invalidate affected results. Independent review precedes integration or live
+   execution. Existing merge gates and final acceptance requirements remain intact.
+   Documentation/control smoke proves only that surface, never gameplay qualification.
+5. **Use Jev as advice, not local permission.** Request bounded plan/coverage and
+   recorded-results reviews at coherent repair-wave boundaries through the existing
+   read-only adapter. Record unavailable, invalid or UNKNOWN results and continue
+   otherwise authorized local development; do not wait for model approval.
+   Deterministic failures stay failures, and concrete review findings are addressed
+   on their evidence. No model gameplay/source tools or automatic live retries.
+   D116's historical calls/results stay historical; this changes its local blocking
+   rule only, not a live release, deployment or user pause.
+6. **Do not watch waits.** Use the existing bounded supervisor and normal cleanup;
+   notify on decisive failure, meaningful progress, missing evidence, resource trouble
+   or completion. Independent work during waits needs disjoint ownership and isolated
+   outputs/resources. Do not edit a frozen candidate or compete over one test database.
+7. **Handoff facts, not copied packets.** Reference existing manifests, commands and
+   results. Report implemented behavior, actual checks/layer, supplied prerequisites,
+   unproved legs, source/dirty identity, independent review and deployment separately.
+   An unknown result is not missing code or permission to weaken acceptance.
+8. **Stop, repair, continue; accept fresh — D119.** New loop harnesses use named
+   observed portions and the shared native `LoopDevelopmentRun` receipt through
+   the existing supervisor. Stop at the first failure and preserve its history.
+   After a focused repair, explicitly retry only from hash-bound, settled,
+   authoritative retained state; reconcile partial effects before any mutation.
+   Never replay an old paid request, refund costs or grant missing supplies.
+   A continued `DEVELOPMENT_PASS` is not acceptance. Run the full journey
+   uninterrupted from its separate declared initial fixture for final acceptance.
+   Unsafe or unknown settlement refuses continuation. Existing scenarios require
+   an adapter; no automatic campaign or service-resume authority follows.
+9. **Copy-only native development — D120.** User authorized isolated cold-copy
+   checkpoint/retry proof, then a narrow shared `Character.Load` position fix
+   after native adoption exposed precision loss. Preserve the original earned
+   lane, human services and failed copies. A copied UUID/history is copied
+   development provenance, not fresh acquisition. Keep ordinary retirement,
+   strict saved-state comparisons and persistence timing; unsafe checkpoints
+   refuse retry. This does not release full qualification or production rollout.
+
+The tracker records authority; it does not grant it by itself. A new implementation
+card is not permission to change another owner's work, start live services, deploy,
+commit or push. Preserve one ordinary Character/scheduler/action path.
+
+For the workflow pilot, report delivered behavior, failure-to-diagnosis and
+edit/build/startup/review/gameplay waits where recorded, expensive-run count,
+repeated failures and attended waiting. Missing timestamps stay unknown; a speedup
+claim needs a comparable baseline. Use existing receipts, not a telemetry project.
+
 
 ### Evidence claim boundary
 

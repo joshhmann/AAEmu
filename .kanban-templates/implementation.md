@@ -157,6 +157,28 @@ rules and required conservation/timing/persistence checks are not optional.
 - Stop when / escalate if:
 - Next slice after this one:
 
+### Bounded local-repair brief
+
+Apply the [all-agent local-repair contract](../PROJECT-CONTROL.md#playerbot-local-repair-contract)
+to every PlayerBot loop. Fill these answers in the existing card/checkpoint;
+do not create another plan or approval packet.
+
+| Existing tracker field | Record so the exported brief is executable within its boundary |
+|---|---|
+| Outcome / baseline | What the bot or server must do; exact source/dirty state; observed failure or feature gap. |
+| Scope / resources / owner / verifier | Exact allowed files and isolated outputs/resources; implementer and independent reviewer. Empty resources means no new runtime allocation. |
+| Outcome / non-goals | **Local authority:** investigate, reproduce, edit and run named focused checks without per-edit approval. **Escalate:** scope/product change, missing prerequisite, ownership conflict or repeated failed diagnosis. Explicit user holds remain binding. |
+| Acceptance | **Development setup:** supplied prerequisites and real production behavior exercised. **Final acceptance:** earned initial state, applicable loop legs and authoritative outcomes, with no promotion between layers. |
+| Acceptance / evidence references | Smallest discriminating check and command; relevant harness setup/observation/cleanup negative; required stable-candidate gates and what changes invalidate their results. Use references to existing receipts. |
+| Non-goals / next action | Stop boundary, unproved claims, review before integration/live execution, and concrete next action. No implicit deployment, live mutation or acceptance change. |
+| Checkpoint confirmed / unknowns / evidence references | Actual result/layer and artifact; Jev requested/result/unavailable status; independent review and deployment separately. UNKNOWN advice cannot halt otherwise authorized local checks or turn failure into success. |
+
+Before another expensive run record changed code/input/question, the expected
+distinguishing observation and why a smaller check is insufficient. When waiting,
+reuse bounded supervision and keep independent work isolated from the frozen candidate.
+For the process pilot, use existing command timestamps and receipts to report elapsed
+work/waits and rerun counts; missing measurements are unknown, not estimated savings.
+
 Do not widen the goal to avoid a blocker or add items to merchants to make a test
 pass. Record the blocker and the smallest corrective slice. Complete a single-bot
 proof before scaling the same claim to multiple bots/regions.

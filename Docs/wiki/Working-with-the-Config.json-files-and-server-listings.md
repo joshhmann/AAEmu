@@ -88,8 +88,21 @@ set in prod config unless explicitly desired.
 | `"Bots": { "EnableSchedules": true }` / `AAEMU_BOT_SCHEDULES_ENABLED` | Game-clock daily schedules (Home/Work/Travel/Rest) for persistent bots |
 | `"Bots": { "PresenceManifest": "<path>" }` / `AAEMU_PRESENCE_MANIFEST` | Data-driven citizen roster (JSON); unset = legacy hardcoded demo citizens |
 | `"Bots": { "MaxPresenceBots": N }` / `AAEMU_PRESENCE_MAX_BOTS` | Presence bot clamp (default 10) |
+| `"Bots": { "EnableStartupArming": true }` / `AAEMU_STARTUP_ARMING` | The ONE supported way to arm the bot host at boot; absent or `false` = nothing arms (shipped default) |
+| `"Bots": { "StartupBotCount": 2 }` / `AAEMU_STARTUP_BOT_COUNT` | Size of the citizen roster the startup switch enrols (default 2, clamped); a re-arm or a restart adopts the same bots by name instead of provisioning duplicates |
 | `AAEMU_QUEST_BOOTSTRAP_ENABLED=1` | Opts into the existing quest activity module; does not globally enable bots or assign a quest |
 | `AAEMU_PRESENCE_IDLE_WAKE=1` | Enables the existing idle self-wake after enrollment; does not add a discovery scheduler or supply work |
+
+Every arming path — presence demo, the manifest roster, the proximity
+bootstrap, admin roam/lab and the E2E bridge — arms the same scheduler owner
+(`IPlayerBotScheduler.Arm`), and host shutdown disarms through that same owner;
+the startup switch above is the supported deployment front for that one path.
+The switch reports what its enrollment actually did (`enrolled N bot(s) of a
+roster of up to M`), so an enrollment that found the world already populated
+reads as `nothing enrolled (idempotent)` instead of as a roster that came up;
+and when a `PresenceManifest` is configured as well, the manifest's roster is
+what gets enrolled — `StartupBotCount` then only sets the idempotency threshold
+and the roster size the line reports.
 
 Related env-only knobs: `AAEMU_PRESENCE_HOME_X/Y/Z` (demo patrol home
 override), `AAEMU_BOT_CHATTER_RADIUS`, `AAEMU_BOT_CHATTER_ZONE_BUDGET`,

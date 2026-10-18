@@ -71,6 +71,11 @@ Every action tool returns the **enqueue acknowledgement** (`success`,
 (Requested → Running → Completed/Failed) — the same async-response
 pattern the scripted fleet (tier 1) uses over HTTP.
 
+When a drain reaches its command budget, remaining requests stay queued in
+`Requested` for a later drain. Keep polling the original trace id; do not
+submit the action again merely because it has not started. E303 verifies this
+boundary through the native queue and actor, not live HTTP or sustained overload.
+
 ## Client-neutral workflow
 
 All clients should use the same evidence loop; the MCP client is only a
