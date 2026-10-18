@@ -53,7 +53,7 @@ public class BotDriveBridgeQuestObserveTests
     }
 
     [Test]
-    public async Task PassiveObserve_ProgressGatherIndexZero_RejectsSameProgressObjectiveIndexZero()
+    public async Task PassiveObserve_ProgressGatherIndexZero_SameProgressObjectiveIndexZero_LeavesTheQuestUnmapped()
     {
         await WithObserverAsync(async fixture =>
         {
@@ -65,10 +65,10 @@ public class BotDriveBridgeQuestObserveTests
             await Assert.That(fixture.Hunt.ParentComponent.KindId).IsEqualTo(QuestComponentKind.Progress);
             var before = fixture.Quest.WriteData();
 
+            // An ambiguous objective is never mapped, and the quest is named
+            // instead of refusing the whole observation (T10 run 17).
             using var observed = fixture.Observe();
-            await Assert.That(observed.RootElement.GetProperty("ok").GetBoolean()).IsFalse();
-            await Assert.That(observed.RootElement.GetProperty("error").ValueKind).IsEqualTo(JsonValueKind.String);
-            await Assert.That(observed.RootElement.TryGetProperty("data", out _)).IsFalse();
+            await AssertUnmappedAsync(observed.RootElement);
             await Assert.That(fixture.Quest.WriteData().SequenceEqual(before)).IsTrue();
             await Assert.That(fixture.Scheduler.IsRunning).IsFalse();
             await Assert.That(fixture.Manager.TryGet(fixture.Session.Character.Id, out _)).IsFalse();
@@ -165,6 +165,34 @@ public class BotDriveBridgeQuestObserveTests
             }
             await Assert.That(fixture.Scheduler.IsRunning).IsFalse();
         });
+    }
+
+    [Test]
+    public async Task PassiveObserve_AliasedGather_LeavesTheQuestUnmappedAndKeepsObserving()
+    {
+        await WithObserverAsync(async fixture =>
+        {
+            using var baseline = fixture.Observe();
+            await AssertValidGatherAsync(baseline.RootElement, fixture);
+            // Quest 266's shape: the gather counts an item alias, which the
+            // observer cannot map to one item id.
+            fixture.Gather.UseAlias = true;
+
+            using var observed = fixture.Observe();
+            await AssertUnmappedAsync(observed.RootElement);
+            await Assert.That(observed.RootElement.GetProperty("data").GetProperty("activeQuests").GetArrayLength())
+                .IsEqualTo(1);
+        });
+    }
+
+    private static async Task AssertUnmappedAsync(JsonElement root)
+    {
+        await Assert.That(root.GetProperty("ok").GetBoolean()).IsTrue();
+        var data = root.GetProperty("data");
+        await Assert.That(data.GetProperty("objectiveItems").GetArrayLength()).IsEqualTo(0);
+        var unmapped = data.GetProperty("objectiveItemsUnmapped");
+        await Assert.That(unmapped.GetArrayLength()).IsEqualTo(1);
+        await Assert.That(unmapped[0].GetUInt32()).IsEqualTo(QuestId);
     }
 
     private static void MintRealAuditRows(GameplayActor actor, int count)

@@ -12,7 +12,13 @@ internal sealed class BotShortRunEvidence
     internal const int MaximumAuditRows = 512;
     internal const int MaximumWorkWitnesses = 128;
     internal const int MaximumRecoveryResponses = 3;
-    internal const double MaximumSeconds = 900;
+    /// <summary>
+    /// The autonomous window: 900 s, or longer when E2E_QUEST_MAX_SECONDS asks
+    /// for a keep-going run toward a target quest (never shorter).
+    /// </summary>
+    internal static double MaximumSeconds { get; } =
+        double.TryParse(Environment.GetEnvironmentVariable("E2E_QUEST_MAX_SECONDS"), out var seconds) && seconds > 900
+            ? seconds : 900;
     internal const double NoProgressSeconds = 300;
 
     internal sealed record Work(double T, Guid TraceId, uint QuestId, string Action,
@@ -79,6 +85,9 @@ internal sealed class BotShortRunEvidence
     public int ProvedProgressVersion { get; private set; }
     public double LastProvedProgressSeconds { get; private set; }
     public string? EvidenceFault { get; private set; }
+
+    /// <summary>Copies dropped or cut because a terminal landed inside their copy window.</summary>
+    public int TornSnapshots { get; private set; }
     public int BaselineCompletedCount { get; }
     public int LastCompletedCount { get; private set; }
     public bool ControlCompleted => _controlCompletedAt.HasValue;
@@ -198,15 +207,28 @@ internal sealed class BotShortRunEvidence
             EvidenceFault ??= "Actor audit exceeds its declared 512-row bound";
             return;
         }
+        // A quest/item-changing terminal that completed while a snapshot was
+        // being copied leaves that copy possibly torn (the copy runs off the
+        // game thread). A torn copy only ever COSTS evidence, never creates it
+        // (T10 run 15: a self-defence Cast landed in a 0.2 ms copy window):
+        //   - the current copy is torn: drop it unconsumed; the next clean copy
+        //     is compared with the last clean one, so nothing is lost;
+        //   - the previous, already consumed copy is torn: break continuity, so
+        //     nothing is credited across it (a recovery in flight loses scope).
         var previousBegin = Time(_previousObservation!.Value, "snapshotStartedAtUtc");
-        if (audit.EnumerateArray().Any(r => UInt(r, "actor_id") == _actorId
+        bool Intersects(DateTime from, DateTime to) => audit.EnumerateArray().Any(r => UInt(r, "actor_id") == _actorId
             && MayChangeQuestOrItems(String(r, "action"))
             && Time(r, "completed_at") is { } completed
-            && ((completed > begin && completed <= at)
-                || (completed > previousBegin && completed <= _previous.At))))
+            && completed > from && completed <= to);
+        if (previousBegin.HasValue && Intersects(previousBegin.Value, _previous.At))
         {
-            EvidenceFault ??= "Terminal intersects copied snapshot interval";
+            TornSnapshots++;
             BreakContinuity();
+            return;
+        }
+        if (Intersects(begin.Value, at.Value))
+        {
+            TornSnapshots++;
             return;
         }
         // Rows naming an observed recovery request cannot disappear through the

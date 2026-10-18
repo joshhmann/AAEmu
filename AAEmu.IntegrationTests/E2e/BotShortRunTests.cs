@@ -102,6 +102,13 @@ public class BotShortRunTests
         var provisionRequested = false;
         var capFailed = false;
         var suppressedCleanupRecords = 0;
+        // E2E_QUEST_START_LEVEL: 10 (default, the historical starter body) or 1 (a
+        // character exactly as ordinary creation makes it, nothing staged).
+        var startLevel = Environment.GetEnvironmentVariable("E2E_QUEST_START_LEVEL") is "1" ? 1 : 10;
+        // E2E_QUEST_TARGET: keep playing past the continuation proof until this
+        // quest is turned in (0 = the ordinary continuation run). The bot is
+        // never told about it; the harness only decides when to stop looking.
+        var targetQuest = uint.TryParse(Environment.GetEnvironmentVariable("E2E_QUEST_TARGET"), out var target) ? target : 0u;
         BotDriveClient? bridge = null;
         HttpClient? control = null;
         BotShortRunEvidence? proof = null;
@@ -266,11 +273,17 @@ public class BotShortRunTests
         bool ObjectiveProved() => proof != null && (continuation
             ? QuestContinuationEvidence.Proved(proof)
             : productive ? ProductiveQuestEvidence.Proved(proof) : proof.PurposeProved);
+        bool TargetAccepted() => targetQuest != 0 && proof != null
+            && proof.QuestWork.Any(w => w.QuestId == targetQuest && w.Action == "AcceptQuest");
+        bool TargetCompleted() => targetQuest == 0 || (proof != null
+            && proof.CompletedGoals.Any(w => w.QuestId == targetQuest));
         string? StopReason(double elapsed)
         {
             if (!productive) return proof!.StopReason(elapsed);
             if (proof!.EvidenceFault != null) return "EVIDENCE_FAULT";
-            if (ObjectiveProved()) return continuation ? "QUEST_CONTINUATION_COMPLETE" : "PRODUCTIVE_QUEST_COMPLETE";
+            if (ObjectiveProved() && TargetCompleted())
+                return targetQuest != 0 ? "QUEST_TARGET_COMPLETE"
+                    : continuation ? "QUEST_CONTINUATION_COMPLETE" : "PRODUCTIVE_QUEST_COMPLETE";
             if (elapsed >= BotShortRunEvidence.MaximumSeconds) return "MAXIMUM_WINDOW";
             if (elapsed - proof.LastProvedProgressSeconds >= BotShortRunEvidence.NoProgressSeconds)
                 return "NO_PROVED_PROGRESS";
@@ -320,17 +333,20 @@ public class BotShortRunTests
             Require(settings.AutoSaveMinutes > 0 && settings.AutoSaveMinutes * 60 + 5 <= FlushSeconds,
                 "Autosave exceeds fixed ordinary persistence margin");
             configuration = new { settings.ExpRate, settings.AutoSaveMinutes, flags = E2eStack.CapabilityManifest(),
-                provisioningLevel = 10, starterBody = "ordinary existing level10 starter body; disclosed, not earned",
+                provisioningLevel = startLevel,
+                starterBody = startLevel == 1
+                    ? "fresh level1 character from ordinary creation; nothing staged"
+                    : "ordinary existing level10 starter body; disclosed, not earned",
                 spawn = "natural", questBootstrap = "ON", idleWake = "ON5s", otherGameplayProducers = "OFF",
                 noAssignedQuestGoalRoute = true, noTeleportGrantKillLootDrive = true };
             using (var deadline = Deadline())
                 await NeedsFarmLoopE2eTests.RequireFreshFarmName(botName, deadline.Token);
             Identity("before-dispatch-intent");
             provisionRequested = true;
-            var provision = await Bridge(new { cmd = "provision", bot = botName, fresh = true, level = 10 });
-            Require(characterId != 0 && Long(provision, "level") == 10, "Fresh level10 identity unavailable");
+            var provision = await Bridge(new { cmd = "provision", bot = botName, fresh = true, level = startLevel });
+            Require(characterId != 0 && Long(provision, "level") == startLevel, $"Fresh level{startLevel} identity unavailable");
             before = await Durable();
-            Require(before.Level == 10 && before.CompletedQuests.Length == 0 && before.Items.Count > 0,
+            Require(before.Level == startLevel && before.CompletedQuests.Length == 0 && before.Items.Count > 0,
                 "Natural starter baseline unavailable or historical character adopted");
             using (var deadline = Deadline()) bodyBefore = await ReadQuestBodyDurable(characterId, sqlCodec!, deadline.Token);
             Raw(new { query = "full owned character/account/abilities baseline" }, bodyBefore);
@@ -505,7 +521,7 @@ public class BotShortRunTests
             control?.Dispose();
         }
         if (File.Exists(markerPath)) Fault(new InvalidDataException("Runner fault marker: no promotion; cleanup retained"));
-        var passed = ObjectiveProved() && releaseProved && flushProved
+        var passed = ObjectiveProved() && TargetCompleted() && releaseProved && flushProved
             && registryRemoved && sessionReleased && registryAbsent && wakeCount == 1 && interruptRequests == 1
             && waitSeconds >= FlushSeconds && failures.Count == 0 && end.HasValue
             && latestRawPersisted && latestProofAccepted && latestCopyFault == null;
@@ -550,12 +566,13 @@ public class BotShortRunTests
             flushBookkeeping = end.HasValue && bodyAfterFlush != null && sqlCodec != null
                 ? QuestBookkeepingEvidence(bodyAfterFlush, end.Value, sqlCodec, endUtc!.Value,
                     bodyAfterRelease?.ObservedAtUtc ?? endUtc!.Value) : null,
-            work = proof?.QuestWork, recoveries = proof?.Recoveries, evidenceFault = proof?.EvidenceFault,
+            work = proof?.QuestWork, recoveries = proof?.Recoveries, evidenceFault = proof?.EvidenceFault, tornSnapshots = proof?.TornSnapshots,
             productiveRootQuest = productive ? 251u : (uint?)null,
             productiveCompletionProved = productive && proof != null && ProductiveQuestEvidence.Proved(proof),
             continuationQuest = continuation ? 324u : (uint?)null,
             continuationCompletionProved = continuation && ObjectiveProved(),
             completedGoals = proof?.CompletedGoals,
+            targetQuest, targetAccepted = TargetAccepted(), targetCompleted = targetQuest != 0 && TargetCompleted(),
             wakeCount, interruptRequests, registryRemoved, sessionReleased, registryAbsent, releaseProved, flushProved,
             provenance = new { source = E2eStack.MeasuredSourceIdentity, E2eStack.PublishSourceIdentity,
                 testAssemblySha256 = Sha256(typeof(BotShortRunTests).Assembly.Location),
@@ -563,9 +580,9 @@ public class BotShortRunTests
                 scope = "Runner frozen build receipts join measured dirty sources to adopted binaries" },
             canonicalMd5, runtimeMd5, identityPath, markerPath, failures,
             scope = continuation
-                ? "Unchanged productive251 proof, then independently accepted supplied-item324, ordinary NPC report/completion and fresh distinct acceptance beyond251/324; frozen-END release/325sflush. Level10 starter setup; no324 harvesting, further quest completion, restart/general loop/H claim."
+                ? "Unchanged productive251 proof, then independently accepted supplied-item324, ordinary NPC report/completion and fresh distinct acceptance beyond251/324; frozen-END release/325sflush. " + (startLevel == 1 ? "Fresh level1 character, nothing staged" : "Level10 starter setup") + "; no324 harvesting, further quest completion, restart/general loop/H claim."
                 : productive
-                ? "One independently accepted Q251 with request-parented Loot numeric/item gain, same-root interruption/recovery, actual ordinary Q251 completion/turn-in then distinct fresh quest acceptance and unchanged full frozen-END durability. Seeded natural level10 body; no subsequent quest completion, restart, general loop or H claim."
+                ? "One independently accepted Q251 with request-parented Loot numeric/item gain, same-root interruption/recovery, actual ordinary Q251 completion/turn-in then distinct fresh quest acceptance and unchanged full frozen-END durability. " + (startLevel == 1 ? "Fresh level1 body, nothing staged" : "Seeded natural level10 body") + "; no subsequent quest completion, restart, general loop or H claim."
                 : "Immutable fallback Move purpose, own Running interrupt, fresh autonomous reselection, request-parented Loot numeric objective+item gain and full frozen-END durability. No Q251 completion/restart/general gameplay claim."
         }, Indented);
         try { budget.ReserveFinal(report); }

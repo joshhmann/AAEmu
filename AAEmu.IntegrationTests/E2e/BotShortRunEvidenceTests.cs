@@ -117,6 +117,35 @@ public class BotShortRunEvidenceTests
             flags: [Flag(completed: true), Flag(2)], audit: [Audit(3, quest: 2, requested: 10.5, completed: 11)]));
 
     [Fact]
+    public void TornSnapshotCopyCostsEvidenceButNeverFaultsOrCredits()
+    {
+        // T10 run 15: a self-defence Cast completed inside a 0.2 ms copy window.
+        // A torn copy is dropped (current) or cuts continuity (previous); it is
+        // never a fault and never a credit.
+        var proof = Accepted();
+        var workBefore = proof.QuestWork.Count;
+
+        // The current copy is torn: dropped unconsumed.
+        Feed(proof, 5, Observation(5, chosen: 1, quests: [Quest()],
+            audit: [Audit(20, action: "Cast", goal: "quest.objective-combat", requested: 4.5, completed: 4.9995)]));
+        Assert.Null(proof.EvidenceFault);
+        Assert.Equal(1, proof.TornSnapshots);
+
+        // The next clean copy is compared with the last clean one.
+        Feed(proof, 7, Observation(7, chosen: 1, quests: [Quest()]));
+        Assert.Null(proof.EvidenceFault);
+        Assert.Equal(1, proof.TornSnapshots);
+
+        // A terminal found to have landed inside the previous (consumed) copy
+        // window cuts continuity instead of faulting.
+        Feed(proof, 9, Observation(9, chosen: 1, quests: [Quest()],
+            audit: [Audit(21, action: "Cast", goal: "quest.objective-combat", requested: 6.5, completed: 6.9995)]));
+        Assert.Null(proof.EvidenceFault);
+        Assert.Equal(2, proof.TornSnapshots);
+        Assert.Equal(workBefore, proof.QuestWork.Count);
+    }
+
+    [Fact]
     public void PendingActorJoinsWithoutRestartingDeadlineOrCreditingPreJoinWork()
     {
         var proof = new BotShortRunEvidence(7, Observation(actor: 0, actorCharacter: 0), protocolReady: true);
@@ -144,7 +173,9 @@ public class BotShortRunEvidenceTests
         Assert.Empty(proof.QuestWork);
         Feed(proof, 4, Observation(4, chosen: 2, quests: [Quest(), Quest(2)],
             audit: [Audit(2, quest: 2, requested: 2.5, completed: 3)]));
-        Assert.NotNull(proof.EvidenceFault);
+        // A torn copy costs evidence instead of faulting (T10 run 15); the
+        // property under test is that it still cannot credit anything.
+        Assert.True(proof.TornSnapshots > 0);
         Assert.Empty(proof.QuestWork);
         Assert.Empty(proof.Recoveries);
         Assert.False(proof.PurposeProved);
@@ -1209,7 +1240,9 @@ public class BotShortRunEvidenceTests
         Assert.Empty(proof.QuestWork);
         Assert.Empty(proof.Recoveries);
         Assert.False(proof.PurposeProved);
-        Assert.NotNull(proof.EvidenceFault);
+        // A torn copy costs evidence instead of faulting (T10 run 15); the
+        // property under test is that it still cannot credit anything.
+        Assert.True(proof.TornSnapshots > 0);
     }
 
     [Fact]
@@ -1332,7 +1365,9 @@ public class BotShortRunEvidenceTests
             "snapshotStartedAtUtc", Start.AddSeconds(9.9));
         b = Changed(Changed(Changed(b, "x", 100d), "questTravelTargetX", null), "questTravelTargetY", null);
         proof.Observe(end, b);
-        Assert.NotNull(proof.EvidenceFault);
+        // A torn copy costs evidence instead of faulting (T10 run 15); the
+        // property under test is that it still cannot credit anything.
+        Assert.True(proof.TornSnapshots > 0);
         Assert.Empty(proof.QuestWork);
         Assert.Empty(proof.Recoveries);
         Assert.False(proof.PurposeProved);

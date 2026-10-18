@@ -4914,12 +4914,20 @@ public sealed class BotDriveBridge
             };
         }).ToArray();
         var objectiveItems = new List<object>();
+        // A quest whose gather objectives cannot be mapped exactly (an aliased
+        // gather such as quest 266's, or an ambiguous objective index) is left
+        // out WHOLE and named here, so it can never be credited from a partial
+        // mapping; before, one such quest refused the observation for every
+        // quest (T10 run 17, the moment the bot accepted 266).
+        var objectiveItemsUnmapped = new List<uint>();
         foreach (var quest in activeQuestSources)
         {
             var acts = quest.QuestSteps.TryGetValue(QuestComponentKind.Progress, out var progress)
                 ? progress.Components.Values.SelectMany(c => c.Acts)
                     .Where(a => a.Template.CountsAsAnObjective).ToArray()
                 : [];
+            var questItems = new List<object>();
+            var mappable = true;
             foreach (var act in acts)
             {
                 if (act.Template is not AAEmu.Game.Models.Game.Quests.Acts.QuestActObjItemGather gather)
@@ -4929,14 +4937,21 @@ public sealed class BotDriveBridge
                     index >= quest.Objectives.Length || act.Id == 0 ||
                     act.QuestComponent.Template.Id == 0 ||
                     acts.Count(a => a.Template.ThisComponentObjectiveIndex == index) != 1)
-                    return Err("quest observe: invalid or ambiguous objective-item mapping");
-                objectiveItems.Add(new
+                {
+                    mappable = false;
+                    break;
+                }
+                questItems.Add(new
                 {
                     questId = quest.TemplateId, actId = act.Id,
                     componentId = act.QuestComponent.Template.Id, objectiveIndex = index,
                     itemId = gather.ItemId, required = gather.Count,
                 });
             }
+            if (mappable)
+                objectiveItems.AddRange(questItems);
+            else
+                objectiveItemsUnmapped.Add(quest.TemplateId);
         }
         if (QuestCompletedBlocksProperty?.GetValue(character.Quests) is not
             System.Collections.Concurrent.ConcurrentDictionary<uint, AAEmu.Game.Models.Game.Quests.CompletedQuest> blocks)
@@ -5101,7 +5116,8 @@ public sealed class BotDriveBridge
             actabilities = character.Actability?.Actabilities.Values.OrderBy(a => a.Id)
                 .Select(a => new { id = a.Id, point = a.Point, step = a.Step }).ToArray(),
             items = items.ToArray(), ownItems = ownItems.ToArray(),
-            objectiveItems = objectiveItems.ToArray(), completedQuests = completedQuests.ToArray(),
+            objectiveItems = objectiveItems.ToArray(), objectiveItemsUnmapped = objectiveItemsUnmapped.ToArray(),
+            completedQuests = completedQuests.ToArray(),
             chosenQuestId = chosenQuest,
             isDead = character.IsDead,
             // Existing server truth and request records, projected read-only.
