@@ -8,13 +8,13 @@ public class BotShortRunEndCaptureTests
     private static readonly Guid StopId = Guid.Parse("10000000-0000-0000-0000-000000000001");
     private static readonly DateTime At = new(2026, 10, 11, 0, 0, 0, DateTimeKind.Utc);
     private static JsonElement Json(object value) => JsonSerializer.SerializeToElement(value);
-    private static JsonElement Scheduler() => Json(new { privateEndPreparation = true, schedulerRunning = false,
-        id = 7, actorObjId = 9, enrollmentGeneration = 3 });
+    private static JsonElement Scheduler() => Json(new { privateEndPreparation = true, schedulerRunning = true,
+        endCaptureHeld = true, id = 7, actorObjId = 9, enrollmentGeneration = 3 });
     private static JsonElement Enqueued() => Json(new { success = true, action = "Stop", trace_id = StopId });
     private static JsonElement Terminal() => Json(new { action = "Stop", trace_id = StopId, actor_id = 9,
         state = "Completed", completed_at = At });
     private static JsonElement Copy(double x = 0) => Json(new { id = 7, actorCharId = 7, actorObjId = 9,
-        enrollmentGeneration = 3, enrollmentRegistered = true, enrollmentSchedulerRunning = false,
+        enrollmentGeneration = 3, enrollmentRegistered = true, enrollmentSchedulerRunning = true, enrollmentLeased = true,
         endPreparationIdle = true, liveState = (string?)null, snapshotStartedAtUtc = At.AddSeconds(1),
         observedAtUtc = At.AddSeconds(2), x });
     private static JsonElement Change(JsonElement value, string name, object? replacement)
@@ -35,7 +35,7 @@ public class BotShortRunEndCaptureTests
         var polls = 0;
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         var result = await BotShortRunEndCapture.CaptureAsync(7, 9, 3,
-            () => { events.Add("scheduler-stopped"); return Task.FromResult(Scheduler()); },
+            () => { events.Add("bot-held"); return Task.FromResult(Scheduler()); },
             () => { events.Add("stop-queued"); return Task.FromResult(Enqueued()); },
             _ =>
             {
@@ -53,12 +53,13 @@ public class BotShortRunEndCaptureTests
         var ordinaryReleasePosition = position;
         Assert.NotEqual(oldEnd.GetProperty("x").GetDouble(), ordinaryReleasePosition);
         Assert.Equal(result.Copy.GetProperty("x").GetDouble(), ordinaryReleasePosition);
-        Assert.Equal(new[] { "scheduler-stopped", "stop-queued", "stop-completed", "full-live-copy" }, events);
+        Assert.Equal(new[] { "bot-held", "stop-queued", "stop-completed", "full-live-copy" }, events);
     }
 
     [Theory]
     [InlineData("privateEndPreparation", false)]
-    [InlineData("schedulerRunning", true)]
+    [InlineData("schedulerRunning", false)]
+    [InlineData("endCaptureHeld", false)]
     [InlineData("id", 8)]
     [InlineData("actorObjId", 10)]
     [InlineData("enrollmentGeneration", 4)]
@@ -92,7 +93,8 @@ public class BotShortRunEndCaptureTests
     [InlineData("enrollmentGeneration", 4)]
     [InlineData("actorCharId", 8)]
     [InlineData("enrollmentRegistered", false)]
-    [InlineData("enrollmentSchedulerRunning", true)]
+    [InlineData("enrollmentSchedulerRunning", false)]
+    [InlineData("enrollmentLeased", false)]
     [InlineData("endPreparationIdle", false)]
     [InlineData("liveState", "Running")]
     [InlineData("snapshotStartedAtUtc", "2026-10-10T23:59:59Z")]

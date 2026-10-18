@@ -5120,6 +5120,32 @@ public static class QuestBehavior
     }
 
     /// <summary>
+    /// Budget for a unit-relative leg, sized to the distance it must cover. The
+    /// flat <see cref="PursuitLegTimeout"/> walks only ~45 m at
+    /// <see cref="PursuitSpeedMps"/>, so a chase issued at a farther target always
+    /// ended TimedOut/Navigation mid-walk (T10 live runs 4 and 6). The per-wake
+    /// drift retrack still re-aims a moving target; this only lets one leg finish
+    /// the ground it was issued for. Never below the pursuit budget, never above
+    /// the corpse-approach budget.
+    /// </summary>
+    internal static TimeSpan UnitLegBudget(IGameplayActor gameplayActor, uint targetId)
+    {
+        var character = gameplayActor.Character;
+        var from = character?.Transform.World.Position;
+        var to = character?.ParentWorld?.GetNpc(targetId)?.Transform.World.Position;
+        if (!from.HasValue || !to.HasValue)
+            return PursuitLegTimeout;
+        return UnitLegBudget(Vector3.Distance(from.Value, to.Value));
+    }
+
+    internal static TimeSpan UnitLegBudget(float distanceM)
+    {
+        var seconds = distanceM / PursuitSpeedMps * 1.5 + 2.0;
+        return TimeSpan.FromSeconds(Math.Clamp(seconds,
+            PursuitLegTimeout.TotalSeconds, LootApproachLegTimeout.TotalSeconds));
+    }
+
+    /// <summary>
     /// G5 pursuit dispatch: preempt a live Move leg (retrack only), issue the
     /// unit-relative MoveToUnit leg, and record the committed target's live
     /// position for the next wake's drift gate. Never touches _move state or
@@ -5140,7 +5166,8 @@ public static class QuestBehavior
         // survives to the MoveToUnit below).
         if (gameplayActor is GameplayActor concrete)
             concrete.SetPendingMoveOwner(TravelLegDispatch.PursuitMoveOwner);
-        var request = gameplayActor.MoveToUnit(proposal.TargetId, PursuitSpeedMps, PursuitLegTimeout, proposal.IdempotencyKey);
+        var request = gameplayActor.MoveToUnit(proposal.TargetId, PursuitSpeedMps,
+            UnitLegBudget(gameplayActor, proposal.TargetId), proposal.IdempotencyKey);
         // Travel brain: the leg that ACTUALLY ran is the one banked (its mode and
         // the point it was issued against — the next wake's drift comparison — plus
         // the repath it spent), read from the decision the proposal carries. A
@@ -5200,7 +5227,8 @@ public static class QuestBehavior
         // survives to the MoveToUnit below).
         if (gameplayActor is GameplayActor concrete)
             concrete.SetPendingMoveOwner("RETURN_MOVE_TO_UNIT");
-        var request = gameplayActor.MoveToUnit(proposal.TargetId, PursuitSpeedMps, PursuitLegTimeout, proposal.IdempotencyKey);
+        var request = gameplayActor.MoveToUnit(proposal.TargetId, PursuitSpeedMps,
+            UnitLegBudget(gameplayActor, proposal.TargetId), proposal.IdempotencyKey);
         // Travel brain: the leg that ACTUALLY ran is the one banked (the mode and
         // the point it was issued against — the next wake's drift comparison — plus
         // the repath it spent), read from the decision the proposal carries. A

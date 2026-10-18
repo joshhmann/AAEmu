@@ -434,6 +434,32 @@ public class PlayerBotSchedulerTests
         await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(1);
     }
 
+    [Test]
+    public async Task EndCaptureHold_WakeWhileHeld_FoldsAndRunsOnceAfterRelease()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        var held = await Task.Run(() =>
+        {
+            ExecutionBoundary.ResetForTest();
+            return rig.Scheduler.TryHoldForEndCapture(bot, TimeSpan.FromSeconds(1));
+        });
+        await Assert.That(held).IsTrue();
+
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+        rig.Scheduler.DrainTickQueue();
+        await Task.Delay(50);
+        rig.Scheduler.DrainTickQueue();
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(0);
+
+        rig.Scheduler.ReleaseEndCaptureHold(bot);
+        rig.Pump();
+        await rig.WaitUntilAsync(() => rig.Executor.CountStarts(bot) == 1);
+        await rig.WaitUntilAsync(() => !rig.Scheduler.IsLeased(bot));
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(1);
+    }
+
     #endregion
 
     #region Cadence: next-delay vs dormant

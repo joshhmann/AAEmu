@@ -17,9 +17,12 @@ internal static class BotShortRunEndCapture
     {
         Require(characterId != 0 && actorId != 0 && generation >= 0, "Owned END identity unavailable");
         var scheduler = await stopScheduler().WaitAsync(cancellationToken);
-        Require(Bool(scheduler, "privateEndPreparation") == true && Bool(scheduler, "schedulerRunning") == false
+        // The host stays running: the ordinary leave after END must still be
+        // able to retire the bot, which a stopped host refuses.
+        Require(Bool(scheduler, "privateEndPreparation") == true && Bool(scheduler, "schedulerRunning") == true
+            && Bool(scheduler, "endCaptureHeld") == true
             && UInt(scheduler, "id") == characterId && UInt(scheduler, "actorObjId") == actorId
-            && Long(scheduler, "enrollmentGeneration") == generation, "Isolated scheduler stop not proved");
+            && Long(scheduler, "enrollmentGeneration") == generation, "Owned end-capture hold not proved");
         var queued = await enqueueStop().WaitAsync(cancellationToken);
         Require(Bool(queued, "success") == true && Text(queued, "action") == "Stop"
             && Guid.TryParse(Text(queued, "trace_id"), out _), "Ordinary Stop enqueue not proved");
@@ -42,7 +45,8 @@ internal static class BotShortRunEndCapture
         var copy = await capture().WaitAsync(cancellationToken);
         Require(UInt(copy, "id") == characterId && UInt(copy, "actorCharId") == characterId
             && UInt(copy, "actorObjId") == actorId && Long(copy, "enrollmentGeneration") == generation
-            && Bool(copy, "enrollmentRegistered") == true && Bool(copy, "enrollmentSchedulerRunning") == false,
+            && Bool(copy, "enrollmentRegistered") == true && Bool(copy, "enrollmentSchedulerRunning") == true
+            && Bool(copy, "enrollmentLeased") == true,
             "Prepared END enrollment changed");
         Require(Bool(copy, "endPreparationIdle") == true && Text(copy, "liveState") is null or "Completed" or "Interrupted" or "Rejected" or "TimedOut",
             "Prepared END still has running work");

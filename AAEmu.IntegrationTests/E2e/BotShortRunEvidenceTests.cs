@@ -1720,6 +1720,45 @@ public class BotShortRunEvidenceTests
     }
 
     [Fact]
+    public void OnlineCountersGrowOnlyWithinTheExactEndToReleaseInterval()
+    {
+        // T10 runs 7 and 9: the counters advanced by one 5 s tracking jump
+        // between END and the leave-save (run 9: within 0.17 s of wall time).
+        var codec = SuppliedCodec([new("characters", "online_time", "int", "int", null),
+            new("accounts", "divine_clock_time", "int", "int", null)]);
+        var end = JsonSerializer.SerializeToElement(new
+        {
+            id = 7u,
+            fullCharacter = new { online_time = 306.6879143d },
+            fullAccount = new { divine_clock_time = 306 },
+        });
+        QuestBodyDurable After(int onlineTime, int divineClock, double readAt = 10.15) => new(Start.AddSeconds(readAt), Start.AddSeconds(readAt + 0.02),
+            JsonSerializer.SerializeToElement(new { id = 7u, account_id = 11u, online_time = onlineTime }),
+            JsonSerializer.SerializeToElement(new { }),
+            JsonSerializer.SerializeToElement(new { account_id = 11u, divine_clock_time = divineClock }),
+            [], [], "TIME_TRUNCATE_FRACTIONAL", "+00:00");
+        var frozenAt = Start.AddSeconds(10);
+
+        QuestBookkeeping[] Counters(QuestBodyDurable after, DateTime? leftWorld = null)
+            => QuestBookkeepingEvidence(after, end, codec, frozenAt, leftWorld)
+                .Where(b => b.Column is "online_time" or "divine_clock_time").ToArray();
+        var grown = Counters(After(312, 311));
+        Assert.Equal(2, grown.Length);
+        Assert.All(grown, b => Assert.True(b.Proved));
+        // Just past one tracking jump + the interval + 1 s rounding.
+        Assert.All(Counters(After(314, 314)), b => Assert.False(b.Proved));
+        Assert.All(Counters(After(320, 320)), b => Assert.False(b.Proved));
+        Assert.All(Counters(After(300, 300)), b => Assert.False(b.Proved));
+
+        // After-flush read 325 s later: growth stops at the leave (the release
+        // read). Unchanged release values pass; counters that kept ticking
+        // after the leave (a bot that never really left) fail.
+        var released = Start.AddSeconds(10.17);
+        Assert.All(Counters(After(312, 311, readAt: 335), released), b => Assert.True(b.Proved));
+        Assert.All(Counters(After(631, 631, readAt: 335), released), b => Assert.False(b.Proved));
+    }
+
+    [Fact]
     public void FullBodyUsesExactTypedFloatMirrorsInsteadOfLossyDirectReaderValues()
     {
         // Supplied provider-shaped rows, not a provider round-trip or gameplay proof.

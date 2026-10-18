@@ -54,6 +54,10 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     // Per-bot execution lease: TryAdd on enqueue, TryRemove on completion.
     private readonly ConcurrentDictionary<uint, byte> _leases = new();
 
+    // Leases taken by TryHoldForEndCapture rather than by a step; only
+    // ReleaseEndCaptureHold removes these.
+    private readonly ConcurrentDictionary<uint, byte> _endCaptureHolds = new();
+
     // M5 A1 execution boundary: steps handed by the worker pool (wake
     // producers) into this marshal queue, drained on the single execution
     // boundary — the game-loop thread (TickManager OnTick, useAsync: false).
@@ -517,6 +521,10 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         }
         // Cancellation can finish after abandonment, but this acknowledgement
         // cannot turn success later or itself perform a physical leave/save.
+        // A retired bot is leaving whichever path asked; an end-capture hold
+        // must not outlive it and park a later re-enrollment of the character.
+        if (retired)
+            ReleaseEndCaptureHold(retirement.ExpectedOwner.CharacterId);
         retirement.Completion.TrySetResult(retired && IsRunning && !retirement.HasExpired);
     }
 
@@ -542,6 +550,67 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
 
     /// <inheritdoc />
     public bool IsLeased(uint characterId) => _leases.ContainsKey(characterId);
+
+    /// <summary>
+    /// Freezes one bot for a final observation while the host keeps running:
+    /// takes the bot's execution lease once no step holds it, so no later step
+    /// is admitted (wakes fold into the pending slot). Native retirement never
+    /// needs the lease, so the ordinary leave that follows still retires the
+    /// bot on the execution boundary — which a stopped host refuses. E2E end
+    /// capture only; never an ordinary per-bot pause.
+    /// </summary>
+    internal bool TryHoldForEndCapture(uint characterId, TimeSpan timeout)
+    {
+        // A step only releases its lease on the boundary; waiting there for
+        // it would wait on ourselves.
+        if (ExecutionBoundary.IsExecutionThread)
+            return false;
+
+        var started = Stopwatch.GetTimestamp();
+        while (IsRunning)
+        {
+            lock (_queueLock)
+            {
+                if (_leases.TryAdd(characterId, 0))
+                {
+                    _endCaptureHolds[characterId] = 0;
+                    return true;
+                }
+            }
+
+            if (Stopwatch.GetElapsedTime(started) >= timeout)
+                return false;
+            Thread.Sleep(20);
+        }
+        return false;
+    }
+
+    /// <summary>True only for a lease taken by <see cref="TryHoldForEndCapture"/>, never a step's.</summary>
+    internal bool IsEndCaptureHeld(uint characterId) => _endCaptureHolds.ContainsKey(characterId);
+
+    /// <summary>
+    /// Releases a hold taken by <see cref="TryHoldForEndCapture"/> and honours
+    /// any wake folded while it was held. A lease a step holds is never touched.
+    /// Native retirement also calls this, so every leave path clears the hold.
+    /// </summary>
+    internal void ReleaseEndCaptureHold(uint characterId)
+    {
+        if (!_endCaptureHolds.TryRemove(characterId, out _))
+            return;
+
+        DateTime? pending = null;
+        lock (_queueLock)
+        {
+            _leases.TryRemove(characterId, out _);
+            if (_pendingWake.TryGetValue(characterId, out var wake))
+            {
+                _pendingWake.Remove(characterId);
+                pending = wake;
+            }
+        }
+        if (pending is { } pendingDue)
+            Schedule(characterId, pendingDue <= UtcNow ? UtcNow : pendingDue);
+    }
 
     /// <inheritdoc />
     public PlayerBotSchedulerMetrics GetMetrics()

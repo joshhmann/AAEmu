@@ -487,6 +487,70 @@ public class BotDriveBridgeLifecycleTests
     }
 
     [Test]
+    public async Task EndCaptureHold_HeldBotIsNotStepped_AndAdminRemoveStillRetiresAndSavesOnce()
+    {
+        // T10 run 5: the E2E END preparation stopped the whole host, so the
+        // ordinary leave after END could never retire the bot. The hold
+        // freezes one bot while the host keeps its retirement path.
+        using var rig = new NativeRetirementRig();
+        await rig.BindActor();
+        var held = await NativeRetirementRig.OffBoundary(() =>
+            rig.Scheduler.TryHoldForEndCapture(rig.Character.Id, TimeSpan.FromSeconds(2)));
+        await Assert.That(held).IsTrue();
+        await Assert.That(rig.Scheduler.IsEndCaptureHeld(rig.Character.Id)).IsTrue();
+        var stepsAtHold = rig.Scheduler.GetMetrics().TotalStepsRun;
+
+        for (var i = 0; i < 3; i++)
+        {
+            rig.Time.Advance(TimeSpan.FromSeconds(1));
+            rig.Scheduler.Wake(rig.Character.Id);
+            rig.Scheduler.RunScanCycle();
+            rig.Scheduler.DrainTickQueue();
+        }
+        await Assert.That(rig.Scheduler.GetMetrics().TotalStepsRun).IsEqualTo(stepsAtHold);
+        await Assert.That(rig.Scheduler.IsLeased(rig.Character.Id)).IsTrue();
+        await Assert.That(rig.Scheduler.IsRunning).IsTrue();
+
+        var remove = NativeRetirementRig.OffBoundary(() => rig.Admin.Remove(rig.Character.Id.ToString()));
+        await rig.DrainUntil(() => remove.IsCompleted);
+        var result = await remove;
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(rig.Physical.Saved).HasCount(1);
+        await Assert.That(rig.Manager.TryGet(rig.Character.Id, out _)).IsFalse();
+        // A plain admin remove (no bridge deactivate) must not leak the hold:
+        // retirement released it, so a re-enrolled character could step again.
+        await Assert.That(rig.Scheduler.IsEndCaptureHeld(rig.Character.Id)).IsFalse();
+        await Assert.That(rig.Scheduler.IsLeased(rig.Character.Id)).IsFalse();
+    }
+
+    [Test]
+    public async Task EndCaptureHold_RefusedOnTheBoundaryOrAfterStop_AndNeverReleasesAStepLease()
+    {
+        using var rig = new NativeRetirementRig();
+        await rig.BindActor();
+        var onBoundary = NativeRetirementRig.OnManualBoundary(() =>
+            rig.Scheduler.TryHoldForEndCapture(rig.Character.Id, TimeSpan.FromMilliseconds(50)));
+        await Assert.That(onBoundary).IsFalse();
+
+        // A step's lease is not a hold: releasing must leave it in place.
+        await rig.QueueOrdinaryWake();
+        await Assert.That(rig.Scheduler.IsLeased(rig.Character.Id)).IsTrue();
+        var whileStepLeased = await NativeRetirementRig.OffBoundary(() =>
+            rig.Scheduler.TryHoldForEndCapture(rig.Character.Id, TimeSpan.FromMilliseconds(50)));
+        await Assert.That(whileStepLeased).IsFalse();
+        await Assert.That(rig.Scheduler.IsEndCaptureHeld(rig.Character.Id)).IsFalse();
+        rig.Scheduler.ReleaseEndCaptureHold(rig.Character.Id);
+        await Assert.That(rig.Scheduler.IsLeased(rig.Character.Id)).IsTrue();
+        await rig.DrainUntil(() => !rig.Scheduler.IsLeased(rig.Character.Id));
+
+        await rig.Scheduler.StopAsync();
+        var afterStop = await NativeRetirementRig.OffBoundary(() =>
+            rig.Scheduler.TryHoldForEndCapture(rig.Character.Id, TimeSpan.FromMilliseconds(50)));
+        await Assert.That(afterStop).IsFalse();
+    }
+
+    [Test]
     public async Task Deactivate_RealRoamConcurrentEnqueueAndStopCompletesFailureWithoutWaitingForTimeout()
     {
         using var rig = new NativeRetirementRig();

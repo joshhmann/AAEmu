@@ -492,7 +492,8 @@ public class BotShortRunTests
                         Raw(new { query = "full owned character/account/abilities/items afterFlush" }, bodyAfterFlush);
                         flushProved = end.HasValue && sqlCodec != null
                             && MatchesQuestDurable(afterFlush, end.Value, sqlCodec, bodyAfterFlush)
-                            && MatchesQuestBody(bodyAfterFlush, end.Value, sqlCodec, endUtc!.Value);
+                            && MatchesQuestBody(bodyAfterFlush, end.Value, sqlCodec, endUtc!.Value,
+                                bodyAfterRelease?.ObservedAtUtc ?? endUtc!.Value);
                         Require(flushProved, "AfterFlush full frozen-END conservation UNKNOWN");
                         Require(Md5(canonicalPath) == canonicalMd5 && Md5(E2eStack.RuntimeSqlite) == runtimeMd5,
                             "Canonical/runtime identity changed");
@@ -510,7 +511,7 @@ public class BotShortRunTests
             && latestRawPersisted && latestProofAccepted && latestCopyFault == null;
         var endCopyProvenance = end.HasValue ? new
         {
-            source = "Fresh full owned passive+SQL END after isolated scheduler shutdown and exact completed ordinary Stop; no gameplay credit",
+            source = "Fresh full owned passive+SQL END under a per-bot end-capture hold (host running) and exact completed ordinary Stop; no gameplay credit",
             rawPersisted = endPreparation != null, preparationProved = endPreparation != null,
             gameplayCopyCapturedAtUtc = latestCopyCapturedAtUtc,
             gameplayRawPersisted = latestRawPersisted, gameplayProofAccepted = latestProofAccepted,
@@ -542,11 +543,13 @@ public class BotShortRunTests
             bodyReleaseDifferences = end.HasValue && bodyAfterRelease != null && sqlCodec != null
                 ? QuestBodyDifferences(bodyAfterRelease, end.Value, sqlCodec, endUtc!.Value) : null,
             bodyFlushDifferences = end.HasValue && bodyAfterFlush != null && sqlCodec != null
-                ? QuestBodyDifferences(bodyAfterFlush, end.Value, sqlCodec, endUtc!.Value) : null,
+                ? QuestBodyDifferences(bodyAfterFlush, end.Value, sqlCodec, endUtc!.Value,
+                    bodyAfterRelease?.ObservedAtUtc ?? endUtc!.Value) : null,
             releaseBookkeeping = end.HasValue && bodyAfterRelease != null && sqlCodec != null
                 ? QuestBookkeepingEvidence(bodyAfterRelease, end.Value, sqlCodec, endUtc!.Value) : null,
             flushBookkeeping = end.HasValue && bodyAfterFlush != null && sqlCodec != null
-                ? QuestBookkeepingEvidence(bodyAfterFlush, end.Value, sqlCodec, endUtc!.Value) : null,
+                ? QuestBookkeepingEvidence(bodyAfterFlush, end.Value, sqlCodec, endUtc!.Value,
+                    bodyAfterRelease?.ObservedAtUtc ?? endUtc!.Value) : null,
             work = proof?.QuestWork, recoveries = proof?.Recoveries, evidenceFault = proof?.EvidenceFault,
             productiveRootQuest = productive ? 251u : (uint?)null,
             productiveCompletionProved = productive && proof != null && ProductiveQuestEvidence.Proved(proof),
@@ -795,9 +798,9 @@ public class BotShortRunTests
         DateTime LowerBoundUtc, DateTime UpperBoundUtc, bool Proved, string Provenance);
 
     internal static QuestBookkeeping[] QuestBookkeepingEvidence(QuestBodyDurable after, JsonElement end,
-        QuestSqlCodec codec, DateTime frozenEndUtc)
+        QuestSqlCodec codec, DateTime frozenEndUtc, DateTime? leftWorldUtc = null)
     {
-        var proofs = new List<QuestBookkeeping>(2);
+        var proofs = new List<QuestBookkeeping>(4);
         foreach (var pair in new[] { (Table: "characters", Projection: "fullCharacter", Column: "updated_at", Row: after.Character),
             (Table: "accounts", Projection: "fullAccount", Column: "last_updated", Row: after.Account) })
         {
@@ -828,11 +831,47 @@ public class BotShortRunTests
                     ? "Character.Save assigns UTC now (Character.cs2783); corroborated deployed DATETIME codec and exact owned END→release/read interval"
                     : "Deployed observed BEFORE UPDATE SET NEW.last_updated=UTC_TIMESTAMP() trigger; UTC_TIMESTAMP() precision0; exact owned END→release/read interval"));
         }
+        // Elapsed-online counters advance with wall time only while the
+        // character is still in the world. The tracking task adds the whole
+        // delta since its last run in one jump every CheckPrecision, so one jump
+        // may land just after END (T10 run 9: 362→367 within 0.17 s). Bound the
+        // growth by the END→left-world interval plus one tracking period (+1 s
+        // rounding), never a decrease. After the leave nothing may grow: a flush
+        // read passes the release read as leftWorldUtc, so a bot that never
+        // really left (counters still ticking) stays a difference.
+        var trackingPeriod = AAEmu.Game.Models.Tasks.Characters.CharacterOnlineTrackingTask.CheckPrecision.TotalSeconds;
+        var leftWorld = leftWorldUtc ?? after.ObservedAtUtc;
+        foreach (var pair in new[] { (Table: "characters", Projection: "fullCharacter", Column: "online_time", Row: after.Character),
+            (Table: "accounts", Projection: "fullAccount", Column: "divine_clock_time", Row: after.Account) })
+        {
+            if (!codec.Columns.Any(c => c.Table == pair.Table && c.Name == pair.Column))
+                continue;
+            // The account copy (and with it divine_clock_time) is read from SQL
+            // before END completes, so its interval starts at that read.
+            var start = pair.Table == "accounts" && Time(end, "fullAccountSqlStartedAtUtc") is { } accountRead
+                ? accountRead : frozenEndUtc;
+            var elapsed = (leftWorld - start).TotalSeconds + trackingPeriod;
+            var before = end.TryGetProperty(pair.Projection, out var projection) && projection.ValueKind == JsonValueKind.Object
+                && projection.TryGetProperty(pair.Column, out var original) ? original : default;
+            var stored = pair.Row.TryGetProperty(pair.Column, out var final) ? final : default;
+            var bounded = before.ValueKind == JsonValueKind.Number && before.TryGetDouble(out var at)
+                && stored.ValueKind == JsonValueKind.Number && stored.TryGetDouble(out var saved)
+                && double.IsFinite(at) && double.IsFinite(saved) && leftWorld >= start && leftWorld <= after.ObservedAtUtc
+                && saved >= Math.Floor(at) && saved <= at + elapsed + 1
+                && after.SnapshotStartedAtUtc >= frozenEndUtc && after.ObservedAtUtc >= after.SnapshotStartedAtUtc
+                && UInt(after.Character, "id") == UInt(end, "id")
+                && UInt(after.Character, "account_id") == UInt(after.Account, "account_id");
+            proofs.Add(new(pair.Table, pair.Column, before.ValueKind == JsonValueKind.Undefined ? null : before,
+                stored.ValueKind == JsonValueKind.Undefined ? null : stored, start, leftWorld, bounded,
+                pair.Table == "characters"
+                    ? "CharacterOnlineTrackingTask advances Character.OnlineTime by wall time while online (5 s jumps); bounded by the owned END→left-world interval + one tracking period"
+                    : "Live counter, not a save product: CharacterOnlineTrackingTask writes divine_clock_time via AccountManager.UpdateDivineClock every 5 s while online; bounded by the owned account-read→left-world interval + one tracking period"));
+        }
         return proofs.ToArray();
     }
 
     internal static string[] QuestBodyDifferences(QuestBodyDurable after, JsonElement end,
-        QuestSqlCodec codec, DateTime frozenEndUtc)
+        QuestSqlCodec codec, DateTime frozenEndUtc, DateTime? leftWorldUtc = null)
     {
         var differences = new List<string>();
         var mirrorsValid = HasCharacterFloatMirrors(after.CharacterFloatMirrors, codec);
@@ -840,7 +879,7 @@ public class BotShortRunTests
         if (after.SqlMode != codec.SqlMode || after.SessionTimeZone != codec.SessionTimeZone
             || after.SnapshotStartedAtUtc < frozenEndUtc || after.ObservedAtUtc < after.SnapshotStartedAtUtc)
             differences.Add("Post-release reader codec or full copy interval differs from corroborated domain");
-        var bookkeeping = QuestBookkeepingEvidence(after, end, codec, frozenEndUtc);
+        var bookkeeping = QuestBookkeepingEvidence(after, end, codec, frozenEndUtc, leftWorldUtc);
         if (!end.TryGetProperty("ownedSqlCopy", out var sqlCopy) || sqlCopy.ValueKind != JsonValueKind.Object
             || String(sqlCopy, "SqlMode") != codec.SqlMode || String(sqlCopy, "SessionTimeZone") != codec.SessionTimeZone
             || Time(sqlCopy, "SnapshotStartedAtUtc") < Time(end, "observedAtUtc")
@@ -904,8 +943,9 @@ public class BotShortRunTests
         return differences.ToArray();
     }
 
-    internal static bool MatchesQuestBody(QuestBodyDurable after, JsonElement end, QuestSqlCodec codec, DateTime frozenEndUtc)
-        => QuestBodyDifferences(after, end, codec, frozenEndUtc).Length == 0;
+    internal static bool MatchesQuestBody(QuestBodyDurable after, JsonElement end, QuestSqlCodec codec, DateTime frozenEndUtc,
+        DateTime? leftWorldUtc = null)
+        => QuestBodyDifferences(after, end, codec, frozenEndUtc, leftWorldUtc).Length == 0;
 
     internal static bool MatchesQuestDurable(NeedsFarmLoopE2eTests.FarmDurable durable, JsonElement end,
         QuestSqlCodec codec, QuestBodyDurable body)

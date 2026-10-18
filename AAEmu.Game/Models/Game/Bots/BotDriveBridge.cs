@@ -2737,6 +2737,15 @@ public sealed class BotDriveBridge
             Logger.Warn(ex, "deactivate failed for '{Bot}'", botName);
             return Err($"deactivate: exact owner for '{botName}' did not leave successfully");
         }
+        finally
+        {
+            // A prepare-end hold outlives its observation only until the leave.
+            // Retirement already released it on success; on a failed leave this
+            // lets the bot step again, which is harmless because the run has
+            // already faulted.
+            (SingletonContainer.ServiceProvider?.GetService<Core.Managers.Bots.IPlayerBotScheduler>()
+                as Core.Managers.Bots.PlayerBotScheduler)?.ReleaseEndCaptureHold(session.Character.Id);
+        }
         return Ok(new { removed = true, id = session.Character.Id, saved = savedThisCall });
     }
 
@@ -4709,8 +4718,10 @@ public sealed class BotDriveBridge
         if (manager == null || scheduler == null || executor == null)
             return Err("quest: bot scheduler/registry unavailable in DI");
 
-        // Final observation preparation only. StopAsync shuts down the whole
-        // scheduler; never expose this as a per-bot pause or ordinary admin action.
+        // Final observation preparation only: the end-capture hold freezes this
+        // one bot while the host keeps running, so the ordinary leave that
+        // follows can still retire it (a stopped host refuses retirement).
+        // Never expose this as an ordinary per-bot pause or admin action.
         if (string.Equals(sub, "prepare-end", StringComparison.OrdinalIgnoreCase))
         {
             if (!string.Equals(Environment.GetEnvironmentVariable("E2E_QUEST_END_BOT"), character!.Name,
@@ -4726,20 +4737,25 @@ public sealed class BotDriveBridge
                 !ReferenceEquals(ownedActor.Character, character))
                 return Err("NOT_PROVED prepare-end: explicitly opted-in sole persistent enrollment required");
 
-            using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            scheduler.StopAsync(deadline.Token).GetAwaiter().GetResult();
-            // Shutdown is not a game-thread barrier. The caller MUST next enqueue
-            // ordinary Stop and await its exact terminal before copying END.
-            if (scheduler.IsRunning || manager.Count != 1 ||
-                !manager.TryGet(character.Id, out var afterStop) || !ReferenceEquals(afterStop, owned) ||
-                afterStop.Generation != generation || afterStop.State != PlayerBotState.Active ||
+            if (scheduler is not Core.Managers.Bots.PlayerBotScheduler host
+                || !host.TryHoldForEndCapture(character.Id, TimeSpan.FromSeconds(5)))
+                return Err("NOT_PROVED prepare-end: end-capture hold unavailable");
+            // The hold is not a game-thread barrier for the actor. The caller MUST
+            // next enqueue ordinary Stop and await its exact terminal before copying END.
+            if (!host.IsRunning || manager.Count != 1 ||
+                !manager.TryGet(character.Id, out var afterHold) || !ReferenceEquals(afterHold, owned) ||
+                afterHold.Generation != generation || afterHold.State != PlayerBotState.Active ||
                 !ReferenceEquals(executor.GetBotState(character.Id), ownedState) ||
                 !ReferenceEquals(ownedState.Actor, ownedActor))
-                return Err("NOT_PROVED prepare-end: enrollment changed during scheduler shutdown");
+            {
+                host.ReleaseEndCaptureHold(character.Id);
+                return Err("NOT_PROVED prepare-end: enrollment changed while taking the end-capture hold");
+            }
             return Ok(new
             {
                 id = character.Id, actorObjId = ownedActor.ActorId,
-                enrollmentGeneration = generation, schedulerRunning = scheduler.IsRunning,
+                enrollmentGeneration = generation, schedulerRunning = host.IsRunning,
+                endCaptureHeld = host.IsEndCaptureHeld(character.Id),
                 privateEndPreparation = true,
             });
         }
