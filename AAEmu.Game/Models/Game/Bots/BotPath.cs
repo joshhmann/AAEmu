@@ -136,6 +136,18 @@ public class BotPath
         return next;
     }
 
+    /// <summary>
+    /// Advances past the current waypoint WITHOUT requiring the walker to stand
+    /// inside <see cref="ArrivalRadius"/>. This is the escape hatch for a
+    /// waypoint the bot cannot reach (code review 2026-10-16, F1): the route's
+    /// own leg exhausted its walk budget short of the waypoint, and leaving the
+    /// cursor there would make every later wake re-issue the same unreachable
+    /// target. Bookkeeping is exactly <see cref="Arrive"/>'s (mode wrap, and a
+    /// finished Once route ends), so a skipped waypoint behaves like a reached
+    /// one for every later step; the caller drives movement itself.
+    /// </summary>
+    public void SkipCurrentWaypoint() => Arrive();
+
     private Vector3 Arrive()
     {
         switch (Mode)
@@ -244,10 +256,15 @@ public class BotPath
         float maxStepPerTick = 5f, float arrivalRadius = ArrivalRadiusDefault)
     {
         var total = MathUtil.CalculateDistance(from, target, true);
-        // A zero-length or sub-arrival destination has nothing to walk, and a
-        // non-positive envelope cannot bound a leg: both are the single-leg
-        // route, which lands inside one ArrivalRadius on the first Move.
-        if (!(envelopeMeters > 0f) || !(chunkMeters > 0f) || total < arrivalRadius)
+        // A zero-length or sub-arrival destination has nothing to walk, a
+        // non-positive envelope cannot bound a leg, and an envelope SHORTER than
+        // the arrival radius has no legal chunk at all (clamping there would make
+        // the lower bound exceed the upper one and throw): all three are the
+        // single-leg route, which lands inside one ArrivalRadius on the first
+        // Move. The third case is a real caller shape — the chunk derives from
+        // RoamSpeed x RoamLegTimeout, so any budget under ~1 s lands here.
+        if (!(envelopeMeters > 0f) || !(chunkMeters > 0f) || total < arrivalRadius
+            || envelopeMeters < arrivalRadius)
             return PathTo(target, maxStepPerTick, arrivalRadius);
 
         var chunk = Math.Clamp(chunkMeters, arrivalRadius, envelopeMeters);

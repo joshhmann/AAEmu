@@ -20,6 +20,14 @@ public sealed record QuestBootstrapModuleOptions
     /// <summary>Copper below which a quest-less bot still seeks work (the copper bootstrap).</summary>
     public long GoldTarget { get; init; } = 1000;
 
+    /// <summary>
+    /// Consecutive legs of the same retained quest failing the same way before
+    /// the module abandons that quest (the T4 return path). One failure is
+    /// tolerated: a rejected move or a single leg that ran out of its walk budget
+    /// is a fact about one wake, not proof of a dead end.
+    /// </summary>
+    public int LegFailureGiveUpThreshold { get; init; } = 3;
+
     /// <summary>Reads the deployment gate from the environment (default OFF).</summary>
     public static QuestBootstrapModuleOptions FromEnvironment()
     {
@@ -49,6 +57,9 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
     public string Name => "QuestBootstrap";
 
     public int Priority { get; } = 58;
+
+    /// <inheritdoc />
+    public IReadOnlyList<string> DeclaredActivities => [ActivityName, DiscoveryActivityName];
 
     /// <summary>Stable activity name (the arbiter's unit of change).</summary>
     public const string ActivityName = "quest.progress";
@@ -95,6 +106,29 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, QuestDeferrals> _deferrals = new();
 
+    // T4 return path (plan §7 T4, audit L3-b): this module's OWN legs, as the
+    // executor reported them (the arbiter hands each fact to the module that
+    // owned the leg, once). Identity is (quest, action, detail): the same leg
+    // failing the same way is a dead end, a different failure is a fresh fact.
+    // Dropped by Forget, by a leg that did not fail, by the give-up itself and
+    // by a lifecycle generation change.
+    private sealed record LegFailures(ulong Generation, uint QuestId, ActorActionType Action, string Detail, int Count);
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, LegFailures> _legFailures = new();
+
+    // A quest abandoned after repeated leg failures that has no Quest record to
+    // defer (an offer the bot never accepted): remembered for this generation so
+    // a fresh listing cannot re-pick the same dead end. An abandoned ACCEPTED
+    // quest is deferred instead — the deferral's own fact-change rule is the
+    // release rule, so this set must not hold a second copy of it.
+    private sealed class AbandonedQuests(ulong generation)
+    {
+        public ulong Generation { get; } = generation;
+        public System.Collections.Generic.HashSet<uint> Quests { get; } = [];
+    }
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, AbandonedQuests> _legAbandoned = new();
+
     // Admission memory, not spawner knowledge: a busy actor can only retain
     // discovery already elected for this activation. Unknown offers never
     // create a new discovery disposition.
@@ -111,6 +145,8 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         _completedQuests.TryRemove(characterId, out _);
         _discoveryGeneration.TryRemove(characterId, out _);
         _deferrals.TryRemove(characterId, out _);
+        _legFailures.TryRemove(characterId, out _);
+        _legAbandoned.TryRemove(characterId, out _);
     }
 
     /// <summary>
@@ -174,6 +210,93 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         deferred.LastListing = listing;
     }
 
+    /// <summary>
+    /// The module's own terminal leg, as reported through the T4 return path.
+    /// Returns the give-up reason when the SAME refused leg has now repeated
+    /// <see cref="QuestBootstrapModuleOptions.LegFailureGiveUpThreshold"/> times
+    /// for the retained quest, and null otherwise — no fact, a leg that was not
+    /// refused (a completed leg clears the memory; an interrupted or expired one
+    /// leaves the streak as it was), or a refusal that has not earned the bound
+    /// yet (the quest is still tried). Only a refusal counts: a timed-out leg may
+    /// still be recovered by the executor's unstick nudge or the quest runtime's
+    /// own wake budget, both of which already own that class. Abandoning means:
+    /// the purpose is released,
+    /// the quest is deferred through the SAME owner the quest runtime's give-up
+    /// verdicts use (so its facts decide when it may be tried again), and a quest
+    /// with no <see cref="Quest"/> record to defer is remembered for this
+    /// generation instead so the next listing cannot re-pick it.
+    /// </summary>
+    private string? OwnLegFailure(BotActivityContext context, uint characterId, QuestDeferrals deferred)
+    {
+        if (context.LastLegOutcome is not { } leg)
+            return null;
+
+        if (leg.State != ActorLifecycleState.Rejected)
+        {
+            // Only a hard refusal counts as a dead end: the world said no. A
+            // timed-out leg may still be recovered (the executor's unstick nudge
+            // and the quest runtime's own wake budget both own that class). A
+            // completed leg is progress and clears the memory; an interrupted or
+            // expired one leaves the streak as it was.
+            if (leg.State == ActorLifecycleState.Completed)
+                _legFailures.TryRemove(characterId, out _);
+            return null;
+        }
+
+        // Attribution: the fact belongs to the activity the leg was issued for.
+        // A stale fact for a quest the runtime already released (its own give-up
+        // verdict) must not be charged to quest discovery.
+        var discovery = string.Equals(leg.ActivityName, DiscoveryActivityName, StringComparison.Ordinal);
+        var questId = discovery ? 0u : GetChosenQuest(characterId);
+        if (!discovery && questId == 0)
+        {
+            _legFailures.TryRemove(characterId, out _);
+            return null;
+        }
+
+        var detail = string.IsNullOrWhiteSpace(leg.Detail) ? leg.Action.ToString() : leg.Detail;
+        var same = _legFailures.TryGetValue(characterId, out var saved)
+            && saved.Generation == context.Bot.Generation
+            && saved.QuestId == questId
+            && saved.Action == leg.Action
+            && string.Equals(saved.Detail, detail, StringComparison.Ordinal);
+        var count = same ? saved!.Count + 1 : 1;
+        if (count < _options.LegFailureGiveUpThreshold)
+        {
+            _legFailures[characterId] = new LegFailures(context.Bot.Generation, questId, leg.Action, detail, count);
+            Logger.Debug("Quest leg failed bot {CharacterId}: quest {QuestId} {Action} ({Detail}) {Count}/{Threshold} — still trying",
+                characterId, questId, leg.Action, detail, count, _options.LegFailureGiveUpThreshold);
+            return null;
+        }
+
+        _legFailures.TryRemove(characterId, out _);
+        var target = questId == 0 ? "quest discovery" : $"quest {questId}";
+        var reason = $"gave up on {target} after {count} failed legs ({detail})";
+        Logger.Warn("Quest give-up bot {CharacterId}: {Reason}", characterId, reason);
+        if (questId == 0)
+            return reason;
+
+        // The deferral owner reads the retained purpose, so it must be asked
+        // BEFORE the purpose is released here; the removal after it keeps the
+        // purpose released on the paths where the owner declines for its own
+        // reasons (a quest the runtime already replaced, a missing record).
+        NotifyQuestGiveUp(characterId, new QuestGiveUp(questId, $"GIVE-UP/LEG-FAILED: {detail}", count,
+            _options.LegFailureGiveUpThreshold));
+        _chosenQuest.TryRemove(characterId, out _);
+        if (!deferred.Quests.ContainsKey(questId))
+            AbandonedFor(characterId, context.Bot.Generation).Quests.Add(questId);
+        return reason;
+    }
+
+    /// <summary>
+    /// The quest ids this bot gave up on with no quest record to defer, for the
+    /// current lifecycle generation (a fresh generation starts with no memory).
+    /// </summary>
+    private AbandonedQuests AbandonedFor(uint characterId, ulong generation)
+        => _legAbandoned.AddOrUpdate(characterId,
+            _ => new AbandonedQuests(generation),
+            (_, prior) => prior.Generation == generation ? prior : new AbandonedQuests(generation));
+
     /// <inheritdoc />
     public BotActivityDecision CanActivate(BotActivityContext context)
     {
@@ -226,6 +349,14 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
             _ => new QuestDeferrals(bot.Generation),
             (_, prior) => prior.Generation == bot.Generation ? prior : new QuestDeferrals(bot.Generation));
         RefreshDeferrals(character, deferred, listing);
+        // T4 return path (plan §7 T4, audit L3-b): the leg this module's own
+        // activity issued came back terminal. A repeated identical failure is a
+        // dead end, so the quest is abandoned — through the same deferral owner
+        // the quest runtime's own give-up verdict uses — and this wake denies
+        // with the reason, so the lower band takes over instead of the same wake
+        // repeating.
+        if (OwnLegFailure(context, characterId, deferred) is { } giveUpReason)
+            return BotActivityDecision.Deny(giveUpReason);
         if (_discoveryGeneration.TryGetValue(characterId, out var discoveryGeneration)
             && discoveryGeneration != bot.Generation)
             _discoveryGeneration.TryRemove(characterId, out _);
@@ -253,7 +384,7 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         if (kept != 0
             && !IsCompleted(characterId, kept)
             && (keptWork != null || keptOffered || keptHunted)
-            && (keptWork == null || keptWork.Leg != "hunt" || keptHunted))
+            && (keptWork == null || keptWork.Leg != "hunt" || keptHunted || IsKnownHuntSearch(keptWork)))
         {
             _discoveryGeneration.TryRemove(characterId, out _);
             return BotActivityDecision.Allow(ActivityName);
@@ -280,13 +411,28 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         var pick = PickQuest(characterId, listing, deferred);
         if (pick == 0)
         {
+            // Unknown offers are exactly what the discovery leg exists for, so
+            // this is the one place the flag is answered with a walk instead of
+            // a hold. Holding for an authoritative scan starves a quest-less
+            // bot on any deployment whose presence patrol keeps a live Move
+            // across the wake boundary: the arbitration runs before the step,
+            // so it sees that patrol leg every wake, and the scan it is waiting
+            // for never arrives. The discovery leg walks to an in-band offerer,
+            // where the free actor finally scans; its own travel outranks the
+            // patrol (ArmQuestTravel exempts the ROAM owner). The kept-purpose
+            // hold above answers the same flag the same way for a bot that
+            // already has a quest.
             if (listing.QuestOffersUnknown)
-                return context.ActiveActivity == DiscoveryActivityName
-                    && _discoveryGeneration.TryGetValue(characterId, out discoveryGeneration)
-                    && discoveryGeneration == bot.Generation
-                    ? BotActivityDecision.Allow(DiscoveryActivityName)
-                    : BotActivityDecision.Deny("quest offers unknown (actor busy) — holding for an authoritative scan");
-            if (listing.ActiveWork.Count != 0 || listing.BlockedWork.Count != 0)
+            {
+                _chosenQuest.TryRemove(characterId, out _);
+                _discoveryGeneration[characterId] = bot.Generation;
+                return BotActivityDecision.Allow(DiscoveryActivityName);
+            }
+            // A deferred quest remains accepted on the Character, but is not
+            // usable work for this owner until its source/progress changes.
+            // It must not prevent the existing search for another quest.
+            if (listing.ActiveWork.Any(work => !deferred.Quests.ContainsKey(work.QuestId))
+                || listing.BlockedWork.Count != 0)
                 return BotActivityDecision.Deny("opportunity listing names no actionable quest work");
 
             _chosenQuest.TryRemove(characterId, out _);
@@ -315,6 +461,12 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
     {
         var blocked = new HashSet<uint>(listing.BlockedWork.Select(b => b.QuestId));
         blocked.UnionWith(deferred.Quests.Keys);
+        // A quest abandoned after repeated leg failures is not re-picked while
+        // this generation lasts: the deferral above carries the release rule for
+        // accepted quests, this covers an offer that has no quest record to defer.
+        if (_legAbandoned.TryGetValue(characterId, out var abandoned)
+            && abandoned.Generation == deferred.Generation)
+            blocked.UnionWith(abandoned.Quests);
         var hunted = new HashSet<uint>(listing.ViableHunts.Select(h => h.QuestId));
         var hunt = listing.ViableHunts
             .Where(h => !IsCompleted(characterId, h.QuestId) && h.HaveCount < h.NeedCount && !blocked.Contains(h.QuestId))
@@ -329,7 +481,7 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         }
         var workCandidates = listing.ActiveWork
             .Where(q => !IsCompleted(characterId, q.QuestId) && !blocked.Contains(q.QuestId))
-            .Where(q => q.Leg != "hunt" || hunted.Contains(q.QuestId))
+            .Where(q => q.Leg != "hunt" || hunted.Contains(q.QuestId) || IsKnownHuntSearch(q))
             .OrderByDescending(WorkUsefulness)
             .ThenBy(q => q.QuestId)
             .ToArray();
@@ -357,6 +509,9 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
     // Only already-observed facts: Ready/credited is progress, not completion;
     // source perception is availability, not reachability or a safe-fight estimate.
     // Retention above this policy always wins over a newly better candidate.
+    private static bool IsKnownHuntSearch(BotOpportunityListing.ActiveQuestWork work)
+        => work.Leg == "hunt" && work.Reason.EndsWith("-search-location-known", StringComparison.Ordinal);
+
     private static int WorkUsefulness(BotOpportunityListing.ActiveQuestWork work)
         => work.Leg is "advance" or "return" or "turn-in" ? 3
             : work.Reason.EndsWith("-source-perceived", StringComparison.Ordinal)

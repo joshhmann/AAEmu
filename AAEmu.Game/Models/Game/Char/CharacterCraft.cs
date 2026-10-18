@@ -1,5 +1,7 @@
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.World;
+using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Crafts;
 using AAEmu.Game.Models.Game.DoodadObj;
@@ -9,6 +11,7 @@ using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Tasks.Skills;
 using NLog;
 
@@ -27,6 +30,7 @@ public class CharacterCraft(Character owner)
     private int ConsumeLaborPower { get; set; }
     private Character Owner => owner;
     public bool IsCrafting { get; set; }
+    private Skill _currentSkill;
 
     /// <summary>
     /// True while a craft queue is active — either a step is currently casting (IsCrafting)
@@ -41,8 +45,12 @@ public class CharacterCraft(Character owner)
     /// </summary>
     private const float DefaultCraftRange = 5f;
 
-    public void Craft(Craft craft, int count, uint doodadId)
+    public void Craft(Craft craft, int count, uint doodadId, Skill skill = null)
     {
+        var previousSkill = _currentSkill;
+        if (previousSkill?.ExecutionLock != null)
+            CancelCraft(previousSkill, previousSkill.InitialTarget as Doodad);
+
         CurrentCraft = craft;
         Count = count;
         DoodadId = doodadId;
@@ -182,7 +190,7 @@ public class CharacterCraft(Character owner)
         var target = SkillCastTarget.GetByType(SkillCastTargetType.Doodad);
         target.ObjId = doodadId;
 
-        var skill = new Skill(skillTemplate);
+        skill ??= new Skill(skillTemplate);
         ConsumeLaborPower = skill.GetLaborCost(Owner);
         var speedMultiplier = 1f;
         if (skill.Template.ActabilityGroupId > 0)
@@ -225,7 +233,32 @@ public class CharacterCraft(Character owner)
         }
         */
         skill.CastTimeMultiplier = speedMultiplier;
-        skill.Use(Owner, caster, target, null, false, out _);
+        _currentSkill = skill;
+        var result = skill.Use(Owner, caster, target, null, false, out var resultUInt);
+        if (result != SkillResult.Success)
+        {
+            if (skill.ExecutionLock != null)
+                CancelCraft(skill, skill.InitialTarget as Doodad);
+            else
+            {
+                // A refused ordinary skill has no scheduled cast task. Retire
+                // only its own plot/timeline; never interrupt a foreign skill.
+                skill.Cancelled = true;
+                skill.ActivePlotState?.RequestCancellation();
+                SkillTlIdManager.ReleaseId(skill.TlId);
+                skill.TlId = 0;
+                if (ReferenceEquals(_currentSkill, skill))
+                    ClearCraftQueue();
+            }
+            var failure = new SCSkillStartedPacket(skill.Id, 0, caster, target, skill, null)
+            {
+                RealCastTimeDiv10 = 0,
+                BaseCastTimeDiv10 = 0
+            };
+            failure.SetSkillResult(result);
+            failure.SetResultUInt(resultUInt);
+            Owner.SendPacket(failure);
+        }
     }
 
     /// <summary>
@@ -488,7 +521,10 @@ public class CharacterCraft(Character owner)
         }
         else
         {
-            CancelCraft();
+            if (_currentSkill?.ExecutionLock != null)
+                ClearCraftQueue();
+            else
+                CancelCraft();
         }
 
         return true;
@@ -556,15 +592,39 @@ public class CharacterCraft(Character owner)
         TaskManager.Instance.Schedule(newCraft, nextCraftDelay);
     }
 
-    /// <summary>
-    /// Stops the current craft queue and interrupts the related skill.
-    /// </summary>
-    public void CancelCraft()
+    internal bool OwnsCraft(Skill skill) => ReferenceEquals(_currentSkill, skill) && IsCraftQueueActive;
+
+    internal void CancelCraft(Skill expectedSkill, Doodad doodad)
+    {
+        lock (expectedSkill.ExecutionLock)
+        {
+            expectedSkill.Stop(Owner, doodad);
+            if (ReferenceEquals(_currentSkill, expectedSkill))
+                ClearCraftQueue();
+        }
+    }
+
+    private void ClearCraftQueue()
     {
         IsCrafting = false;
         CurrentCraft = null;
         Count = 0;
         DoodadId = 0;
+        _currentSkill = null;
+    }
+
+    /// <summary>
+    /// Stops the current craft queue and interrupts the related skill.
+    /// </summary>
+    public void CancelCraft()
+    {
+        var currentSkill = _currentSkill;
+        if (currentSkill?.ExecutionLock != null)
+        {
+            CancelCraft(currentSkill, currentSkill.InitialTarget as Doodad);
+            return;
+        }
+        ClearCraftQueue();
 
         // Also cancel the related skill ? I don't think this really does anything for crafts, but can't hurt I guess
         if (Owner != null)

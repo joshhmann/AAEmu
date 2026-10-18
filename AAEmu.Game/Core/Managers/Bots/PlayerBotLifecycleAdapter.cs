@@ -34,10 +34,12 @@ public sealed class PlayerBotLifecycleAdapter : IPlayerBotLifecycleService
     private static Logger Logger { get; } = LogManager.GetCurrentClassLogger();
 
     private readonly ICharacterLifecycleService _lifecycle;
+    private readonly Lazy<PlayerBotScheduler> _scheduler;
 
-    public PlayerBotLifecycleAdapter(ICharacterLifecycleService lifecycle)
+    public PlayerBotLifecycleAdapter(ICharacterLifecycleService lifecycle, Lazy<PlayerBotScheduler> scheduler)
     {
         _lifecycle = lifecycle ?? throw new ArgumentNullException(nameof(lifecycle));
+        _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
     }
 
     /// <inheritdoc />
@@ -67,6 +69,10 @@ public sealed class PlayerBotLifecycleAdapter : IPlayerBotLifecycleService
             return false;
         }
     }
+
+    /// <inheritdoc />
+    public bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason)
+        => _scheduler.Value.TryRetireNativeWork(expectedOwner, expectedGeneration, reason);
 
     /// <inheritdoc />
     public bool Deactivate(Character character, string reason)

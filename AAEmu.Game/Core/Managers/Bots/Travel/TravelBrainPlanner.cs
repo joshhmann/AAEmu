@@ -89,7 +89,14 @@ public static class TravelBrainPlanner
         Vector3 LegDestination,
         bool RetreatRequested,
         uint ThreatObjId,
-        Vector3 ThreatPosition);
+        Vector3 ThreatPosition)
+    {
+        /// <summary>
+        /// A combat approach must reach the unit using the same distance as
+        /// Skill.Use. Other journeys retain their existing map arrival rule.
+        /// </summary>
+        public bool UseUnitInteractionDistance { get; init; }
+    }
 
     /// <summary>
     /// Arms (or refreshes) an actor's travel intent — the caller's own act, and the
@@ -132,6 +139,7 @@ public static class TravelBrainPlanner
         // ------------------------------------------------------ destination + probe
         var destination = request.Destination;
         var targetResolved = true;
+        float? interactionDistance = null;
 
         // The world-key pre-flight reads the CALLER's reading of the destination's
         // world — it applies to a POSITION destination, which can name a point in
@@ -153,12 +161,14 @@ public static class TravelBrainPlanner
             else
             {
                 destination = unit.Transform.World.Position;
+                if (request.UseUnitInteractionDistance && character != null)
+                    interactionDistance = character.GetDistanceTo(unit, true);
             }
         }
 
         var distance = character == null
             ? float.NaN
-            : MathUtil.CalculateDistance(selfPosition, destination, false);
+            : interactionDistance ?? MathUtil.CalculateDistance(selfPosition, destination, false);
 
         // Road artwork and candidate atlas links are observations, not executable paths.
         // Only a query bound to this actor's world instance may supply evidenced road geometry.
@@ -294,7 +304,8 @@ public static class TravelBrainPlanner
     {
         if (prepared.Decision.IsTerminal)
         {
-            TravelIntentStore.BankTerminal(actorObjId, prepared.Decision.Terminal, prepared.Decision.Reason, legOwner);
+            TravelIntentStore.BankTerminal(actorObjId, prepared.Decision.Terminal, prepared.Decision.Reason, legOwner,
+                prepared.Inputs.SelfPosition, prepared.Inputs.Destination);
             return;
         }
 

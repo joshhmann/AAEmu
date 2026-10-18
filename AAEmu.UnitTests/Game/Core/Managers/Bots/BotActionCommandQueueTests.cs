@@ -2,6 +2,9 @@ using System.Numerics;
 using System.Text.Json;
 
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Models;
+using AAEmu.Game.Models.Game;
+using AAEmu.UnitTests.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 
@@ -53,6 +56,8 @@ public class BotActionCommandQueueTests
 
         public bool Spawn(Character character, string owner) => throw new NotSupportedException("not used by this rig");
         public bool Activate(uint characterId, object? botContext, string owner) => throw new NotSupportedException("not used by this rig");
+        public bool LeaveHeadlessCharacter(Character expected, AAEmu.Game.Core.Managers.CharacterLifecycleReason reason,
+            out bool savedThisCall, Func<bool>? releaseCachedSession = null) => throw new NotSupportedException("not used by this rig");
         public bool Deactivate(uint characterId, string reason) => throw new NotSupportedException("not used by this rig");
         public bool Remove(uint characterId) => throw new NotSupportedException("not used by this rig");
         public IReadOnlyList<PlayerBotRuntime> GetActive() => _registry.Values.Where(r => r.State == PlayerBotState.Active).ToList();
@@ -66,8 +71,16 @@ public class BotActionCommandQueueTests
         public List<uint> Wakes { get; } = [];
 
         public bool Wake(uint characterId) { Wakes.Add(characterId); return true; }
-        public void Start() { }
+
+        // T2: the one arming owner. This rig never enrols a bot, so the arming
+        // itself is inert; ArmedBy reports the reason the production callers
+        // pass.
+        public string? ArmedBy { get; private set; }
+        public bool Arm(string reason) { ArmedBy ??= reason; return true; }
         public Task StopAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        // A1 stop owner: this rig never enrols a bot, so a disarm is inert.
+        public BotHostTeardownReport Disarm(string reason) => new(reason, false, 0, 0, 0, []);
         public bool WakeAt(uint characterId, DateTime utcDue) => true;
         public bool WakeAfter(uint characterId, TimeSpan delay) => true;
         public bool IsLeased(uint characterId) => false;
@@ -89,9 +102,11 @@ public class BotActionCommandQueueTests
         public required FakeTimeProvider Clock { get; init; }
     }
 
-    private static Rig CreateRig(string name = "api-bot", PlayerBotState state = PlayerBotState.Active)
+    private static Rig CreateRig(string name = "api-bot", PlayerBotState state = PlayerBotState.Active, bool cropWorld = false)
     {
-        var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        var (actor, session) = cropWorld
+            ? GameplayActorHarvestTests.CreateActorOnUniqueWorld(name)
+            : GameplayActorTestRig.CreateActor(name);
         GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
 
         var manager = new FakeManager();
@@ -318,6 +333,13 @@ public class BotActionCommandQueueTests
     public async Task Move_NoTicks_BackstopExpiresCleanly()
     {
         var rig = CreateRig();
+
+        // Adversarial setup: the bot's own last decision is still staged on the
+        // actor when an operator command arrives. The injected request and its
+        // audit row must NOT inherit it — an operator's action is not the bot's
+        // decision, and the row must say so (command_origin). The staged seed
+        // deliberately repeats the operator's own cycle-id literal below, so the
+        // two provenances cannot be told apart by their text alone.
         rig.Actor.SetPendingDecision("quest.progress", "quest-v1", 2, 1, "opaque-source", 251);
 
         // The scheduler never steps this bot (stopped/not started) — the
@@ -330,7 +352,14 @@ public class BotActionCommandQueueTests
         rig.Queue.DrainCommands();
         var request = rig.Actor.ActiveRequest!;
         await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
-        await Assert.That(request.DecisionQuestId).IsEqualTo((uint?)251);
+        await Assert.That(request.DecisionQuestId).IsNull();
+        await Assert.That(request.DecisionGoal).IsNull();
+        await Assert.That(request.CommandOrigin).IsEqualTo("control-api");
+        // The caller's own join keys are the OPERATOR's provenance, not the
+        // bot's decision: the API passes them to correlate its trace, so they
+        // round-trip onto the request (unlike the staged decision above).
+        await Assert.That(request.DecisionCycleId).IsEqualTo("opaque-source");
+        await Assert.That(request.WakeSequence).IsEqualTo(17L);
         await Assert.That(result.TraceId).IsNotEqualTo(request.TraceId);
 
         rig.Clock.Advance(TimeSpan.FromSeconds(5));
@@ -343,13 +372,18 @@ public class BotActionCommandQueueTests
         using var audit = JsonDocument.Parse(snap.AuditJson!);
         var row = audit.RootElement;
         await Assert.That(row.GetProperty("trace_id").GetGuid()).IsEqualTo(request.TraceId);
-        await Assert.That(row.GetProperty("decision_quest_id").GetUInt32()).IsEqualTo(251u);
-        await Assert.That(row.GetProperty("decision_goal").GetString()).IsEqualTo(request.DecisionGoal);
-        await Assert.That(row.GetProperty("decision_policy").GetString()).IsEqualTo(request.DecisionPolicy);
-        await Assert.That(row.GetProperty("decision_cycle_id").GetString()).IsEqualTo(request.DecisionCycleId);
-        await Assert.That(row.GetProperty("decision_seed").GetString()).IsEqualTo(request.DecisionSeed);
-        await Assert.That(row.GetProperty("decision_candidates").GetInt32()).IsEqualTo(request.DecisionCandidates);
-        await Assert.That(row.GetProperty("decision_rejections").GetInt32()).IsEqualTo(request.DecisionRejections);
+        await Assert.That(row.GetProperty("command_origin").GetString()).IsEqualTo("control-api");
+        await Assert.That(row.GetProperty("decision_quest_id").ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(row.GetProperty("decision_goal").ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(row.GetProperty("decision_policy").ValueKind).IsEqualTo(JsonValueKind.Null);
+        // The bot's staged decision vocabulary is gone, but the caller-supplied
+        // join keys stay: they are the operator's provenance, and dropping them
+        // would break the control plane's trace correlation.
+        await Assert.That(row.GetProperty("decision_cycle_id").GetString()).IsEqualTo("opaque-source");
+        await Assert.That(row.GetProperty("wake_sequence").GetInt64()).IsEqualTo(17L);
+        await Assert.That(row.GetProperty("decision_seed").ValueKind).IsEqualTo(JsonValueKind.Null);
+        await Assert.That(row.GetProperty("decision_candidates").GetInt32()).IsEqualTo(0);
+        await Assert.That(row.GetProperty("decision_rejections").GetInt32()).IsEqualTo(0);
         await Assert.That(row.GetProperty("requested_at").GetDateTime()).IsEqualTo(request.RequestedAtUtc);
 
         // The actor is usable again afterwards (no wedge).
@@ -392,6 +426,145 @@ public class BotActionCommandQueueTests
         await Assert.That(s.State).IsEqualTo(nameof(ActorLifecycleState.Rejected));
         await Assert.That(s.Detail).Contains("duplicate idempotency key");
         await Assert.That(s.Detail).Contains("k-ledger");
+    }
+
+    [Test]
+    public async Task UseItem_NativeCompletionWithoutActorTicks_BackstopReportsSuccess()
+    {
+        var rig = CreateRig("queue-native-item-complete");
+        var item = OrdinaryRecoveryTestRig.StockHeal(rig.Actor, 98561, 40, 150);
+        rig.Actor.Character.Hp = 35;
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var submitted = rig.Queue.Enqueue(rig.Actor.Character.Name,
+            new BotActionSpec(BotActionKind.UseItem, TargetId: item.TemplateId, IdempotencyKey: "native-item-complete"));
+        rig.Queue.DrainCommands();
+        var request = rig.Actor.ActiveRequest!;
+        await scheduler.PumpFor(null, TimeSpan.FromMilliseconds(350));
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        rig.Clock.Advance(GameplayActor.DefaultItemUseTimeout + TimeSpan.FromSeconds(1));
+        ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+        rig.Queue.DrainCommands();
+
+        await Assert.That(rig.Queue.TryGetSnapshot(submitted.TraceId, out var snapshot)).IsTrue();
+        await Assert.That(snapshot.State).IsEqualTo(nameof(ActorLifecycleState.Completed));
+        await Assert.That(item.Count).IsEqualTo(1);
+        await Assert.That(rig.Actor.Character.Hp).IsGreaterThan(35);
+    }
+
+    [Test]
+    public async Task UseItem_PendingBackstopExpiry_CancelsNativeWorkAndConservesItem()
+    {
+        var rig = CreateRig("queue-native-item-timeout");
+        var item = OrdinaryRecoveryTestRig.StockHeal(rig.Actor, 98562, 40, 300);
+        rig.Actor.Character.Hp = 35;
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var submitted = rig.Queue.Enqueue(rig.Actor.Character.Name,
+            new BotActionSpec(BotActionKind.UseItem, TargetId: item.TemplateId, IdempotencyKey: "native-item-timeout"));
+        rig.Queue.DrainCommands();
+        rig.Clock.Advance(GameplayActor.DefaultItemUseTimeout + TimeSpan.FromSeconds(1));
+        rig.Queue.DrainCommands();
+        await scheduler.PumpFor(rig.Actor, TimeSpan.FromMilliseconds(500));
+
+        await Assert.That(rig.Queue.TryGetSnapshot(submitted.TraceId, out var snapshot)).IsTrue();
+        await Assert.That(snapshot.State).IsEqualTo(nameof(ActorLifecycleState.TimedOut));
+        await Assert.That(rig.Actor.ActiveRequest).IsNull();
+        await Assert.That(item.Count).IsEqualTo(2);
+        await Assert.That(rig.Actor.Character.Hp).IsEqualTo(35);
+        await Assert.That(rig.Actor.UseItem(item.TemplateId, idempotencyKey: "native-item-timeout").State)
+            .IsEqualTo(ActorLifecycleState.Rejected);
+    }
+
+    [Test]
+    public async Task Craft_PendingNativeBackstop_CancelsExactWorkAndReleasesQueue()
+    {
+        var rig = CreateRig("queue-native-craft-timeout");
+        GameplayActorTestRig.SeedCraftSurface();
+        var bench = GameplayActorTestRig.SpawnCraftBench(rig.Session, rig.Actor);
+        rig.Actor.Character.LaborPower = 100;
+        GameplayActorTestRig.GrantItem(rig.Actor, GameplayActorTestRig.CraftMaterialTemplateId, 2);
+        using var fixture = new GameplayActorCraftTests.NativeCraftSkill();
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var submitted = rig.Queue.Enqueue(rig.Actor.Character.Name,
+            new BotActionSpec(BotActionKind.Craft, TargetId: GameplayActorTestRig.CraftTestCraftId,
+                Payload: new CraftActionParams(bench), IdempotencyKey: "native-craft-backstop"));
+        rig.Queue.DrainCommands();
+        rig.Clock.Advance(GameplayActor.DefaultCraftTimeout + TimeSpan.FromSeconds(1));
+        rig.Queue.DrainCommands();
+        await scheduler.PumpFor(rig.Actor, TimeSpan.FromMilliseconds(350));
+        await Assert.That(rig.Queue.TryGetSnapshot(submitted.TraceId, out var snapshot)).IsTrue();
+        await Assert.That(snapshot.State).IsEqualTo(nameof(ActorLifecycleState.TimedOut));
+        await Assert.That(GameplayActorTestRig.BagCount(rig.Actor, GameplayActorTestRig.CraftMaterialTemplateId)).IsEqualTo(2);
+        await Assert.That(GameplayActorTestRig.BagCount(rig.Actor, GameplayActorTestRig.CraftProductTemplateId)).IsEqualTo(0);
+        await Assert.That(rig.Actor.Character.LaborPower).IsEqualTo((short)100);
+        await Assert.That(rig.Actor.Character.Craft.IsCraftQueueActive).IsFalse();
+        await Assert.That(rig.Actor.ActiveRequest).IsNull();
+        await Assert.That(rig.Actor.Character.SkillTask).IsNull();
+    }
+
+    [Test]
+    public async Task Craft_NativeCommitWithoutActorTicks_BackstopReportsCompleted()
+    {
+        var rig = CreateRig("queue-native-craft-complete");
+        GameplayActorTestRig.SeedCraftSurface();
+        var bench = GameplayActorTestRig.SpawnCraftBench(rig.Session, rig.Actor);
+        rig.Actor.Character.LaborPower = 100;
+        GameplayActorTestRig.GrantItem(rig.Actor, GameplayActorTestRig.CraftMaterialTemplateId, 2);
+        using var fixture = new GameplayActorCraftTests.NativeCraftSkill();
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var submitted = rig.Queue.Enqueue(rig.Actor.Character.Name,
+            new BotActionSpec(BotActionKind.Craft, TargetId: GameplayActorTestRig.CraftTestCraftId,
+                Payload: new CraftActionParams(bench), IdempotencyKey: "native-craft-committed"));
+        rig.Queue.DrainCommands();
+        await scheduler.PumpFor(null, TimeSpan.FromMilliseconds(350));
+        rig.Clock.Advance(GameplayActor.DefaultCraftTimeout + TimeSpan.FromSeconds(1));
+        ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+        rig.Queue.DrainCommands();
+        await Assert.That(rig.Queue.TryGetSnapshot(submitted.TraceId, out var snapshot)).IsTrue();
+        await Assert.That(snapshot.State).IsEqualTo(nameof(ActorLifecycleState.Completed));
+        await Assert.That(GameplayActorTestRig.BagCount(rig.Actor, GameplayActorTestRig.CraftMaterialTemplateId)).IsEqualTo(0);
+        await Assert.That(GameplayActorTestRig.BagCount(rig.Actor, GameplayActorTestRig.CraftProductTemplateId)).IsEqualTo(1);
+        await Assert.That(rig.Actor.Character.LaborPower).IsEqualTo((short)90);
+        await Assert.That(rig.Actor.ActiveRequest).IsNull();
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task Harvest_NativeQueueBackstop_CancelsPendingOrObservesCommitted(bool committed)
+    {
+        var previousWorld = AppConfiguration.Instance.World;
+        AppConfiguration.Instance.World = new WorldConfig();
+        try
+        {
+            CropHarvestLoopRig.Seed();
+            var rig = CreateRig("queue-native-harvest-" + committed, cropWorld: true);
+            var crop = GameplayActorHarvestTests.PlantMatureCrop(rig.Actor, rig.Session);
+            rig.Actor.Character.LaborPower = 100;
+            using var fixture = new GameplayActorHarvestTests.NativeHarvestSkill(150);
+            using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+            var submitted = rig.Queue.Enqueue(rig.Actor.Character.Name,
+                new BotActionSpec(BotActionKind.Harvest, TargetId: crop.ObjId, IdempotencyKey: "native-harvest-backstop"));
+            rig.Queue.DrainCommands();
+            var request = rig.Actor.ActiveRequest!;
+            await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+            if (committed)
+                await scheduler.PumpFor(null, TimeSpan.FromMilliseconds(350));
+            rig.Clock.Advance(GameplayActor.DefaultHarvestTimeout + TimeSpan.FromSeconds(1));
+            ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+            rig.Queue.DrainCommands();
+            await scheduler.PumpFor(rig.Actor, TimeSpan.FromMilliseconds(350));
+            await Assert.That(rig.Queue.TryGetSnapshot(submitted.TraceId, out var snapshot)).IsTrue();
+            await Assert.That(snapshot.State).IsEqualTo((committed ? ActorLifecycleState.Completed : ActorLifecycleState.TimedOut).ToString());
+            await Assert.That(rig.Actor.Character.LaborPower).IsEqualTo(committed ? (short)99 : (short)100);
+            var yield = GameplayActorTestRig.BagCount(rig.Actor, CropHarvestLoopTests.PotatoItemId);
+            await Assert.That(committed ? yield >= 2 : yield == 0).IsTrue();
+            await Assert.That(rig.Actor.ActiveRequest).IsNull();
+            await Assert.That(rig.Actor.Character.SkillTask).IsNull();
+        }
+        finally
+        {
+            AppConfiguration.Instance.World = previousWorld;
+        }
     }
 
     [Test]

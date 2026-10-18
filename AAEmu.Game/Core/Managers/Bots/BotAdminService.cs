@@ -304,10 +304,10 @@ public sealed class BotAdminService
     }
 
     /// <summary>
-    /// Removes a bot by name or id: clears its patrol route, deactivates via
-    /// the lifecycle (leave-save — <see cref="CharacterLifecycleService.Deactivate"/>
-    /// persists the character), then drops the registry entry. Idempotent:
-    /// an unknown name/id returns a friendly error, never throws.
+    /// Removes a bot by name or id through manager deactivation (closed
+    /// admission, native retirement, then ordinary leave-save), followed by
+    /// registry removal. No off-boundary route preclear is needed. An unknown
+    /// name/id returns a friendly error, never throws.
     /// </summary>
     public BotAdminCommandResult Remove(string nameOrId)
     {
@@ -316,9 +316,6 @@ public sealed class BotAdminService
             return new BotAdminCommandResult(false, $"No bot found matching '{nameOrId}'.");
 
         var name = runtime.Character.Name;
-
-        // Stop the patrol loop first so the executor stops walking the bot.
-        _stepExecutor.SetRoamRoute(runtime.Character, null);
 
         if (runtime.State == PlayerBotState.Active)
         {
@@ -463,7 +460,7 @@ public sealed class BotAdminService
                 var route = BotPath.BuildCircle(targetPos, 10f, 32);
                 _stepExecutor.SetRoamRoute(targetChar, route);
                 _stepExecutor.SetBotCadence(targetChar, hz);
-                _scheduler.Start();
+                _scheduler.Arm("admin-lab");
                 _scheduler.Wake(targetChar.Id);
                 return new BotAdminCommandResult(true,
                     $"Bot '{targetChar.Name}' running CIRCLE test (r=10m, 32 points) at {hz} Hz.");
@@ -477,7 +474,7 @@ public sealed class BotAdminService
                 var route = BotPath.BuildStraightLine(targetPos, clampedEnd);
                 _stepExecutor.SetRoamRoute(targetChar, route);
                 _stepExecutor.SetBotCadence(targetChar, hz);
-                _scheduler.Start();
+                _scheduler.Arm("admin-lab");
                 _scheduler.Wake(targetChar.Id);
                 return new BotAdminCommandResult(true,
                     $"Bot '{targetChar.Name}' running STRAIGHT LINE test (20m ping-pong) at {hz} Hz.");
@@ -490,7 +487,7 @@ public sealed class BotAdminService
                 var route = BotPath.BuildStraightLine(targetPos, clampedRamp);
                 _stepExecutor.SetRoamRoute(targetChar, route);
                 _stepExecutor.SetBotCadence(targetChar, hz);
-                _scheduler.Start();
+                _scheduler.Arm("admin-lab");
                 _scheduler.Wake(targetChar.Id);
                 return new BotAdminCommandResult(true,
                     $"Bot '{targetChar.Name}' running RAMP test (25m ping-pong) at {hz} Hz.");
@@ -689,7 +686,7 @@ public sealed class BotAdminService
         var route = BotPresenceCoordinator.BuildRoamRoute(home, GmRoamRadius, (int)character.Id,
             character.Transform.ZoneId, _groundHeightProvider);
         _stepExecutor.SetRoamRoute(character, route);
-        _scheduler.Start();
+        _scheduler.Arm("admin-roam");
         _scheduler.Wake(character.Id);
     }
 

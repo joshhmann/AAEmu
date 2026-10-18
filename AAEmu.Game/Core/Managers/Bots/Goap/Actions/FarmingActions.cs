@@ -240,8 +240,8 @@ public sealed class PlantWildSaplingAction : GoapActionBase
 }
 
 /// <summary>
-/// Chops or harvests a mature tree doodad in the secret grove.
-/// Consumes labor points.
+/// Mature-tree harvesting has no supported target binding yet. It fails
+/// explicitly rather than dispatching an invalid target or holding a request.
 /// </summary>
 public sealed class ChopMatureTreeAction : GoapActionBase
 {
@@ -261,8 +261,7 @@ public sealed class ChopMatureTreeAction : GoapActionBase
 
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
-        var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        return effectiveActor.Harvest(0);
+        return null;
     }
 
     public override GoapActionStatus EvaluateStatus(
@@ -274,7 +273,7 @@ public sealed class ChopMatureTreeAction : GoapActionBase
         if (observedState.Has(BotWorldState.BagFull))
             return GoapActionStatus.Succeeded;
 
-        if (activeRequest != null && activeRequest.IsTerminal && activeRequest.State != ActorLifecycleState.Completed)
+        if (activeRequest == null || activeRequest.IsTerminal)
             return GoapActionStatus.Failed;
 
         return GoapActionStatus.Running;

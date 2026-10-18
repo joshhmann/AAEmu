@@ -48,6 +48,8 @@ public class BotPresenceCoordinatorTests
             return ActivateResult;
         }
 
+        public bool LeaveHeadlessCharacter(Character expected, AAEmu.Game.Core.Managers.CharacterLifecycleReason reason,
+            out bool savedThisCall, Func<bool>? releaseCachedSession = null) => throw new NotSupportedException("not used by this rig");
         public bool Deactivate(uint characterId, string reason) => true;
         public bool TryGet(uint characterId, out PlayerBotRuntime? runtime)
         {
@@ -56,13 +58,28 @@ public class BotPresenceCoordinatorTests
         }
 
         public bool Remove(uint characterId) => true;
-        public IReadOnlyList<PlayerBotRuntime> GetAll() => [];
-        public IReadOnlyList<PlayerBotRuntime> GetActive() => [];
+        public IReadOnlyList<PlayerBotRuntime> GetAll() => Enrolled;
+        public IReadOnlyList<PlayerBotRuntime> GetActive()
+            => Enrolled.Where(r => r.State == PlayerBotState.Active).ToList();
 
-        public int Count => 0;
-        public int ActiveCount => 0;
+        public int Count => Enrolled.Count;
+        public int ActiveCount => Enrolled.Count(r => r.State == PlayerBotState.Active);
         public PlayerBotDiagnostics GetDiagnostics() => new(0, 0, 0, 0, 0, 0, 0, 0, 0);
-        public IReadOnlyList<PlayerBotRuntime> Runtimes => [];
+        public IReadOnlyList<PlayerBotRuntime> Runtimes => Enrolled;
+
+        /// <summary>
+        /// Bots this rig pretends are already registered (T2 reconciliation:
+        /// the registry lookup that decides re-enroll vs provision).
+        /// </summary>
+        public List<PlayerBotRuntime> Enrolled { get; } = [];
+
+        public PlayerBotRuntime Enroll(Character character, PlayerBotState state = PlayerBotState.Active,
+            string owner = "rig")
+        {
+            var runtime = new PlayerBotRuntime(character, owner) { State = state };
+            Enrolled.Add(runtime);
+            return runtime;
+        }
     }
 
     private sealed class RecordingScheduler : IPlayerBotScheduler
@@ -70,8 +87,14 @@ public class BotPresenceCoordinatorTests
         public int StartCalls;
         public List<uint> Wakes { get; } = [];
 
-        public void Start() => StartCalls++;
+        // T2: the one arming owner. StartCalls counts armings, so the existing
+        // "armed once" assertions keep their meaning.
+        public string? ArmedBy { get; private set; }
+        public bool Arm(string reason) { StartCalls++; ArmedBy ??= reason; return true; }
         public Task StopAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        // A1 stop owner: this rig never enrols a bot, so a disarm is inert.
+        public BotHostTeardownReport Disarm(string reason) => new(reason, false, 0, 0, 0, []);
         public bool Wake(uint characterId)
         {
             Wakes.Add(characterId);
@@ -115,7 +138,7 @@ public class BotPresenceCoordinatorTests
         RecordingManager Manager,
         RecordingScheduler Scheduler,
         RecordingDirector Director,
-        List<string> Provisioned) CreateRig()
+        List<string> Provisioned) CreateRig(Func<string, string?>? existingBotName = null)
     {
         // HeadlessSession.Create builds an ordinary Character (Inventory ctor
         // resolves ItemManager.Instance + ContainerIdManager.Instance) — seed
@@ -143,7 +166,8 @@ public class BotPresenceCoordinatorTests
             // Flat-route rig: 0 = "no heightmap data" → waypoints keep home.Z
             // (exactly the pre-fix builder output). The terrain tests inject
             // a real terrain function instead.
-            groundHeightProvider: (_, _) => 0f);
+            groundHeightProvider: (_, _) => 0f,
+            existingBotName: existingBotName);
 
         return (coordinator, manager, scheduler, director, provisioned);
     }
@@ -181,6 +205,35 @@ public class BotPresenceCoordinatorTests
         await Assert.That(provisioned.Count).IsEqualTo(0);
         await Assert.That(manager.SpawnCalls).IsEqualTo(0);
         await Assert.That(scheduler.StartCalls).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Start_AlreadyEmbodied_ReportsNoEnrollment()
+    {
+        // Review D1's root: the skip returns true, so the switch that reports
+        // the enrollment must be able to see that nothing came up.
+        var (coordinator, _, _, director, _) = CreateRig();
+        director.Embodied = 3;
+
+        coordinator.Start(Config(3));
+
+        await Assert.That(coordinator.LastEnrollment.Enrolled).IsEqualTo(0);
+        await Assert.That(coordinator.LastEnrollment.Any).IsFalse();
+        await Assert.That(coordinator.LastEnrollment.AlreadyEmbodied).IsTrue();
+    }
+
+    [Test]
+    public async Task Enroll_ReportsTheBotsThatReachedTheWorld()
+    {
+        var (coordinator, _, _, _, _) = CreateRig();
+
+        var outcome = coordinator.Enroll(Config(3));
+
+        await Assert.That(outcome.Enrolled).IsEqualTo(3);
+        await Assert.That(outcome.Adopted).IsEqualTo(0);
+        await Assert.That(outcome.AlreadyEmbodied).IsFalse();
+        await Assert.That(outcome.Any).IsTrue();
+        await Assert.That(coordinator.LastEnrollment.Enrolled).IsEqualTo(3);
     }
 
     [Test]
@@ -521,6 +574,80 @@ public class BotPresenceCoordinatorTests
         }
 
         await Assert.That(transfer.Transform.World.Position).IsEqualTo(new Vector3(1f, 2f, 3f));
+    }
+
+    // --------------------------------------- T2 supported arming: reconciliation (audit L1-e)
+
+    [Test]
+    public async Task Start_IndexNameAlreadyEnrolled_ReEnrolsItInsteadOfProvisioningASecondRow()
+    {
+        var (coordinator, manager, scheduler, _, provisioned) = CreateRig();
+        manager.Enroll(HeadlessSession.Create(777, "Citizen01", 5, Race.Nuian).Character);
+
+        var result = coordinator.Start(Config(2));
+
+        await Assert.That(result).IsTrue();
+        // Index 0 is the bot the registry already holds; only index 1 is new.
+        await Assert.That(provisioned).IsEquivalentTo(new[] { "Citizen02" });
+        await Assert.That(manager.SpawnCalls).IsEqualTo(1);
+        await Assert.That(manager.ActivateCalls).IsEqualTo(1);
+        await Assert.That(scheduler.Wakes).Contains(777u);
+    }
+
+    [Test]
+    public async Task Start_ManagedAccountAlreadyOwnsABot_AdoptsThatNameInsteadOfGeneratingOne()
+    {
+        // A restart asks the account what it already owns: the name it
+        // returns is the roster index's identity, so the adopt path in
+        // HeadlessSession.Provision reloads THAT row. Generating a fresh
+        // pool name here is exactly how every restart used to add a row.
+        var (coordinator, _, _, _, provisioned) = CreateRig(existingBotName: _ => "OldTimer");
+
+        await Assert.That(coordinator.Start(Config(1))).IsTrue();
+
+        await Assert.That(provisioned).IsEquivalentTo(new[] { "OldTimer" });
+    }
+
+    [Test]
+    public async Task Start_ReEnrolledBotThatWasDeactivated_IsActivatedAndWoken()
+    {
+        var (coordinator, manager, scheduler, director, provisioned) = CreateRig();
+        manager.Enroll(HeadlessSession.Create(778, "Citizen01", 5, Race.Nuian).Character, PlayerBotState.Deactivated);
+
+        await Assert.That(coordinator.Start(Config(1))).IsTrue();
+
+        await Assert.That(provisioned).IsEmpty();
+        await Assert.That(manager.ActivateCalls).IsEqualTo(1);
+        await Assert.That(director.FidelityCalls).IsEqualTo(2); // Reduced + Full for the revived bot
+        await Assert.That(scheduler.Wakes).Contains(778u);
+    }
+
+    [Test]
+    public async Task Start_ReEnrolledBotAlreadyActive_DoesNotTouchItsFidelity()
+    {
+        var (coordinator, manager, scheduler, director, provisioned) = CreateRig();
+        manager.Enroll(HeadlessSession.Create(779, "Citizen01", 5, Race.Nuian).Character);
+
+        await Assert.That(coordinator.Start(Config(1))).IsTrue();
+
+        await Assert.That(provisioned).IsEmpty();
+        await Assert.That(manager.ActivateCalls).IsEqualTo(0);
+        await Assert.That(director.FidelityCalls).IsEqualTo(0); // already in the world: no ladder
+        await Assert.That(scheduler.Wakes).Contains(779u);
+    }
+
+    [Test]
+    public async Task Start_ReEnrolmentNameMatch_IsCaseInsensitive()
+    {
+        // Mirrors BotAdminService.FindByName: the registry lookup must not
+        // miss a bot because the stored name differs in case.
+        var (coordinator, manager, _, _, provisioned) = CreateRig();
+        manager.Enroll(HeadlessSession.Create(781, "citizen01", 5, Race.Nuian).Character);
+
+        await Assert.That(coordinator.Start(Config(1))).IsTrue();
+
+        await Assert.That(provisioned).IsEmpty();
+        await Assert.That(manager.SpawnCalls).IsEqualTo(0);
     }
 
     // ---------------------------------------------------------------- singleton seeding

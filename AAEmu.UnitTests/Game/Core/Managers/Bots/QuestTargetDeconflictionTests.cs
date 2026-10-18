@@ -1,4 +1,5 @@
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game;
@@ -52,6 +53,160 @@ public class QuestTargetDeconflictionTests
         PlayerbotPilotRig.SeedPilotSingletons();
         GameplayActorTestRig.Seed();
         SeedCombatSurface();
+    }
+
+    [Test]
+    public async Task Canonical260_ThreeLootSources_NearestLegalPreyIsSelectable()
+    {
+        // The real quest template is loaded by SetUp. Mirror only the three
+        // exact canonical NPC -> pack -> item rows missing from the headless
+        // ItemManager/LootGameData surfaces; restore all prior rows afterward.
+        var sources = new (uint Npc, uint Pack, uint Mapping, uint Loot)[]
+        {
+            (3484, 4533, 2096, 5807),
+            (3497, 5746, 17961, 18068),
+            (7675, 5745, 17960, 18067),
+        };
+        const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+        var map = (Dictionary<uint, List<LootPackDroppingNpc>>)typeof(ItemManager)
+            .GetField("_lootPackDroppingNpc", flags)!.GetValue(ItemManager.Instance)!;
+        var packs = (Dictionary<uint, LootPack>)typeof(LootGameData)
+            .GetField("_lootPacks", flags)!.GetValue(LootGameData.Instance)!;
+        var priorMaps = sources.ToDictionary(s => s.Npc, s => map.GetValueOrDefault(s.Npc));
+        var priorPacks = sources.ToDictionary(s => s.Pack, s => packs.GetValueOrDefault(s.Pack));
+        try
+        {
+            foreach (var s in sources)
+            {
+                map[s.Npc] = [new LootPackDroppingNpc
+                    { Id = s.Mapping, NpcId = s.Npc, LootPackId = s.Pack, DefaultPack = true }];
+                var loot = new Loot { Id = s.Loot, Group = 0, ItemId = 8128,
+                    DropRate = 10_000_000, MinAmount = 1, MaxAmount = 1,
+                    LootPackId = s.Pack, GradeId = 0, AlwaysDrop = false };
+                packs[s.Pack] = new LootPack { Id = s.Pack, Loots = [loot],
+                    LootsByGroupNo = new Dictionary<uint, List<Loot>> { [0] = [loot] },
+                    Groups = [], ActabilityGroups = [], GroupCount = 1 };
+            }
+            QuestFixtureRow.Invalidate(260);
+            var row = QuestFixtureRow.FromQuestData(260);
+            await Assert.That(row.GatherActId).IsEqualTo(6902u);
+            await Assert.That(row.PreyItem).IsEqualTo(8128u);
+            await Assert.That(row.Need).IsEqualTo(3);
+            await Assert.That(row.PreyTemplate).IsEqualTo(3484u);
+            await Assert.That(row.PreyPack).IsEqualTo(4533u);
+
+            var (actor, session) = GameplayActorTestRig.CreateActor("quest260-three-prey");
+            GameplayActorTestRig.SetPosition(actor, Vector3.Zero);
+            var region = session.World.GetRegionByPos(Vector3.Zero)
+                ?? throw new InvalidOperationException("Native fixture region missing.");
+            region.AddObject(actor.Character);
+            actor.Character.Region = region;
+            // Accepted quest state is fixture setup, matching Activate251;
+            // the selector receives no chosen target or committed CurrentTarget.
+            actor.Character.Quests.ActiveQuests[260] = new Quest(actor.Character)
+            {
+                TemplateId = 260, Status = QuestStatus.Progress,
+                Step = QuestComponentKind.Progress, Objectives = [0, 0, 0, 0, 0]
+            };
+            var normalNear = SpawnNpcAt(session, 3497, new Vector3(3, 0, 0));
+            var normalFar = SpawnNpcAt(session, 7675, new Vector3(7, 0, 0));
+            var strongFar = SpawnNpcAt(session, 3484, new Vector3(12, 0, 0));
+            actor.Character.Level = 5;
+            foreach (var id in new[] { normalNear, normalFar })
+            {
+                var npc = session.World.GetNpc(id)!;
+                npc.Template.NpcGradeId = NpcGradeType.Normal;
+                npc.Template.Level = 4;
+                npc.Level = 4;
+            }
+            var strong = session.World.GetNpc(strongFar)!;
+            strong.Template.NpcGradeId = NpcGradeType.Strong;
+            strong.Template.Level = 5;
+            strong.Level = 5;
+            await Assert.That(actor.Character.CurrentTarget).IsNull();
+            foreach (var id in new[] { normalNear, normalFar, strongFar })
+            {
+                var npc = session.World.GetNpc(id)!;
+                await Assert.That(CombatDecisionTree.IsHostileTarget(actor.Character, npc)).IsTrue();
+                await Assert.That(actor.Character.CanAttack(npc)).IsTrue();
+                await Assert.That(actor.Character.CanSeeTarget(npc)).IsTrue();
+            }
+            var funnel = QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.From(actor.Observe()), "quest260-three-sources", row);
+            await Assert.That(funnel.SourceResolved).IsTrue();
+            await Assert.That(funnel.Candidates.Select(c => c.ObjId))
+                .IsEquivalentTo(new[] { normalNear, normalFar, strongFar });
+            // Existing single-representative code marks both Normal source
+            // templates as mismatches and chooses the more distant Strong NPC.
+            // Expected behavior is to choose the nearest legally eligible
+            // source of item 8128, without assigning any target to the bot.
+            await Assert.That(funnel.SelectedObjId).IsEqualTo(normalNear);
+            await Assert.That(funnel.Candidates.Single(c => c.ObjId == normalNear).QuestRelevant).IsTrue();
+            await Assert.That(funnel.Candidates.Single(c => c.ObjId == normalFar).QuestRelevant).IsTrue();
+            await Assert.That(actor.Character.CurrentTarget).IsNull();
+
+            // Source types do not override a valid current commitment.
+            actor.Character.CurrentTarget = strong;
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "three-sources-committed", row).SelectedObjId).IsEqualTo(strongFar);
+            actor.Character.CurrentTarget = null;
+
+            // A foreign tag moves the nearest source behind useful alternatives.
+            var (other, _) = GameplayActorTestRig.CreateActor("three-sources-tagger");
+            var near = session.World.GetNpc(normalNear)!;
+            near.CharacterTagging = new Tagging(near);
+            near.CharacterTagging.AddTagger(other.Character, int.MaxValue / 4);
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "three-sources-claimed", row).SelectedObjId).IsEqualTo(normalFar);
+            near.CharacterTagging.ClearAllTaggers();
+            near.Hp = 0;
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "three-sources-dead", row).SelectedObjId).IsEqualTo(normalFar);
+            near.Hp = 100; // Test world input, no resurrection claim.
+            var ownMapping = map[3497];
+            map[3497] = [new LootPackDroppingNpc { NpcId = 3497, LootPackId = 4533, DefaultPack = true }];
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "three-sources-wrong-pack", row).SelectedObjId).IsEqualTo(normalFar);
+            map[3497] = ownMapping;
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "three-sources-restored", row).SelectedObjId).IsEqualTo(normalNear);
+            // Snapshot inputs describe a fulfilled need or absent quest; neither
+            // may create further hunt work even though matching mobs are alive.
+            var fulfilled = BotObservedContext.Capture(actor) with { BagItemCounts = new Dictionary<uint, int> { [8128] = 3 } };
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                fulfilled, "three-sources-fulfilled", row).SelectedObjId).IsEqualTo(0u);
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor) with { ActiveQuestIds = [] },
+                "three-sources-noquest", row).SelectedObjId).IsEqualTo(0u);
+
+            GameplayActorTestRig.SetNpcPosition(session, normalNear, new Vector3(18, 0, 0));
+            GameplayActorTestRig.SetNpcPosition(session, normalFar, new Vector3(24, 0, 0));
+            GameplayActorTestRig.SetNpcPosition(session, strongFar, new Vector3(30, 0, 0));
+            actor.Character.CurrentTarget = near;
+            TravelLegDispatch.EnsureJourney(actor, normalNear, near.Transform.World.Position, 3, 2,
+                TravelLegDispatch.PursuitMoveOwner);
+            TravelIntentStore.SetPursuitPurpose(actor.ActorId, 260);
+            // Declared failed-navigation terminal fixture: apply the existing
+            // recovery rule across source types, without claiming a live failure.
+            TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+                TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner);
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "three-sources-exhausted", row).SelectedObjId).IsEqualTo(normalFar);
+            GameplayActorTestRig.SetNpcPosition(session, normalNear, new Vector3(2, 0, 0));
+            await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, normalNear, 260)).IsFalse();
+            await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "three-sources-contact", row).SelectedObjId).IsEqualTo(normalNear);
+            TravelIntentStore.Disarm(actor.ActorId, TravelLegDispatch.PursuitMoveOwner);
+        }
+        finally
+        {
+            foreach (var s in sources)
+            {
+                if (priorMaps[s.Npc] is { } rows) map[s.Npc] = rows; else map.Remove(s.Npc);
+                if (priorPacks[s.Pack] is { } pack) packs[s.Pack] = pack; else packs.Remove(s.Pack);
+            }
+            QuestFixtureRow.Invalidate(260);
+        }
     }
 
     // ------------------------------------------------------------- the contract

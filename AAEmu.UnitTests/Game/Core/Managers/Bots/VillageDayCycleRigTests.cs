@@ -375,6 +375,7 @@ public class VillageDayCycleRigTests
     {
         var (actor, session) = CreateActorOnUniqueWorld(name);
         GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100; // Supplied farmer fixture resource.
         StockSeed(actor);
         var crop = CropHarvestLoopRig.Plant(actor.Character, session.World,
             CropHarvestLoopRig.MakeHouse(actor.Character));

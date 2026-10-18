@@ -81,6 +81,31 @@ public class BotOpportunityListingBusyTests
     }
 
     [Test]
+    public async Task BusyObserve_DoesNotReplaceMeaningfulAuditWithKnownBusyRefusals()
+    {
+        var (actor, session) = CreateAreaActor("busy-observe-audit");
+        GameplayActorTestRig.SeedQuestOffer(OpenQuestId, StartComponent, OfferNpcTemplate, level: 1);
+        SpawnAreaNpc(session, OfferNpcTemplate, SpawnPos + new Vector3(5, 0, 0));
+        actor.BroadcastMovement = false;
+        var leg = actor.MoveTo(SpawnPos + new Vector3(4, 0, 0), speed: 5f);
+        await Assert.That(leg.IsTerminal).IsFalse();
+        var before = actor.AuditTrace.Count;
+        for (var observation = 0; observation < 32; observation++)
+        {
+            var listing = BotOpportunityListing.List(actor);
+            await Assert.That(listing.QuestOffersUnknown).IsTrue();
+            await Assert.That(actor.ActiveRequest).IsSameReferenceAs(leg);
+        }
+        await Assert.That(actor.AuditTrace.Count).IsEqualTo(before);
+        for (var tick = 0; tick < 100 && !leg.IsTerminal; tick++)
+            actor.Tick(TimeSpan.FromMilliseconds(100));
+        await Assert.That(leg.State).IsEqualTo(ActorLifecycleState.Completed);
+        var resumed = BotOpportunityListing.List(actor);
+        await Assert.That(resumed.QuestOffersUnknown).IsFalse();
+        await Assert.That(resumed.EligibleQuests.Any(q => q.QuestId == OpenQuestId)).IsTrue();
+    }
+
+    [Test]
     public async Task BusyObserve_KeepsOwnedMove_AndMarksOffersUnknown()
     {
         var (actor, session) = CreateAreaActor("busy-observe-unknown");
@@ -134,7 +159,7 @@ public class BotOpportunityListingBusyTests
     }
 
     [Test]
-    public async Task BusyObserve_NoPurpose_DeniesAsUnknown_NeverAsExhausted()
+    public async Task BusyObserve_NoPurpose_EntersDiscovery_NeverAsExhausted()
     {
         var (actor, session) = CreateAreaActor("busy-observe-nopick");
         GameplayActorTestRig.SeedQuestOffer(OpenQuestId, StartComponent, OfferNpcTemplate, level: 1);
@@ -149,10 +174,14 @@ public class BotOpportunityListingBusyTests
 
         var decision = module.CanActivate(new BotActivityContext { Bot = bot, GameHour = 12f });
 
+        // Observation never preempts, and the unknown offers are answered with
+        // the walk that produces an authoritative scan — holding for one here
+        // would starve the owner forever behind a never-finishing patrol leg.
         await Assert.That(ReferenceEquals(actor.ActiveRequest, leg)).IsTrue();
-        await Assert.That(decision.CanActivate).IsFalse();
-        await Assert.That(decision.WhyNot!.Contains("unknown")).IsTrue();
-        await Assert.That(decision.WhyNot!.Contains("exhaust")).IsFalse();
+        await Assert.That(decision.CanActivate).IsTrue().Because($"why={decision.WhyNot}");
+        await Assert.That(decision.ActivityName).IsEqualTo(QuestBootstrapActivityModule.DiscoveryActivityName);
+        await Assert.That(decision.WhyNot).IsNull();
+        await Assert.That(decision.WhyNot?.Contains("exhaust")).IsNotEqualTo(true);
         await Assert.That(module.GetChosenQuest(actor.Character.Id)).IsEqualTo(0u);
     }
 }

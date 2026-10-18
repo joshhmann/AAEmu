@@ -37,20 +37,38 @@ public interface IPlayerBotManager
     bool Activate(uint characterId, object? botContext, string owner);
 
     /// <summary>
-    /// Tears down an Active bot through the lifecycle service and retains the
-    /// record as Deactivated (diagnostics/audit). Refused when not Active.
+    /// Closes admission for an Active bot, drains the admitted step, and retires
+    /// its exact native work before physical leave/save. The boundary handoff
+    /// does not hold the entry lock; exact ownership is revalidated before save.
+    /// Success retains Deactivated for audit. Retirement/leave failure retains
+    /// DeactivationFailed, never reopens admission or retries. Refused when not Active.
     /// </summary>
     /// <param name="characterId">Registry key (Character.Id).</param>
     /// <param name="reason">Why the bot is being deactivated (forwarded to the lifecycle service, retained on the record).</param>
     /// <returns>True when the lifecycle service tore the bot down; false otherwise.</returns>
     bool Deactivate(uint characterId, string reason);
 
+    /// <summary>
+    /// Closes admission and retires native work for the exact headless Character
+    /// before ordinary physical leave with the supplied reason. It releases the
+    /// entry lock only for retirement, then revalidates owner/Character/generation
+    /// and connection/world identity before save and exact optional cache release.
+    /// Missing owners are reserved as Deactivating (generation 0), never activated;
+    /// a mismatched cached embodiment refuses retirement. Already absent-world
+    /// cache-only leave performs no second save and is not native-retirement proof.
+    /// Failure retains a non-admissible owner; connected humans and foreign
+    /// Characters are refused. savedThisCall reports a normal physical-service
+    /// return, not independently verified DB durability.
+    /// </summary>
+    bool LeaveHeadlessCharacter(Character expected, CharacterLifecycleReason reason, out bool savedThisCall,
+        Func<bool>? releaseCachedSession = null);
+
     /// <summary>Registry lookup. Returns false when the id is unknown.</summary>
     bool TryGet(uint characterId, out PlayerBotRuntime? runtime);
 
     /// <summary>
-    /// Drops a non-Active record from the registry (deactivate first — an
-    /// Active bot is refused so no embodied bot can leak out of the manager).
+    /// Drops only a Registered or Deactivated record (deactivate first).
+    /// Active, Deactivating and DeactivationFailed claims are refused.
     /// </summary>
     bool Remove(uint characterId);
 
@@ -60,7 +78,7 @@ public interface IPlayerBotManager
     /// <summary>Snapshot of currently embodied (Active) entries — the scheduler's feed.</summary>
     IReadOnlyList<PlayerBotRuntime> GetActive();
 
-    /// <summary>Current registry size (Registered + Active + Deactivated).</summary>
+    /// <summary>Current registry size, including in-progress and failed quiesced owners.</summary>
     int Count { get; }
 
     /// <summary>Current embodied bot count.</summary>

@@ -30,9 +30,18 @@ public interface IPlayerBotLifecycleService
     bool ActivateHeadless(Character character, object? botContext);
 
     /// <summary>
-    /// Tears down an embodied bot character. Returns false when refused or
-    /// failed — the manager keeps the bot active and records a failed
-    /// deactivation.
+    /// Retires existing native work for the exact Deactivating owner and
+    /// generation on the game-loop boundary, without activation or physical
+    /// leave/save. The manager releases the entry lock for this finite handoff.
+    /// False (including abandonment) leaves admission closed and forbids save;
+    /// absence is success only after exact owner identity has been checked.
+    /// </summary>
+    bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason);
+
+    /// <summary>
+    /// Performs physical leave/save after acknowledged exact native retirement.
+    /// Returns false when refused or failed — the manager retains the owner
+    /// as DeactivationFailed, never restores Active, and does not retry.
     /// </summary>
     bool Deactivate(Character character, string reason);
 }

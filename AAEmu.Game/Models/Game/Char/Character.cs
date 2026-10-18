@@ -2332,6 +2332,17 @@ public partial class Character : Unit, ICharacter
 
     #region Database
 
+    // MySQL's text FLOAT projection rounds large world coordinates before the connector reads them.
+    private const string CharacterLoadProjection = "SELECT id, account_id, name, access_level, race, gender, unit_model_params, level, experience, recoverable_exp, "
+        + "hp, mp, consumed_lp, ability1, ability2, ability3, world_id, zone_id, "
+        + "CAST(x AS DOUBLE) AS x, CAST(y AS DOUBLE) AS y, CAST(z AS DOUBLE) AS z, yaw, pitch, roll, "
+        + "faction_id, faction_name, expedition_id, family, dead_count, dead_time, rez_wait_duration, rez_time, rez_penalty_duration, "
+        + "leave_time, money, money2, honor_point, vocation_point, crime_point, crime_record, jury_point, hostile_faction_kills, "
+        + "pvp_honor, died_in_pvp, died_in_pvp_war_zone, transfer_request_time, delete_request_time, delete_time, auto_use_aapoint, "
+        + "prev_point, point, gift, num_inv_slot, num_bank_slot, expanded_expert, created_at, updated_at, return_district, online_time, "
+        + "arrest_count, accept_guilty_count, accept_trial_count, not_guilty_count, guilty_count, evidence_reported_count, "
+        + "bot_reported_count, reported_as_bot_count, offline_guilty_time, offline_guilty_region, slots ";
+
     public static Character Load(MySqlConnection connection, uint characterId, uint accountId)
     {
         var accountDetails = AccountManager.Instance.GetAccountDetails(accountId);
@@ -2339,7 +2350,7 @@ public partial class Character : Unit, ICharacter
         using (var command = connection.CreateCommand())
         {
             command.Connection = connection;
-            command.CommandText = "SELECT * FROM characters WHERE `id` = @id AND `account_id` = @account_id and `deleted`=0";
+            command.CommandText = CharacterLoadProjection + "FROM characters WHERE `id` = @id AND `account_id` = @account_id and `deleted`=0";
             command.Parameters.AddWithValue("@id", characterId);
             command.Parameters.AddWithValue("@account_id", accountId);
             using (var reader = command.ExecuteReader())
@@ -2373,7 +2384,7 @@ public partial class Character : Unit, ICharacter
                     character.ServerId = reader.GetUInt32("world_id");
                     character.Transform = new Transform(character, null, 
                         reader.GetUInt32("zone_id"), WorldManager.DefaultInstanceId,
-                        reader.GetFloat("x"), reader.GetFloat("y"), reader.GetFloat("z"),
+                        (float)reader.GetDouble("x"), (float)reader.GetDouble("y"), (float)reader.GetDouble("z"),
                         reader.GetFloat("yaw"), reader.GetFloat("pitch"), reader.GetFloat("roll")
                         );
                     character.Faction = FactionManager.Instance.GetFaction((FactionsEnum)reader.GetUInt32("faction_id"));
@@ -2468,7 +2479,7 @@ public partial class Character : Unit, ICharacter
         using (var command = connection.CreateCommand())
         {
             command.Connection = connection;
-            command.CommandText = "SELECT * FROM characters WHERE `id` = @id and `deleted`=0";
+            command.CommandText = CharacterLoadProjection + "FROM characters WHERE `id` = @id and `deleted`=0";
             command.Parameters.AddWithValue("@id", characterId);
             using (var reader = command.ExecuteReader())
             {
@@ -2504,7 +2515,7 @@ public partial class Character : Unit, ICharacter
                     character.ServerId = reader.GetUInt32("world_id");
                     character.Transform = new Transform(character, null, 
                         reader.GetUInt32("zone_id"), WorldManager.DefaultInstanceId,
-                        reader.GetFloat("x"), reader.GetFloat("y"), reader.GetFloat("z"),
+                        (float)reader.GetDouble("x"), (float)reader.GetDouble("y"), (float)reader.GetDouble("z"),
                         reader.GetFloat("yaw"), reader.GetFloat("pitch"), reader.GetFloat("roll")
                         );
                     character.Faction = FactionManager.Instance.GetFaction((FactionsEnum)reader.GetUInt32("faction_id"));

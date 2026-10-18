@@ -443,7 +443,15 @@ public static class M3aM4ReplayScenario
                     farm.HarvestSeedGrants += SeedGrantForCrop(crop, options);
 
                 var harvest = actor.Harvest(cropObjId, idempotencyKey: $"m3a4-harvest-{cropObjId}");
-                traceRecords.Add(actor.AuditTrace.Last());
+                if (!TryDriveLegToTerminal(actor, pump, harvest, options.ActionPumpTimeout, traceRecords, out harvest))
+                {
+                    actor.RecordBackstopTimeout(harvest);
+                    var terminal = actor.AuditTrace.LastOrDefault(r => r.TraceId == harvest.TraceId);
+                    if (terminal != null)
+                        traceRecords.Add(terminal);
+                    if (harvest.State != ActorLifecycleState.Completed)
+                        return Fail("HARVEST", harvest, $"crop {cropObjId} exceeded harvest budget", rigNotes, stages, criteria, traceRecords);
+                }
                 stages.Add(Stage($"HARVEST-{cropObjId}", harvest, $"crop {cropObjId}"));
                 if (harvest.State != ActorLifecycleState.Completed)
                     return Fail("HARVEST", harvest, $"crop {cropObjId}", rigNotes, stages, criteria, traceRecords);
@@ -611,7 +619,13 @@ public static class M3aM4ReplayScenario
                 Thread.Sleep(300);
 
                 var summon = actor.UseItem(options.FarmWagonSummonScrollItemId, idempotencyKey: "m3a4-summon-wagon");
-                traceRecords.Add(actor.AuditTrace.Last());
+                if (!TryDriveLegToTerminal(actor, pump, summon, options.ActionPumpTimeout, traceRecords, out summon))
+                {
+                    if (ReferenceEquals(actor.ActiveRequest, summon) && !summon.IsTerminal)
+                        actor.PreemptCurrent("summon item exceeded scenario action budget");
+                    return Fail("USE-SUMMON-SCROLL", summon, "ordinary summon item did not finish",
+                        rigNotes, stages, criteria, traceRecords);
+                }
                 stages.Add(Stage("USE-SUMMON-SCROLL", summon, $"scroll {options.FarmWagonSummonScrollItemId}"));
                 if (summon.State != ActorLifecycleState.Completed)
                     return Fail("USE-SUMMON-SCROLL", summon, "farm wagon summon", rigNotes, stages, criteria, traceRecords);

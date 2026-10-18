@@ -175,6 +175,17 @@ public sealed class ActorRequest
     /// </summary>
     public string? MoveOwner { get; private set; }
 
+    /// <summary>
+    /// Who asked for this request: null = the bot's own decision path (the
+    /// default), <c>"control-api"</c> = an operator-injected control-plane
+    /// command (any other non-null value is caller-supplied). Staged by the
+    /// caller before the action method runs (the pending pattern, same as the
+    /// cycle-id staging) and stamped into the audit record at Finish, so an
+    /// injected row is never read as the bot's own decision. Telemetry only —
+    /// never read by behavior.
+    /// </summary>
+    public string? CommandOrigin { get; private set; }
+
 
     /// <summary>
     /// Stamps the join key. Null arguments are ignored (absent stays
@@ -184,6 +195,16 @@ public sealed class ActorRequest
     {
         if (cycleId != null)
             DecisionCycleId = cycleId;
+    }
+
+    /// <summary>
+    /// Stages the command origin for the next created request.
+    /// Null arguments are ignored (absent stays absent).
+    /// </summary>
+    internal void SetCommandOrigin(string? commandOrigin)
+    {
+        if (commandOrigin != null)
+            CommandOrigin = commandOrigin;
     }
 
     /// <summary>

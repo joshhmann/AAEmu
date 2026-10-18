@@ -13,10 +13,12 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// PRESENCE PROOF bootstrap (integration card t_6bad0654) — starts
 /// <see cref="BotPresenceCoordinator"/> when the game server boots with the
 /// presence demo enabled (Config.Local.json "Bots"."EnablePresenceDemo" or
-/// AAEMU_PRESENCE_DEMO env). Follows the BotDriveBridge precedent: runs at
+/// AAEMU_PRESENCE_DEMO env), and — T2 supported arming — arms and enrolls the
+/// configured roster when the deployment sets "Bots"."EnableStartupArming"
+/// (or AAEMU_STARTUP_ARMING). Follows the BotDriveBridge precedent: runs at
 /// assembly load, waits for the DI container, then waits for the world to be
-/// ready before provisioning bots. When disabled (the default — prod config
-/// never sets it) it is a strict no-op: no thread, no socket, no DB writes.
+/// ready before provisioning bots. When every switch is off (the shipped
+/// default) it is a strict no-op: no thread, no socket, no DB writes.
 /// </summary>
 internal static class BotPresenceBootstrap
 {
@@ -25,7 +27,8 @@ internal static class BotPresenceBootstrap
     {
         var runPresence = BotPresenceCoordinator.IsEnabled();
         var runAutoRestore = BotAdminService.IsAutoRestoreEnabled();
-        if (!runPresence && !runAutoRestore)
+        var runStartupArming = BotStartupArmingOptions.ReadEnabledFlag();
+        if (!runPresence && !runAutoRestore && !runStartupArming)
             return;
 
         _ = Task.Run(async () =>
@@ -71,33 +74,25 @@ internal static class BotPresenceBootstrap
                 if (!worldReady)
                 {
                     BotPresenceCoordinator.LogWarn(
-                        "world never became ready — presence demo / bot auto-restore aborted");
+                        "world never became ready — presence demo / bot auto-restore / startup arming aborted");
                     return;
                 }
 
                 if (runPresence)
                 {
-                    var coordinator = new BotPresenceCoordinator(
-                        SingletonContainer.ServiceProvider.GetRequiredService<IPlayerBotManager>(),
-                        SingletonContainer.ServiceProvider.GetRequiredService<IPlayerBotScheduler>(),
-                        SingletonContainer.ServiceProvider.GetRequiredService<IPopulationDirector>(),
-                        SingletonContainer.ServiceProvider.GetRequiredService<BotRoamStepExecutor>());
+                    NewCoordinator().Start(RosterConfig(BotPresenceCoordinator.ReadBotCount(), "presence"));
+                }
 
-                    var count = BotPresenceCoordinator.ReadBotCount();
-                    var home = BotPresenceCoordinator.ReadHomePosition();
-                    coordinator.Start(new BotPresenceCoordinator.BotPresenceConfig(
-                        BotCount: count,
-                        ZoneId: WorldManager.DefaultWorldTemplateId,
-                        HomePosition: home,
-                        RoamRadius: 30f,
-                        RoamSpeed: 2.5f,
-                        Level: 5,
-                        // No prefix: names are generated in-world from
-                        // Data/Bots/bot_names.json (BotNameGenerator). Set
-                        // NamePrefix to pin the historical {prefix}{NN} shape.
-                        NamePrefix: null,
-                        AccountPrefix: "presence",
-                        MaxPresenceBots: BotPresenceCoordinator.ReadMaxPresenceBots()));
+                if (runStartupArming)
+                {
+                    // T2 supported arming: the explicit deployment switch drives
+                    // the same enrollment flow through the one arming owner.
+                    var coordinator = NewCoordinator();
+                    var result = BotStartupArming.Enroll(
+                        SingletonContainer.ServiceProvider.GetRequiredService<IPlayerBotScheduler>(),
+                        RosterConfig(BotStartupArmingOptions.ReadBotCount(), BotStartupArmingOptions.AccountPrefix),
+                        coordinator.Enroll);
+                    BotPresenceCoordinator.LogWarn($"Startup arming: {result.Message}");
                 }
 
                 if (runAutoRestore)
@@ -106,11 +101,34 @@ internal static class BotPresenceBootstrap
                     var result = admin.Restore();
                     BotPresenceCoordinator.LogWarn($"Auto-restore bots on boot: {result.Message}");
                 }
+
+                static BotPresenceCoordinator NewCoordinator() => new(
+                    SingletonContainer.ServiceProvider.GetRequiredService<IPlayerBotManager>(),
+                    SingletonContainer.ServiceProvider.GetRequiredService<IPlayerBotScheduler>(),
+                    SingletonContainer.ServiceProvider.GetRequiredService<IPopulationDirector>(),
+                    SingletonContainer.ServiceProvider.GetRequiredService<BotRoamStepExecutor>());
+
+                // The roster shape every boot-time enrollment uses — ONE copy, so
+                // the presence demo and the supported startup switch cannot drift.
+                static BotPresenceCoordinator.BotPresenceConfig RosterConfig(int count, string accountPrefix) => new(
+                    BotCount: count,
+                    ZoneId: WorldManager.DefaultWorldTemplateId,
+                    HomePosition: BotPresenceCoordinator.ReadHomePosition(),
+                    RoamRadius: 30f,
+                    RoamSpeed: 2.5f,
+                    Level: 5,
+                    // No prefix: names come from Data/Bots/bot_names.json
+                    // (BotNameGenerator), and an index whose managed account
+                    // already owns a bot re-enrols that bot under its own name.
+                    NamePrefix: null,
+                    AccountPrefix: accountPrefix,
+                    MaxPresenceBots: BotPresenceCoordinator.ReadMaxPresenceBots());
             }
             catch (Exception ex)
             {
-                // The presence demo / auto-restore must never take the server down.
-                BotPresenceCoordinator.LogError(ex, "presence demo / auto-restore bootstrap failed");
+                // The presence demo / auto-restore / startup arming must never
+                // take the server down.
+                BotPresenceCoordinator.LogError(ex, "presence demo / auto-restore / startup arming bootstrap failed");
             }
         });
     }

@@ -37,6 +37,14 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// Fail-safe contract: no exception from the enumeration/behavior/persistence
 /// ever propagates into gameplay paths — the first failure of an episode is
 /// logged once and the tick ends quietly.
+///
+/// One writer per route (plan T8, audit L1-g): a phase transition is applied
+/// only while no elected activity owns the bot's route
+/// (<see cref="IBotGoalArbiter.GetRouteOwner"/> — the arbiter's live
+/// single-active authority, minus the terminal idle fallback and the schedule
+/// layer's own phases). While work is in force the transition is DEFERRED: the
+/// route, the phase memory and the persisted lastPhase all stay as they were,
+/// so the transition is retried on the next scan and lands when the work ends.
 /// </summary>
 public sealed class BotScheduleService
 {
@@ -50,13 +58,25 @@ public sealed class BotScheduleService
     private readonly Func<uint, PlayerBotMetadata> _metadataProvider;
     private readonly Action<uint, string> _scheduleWriter;
 
+    // Plan T8 ownership authority: the arbiter's live single-active activity.
+    // Lazy so the service (and the schedule module that depends on it) can be
+    // constructed before the arbiter, which is built from the modules.
+    private readonly Lazy<IBotGoalArbiter>? _arbiter;
+
     // Per-bot phase memory. Mutated only on the execution boundary (the
     // game-loop tick) in production; tests pump RunTick directly.
     private readonly ConcurrentDictionary<uint, BotSchedulePhase> _phaseByBot = [];
 
+    // Per-bot deferred transitions (plan T8): the phase that is waiting and the
+    // activity that currently owns the route. Written when a transition is
+    // deferred, cleared when that bot's transition next applies or resolves
+    // back to the applied phase.
+    private readonly ConcurrentDictionary<uint, BotScheduleDeferral> _deferrals = [];
+
     private int _started;
     private bool _failureLoggedThisEpisode;
     private long _transitionCount;
+    private long _deferralCount;
 
     public BotScheduleService(
         IPlayerBotManager manager,
@@ -65,7 +85,8 @@ public sealed class BotScheduleService
         IBotScheduleBehavior? behavior = null,
         Func<float>? gameHourProvider = null,
         Func<uint, PlayerBotMetadata>? metadataProvider = null,
-        Action<uint, string>? scheduleWriter = null)
+        Action<uint, string>? scheduleWriter = null,
+        Lazy<IBotGoalArbiter>? arbiter = null)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         _options = options ?? new BotScheduleOptions();
@@ -75,6 +96,7 @@ public sealed class BotScheduleService
         _gameHourProvider = gameHourProvider ?? DefaultGameHourProvider;
         _metadataProvider = metadataProvider ?? DefaultMetadataProvider;
         _scheduleWriter = scheduleWriter ?? DefaultScheduleWriter;
+        _arbiter = arbiter;
     }
 
     /// <summary>True between a successful gated <see cref="Start"/> and <see cref="StopAsync"/>.</summary>
@@ -82,6 +104,13 @@ public sealed class BotScheduleService
 
     /// <summary>Cumulative phase transitions applied since construction (diagnostics).</summary>
     public long TransitionCount => Volatile.Read(ref _transitionCount);
+
+    /// <summary>
+    /// Cumulative phase transitions DEFERRED because an elected activity owned
+    /// the bot's route (plan T8, audit L1-g) — diagnostics. Counted once per
+    /// deferral episode, not once per scan.
+    /// </summary>
+    public long DeferralCount => Volatile.Read(ref _deferralCount);
 
     /// <summary>The resolved options snapshot.</summary>
     public BotScheduleOptions Options => _options;
@@ -130,6 +159,14 @@ public sealed class BotScheduleService
 
     /// <summary>Test/observability surface: the last resolved phase per bot.</summary>
     internal IReadOnlyDictionary<uint, BotSchedulePhase> SnapshotPhases() => _phaseByBot;
+
+    /// <summary>
+    /// Test/observability surface: the phase transitions waiting right now, per
+    /// bot — the pending phase and the activity that owns the route (plan T8).
+    /// An entry appears when a transition is deferred and disappears when that
+    /// bot's transition next applies or resolves back to the applied phase.
+    /// </summary>
+    internal IReadOnlyDictionary<uint, BotScheduleDeferral> SnapshotDeferrals() => _deferrals;
 
     /// <summary>Tick subscriber entry (game-loop thread).</summary>
     private void ScanTick(TimeSpan delta) => RunTick();
@@ -182,10 +219,44 @@ public sealed class BotScheduleService
 
             var next = BotScheduleResolver.Resolve(
                 anchors, hour, previous, _options.HysteresisHours, _options.TravelDurationHours);
-            _phaseByBot[runtime.CharacterId] = next;
 
             if (previous == next)
+            {
+                _phaseByBot[runtime.CharacterId] = next;
+                if (_deferrals.TryRemove(runtime.CharacterId, out var dropped))
+                {
+                    // The pending phase's window closed before the route was
+                    // released, so the retry resolves back to the phase the bot
+                    // is already in: the deferral is dropped, not queued (T8).
+                    Logger.Info(
+                        "BotScheduleService: bot {CharacterId} deferred transition to {Pending} dropped at game hour {Hour:F2} — its window closed before the route was released",
+                        runtime.CharacterId, dropped.Pending, hour);
+                }
+
                 continue; // steady state — nothing visible happens per tick
+            }
+
+            // Plan T8 (audit L1-g): ONE writer per route. While an elected
+            // activity owns this bot's route, the schedule defers instead of
+            // overwriting it: the route, the phase memory and the persisted
+            // lastPhase all stay as they were, so every scan re-resolves the
+            // same transition and it lands as soon as the work ends. A deferral
+            // is NOT queued: if the pending phase's own window closes first, the
+            // next resolve returns the phase the bot is already in and the
+            // steady-state branch below drops the deferral (with a log line)
+            // instead of applying a phase that is no longer the current one. No
+            // arbiter (hermetic rigs, or a host that did not register
+            // Lazy<IBotGoalArbiter>) means nobody owns the route — the pre-T8
+            // unconditional behavior.
+            var owner = _arbiter?.Value.GetRouteOwner(runtime.CharacterId);
+            if (owner is not null)
+            {
+                DeferTransition(runtime.CharacterId, next, owner, hour);
+                continue;
+            }
+
+            _phaseByBot[runtime.CharacterId] = next;
+            _deferrals.TryRemove(runtime.CharacterId, out _);
 
             Interlocked.Increment(ref _transitionCount);
             Logger.Info(
@@ -229,6 +300,29 @@ public sealed class BotScheduleService
                 _behavior.MoveToAnchor(runtime, toWork ? ResolveWorkCenter(scheduleJson, home) : home);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Records one deferred phase transition (plan T8): the pending phase, the
+    /// activity that owns the route, and — once per deferral episode — the
+    /// counter and the log line. Nothing is applied and nothing is persisted;
+    /// every scan retries the transition for as long as the clock still
+    /// resolves that phase. A deferral whose own window closes first is dropped
+    /// by the steady-state branch (with a log line), not queued.
+    /// </summary>
+    private void DeferTransition(uint characterId, BotSchedulePhase pending, string owner, float hour)
+    {
+        var deferral = new BotScheduleDeferral(pending, owner);
+        var newEpisode = !_deferrals.TryGetValue(characterId, out var existing) || existing != deferral;
+        _deferrals[characterId] = deferral;
+
+        if (!newEpisode)
+            return; // same pending phase, same owner — already counted and logged
+
+        Interlocked.Increment(ref _deferralCount);
+        Logger.Info(
+            "BotScheduleService: bot {CharacterId} phase transition to {Pending} deferred at game hour {Hour:F2} — route owned by elected work ({Owner})",
+            characterId, pending, hour, owner);
     }
 
     private static BotDailyAnchors ResolveAnchors(string scheduleJson) =>
@@ -281,3 +375,14 @@ public sealed class BotScheduleService
                 "BotRoamStepExecutor is not registered — inject an IBotScheduleBehavior explicitly."));
     }
 }
+
+/// <summary>
+/// One phase transition the schedule is holding back (plan T8, audit L1-g):
+/// the phase it wants to apply and the activity that currently owns the bot's
+/// route. Surfaced through <see cref="BotScheduleService.SnapshotDeferrals"/>
+/// so the ownership decision is observable, not just inferred from a missing
+/// transition.
+/// </summary>
+/// <param name="Pending">The phase the resolver wants and the schedule is deferring.</param>
+/// <param name="Owner">The elected activity holding the route (arbiter activity name).</param>
+internal sealed record BotScheduleDeferral(BotSchedulePhase Pending, string Owner);

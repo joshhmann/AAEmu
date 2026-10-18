@@ -13,10 +13,20 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// </summary>
 public sealed class IdleActivityModule : IBotActivityModule
 {
+    /// <summary>
+    /// The activity name this module elects under. Shared with
+    /// <see cref="BotRouteOwnership"/> (plan T8): idle CLEARS the route instead
+    /// of owning one, so it must never read as a route owner.
+    /// </summary>
+    public const string ActivityName = "idle";
+
     private readonly BotRoamStepExecutor _stepExecutor;
 
     public string Name => "Idle";
     public int Priority { get; } = 0;
+
+    /// <inheritdoc />
+    public IReadOnlyList<string> DeclaredActivities => [ActivityName];
 
     public IdleActivityModule(BotRoamStepExecutor stepExecutor)
     {
@@ -31,7 +41,7 @@ public sealed class IdleActivityModule : IBotActivityModule
         if (context.Bot.Character.IsInBattle)
             return BotActivityDecision.Deny("bot in battle");
 
-        return BotActivityDecision.Allow("idle");
+        return BotActivityDecision.Allow(ActivityName);
     }
 
     /// <inheritdoc />
@@ -40,6 +50,6 @@ public sealed class IdleActivityModule : IBotActivityModule
         ArgumentNullException.ThrowIfNull(context);
 
         _stepExecutor.SetRoamRoute(context.Bot.Character, null);
-        return new BotActivity("idle", Name);
+        return new BotActivity(ActivityName, Name);
     }
 }

@@ -27,6 +27,13 @@ public class BotGoalArbiterTests
         public BotActivityDecision Decision { get; set; }
         public int Activations { get; private set; }
         public int Probes { get; private set; }
+        public int Retirements { get; private set; }
+
+        /// <summary>The context handed to the most recent activation.</summary>
+        public BotActivityContext? LastContext { get; private set; }
+
+        /// <summary>Whether this module releases its work when asked to retire.</summary>
+        public bool Retire { get; init; } = true;
 
         public FakeModule(string name, int priority, BotActivityDecision decision)
         {
@@ -44,7 +51,14 @@ public class BotGoalArbiterTests
         public BotActivity Activate(BotActivityContext context)
         {
             Activations++;
+            LastContext = context;
             return new BotActivity(Decision.ActivityName!, Name);
+        }
+
+        public bool Deactivate(BotActivityContext context)
+        {
+            Retirements++;
+            return Retire;
         }
     }
 
@@ -143,6 +157,49 @@ public class BotGoalArbiterTests
         await Assert.That(module.Activations).IsEqualTo(2);
         await Assert.That(arbiter.TransitionCount).IsEqualTo(2);
         await Assert.That(arbiter.GetActiveActivity(bot.CharacterId)).IsEqualTo("schedule.rest");
+        await Assert.That(module.Retirements, "an owner handing over to itself is not a supersede").IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Arbitrate_OwnerChanges_RetiresTheOutgoingModule()
+    {
+        var first = new FakeModule("First", 100, BotActivityDecision.Allow("first.act"));
+        var second = new FakeModule("Second", 50, BotActivityDecision.Allow("second.act"));
+        var arbiter = new BotGoalArbiter([first, second]);
+        var bot = NewBot("owner-change-bot");
+
+        await Assert.That(arbiter.Arbitrate(bot, 12f).Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+
+        first.Decision = BotActivityDecision.Deny("done");
+        var changed = arbiter.Arbitrate(bot, 12f);
+
+        await Assert.That(changed.Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+        await Assert.That(changed.Activity!.ModuleName).IsEqualTo("Second");
+        await Assert.That(first.Retirements, "the outgoing owner is asked to release").IsEqualTo(1);
+        await Assert.That(second.Retirements, "the incoming owner keeps its own work").IsEqualTo(0);
+        await Assert.That(second.LastContext!.Retirement!.Retired).IsTrue();
+        await Assert.That(second.LastContext!.Retirement!.ModuleName).IsEqualTo("First");
+    }
+
+    [Test]
+    public async Task Arbitrate_OutgoingRefusesToRetire_TheRefusalReachesTheIncomingModule()
+    {
+        var first = new FakeModule("First", 100, BotActivityDecision.Allow("first.act")) { Retire = false };
+        var second = new FakeModule("Second", 50, BotActivityDecision.Allow("second.act"));
+        var arbiter = new BotGoalArbiter([first, second]);
+        var bot = NewBot("retire-refusal-bot");
+
+        await Assert.That(arbiter.Arbitrate(bot, 12f).Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+
+        first.Decision = BotActivityDecision.Deny("done");
+        var changed = arbiter.Arbitrate(bot, 12f);
+
+        await Assert.That(changed.Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+        await Assert.That(first.Retirements).IsEqualTo(1);
+        var retirement = second.LastContext!.Retirement;
+        await Assert.That(retirement!.Retired).IsFalse();
+        await Assert.That(retirement.ActivityName).IsEqualTo("first.act");
+        await Assert.That(retirement.Reason).Contains("refused");
     }
 
     [Test]
@@ -357,6 +414,53 @@ public class BotGoalArbiterTests
     }
 
     [Test]
+    public async Task SchedulePhaseModule_ElectedWorkOwnsTheRoute_Declines()
+    {
+        var module = new SchedulePhaseActivityModule(
+            new BotScheduleOptions { Enabled = true },
+            new RecordingBehavior(),
+            metadataProvider: id => PlayerBotMetadata.Empty(id));
+        var bot = NewBot("sched-owned-bot");
+
+        // Plan T8 (audit L1-g): the schedule layer must not overwrite a route an
+        // elected work leg owns — ActiveActivity is the arbiter's authority.
+        var owned = module.CanActivate(ContextFor(bot, active: "farm.work", hour: 23f));
+
+        await Assert.That(owned.CanActivate).IsFalse();
+        await Assert.That(owned.WhyNot).Contains("farm.work");
+
+        // Idle and the schedule layer's own phases own no route: the phase applies.
+        await Assert.That(module.CanActivate(ContextFor(bot, active: "idle", hour: 23f)).CanActivate).IsTrue();
+        await Assert.That(module.CanActivate(ContextFor(bot, active: "schedule.work", hour: 23f)).CanActivate).IsTrue();
+    }
+
+    [Test]
+    public async Task RouteOwner_ReportsLiveWork_AndNothingForIdleOrTheSchedule()
+    {
+        var bot = NewBot("route-owner-bot");
+        var arbiter = new BotGoalArbiter([new FakeModule("Farm", 55, BotActivityDecision.Allow("farm.work"))]);
+
+        await Assert.That(arbiter.GetRouteOwner(bot.CharacterId), "no election yet").IsNull();
+
+        arbiter.Arbitrate(bot, gameHour: 12f);
+        await Assert.That(arbiter.GetRouteOwner(bot.CharacterId)).IsEqualTo("farm.work");
+
+        arbiter.Forget(bot.CharacterId);
+        await Assert.That(arbiter.GetRouteOwner(bot.CharacterId)).IsNull();
+
+        var idleArbiter = new BotGoalArbiter([new FakeModule("Idle", 0, BotActivityDecision.Allow("idle"))]);
+        idleArbiter.Arbitrate(bot, gameHour: 12f);
+        await Assert.That(idleArbiter.GetActiveActivity(bot.CharacterId)).IsEqualTo("idle");
+        await Assert.That(idleArbiter.GetRouteOwner(bot.CharacterId), "idle clears the route instead of owning it")
+            .IsNull();
+
+        var scheduleArbiter = new BotGoalArbiter([new FakeModule("Schedules", 100, BotActivityDecision.Allow("schedule.work"))]);
+        scheduleArbiter.Arbitrate(bot, gameHour: 12f);
+        await Assert.That(scheduleArbiter.GetRouteOwner(bot.CharacterId), "the schedule's own phase is its own route")
+            .IsNull();
+    }
+
+    [Test]
     public async Task PresenceRoamModule_LiveRoute_NeverRears()
     {
         var behavior = new RecordingBehavior();
@@ -387,6 +491,96 @@ public class BotGoalArbiterTests
 
         await Assert.That(activity.Name).IsEqualTo("idle");
         await Assert.That(stepExecutor.GetRoamRoute(bot.CharacterId), "idle clears the route").IsNull();
+    }
+
+    #endregion
+
+    #region Dispatcher-or-deny (T9)
+
+    [Test]
+    public async Task Arbitrate_ActivityWithNoDispatchOwner_IsRefusedWithTheMissingOwner()
+    {
+        var module = new FakeModule("Fishing", 60, BotActivityDecision.Allow("fishing.contest"));
+        var arbiter = new BotGoalArbiter([module]) { ActivityCarrier = BotActivityDispatchSurface.IsCarried };
+        var bot = NewBot("ownerless-bot");
+
+        var result = arbiter.Arbitrate(bot, gameHour: 12f);
+
+        await Assert.That(result.Outcome).IsEqualTo(BotArbitrationOutcome.NoCandidate);
+        await Assert.That(result.WhyNot).IsEqualTo("no dispatch owner for activity 'fishing.contest'");
+        await Assert.That(module.Activations, "an ownerless allowance must never activate").IsEqualTo(0);
+        await Assert.That(arbiter.GetActiveActivity(bot.CharacterId)).IsNull();
+        await Assert.That(arbiter.OwnerlessRefusalCount).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task Arbitrate_OwnerlessRefusal_LetsTheLowerBandTakeOver()
+    {
+        var ownerless = new FakeModule("Fishing", 60, BotActivityDecision.Allow("fishing.contest"));
+        var carried = new FakeModule("Presence", 50, BotActivityDecision.Allow(PresenceRoamActivityModule.ActivityName));
+        var arbiter = new BotGoalArbiter([ownerless, carried]) { ActivityCarrier = BotActivityDispatchSurface.IsCarried };
+        var bot = NewBot("ownerless-lower-band-bot");
+
+        var result = arbiter.Arbitrate(bot, gameHour: 12f);
+
+        await Assert.That(result.Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+        await Assert.That(result.Activity!.ModuleName).IsEqualTo("Presence");
+        await Assert.That(carried.Activations).IsEqualTo(1);
+        await Assert.That(ownerless.Activations).IsEqualTo(0);
+        await Assert.That(arbiter.OwnerlessRefusalCount).IsEqualTo(1);
+        await Assert.That(result.WhyNot, "the operator read-back still shows the ownerless module")
+            .IsEqualTo("no dispatch owner for activity 'fishing.contest'");
+    }
+
+    [Test]
+    public async Task Arbitrate_WithoutTheCarrierCheck_KeepsThePreT9Behaviour()
+    {
+        var module = new FakeModule("Fishing", 60, BotActivityDecision.Allow("fishing.contest"));
+        var arbiter = new BotGoalArbiter([module]);
+        var bot = NewBot("no-carrier-check-bot");
+
+        var result = arbiter.Arbitrate(bot, gameHour: 12f);
+
+        await Assert.That(result.Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+        await Assert.That(result.Activity!.Name).IsEqualTo("fishing.contest");
+        await Assert.That(arbiter.OwnerlessRefusalCount).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Arbitrate_CarriedActivity_IsNotRefused()
+    {
+        var module = new FakeModule("Quest", 58, BotActivityDecision.Allow("quest.progress"));
+        var arbiter = new BotGoalArbiter([module]) { ActivityCarrier = BotActivityDispatchSurface.IsCarried };
+        var bot = NewBot("carried-bot");
+
+        var result = arbiter.Arbitrate(bot, gameHour: 12f);
+
+        await Assert.That(result.Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+        await Assert.That(result.Activity!.Name).IsEqualTo("quest.progress");
+        await Assert.That(arbiter.OwnerlessRefusalCount).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Arbitrate_RealFishingModule_IsRefusedByTheRealSurface()
+    {
+        var now = new DateTimeOffset(2026, 9, 10, 12, 0, 0, TimeSpan.Zero);
+        var module = new FishingContestActivityModule(
+            new FishingContestModuleOptions { Enabled = true, OpensAt = now.AddHours(-1), ClosesAt = now.AddHours(1) },
+            utcNow: () => now);
+        var presence = new FakeModule("Presence", 50, BotActivityDecision.Allow(PresenceRoamActivityModule.ActivityName));
+        var arbiter = new BotGoalArbiter([module, presence]) { ActivityCarrier = BotActivityDispatchSurface.IsCarried };
+        var bot = NewBot("real-fishing-bot");
+
+        // The real module really does allow its activity while the window is open...
+        await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+
+        var result = arbiter.Arbitrate(bot, gameHour: 12f);
+
+        // ...and the real surface refuses it, so the lower band runs instead.
+        await Assert.That(result.Outcome).IsEqualTo(BotArbitrationOutcome.Activated);
+        await Assert.That(result.Activity!.ModuleName).IsEqualTo("Presence");
+        await Assert.That(arbiter.OwnerlessRefusalCount).IsEqualTo(1);
+        await Assert.That(arbiter.GetActiveActivity(bot.CharacterId)).IsEqualTo(PresenceRoamActivityModule.ActivityName);
     }
 
     #endregion

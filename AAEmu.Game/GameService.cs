@@ -4,6 +4,7 @@ using AAEmu.Commons.Utils;
 using AAEmu.Commons.Utils.DB;
 using AAEmu.Commons.Utils.Updater;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.Id;
 using AAEmu.Game.Core.Managers.Stream;
 using AAEmu.Game.Core.Managers.UnitManagers;
@@ -17,6 +18,7 @@ using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Utils.Scripts;
 
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using NLog;
@@ -152,6 +154,13 @@ public sealed class GameService : IHostedService, IDisposable
     {
         Logger.Info("Stopping daemon...");
 
+        // A1 converging teardown: disarm the bot host FIRST, while the world
+        // and character managers are still alive, so every enrolled bot leaves
+        // through its ordinary leave-save and the queued steps the stopped
+        // game loop can no longer run are dropped with a record. Never fatal:
+        // a partial teardown is logged with its failures.
+        DisarmBotHost("host-shutdown");
+
         await SaveManager.Instance.StopAsync();
 
         // SpawnManager.Instance.Stop(); Moved to World Instance
@@ -172,6 +181,33 @@ public sealed class GameService : IHostedService, IDisposable
         TimeManager.Instance.Stop();
 
         ClientFileManager.ClearSources();
+    }
+
+    /// <summary>
+    /// A1 converging teardown: hand the bot host to its single owner
+    /// (<see cref="IPlayerBotScheduler.Disarm"/>) so a stopping server never
+    /// leaves a bot Active with its native work abandoned and never drops
+    /// queued steps without a record. A no-op when the bot seam was never
+    /// wired; a partial teardown is logged with its failures, never swallowed.
+    /// </summary>
+    private static void DisarmBotHost(string reason)
+    {
+        var scheduler = SingletonContainer.ServiceProvider?.GetService<IPlayerBotScheduler>();
+        if (scheduler is null)
+            return;
+
+        try
+        {
+            var report = scheduler.Disarm(reason);
+            if (!report.Converged)
+                Logger.Warn("Bot host teardown did NOT converge: {Report}", report);
+            else if (report.SchedulerWasRunning || report.BotsDeactivated > 0 || report.QueuedStepsDropped > 0)
+                Logger.Info("Bot host disarmed on shutdown: {Report}", report);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "Bot host disarm failed during shutdown");
+        }
     }
 
     public void Dispose()

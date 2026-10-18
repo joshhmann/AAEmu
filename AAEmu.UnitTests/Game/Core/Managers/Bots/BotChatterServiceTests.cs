@@ -27,6 +27,8 @@ public class BotChatterServiceTests
         public IReadOnlyList<PlayerBotRuntime> GetActive() => Active;
         public bool Spawn(Character character, string owner) => true;
         public bool Activate(uint characterId, object? botContext, string owner) => true;
+        public bool LeaveHeadlessCharacter(Character expected, AAEmu.Game.Core.Managers.CharacterLifecycleReason reason,
+            out bool savedThisCall, Func<bool>? releaseCachedSession = null) => throw new NotSupportedException("not used by this rig");
         public bool Deactivate(uint characterId, string reason) => true;
         public bool TryGet(uint characterId, out PlayerBotRuntime? runtime)
         {

@@ -30,6 +30,9 @@ public sealed class ConflictJoinActivityModule : IBotActivityModule
     public string Name => "ConflictJoin";
     public int Priority { get; } = 75;
 
+    /// <inheritdoc />
+    public IReadOnlyList<string> DeclaredActivities => [BotActivityDispatchSurface.ConflictPrefix];
+
     /// <summary>Minimum HP fraction to consider joining.</summary>
     public const float MinHpFraction = 0.7f;
 

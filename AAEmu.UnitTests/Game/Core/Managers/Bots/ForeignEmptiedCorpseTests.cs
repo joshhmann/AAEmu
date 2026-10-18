@@ -65,9 +65,9 @@ public class ForeignEmptiedCorpseTests
         // the live prey (10m, same bearing) starves; with the exclusion the
         // corpse is never a candidate and B closes on live prey instead.
         GameplayActorTestRig.SetPosition(second, new Vector3(8, 0, 0));
-        // Region-graph join (BotRadarProjectionTests.JoinActor convention):
-        // JoinActorWorld moves ParentWorld, but Observe's GetAround reads the
-        // region graph — without this the guest perceives nothing.
+        // Region-graph join: JoinActorWorld moves ParentWorld, but Observe's
+        // GetAround reads the region graph — without this the guest perceives
+        // nothing.
         var guestRegion = session.World.GetRegionByPos(second.Character.Transform.World.Position)!;
         guestRegion.AddObject(second.Character);
         second.Character.Region = guestRegion;

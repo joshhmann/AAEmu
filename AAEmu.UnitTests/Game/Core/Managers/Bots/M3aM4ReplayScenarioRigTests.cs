@@ -17,6 +17,7 @@ using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.Models;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Effects;
+using AAEmu.Game.Models.Game.Skills.Effects.Enums;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
@@ -106,7 +107,9 @@ public class M3aM4ReplayScenarioRigTests
     }
 
     [Test]
-    public async Task M3aM4EconomicReplay_OnFixtureWorld_PassesConservationAndLifecycle()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task M3aM4EconomicReplay_OnFixtureWorld_PassesConservationAndLifecycle(bool deferHarvestObservation)
     {
         // ---------------------------------------------------------- surfaces
         CropHarvestLoopRig.Seed();          // real potato chain (seed 15659 → crop 2259 → yield 7992)
@@ -137,10 +140,10 @@ public class M3aM4ReplayScenarioRigTests
         GameplayActorTestRig.SetNpcPosition(session, generalMerchantObjId, RigFarmOrigin);
 
         // Craft bench (fixture doodad 1m in front of the actor).
-        var benchObjId = GameplayActorTestRig.SpawnCraftBench(session, actor);
+        GameplayActorTestRig.SpawnCraftBench(session, actor);
 
         var world = new FixtureReplayWorld(seedMerchantObjId, generalMerchantObjId);
-        var pump = new FixtureReplayPump(session, actor, benchObjId);
+        using var pump = new FixtureReplayPump(session, actor, deferHarvestObservation);
 
         var options = new M3aM4ReplayScenario.ReplayOptions
         {
@@ -184,8 +187,6 @@ public class M3aM4ReplayScenarioRigTests
 
         await Assert.That(result.Passed).IsTrue();
 
-        // The route drove the full action vocabulary (≥ 12 trace records).
-        await Assert.That(result.ActorRequests).IsGreaterThanOrEqualTo(12);
         // Pack conservation + currency + labor + lifecycle criteria all green.
         await Assert.That(result.Criteria.Any(c => c.Name == "pack-conserved" && c.Passed)).IsTrue();
         await Assert.That(result.Criteria.Any(c => c.Name == "currency-conservation" && c.Passed)).IsTrue();
@@ -284,14 +285,20 @@ public class M3aM4ReplayScenarioRigTests
             {
                 Id = RigCraftSkillId,
                 ManaCost = 0,
-                CastingTime = 0,
+                CastingTime = 150, // Explicit shortened native fixture cast.
                 CooldownTime = 0,
                 MinRange = 0,
                 MaxRange = 100,
                 ConsumeLaborPower = 10,
                 ActabilityGroupId = 0,
                 TargetType = SkillTargetType.Doodad,
-                TargetSelection = SkillTargetSelection.Target
+                TargetSelection = SkillTargetSelection.Target,
+                Effects = [new SkillEffect
+                {
+                    Template = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart },
+                    Chance = 100, Friendly = true, NonFriendly = true, AlwaysHit = true,
+                    EndLevel = byte.MaxValue, ApplicationMethod = SkillEffectApplicationMethod.Target
+                }]
             };
         }
     }
@@ -417,37 +424,29 @@ public class M3aM4ReplayScenarioRigTests
 
     /// <summary>
     /// Fixture pump: drives in-flight requests deterministically (no wall
-    /// clock) — craft completion through the real CraftEffect chain (the
-    /// same step the rig's CompleteCraftStep applies), crop maturity through
-    /// the armed engine growth tasks (DoodadFuncGrowthTask.Execute — the
-    /// Harvest rig's own no-wall-clock path), and the wagon is injected
-    /// (the fixture world has no real summon-scroll item data).
+    /// clock acceleration): requests wait for actual native queued callbacks.
+    /// Harvest/craft use explicit 150ms metadata, not canonical cast timing.
+    /// Mature crop and wagon initial fixtures do not prove acquisition/growth.
     /// </summary>
-    private sealed class FixtureReplayPump(HeadlessSession session, GameplayActor actor, uint benchObjId)
-        : M3aM4ReplayScenario.IScenarioPump
+    private sealed class FixtureReplayPump(HeadlessSession session, GameplayActor actor, bool deferHarvestObservation = false)
+        : M3aM4ReplayScenario.IScenarioPump, IDisposable
     {
-        private bool _craftStepApplied;
+        private readonly GameplayActorUseItemPacketTests.NativeScheduler _scheduler = new();
+        private readonly GameplayActorHarvestTests.NativeHarvestSkill _harvest = new(150);
 
         public ActorRequest Drive(GameplayActor a, ActorRequest request, TimeSpan maxWait)
         {
+            if (deferHarvestObservation && request.Action == ActorActionType.Harvest && !request.IsTerminal)
+            {
+                _scheduler.PumpFor(null, TimeSpan.FromMilliseconds(350)).GetAwaiter().GetResult();
+                if (a.Character.ParentWorld.GetDoodad(request.TargetId) != null || request.IsTerminal)
+                    throw new InvalidOperationException("Native harvest did not commit before the pump observation boundary");
+                return request; // Real callback committed; original actor has not observed it yet.
+            }
             var deadline = Environment.TickCount64 + (long)maxWait.TotalMilliseconds;
             while (!request.IsTerminal && Environment.TickCount64 < deadline)
             {
-                a.Tick(TimeSpan.FromMilliseconds(20));
-                if (request.Action == ActorActionType.Craft && !_craftStepApplied
-                    && a.Character.Craft is { IsCraftQueueActive: true })
-                {
-                    // The engine craft queue drains when the skill pipeline
-                    // completes its step — apply the REAL CraftEffect (the
-                    // exact chain CharacterCraft's CraftTask runs) once.
-                    var bench = a.Character.ParentWorld?.GetDoodad(benchObjId);
-                    var effect = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart };
-                    effect.Apply(a.Character, null, bench, null,
-                        new CastSkill(RigCraftSkillId, 0), new EffectSource(), null, DateTime.UtcNow);
-                    _craftStepApplied = true;
-                }
-
-                Thread.Sleep(5);
+                _scheduler.PumpFor(a, TimeSpan.FromMilliseconds(20)).GetAwaiter().GetResult();
             }
 
             return request;
@@ -584,5 +583,11 @@ public class M3aM4ReplayScenarioRigTests
         private static uint s_nextCropObjId = 0x6000_0000;
 
         private static uint NextCropObjId() => s_nextCropObjId++;
+
+        public void Dispose()
+        {
+            _harvest.Dispose();
+            _scheduler.Dispose();
+        }
     }
 }

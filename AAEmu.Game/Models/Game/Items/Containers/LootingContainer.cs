@@ -220,13 +220,19 @@ public class LootingContainer(IBaseUnit owner)
             // var baseId = ((ulong)LootOwner.ObjId << 32) + ((ulong)LootOwnerType << 16) + 1;
 
             // Generate the actual loot
+            // Keep the native claim snapshot and one shared roll. A foreign
+            // final hit must neither remove nor supply an entitled quest need.
+            // With no resolved eligible recipient, retain the legacy fallback.
+            Func<uint, bool> npcQuestEligible = eligiblePlayers.Count > 0
+                ? questId => eligiblePlayers.Any(recipient => recipient.Quests.HasQuest(questId))
+                : null;
             List<(uint itemId, int count, byte grade, uint lootGroupOrigin)> lootPackResults = [];
             foreach (var lootPackDropping in lootPackDroppingNpcs)
             {
                 var lootPack = LootGameData.Instance.GetPack(lootPackDropping.LootPackId);
                 if (lootPack == null)
                     continue;
-                lootPackResults.AddRange(lootPack.GeneratePackNewV2(lootDropRate, lootGoldRate, killer as Character, ActabilityType.None));
+                lootPackResults.AddRange(lootPack.GeneratePackNewV2(lootDropRate, lootGoldRate, killer as Character, ActabilityType.None, null, npcQuestEligible));
                 // var items = lootPack.GenerateNpcPackItems(ref baseId, killer, lootDropRate, lootGoldRate);
                 // RegisterItems(items);
             }
@@ -247,6 +253,22 @@ public class LootingContainer(IBaseUnit owner)
                     RegisterItems(resultsToAdd);
                 }
             }
+
+            // A killing blow is not proof that its recipient received quest
+            // loot. Keep the generated items separate from the remaining
+            // container, which another eligible player may already have opened.
+            int remainingCount;
+            lock (ItemsLock)
+                remainingCount = Items.Count;
+            var recipients = string.Join(",", eligiblePlayers.OrderBy(p => p.Id).Take(16).Select(p => p.Id));
+            var generated = string.Join(",", lootPackResults.Take(16).Select(i => $"{i.itemId}x{i.count}"));
+            var killerQuests = (killer as Character)?.Quests.ActiveQuests.Keys.OrderBy(id => id).ToArray() ?? [];
+            Logger.Info($"NpcLootGenerated npc={npc.ObjId} template={npc.TemplateId} killer={(killer as Character)?.Id ?? 0} " +
+                $"eligibleCount={eligiblePlayers.Count} eligible=[{recipients}] eligibleTruncated={eligiblePlayers.Count > 16} " +
+                $"dropRate={lootDropRate} worldLootRate={AppConfiguration.Instance.World.LootRate} " +
+                $"generatedCount={lootPackResults.Count} generated=[{generated}] generatedTruncated={lootPackResults.Count > 16} " +
+                $"remainingCount={remainingCount} killerQuestCount={killerQuests.Length} " +
+                $"killerQuests=[{string.Join(",", killerQuests.Take(16))}] killerQuestsTruncated={killerQuests.Length > 16}");
 
             lock (ItemsLock)
             {

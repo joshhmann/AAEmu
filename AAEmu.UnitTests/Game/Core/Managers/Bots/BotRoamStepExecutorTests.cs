@@ -95,6 +95,63 @@ public class BotRoamStepExecutorTests
     }
 
     /// <summary>
+    /// Activation binding: the production lifecycle stamps a non-zero
+    /// <see cref="PlayerBotRuntime.Generation"/> when a bot is embodied, and the
+    /// activity modules / presence coordinator arm the route BEFORE that
+    /// activation's first step. An armed state must adopt the live generation
+    /// instead of being evicted — otherwise the route, its actor and the staged
+    /// decision trace are all discarded in the same wake they were armed
+    /// (observed live 2026-10-16: bot held presence.roam, logged the arming,
+    /// and never walked).
+    /// </summary>
+    [Test]
+    public async Task Step_ArmedRouteBeforeFirstStep_AdoptsLiveGeneration_AndWalks()
+    {
+        var (executor, actor, runtime, clock) = CreateRig("roam-armed-generation");
+        runtime.Generation = 1; // embodied bot: production never leaves this at 0
+
+        var route = new BotPath(
+        [
+            new Vector3(10, 0, 0),
+            new Vector3(20, 0, 0)
+        ], BotPath.LoopMode.Loop);
+        executor.SetRoamRoute(runtime.Character, route);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        var next = await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNotNull()
+            .Because("the route armed for this activation must survive its first step");
+        await Assert.That(actor.ActiveRequest).IsNotNull();
+        await Assert.That(actor.ActiveRequest!.Action).IsEqualTo(ActorActionType.Move);
+        await Assert.That(next).IsNotNull();
+    }
+
+    /// <summary>
+    /// The other arm of the same rule: a state that already ran a step is bound
+    /// to its activation, so a later activation still evicts it (route included).
+    /// Adopting is only for states that never ran a step.
+    /// </summary>
+    [Test]
+    public async Task Step_StateBoundToPreviousActivation_IsStillEvicted()
+    {
+        var (executor, _, runtime, clock) = CreateRig("roam-stale-generation");
+        runtime.Generation = 1;
+        executor.SetRoamRoute(runtime.Character, new BotPath([new Vector3(10, 0, 0)], BotPath.LoopMode.Loop));
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNotNull();
+
+        runtime.Generation = 2; // re-embodied
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId)).IsNull()
+            .Because("a state bound to a previous activation is evicted, route included");
+    }
+
+    /// <summary>
     /// The default-off contract, stated as its own test: an idler with no route,
     /// no live request, no hunt and no butcher reports null, so the scheduler
     /// drops it. Flag is set explicitly OFF so a machine exporting
@@ -342,6 +399,7 @@ public class BotRoamStepExecutorTests
         var wildlife = new Npc
         {
             ObjId = 9876,
+            Template = new NpcTemplate { Id = 9876, Scale = 1f },
             Hp = 100,
             MaxHp = 100,
             Faction = new SystemFaction { Id = (FactionsEnum)115 }
@@ -984,7 +1042,12 @@ public class BotRoamStepExecutorTests
         await Assert.That(victim.State).IsEqualTo(ActorLifecycleState.Running);
         actor.PreemptCurrent("external work selected");
         GameplayActorTestRig.SetPosition(actor, new Vector3(1000, 0, 0));
-        actor.SetPendingMoveOwner("ROAM");
+        // A genuinely foreign owner. The presence/patrol owner ("ROAM") is the
+        // one owner the quest leg deliberately pauses at its own decision tick
+        // (the 0a patrol pause, covered by
+        // StepAsync_QuestActiveOverLivePatrol_PausesPatrolSoLegRuns); every
+        // other owner — this one included — stays untouched by that pause.
+        actor.SetPendingMoveOwner("OTHER:party-assist");
         var unrelated = actor.MoveTo(new Vector3(1100, 0, 0), 2f, TimeSpan.FromMinutes(1));
         await Assert.That(unrelated.State).IsEqualTo(ActorLifecycleState.Running);
         clock.Advance(TimeSpan.FromMilliseconds(100));

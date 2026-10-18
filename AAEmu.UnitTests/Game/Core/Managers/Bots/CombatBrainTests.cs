@@ -1049,11 +1049,6 @@ public class CombatBrainTests
     ///
     /// The bound is read from <see cref="CombatBrain.AggroBandM"/>, not from a
     /// literal 25, so a future change to the census radius is caught here.
-    /// <c>BotRadarProjection.PerceivedRadiusM</c> would name the same number but
-    /// is deliberately unreadable from this namespace: the IL scan in
-    /// <c>PerceptionStackSurfaceTests</c> forbids any decision path from
-    /// referencing the perception stack, which is exactly why
-    /// <see cref="CombatBrain.AggroBandM"/> is quoted as a literal.
     /// </summary>
     [Test]
     public async Task ACrowdedArcherBackingOff_LandsItsPreyInsideThePerceptionRadius()

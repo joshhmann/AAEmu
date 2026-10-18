@@ -23,6 +23,9 @@ using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Items.Loots;
 using AAEmu.Game.Models.Game.Items.Templates;
+using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Effects;
+using AAEmu.Game.Models.Game.Skills.Effects.Enums;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.World.Transform;
@@ -869,6 +872,26 @@ public static class CropHarvestLoopRig
             if (!skills.ContainsKey(skillId))
                 skills[skillId] = new SkillTemplate { Id = skillId };
         }
+        // Explicit instant crop fixture, not canonical 4000ms cast evidence.
+        // The effect itself follows the real native interaction pipeline.
+        var harvest = skills[CropHarvestLoopTests.HarvestSkillId];
+        harvest.TargetType = SkillTargetType.Doodad;
+        harvest.TargetSelection = SkillTargetSelection.Target;
+        harvest.MaxRange = 4;
+        harvest.CastingTime = 0;
+        harvest.ConsumeLaborPower = 1;
+        harvest.ActabilityGroupId = 6;
+        harvest.Effects.Clear();
+        harvest.Effects.Add(new SkillEffect
+        {
+            Template = new InteractionEffect { WorldInteraction = WorldInteractionType.CropHarvest },
+            EndLevel = byte.MaxValue,
+            Friendly = true,
+            NonFriendly = true,
+            Chance = 100,
+            AlwaysHit = true,
+            ApplicationMethod = SkillEffectApplicationMethod.Target
+        });
     }
 
     /// <summary>

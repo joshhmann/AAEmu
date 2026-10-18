@@ -292,6 +292,19 @@ public class QuestBootstrapModuleTests
         QuestFixtureRow.InvalidateAll();
     }
 
+    /// <summary>
+    /// Credits the staged Progress step's gather objective (item 4058 x3) so the
+    /// next AdvanceQuest genuinely applies: the step machine re-reads the bag,
+    /// sees the objective met, and moves the quest off Progress. Without it the
+    /// step machine runs and applies nothing — a Completed terminal carrying a
+    /// failed payload, which is not landed work.
+    /// </summary>
+    private static void CreditAdvanceQuestObjective(GameplayActor actor)
+    {
+        GameplayActorTestRig.SeedItemTemplate(BoarMeatItemId);
+        GameplayActorTestRig.GrantItem(actor, BoarMeatItemId, 3);
+    }
+
 
     // ------------------------------------------------------------ gate matrix
 
@@ -608,8 +621,10 @@ public class QuestBootstrapModuleTests
     [Test]
     public async Task StepAsync_QuestActiveAndAdvanceLands_SetsQuestLegFlag()
     {
-        // Staged quest 251 (Progress, uncredited): its advance genuinely
-        // lands — quest 254 goes Ready on accept and can no longer drive this.
+        // Staged quest 251 (Progress) with its gather objective credited, so the
+        // advance genuinely applies and the quest leg owns the wake. A3 made the
+        // request payload the applied verdict, so a declined advance is no
+        // longer mistaken for landed work.
         var rigged = GameplayActorTestRig.CreateActor("qb-leg-advance");
         var (actor, session) = rigged;
         var character = session.Character;
@@ -617,6 +632,7 @@ public class QuestBootstrapModuleTests
         character.Hp = character.MaxHp;
         JoinActorRegion(session);
         StageAdvanceQuest(actor);
+        CreditAdvanceQuestObjective(actor);
         var (executor, _, runtime, clock) = CreateQuestLegRig(rigged, "quest.progress",
             nearbyNpcs: (_, _) => []);
 
@@ -626,13 +642,17 @@ public class QuestBootstrapModuleTests
         await Assert.That(executor.GetBotState(runtime.CharacterId)?.QuestLegActive ?? false).IsTrue();
         await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AdvanceQuest
             && r.Result == ActorLifecycleState.Completed)).IsTrue();
+        // The credited objective must really move the quest: the row's payload
+        // carries the applied verdict, not just the Completed transport fact.
+        await Assert.That(actor.AuditTrace.Last(r => r.Action == ActorActionType.AdvanceQuest).Detail ?? "")
+            .Contains(QuestAdvanceOutcome.From(accepted: true, applied: true).Token);
     }
 
     [Test]
     public async Task StepAsync_QuestActive_PreemptsWildlifeAcquisitionAndRoute()
     {
-        // Staged quest 251 (Progress, uncredited): its advance genuinely
-        // lands, so the quest leg owns the wake and preempts hunt + route.
+        // Staged quest 251 (Progress) with its gather objective credited: the
+        // advance lands, so the quest leg owns the wake and preempts hunt + route.
         var rigged = GameplayActorTestRig.CreateActor("qb-leg-preempt");
         var (actor, session) = rigged;
         var character = session.Character;
@@ -641,6 +661,7 @@ public class QuestBootstrapModuleTests
         JoinActorRegion(session);
         GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
         StageAdvanceQuest(actor);
+        CreditAdvanceQuestObjective(actor);
         var wildlife = new Npc
         {
             ObjId = 0x71001,
@@ -660,6 +681,92 @@ public class QuestBootstrapModuleTests
         await Assert.That(executor.GetBotState(runtime.CharacterId)?.QuestLegActive ?? false).IsTrue();
         await Assert.That(executor.GetBotState(runtime.CharacterId)?.TargetNpcObjId ?? 1u).IsEqualTo(0u);
         await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Move)).IsFalse();
+    }
+
+    [Test]
+    public async Task StepAsync_QuestActiveOverLivePatrol_PausesPatrolSoLegRuns()
+    {
+        // The presence ring never finishes, so its live ROAM leg is still
+        // pending at the next wake boundary. The arbiter runs before the step,
+        // so the module only ever sees that busy actor and its opportunity
+        // listing can never become authoritative — without the 0a patrol pause
+        // the actor-idle guard starves the quest leg at every wake (live T10
+        // run 1: 295 s of presence.roam, 0 discover calls, 69 interrupted moves).
+        var rigged = GameplayActorTestRig.CreateActor("qb-leg-patrol");
+        var (actor, session) = rigged;
+        var character = session.Character;
+        character.Level = 3;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        GameplayActorTestRig.SetPosition(actor, new Vector3(0, 0, 0));
+        StageAdvanceQuest(actor);
+        CreditAdvanceQuestObjective(actor);
+        var activity = "presence.roam";
+        var clock = new FakeTimeProvider();
+        BotRoamStepExecutor executor = new()
+        {
+            ActorFactory = _ => actor,
+            TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            RoamSpeed = 2f,
+            ActiveActivityProvider = _ => activity,
+            NearbyNpcProvider = (_, _) => [],
+            NearbyDoodadProvider = (_, _) => [],
+            UnitResolver = (c, id) => c.ParentWorld?.GetUnit(id),
+            DoodadResolver = (c, id) => c.ParentWorld?.GetDoodad(id)
+        };
+        var runtime = new PlayerBotRuntime(actor.Character, "quest-leg-patrol");
+        executor.SetRoamRoute(runtime.Character, new BotPath([new Vector3(50f, 0f, 0f)], BotPath.LoopMode.Loop));
+
+        // Wake 1 (presence.roam): the patrol owns the actor — a live ROAM Move
+        // is left pending across the wake boundary.
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var patrol = actor.ActiveRequest;
+        await Assert.That(patrol).IsNotNull();
+        await Assert.That(patrol!.Action).IsEqualTo(ActorActionType.Move);
+        await Assert.That(patrol.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(patrol.MoveOwner).IsEqualTo("ROAM");
+
+        // Wake 2 (quest.progress): the elected quest activity pauses that
+        // patrol leg so the quest leg can take the actor on this same wake.
+        activity = "quest.progress";
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(executor.GetBotState(runtime.CharacterId)?.QuestLegActive ?? false).IsTrue();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AdvanceQuest
+            && r.Result == ActorLifecycleState.Completed)).IsTrue();
+        await Assert.That(patrol.IsTerminal).IsTrue();
+    }
+
+    [Test]
+    public async Task StepAsync_QuestActiveAdvanceDeclines_DoesNotClaimWake()
+    {
+        // Same staged quest with its gather objective UNCREDITED (0/3 meat): the
+        // step machine runs and applies nothing. The advance is Completed by
+        // design, but A3 makes the payload the applied verdict, so the wake is
+        // NOT landed work and the quest leg must not claim it — the bot falls
+        // through to the travel/hunt legs that can actually make progress.
+        var rigged = GameplayActorTestRig.CreateActor("qb-leg-declined");
+        var (actor, session) = rigged;
+        var character = session.Character;
+        character.Level = 3;
+        character.Hp = character.MaxHp;
+        JoinActorRegion(session);
+        StageAdvanceQuest(actor);
+        var (executor, _, runtime, clock) = CreateQuestLegRig(rigged, "quest.progress",
+            nearbyNpcs: (_, _) => []);
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AdvanceQuest
+            && r.Result == ActorLifecycleState.Completed)).IsTrue();
+        var row = actor.AuditTrace.Last(r => r.Action == ActorActionType.AdvanceQuest);
+        await Assert.That(row.Detail ?? "").Contains(
+            QuestAdvanceOutcome.From(accepted: true, applied: false).Token);
+        await Assert.That(executor.GetBotState(runtime.CharacterId)?.QuestLegActive ?? true).IsFalse();
     }
 
     [Test]

@@ -29,6 +29,8 @@ public class BotScheduleServiceTests
         public IReadOnlyList<PlayerBotRuntime> GetActive() => Active;
         public bool Spawn(Character character, string owner) => true;
         public bool Activate(uint characterId, object? botContext, string owner) => true;
+        public bool LeaveHeadlessCharacter(Character expected, AAEmu.Game.Core.Managers.CharacterLifecycleReason reason,
+            out bool savedThisCall, Func<bool>? releaseCachedSession = null) => throw new NotSupportedException("not used by this rig");
         public bool Deactivate(uint characterId, string reason) => true;
         public bool TryGet(uint characterId, out PlayerBotRuntime? runtime)
         {
@@ -65,11 +67,35 @@ public class BotScheduleServiceTests
             Moves.Add((bot.CharacterId, target));
     }
 
+    /// <summary>
+    /// Minimal activatable module so the rig can drive a REAL
+    /// <see cref="BotGoalArbiter"/> and produce the route-ownership fact the
+    /// service reads (plan T8). <see cref="CanWork"/> flips to false to end the
+    /// work leg; the arbiter then reports no active activity.
+    /// </summary>
+    private sealed class FakeModule(string name, int priority, string activityName) : IBotActivityModule
+    {
+        public string Name { get; } = name;
+        public int Priority { get; } = priority;
+        public bool CanWork { get; set; } = true;
+
+        public BotActivityDecision CanActivate(BotActivityContext context) =>
+            CanWork ? BotActivityDecision.Allow(activityName) : BotActivityDecision.Deny("work finished");
+
+        public BotActivity Activate(BotActivityContext context) => new(activityName, Name);
+    }
+
     private sealed class Rig
     {
         public required FakeBotManager Manager { get; init; }
         public required FakeTickManager Ticker { get; init; }
-        public required RecordingBehavior Behavior { get; init; }
+
+        /// <summary>The behavior the service was built with (recording fake unless a test supplied a real one).</summary>
+        public required IBotScheduleBehavior Behavior { get; init; }
+
+        /// <summary>The recording fake behind <see cref="Behavior"/> — every rig except the real-behavior one.</summary>
+        public RecordingBehavior Recording => (RecordingBehavior)Behavior;
+
         public required Dictionary<uint, PlayerBotMetadata> Metadata { get; init; }
         public required BotScheduleService Service { get; init; }
 
@@ -81,12 +107,13 @@ public class BotScheduleServiceTests
         }
     }
 
-    private static Rig CreateRig(BotScheduleOptions? options = null, float hour = 12f)
+    private static Rig CreateRig(BotScheduleOptions? options = null, float hour = 12f,
+        Lazy<IBotGoalArbiter>? arbiter = null, IBotScheduleBehavior? behavior = null)
     {
         SeedFixtureSingletons();
         var manager = new FakeBotManager();
         var ticker = new FakeTickManager();
-        var behavior = new RecordingBehavior();
+        var recording = new RecordingBehavior();
         var metadata = new Dictionary<uint, PlayerBotMetadata>();
         // The hour provider closes over the rig being built here — evaluated
         // lazily per tick, never during construction.
@@ -95,20 +122,21 @@ public class BotScheduleServiceTests
         {
             Manager = manager,
             Ticker = ticker,
-            Behavior = behavior,
+            Behavior = behavior ?? recording,
             Metadata = metadata,
             Service = new BotScheduleService(
                 manager,
                 options ?? Options(),
                 ticker,
-                behavior,
+                behavior ?? recording,
                 gameHourProvider: () => rig.Hour,
                 metadataProvider: id => metadata.TryGetValue(id, out var meta)
                     ? meta
                     : PlayerBotMetadata.Empty(id),
                 scheduleWriter: (id, json) => metadata[id] = metadata.TryGetValue(id, out var meta)
                     ? meta with { Schedule = json }
-                    : PlayerBotMetadata.Empty(id) with { Schedule = json })
+                    : PlayerBotMetadata.Empty(id) with { Schedule = json },
+                arbiter: arbiter)
         };
         rig.Hour = hour;
         return rig;
@@ -162,8 +190,8 @@ public class BotScheduleServiceTests
 
         rig.Service.RunTick(); // must not resolve, apply, or persist anything
 
-        await Assert.That(rig.Behavior.Roams).IsEmpty();
-        await Assert.That(rig.Behavior.Moves).IsEmpty();
+        await Assert.That(rig.Recording.Roams).IsEmpty();
+        await Assert.That(rig.Recording.Moves).IsEmpty();
         foreach (var metadata in rig.Metadata.Values)
             await Assert.That(metadata.Schedule).IsEqualTo(string.Empty);
     }
@@ -197,9 +225,9 @@ public class BotScheduleServiceTests
 
         await Assert.That(rig.Service.TransitionCount).IsEqualTo(1);
         await Assert.That(rig.Service.SnapshotPhases()[3002]).IsEqualTo(BotSchedulePhase.Rest);
-        await Assert.That(rig.Behavior.Moves.Count).IsEqualTo(1);
-        await Assert.That(rig.Behavior.Moves[0].BotId).IsEqualTo(3002u);
-        await Assert.That(rig.Behavior.Moves[0].Target).IsEqualTo(home);
+        await Assert.That(rig.Recording.Moves.Count).IsEqualTo(1);
+        await Assert.That(rig.Recording.Moves[0].BotId).IsEqualTo(3002u);
+        await Assert.That(rig.Recording.Moves[0].Target).IsEqualTo(home);
     }
 
     [Test]
@@ -212,9 +240,9 @@ public class BotScheduleServiceTests
         rig.Service.RunTick();
 
         await Assert.That(rig.Service.SnapshotPhases()[3003]).IsEqualTo(BotSchedulePhase.Work);
-        await Assert.That(rig.Behavior.Roams.Count).IsEqualTo(1);
-        await Assert.That(rig.Behavior.Roams[0].BotId).IsEqualTo(runtime.CharacterId);
-        await Assert.That(rig.Behavior.Roams[0].FallbackCenter).IsEqualTo(new Vector3(1f, 2f, 3f));
+        await Assert.That(rig.Recording.Roams.Count).IsEqualTo(1);
+        await Assert.That(rig.Recording.Roams[0].BotId).IsEqualTo(runtime.CharacterId);
+        await Assert.That(rig.Recording.Roams[0].FallbackCenter).IsEqualTo(new Vector3(1f, 2f, 3f));
     }
 
     [Test]
@@ -227,7 +255,7 @@ public class BotScheduleServiceTests
         rig.Service.RunTick();
 
         await Assert.That(rig.Service.SnapshotPhases()[3004]).IsEqualTo(BotSchedulePhase.Travel);
-        await Assert.That(rig.Behavior.Moves.Single().Target).IsEqualTo(new Vector3(500f, 600f, 7f));
+        await Assert.That(rig.Recording.Moves.Single().Target).IsEqualTo(new Vector3(500f, 600f, 7f));
     }
 
     [Test]
@@ -241,7 +269,7 @@ public class BotScheduleServiceTests
         rig.Service.RunTick();
 
         await Assert.That(rig.Service.TransitionCount).IsEqualTo(1); // logged/applied ONCE
-        await Assert.That(rig.Behavior.Moves.Count).IsEqualTo(1);
+        await Assert.That(rig.Recording.Moves.Count).IsEqualTo(1);
     }
 
     [Test]
@@ -271,7 +299,7 @@ public class BotScheduleServiceTests
 
         var module = new SchedulePhaseActivityModule(
             rig.Service.Options,
-            rig.Behavior,
+            rig.Recording,
             gameHourProvider: () => rig.Hour,
             metadataProvider: id => rig.Metadata[id],
             scheduleWriter: (id, json) => rig.Metadata[id] = rig.Metadata[id] with { Schedule = json },
@@ -283,7 +311,7 @@ public class BotScheduleServiceTests
 
         rig.Service.RunTick();
 
-        await Assert.That(rig.Behavior.Moves.Count).IsEqualTo(1);
+        await Assert.That(rig.Recording.Moves.Count).IsEqualTo(1);
         await Assert.That(rig.Service.TransitionCount).IsEqualTo(1);
     }
 
@@ -297,8 +325,225 @@ public class BotScheduleServiceTests
         rig.Service.RunTick();
 
         await Assert.That(rig.Service.TransitionCount).IsEqualTo(0);
-        await Assert.That(rig.Behavior.Moves).IsEmpty();
+        await Assert.That(rig.Recording.Moves).IsEmpty();
         await Assert.That(rig.Service.SnapshotPhases()).DoesNotContainKey(3006u);
+    }
+
+    // ---------------------------------------------------------------- one writer per route (plan T8)
+
+    [Test]
+    public async Task PhaseChange_WhileElectedWorkOwnsTheRoute_Defers_ThenLandsWhenTheWorkEnds()
+    {
+        var work = new FakeModule("Farm", 55, "farm.work");
+        var arbiter = new BotGoalArbiter([work]);
+        var rig = CreateRig(arbiter: new Lazy<IBotGoalArbiter>(() => arbiter));
+        var runtime = AddActiveBot(rig, 4101, homeAt: new Vector3(10f, 20f, 30f));
+
+        // The bot is running an elected work leg: the arbiter's live activity
+        // owns the route — this is the authority the service reads.
+        arbiter.Arbitrate(runtime, gameHour: 12f);
+        await Assert.That(arbiter.GetRouteOwner(runtime.CharacterId)).IsEqualTo("farm.work");
+
+        // Night falls (rest 22-06) while that leg is still in force: the
+        // transition must not be applied, not be persisted, and not advance the
+        // phase memory (so it is retried instead of being lost).
+        rig.Hour = 23f;
+        rig.Service.RunTick();
+
+        await Assert.That(rig.Recording.Moves, "the elected route must survive the phase change").IsEmpty();
+        await Assert.That(rig.Recording.Roams).IsEmpty();
+        await Assert.That(rig.Service.TransitionCount).IsEqualTo(0);
+        await Assert.That(rig.Metadata[runtime.CharacterId].Schedule, "the deferred phase must not be persisted")
+            .IsEqualTo(string.Empty);
+        await Assert.That(rig.Service.SnapshotPhases(), "the applied phase must stay where it was").IsEmpty();
+        await Assert.That(rig.Service.DeferralCount).IsEqualTo(1);
+        await Assert.That(rig.Service.SnapshotDeferrals().TryGetValue(runtime.CharacterId, out var pending)).IsTrue();
+        await Assert.That(pending!.Pending).IsEqualTo(BotSchedulePhase.Rest);
+        await Assert.That(pending.Owner).IsEqualTo("farm.work");
+
+        // A second scan with the same work still holding the route: still
+        // deferred, but not counted as a new episode.
+        rig.Service.RunTick();
+        await Assert.That(rig.Service.DeferralCount).IsEqualTo(1);
+        await Assert.That(rig.Recording.Moves).IsEmpty();
+
+        // The leg ends: the arbiter drops the activity and the SAME transition
+        // lands on the next scan.
+        work.CanWork = false;
+        arbiter.Arbitrate(runtime, gameHour: 23f);
+        await Assert.That(arbiter.GetRouteOwner(runtime.CharacterId)).IsNull();
+
+        rig.Service.RunTick();
+
+        await Assert.That(rig.Recording.Moves.Count).IsEqualTo(1);
+        await Assert.That(rig.Recording.Moves[0].Target).IsEqualTo(new Vector3(10f, 20f, 30f));
+        await Assert.That(rig.Service.TransitionCount).IsEqualTo(1);
+        await Assert.That(rig.Service.DeferralCount, "the episode is not re-counted when it lands").IsEqualTo(1);
+        await Assert.That(rig.Service.SnapshotDeferrals()).IsEmpty();
+        await Assert.That(rig.Service.SnapshotPhases()[runtime.CharacterId]).IsEqualTo(BotSchedulePhase.Rest);
+        await Assert.That(rig.Metadata[runtime.CharacterId].Schedule).Contains("\"lastPhase\":\"Rest\"");
+    }
+
+    [Test]
+    public async Task DeferredTransition_WhoseWindowClosesFirst_IsDroppedNotQueued()
+    {
+        var work = new FakeModule("Farm", 55, "farm.work");
+        var arbiter = new BotGoalArbiter([work]);
+        var rig = CreateRig(hour: 10f, arbiter: new Lazy<IBotGoalArbiter>(() => arbiter));
+        var runtime = AddActiveBot(rig, 4108, homeAt: new Vector3(10f, 20f, 30f));
+
+        // Daytime with nobody elected: the work phase applies, so the bot's
+        // phase memory now says Work.
+        rig.Service.RunTick();
+        await Assert.That(rig.Recording.Roams.Count).IsEqualTo(1);
+        await Assert.That(rig.Service.SnapshotPhases()[runtime.CharacterId]).IsEqualTo(BotSchedulePhase.Work);
+
+        // An elected leg owns the route and night falls (rest 22-06): the
+        // transition is deferred, not applied.
+        arbiter.Arbitrate(runtime, gameHour: 12f);
+        rig.Hour = 23f;
+        rig.Service.RunTick();
+        await Assert.That(rig.Service.SnapshotDeferrals()[runtime.CharacterId].Pending)
+            .IsEqualTo(BotSchedulePhase.Rest);
+        await Assert.That(rig.Service.DeferralCount).IsEqualTo(1);
+
+        // The rest window closes before the leg ends. 06:05 is inside the
+        // hysteresis window past RestEnd, so the resolver holds the phase the
+        // bot is already in: the deferral resolves back to it and is DROPPED,
+        // not queued — a stale Rest at dawn must not run.
+        rig.Hour = 6.05f;
+        rig.Service.RunTick();
+
+        await Assert.That(rig.Service.SnapshotDeferrals(), "the closed-window deferral is dropped").IsEmpty();
+        await Assert.That(rig.Service.DeferralCount, "the dropped episode stays counted").IsEqualTo(1);
+        await Assert.That(rig.Service.SnapshotPhases()[runtime.CharacterId], "the applied phase stays Work")
+            .IsEqualTo(BotSchedulePhase.Work);
+        await Assert.That(rig.Recording.Moves, "no stale rest leg runs").IsEmpty();
+        await Assert.That(rig.Recording.Roams.Count, "no new work leg is armed either").IsEqualTo(1);
+
+        // Nothing was queued behind the drop: the work still owns the route.
+        await Assert.That(arbiter.GetRouteOwner(runtime.CharacterId)).IsEqualTo("farm.work");
+    }
+
+    [Test]
+    public async Task PhaseChange_WhileElectedWorkOwnsTheRoute_LeavesTheArmedRouteInPlace()
+    {
+        var work = new FakeModule("Farm", 55, "farm.work");
+        var arbiter = new BotGoalArbiter([work]);
+        var executor = new BotRoamStepExecutor();
+        var rig = CreateRig(
+            arbiter: new Lazy<IBotGoalArbiter>(() => arbiter),
+            behavior: new RoamRouteScheduleBehavior(executor));
+        var runtime = AddActiveBot(rig, 4102, homeAt: new Vector3(10f, 20f, 30f));
+
+        // The work leg armed its route through the same entry point the farm
+        // loop uses.
+        var armed = BotPath.PathTo(new Vector3(41f, 42f, 43f));
+        executor.SetRoamRoute(runtime.Character, armed);
+        arbiter.Arbitrate(runtime, gameHour: 12f);
+
+        rig.Hour = 23f; // Rest would walk home through the same behavior seam
+        rig.Service.RunTick();
+
+        await Assert.That(executor.GetRoamRoute(runtime.CharacterId), "the elected route survives the phase change")
+            .IsSameReferenceAs(armed);
+
+        // Once the work ends the same transition lands and takes the route.
+        work.CanWork = false;
+        arbiter.Arbitrate(runtime, gameHour: 23f);
+        rig.Service.RunTick();
+
+        var replaced = executor.GetRoamRoute(runtime.CharacterId);
+        await Assert.That(replaced).IsNotNull();
+        await Assert.That(replaced, "the schedule's route takes over once nothing elected owns the route")
+            .IsNotSameReferenceAs(armed);
+        await Assert.That(replaced!.CurrentTarget).IsEqualTo(new Vector3(10f, 20f, 30f));
+    }
+
+    [Test]
+    public async Task PhaseChange_NoElectedWork_AppliesAsBefore()
+    {
+        // An arbiter that is registered but has nothing in force for this bot.
+        var arbiter = new BotGoalArbiter([]);
+        var rig = CreateRig(arbiter: new Lazy<IBotGoalArbiter>(() => arbiter));
+        AddActiveBot(rig, 4103, homeAt: new Vector3(10f, 20f, 30f));
+
+        rig.Hour = 23f;
+        rig.Service.RunTick();
+
+        await Assert.That(rig.Recording.Moves.Count).IsEqualTo(1);
+        await Assert.That(rig.Service.TransitionCount).IsEqualTo(1);
+        await Assert.That(rig.Service.DeferralCount).IsEqualTo(0);
+        await Assert.That(rig.Service.SnapshotDeferrals()).IsEmpty();
+    }
+
+    [Test]
+    public async Task PhaseChange_WhenIdleOrTheScheduleOwnsTheRoute_Applies()
+    {
+        // Idle: a route-less bot (idle clears the route instead of owning one).
+        var idle = new FakeModule("Idle", 0, IdleActivityModule.ActivityName);
+        var idleArbiter = new BotGoalArbiter([idle]);
+        var idleRig = CreateRig(arbiter: new Lazy<IBotGoalArbiter>(() => idleArbiter));
+        var idleBot = AddActiveBot(idleRig, 4104, homeAt: new Vector3(10f, 20f, 30f));
+        idleArbiter.Arbitrate(idleBot, gameHour: 12f);
+        await Assert.That(idleArbiter.GetRouteOwner(idleBot.CharacterId)).IsNull();
+
+        idleRig.Hour = 23f;
+        idleRig.Service.RunTick();
+
+        await Assert.That(idleRig.Recording.Moves.Count).IsEqualTo(1);
+        await Assert.That(idleRig.Service.DeferralCount).IsEqualTo(0);
+
+        // The schedule layer's own phase: that route IS the schedule's.
+        var schedule = new FakeModule("Schedules", 100, "schedule.work");
+        var scheduleArbiter = new BotGoalArbiter([schedule]);
+        var scheduleRig = CreateRig(arbiter: new Lazy<IBotGoalArbiter>(() => scheduleArbiter));
+        var scheduleBot = AddActiveBot(scheduleRig, 4105, homeAt: new Vector3(10f, 20f, 30f));
+        scheduleArbiter.Arbitrate(scheduleBot, gameHour: 12f);
+        await Assert.That(scheduleArbiter.GetRouteOwner(scheduleBot.CharacterId)).IsNull();
+
+        scheduleRig.Hour = 23f;
+        scheduleRig.Service.RunTick();
+
+        await Assert.That(scheduleRig.Recording.Moves.Count).IsEqualTo(1);
+        await Assert.That(scheduleRig.Service.DeferralCount).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task GameLoopTick_WhileElectedWorkOwnsTheRoute_Defers()
+    {
+        var work = new FakeModule("Farm", 55, "farm.work");
+        var arbiter = new BotGoalArbiter([work]);
+        var rig = CreateRig(hour: 23f, arbiter: new Lazy<IBotGoalArbiter>(() => arbiter));
+        var runtime = AddActiveBot(rig, 4107, homeAt: new Vector3(10f, 20f, 30f));
+        arbiter.Arbitrate(runtime, gameHour: 12f);
+
+        // The REAL schedule path: Start() subscribes the scan to the game-loop
+        // tick and the tick — not a direct RunTick call — drives the deferral.
+        await Assert.That(rig.Service.Start()).IsTrue();
+        rig.Ticker.OnTick.Invoke();
+
+        await Assert.That(rig.Recording.Moves, "the elected route survives the tick").IsEmpty();
+        await Assert.That(rig.Service.TransitionCount).IsEqualTo(0);
+        await Assert.That(rig.Service.DeferralCount).IsEqualTo(1);
+        await Assert.That(rig.Service.SnapshotDeferrals()[runtime.CharacterId].Owner).IsEqualTo("farm.work");
+
+        await rig.Service.StopAsync();
+    }
+
+    [Test]
+    public async Task NoArbiterWired_KeepsTheUnconditionalBehavior()
+    {
+        // Hermetic rigs (and a host that never registered the arbiter wrapper)
+        // have no ownership authority: the phase applies as it did before T8.
+        var rig = CreateRig();
+        AddActiveBot(rig, 4106, homeAt: new Vector3(10f, 20f, 30f));
+
+        rig.Hour = 23f;
+        rig.Service.RunTick();
+
+        await Assert.That(rig.Recording.Moves.Count).IsEqualTo(1);
+        await Assert.That(rig.Service.TransitionCount).IsEqualTo(1);
     }
 
     // ---------------------------------------------------------------- B4-shape compatibility
@@ -338,7 +583,7 @@ public class BotScheduleServiceTests
 
         await Assert.That(rig.Service.TransitionCount).IsEqualTo(0);
         await Assert.That(rig.Service.SnapshotPhases()[3008]).IsEqualTo(BotSchedulePhase.Rest);
-        await Assert.That(rig.Behavior.Moves).IsEmpty();
+        await Assert.That(rig.Recording.Moves).IsEmpty();
     }
 
     // ---------------------------------------------------------------- persistence (real store, DB-less)

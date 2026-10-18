@@ -30,9 +30,26 @@ public sealed class BotGoalArbiterStepExecutor : IBotStepExecutor
     /// </summary>
     private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, long> _wakeSequence = new();
 
+    /// <summary>
+    /// Last arbitration decision per bot (plan T7 operator read-back). Same
+    /// key space and overwrite-next-wake semantics as <see cref="_wakeSequence"/>:
+    /// one entry per bot, O(bots), no per-wake growth.
+    /// </summary>
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, BotWakeDecision> _lastDecision = new();
+
     /// <summary>Latest wake sequence for a bot (0 = never stepped through this decorator).</summary>
     public long GetWakeSequence(uint botId)
         => _wakeSequence.TryGetValue(botId, out var seq) ? seq : 0;
+
+    /// <summary>
+    /// The last arbitration decision this decorator saw for a bot (plan T7;
+    /// audit L2.7), or null when it never stepped the bot. Read-back only: the
+    /// operator surface answers "why this activity this wake" from it. One
+    /// entry per bot, overwritten every wake — the same key space and cost as
+    /// <see cref="_wakeSequence"/>, with no gameplay effect.
+    /// </summary>
+    public BotWakeDecision? GetLastDecision(uint botId)
+        => _lastDecision.TryGetValue(botId, out var decision) ? decision : null;
 
     public BotGoalArbiterStepExecutor(IBotGoalArbiter arbiter, IBotStepExecutor inner,
         Func<float>? gameHourProvider = null)
@@ -52,10 +69,17 @@ public sealed class BotGoalArbiterStepExecutor : IBotStepExecutor
         // NoCandidate leaves the world untouched — the inner step still runs,
         // so any motion the bot already has simply continues.
         var arbitration = _arbiter.Arbitrate(bot, _gameHourProvider());
+        // Plan T5 (audit L4-a remainder): this decorator does NOT retire an
+        // outgoing activity. The executor's own read of the election releases
+        // the state an activity owned (recovery at BotRoamStepExecutor
+        // "recovery superseded or unsafe"), so a per-wake release here was a
+        // second, duplicate owner for the same state in the same wake — the
+        // supersede retirement has exactly one owner.
         // Phase 1 wake identity: one increment per wake per bot, staged for
         // the inner step's next request (same overwrite-next-wake semantics
         // as the arbitration stamp — an idle wake never leaks forward).
         var wakeSeq = _wakeSequence.AddOrUpdate(bot.CharacterId, 1, (_, seq) => seq + 1);
+        _lastDecision[bot.CharacterId] = Describe(arbitration);
         StageArbitrationTrace(bot, arbitration);
         StageWakeSequence(bot, wakeSeq);
 
@@ -78,9 +102,10 @@ public sealed class BotGoalArbiterStepExecutor : IBotStepExecutor
     /// Minimal decision trace (prereq Part 2): stamps the arbitration
     /// outcome — selected activity + candidate/rejection counts — for the
     /// next request the inner step creates, so the audit record answers
-    /// "why this activity this wake". Reuses existing record fields only;
-    /// the per-module WhyNot reasons have no record column and stay in the
-    /// transition log. Skipped when the arbiter is inert (None: zero
+    /// "why this activity this wake". Reuses existing record fields only: the
+    /// per-module WhyNot reasons have no actor-record column, so the transition
+    /// log and the operator read-back (<see cref="GetLastDecision"/>) are where
+    /// they can be read. Skipped when the arbiter is inert (None: zero
     /// modules — the pass-through must stay byte-identical) or when the
     /// inner executor is not the live-actor host (no second actor is ever
     /// created for tracing). A staged stamp is always overwritten next
@@ -119,4 +144,18 @@ public sealed class BotGoalArbiterStepExecutor : IBotStepExecutor
             return;
         roam.GetOrCreateActor(bot.Character).SetPendingWakeSequence(wakeSeq);
     }
+
+    /// <summary>
+    /// The operator read-back of one arbitration result (plan T7): the outcome,
+    /// the activity it put in force, the arbiter's own refusal text and the
+    /// candidate/refusal counts. Nothing is derived or phrased here — a wake
+    /// where every module allowed carries a null reason.
+    /// </summary>
+    private static BotWakeDecision Describe(BotArbitration arbitration)
+        => new(
+            arbitration.Outcome.ToString(),
+            arbitration.Activity?.Name,
+            arbitration.WhyNot,
+            arbitration.Candidates,
+            arbitration.Rejections);
 }

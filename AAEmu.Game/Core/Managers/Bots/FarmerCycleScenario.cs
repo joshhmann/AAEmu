@@ -20,8 +20,8 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// actions (<see cref="GameplayActor.Harvest"/>, <see cref="GameplayActor.DepositItem"/>,
 /// <see cref="GameplayActor.Plant"/>) unchanged, driven by an ordinary
 /// <see cref="Character"/> through normal gameplay services (AGENTS.md #9).
-/// No new engine path, no parallel harvest implementation — the harvest runs
-/// the real <c>Doodad.Use</c> chain inside <see cref="GameplayActor.Harvest"/>.
+/// No new engine path or scheduler: harvest's ordinary native skill is
+/// observed to terminal through the existing <see cref="LiveReplayPump"/>.
 ///
 /// Default-OFF surface: this is a static callable with no tick subscription,
 /// no bootstrap, no background work — inert unless a caller invokes it.
@@ -175,8 +175,12 @@ public static class FarmerCycleScenario
         var bagBefore = SnapshotBag(character);
         seedsBeforeHarvest = CountIn(bagBefore, options.SeedItemId);
 
-        // ---- HARVEST: the existing action (real Doodad.Use chain) ----
+        // ---- HARVEST: hold the same actor until its native skill is terminal ----
         var harvest = actor.Harvest(cropObjId, idempotencyKey: $"{options.CycleId}-harvest-{cropObjId}");
+        if (!harvest.IsTerminal)
+            harvest = new LiveReplayPump().Drive(actor, harvest, GameplayActor.DefaultHarvestTimeout);
+        if (!harvest.IsTerminal)
+            actor.RecordBackstopTimeout(harvest);
         traceRecords.Add(actor.AuditTrace.Last());
         stages.Add(Stage($"HARVEST-{cropObjId}", harvest, $"crop {cropObjId}"));
         harvestOutcome = $"{harvest.State} ({harvest.Detail})";

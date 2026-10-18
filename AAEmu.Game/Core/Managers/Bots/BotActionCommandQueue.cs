@@ -241,6 +241,12 @@ public sealed class BotActionCommandQueue
     public const int DefaultTraceLimit = 20;
     public const int MaxTraceLimit = 100;
 
+    /// <summary>
+    /// Audit provenance stamped on every request this queue dispatches: these
+    /// commands come from the control plane, not the bot's own decision path.
+    /// </summary>
+    public const string CommandOriginControlApi = "control-api";
+
     private readonly IPlayerBotManager _manager;
     private readonly IPlayerBotScheduler _scheduler;
     private readonly BotRoamStepExecutor _stepExecutor;
@@ -360,7 +366,7 @@ public sealed class BotActionCommandQueue
 
         // 1. Execute newly queued commands (bounded per drain).
         var guard = 0;
-        while (_queue.TryDequeue(out var traceId) && guard++ < _options.MaxCommandsPerDrain)
+        while (guard++ < _options.MaxCommandsPerDrain && _queue.TryDequeue(out var traceId))
         {
             if (_history.TryGetValue(traceId, out var entry))
                 Execute(entry);
@@ -402,12 +408,14 @@ public sealed class BotActionCommandQueue
             if (request.Timeout is { } budget
                 && UtcNow - entry.EnqueuedAtUtc > budget)
             {
-                _ = request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action), "action budget exceeded (queue backstop)");
+                // Item callbacks can finish independently of bot wakes. Observe
+                // their native terminal, or cancel exact owned work, before expiry.
+                if (entry.Actor?.RecordBackstopTimeout(request) != true)
+                {
+                    _ = request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action), "action budget exceeded (queue backstop)");
+                    _ = entry.Actor?.RecordBackstopTimeout(request);
+                }
                 _apiOwned.TryRemove(requestTraceId, out _);
-                // Q-ledger parity: the actor's Finish never ran, so record
-                // the TimedOut outcome explicitly — otherwise a same-key
-                // retry after backstop-expiry would execute (not dedupe-safe).
-                _ = entry.Actor?.RecordBackstopTimeout(request);
                 CaptureAudit(entry, request);
                 PublishSnapshot(entry);
                 continue;
@@ -465,6 +473,13 @@ public sealed class BotActionCommandQueue
             if (spec.WakeSequence != null)
                 actor.SetPendingWakeSequence(spec.WakeSequence);
 
+            // Provenance: this command came from OUTSIDE the bot's own
+            // decision path, so its row must say so — and it must not carry
+            // the decision vocabulary the bot staged for its own next
+            // request (an operator's Move is not the bot's decision).
+            actor.SetPendingCommandOrigin(CommandOriginControlApi);
+            actor.SetPendingDecision(null, null, 0, 0, null, null);
+
             var (request, result) = ExecuteKind(actor, spec);
             entry.Result = result;
 
@@ -474,6 +489,11 @@ public sealed class BotActionCommandQueue
             // outcome (the interrupted request's record stays on ITS entry).
             if (request == null)
             {
+                // No actor request was created (Observe emits its own record,
+                // Interrupt is a queue-level op), so nothing consumed the
+                // staged provenance — clear it before it can label the bot's
+                // next own request.
+                entry.Actor?.SetPendingCommandOrigin(null);
                 if (spec.Kind == BotActionKind.Interrupt)
                 {
                     var interrupted = result is true;
@@ -517,6 +537,7 @@ public sealed class BotActionCommandQueue
             // actor's next unrelated request.
             entry.Actor?.SetPendingCycleId(null);
             entry.Actor?.SetPendingWakeSequence(null);
+            entry.Actor?.SetPendingCommandOrigin(null);
         }
     }
 
@@ -889,7 +910,7 @@ public sealed class BotActionCommandQueue
                 DecisionCandidates: request.DecisionCandidates, DecisionRejections: request.DecisionRejections,
                 DecisionSeed: request.DecisionSeed, DecisionCycleId: request.DecisionCycleId,
                 WakeSequence: request.WakeSequence, MoveOwner: request.MoveOwner,
-                DecisionQuestId: request.DecisionQuestId);
+                DecisionQuestId: request.DecisionQuestId, CommandOrigin: request.CommandOrigin);
     }
 
     private void PublishSnapshot(BotActionCommand entry)

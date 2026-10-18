@@ -51,6 +51,124 @@ public class Skill
     public bool Cancelled { get; set; } = false;
     public Action Callback { get; set; }
 
+    // Opt-in observation for an owned actor request. Normal player skills keep
+    // their existing callbacks and execution path without a new lock allocation.
+    private object _executionLock;
+    private SkillExecutionState _executionState;
+    private ActorRequest _ownedRequest;
+    private AAEmu.Game.Models.Tasks.Task _pendingTask;
+    private bool _castExecuted;
+    private bool _effectsExecuted;
+    private bool _ordinaryEnded;
+    private bool _plotEnded;
+    private bool _callbackInvoked;
+
+    internal object ExecutionLock => _executionLock;
+
+    internal void ObserveExecution(ActorRequest request)
+    {
+        _executionLock = this;
+        _ownedRequest = request;
+        _plotEnded = Template.Plot == null;
+        _ordinaryEnded = Template.PlotOnly && Template.Plot != null;
+    }
+
+    internal SkillExecutionState ExecutionState
+    {
+        get
+        {
+            lock (_executionLock)
+            {
+                return _executionState == SkillExecutionState.Pending &&
+                    (Cancelled || _pendingTask?.Cancelled == true)
+                    ? SkillExecutionState.Interrupted
+                    : _executionState;
+            }
+        }
+    }
+
+    internal bool CanExecuteObserved(BaseUnit caster, Doodad channelDoodad = null, SkillCaster casterCaster = null)
+    {
+        if (_executionState != SkillExecutionState.Pending)
+            return false;
+        if (_ownedRequest.IsTerminal || Cancelled || _pendingTask?.Cancelled == true ||
+            caster is Unit { IsDead: true } ||
+            caster is Unit { SkillTask: { } task } && !ReferenceEquals(task.Skill, this) ||
+            caster is Unit { ActivePlotState: { } plot } && !ReferenceEquals(plot.ActiveSkill, this))
+        {
+            Stop(caster, channelDoodad, casterCaster);
+            return false;
+        }
+        if (_ownedRequest.Timeout is { } budget && _ownedRequest.BudgetElapsed > budget)
+        {
+            Stop(caster, channelDoodad, casterCaster);
+            if (_executionState != SkillExecutionState.Failed)
+                _executionState = SkillExecutionState.TimedOut;
+            return false;
+        }
+        return true;
+    }
+
+    internal void MarkObservedExecutionFailed()
+    {
+        if (_executionLock != null)
+        {
+            lock (_executionLock)
+                _executionState = SkillExecutionState.Failed;
+        }
+    }
+
+    internal void InvokeCallback()
+    {
+        if (_executionLock == null)
+        {
+            Callback?.Invoke();
+            return;
+        }
+        lock (_executionLock)
+        {
+            if (_callbackInvoked)
+                return;
+            _callbackInvoked = true;
+            Callback?.Invoke();
+        }
+    }
+
+    private void CompleteObservedExecution()
+    {
+        if (_executionLock != null && _executionState == SkillExecutionState.Pending && _ordinaryEnded && _plotEnded)
+            _executionState = Cancelled ? SkillExecutionState.Interrupted : SkillExecutionState.Completed;
+    }
+
+    private async Task RunObservedPlotAsync(BaseUnit caster, SkillCaster casterCaster, BaseUnit target,
+        SkillCastTarget targetCaster, SkillObject skillObject)
+    {
+        try
+        {
+            Task plot;
+            lock (_executionLock)
+            {
+                if (!CanExecuteObserved(caster))
+                    return;
+                plot = Template.Plot.RunAsync(caster, casterCaster, target, targetCaster, skillObject, this);
+            }
+            await plot;
+            lock (_executionLock)
+            {
+                _plotEnded = true;
+                if (_executionState == SkillExecutionState.Pending && ActivePlotState?.CancellationRequested() == true)
+                    Stop(caster);
+                CompleteObservedExecution();
+            }
+        }
+        catch
+        {
+            lock (_executionLock)
+                _executionState = SkillExecutionState.Failed;
+            throw;
+        }
+    }
+
     /// <summary>
     /// Multiplier that can be added as an additional modifier to casting times
     /// </summary>
@@ -210,7 +328,9 @@ public class Skill
             // run it without the caller's execution scope so a bot-step's
             // AsyncLocal scope never flows onto the plot thread and trips
             // the boundary's write assertion when plot effects land.
-            _ = ExecutionBoundary.RunUnscoped(() => Template.Plot.RunAsync(caster, casterCaster, target, targetCaster, skillObject, this));
+            _ = ExecutionBoundary.RunUnscoped(() => _executionLock == null
+                ? Template.Plot.RunAsync(caster, casterCaster, target, targetCaster, skillObject, this)
+                : RunObservedPlotAsync(caster, casterCaster, target, targetCaster, skillObject));
             if (Template.PlotOnly)
                 return SkillResult.Success;
         }
@@ -353,6 +473,8 @@ public class Skill
             }, true);
 
             unit.SkillTask = new CastTask(this, caster, casterCaster, target, targetCaster, skillObject);
+            if (_executionLock != null)
+                _pendingTask = unit.SkillTask;
             TaskManager.Instance.Schedule(unit.SkillTask, TimeSpan.FromMilliseconds(castTime));
         }
         else
@@ -638,6 +760,30 @@ public class Skill
 
     public void Cast(BaseUnit caster, SkillCaster casterCaster, BaseUnit target, SkillCastTarget targetCaster, SkillObject skillObject)
     {
+        if (_executionLock == null)
+        {
+            CastCore(caster, casterCaster, target, targetCaster, skillObject);
+            return;
+        }
+        lock (_executionLock)
+        {
+            if (!CanExecuteObserved(caster) || _castExecuted)
+                return;
+            _castExecuted = true;
+            try
+            {
+                CastCore(caster, casterCaster, target, targetCaster, skillObject);
+            }
+            catch
+            {
+                _executionState = SkillExecutionState.Failed;
+                throw;
+            }
+        }
+    }
+
+    private void CastCore(BaseUnit caster, SkillCaster casterCaster, BaseUnit target, SkillCastTarget targetCaster, SkillObject skillObject)
+    {
         if (caster is not Unit unit) { return; }
 
         if (!_bypassGcd)
@@ -746,12 +892,16 @@ public class Skill
                 if (useItem == null)
                 {
                     Logger.Warn("SkillItem does not exists {0} (templateId: {1})", castItem.ItemId, castItem.ItemTemplateId);
+                    if (_executionLock != null)
+                        _executionState = SkillExecutionState.Refused;
                     return; // Item does not exists
                 }
 
                 if (useItem._holdingContainer.OwnerId != player.Id)
                 {
                     Logger.Warn("SkillItem {0} (itemId:{1}) is not owned by player {2} ({3})", useItem.Template.Name, useItem.Id, player.Name, player.Id);
+                    if (_executionLock != null)
+                        _executionState = SkillExecutionState.Refused;
                     return; // Item is not in the player's possessions
                 }
 
@@ -760,6 +910,8 @@ public class Skill
                 if (itemCount < itemsRequired)
                 {
                     Logger.Warn("SkillItem, player does not own enough of {0} (count: {1}/{2}, templateId: {3})", useItem.Id, itemCount, itemsRequired, castItem.ItemTemplateId);
+                    if (_executionLock != null)
+                        _executionState = SkillExecutionState.Refused;
                     return; // not enough of item
                 }
             }
@@ -821,13 +973,39 @@ public class Skill
 
         caster.BroadcastPacket(new SCSkillFiredPacket(Id, TlId, casterCaster, targetCaster, this, skillObject), true);
         unit.SkillTask = new EndChannelingTask(this, caster, casterCaster, target, targetCaster, skillObject, doodad);
+        if (_executionLock != null)
+            _pendingTask = unit.SkillTask;
         TaskManager.Instance.Schedule(unit.SkillTask, TimeSpan.FromMilliseconds(Template.ChannelingTime));
     }
 
     public void EndChanneling(BaseUnit caster, Doodad channelDoodad, SkillCaster casterCaster)
     {
+        if (_executionLock == null)
+        {
+            EndChannelingCore(caster, channelDoodad, casterCaster);
+            return;
+        }
+        lock (_executionLock)
+        {
+            if (!CanExecuteObserved(caster, channelDoodad, casterCaster))
+                return;
+            try
+            {
+                EndChannelingCore(caster, channelDoodad, casterCaster);
+            }
+            catch
+            {
+                _executionState = SkillExecutionState.Failed;
+                throw;
+            }
+        }
+    }
+
+    private void EndChannelingCore(BaseUnit caster, Doodad channelDoodad, SkillCaster casterCaster)
+    {
         if (caster is not Unit unit) { return; }
-        unit.SkillTask = null;
+        if (_executionLock == null || ReferenceEquals(unit.SkillTask?.Skill, this))
+            unit.SkillTask = null;
         if (Template.ChannelingBuffId != 0)
         {
             caster.Buffs.RemoveEffect(Template.ChannelingBuffId, Template.Id);
@@ -882,6 +1060,8 @@ public class Skill
         if (totalDelay > 0)
         {
             var thisSkillTask = new ApplySkillTask(this, caster, casterCaster, target, targetCaster, skillObject);
+            if (_executionLock != null)
+                _pendingTask = thisSkillTask;
             TaskManager.Instance.Schedule(thisSkillTask, TimeSpan.FromMilliseconds(totalDelay));
         }
         else
@@ -943,6 +1123,30 @@ public class Skill
     }
 
     public void ApplyEffects(BaseUnit caster, SkillCaster casterCaster, BaseUnit targetSelf, SkillCastTarget targetCaster, SkillObject skillObject)
+    {
+        if (_executionLock == null)
+        {
+            ApplyEffectsCore(caster, casterCaster, targetSelf, targetCaster, skillObject);
+            return;
+        }
+        lock (_executionLock)
+        {
+            if (!CanExecuteObserved(caster) || _effectsExecuted)
+                return;
+            _effectsExecuted = true;
+            try
+            {
+                ApplyEffectsCore(caster, casterCaster, targetSelf, targetCaster, skillObject);
+            }
+            catch
+            {
+                _executionState = SkillExecutionState.Failed;
+                throw;
+            }
+        }
+    }
+
+    private void ApplyEffectsCore(BaseUnit caster, SkillCaster casterCaster, BaseUnit targetSelf, SkillCastTarget targetCaster, SkillObject skillObject)
     {
         if (caster is not Unit unit)
             return;
@@ -1433,15 +1637,20 @@ public class Skill
     /// <returns>Adjusted labor cost, 0 when the skill costs no labor</returns>
     public int GetLaborCost(Character character)
     {
-        var laborCost = Template.ConsumeLaborPower;
+        return GetLaborCost(Template, character);
+    }
+
+    public static int GetLaborCost(SkillTemplate template, Character character)
+    {
+        var laborCost = template.ConsumeLaborPower;
         // Adjust labor cost if needed
-        if (character.Actability.Actabilities.TryGetValue((byte)Template.ActabilityGroupId, out var actAbility))
+        if (character.Actability.Actabilities.TryGetValue((byte)template.ActabilityGroupId, out var actAbility))
         {
             laborCost = (int)Math.Round(laborCost * actAbility.GetLaborCostMultiplier());
         }
 
         // Lower cap at 1
-        if (Template.ConsumeLaborPower > 0 && laborCost < 1)
+        if (template.ConsumeLaborPower > 0 && laborCost < 1)
             laborCost = 1;
 
         return laborCost;
@@ -1452,6 +1661,31 @@ public class Skill
     /// </summary>
     /// <param name="caster"></param>
     public void EndSkill(BaseUnit caster)
+    {
+        if (_executionLock == null)
+        {
+            EndSkillCore(caster);
+            return;
+        }
+        lock (_executionLock)
+        {
+            if (_executionState != SkillExecutionState.Pending)
+                return;
+            try
+            {
+                EndSkillCore(caster);
+                _ordinaryEnded = true;
+                CompleteObservedExecution();
+            }
+            catch
+            {
+                _executionState = SkillExecutionState.Failed;
+                throw;
+            }
+        }
+    }
+
+    private void EndSkillCore(BaseUnit caster)
     {
         if (caster is not Unit unit)
             return;
@@ -1489,7 +1723,7 @@ public class Skill
             }
         }
 
-        Callback?.Invoke();
+        InvokeCallback();
         unit.OnSkillEnd(this);
         caster.BroadcastPacket(new SCSkillEndedPacket(TlId), true);
         SkillTlIdManager.ReleaseId(TlId);
@@ -1509,10 +1743,46 @@ public class Skill
     /// <param name="channelDoodad"></param>
     public void Stop(BaseUnit caster, Doodad channelDoodad = null, SkillCaster casterCaster = null)
     {
+        if (_executionLock == null)
+        {
+            StopCore(caster, channelDoodad, casterCaster);
+            return;
+        }
+        lock (_executionLock)
+        {
+            if (_executionState is SkillExecutionState.Completed or SkillExecutionState.Interrupted or SkillExecutionState.TimedOut)
+                return;
+            if (_executionState != SkillExecutionState.Failed)
+                _executionState = SkillExecutionState.Interrupted;
+            Cancelled = true;
+            ActivePlotState?.RequestCancellation();
+            if (channelDoodad == null && _pendingTask is EndChannelingTask channel)
+                channelDoodad = channel._channelDoodad;
+            if (_pendingTask != null)
+                TaskManager.Instance.Cancel(_pendingTask);
+            try
+            {
+                if (TlId != 0 || ActivePlotState != null)
+                    StopCore(caster, channelDoodad, casterCaster);
+            }
+            catch (Exception ex)
+            {
+                _executionState = SkillExecutionState.Failed;
+                if (caster is Unit unit && ReferenceEquals(unit.SkillTask?.Skill, this))
+                    unit.SkillTask = null;
+                SkillTlIdManager.ReleaseId(TlId);
+                TlId = 0;
+                Logger.Error(ex, $"Owned skill {Id} cancellation callback failed");
+            }
+        }
+    }
+
+    private void StopCore(BaseUnit caster, Doodad channelDoodad, SkillCaster casterCaster)
+    {
         if (caster is not Unit unit) { return; }
         if (Template.ChannelingTime > 0)
         {
-            EndChanneling(caster, channelDoodad, casterCaster);
+            EndChannelingCore(caster, channelDoodad, casterCaster);
         }
 
         if (Template.ToggleBuffId != 0)
@@ -1521,9 +1791,10 @@ public class Skill
         }
         caster.BroadcastPacket(new SCCastingStoppedPacket(TlId, 0), true);
         caster.BroadcastPacket(new SCSkillEndedPacket(TlId), true);
-        Callback?.Invoke();
+        InvokeCallback();
         unit.OnSkillEnd(this);
-        unit.SkillTask = null;
+        if (_executionLock == null || ReferenceEquals(unit.SkillTask?.Skill, this))
+            unit.SkillTask = null;
         Cancelled = true;
         SkillTlIdManager.ReleaseId(TlId);
         TlId = 0;
@@ -1655,4 +1926,14 @@ AlwaysHit:
         character.LastCast = DateTime.UtcNow;
         character.IsInPostCast = true;
     }
+}
+
+internal enum SkillExecutionState
+{
+    Pending,
+    Completed,
+    Interrupted,
+    TimedOut,
+    Refused,
+    Failed
 }

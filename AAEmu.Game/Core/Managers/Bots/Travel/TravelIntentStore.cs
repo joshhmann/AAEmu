@@ -42,6 +42,10 @@ public static class TravelIntentStore
     /// <summary>Intent memory bound per process (a full clear, never a per-entry eviction policy).</summary>
     public const int MemoryBound = 256;
 
+    // An exhausted approach is evidence, not a fresh budget when another prey is selected.
+    public const int FailedApproachBound = 32;
+    public readonly record struct FailedApproach(uint QuestId, string Progress, uint TargetObjId, Vector3? SelfPosition, Vector3 TargetPosition);
+
     /// <summary>
     /// One armed travel intent. Immutable: every mutation replaces the row, so a
     /// reader can never observe a half-updated intent.
@@ -77,6 +81,12 @@ public static class TravelIntentStore
         /// </summary>
         public string LegOwner { get; init; } = "";
         public long? RoadRevision { get; init; }
+        /// <summary>First terminal poses; unchanged failure must not become a fresh approach each wake.</summary>
+        public Vector3? TerminalSelfPosition { get; init; }
+        public Vector3? TerminalTargetPosition { get; init; }
+        public IReadOnlyList<FailedApproach> FailedApproaches { get; init; } = [];
+        public uint PursuitQuestId { get; init; }
+        public string PursuitProgress { get; init; } = "";
         /// <summary>True when this intent already reached a terminal (arrival or one of the three abandonments).</summary>
         public bool IsSettled => Terminal != TravelTerminal.None;
 
@@ -119,6 +129,9 @@ public static class TravelIntentStore
         var priorDestination = destination;
         IReadOnlyList<Vector3> route = [];
         long? roadRevision = null;
+        IReadOnlyList<FailedApproach> failedApproaches = [];
+        if (Intents.TryGetValue(key, out var remembered))
+            failedApproaches = remembered.FailedApproaches;
         if (Intents.TryGetValue(key, out var prior)
             && prior.Kind == kind
             && prior.TargetObjId == targetObjId
@@ -140,9 +153,52 @@ public static class TravelIntentStore
             TravelReason.None, route)
         {
             LegOwner = legOwner ?? "",
-            RoadRevision = roadRevision
+            RoadRevision = roadRevision,
+            FailedApproaches = failedApproaches,
+            PursuitQuestId = remembered.PursuitQuestId,
+            PursuitProgress = remembered.PursuitProgress ?? ""
         };
         return fresh;
+    }
+
+    // Planning can inspect multiple purposes; only the winning dispatch owns
+    // the prepared journey. Reapply its immutable snapshot before issuing it.
+    internal static bool RestorePreparedJourney(uint actorObjId, Intent intent, string expectedOwner)
+    {
+        if (actorObjId == 0 || intent.Kind != TravelTargetKind.Unit || intent.TargetObjId == 0
+            || intent.LegOwner != expectedOwner)
+            return false;
+        if (Intents.Count >= MemoryBound) Intents.Clear();
+        Intents[(actorObjId, expectedOwner)] = intent;
+        return true;
+    }
+
+    // Purpose is part of failure attribution; it does not create another action owner.
+    public static void SetPursuitPurpose(uint actorObjId, uint questId, string progress = "")
+    {
+        if (actorObjId == 0) return;
+        var key = (actorObjId, TravelLegDispatch.PursuitMoveOwner);
+        if (!Intents.TryGetValue(key, out var intent))
+        {
+            if (Intents.Count >= MemoryBound) Intents.Clear();
+            intent = new Intent(TravelTargetKind.None, 0, Vector3.Zero, false, 0, 0, 0, 0, 0,
+                TravelMode.None, Vector3.Zero, TravelTerminal.None, TravelReason.None, [])
+                { LegOwner = TravelLegDispatch.PursuitMoveOwner };
+        }
+        var changed = intent.PursuitQuestId != questId
+            || (intent.PursuitProgress.Length != 0 && intent.PursuitProgress != progress);
+        var retained = intent.FailedApproaches.Where(f => f.QuestId != questId
+            || f.Progress.Length == 0 || f.Progress == progress).ToArray();
+        Intents[key] = intent with
+        {
+            PursuitQuestId = questId, PursuitProgress = progress, FailedApproaches = retained,
+            Terminal = changed ? TravelTerminal.None : intent.Terminal,
+            Reason = changed ? TravelReason.None : intent.Reason,
+            ResolveAttempts = changed ? 0 : intent.ResolveAttempts,
+            RepathCount = changed ? 0 : intent.RepathCount,
+            TerminalSelfPosition = changed ? null : intent.TerminalSelfPosition,
+            TerminalTargetPosition = changed ? null : intent.TerminalTargetPosition
+        };
     }
 
     /// <summary>Reads an actor's armed intent for one owning leg (<paramref name="legOwner"/> empty = the owner-less callers).</summary>
@@ -248,12 +304,33 @@ public static class TravelIntentStore
     /// terminal, later wakes re-read the same named verdict instead of re-deriving
     /// one, and only a fresh arm clears it.
     /// </summary>
-    public static void BankTerminal(uint actorObjId, TravelTerminal terminal, TravelReason reason, string legOwner = "")
+    public static void BankTerminal(uint actorObjId, TravelTerminal terminal, TravelReason reason, string legOwner = "",
+        Vector3? selfPosition = null, Vector3? targetPosition = null)
     {
         var key = (actorObjId, legOwner ?? "");
         if (terminal == TravelTerminal.None || !Intents.TryGetValue(key, out var current))
             return;
-        Intents[key] = current with { Terminal = terminal, Reason = reason };
+        var firstSelf = current.TerminalSelfPosition ?? selfPosition;
+        var firstTarget = current.TerminalTargetPosition ?? targetPosition ?? current.PriorDestination;
+        var failed = current.FailedApproaches;
+        if (terminal == TravelTerminal.Unreachable && legOwner == TravelLegDispatch.PursuitMoveOwner)
+        {
+            var retained = failed.Where(f => f.QuestId != current.PursuitQuestId || f.TargetObjId != current.TargetObjId).ToList();
+            // Match the existing store's total bound. Preserve this purpose's failures
+            // when older purposes reach the global evidence-memory limit.
+            if (retained.Count >= MemoryBound)
+                retained.RemoveAll(f => f.QuestId != current.PursuitQuestId);
+            if (retained.Count(f => f.QuestId == current.PursuitQuestId) < FailedApproachBound)
+                retained.Add(new FailedApproach(current.PursuitQuestId, current.PursuitProgress, current.TargetObjId, firstSelf, firstTarget));
+            failed = retained.ToArray();
+        }
+        Intents[key] = current with
+        {
+            FailedApproaches = failed,
+            Terminal = terminal, Reason = reason,
+            TerminalSelfPosition = current.TerminalSelfPosition ?? selfPosition,
+            TerminalTargetPosition = current.TerminalTargetPosition ?? targetPosition ?? current.PriorDestination
+        };
     }
 
     /// <summary>Clears the whole store (the world-reset / test seam, mirroring the other bot memory clears).</summary>

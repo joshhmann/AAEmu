@@ -202,7 +202,7 @@ public class GameplayActorCastEffectTests
             "completed_at", "result", "failure", "detail", "state_changes",
             "target_hp_before", "target_hp_after", "effect_observed", "effect_wait_ms",
             "decision_goal", "decision_policy", "decision_quest_id", "decision_candidates", "decision_rejections", "decision_seed",
-            "decision_cycle_id", "wake_sequence", "move_owner"
+            "decision_cycle_id", "wake_sequence", "move_owner", "command_origin"
         });
 
         await Assert.That(root.GetProperty("trace_id").GetGuid()).IsEqualTo(request.TraceId);
@@ -213,6 +213,8 @@ public class GameplayActorCastEffectTests
         await Assert.That(root.GetProperty("failure").ValueKind).IsEqualTo(JsonValueKind.Null);
         await Assert.That(root.GetProperty("state_changes").GetArrayLength()).IsEqualTo(request.StateChanges.Count);
         await Assert.That(root.GetProperty("decision_quest_id").ValueKind).IsEqualTo(JsonValueKind.Null);
+        // A bot's own request carries no operator provenance.
+        await Assert.That(root.GetProperty("command_origin").ValueKind).IsEqualTo(JsonValueKind.Null);
         // Unmeasured observations serialize as null (never fabricated).
         await Assert.That(root.GetProperty("target_hp_before").ValueKind).IsEqualTo(JsonValueKind.Null);
         await Assert.That(root.GetProperty("target_hp_after").ValueKind).IsEqualTo(JsonValueKind.Null);

@@ -849,7 +849,7 @@ public static class LevelingLoopScenario
 
                 case QuestActObjItemGroupUse groupUse:
                     {
-                        var groupUseFailure = GroupUseItemLeg(actor, questId, groupUse);
+                        var groupUseFailure = GroupUseItemLeg(actor, opts, questId, groupUse);
                         if (groupUseFailure != null)
                             return Fail($"OBJECTIVES:group-item-use({groupUse.ItemGroupId})",
                                 ActorFailureReason.RejectedAction, groupUseFailure, actor, null);
@@ -938,7 +938,7 @@ public static class LevelingLoopScenario
                     }
                 case QuestActObjItemUse itemUse:
                     {
-                        var useFailure = UseItemLeg(actor, questId, itemUse);
+                        var useFailure = UseItemLeg(actor, opts, questId, itemUse);
                         if (useFailure != null)
                             return Fail($"OBJECTIVES:item-use({itemUse.ItemId})",
                                 ActorFailureReason.RejectedAction, useFailure, actor, null);
@@ -1119,7 +1119,7 @@ public static class LevelingLoopScenario
     /// state, which is updated by the engine's OnItemUse event; inventory
     /// depletion or a rejected use fails closed rather than faking credit.
     /// </summary>
-    private static string? UseItemLeg(GameplayActor actor, uint questId, QuestActObjItemUse use)
+    private static string? UseItemLeg(GameplayActor actor, LoopOptions opts, uint questId, QuestActObjItemUse use)
     {
         var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
         if (quest == null)
@@ -1138,7 +1138,7 @@ public static class LevelingLoopScenario
                        $"but inventory has none while objective is {use.GetObjective(quest)}/{use.Count}";
             }
 
-            var request = actor.UseItem(use.ItemId);
+            var request = DriveRequest(actor, opts, actor.UseItem(use.ItemId));
             if (request.State != ActorLifecycleState.Completed)
             {
                 return $"UseItem {use.ItemId} refused for quest {questId}: {request.Detail}";
@@ -1227,7 +1227,7 @@ public static class LevelingLoopScenario
                     ActorFailureReason.Starvation);
             }
 
-            var request = actor.UseItem(growthItemId, mate.ObjId);
+            var request = DriveRequest(actor, opts, actor.UseItem(growthItemId, mate.ObjId));
             if (request.State != ActorLifecycleState.Completed)
             {
                 return ($"UseItem {growthItemId} on mate {mate.ObjId} refused for quest {questId}: " +
@@ -1433,7 +1433,7 @@ public static class LevelingLoopScenario
                     .FirstOrDefault(i => i?.Template != null && (ItemCategory)i.Template.CategoryId is ItemCategory.Healing_Potion or ItemCategory.Potion or ItemCategory.Food);
                 if (potion != null)
                 {
-                    actor.UseItem(potion.TemplateId);
+                    DriveRequest(actor, opts, actor.UseItem(potion.TemplateId));
                 }
 
                 var regenGuard = 0;
@@ -1634,7 +1634,7 @@ public static class LevelingLoopScenario
                     .FirstOrDefault(i => i?.Template != null && (ItemCategory)i.Template.CategoryId is ItemCategory.Healing_Potion or ItemCategory.Potion or ItemCategory.Food);
                 if (potion != null)
                 {
-                    actor.UseItem(potion.TemplateId);
+                    DriveRequest(actor, opts, actor.UseItem(potion.TemplateId));
                 }
 
                 var regenGuard = 0;
@@ -1781,7 +1781,7 @@ public static class LevelingLoopScenario
     /// engine's OnItemUse → CheckGroupItem path. No inventory member and no
     /// supply grant fails closed — progress is never faked.
     /// </summary>
-    private static string? GroupUseItemLeg(GameplayActor actor, uint questId, QuestActObjItemGroupUse use)
+    private static string? GroupUseItemLeg(GameplayActor actor, LoopOptions opts, uint questId, QuestActObjItemGroupUse use)
     {
         var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
         if (quest == null)
@@ -1822,7 +1822,7 @@ public static class LevelingLoopScenario
             }
 
             var objectiveBefore = use.GetObjective(quest);
-            var request = actor.UseItem(memberId);
+            var request = DriveRequest(actor, opts, actor.UseItem(memberId));
             if (request.State != ActorLifecycleState.Completed)
             {
                 return $"UseItem {memberId} refused for quest {questId}: {request.Detail}";
@@ -2681,7 +2681,7 @@ public static class LevelingLoopScenario
                     .FirstOrDefault(i => i?.Template != null && (ItemCategory)i.Template.CategoryId is ItemCategory.Healing_Potion or ItemCategory.Potion or ItemCategory.Food);
                 if (potion != null)
                 {
-                    actor.UseItem(potion.TemplateId);
+                    DriveRequest(actor, opts, actor.UseItem(potion.TemplateId));
                 }
 
                 var regenGuard = 0;
@@ -2922,7 +2922,12 @@ public static class LevelingLoopScenario
                     new CastSkill(craft?.SkillId ?? 0, 0), new EffectSource(), null, DateTime.UtcNow);
             }
             actor.Tick(TimeSpan.FromMilliseconds(20));
+            if (request.Action == ActorActionType.UseItem && !request.IsTerminal)
+                Thread.Sleep(20);
         }
+        if (!request.IsTerminal && request.Action == ActorActionType.UseItem
+            && ReferenceEquals(actor.ActiveRequest, request))
+            actor.PreemptCurrent("item use exceeded leveling action budget");
         return request;
     }
 

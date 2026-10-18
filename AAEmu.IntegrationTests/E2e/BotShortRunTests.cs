@@ -76,7 +76,11 @@ public class BotShortRunTests
         var botName = Environment.GetEnvironmentVariable("E2E_QUEST_END_BOT");
         Assert.True(!string.IsNullOrWhiteSpace(botName), "Explicit E2E_QUEST_END_BOT required in runner and owned Game process");
         var scenario = continuation ? "quest-continuation" : productive ? "productive-quest" : "quest-purpose";
-        var directory = Path.Combine(E2eStack.E2eRoot, "logs", scenario + "-" + runId);
+        // An optional test supervisor supplies a new, exclusively owned directory.
+        // This changes evidence custody only, never provisioning or acceptance.
+        var directory = Environment.GetEnvironmentVariable("E2E_QUEST_OBSERVER_DIRECTORY")
+            ?? Path.Combine(E2eStack.E2eRoot, "logs", scenario + "-" + runId);
+        Require(!Directory.Exists(directory), "Quest evidence directory already exists; refuse overwrite");
         Directory.CreateDirectory(directory);
         if (!OperatingSystem.IsWindows())
             File.SetUnixFileMode(directory, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
@@ -274,6 +278,12 @@ public class BotShortRunTests
         }
         string? OperationStopReason()
         {
+            var observerStop = Environment.GetEnvironmentVariable("E2E_QUEST_OBSERVER_STOP_FILE");
+            // Break only the observation loop. The existing finally block still
+            // stops the owned actor, releases it and verifies normal persistence.
+            // An observer's narrower PASS never bypasses the native assertions.
+            if (!string.IsNullOrWhiteSpace(observerStop) && File.Exists(observerStop))
+                return "OBSERVER_REQUESTED_STOP";
             var elapsed = watch.Elapsed.TotalSeconds;
             return BotShortRunObservationBudget.StopReason(elapsed, proof!.LastProvedProgressSeconds,
                 StopReason(elapsed));
@@ -514,6 +524,7 @@ public class BotShortRunTests
         var report = JsonSerializer.Serialize(new
         {
             scenario, runId, botName, characterId, passed, endReason, endUtc,
+            observerDatabaseId = $"{E2eStack.DbHost}:{E2eStack.DbPort}/aaemu_game@{Path.GetFullPath(E2eStack.E2eRoot)}",
             endPreparation = endPreparation is { } prepared
                 ? new { prepared.StopTraceId, prepared.Scheduler, prepared.Stop } : null,
             frozenEndRetained = end.HasValue, rawPersisted = latestRawPersisted, proofAccepted = latestProofAccepted,

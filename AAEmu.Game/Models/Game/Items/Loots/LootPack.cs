@@ -177,6 +177,11 @@ public class LootPack
     /// <param name="inheritedGrade">Grade to inherit (Optional)</param>
     /// <returns></returns>
     public List<(uint itemId, int count, byte grade, uint lootGroupOrigin)> GeneratePackNewV2(float lootDropRate, float lootGoldRate, Character player, ActabilityType actabilityType, byte? inheritedGrade = null)
+        => GeneratePackNewV2(lootDropRate, lootGoldRate, player, actabilityType, inheritedGrade, null);
+
+    // NPC corpses have a shared roll. Quest eligibility follows the existing
+    // entitled recipients; player still supplies the ordinary actability inputs.
+    internal List<(uint itemId, int count, byte grade, uint lootGroupOrigin)> GeneratePackNewV2(float lootDropRate, float lootGoldRate, Character player, ActabilityType actabilityType, byte? inheritedGrade, Func<uint, bool> npcQuestEligible)
     {
         var items = new List<(uint itemId, int count, byte grade, uint lootGroupOrigin)>();
 
@@ -194,10 +199,10 @@ public class LootPack
                 {
                     // Check for Quest loot drops
                     var itemTemplate = ItemManager.Instance.GetTemplate(loot.ItemId);
-                    if (itemTemplate?.LootQuestId > 0 && player != null)
+                    if (itemTemplate?.LootQuestId > 0 && (npcQuestEligible != null || player != null))
                     {
                         // Skip item if player does not have quest
-                        if (!player.Quests.HasQuest(itemTemplate.LootQuestId))
+                        if (!(npcQuestEligible?.Invoke(itemTemplate.LootQuestId) ?? player.Quests.HasQuest(itemTemplate.LootQuestId)))
                             continue;
                     }
 
@@ -227,10 +232,10 @@ public class LootPack
                     {
                         var itemTemplate = ItemManager.Instance.GetTemplate(loot.ItemId);
                         // Check for questS itemS in group
-                        if (itemTemplate?.LootQuestId > 0 && player != null)
+                        if (itemTemplate?.LootQuestId > 0 && (npcQuestEligible != null || player != null))
                         {
                             // Add item if player has quest
-                            if (player.Quests.HasQuest(itemTemplate.LootQuestId))
+                            if (npcQuestEligible?.Invoke(itemTemplate.LootQuestId) ?? player.Quests.HasQuest(itemTemplate.LootQuestId))
                             {
                                 // TODO Add Loot rate for quest items ???
                                 if (!tmpSelectedQuestItemsByGroup.ContainsKey(groupNo))
@@ -288,6 +293,10 @@ public class LootPack
                     }
                     // Merge quests items in selected items
                     if (tmpSelectedQuestItemsByGroup.Count > 0)
+                    {
+                        // A quest-only group has no selected non-quest item.
+                        if (!selectedItemsByGroup.ContainsKey(groupNo))
+                            selectedItemsByGroup.Add(groupNo, []);
                         foreach (var loot in tmpSelectedQuestItemsByGroup[groupNo])
                         {
                             // Skip quest item if it was randomly selected
@@ -295,6 +304,7 @@ public class LootPack
                                 continue;
                             selectedItemsByGroup[groupNo].Add(loot);
                         }
+                    }
                 }
             }
             // No matches found

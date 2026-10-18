@@ -741,7 +741,16 @@ public static class EconomyDayCycleScenario
 
                 var beforeHarvest = EconomySnapshot.Capture(character);
                 var harvest = actor.Harvest(cropObjId, idempotencyKey: $"{key}-harvest-{cropObjId}");
-                traceRecords.Add(actor.AuditTrace.Last());
+                if (!TryDriveLegToTerminal(actor, pump, harvest, options.ActionPumpTimeout, traceRecords, out harvest))
+                {
+                    actor.RecordBackstopTimeout(harvest);
+                    var terminal = actor.AuditTrace.LastOrDefault(r => r.TraceId == harvest.TraceId);
+                    if (terminal != null)
+                        traceRecords.Add(terminal);
+                    if (harvest.State != ActorLifecycleState.Completed)
+                        return Fail($"HARVEST-{cycle}", harvest, $"crop {cropObjId} exceeded harvest budget",
+                            rigNotes, stages, criteria, ledger, traceRecords);
+                }
                 stages.Add(Stage($"HARVEST-{cycle}-{cropObjId}", harvest, $"crop {cropObjId}"));
                 if (harvest.State != ActorLifecycleState.Completed)
                     return Fail($"HARVEST-{cycle}", harvest, $"crop {cropObjId}",
@@ -939,7 +948,13 @@ public static class EconomyDayCycleScenario
                 // the engine's 150ms window are refused with CooldownTime.
                 Thread.Sleep(300);
                 var summon = actor.UseItem(options.FarmWagonSummonScrollItemId, idempotencyKey: $"{key}-summon-wagon");
-                traceRecords.Add(actor.AuditTrace.Last());
+                if (!TryDriveLegToTerminal(actor, pump, summon, options.ActionPumpTimeout, traceRecords, out summon))
+                {
+                    if (ReferenceEquals(actor.ActiveRequest, summon) && !summon.IsTerminal)
+                        actor.PreemptCurrent("summon item exceeded cycle action budget");
+                    return Fail($"SUMMON-VEHICLE-{cycle}", summon, "ordinary summon item did not finish",
+                        rigNotes, stages, criteria, ledger, traceRecords);
+                }
                 stages.Add(Stage($"SUMMON-VEHICLE-{cycle}", summon, $"scroll {options.FarmWagonSummonScrollItemId}"));
                 if (summon.State != ActorLifecycleState.Completed)
                     return Fail($"SUMMON-VEHICLE-{cycle}", summon, "farm wagon summon",

@@ -38,6 +38,10 @@ public sealed class BotDriveClient : IDisposable
     public JsonElement Call(JsonElement request, int timeoutMs = 30000)
         => CallAsync(request, timeoutMs, CancellationToken.None).GetAwaiter().GetResult();
 
+    /// <summary>Retains the response envelope for passive probes that must validate an expected bridge error.</summary>
+    public JsonElement CallResponse(JsonElement request, int timeoutMs = 30000)
+        => ReadResponseAsync(request, timeoutMs, CancellationToken.None).GetAwaiter().GetResult();
+
     /// <summary>
     /// Sends one bridge request and waits for its response without blocking a
     /// worker thread. Cancellation closes the read operation at the socket
@@ -47,6 +51,15 @@ public sealed class BotDriveClient : IDisposable
         JsonElement request,
         int timeoutMs = 30000,
         CancellationToken cancellationToken = default)
+    {
+        var root = await ReadResponseAsync(request, timeoutMs, cancellationToken).ConfigureAwait(false);
+        if (!root.GetProperty("ok").GetBoolean())
+            throw new InvalidOperationException("bridge error: " + root.GetProperty("error").GetString());
+        return root.GetProperty("data").Clone();
+    }
+
+    private async Task<JsonElement> ReadResponseAsync(
+        JsonElement request, int timeoutMs, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         _writer.WriteLine(request.GetRawText());
@@ -77,11 +90,7 @@ public sealed class BotDriveClient : IDisposable
             throw new IOException("bridge connection closed");
 
         using var doc = JsonDocument.Parse(line);
-        var root = doc.RootElement.Clone();
-        if (!root.GetProperty("ok").GetBoolean())
-            throw new InvalidOperationException("bridge error: " + root.GetProperty("error").GetString());
-
-        return root.GetProperty("data").Clone();
+        return doc.RootElement.Clone();
     }
 
     // Opt-in ingress bound: reject before an unbounded line or JSON DOM exists.

@@ -145,7 +145,7 @@ public class TaskManager(ITickManager tickManager) : Singleton<TaskManager>, ITa
     /// <returns></returns>
     public bool Cancel(Task task)
     {
-        var res = _queue.Remove(task.Id, out _);
+        var res = ((ICollection<KeyValuePair<uint, Task>>)_queue).Remove(new(task.Id, task));
 
         if (res)
         {

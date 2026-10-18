@@ -115,19 +115,20 @@ public sealed class BotDriveBridge
     /// <summary>
     /// Soak-lane scheduler arming (slice #6 clearance): the soak lane drives
     /// bots synchronously past the scheduler (see <see cref="CollectGateMetrics"/>),
-    /// so nothing ever called <see cref="IPlayerBotScheduler.Start"/> here and
-    /// the lane reported isRunning=false/totalStepsRun=0. Starting the
-    /// scheduler does NOT change synchronous driving — with no Wake calls the
-    /// scan loop, workers and tick drain idle empty — but it makes the
-    /// scheduler live for presence/admin-enrolled bots and turns
-    /// metrics.scheduler into a real liveness signal. Idempotent; a failure
-    /// is WARN-only and never breaks the bridge.
+    /// so nothing ever armed the host here and the lane reported
+    /// isRunning=false/totalStepsRun=0. Arming the host does NOT change
+    /// synchronous driving — with no Wake calls the scan loop, workers and
+    /// tick drain idle empty — but it makes the scheduler live for
+    /// presence/admin-enrolled bots and turns metrics.scheduler into a real
+    /// liveness signal. It goes through the one arming owner
+    /// (<see cref="IPlayerBotScheduler.Arm"/>); a failure is WARN-only and
+    /// never breaks the bridge.
     /// </summary>
     private static void ArmSoakScheduler()
     {
         try
         {
-            SingletonContainer.ServiceProvider?.GetService<IPlayerBotScheduler>()?.Start();
+            SingletonContainer.ServiceProvider?.GetService<IPlayerBotScheduler>()?.Arm("e2e-bridge");
         }
         catch (Exception ex)
         {
@@ -294,6 +295,8 @@ public sealed class BotDriveBridge
                 return HandleHousingOp(root);
             case "homestead":
                 return HandleHomesteadOp(root);
+            case "assign":
+                return HandleAssignOp(root);
             default:
                 return Err($"unknown cmd '{cmd}'");
         }
@@ -1248,6 +1251,8 @@ public sealed class BotDriveBridge
             return Err($"scenario: provisioning failed for '{botName}': {ex.GetType().Name}: {ex.Message}");
         }
 
+        string response;
+        string? cleanupError = null;
         try
         {
             var result = BotScenarioRunner.Run(template, session.Character, new LiveScenarioWorldAdapter(session.Character));
@@ -1283,24 +1288,30 @@ public sealed class BotDriveBridge
             Logger.Info("scenario '{Template}': {Verdict} on '{Bot}' ({Stage}{Failure})",
                 templateName, result.Passed ? "PASS" : "FAIL", botName,
                 result.FailStage, result.Failure is { } f ? $", {f}" : "");
-            return Ok(payload);
+            response = Ok(payload);
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "scenario '{Template}': run crashed on '{Bot}'", templateName, botName);
-            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
+            response = Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
         }
         finally
         {
             try
             {
-                CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+                LeaveSaveHeadless(session.Character, CharacterLifecycleReason.Logout);
             }
             catch (Exception ex)
             {
+                cleanupError = ex.ToString();
                 Logger.Warn(ex, "scenario '{Template}': deactivate failed for '{Bot}'", templateName, botName);
             }
         }
+        return cleanupError == null ? response : JsonSerializer.Serialize(new
+        {
+            ok = false, error = "scenario cleanup failed",
+            primary = JsonSerializer.Deserialize<JsonElement>(response), cleanupError
+        });
     }
 
     /// <summary>
@@ -1346,6 +1357,12 @@ public sealed class BotDriveBridge
         if (provisionError != null)
             return provisionError;
 
+        return RunPartyFollowAssistScenario(root, leaderName, memberName, npcTemplateId, sessions);
+    }
+
+    private string RunPartyFollowAssistScenario(JsonElement root, string leaderName, string memberName,
+        uint npcTemplateId, IReadOnlyList<HeadlessSession> sessions)
+    {
         var leaderSession = sessions[0];
         var memberSession = sessions[1];
         var leaderChar = leaderSession.Character;
@@ -1359,15 +1376,15 @@ public sealed class BotDriveBridge
             // membership through the engine registry before running.
             var invite = new GameplayActor(leaderChar).PartyInvite(memberChar.ObjId);
             if (invite.State != ActorLifecycleState.Completed)
-                return Err($"scenario: party invite failed ({invite.State}: {invite.Detail ?? "no detail"})");
+                return DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions, Err($"scenario: party invite failed ({invite.State}: {invite.Detail ?? "no detail"})"));
             var accept = new GameplayActor(memberChar).PartyAccept();
             if (accept.State != ActorLifecycleState.Completed)
-                return Err($"scenario: party accept failed ({accept.State}: {accept.Detail ?? "no detail"})");
+                return DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions, Err($"scenario: party accept failed ({accept.State}: {accept.Detail ?? "no detail"})"));
 
             var team = TeamManager.Instance.GetActiveTeamByUnit(leaderChar.Id);
             if (team == null || !team.IsParty || !team.IsMember(memberChar.Id) || team.OwnerId != leaderChar.Id)
-                return Err($"scenario: party did not form (team {(team == null ? "<null>" : team.Id.ToString())}, " +
-                           $"owner {team?.OwnerId.ToString() ?? "<null>"}, expected owner {leaderChar.Id})");
+                return DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions, Err($"scenario: party did not form (team {(team == null ? "<null>" : team.Id.ToString())}, " +
+                           $"owner {team?.OwnerId.ToString() ?? "<null>"}, expected owner {leaderChar.Id})"));
 
             // ---------------------------------------------------- POSITION
             // Leader at the target NPC's spawner (the adapter resolves/spawns
@@ -1375,14 +1392,14 @@ public sealed class BotDriveBridge
             // distanceBefore > FollowDistance and the FOLLOW leg drives.
             var npcObjId = new LiveScenarioWorldAdapter(leaderChar).ResolveNpcObjId(npcTemplateId);
             if (npcObjId == 0)
-                return Err($"scenario: could not resolve a live objId for NPC template {npcTemplateId}");
+                return DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions, Err($"scenario: could not resolve a live objId for NPC template {npcTemplateId}"));
 
             TeleportWithRegionSync(memberChar, leaderChar.Transform.Local.Position +
                 new System.Numerics.Vector3(20f, 0f, 0f), leaderChar.Transform.ZoneId);
 
             var setTarget = new GameplayActor(leaderChar).SetTarget(npcObjId);
             if (setTarget.State != ActorLifecycleState.Completed)
-                return Err($"scenario: leader SetTarget({npcObjId}) failed ({setTarget.State}: {setTarget.Detail ?? "no detail"})");
+                return DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions, Err($"scenario: leader SetTarget({npcObjId}) failed ({setTarget.State}: {setTarget.Detail ?? "no detail"})"));
 
             // -------------------------------------------------------- RUN
             var options = new PartyFollowAssistScenario.PartyOptions
@@ -1431,17 +1448,13 @@ public sealed class BotDriveBridge
             Logger.Info("scenario '{Template}': {Verdict} on '{Leader}'/'{Member}' ({Stage}{Failure})",
                 PartyFollowAssistScenario.ScenarioName, result.Passed ? "PASS" : "FAIL",
                 leaderName, memberName, result.FailStage, result.Failure is { } f ? $", {f}" : "");
-            return Ok(payload);
+            return DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions, Ok(payload));
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "scenario '{Template}': run crashed on '{Leader}'/'{Member}'",
                 PartyFollowAssistScenario.ScenarioName, leaderName, memberName);
-            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
-        }
-        finally
-        {
-            DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions);
+            return DeactivateParty(PartyFollowAssistScenario.ScenarioName, sessions, Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}"));
         }
     }
     /// <summary>
@@ -1516,17 +1529,13 @@ public sealed class BotDriveBridge
             Logger.Info("scenario '{Template}': {Verdict} on '{Alice}'/'{Bob}' ({Stage}{Failure})",
                 TradeHandshakeScenario.ScenarioName, result.Passed ? "PASS" : "FAIL",
                 aliceName, bobName, result.FailStage, result.Failure is { } f ? $", {f}" : "");
-            return Ok(payload);
+            return DeactivateParty(TradeHandshakeScenario.ScenarioName, sessions, Ok(payload));
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "scenario '{Template}': run crashed on '{Alice}'/'{Bob}'",
                 TradeHandshakeScenario.ScenarioName, aliceName, bobName);
-            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
-        }
-        finally
-        {
-            DeactivateParty(TradeHandshakeScenario.ScenarioName, sessions);
+            return DeactivateParty(TradeHandshakeScenario.ScenarioName, sessions, Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}"));
         }
     }
 
@@ -1603,17 +1612,13 @@ public sealed class BotDriveBridge
             Logger.Info("scenario '{Template}': {Verdict} ({Stage}{Failure})",
                 ExpeditionFormationScenario.ScenarioName, result.Passed ? "PASS" : "FAIL",
                 result.FailStage, result.Failure is { } f ? $", {f}" : "");
-            return Ok(payload);
+            return DeactivateParty(ExpeditionFormationScenario.ScenarioName, sessions, Ok(payload));
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "scenario '{Template}': run crashed",
                 ExpeditionFormationScenario.ScenarioName);
-            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
-        }
-        finally
-        {
-            DeactivateParty(ExpeditionFormationScenario.ScenarioName, sessions);
+            return DeactivateParty(ExpeditionFormationScenario.ScenarioName, sessions, Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}"));
         }
     }
 
@@ -1686,17 +1691,17 @@ public sealed class BotDriveBridge
             {
                 var invite = new GameplayActor(leaderChar).PartyInvite(member.ObjId);
                 if (invite.State != ActorLifecycleState.Completed)
-                    return Err($"scenario: party invite for '{member.Name}' failed ({invite.State}: {invite.Detail ?? "no detail"})");
+                    return DeactivateParty(PartySpikeScenario.ScenarioName, sessions, Err($"scenario: party invite for '{member.Name}' failed ({invite.State}: {invite.Detail ?? "no detail"})"));
                 var accept = new GameplayActor(member).PartyAccept();
                 if (accept.State != ActorLifecycleState.Completed)
-                    return Err($"scenario: party accept from '{member.Name}' failed ({accept.State}: {accept.Detail ?? "no detail"})");
+                    return DeactivateParty(PartySpikeScenario.ScenarioName, sessions, Err($"scenario: party accept from '{member.Name}' failed ({accept.State}: {accept.Detail ?? "no detail"})"));
             }
 
             var team = TeamManager.Instance.GetActiveTeamByUnit(leaderChar.Id);
             if (team == null || !team.IsParty || team.OwnerId != leaderChar.Id ||
                 characters.Any(c => !team.IsMember(c.Id)))
-                return Err($"scenario: party did not form (team {(team == null ? "<null>" : team.Id.ToString())}, " +
-                           $"owner {team?.OwnerId.ToString() ?? "<null>"}, expected owner {leaderChar.Id})");
+                return DeactivateParty(PartySpikeScenario.ScenarioName, sessions, Err($"scenario: party did not form (team {(team == null ? "<null>" : team.Id.ToString())}, " +
+                           $"owner {team?.OwnerId.ToString() ?? "<null>"}, expected owner {leaderChar.Id})"));
 
             // -------------------------------------------------------- POSITION
             // Leader at the elite's spawner (the adapter resolves/spawns the
@@ -1704,7 +1709,7 @@ public sealed class BotDriveBridge
             // distanceBefore > FollowDistance and the RALLY legs drive.
             var npcObjId = new LiveScenarioWorldAdapter(leaderChar).ResolveNpcObjId(npcTemplateId);
             if (npcObjId == 0)
-                return Err($"scenario: could not resolve a live objId for NPC template {npcTemplateId}");
+                return DeactivateParty(PartySpikeScenario.ScenarioName, sessions, Err($"scenario: could not resolve a live objId for NPC template {npcTemplateId}"));
 
             var offsets = new[]
             {
@@ -1766,17 +1771,13 @@ public sealed class BotDriveBridge
             Logger.Info("scenario '{Template}': {Verdict} on '{Leader}'+'{M1}'/'{M2}' ({Stage}{Failure})",
                 PartySpikeScenario.ScenarioName, result.Passed ? "PASS" : "FAIL",
                 leaderName, member1Name, member2Name, result.FailStage, result.Failure is { } f ? $", {f}" : "");
-            return Ok(payload);
+            return DeactivateParty(PartySpikeScenario.ScenarioName, sessions, Ok(payload));
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "scenario '{Template}': run crashed on '{Leader}'/'{M1}'/'{M2}'",
                 PartySpikeScenario.ScenarioName, leaderName, member1Name, member2Name);
-            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
-        }
-        finally
-        {
-            DeactivateParty(PartySpikeScenario.ScenarioName, sessions);
+            return DeactivateParty(PartySpikeScenario.ScenarioName, sessions, Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}"));
         }
     }
 
@@ -1851,6 +1852,8 @@ public sealed class BotDriveBridge
             return Err($"scenario: provisioning failed for '{botName}': {ex.GetType().Name}: {ex.Message}");
         }
 
+        string response;
+        string? cleanupError = null;
         try
         {
             var result = EconomyDayCycleScenario.Run(session.Character,
@@ -1896,26 +1899,32 @@ public sealed class BotDriveBridge
             Logger.Info("scenario '{Template}': {Verdict} on '{Bot}' ({Stage}{Failure})",
                 EconomyDayCycleScenario.ScenarioName, result.Passed ? "PASS" : "FAIL", botName,
                 result.FailStage, result.Failure is { } f ? $", {f}" : "");
-            return Ok(payload);
+            response = Ok(payload);
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "scenario '{Template}': run crashed on '{Bot}'",
                 EconomyDayCycleScenario.ScenarioName, botName);
-            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
+            response = Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
         }
         finally
         {
             try
             {
-                CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+                LeaveSaveHeadless(session.Character, CharacterLifecycleReason.Logout);
             }
             catch (Exception ex)
             {
+                cleanupError = ex.ToString();
                 Logger.Warn(ex, "scenario '{Template}': deactivate failed for '{Bot}'",
                     EconomyDayCycleScenario.ScenarioName, botName);
             }
         }
+        return cleanupError == null ? response : JsonSerializer.Serialize(new
+        {
+            ok = false, error = "scenario cleanup failed",
+            primary = JsonSerializer.Deserialize<JsonElement>(response), cleanupError
+        });
     }
 
     /// <summary>
@@ -1979,12 +1988,12 @@ public sealed class BotDriveBridge
                 idempotencyKey: $"{cycleId}-prep-plant");
             prep = pump.Drive(farmerActor, prep, TimeSpan.FromSeconds(60));
             if (prep.State != ActorLifecycleState.Completed)
-                return Err($"scenario: prep plant failed ({prep.State}: {prep.Detail ?? "no detail"})");
+                return DeactivateParty(VillageDayCycle.ScenarioName, sessions, Err($"scenario: prep plant failed ({prep.State}: {prep.Detail ?? "no detail"})"));
             var cropObjId = ReadVillageObjId(prep.Result);
             if (cropObjId == 0)
-                return Err("scenario: prep plant completed without a crop ObjId");
+                return DeactivateParty(VillageDayCycle.ScenarioName, sessions, Err("scenario: prep plant completed without a crop ObjId"));
             if (!pump.WaitForCropMaturity(farmerChar, cropObjId, TimeSpan.FromSeconds(180)))
-                return Err($"scenario: prep crop {cropObjId} not harvestable within the maturity window");
+                return DeactivateParty(VillageDayCycle.ScenarioName, sessions, Err($"scenario: prep crop {cropObjId} not harvestable within the maturity window"));
 
             // ---- Crafter prep: the recipe rows into the bank through REAL deposit legs.
             var crafterCtl = new PlayerBotController(crafterChar);
@@ -1995,7 +2004,7 @@ public sealed class BotDriveBridge
                 var deposit = crafterActor.DepositItem(material, idempotencyKey: $"{cycleId}-prep-deposit-{material}");
                 deposit = pump.Drive(crafterActor, deposit, TimeSpan.FromSeconds(60));
                 if (deposit.State != ActorLifecycleState.Completed)
-                    return Err($"scenario: prep deposit of {material} failed ({deposit.State}: {deposit.Detail ?? "no detail"})");
+                    return DeactivateParty(VillageDayCycle.ScenarioName, sessions, Err($"scenario: prep deposit of {material} failed ({deposit.State}: {deposit.Detail ?? "no detail"})"));
             }
 
             // Nearest non-crop doodad bench (the economy ReqDoodadId=0
@@ -2003,7 +2012,7 @@ public sealed class BotDriveBridge
             // leg harvests (deletes) it before the crafter leg resolves.
             var benchObjId = ResolveVillageBench(crafterChar, cropObjId);
             if (benchObjId == 0)
-                return Err("scenario: no craft bench doodad in range");
+                return DeactivateParty(VillageDayCycle.ScenarioName, sessions, Err("scenario: no craft bench doodad in range"));
             var bench = crafterChar.ParentWorld?.GetDoodad(benchObjId);
             var benchPos = bench?.Transform.World.Position ?? crafterChar.Transform.World.Position;
             TeleportWithRegionSync(crafterChar, benchPos + new System.Numerics.Vector3(2f, 0f, 0f));
@@ -2101,17 +2110,13 @@ public sealed class BotDriveBridge
             Logger.Info("scenario '{Template}': {Verdict} on '{Farmer}'+'{Crafter}' ({Stage}{Failure})",
                 VillageDayCycle.ScenarioName, result.Passed ? "PASS" : "FAIL", farmerName, crafterName,
                 result.FailStage, result.Failure is { } f ? $", {f}" : "");
-            return Ok(payload);
+            return DeactivateParty(VillageDayCycle.ScenarioName, sessions, Ok(payload));
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "scenario '{Template}': run crashed on '{Farmer}'+'{Crafter}'",
                 VillageDayCycle.ScenarioName, farmerName, crafterName);
-            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
-        }
-        finally
-        {
-            DeactivateParty(VillageDayCycle.ScenarioName, sessions);
+            return DeactivateParty(VillageDayCycle.ScenarioName, sessions, Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}"));
         }
     }
 
@@ -2177,7 +2182,7 @@ public sealed class BotDriveBridge
             var merchantObjId = new LiveScenarioWorldAdapter(farmerChar)
                 .ResolveNpcObjId(EconomyDayCycleScenario.GeneralMerchantNpcTemplateId);
             if (merchantObjId == 0)
-                return Err($"scenario: general merchant {EconomyDayCycleScenario.GeneralMerchantNpcTemplateId} unresolvable in world");
+                return DeactivateParty(VillageFullDayCycle.ScenarioName, sessions, Err($"scenario: general merchant {EconomyDayCycleScenario.GeneralMerchantNpcTemplateId} unresolvable in world"));
 
             // ---- Farmer prep: one mature owned crop at the farmer's feet. ----
             new PlayerBotController(farmerChar).StockInventory(EconomyDayCycleScenario.PotatoSeedItemId, 3);
@@ -2186,12 +2191,12 @@ public sealed class BotDriveBridge
                 idempotencyKey: $"{cycleId}-prep-plant");
             prep = pump.Drive(farmerActor, prep, TimeSpan.FromSeconds(60));
             if (prep.State != ActorLifecycleState.Completed)
-                return Err($"scenario: prep plant failed ({prep.State}: {prep.Detail ?? "no detail"})");
+                return DeactivateParty(VillageFullDayCycle.ScenarioName, sessions, Err($"scenario: prep plant failed ({prep.State}: {prep.Detail ?? "no detail"})"));
             var cropObjId = ReadVillageObjId(prep.Result);
             if (cropObjId == 0)
-                return Err("scenario: prep plant completed without a crop ObjId");
+                return DeactivateParty(VillageFullDayCycle.ScenarioName, sessions, Err("scenario: prep plant completed without a crop ObjId"));
             if (!pump.WaitForCropMaturity(farmerChar, cropObjId, TimeSpan.FromSeconds(180)))
-                return Err($"scenario: prep crop {cropObjId} not harvestable within the maturity window");
+                return DeactivateParty(VillageFullDayCycle.ScenarioName, sessions, Err($"scenario: prep crop {cropObjId} not harvestable within the maturity window"));
             var crafterCtl = new PlayerBotController(crafterChar);
             crafterCtl.StockInventory(EconomyDayCycleScenario.PotatoItemId, 1);
             crafterCtl.StockInventory(EconomyDayCycleScenario.WaterItemId, 1);
@@ -2200,12 +2205,12 @@ public sealed class BotDriveBridge
                 var deposit = crafterActor.DepositItem(material, idempotencyKey: $"{cycleId}-prep-deposit-{material}");
                 deposit = pump.Drive(crafterActor, deposit, TimeSpan.FromSeconds(60));
                 if (deposit.State != ActorLifecycleState.Completed)
-                    return Err($"scenario: prep deposit of {material} failed ({deposit.State}: {deposit.Detail ?? "no detail"})");
+                    return DeactivateParty(VillageFullDayCycle.ScenarioName, sessions, Err($"scenario: prep deposit of {material} failed ({deposit.State}: {deposit.Detail ?? "no detail"})"));
             }
 
             var benchObjId = ResolveVillageBench(crafterChar, cropObjId);
             if (benchObjId == 0)
-                return Err("scenario: no craft bench doodad in range");
+                return DeactivateParty(VillageFullDayCycle.ScenarioName, sessions, Err("scenario: no craft bench doodad in range"));
             var bench = crafterChar.ParentWorld?.GetDoodad(benchObjId);
             var benchPos = bench?.Transform.World.Position ?? crafterChar.Transform.World.Position;
             TeleportWithRegionSync(crafterChar, benchPos + new System.Numerics.Vector3(2f, 0f, 0f));
@@ -2222,7 +2227,7 @@ public sealed class BotDriveBridge
                     idempotencyKey: $"{cycleId}-prep-evening-{prepChar.Name}");
                 eveningStock = pump.Drive(prepActor, eveningStock, TimeSpan.FromSeconds(60));
                 if (eveningStock.State != ActorLifecycleState.Completed)
-                    return Err($"scenario: evening stock deposit failed for {prepChar.Name} ({eveningStock.State}: {eveningStock.Detail ?? "no detail"})");
+                    return DeactivateParty(VillageFullDayCycle.ScenarioName, sessions, Err($"scenario: evening stock deposit failed for {prepChar.Name} ({eveningStock.State}: {eveningStock.Detail ?? "no detail"})"));
             }
 
             // ---- Metadata: profession + home + schedule (anchors, no phase yet). ----
@@ -2340,17 +2345,13 @@ public sealed class BotDriveBridge
             Logger.Info("scenario '{Template}': {Verdict} on '{Farmer}'+'{Crafter}' ({Stage}{Failure})",
                 VillageFullDayCycle.ScenarioName, result.Passed ? "PASS" : "FAIL", farmerName, crafterName,
                 result.FailStage, result.Failure is { } f ? $", {f}" : "");
-            return Ok(payload);
+            return DeactivateParty(VillageFullDayCycle.ScenarioName, sessions, Ok(payload));
         }
         catch (Exception ex)
         {
             Logger.Error(ex, "scenario '{Template}': run crashed on '{Farmer}'+'{Crafter}'",
                 VillageFullDayCycle.ScenarioName, farmerName, crafterName);
-            return Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}");
-        }
-        finally
-        {
-            DeactivateParty(VillageFullDayCycle.ScenarioName, sessions);
+            return DeactivateParty(VillageFullDayCycle.ScenarioName, sessions, Err($"scenario: run crashed: {ex.GetType().Name}: {ex.Message}"));
         }
     }
 
@@ -2557,9 +2558,10 @@ public sealed class BotDriveBridge
             catch (Exception ex)
             {
                 Logger.Error(ex, "scenario '{Template}': provisioning failed for '{Bot}'", scenarioName, botName);
-                DeactivateParty(scenarioName, sessions);
+                var response = DeactivateParty(scenarioName, sessions,
+                    Err($"scenario: provisioning failed for '{botName}': {ex.GetType().Name}: {ex.Message}"));
                 sessions = [];
-                return Err($"scenario: provisioning failed for '{botName}': {ex.GetType().Name}: {ex.Message}");
+                return response;
             }
         }
 
@@ -2581,9 +2583,10 @@ public sealed class BotDriveBridge
         {
             var detail = string.Join("; ", provisioned.Select(s =>
                 $"'{s.Character.Name}' world {s.Character.ParentWorld?.Id.ToString() ?? "<none>"}"));
-            DeactivateParty(scenarioName, provisioned);
+            var response = DeactivateParty(scenarioName, provisioned,
+                Err($"scenario: provisioned bots did not converge into a shared world instance within 20s [{detail}]"));
             sessions = [];
-            return Err($"scenario: provisioned bots did not converge into a shared world instance within 20s [{detail}]");
+            return response;
         }
 
         // Headless activation never runs CSNotifyInGamePacket's
@@ -2598,20 +2601,27 @@ public sealed class BotDriveBridge
         return null;
     }
 
-    private void DeactivateParty(string scenarioName, IReadOnlyList<HeadlessSession> sessions)
+    private string DeactivateParty(string scenarioName, IReadOnlyList<HeadlessSession> sessions, string primary)
     {
+        List<string>? cleanupErrors = null;
         foreach (var session in sessions)
         {
             try
             {
-                CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+                LeaveSaveHeadless(session.Character, CharacterLifecycleReason.Logout);
             }
             catch (Exception ex)
             {
+                (cleanupErrors ??= []).Add(ex.ToString());
                 Logger.Warn(ex, "scenario '{Template}': deactivate failed for '{Bot}'",
                     scenarioName, session.Character.Name);
             }
         }
+        return cleanupErrors == null ? primary : JsonSerializer.Serialize(new
+        {
+            ok = false, error = "scenario cleanup failed",
+            primary = JsonSerializer.Deserialize<JsonElement>(primary), cleanupErrors
+        });
     }
 
     #endregion
@@ -2640,6 +2650,22 @@ public sealed class BotDriveBridge
         var level = (byte)GetInt(root, "level", 10);
 
         var fresh = !root.TryGetProperty("fresh", out var freshEl) || freshEl.GetBoolean();
+        // A cached embodiment must leave through its exact registered owner
+        // before its cache entry or an existing database row can be replaced.
+        if (PersistentBotSessions.TryGetValue(botName, out var stale))
+        {
+            try
+            {
+                LeaveSaveHeadless(stale.Character, CharacterLifecycleReason.Logout,
+                    () => ReleaseExactPersistentSession(botName, stale));
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "provision: replacing session '{Bot}' failed", botName);
+                return Err($"provision: old session for '{botName}' did not leave successfully");
+            }
+        }
+
         if (fresh)
         {
             try
@@ -2649,20 +2675,6 @@ public sealed class BotDriveBridge
             catch (Exception ex)
             {
                 Logger.Warn(ex, "provision: fresh wipe failed for '{Bot}' — continuing with adoption semantics", botName);
-            }
-        }
-
-        // Replace any stale embodied session under this name (a previous
-        // provision call whose Deactivate never ran).
-        if (PersistentBotSessions.TryRemove(botName, out var stale))
-        {
-            try
-            {
-                CharacterLifecycleService.Instance.Deactivate(stale.Character, CharacterLifecycleReason.Logout);
-            }
-            catch (Exception ex)
-            {
-                Logger.Debug(ex, "provision: replacing stale session '{Bot}' failed (best-effort)", botName);
             }
         }
 
@@ -2689,24 +2701,43 @@ public sealed class BotDriveBridge
         });
     }
 
+    private static bool ReleaseExactPersistentSession(string botName, HeadlessSession expected)
+    {
+        // A delayed caller may already have had its exact entry removed by another successful leave.
+        // Never remove a different session: only an exact removal or an observed absent key succeeds.
+        return ((ICollection<KeyValuePair<string, HeadlessSession>>)PersistentBotSessions)
+            .Remove(new KeyValuePair<string, HeadlessSession>(botName, expected))
+            || !PersistentBotSessions.ContainsKey(botName);
+    }
+
+    private static bool LeaveSaveHeadless(Character character, CharacterLifecycleReason reason, Func<bool>? releaseCachedSession = null)
+    {
+        var manager = SingletonContainer.ServiceProvider?.GetService<IPlayerBotManager>();
+        if (manager == null || !manager.LeaveHeadlessCharacter(character, reason, out var savedThisCall, releaseCachedSession))
+            throw new InvalidOperationException("Exact headless owner did not complete its leave transition.");
+        return savedThisCall;
+    }
+
     private string HandleDeactivate(JsonElement root)
     {
         var rawName = root.TryGetProperty("bot", out var b) ? b.GetString() : null;
         if (string.IsNullOrWhiteSpace(rawName))
             return Err("deactivate requires 'bot'");
         var botName = rawName.NormalizeName();
-        if (!PersistentBotSessions.TryRemove(botName, out var session))
+        if (!PersistentBotSessions.TryGetValue(botName, out var session))
             return Err($"deactivate: bot '{botName}' is not provisioned");
+        bool savedThisCall;
         try
         {
-            CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+            savedThisCall = LeaveSaveHeadless(session.Character, CharacterLifecycleReason.Logout,
+                () => ReleaseExactPersistentSession(botName, session));
         }
         catch (Exception ex)
         {
             Logger.Warn(ex, "deactivate failed for '{Bot}'", botName);
+            return Err($"deactivate: exact owner for '{botName}' did not leave successfully");
         }
-
-        return Ok(new { removed = true, id = session.Character.Id });
+        return Ok(new { removed = true, id = session.Character.Id, saved = savedThisCall });
     }
 
     /// <summary>
@@ -2793,7 +2824,7 @@ public sealed class BotDriveBridge
             }
             try
             {
-                CharacterLifecycleService.Instance.Deactivate(session.Character, CharacterLifecycleReason.Logout);
+                LeaveSaveHeadless(session.Character, CharacterLifecycleReason.Logout);
             }
             catch (Exception ex)
             {
@@ -2806,6 +2837,53 @@ public sealed class BotDriveBridge
 
         Logger.Info("seedDormant: seeded {Count} dormant specs", seeded.Count);
         return Ok(new { seeded = seeded.Count, bots = seeded });
+    }
+
+    /// <summary>
+    /// Resolves a MANAGED bot — the population the token-gated HTTP route, the
+    /// brain read-back and the bot scheduler all address — by numeric id or by
+    /// name, using the same rules as
+    /// <c>BotControlController.TryResolveBot</c>. The two assignment frontends
+    /// therefore cannot diverge on WHICH bot an instruction names: the lane run
+    /// of 2026-10-17 found the bridge could not address the very bot the lane had
+    /// provisioned through the management surface (it only knew the bridge's own
+    /// persistent sessions and real networked sessions, so the op was unusable
+    /// for every managed bot).
+    /// </summary>
+    private static bool TryResolveManagedBot(string? rawNameOrId, out Character? character, out string error)
+    {
+        character = null;
+        error = "";
+        if (string.IsNullOrWhiteSpace(rawNameOrId))
+        {
+            error = "assign requires 'bot'";
+            return false;
+        }
+
+        var manager = SingletonContainer.ServiceProvider?.GetService<IPlayerBotManager>();
+        if (manager == null)
+        {
+            error = "assign: bot manager unavailable in DI";
+            return false;
+        }
+
+        var nameOrId = rawNameOrId.Trim();
+        if (uint.TryParse(nameOrId, out var id) && manager.TryGet(id, out var byId) && byId != null)
+        {
+            character = byId.Character;
+            return true;
+        }
+
+        var runtime = manager.GetAll().FirstOrDefault(r =>
+            r.Character.Name.Equals(nameOrId, StringComparison.OrdinalIgnoreCase));
+        if (runtime == null)
+        {
+            error = $"unknown bot '{nameOrId}' (not a managed bot on this boot)";
+            return false;
+        }
+
+        character = runtime.Character;
+        return true;
     }
 
     /// <summary>
@@ -3357,6 +3435,16 @@ public sealed class BotDriveBridge
                 var hpBefore = character!.Hp;
                 var actor = new GameplayActor(character!);
                 var request = actor.UseItem(itemTemplate);
+                var budget = request.Timeout ?? TimeSpan.FromSeconds(30);
+                var deadline = Environment.TickCount64 + (long)budget.TotalMilliseconds;
+                while (!request.IsTerminal && Environment.TickCount64 < deadline)
+                {
+                    actor.Tick(TimeSpan.FromMilliseconds(20));
+                    if (!request.IsTerminal)
+                        Thread.Sleep(20);
+                }
+                if (!request.IsTerminal && ReferenceEquals(actor.ActiveRequest, request))
+                    actor.PreemptCurrent("ordinary item use exceeded bridge action budget");
                 return Ok(new
                 {
                     state = request.State.ToString(),
@@ -3664,6 +3752,74 @@ public sealed class BotDriveBridge
         public object GetAttribute(string name) => _attributes.GetValueOrDefault(name)!;
         public void ClearAttribute(string name) => _attributes.Remove(name);
         public void Close() { }
+    }
+
+    /// <summary>
+    /// Operator assignment plane over the E2E bridge (plan T1, E2E-ONLY,
+    /// additive). Writes the SAME registry the token-gated HTTP route and the
+    /// arbitration band read, so a lane can arm an assignment through the
+    /// loopback control channel and still read the identical state back — the
+    /// two frontends cannot diverge.
+    ///
+    /// Body: {"cmd":"assign","bot":"Bot","activity":"assigned.travel",
+    ///        "x":..,"y":..,"z":..,"expirySeconds":600}
+    /// `activity` defaults to assigned.travel; the registry applies its own
+    /// default and bounds to the expiry, and refuses an unknown activity
+    /// instead of silently ignoring it. Numeric `x`, `y` and `z` are REQUIRED —
+    /// the same validation the HTTP route applies, so a mistyped call cannot
+    /// send the bot to the world origin.
+    ///
+    /// `bot` is resolved as a MANAGED bot first (the population the HTTP route
+    /// and the brain read-back address) and then through the bridge's own
+    /// persistent/networked sessions, so both frontends name the same bots.
+    /// </summary>
+    private string HandleAssignOp(JsonElement root)
+    {
+        var rawBot = root.TryGetProperty("bot", out var b) ? b.GetString() : null;
+        if (!TryResolveManagedBot(rawBot, out var character, out var err)
+            && !TryResolvePersistentBot(rawBot, out character, out err)
+            && !TryResolveNetworkedBot(rawBot, out character, out err))
+            return Err(err);
+
+        var registry = SingletonContainer.ServiceProvider?.GetService<IBotAssignmentRegistry>();
+        if (registry == null)
+            return Err("assign: assignment registry unavailable in DI");
+
+        var activity = root.TryGetProperty("activity", out var activityEl) ? activityEl.GetString() : null;
+        if (string.IsNullOrWhiteSpace(activity))
+            activity = BotAssignmentActivities.Travel;
+
+        var seconds = GetInt(root, "expirySeconds", BotAssignmentRegistry.DefaultExpirySeconds);
+        // The HTTP route rejects a missing coordinate ("x, y and z are required");
+        // the bridge used to read a missing key as 0f and silently walk the bot to
+        // the world origin (code review 2026-10-16, P3-5).
+        if (!root.TryGetProperty("x", out var xElement) || xElement.ValueKind != JsonValueKind.Number
+            || !root.TryGetProperty("y", out var yElement) || yElement.ValueKind != JsonValueKind.Number
+            || !root.TryGetProperty("z", out var zElement) || zElement.ValueKind != JsonValueKind.Number)
+            return Err("assign: numeric x, y and z are required");
+
+        var assignment = registry.Accept(
+            character!.Id, activity, xElement.GetSingle(), yElement.GetSingle(), zElement.GetSingle(),
+            TimeSpan.FromSeconds(seconds), "e2e-bridge");
+        if (assignment == null)
+            return Err($"unsupported activity '{activity}' (supported: {BotAssignmentActivities.Travel})");
+
+        return Ok(new
+        {
+            characterId = assignment.CharacterId,
+            name = character.Name,
+            activity = assignment.Activity,
+            x = assignment.X,
+            y = assignment.Y,
+            z = assignment.Z,
+            state = assignment.StateName,
+            acceptedUtc = assignment.AcceptedUtc,
+            expiresUtc = assignment.ExpiresUtc,
+            secondsRemaining = assignment.SecondsRemaining(DateTime.UtcNow),
+            requestedBy = assignment.RequestedBy,
+            retirement = assignment.Retirement,
+            lastReason = assignment.LastReason,
+        });
     }
 
     /// <summary>
@@ -4355,7 +4511,18 @@ public sealed class BotDriveBridge
                 var objId = GetUInt(root, "objId");
                 if (objId == 0)
                     return Err("farm harvest requires 'objId'");
-                var request = new GameplayActor(character!).Harvest(objId);
+                var actor = new GameplayActor(character!);
+                var request = actor.Harvest(objId);
+                var budget = request.Timeout ?? GameplayActor.DefaultHarvestTimeout;
+                var deadline = Environment.TickCount64 + (long)budget.TotalMilliseconds;
+                while (!request.IsTerminal && Environment.TickCount64 < deadline)
+                {
+                    actor.Tick(TimeSpan.FromMilliseconds(20));
+                    if (!request.IsTerminal)
+                        Thread.Sleep(20);
+                }
+                if (!request.IsTerminal)
+                    actor.RecordBackstopTimeout(request);
                 var after = character!.ParentWorld?.GetDoodad(objId);
                 return Ok(new
                 {
@@ -4995,8 +5162,17 @@ public sealed class BotDriveBridge
                 or Core.Managers.Bots.ActorActionType.TurnInDoodad
                 or Core.Managers.Bots.ActorActionType.AutoTurnIn
                 && r.Result == Core.Managers.Bots.ActorLifecycleState.Completed),
+            // A3: a Completed AdvanceQuest can carry a DECLINED payload — the
+            // step machine ran and the quest did not move ("accepted
+            // not-applied"). Counting terminals alone would report a declined
+            // advance as progress (code review 2026-10-16, F5), so the two
+            // facts are counted separately.
             advances = rows.Count(r => r.Action == Core.Managers.Bots.ActorActionType.AdvanceQuest
-                && r.Result == Core.Managers.Bots.ActorLifecycleState.Completed),
+                && r.Result == Core.Managers.Bots.ActorLifecycleState.Completed
+                && !IsDeclinedAdvance(r)),
+            advancesDeclined = rows.Count(r => r.Action == Core.Managers.Bots.ActorActionType.AdvanceQuest
+                && r.Result == Core.Managers.Bots.ActorLifecycleState.Completed
+                && IsDeclinedAdvance(r)),
             lastAction = last?.Action.ToString(),
             lastResult = last?.Result.ToString(),
             lastDetail = last?.Detail,
@@ -5135,6 +5311,19 @@ public sealed class BotDriveBridge
 
     private static int GetInt(JsonElement root, string name, int defaultValue = 0)
         => root.TryGetProperty(name, out var el) && el.TryGetInt32(out var v) ? v : defaultValue;
+
+    /// <summary>
+    /// A3 verdict reader for the metrics block: a Completed AdvanceQuest whose
+    /// payload says the step machine declined the advance (the world did not
+    /// move). The token is the contract
+    /// (<see cref="Core.Managers.Bots.QuestAdvanceOutcome.Token"/>); the
+    /// <c>not-</c> prefix keeps a substring scan for <c>applied</c> from
+    /// mistaking a declined advance for a landed one.
+    /// </summary>
+    private static bool IsDeclinedAdvance(Core.Managers.Bots.ActorAuditRecord row)
+        => row.Detail?.Contains(
+            Core.Managers.Bots.QuestAdvanceOutcome.From(accepted: true, applied: false).Token,
+            StringComparison.Ordinal) == true;
 
     /// <summary>
     /// Q4 live hunt-leg helper (E2E-ONLY): the caller's bag grouped by

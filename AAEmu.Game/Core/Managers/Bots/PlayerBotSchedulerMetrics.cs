@@ -25,6 +25,8 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// <param name="TotalQuestsAccepted">Cumulative quests ACCEPTED (see <see cref="QuestProgressCounters.Accepted"/>).</param>
 /// <param name="TotalQuestTurnInsRequested">Cumulative turn-in requests reaching the report seam (see <see cref="QuestProgressCounters.TurnInsRequested"/>).</param>
 /// <param name="TotalQuestsCompleted">Cumulative quests COMPLETED (see <see cref="QuestProgressCounters.Completed"/>).</param>
+/// <param name="TotalStepsDropped">Cumulative steps dropped when the execution boundary stopped (see <see cref="IPlayerBotScheduler.Disarm"/>) — queued work the stopped game loop could no longer run.</param>
+/// <param name="TotalStepsDeferred">Cumulative steps left in the marshal queue when a tick drain hit <see cref="PlayerBotSchedulerOptions.MaxStepsPerTick"/> — they run on a later tick, so this counts deferrals, not losses.</param>
 public sealed record PlayerBotSchedulerMetrics(
     int WorkerCount,
     int ActiveWorkers,
@@ -45,7 +47,9 @@ public sealed record PlayerBotSchedulerMetrics(
     long TotalResurrections = 0,
     long TotalQuestsAccepted = 0,
     long TotalQuestTurnInsRequested = 0,
-    long TotalQuestsCompleted = 0)
+    long TotalQuestsCompleted = 0,
+    long TotalStepsDropped = 0,
+    long TotalStepsDeferred = 0)
 {
     /// <summary>Mean wake→start latency in ms (0 when no steps ran).</summary>
     public double AverageWakeLatencyMs => TotalStepsRun == 0 ? 0 : (double)TotalWakeLatencyMs / TotalStepsRun;

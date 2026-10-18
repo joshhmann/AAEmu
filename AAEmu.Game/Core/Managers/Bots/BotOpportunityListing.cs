@@ -45,9 +45,9 @@ namespace AAEmu.Game.Core.Managers.Bots;
 ///   its first failing predicate — never listed as viable.
 /// - Recovery needs: actual vitals (<c>Character.Hp/MaxHp/Mp/MaxMp</c>) against
 ///   the normal recovery thresholds (<see cref="OutOfCombatRecoveryModule"/>),
-///   plus whether the bag holds an edible consumable (the module's own
-///   <c>IsEdibleConsumable</c> predicate — no vendor-stock or eligibility
-///   invention: without a consumable the listing says rest, not buy).
+///   plus a supported unprotected health consumable selected for an actual
+///   HP shortage — no vendor-stock or eligibility invention: otherwise the
+///   listing says rest, not buy.
 ///
 /// Unknown stays unknown (layer-02 direction): a missing region census is
 /// reported as coverage-invalid with zero hunts and zero quest sources — never
@@ -119,7 +119,7 @@ public static class BotOpportunityListing
     ///
     /// QuestOffersUnknown is the busy-actor witness: true when at least one
     /// quest-offer observation (per-NPC DiscoverQuests or DiscoverSelfQuests)
-    /// was refused because the actor was busy with a live request. The
+    /// could not run because the actor was busy with a live request. The
     /// eligible set is then INCOMPLETE — unknown, never disappearance or
     /// exhaustion. Hunts ride pure region reads (no request gate) and stay
     /// authoritative regardless of this flag.
@@ -179,6 +179,12 @@ public static class BotOpportunityListing
         IGameplayActor actor, Character character, Vector3 actorPos,
         List<EligibleQuest> eligible, HashSet<uint> seenQuests)
     {
+        // TryBegin would refuse this observation without learning any offer
+        // facts. Preserve unknown eligibility and the running action without
+        // filling its audit with the same known-busy refusal every wake.
+        if (actor.ActiveRequest is { IsTerminal: false })
+            return true;
+
         // NPC channel: every live NPC in the bounded census, through the REAL
         // discover path per target (offer linkage + IsDiscoverable fail-closed
         // filter). Ineligible quests never surface — DiscoverQuests withholds
@@ -271,7 +277,8 @@ public static class BotOpportunityListing
                     _ => (0u, 0u)
                 };
                 if (npcTemplate != 0 || npcGroup != 0)
-                    objectives.Add((questId, npcTemplate, npcGroup, act.GetObjective(quest), act.Count));
+                    objectives.Add((questId, npcTemplate, npcGroup, act.GetObjective(quest),
+                        QuestDirector.ObjectiveCountForFullCredit(act, quest)));
             }
         }
         if (objectives.Count == 0)
@@ -297,7 +304,13 @@ public static class BotOpportunityListing
                     continue;
                 if (!character.CanSeeTarget(npc))
                     continue;
+                if (QuestBehavior.HasExhaustedPursuit(character, npc.ObjId, questId))
+                    continue;
                 var distance = MathUtil.CalculateDistance(actorPos, npc.Transform.World.Position, false);
+                // One live NPC may advance several ordinary quests. Preserve
+                // each quest's opportunity instead of hiding all but the first.
+                if (hunts.Any(h => h.QuestId == questId && h.TargetObjId == npc.ObjId))
+                    continue;
                 hunts.Add(new ViableHunt(
                     npc.ObjId,
                     npc.TemplateId,
@@ -306,7 +319,6 @@ public static class BotOpportunityListing
                     have,
                     need,
                     "live-prey-in-census-passes-hostile-attack-visible-gates"));
-                break;
             }
         }
     }
@@ -495,11 +507,12 @@ public static class BotOpportunityListing
                 if (supply != null)
                     return ObjectiveVerdict.Work("delivery", $"delivery-objective-pending-item-{gather.ItemId}-supply-{supply.ItemId}");
                 var row = QuestFixtureRow.FromQuestData(questId, gather);
-                var preyTemplate = row.PreyTemplate;
+                var hasNpcSources = row.GatherNpcSources.Count != 0;
                 var doodadTemplates = row.GatherDoodadTemplates;
                 var perceived = CensusHasDoodad(character, doodadTemplates)
-                    || (preyTemplate != 0 && WorldManager.GetAround<Npc>(character, QuestObjectiveTargetSelector.LivingPreyScanRadiusM)
-                        .Any(n => QuestObjectiveTargetSelector.IsSuitableLivingPrey(character, n, preyTemplate)))
+                    || (hasNpcSources && WorldManager.GetAround<Npc>(character, QuestObjectiveTargetSelector.LivingPreyScanRadiusM)
+                        .Any(n => QuestObjectiveTargetSelector.IsSuitableGatherPrey(character, n, row)
+                            && !QuestBehavior.HasExhaustedPursuit(character, n.ObjId, questId)))
                     || hunts.Any(h => h.QuestId == questId);
                 if (perceived)
                     return ObjectiveVerdict.Work("gather", $"gather-objective-pending-item-{gather.ItemId}-source-perceived");
@@ -517,6 +530,8 @@ public static class BotOpportunityListing
                 // the row: no nearby prey is never abandonment.
                 if (hunts.Any(h => h.QuestId == questId && h.TargetTemplateId == hunt.NpcId))
                     return ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-{hunt.NpcId}-group-0-prey-perceived");
+                if (QuestBehavior.HasKnownHuntSearch(character, QuestFixtureRow.FromQuestData(questId, hunt)))
+                    return ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-{hunt.NpcId}-group-0-search-location-known");
                 return CensusHasNpcTarget(character, hunt.NpcId, 0)
                     ? ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-{hunt.NpcId}-group-0-prey-present-not-viable")
                     : ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-{hunt.NpcId}-group-0-no-perceived-prey");
@@ -527,6 +542,8 @@ public static class BotOpportunityListing
                     return ObjectiveVerdict.Stuck($"quest-hunt-no-prey-act-{act.ActId}");
                 if (hunts.Any(h => h.QuestId == questId && IsGroupMember(groupHunt.QuestMonsterGroupId, h.TargetTemplateId)))
                     return ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-0-group-{groupHunt.QuestMonsterGroupId}-prey-perceived");
+                if (QuestBehavior.HasKnownHuntSearch(character, QuestFixtureRow.FromQuestData(questId, groupHunt)))
+                    return ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-0-group-{groupHunt.QuestMonsterGroupId}-search-location-known");
                 return CensusHasNpcTarget(character, 0, groupHunt.QuestMonsterGroupId)
                     ? ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-0-group-{groupHunt.QuestMonsterGroupId}-prey-present-not-viable")
                     : ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-0-group-{groupHunt.QuestMonsterGroupId}-no-perceived-prey");
@@ -675,7 +692,8 @@ public static class BotOpportunityListing
         var needsMp = mpRatio < OutOfCombatRecoveryModule.DefaultMpTriggerFraction;
         var needsRecovery = !character.IsInBattle && (needsHp || needsMp);
 
-        var hasConsumable = HasEdibleConsumable(character);
+        var hasConsumable = needsHp && OutOfCombatRecoveryModule.SelectConsumableItem(
+            character, ConsumablePreference.Health) != null;
         var reason = !needsRecovery
             ? "vitals-above-recovery-threshold"
             : character.IsInBattle
@@ -687,25 +705,6 @@ public static class BotOpportunityListing
         return new RecoveryNeed(needsRecovery, hpRatio, mpRatio, hasConsumable, reason);
     }
 
-    private static bool HasEdibleConsumable(Character character)
-    {
-        try
-        {
-            var bag = character.Inventory?.Bag;
-            if (bag == null)
-                return false;
-            foreach (var item in bag.GetItemsSnapshot())
-            {
-                if (item != null && OutOfCombatRecoveryModule.IsEdibleConsumable(item))
-                    return true;
-            }
-            return false;
-        }
-        catch
-        {
-            return false;
-        }
-    }
 
     /// <summary>
     /// <c>CanAttack</c> without letting a missing zone/faction singleton read

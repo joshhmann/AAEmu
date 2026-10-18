@@ -22,9 +22,19 @@ public class DormantBotRegistryTests
 {
     private sealed class RecordingLifecycle : IPlayerBotLifecycleService
     {
+        public RecordingLifecycle() => GameplayActorTestRig.Seed();
+
         public List<uint> Activated { get; } = [];
         public List<uint> Deactivated { get; } = [];
         public HashSet<uint> RefuseDeactivate { get; } = [];
+        public bool RetirementResult { get; set; } = true;
+        public List<(PlayerBotRuntime Owner, ulong Generation, string Reason)> RetirementCalls { get; } = [];
+
+        public bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason)
+        {
+            RetirementCalls.Add((expectedOwner, expectedGeneration, reason));
+            return RetirementResult;
+        }
 
         public bool ActivateHeadless(Character character, object? botContext)
         {
@@ -228,6 +238,30 @@ public class DormantBotRegistryTests
         await Assert.That(specs.Count).IsEqualTo(4);
     }
 
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task FailedLeave_IsNotDormant_AndCannotLoadOrRestoreHome(bool discoveredBeforeFailure)
+    {
+        using var rig = new Rig();
+        if (discoveredBeforeFailure)
+            await Assert.That(rig.Registry.ListSpecs().Any(x => x.CharacterId == 101)).IsTrue();
+        var row = rig.Rows[101];
+        var initialPosition = row.Transform.ComputeWorldPosition();
+        rig.HomeSource.Homes[101] = (0u, new Vector3(91f, 92f, 93f));
+        rig.Manager.Spawn(row, "failed-leave");
+        rig.Manager.Activate(row.Id, null, "failed-leave");
+        rig.Lifecycle.RefuseDeactivate.Add(row.Id);
+
+        await Assert.That(rig.Manager.Deactivate(row.Id, "save-refused")).IsFalse();
+
+        await Assert.That(rig.Registry.ListSpecs().Any(x => x.CharacterId == row.Id)).IsFalse();
+        await Assert.That(rig.Registry.Materialize(new DormantBotSpec(row.Id, row.Name))).IsFalse();
+        await Assert.That(rig.LoadedIds).IsEmpty();
+        await Assert.That(row.Transform.ComputeWorldPosition()).IsEqualTo(initialPosition);
+        await Assert.That(rig.Lifecycle.Activated.Count).IsEqualTo(1);
+    }
+
     // ------------------------------------------------------ round trip
 
     [Test]
@@ -263,6 +297,27 @@ public class DormantBotRegistryTests
         await Assert.That(rig.Manager.TryGet(102, out runtime)).IsTrue();
         await Assert.That(runtime.State).IsEqualTo(PlayerBotState.Active);
         await Assert.That(rig.Registry.IsDormant(102)).IsFalse();
+    }
+
+    [Test]
+    public async Task Dematerialize_RetirementRefusedRetainsFailedEmbodimentWithoutPhysicalLeave()
+    {
+        using var rig = new Rig();
+        await Assert.That(rig.Registry.Materialize(new DormantBotSpec(102, "DormantTwo"))).IsTrue();
+        rig.Manager.TryGet(102, out var runtime);
+        var generation = runtime!.Generation;
+        rig.Lifecycle.RetirementResult = false;
+
+        await Assert.That(rig.Registry.Dematerialize(rig.Rows[102])).IsFalse();
+
+        await Assert.That(rig.Lifecycle.RetirementCalls).HasCount(1);
+        await Assert.That(rig.Lifecycle.RetirementCalls[0].Owner).IsSameReferenceAs(runtime);
+        await Assert.That(rig.Lifecycle.RetirementCalls[0].Generation).IsEqualTo(generation);
+        await Assert.That(rig.Lifecycle.Deactivated).IsEmpty();
+        await Assert.That(runtime.State).IsEqualTo(PlayerBotState.DeactivationFailed);
+        await Assert.That(rig.Registry.IsDormant(102)).IsFalse();
+        await Assert.That(rig.Registry.ListSpecs().Any(s => s.CharacterId == 102)).IsFalse();
+        await Assert.That(rig.Manager.Activate(102, null, "must-not-resume")).IsFalse();
     }
 
     [Test]

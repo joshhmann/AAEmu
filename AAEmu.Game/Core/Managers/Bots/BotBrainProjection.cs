@@ -166,6 +166,30 @@ public static class BotBrainProjection
         float? QuestTravelY,
         float? QuestTravelZ,
         string? QuestTravelReason,
+        // Operator assignment (plan T1): the live assignment the registry holds
+        // for this bot, or the last one recorded — the operator's read-back of
+        // what was asked, what happened and why it ended.
+        BotAssignment? Assignment,
+        // Last arbitration decision (plan T7): the outcome, the elected
+        // activity, the arbiter's OWN refusal text for that wake and the
+        // candidate/refusal counts. Null/0 when the decorator never stepped
+        // this bot; the reason is null whenever nothing refused. The elected
+        // activity is the arbitration's answer for that wake (also null when
+        // the outcome put nothing in force) — not the runtime's `Activity`,
+        // which is the quest runtime's last-ticked leg.
+        string? DecisionOutcome,
+        string? DecisionActivity,
+        string? DecisionReason,
+        int DecisionCandidates,
+        int DecisionRejections,
+        // Which side of the control plane the work in force came from
+        // (plan T7): BotWorkOrigin.Commanded when the live assignment's
+        // activity is the one in force, Autonomous for anything else in force,
+        // null when nothing is in force (pending intent is read from
+        // Assignment instead of being inferred here). "In force" is the
+        // arbitration's own elected activity, never the quest runtime's
+        // never-cleared CurrentActivity.
+        string? WorkOrigin,
         // Bounded recent audit history (execution order, oldest first).
         IReadOnlyList<BotBrainHistoryRow> History);
 
@@ -190,7 +214,9 @@ public static class BotBrainProjection
         bool questLegActive,
         float? questTravelX, float? questTravelY, float? questTravelZ,
         string? questTravelReason,
-        int historyLimit = DefaultHistoryLimit)
+        int historyLimit = DefaultHistoryLimit,
+        BotAssignment? assignment = null,
+        BotWakeDecision? decision = null)
     {
         var result = runtime?.LastResult;
         var funnel = result != null && result.FailStage == "DECIDE"
@@ -199,8 +225,16 @@ public static class BotBrainProjection
         var liveRunning = liveRequest is { IsTerminal: false };
         var status = runtime?.Status.ToString() ?? nameof(BotBehaviorStatus.NotStarted);
         var phase = runtime?.CurrentPhase ?? "idle";
+        var activityInForce = runtime?.CurrentActivity ?? arbiterActivity;
+        // The side of the control plane is decided by the activity the
+        // ARBITRATION put in force, not by `activityInForce` above: the quest
+        // runtime's CurrentActivity is only written while a quest leg ticks and
+        // is never cleared, so it can still name quest work the bot left long
+        // ago (the arbiter's own answer is the decision's activity, and it is
+        // null exactly when the outcome put nothing in force).
+        var originActivity = decision is not null ? decision.Activity : arbiterActivity;
         var statusLine = BuildStatusLine(status, phase, liveRunning, liveRequest,
-            runtime?.CurrentActivity ?? arbiterActivity, funnel, result, runtime?.LastFailure);
+            activityInForce, funnel, result, runtime?.LastFailure);
 
         var rows = trace ?? [];
         var capped = Math.Clamp(historyLimit, 1, 100);
@@ -226,7 +260,7 @@ public static class BotBrainProjection
             characterId, name,
             wakeSequence,
             runtime?.BehaviorInstanceId,
-            runtime?.CurrentActivity ?? arbiterActivity,
+            activityInForce,
             runtime?.CurrentBehavior ?? BotBehaviorRuntime.QuestBehaviorName,
             phase, status,
             runtime?.BehaviorInstanceId,
@@ -259,6 +293,13 @@ public static class BotBrainProjection
             questLegActive,
             questTravelX, questTravelY, questTravelZ,
             questTravelReason,
+            assignment,
+            decision?.Outcome,
+            decision?.Activity,
+            decision?.Reason,
+            decision?.Candidates ?? 0,
+            decision?.Rejections ?? 0,
+            BotWorkOrigin.Of(originActivity, assignment),
             history);
     }
 

@@ -82,6 +82,39 @@ public class TravelBrainPlannerTests
     }
 
     [Test]
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task ElevatedUnit_PursuitUsesCombatDistance_OtherOwnersKeepTheirArrivalRule(bool pursuit)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("travel-elevated-unit");
+        var here = new Vector3(100f, 100f, 10f);
+        GameplayActorTestRig.SetPosition(actor, here);
+        var targetId = session.SpawnNpc(Boar3475);
+        GameplayActorTestRig.SetNpcPosition(session, targetId, here + new Vector3(2f, 0f, 10f));
+        var target = session.World.GetNpc(targetId)!;
+        target.Template = new NpcTemplate { Id = Boar3475, Scale = 1f };
+        var owner = pursuit ? TravelLegDispatch.PursuitMoveOwner : TravelLegDispatch.ReturnMoveOwner;
+        var prepared = TravelLegDispatch.Prepare(actor, targetId, target.Transform.World.Position,
+            3f, false, TravelLegOutcome.None, legOwner: owner)!.Value;
+
+        await Assert.That(prepared.Inputs.DistanceM).IsCloseTo(
+            pursuit ? actor.Character.GetDistanceTo(target, true) : 2f, 0.01f);
+        await Assert.That(prepared.Decision.Verb).IsEqualTo(
+            pursuit ? TravelVerb.MoveToUnit : TravelVerb.Stop);
+        await Assert.That(prepared.Decision.Reason).IsEqualTo(
+            pursuit ? TravelReason.FollowSelected : TravelReason.FollowInPosition);
+
+        // A failed approach must spend its existing budget rather than becoming
+        // "in position" merely because the target is close on the map.
+        TravelIntentStore.NoteRepath(actor.ActorId, TravelBrain.DefaultRepathBudget,
+            TravelMode.Follow, target.Transform.World.Position, owner);
+        var exhausted = TravelLegDispatch.Prepare(actor, targetId, target.Transform.World.Position,
+            3f, false, TravelLegOutcome.TimedOut, legOwner: owner)!.Value;
+        await Assert.That(exhausted.Decision.Terminal).IsEqualTo(
+            pursuit ? TravelTerminal.Unreachable : TravelTerminal.None);
+    }
+
+    [Test]
     public async Task UnitIntent_UnresolvableTarget_NeverReadsAGoneVerdictOnTheFirstMiss()
     {
         var (actor, _) = GameplayActorTestRig.CreateActor("travel-unit-gone");

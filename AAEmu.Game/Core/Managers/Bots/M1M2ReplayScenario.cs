@@ -645,13 +645,32 @@ public static class M1M2ReplayScenario
         for (var attempt = 0; attempt < 3; attempt++)
         {
             var use = actor.UseItem(itemId, targetObjId);
-            traceRecords.Add(actor.AuditTrace.Last());
+            WaitForItemUseTerminal(actor, use);
+            var record = actor.AuditTrace.LastOrDefault(r => r.TraceId == use.TraceId);
+            if (record != null)
+                traceRecords.Add(record);
             if (use.State != ActorLifecycleState.Rejected || use.Detail?.Contains("CooldownTime") != true)
                 return use;
             Thread.Sleep(350); // default GCD is 1000ms — wait it out
         }
 
-        return actor.UseItem(itemId, targetObjId); // final attempt; its record is captured by the caller loop's next iteration
+        var finalUse = actor.UseItem(itemId, targetObjId);
+        WaitForItemUseTerminal(actor, finalUse);
+        return finalUse;
+    }
+
+    private static void WaitForItemUseTerminal(GameplayActor actor, ActorRequest request)
+    {
+        var budget = request.Timeout ?? TimeSpan.FromSeconds(30);
+        var deadline = Environment.TickCount64 + (long)budget.TotalMilliseconds;
+        while (!request.IsTerminal && Environment.TickCount64 < deadline)
+        {
+            actor.Tick(TimeSpan.FromMilliseconds(20));
+            if (!request.IsTerminal)
+                Thread.Sleep(20);
+        }
+        if (!request.IsTerminal && ReferenceEquals(actor.ActiveRequest, request))
+            actor.PreemptCurrent("ordinary item use exceeded replay budget");
     }
 
     /// <summary>
@@ -678,7 +697,10 @@ public static class M1M2ReplayScenario
         List<ActorAuditRecord> traceRecords)
     {
         var use = actor.UseItem(FirstMountItemId);
-        traceRecords.Add(actor.AuditTrace.Last());
+        WaitForItemUseTerminal(actor, use);
+        var useRecord = actor.AuditTrace.LastOrDefault(r => r.TraceId == use.TraceId);
+        if (useRecord != null)
+            traceRecords.Add(useRecord);
         if (use.State != ActorLifecycleState.Completed)
         {
             rigNotes.Add($"mount segment: use_item {FirstMountItemId} {use.State} — {use.Detail}");

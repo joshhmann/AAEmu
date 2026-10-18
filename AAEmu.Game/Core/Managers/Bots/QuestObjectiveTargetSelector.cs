@@ -5,6 +5,7 @@ using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Utils;
 
 namespace AAEmu.Game.Core.Managers.Bots;
@@ -59,6 +60,82 @@ public static class QuestObjectiveTargetSelector
     // observed prey can own the wake instead of travel. No new combat rules.
     internal static bool IsSuitableLivingPrey(Character character, Npc npc, uint templateId)
         => LivingPreyRejection(character, npc, templateId) == "-";
+
+    internal static bool IsSuitableGatherPrey(Character character, Npc npc, QuestFixtureRow fixture)
+        => IsQuestNpcSource(fixture, npc.TemplateId)
+            && IsSuitableLivingPrey(character, npc, npc.TemplateId);
+
+    // Cached reference links identify possible sources; the loaded native pack
+    // must still grant this item. Never substitute another NPC's loot pack.
+    internal static bool IsQuestNpcSource(QuestFixtureRow fixture, uint templateId)
+        => fixture.HuntActId != 0
+            ? HuntMatches(fixture, templateId)
+            : ValidNpcSources(fixture).Any(s => s.NpcTemplateId == templateId);
+
+    private static QuestActTemplate? HuntObjective(QuestFixtureRow fixture)
+    {
+        var act = QuestManager.Instance.GetTemplate(fixture.QuestId)?
+            .GetComponents(QuestComponentKind.Progress).SelectMany(c => c.ActTemplates)
+            .FirstOrDefault(a => a.ActId == fixture.HuntActId);
+        return act switch
+        {
+            QuestActObjMonsterHunt hunt when hunt.NpcId != 0
+                && hunt.NpcId == fixture.HuntNpcTemplate && hunt.Count == fixture.HuntNeed => hunt,
+            QuestActObjMonsterGroupHunt hunt when hunt.QuestMonsterGroupId != 0
+                && hunt.QuestMonsterGroupId == fixture.HuntNpcGroup && hunt.Count == fixture.HuntNeed => hunt,
+            _ => null
+        };
+    }
+
+    private static bool HuntMatches(QuestFixtureRow fixture, uint templateId)
+        => HuntObjective(fixture) switch
+        {
+            QuestActObjMonsterHunt hunt => hunt.NpcId == templateId,
+            QuestActObjMonsterGroupHunt hunt => QuestManager.Instance.CheckGroupNpc(hunt.QuestMonsterGroupId, templateId),
+            _ => false
+        };
+
+    // Read the ordinary act's counter, never a bag count or an action result.
+    // Missing, completed, or inactive component facts fail closed.
+    private static bool TryHuntCount(Character? character, QuestFixtureRow fixture, out int count)
+    {
+        count = -1;
+        try
+        {
+            var quest = character?.Quests.ActiveQuests.GetValueOrDefault(fixture.QuestId);
+            var act = HuntObjective(fixture);
+            if (quest == null || act == null || quest.Status != QuestStatus.Progress)
+                return false;
+            count = act.GetObjective(quest);
+            return count >= 0 && QuestDirector.ReadObjectiveGroups(quest).Any(g => g.Active
+                && g.Remaining.Any(a => a.ActId == fixture.HuntActId));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    internal static IEnumerable<QuestFixtureRow.NpcDropSource> ValidNpcSources(QuestFixtureRow fixture)
+    {
+        foreach (var source in fixture.GatherNpcSources)
+        {
+            bool valid;
+            try
+            {
+                valid = ItemManager.Instance.GetLootPackIdByNpcId(source.NpcTemplateId)
+                    .Any(p => p.LootPackId == source.LootPackId)
+                    && LootGameData.Instance.GetPack(source.LootPackId)?.Loots
+                        ?.Any(l => l.ItemId == fixture.PreyItem) == true;
+            }
+            catch
+            {
+                valid = false;
+            }
+            if (valid)
+                yield return source;
+        }
+    }
 
     private static string LivingPreyRejection(Character character, Npc npc, uint templateId)
     {
@@ -120,11 +197,26 @@ public static class QuestObjectiveTargetSelector
     /// row's loot link).
     /// </summary>
     public static bool IsRelevant(BotObservedContext observation, QuestFixtureRow fixture)
+        => IsRelevant(null, observation, fixture);
+
+    internal static bool IsRelevant(Character? character, BotObservedContext observation, QuestFixtureRow fixture)
     {
         if (observation == null || fixture == null)
             return false;
         if (!observation.ActiveQuestIds.Contains(fixture.QuestId))
             return false;
+        if (fixture.HuntActId != 0)
+            {
+            if (!TryHuntCount(character, fixture, out var count))
+                return false;
+            var quest = character!.Quests.ActiveQuests.GetValueOrDefault(fixture.QuestId);
+            if (quest == null || (quest.Template.Score <= 0 && count >= fixture.HuntNeed))
+                return false;
+            // Count is a score weight in scored quests. The ordinary server
+            // status decides readiness; never demand that many kills instead.
+            return quest != null && !QuestDirector.ObjectivesPermitAdvance(quest,
+                QuestDirector.ReadObjectiveGroups(quest));
+        }
         return !observation.BagItemCounts.TryGetValue(fixture.PreyItem, out var have) || have < fixture.Need;
     }
 
@@ -141,10 +233,13 @@ public static class QuestObjectiveTargetSelector
         var cycle = string.IsNullOrEmpty(cycleId) ? "-" : cycleId;
         var (objectiveResolved, objectiveDetail) = ResolveObjective(fixture);
         var (sourceResolved, sourceDetail) = ResolveSource(fixture);
+        var sourceTemplates = ValidNpcSources(fixture).Select(s => s.NpcTemplateId).ToHashSet();
 
-        var relevance = IsRelevant(observation!, fixture);
+        var relevance = IsRelevant(character, observation!, fixture);
         var have = 0;
-        if (observation?.BagItemCounts.TryGetValue(fixture.PreyItem, out var held) == true)
+        if (fixture.HuntActId != 0)
+            TryHuntCount(character, fixture, out have);
+        else if (observation?.BagItemCounts.TryGetValue(fixture.PreyItem, out var held) == true)
             have = held;
 
         var rawCount = 0;
@@ -187,7 +282,9 @@ public static class QuestObjectiveTargetSelector
                 continue;
             }
 
-            var templateMatch = npc.TemplateId == fixture.PreyTemplate;
+            var templateMatch = fixture.HuntActId != 0
+                ? HuntMatches(fixture, npc.TemplateId)
+                : sourceTemplates.Contains(npc.TemplateId);
             var questRelevant = relevance && templateMatch;
             if (questRelevant)
                 relevantCount++;
@@ -204,7 +301,7 @@ public static class QuestObjectiveTargetSelector
             else
             {
                 distance = MathUtil.CalculateDistance(actorPos.Value, npc.Transform.World.Position, false);
-                reject = LivingPreyRejection(character!, npc, fixture.PreyTemplate);
+                reject = LivingPreyRejection(character!, npc, templateMatch ? npc.TemplateId : 0);
                 // A target can move after capture. The widened band is still
                 // bounded at selection time; ordinary 25m fixture snapshots keep
                 // their existing semantics.
@@ -256,6 +353,11 @@ public static class QuestObjectiveTargetSelector
                     ? (byte)(QuestBehavior.IsLeashStaleTarget(character?.ObjId ?? 0, objId) ? staleTier : 0)
                     : (byte)(QuestBehavior.IsLeashStaleTarget(character?.ObjId ?? 0, objId) ? staleTier
                         : contested.Contains(objId) || competingClaim ? 2 : 1);
+                // An exhausted owned approach cannot keep a useful alternative
+                // behind an otherwise valid commitment. Keep the sole fallback:
+                // its named terminal lets the existing owner retire finitely.
+                if (QuestBehavior.HasExhaustedPursuit(character!, objId, fixture.QuestId))
+                    tier = 4;
                 if (tier < bestTier
                     || (tier == bestTier && (distance < bestDistance
                         || (distance == bestDistance && objId < bestObjId))))
@@ -270,7 +372,12 @@ public static class QuestObjectiveTargetSelector
 
         return new ObjectiveTargetFunnel(
             cycle, fixture.QuestId, objectiveResolved, objectiveDetail, sourceResolved, sourceDetail,
-            relevance, have, fixture.Need,
+            relevance, have, fixture.HuntActId != 0
+                ? character?.Quests.ActiveQuests.GetValueOrDefault(fixture.QuestId) is { } nativeQuest
+                    && HuntObjective(fixture) is { } nativeHunt
+                        ? QuestDirector.ObjectiveCountForFullCredit(nativeHunt, nativeQuest)
+                        : fixture.HuntNeed
+                : fixture.Need,
             rawCount,
             relevantCount, legalCount,
             best?.ObjId ?? 0, best?.TemplateId ?? 0, best == null ? double.NaN : bestDistance,
@@ -351,6 +458,10 @@ public static class QuestObjectiveTargetSelector
             var template = QuestManager.Instance.GetTemplate(fixture.QuestId);
             if (template == null)
                 return (false, $"no-template-{fixture.QuestId}");
+            if (fixture.HuntActId != 0)
+                return HuntObjective(fixture) is { } hunt
+                    ? (true, $"act{hunt.ActId}:huntx{hunt.Count}")
+                    : (false, $"no-matching-hunt-act-{fixture.HuntActId}");
             var gathers = template.GetComponents(QuestComponentKind.Progress)
                 .SelectMany(c => c.ActTemplates)
                 .OfType<QuestActObjItemGather>()
@@ -377,6 +488,17 @@ public static class QuestObjectiveTargetSelector
     {
         try
         {
+            if (fixture.HuntActId != 0)
+                return HuntObjective(fixture) != null
+                    ? (true, $"hunt-npc-{fixture.HuntNpcTemplate}-group-{fixture.HuntNpcGroup}")
+                    : (false, $"no-matching-hunt-source-{fixture.HuntActId}");
+            if (fixture.GatherNpcSources.Count > 1)
+            {
+                var sources = ValidNpcSources(fixture).ToArray();
+                return (sources.Length != 0,
+                    $"sources={sources.Length}:" + string.Join(",", sources.Take(CandidatesShown)
+                        .Select(s => $"npc{s.NpcTemplateId}>pack{s.LootPackId}>item{fixture.PreyItem}")));
+            }
             var packs = ItemManager.Instance.GetLootPackIdByNpcId(fixture.PreyTemplate);
             var hasPack = packs.Any(p => p.LootPackId == fixture.PreyPack);
             var pack = LootGameData.Instance.GetPack(fixture.PreyPack);

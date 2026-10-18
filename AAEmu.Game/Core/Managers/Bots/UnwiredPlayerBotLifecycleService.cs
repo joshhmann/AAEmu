@@ -26,6 +26,14 @@ public sealed class UnwiredPlayerBotLifecycleService : IPlayerBotLifecycleServic
         return false;
     }
 
+    public bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason)
+    {
+        Logger.Warn(
+            "PlayerBot lifecycle not wired: refusing native retirement of character {CharacterId}, generation {Generation} ({Reason})",
+            expectedOwner.CharacterId, expectedGeneration, reason);
+        return false;
+    }
+
     public bool Deactivate(Character character, string reason)
     {
         Logger.Warn(

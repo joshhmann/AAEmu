@@ -286,6 +286,7 @@ public class FarmerCycleScenarioTests
     private static (GameplayActor Actor, HeadlessSession Session) CreateActorOnUniqueWorld(string name)
     {
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        actor.Character.LaborPower = 100; // Supplied labor for the ordinary crop skill.
 
         var uniqueWorldId = _nextWorldInstanceId++;
         var worldIdField = typeof(WorldInstance).GetField("<Id>k__BackingField",

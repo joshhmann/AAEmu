@@ -39,7 +39,18 @@ public class PlayerBotSchedulerTests
     /// <summary>Deterministic lifecycle seam (same shape as the manager rig).</summary>
     private sealed class RecordingLifecycle : IPlayerBotLifecycleService
     {
+        public RecordingLifecycle() => GameplayActorTestRig.Seed();
+
         public bool Called { get; private set; }
+        public Func<Character, string, bool>? OnDeactivate { get; set; }
+        public bool RetirementResult { get; set; } = true;
+        public ConcurrentQueue<(PlayerBotRuntime Owner, ulong Generation, string Reason)> RetirementCalls { get; } = [];
+
+        public bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason)
+        {
+            RetirementCalls.Enqueue((expectedOwner, expectedGeneration, reason));
+            return RetirementResult;
+        }
 
         public bool ActivateHeadless(Character character, object? botContext)
         {
@@ -47,7 +58,7 @@ public class PlayerBotSchedulerTests
             return true;
         }
 
-        public bool Deactivate(Character character, string reason) => true;
+        public bool Deactivate(Character character, string reason) => OnDeactivate?.Invoke(character, reason) ?? true;
     }
 
     /// <summary>
@@ -79,6 +90,7 @@ public class PlayerBotSchedulerTests
         public Func<uint, TimeSpan?>? DelayFor { get; set; } // per-bot simulated step duration
         public bool Throw { get; set; }
         public bool IgnoreCancellation { get; set; }
+        public Action<PlayerBotRuntime>? OnStep { get; set; }
 
         public ConcurrentQueue<(uint BotId, DateTime StartedUtc)> Starts { get; } = [];
         public ConcurrentQueue<(uint BotId, DateTime FinishedUtc)> Finishes { get; } = [];
@@ -109,6 +121,7 @@ public class PlayerBotSchedulerTests
 
             try
             {
+                OnStep?.Invoke(bot);
                 var duration = DelayFor?.Invoke(bot.CharacterId) ?? TimeSpan.Zero;
                 if (duration > TimeSpan.Zero)
                 {
@@ -166,6 +179,7 @@ public class PlayerBotSchedulerTests
         /// <summary>UTC now from the fake clock (TimeProvider returns DateTimeOffset).</summary>
         public DateTime Now => Time.GetUtcNow().UtcDateTime;
         public RecordingExecutor Executor { get; } = new();
+        public RecordingLifecycle Lifecycle { get; } = new();
         public PlayerBotManager Manager { get; }
         public PlayerBotScheduler Scheduler { get; }
 
@@ -175,7 +189,7 @@ public class PlayerBotSchedulerTests
             // itself to its own thread on every entry — no explicit pin here
             // (async test continuations may hop threads; the pin follows the
             // drain, tests that need a fixed boundary pin it explicitly).
-            Manager = new PlayerBotManager(new RecordingLifecycle());
+            Manager = new PlayerBotManager(Lifecycle);
             var options = new PlayerBotSchedulerOptions
             {
                 WorkerCount = workerCount,
@@ -626,6 +640,158 @@ public class PlayerBotSchedulerTests
         var metrics = rig.Scheduler.GetMetrics();
         await Assert.That(metrics.TotalStepsRun).IsEqualTo(0);
         await Assert.That(metrics.DueQueueDepth).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Deactivate_QueuedStepCannotRunInsidePhysicalSave()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(71);
+        rig.Manager.TryGet(bot, out var runtime);
+        runtime!.Character.Money = 850;
+        rig.Executor.OnStep = current => current.Character.Money -= 75;
+        long? savedMoney = null;
+        var leaseSettledDuringSave = false;
+        rig.Lifecycle.OnDeactivate = (character, _) =>
+        {
+            savedMoney = character.Money;
+            var boundary = Stopwatch.StartNew();
+            while (rig.Scheduler.IsLeased(bot) && boundary.Elapsed < TimeSpan.FromSeconds(3))
+            {
+                rig.Scheduler.DrainTickQueue();
+                Thread.Yield();
+            }
+            leaseSettledDuringSave = !rig.Scheduler.IsLeased(bot);
+            return true;
+        };
+        rig.Scheduler.WakeAt(bot, rig.Now);
+        rig.Pump();
+
+        await Assert.That(rig.Manager.Deactivate(bot, "save-boundary")).IsTrue();
+
+        await Assert.That(leaseSettledDuringSave).IsTrue();
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(0);
+        await Assert.That(savedMoney).IsEqualTo(runtime.Character.Money);
+        await Assert.That(rig.Scheduler.GetMetrics().TotalStepsSkipped).IsEqualTo(1);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task Deactivate_FailedPhysicalLeaveCannotAdmitFollowingStep(bool throws)
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(72);
+        rig.Lifecycle.OnDeactivate = (_, _) => throws
+            ? throw new InvalidOperationException("physical leave failed after entry")
+            : false;
+
+        await Assert.That(rig.Manager.Deactivate(bot, "failed-save")).IsFalse();
+        rig.Scheduler.WakeAt(bot, rig.Now);
+        rig.Pump();
+        await rig.WaitUntilAsync(() => !rig.Scheduler.IsLeased(bot));
+
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(0);
+        await Assert.That(rig.Scheduler.GetMetrics().TotalStepsSkipped).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task Deactivate_InFlightStepCommitsBeforeSave_WithoutBlockingOtherRegistryEntries()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(73);
+        var other = rig.AddActiveBot(74);
+        rig.Manager.TryGet(bot, out var runtime);
+        runtime!.Character.Money = 850;
+        using var entered = new ManualResetEventSlim();
+        using var allowFinish = new ManualResetEventSlim();
+        using var finished = new ManualResetEventSlim();
+        using var deactivateAttempted = new ManualResetEventSlim();
+        long? savedMoney = null;
+        var savedBeforeStepEnded = false;
+        rig.Executor.OnStep = current =>
+        {
+            entered.Set();
+            if (!allowFinish.Wait(TimeSpan.FromSeconds(5)))
+                throw new TimeoutException("test did not release synchronous step");
+            current.Character.Money -= 75;
+            finished.Set();
+        };
+        rig.Lifecycle.OnDeactivate = (character, _) =>
+        {
+            if (character.Id == bot)
+            {
+                savedBeforeStepEnded = !finished.IsSet;
+                savedMoney = character.Money;
+            }
+            return true;
+        };
+        rig.Scheduler.WakeAt(bot, rig.Now);
+        rig.Pump();
+        var drain = Task.Run(() =>
+        {
+            var boundary = Stopwatch.StartNew();
+            while (rig.Scheduler.IsLeased(bot) && boundary.Elapsed < TimeSpan.FromSeconds(5))
+            {
+                rig.Scheduler.DrainTickQueue();
+                Thread.Yield();
+            }
+        });
+        Task<bool>? deactivate = null;
+        try
+        {
+            await Assert.That(entered.Wait(TimeSpan.FromSeconds(3))).IsTrue();
+            deactivate = Task.Run(() =>
+            {
+                deactivateAttempted.Set();
+                return rig.Manager.Deactivate(bot, "save-after-step");
+            });
+            await Assert.That(deactivateAttempted.Wait(TimeSpan.FromSeconds(3))).IsTrue();
+            await Assert.That(await Task.Run(() => rig.Manager.Deactivate(other, "unrelated"))
+                .WaitAsync(TimeSpan.FromSeconds(2))).IsTrue();
+            await Task.Delay(100);
+        }
+        finally
+        {
+            allowFinish.Set();
+            await drain.WaitAsync(TimeSpan.FromSeconds(5));
+            if (deactivate != null)
+                await deactivate.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+
+        await Assert.That(deactivate is not null).IsTrue();
+        await Assert.That(await deactivate!).IsTrue();
+        await Assert.That(savedBeforeStepEnded).IsFalse();
+        await Assert.That(savedMoney).IsEqualTo(775L);
+        await Assert.That(savedMoney).IsEqualTo(runtime.Character.Money);
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(1);
+    }
+
+    [Test]
+    public async Task Deactivate_FromOwnExecutingStep_RefusesSaveBeforeFollowingEffects()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(75);
+        rig.Manager.TryGet(bot, out var runtime);
+        runtime!.Character.Money = 850;
+        var deactivated = true;
+        var saved = false;
+        rig.Lifecycle.OnDeactivate = (_, _) => saved = true;
+        rig.Executor.OnStep = current =>
+        {
+            deactivated = rig.Manager.Deactivate(current.CharacterId, "self-leave");
+            current.Character.Money -= 75;
+        };
+        rig.Scheduler.WakeAt(bot, rig.Now);
+        rig.Pump();
+
+        await rig.WaitUntilAsync(() => !rig.Scheduler.IsLeased(bot));
+
+        await Assert.That(deactivated).IsFalse();
+        await Assert.That(saved).IsFalse();
+        await Assert.That(runtime.Character.Money).IsEqualTo(775L);
+        await Assert.That(rig.Executor.CountStarts(bot)).IsEqualTo(1);
+        await Assert.That(rig.Manager.ActiveCount).IsEqualTo(1);
     }
 
     [Test]

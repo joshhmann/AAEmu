@@ -122,19 +122,9 @@ public static class CombatBrainPlanner
                 incumbentPosition = incumbentNpc.Transform.World.Position;
                 if (incumbentValid)
                 {
-                    incumbentDistance = MathUtil.CalculateDistance(selfPosition, incumbentPosition, false);
-                    // Deliberately the 2-D XZ reading, NOT the engine's
-                    // 3-D-minus-radii `GetDistanceTo(target, true)`. The brain's
-                    // arms walk the actor INSIDE a ceiling, so this metric must
-                    // never read SHORTER than the distance the engine will judge
-                    // the cast by — and it cannot: 2-D omits the elevation term and
-                    // the two model radii are non-negative, so this value is always
-                    // >= the engine's. The bias is therefore one-directional
-                    // (it may ask to close a little further than strictly needed,
-                    // never stop short of its own reach), which is the safe side
-                    // to err on. The gate that decides whether the brain is ASKED
-                    // is the strict side, and that one is on the engine's metric
-                    // (`QuestBehavior.CombatAdmissionRadiusM`).
+                    // Position and select attacks at the distance Skill.Use checks.
+                    // Horizontal distance can be shorter for elevated prey.
+                    incumbentDistance = character!.GetDistanceTo(incumbentNpc, true);
                     leashBudget = LeashBudgetOf(incumbentNpc);
                     incumbentDrift = DriftFromAnchor(actor.ActorId, incumbentObjId, incumbentPosition);
                     // The leash frame is a MEASUREMENT, so it advances on every
@@ -231,6 +221,15 @@ public static class CombatBrainPlanner
                     (skillMin, skillMax) = CombatDecisionTree.GetKnownSkillRange(selectedSkill);
                 }
             }
+        }
+
+        if (selectedSkill == 0 && role == CombatRole.Melee && incumbentValid
+            && CombatDecisionTree.TryGetRangedAutoAttackRange(character, incumbentDistance, out var rangedRange))
+        {
+            // Keep learned melee choices. If none can reach, use the existing
+            // ranged stance with the real bow's range; Ability1 is unchanged.
+            role = CombatRole.RangedPhysical;
+            (skillMin, skillMax) = rangedRange;
         }
 
         // ------------------------------------------------ crowd control + escape

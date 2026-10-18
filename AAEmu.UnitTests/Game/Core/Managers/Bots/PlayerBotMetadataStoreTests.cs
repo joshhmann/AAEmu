@@ -139,6 +139,27 @@ public class PlayerBotMetadataStoreTests
         await Assert.That(store.IsDirty(990000004u)).IsTrue();
     }
 
+    /// <summary>
+    /// Plan T6: the arbiter's goal-continuity record rides the row's
+    /// planner_state column. Without MySQL the write is cached and the row is
+    /// left dirty for the next save — the same graceful degradation as the
+    /// schedule and behavior-config columns, so a server with no database still
+    /// keeps the record in memory for the rest of the run.
+    /// </summary>
+    [Test]
+    public async Task RecordPlannerState_WithoutMySql_StoresJson_LeavesRowDirty()
+    {
+        var store = PlayerBotMetadataStore.Instance;
+        const string json = "{\"activityName\":\"recover.work\",\"moduleName\":\"Recover\"," +
+                            "\"interruptedActivity\":\"farm.work\",\"interruptedModule\":\"Farm\"," +
+                            "\"interruptionReason\":\"superseded by recover.work\"}";
+
+        store.RecordPlannerState(990000006u, json);
+
+        await Assert.That(store.GetForRead(990000006u).PlannerState).IsEqualTo(json);
+        await Assert.That(store.IsDirty(990000006u)).IsTrue();
+    }
+
     [Test]
     public async Task RecordFields_WithoutMySql_UpdateCache_LeaveRowDirty()
     {
@@ -147,13 +168,11 @@ public class PlayerBotMetadataStoreTests
         store.RecordPersonality(990000005u, "cheerful");
         store.RecordProfession(990000005u, "farmer");
         store.RecordBehaviorConfig(990000005u, "{\"greet\":true}");
-        store.RecordPlannerState(990000005u, "{\"goal\":\"idle\"}");
 
         var metadata = store.GetForRead(990000005u);
         await Assert.That(metadata.Personality).IsEqualTo("cheerful");
         await Assert.That(metadata.Profession).IsEqualTo("farmer");
         await Assert.That(metadata.BehaviorConfig).IsEqualTo("{\"greet\":true}");
-        await Assert.That(metadata.PlannerState).IsEqualTo("{\"goal\":\"idle\"}");
         await Assert.That(store.IsDirty(990000005u)).IsTrue();
     }
 

@@ -1210,6 +1210,11 @@ public static class E2eStack
             F("AAEMU_BOT_STAGGER_WINDOW_MS", Raw("AAEMU_BOT_STAGGER_WINDOW_MS"), false),
             F("AAEMU_BOT_DORMANCY_MATERIALIZE_PER_SWEEP", Raw("AAEMU_BOT_DORMANCY_MATERIALIZE_PER_SWEEP"), false),
             F("AAEMU_BOT_AUTO_RESTORE", Raw("AAEMU_BOT_AUTO_RESTORE"), false),
+            // Supported startup arming (plan T2): the deployment switch that
+            // arms the host and enrols a fixed roster at boot. Absent (the
+            // shipped default) nothing arms.
+            F("AAEMU_STARTUP_ARMING", Raw("AAEMU_STARTUP_ARMING"), false),
+            F("AAEMU_STARTUP_BOT_COUNT", Raw("AAEMU_STARTUP_BOT_COUNT"), false),
         ];
     }
 

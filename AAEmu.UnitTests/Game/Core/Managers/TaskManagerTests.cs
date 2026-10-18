@@ -148,6 +148,22 @@ public class TaskManagerTests
     }
 
     [Test]
+    public async Task Cancel_StaleTaskWithReusedId_PreservesTheLiveTask()
+    {
+        var mockTick = Mock.Of<ITickManager>();
+        mockTick.OnTick.Returns(new TickManager.TickEventHandler());
+        var manager = new TaskManager(mockTick.Object);
+        var live = new TestTask();
+        manager.Schedule(live, TimeSpan.FromMinutes(1));
+        var stale = new TestTask { Id = live.Id };
+
+        await Assert.That(manager.Cancel(stale)).IsFalse();
+        await Assert.That(live.Cancelled).IsFalse();
+        await Assert.That(manager.Cancel(live)).IsTrue();
+        await Assert.That(live.Cancelled).IsTrue();
+    }
+
+    [Test]
     public async Task Cancel_SetsCancelledFlag_WhenTaskIsCancelled()
     {
         var mockTick = Mock.Of<ITickManager>();

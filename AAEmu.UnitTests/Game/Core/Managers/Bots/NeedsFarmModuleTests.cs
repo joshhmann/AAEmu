@@ -21,6 +21,7 @@ using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Models.Game.Items.Actions;
 using AAEmu.Game.Models.Game.Merchant;
 using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.Game.World.Transform;
 using AAEmu.Game.Models.Tasks.Doodads;
 using AAEmu.UnitTests.Game.Housing;
 using AAEmu.UnitTests.Game.Models.Game.DoodadObj;
@@ -881,7 +882,7 @@ public class NeedsFarmModuleTests
         var (actor, session) = rigged;
         GameplayActorTestRig.SetPosition(actor, TestPosition);
         GameplayActorTestRig.SetMoney(actor, 0);
-        actor.Character.LaborPower = 0;
+        actor.Character.LaborPower = 100; // The real crop skill requires labor.
         actor.Character.Inventory.Bag.AcquireDefaultItem(ItemTaskType.DoodadCreate,
             CropHarvestLoopTests.PotatoSeedItemId, 5);
         var crop = CropHarvestLoopRig.Plant(actor.Character, session.World,
@@ -1101,6 +1102,73 @@ public class NeedsFarmModuleTests
     }
 
     [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task StepAsync_NativeHarvest_HoldsSameActorThenReassessesWithoutSecondCastDelay(bool needsWithdrawn)
+    {
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("nf-native-harvest-owner");
+        var (actor, session) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        var crop = PlantMatureCrop(actor, session);
+        crop.Transform.Local.SetPosition(TestPosition + new Vector3(2f, 0f, 0f));
+        string? activity = "needs.farm";
+        var (executor, runtime, clock) = FarmLoopRig(rigged, (_, _) => true,
+            (_, _) => session.World.GetAllDoodads(), _ => activity);
+        using var fixture = new GameplayActorHarvestTests.NativeHarvestSkill(150);
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var request = actor.ActiveRequest!;
+        var state = executor.GetBotState(runtime.CharacterId)!;
+        await Assert.That(request.Action).IsEqualTo(ActorActionType.Harvest);
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(ReferenceEquals(state.NeedsFarmHarvestRequest, request)).IsTrue();
+        await Assert.That(ReferenceEquals(executor.GetOrCreateActor(actor.Character), actor)).IsTrue();
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Harvesting);
+        await Assert.That(crop.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsEqualTo(0);
+
+        // Only the ordinary TaskManager callbacks run here. The request still
+        // needs its original actor's next scheduler wake to observe completion.
+        await scheduler.PumpFor(null, TimeSpan.FromMilliseconds(350));
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        activity = needsWithdrawn ? null : "needs.farm";
+        ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(state.NeedsFarmHarvestRequest).IsNull();
+        await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Replanting);
+        await Assert.That(state.NeedsFarmCropObjId).IsEqualTo(0u);
+        await Assert.That(actor.Character.LaborPower).IsEqualTo((short)99);
+        await Assert.That(GameplayActorTestRig.BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsGreaterThanOrEqualTo(2);
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Harvest)).IsEqualTo(1);
+
+        // Re-evaluate updated needs on the next ordinary wake. This fixture's
+        // food need is satisfied: retained activity rests, withdrawn activity
+        // admits no farm work. Replanting is not forced by harvest completion.
+        ExecutionBoundary.SetExecutionThreadForTest(Environment.CurrentManagedThreadId);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Plant)).IsFalse();
+        var rest = actor.AuditTrace.LastOrDefault(r => r.Action == ActorActionType.Stop);
+        if (needsWithdrawn)
+            await Assert.That(rest).IsNull();
+        else
+        {
+            await Assert.That(rest).IsNotNull();
+            await Assert.That(rest!.Result).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Idle);
+        }
+        await Assert.That(actor.Character.LaborPower).IsEqualTo((short)99);
+        await Assert.That(session.World.GetDoodad(crop.ObjId)).IsNull();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Harvest)).IsEqualTo(1);
+    }
+
+    [Test]
     public async Task StepAsync_OnSoilWithSeed_RoutesPlantThroughTheBrainDecision()
     {
         // The brain's PLANT action arm: seed on hand and standing on valid soil is
@@ -1164,7 +1232,8 @@ public class NeedsFarmModuleTests
     private static (BotRoamStepExecutor Executor, PlayerBotRuntime Runtime, FakeTimeProvider Clock) FarmLoopRig(
         (GameplayActor Actor, HeadlessSession Session) rigged,
         Func<Character, Vector3, bool> soil,
-        Func<Character, float, IEnumerable<Doodad>>? doodads = null)
+        Func<Character, float, IEnumerable<Doodad>>? doodads = null,
+        Func<uint, string?>? activity = null)
     {
         var (actor, _) = rigged;
         var runtime = new PlayerBotRuntime(actor.Character, "needs-farm-loop");
@@ -1176,7 +1245,7 @@ public class NeedsFarmModuleTests
             ActiveCadence = TimeSpan.FromMilliseconds(100),
             RoamSpeed = 2f,
             GroundHeightProvider = (_, _) => 0f,
-            ActiveActivityProvider = _ => "needs.farm",
+            ActiveActivityProvider = activity ?? (_ => "needs.farm"),
             NearbyNpcProvider = (_, _) => [],
             NearbyDoodadProvider = doodads,
             FarmSoilProvider = soil,
@@ -1728,5 +1797,935 @@ public class NeedsFarmModuleTests
         var distAfterWake2 = MathUtil.CalculateDistance(
             actor.Character.Transform.World.Position, soil, false);
         await Assert.That(distAfterWake2 < distAfterWake1).IsTrue();
+    }
+
+    [Test]
+    public async Task BreadMode_UsesFinishedUsableReserve_NotRawGrainOrGold()
+    {
+        var (actor, _) = CreateActorOnUniqueWorld("food-reserve");
+        using var fixture = new HardBreadFixture(actor);
+        GameplayActorTestRig.SetMoney(actor, 1000);
+        GameplayActorTestRig.GrantItem(actor, NeedsFarmModuleOptions.BarleyItemId, 100);
+        var module = new NeedsFarmActivityModule(new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true });
+        await Assert.That(module.CanActivate(ContextFor(NewBot(actor))).CanActivate).IsTrue();
+        fixture.Bread.Count = 5; // Initial stocked-state comparison, not generated progress.
+        GameplayActorTestRig.SetMoney(actor, 0);
+        await Assert.That(module.CanActivate(ContextFor(NewBot(actor))).CanActivate).IsFalse();
+        fixture.Bread.Template.LootQuestId = 1;
+        await Assert.That(module.CanActivate(ContextFor(NewBot(actor))).CanActivate).IsTrue();
+    }
+
+    [Test]
+    public async Task BreadMode_DefaultCropAndExplicitDisabledGate_ArePreserved()
+    {
+        var options = new NeedsFarmModuleOptions();
+        await Assert.That(options.ProduceHardBread).IsFalse();
+        await Assert.That(options.SeedItemTemplateId).IsEqualTo(15659u);
+        await Assert.That(options.HarvestItemTemplateId).IsEqualTo(7992u);
+        await Assert.That(options.SeedUnitPrice).IsEqualTo(25L);
+        var actor = CreateActorOnUniqueWorld("food-gate").Actor;
+        var module = new NeedsFarmActivityModule(options with { ProduceHardBread = true });
+        await Assert.That(module.CanActivate(ContextFor(NewBot(actor))).CanActivate).IsFalse();
+        await Assert.That((options with { ProduceHardBread = true }).SeedItemTemplateId).IsEqualTo(15652u);
+    }
+
+    [Test]
+    public async Task BreadMode_NativeCraftPending_DrainsAfterAdmissionWithdrawn_WithoutForcedRefill()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("food-pending");
+        using var fixture = new HardBreadFixture(actor);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.GrantItem(actor, NeedsFarmModuleOptions.ProcessedGrainItemId, 12);
+        var benchId = GameplayActorTestRig.SpawnCraftBench(session, actor, NeedsFarmModuleOptions.CookingDoodadId);
+        var bench = session.World.GetDoodad(benchId);
+        using var native = new GameplayActorCraftTests.NativeCraftSkill();
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var clock = new FakeTimeProvider();
+        var activity = "needs.farm";
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true },
+            ActorFactory = _ => actor,
+            ActiveActivityProvider = _ => activity,
+            TimeProvider = clock,
+            GroundHeightProvider = (_, _) => 0,
+            NearbyNpcProvider = (_, _) => [],
+            NearbyDoodadProvider = (_, _) => [bench]
+        };
+        var bot = NewBot(actor);
+        try
+        {
+            await executor.StepAsync(bot, CancellationToken.None);
+            var pending = executor.GetBotState(bot.CharacterId)!.NeedsFoodRequest!;
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Running);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, NeedsFarmModuleOptions.ProcessedGrainItemId)).IsEqualTo(12);
+            activity = "presence.roam";
+            await scheduler.WaitForTerminal(actor, pending);
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(executor.GetBotState(bot.CharacterId)!.NeedsFoodRequest).IsNull();
+            await Assert.That(GameplayActorTestRig.BagCount(actor, NeedsFarmModuleOptions.ProcessedGrainItemId)).IsEqualTo(8);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, NeedsFarmModuleOptions.HardBreadItemId)).IsEqualTo(10);
+            await Assert.That(actor.AuditTrace.Count(x => x.Action == ActorActionType.Craft)).IsEqualTo(1);
+            await Assert.That(actor.AuditTrace.Any(x => x.Action is ActorActionType.Plant or ActorActionType.Buy or ActorActionType.UseItem)).IsFalse();
+        }
+        finally
+        {
+            actor.PreemptCurrent("food fixture cleanup");
+        }
+    }
+
+    [Test]
+    public async Task BreadMode_ProtectedProcessedIngredient_ReleasesAndRetriesWhenProtectionChanges()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("food-protected");
+        using var fixture = new HardBreadFixture(actor);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.GrantItem(actor, 30902, 8);
+        var ingredient = ItemManager.Instance.GetTemplate(30902);
+        ingredient.LootQuestId = 1;
+        var bench = session.World.GetDoodad(GameplayActorTestRig.SpawnCraftBench(session, actor, 525));
+        using var native = new GameplayActorCraftTests.NativeCraftSkill();
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var clock = new FakeTimeProvider();
+        var options = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true };
+        var bot = NewBot(actor);
+        NeedsFarmActivityModule module = null!;
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = options, ActorFactory = _ => actor, TimeProvider = clock,
+            ActiveActivityProvider = _ => module.CanActivate(ContextFor(bot)).CanActivate ? "needs.farm" : "presence.roam",
+            GroundHeightProvider = (_, _) => 0,
+            NearbyNpcProvider = (_, _) => [], NearbyDoodadProvider = (_, _) => [bench]
+        };
+        module = new NeedsFarmActivityModule(options) { FoodEligibilityProvider = executor.FoodBlockedReason };
+        try
+        {
+            await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(actor.AuditTrace.Any(x => x.Action is ActorActionType.Craft or ActorActionType.Sell or ActorActionType.UseItem)).IsFalse();
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(8);
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsFalse();
+            ingredient.LootQuestId = 0; // Changed native protection fact, not a blocked-state reset.
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(bot, CancellationToken.None);
+            var pending = executor.GetBotState(bot.CharacterId)!.NeedsFoodRequest!;
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Running);
+            await scheduler.WaitForTerminal(actor, pending);
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(4);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 17664)).IsEqualTo(10);
+        }
+        finally { actor.PreemptCurrent("food protection fixture cleanup"); }
+    }
+
+    [Test]
+    public async Task BreadMode_UnavailableBench_ReleasesToUsefulMovement_AndRetriesPublicBench()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("food-unavailable");
+        using var fixture = new HardBreadFixture(actor);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.GrantItem(actor, 30902, 8);
+        Doodad? bench = null;
+        using var native = new GameplayActorCraftTests.NativeCraftSkill();
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var clock = new FakeTimeProvider();
+        var options = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true };
+        NeedsFarmActivityModule module = null!;
+        var bot = NewBot(actor);
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = options, ActorFactory = _ => actor, TimeProvider = clock,
+            ActiveActivityProvider = _ => module.CanActivate(ContextFor(bot)).CanActivate ? "needs.farm" : "presence.roam",
+            GroundHeightProvider = (_, _) => 0, NearbyNpcProvider = (_, _) => [],
+            NearbyDoodadProvider = (_, _) => bench == null ? [] : [bench]
+        };
+        module = new NeedsFarmActivityModule(options) { FoodEligibilityProvider = executor.FoodBlockedReason };
+        try
+        {
+            await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(executor.GetBotState(bot.CharacterId)!.NeedsLegActive).IsFalse();
+            await Assert.That(actor.AuditTrace.Any(x => x.Action == ActorActionType.Craft)).IsFalse();
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsFalse();
+            executor.SetRoamRoute(actor.Character, BotPath.PathTo(TestPosition + new Vector3(20, 0, 0)));
+            clock.Advance(TimeSpan.FromSeconds(1));
+            await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(actor.Character.Transform.World.Position.X).IsGreaterThan(TestPosition.X);
+            clock.Advance(TimeSpan.FromSeconds(10));
+            await executor.StepAsync(bot, CancellationToken.None);
+            bench = session.World.GetDoodad(GameplayActorTestRig.SpawnCraftBench(session, actor, 525));
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(bot, CancellationToken.None);
+            var pending = executor.GetBotState(bot.CharacterId)!.NeedsFoodRequest!;
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Running);
+            await scheduler.WaitForTerminal(actor, pending);
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(4);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 17664)).IsEqualTo(10);
+        }
+        finally { actor.PreemptCurrent("food bench fixture cleanup"); }
+    }
+
+    [Test]
+    public async Task BreadMode_MissingKnifeMerchant_PreservesRoamUntilMerchantAppears_ThenPreservesApproach()
+    {
+        // Reconstructed policy fixture, not the failed live run: supplied raw
+        // barley and an empty perception feed reproduce the reviewer's schedule.
+        // The later merchant uses canonical NPC 1921 / pack 145 / item 8326,
+        // but its visibility and position are controlled only in this unit world.
+        var (actor, session) = CreateActorOnUniqueWorld("food-knife-route");
+        using var fixture = new HardBreadFixture(actor);
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 700);
+        actor.Character.LaborPower = 96;
+        GameplayActorTestRig.GrantItem(actor, NeedsFarmModuleOptions.BarleyItemId, 10);
+        var goods = (Dictionary<uint, MerchantGoods>)GameplayActorTestRig.GetField(NpcManager.Instance, "<Goods>k__BackingField");
+        var previousPack = goods.GetValueOrDefault(145u);
+        var knifePack = new MerchantGoods(145);
+        knifePack.AddItemToStock(NeedsFarmModuleOptions.ProcessingKnifeItemId, 0);
+        goods[145] = knifePack;
+        var clock = new FakeTimeProvider();
+        var options = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true };
+        var bot = NewBot(actor);
+        Npc? merchant = null;
+        BotGoalArbiter arbiter = null!;
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = options, ActorFactory = _ => actor, TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100), RoamSpeed = 2f,
+            ActiveActivityProvider = id => arbiter.GetActiveActivity(id),
+            GroundHeightProvider = (_, _) => TestPosition.Z,
+            NearbyNpcProvider = (_, _) => merchant == null ? [] : [merchant],
+            NearbyDoodadProvider = (_, _) => []
+        };
+        var module = new NeedsFarmActivityModule(options) { FoodEligibilityProvider = executor.FoodBlockedReason };
+        arbiter = new BotGoalArbiter([module, new PresenceRoamProbe()]);
+        var steps = new BotGoalArbiterStepExecutor(arbiter, executor, () => 12f);
+        var patrol = BotPath.PathTo(TestPosition + new Vector3(20, 0, 0));
+        executor.SetRoamRoute(actor.Character, patrol);
+        try
+        {
+            await steps.StepAsync(bot, CancellationToken.None);
+            var state = executor.GetBotState(bot.CharacterId)!;
+            await Assert.That(state.NeedsFoodBlockedReason).IsEqualTo("no observed processing-knife merchant");
+            await Assert.That(state.NeedsLegActive).IsFalse();
+            var originalMove = actor.ActiveRequest!;
+            await Assert.That(originalMove.Action).IsEqualTo(ActorActionType.Move);
+            await Assert.That(originalMove.MoveOwner).IsEqualTo("ROAM");
+            await Assert.That(ReferenceEquals(executor.GetRoamRoute(bot.CharacterId), patrol)).IsTrue();
+            var afterFirstWake = actor.Character.Transform.World.Position;
+            for (var i = 0; i < 4; i++)
+            {
+                clock.Advance(TimeSpan.FromMilliseconds(500));
+                await steps.StepAsync(bot, CancellationToken.None);
+            }
+            await Assert.That(actor.Character.Transform.World.Position.X).IsGreaterThan(afterFirstWake.X);
+            var patrolStillRunning = ReferenceEquals(actor.ActiveRequest, originalMove) && !originalMove.IsTerminal;
+            var interruptedPatrols = actor.AuditTrace.Count(r => r.Action == ActorActionType.Move
+                && r.Result == ActorLifecycleState.Interrupted && r.Detail == "stop requested");
+            var moduleStops = actor.AuditTrace.Count(r =>
+            {
+                if (r.Action != ActorActionType.Stop) return false;
+                using var json = JsonDocument.Parse(r.ToJson());
+                return json.RootElement.GetProperty("decision_policy").GetString() == "module:NeedsFarm";
+            });
+
+            // Exercise changed availability before the red assertion, so the
+            // missing-merchant failure cannot hide a broken ordinary approach.
+            var merchantPosition = TestPosition + new Vector3(-10, 12, 0);
+            var merchantObjId = GameplayActorTestRig.SpawnMerchantNpc(session, npcTemplateId: 1921, packId: 145);
+            GameplayActorTestRig.SetNpcPosition(session, merchantObjId, merchantPosition);
+            merchant = session.World.GetNpc(merchantObjId)!;
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+            clock.Advance(TimeSpan.FromMilliseconds(500));
+            await steps.StepAsync(bot, CancellationToken.None);
+            await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Traveling);
+            var approach = actor.ActiveRequest!;
+            await Assert.That(approach.MoveOwner).IsEqualTo("OTHER:needs-farm-travel");
+            await Assert.That(approach.Destination).IsEqualTo((Vector3?)merchantPosition);
+            var distance = MathUtil.CalculateDistance(actor.Character.Transform.World.Position, merchantPosition, true);
+            await Assert.That(distance).IsGreaterThan(GameplayActor.MaxShopRange);
+            var stopsBeforeApproachWake = actor.AuditTrace.Count(r => r.Action == ActorActionType.Stop);
+            for (var i = 0; i < 2; i++)
+            {
+                clock.Advance(TimeSpan.FromMilliseconds(500));
+                await steps.StepAsync(bot, CancellationToken.None);
+            }
+            await Assert.That(ReferenceEquals(actor.ActiveRequest, approach) && !approach.IsTerminal).IsTrue();
+            await Assert.That(MathUtil.CalculateDistance(actor.Character.Transform.World.Position, merchantPosition, true))
+                .IsLessThan(distance);
+            await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Stop)).IsEqualTo(stopsBeforeApproachWake);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, NeedsFarmModuleOptions.BarleyItemId)).IsEqualTo(10);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, NeedsFarmModuleOptions.ProcessingKnifeItemId)).IsEqualTo(0);
+            await Assert.That(actor.Character.Money).IsEqualTo(700L);
+            await Assert.That(patrolStillRunning && interruptedPatrols == 0 && moduleStops == 0).IsEqualTo(true,
+                $"Unchanged missing merchant must preserve the original ROAM Move. original={originalMove.State}/{originalMove.Detail}; interrupted patrols={interruptedPatrols}; module Stops={moduleStops}; moved={actor.Character.Transform.World.Position - TestPosition}. Revealed merchant approach survived two wakes.");
+        }
+        finally
+        {
+            actor.PreemptCurrent("food knife routing fixture cleanup");
+            if (previousPack == null) goods.Remove(145);
+            else goods[145] = previousPack;
+        }
+    }
+
+    [Test]
+    public async Task BreadMode_PendingNativeCraft_FromIdle_IsNotStoppedByLowerPriorityWildlife()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("food-hunt-hold");
+        using var fixture = new HardBreadFixture(actor);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.GrantItem(actor, 30902, 4);
+        var bench = session.World.GetDoodad(GameplayActorTestRig.SpawnCraftBench(session, actor, 525));
+        var prey = new Npc
+        {
+            ObjId = 9876, Template = new NpcTemplate { Id = 9876, Scale = 1 },
+            Hp = 100, MaxHp = 100, Faction = new SystemFaction { Id = (FactionsEnum)115 }
+        };
+        prey.Transform.World.Position = TestPosition + new Vector3(2, 0, 0);
+        using var native = new GameplayActorCraftTests.NativeCraftSkill();
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var clock = new FakeTimeProvider();
+        var showPrey = false;
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true },
+            ActorFactory = _ => actor, TimeProvider = clock, ActiveActivityProvider = _ => "needs.farm",
+            GroundHeightProvider = (_, _) => 0, NearbyDoodadProvider = (_, _) => [bench],
+            EnableWildlifeHunt = true, HuntScanInterval = TimeSpan.FromMilliseconds(100),
+            NearbyNpcProvider = (_, _) => showPrey ? [prey] : [],
+            UnitResolver = (_, id) => id == prey.ObjId ? prey : null
+        };
+        var bot = NewBot(actor);
+        try
+        {
+            await executor.StepAsync(bot, CancellationToken.None);
+            var pending = executor.GetBotState(bot.CharacterId)!.NeedsFoodRequest!;
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Running);
+            await Assert.That(executor.GetBotState(bot.CharacterId)!.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Idle);
+            showPrey = true;
+            clock.Advance(TimeSpan.FromMilliseconds(200));
+            await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Running);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(4);
+            await scheduler.WaitForTerminal(actor, pending);
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 17664)).IsEqualTo(10);
+            await Assert.That(actor.AuditTrace.Any(x => x.Action == ActorActionType.Stop)).IsFalse();
+        }
+        finally { actor.PreemptCurrent("food hunt fixture cleanup"); }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task LegacyPotato_ProtectedAndMetadataNullSeeds_StillChooseOrdinarySoilTravel(bool missingMetadata)
+    {
+        CropHarvestLoopRig.Seed();
+        var rigged = CreateActorOnUniqueWorld("legacy-seed-count");
+        var (actor, _) = rigged;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        StockLoopSeed(rigged);
+        var seed = actor.Character.Inventory.Bag.Items.Single(x => x != null && x.TemplateId == 15659);
+        var template = seed.Template;
+        var oldQuest = template.LootQuestId;
+        if (missingMetadata) seed.Template = null!;
+        else template.LootQuestId = 1;
+        var (executor, bot, clock) = FarmLoopRig(rigged,
+            (_, p) => p.X >= TestPosition.X + 5, (_, _) => []);
+        try
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(executor.GetBotState(bot.CharacterId)!.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Traveling);
+            clock.Advance(TimeSpan.FromSeconds(1));
+            await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(actor.Character.Transform.World.Position.X).IsGreaterThan(TestPosition.X);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 15659)).IsEqualTo(3);
+            await Assert.That(actor.AuditTrace.Any(x => x.Action == ActorActionType.Buy)).IsFalse();
+        }
+        finally
+        {
+            seed.Template = template;
+            template.LootQuestId = oldQuest;
+            actor.PreemptCurrent("legacy seed fixture cleanup");
+        }
+    }
+
+    [Test]
+    public async Task BreadMode_NativeGcdRefusal_RetriesAfterRealReadinessWithoutResourceMutation()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("food-real-gcd");
+        using var fixture = new HardBreadFixture(actor);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.GrantItem(actor, 30902, 4);
+        var bench = session.World.GetDoodad(GameplayActorTestRig.SpawnCraftBench(session, actor, 525));
+        using var native = new GameplayActorCraftTests.NativeCraftSkill();
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var skill = SkillManager.Instance.GetSkillTemplate(GameplayActorTestRig.CraftTestSkillId);
+        var previousIgnore = skill.IgnoreGlobalCooldown;
+        skill.IgnoreGlobalCooldown = false;
+        actor.Character.GlobalCooldown = DateTime.UtcNow.AddSeconds(1); // Initial ordinary readiness fixture.
+        var options = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true };
+        var bot = NewBot(actor);
+        NeedsFarmActivityModule module = null!;
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = options, ActorFactory = _ => actor,
+            ActiveActivityProvider = _ => module.CanActivate(ContextFor(bot)).CanActivate ? "needs.farm" : "presence.roam",
+            GroundHeightProvider = (_, _) => 0, NearbyNpcProvider = (_, _) => [],
+            NearbyDoodadProvider = (_, _) => [bench]
+        };
+        module = new NeedsFarmActivityModule(options) { FoodEligibilityProvider = executor.FoodBlockedReason };
+        try
+        {
+            var prime = actor.Craft(6751, bench.ObjId);
+            await Assert.That(prime.State).IsEqualTo(ActorLifecycleState.Running);
+            actor.PreemptCurrent("initial ordinary craft cancellation before effects");
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(4);
+            await executor.StepAsync(bot, CancellationToken.None);
+            await executor.StepAsync(bot, CancellationToken.None); // Common tick observes the native refused skill.
+            await Assert.That(actor.AuditTrace.Last(x => x.Action == ActorActionType.Craft).Result).IsEqualTo(ActorLifecycleState.Interrupted);
+            await Assert.That(actor.Character.Craft.IsCraftQueueActive).IsFalse();
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsFalse();
+            var mana = actor.Character.Mp;
+            await Task.Delay(1200); // Real native interval expiry; no clock/MP/labor/stock mutation.
+            await Assert.That(actor.Character.Mp).IsEqualTo(mana);
+            await Assert.That(actor.Character.LaborPower).IsEqualTo((short)100);
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+            await executor.StepAsync(bot, CancellationToken.None);
+            var pending = executor.GetBotState(bot.CharacterId)!.NeedsFoodRequest!;
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Running);
+            await scheduler.WaitForTerminal(actor, pending);
+            await Assert.That(pending.State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(0);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 17664)).IsEqualTo(10);
+        }
+        finally
+        {
+            skill.IgnoreGlobalCooldown = previousIgnore;
+            actor.PreemptCurrent("food GCD fixture cleanup");
+        }
+    }
+
+    [Test]
+    public async Task BreadMode_ExhaustedUnreachableApproach_RetriesDifferentReachableBench()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("food-new-target");
+        using var fixture = new HardBreadFixture(actor);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.NoProgressWindow = TimeSpan.FromMilliseconds(500); // Initial native navigation failure fixture.
+        actor.MaxUnstickNudges = 0;
+        GameplayActorTestRig.GrantItem(actor, 30902, 4);
+        var bench = session.World.GetDoodad(GameplayActorTestRig.SpawnCraftBench(session, actor, 525));
+        bench.Transform.Local.SetPosition(TestPosition + new Vector3(2, 0, 60)); // Beyond ordinary craft reach; terrain cannot reach this fixture's height.
+        using var native = new GameplayActorCraftTests.NativeCraftSkill();
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var options = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true };
+        var bot = NewBot(actor);
+        NeedsFarmActivityModule module = null!;
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = options, ActorFactory = _ => actor,
+            ActiveActivityProvider = _ => module.CanActivate(ContextFor(bot)).CanActivate ? "needs.farm" : "presence.roam",
+            GroundHeightProvider = (_, _) => TestPosition.Z,
+            NearbyNpcProvider = (_, _) => [], NearbyDoodadProvider = (_, _) => [bench]
+        };
+        module = new NeedsFarmActivityModule(options) { FoodEligibilityProvider = executor.FoodBlockedReason };
+        try
+        {
+            for (var i = 0; i < 400 && module.CanActivate(ContextFor(bot)).CanActivate; i++)
+            {
+                await executor.StepAsync(bot, CancellationToken.None);
+                await Task.Delay(25);
+            }
+            var exhausted = executor.GetBotState(bot.CharacterId)!;
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsEqualTo(false,
+                $"attempts={exhausted.NeedsFarmSoilAttempts}, phase={exhausted.NeedsFarmPhase}, reason={exhausted.NeedsFarmReason}, pathFinished={exhausted.Path?.IsFinished}, request={actor.ActiveRequest?.Action}/{actor.ActiveRequest?.State}, position={actor.Character.Transform.World.Position}");
+            await Assert.That(actor.AuditTrace.Any(x => x.Action == ActorActionType.Move)).IsTrue();
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(4);
+            bench = session.World.GetDoodad(GameplayActorTestRig.SpawnCraftBench(session, actor, 525));
+            bench.Transform.Local.SetPosition(TestPosition + new Vector3(30, 0, 0)); // Changed target requires a real, reachable native approach.
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+            for (var i = 0; i < 160 && executor.GetBotState(bot.CharacterId)!.NeedsFoodRequest == null; i++)
+            {
+                await executor.StepAsync(bot, CancellationToken.None);
+                await Task.Delay(50);
+            }
+            var retried = executor.GetBotState(bot.CharacterId)!;
+            var pending = retried.NeedsFoodRequest;
+            await Assert.That(pending != null).IsEqualTo(true,
+                $"attempts={retried.NeedsFarmSoilAttempts}, phase={retried.NeedsFarmPhase}, reason={retried.NeedsFarmReason}, blocked={retried.NeedsFoodBlockedReason}, position={actor.Character.Transform.World.Position}, nativeRequests={string.Join(';', actor.AuditTrace.Select(x => $"{x.Action}:{x.Result}:{x.Detail}"))}");
+            await scheduler.WaitForTerminal(actor, pending!);
+            await Assert.That(pending!.State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(0);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 17664)).IsEqualTo(10);
+        }
+        finally { actor.PreemptCurrent("food changed target fixture cleanup"); }
+    }
+
+    [Test]
+    [Arguments("reached")]
+    [Arguments("exhausted")]
+    [Arguments("merchant")]
+    [Arguments("timed-out")]
+    [Arguments("foreign")]
+    [Arguments("not-merchant")]
+    [Arguments("no-stock")]
+    [Arguments("nonfinite")]
+    [Arguments("outside")]
+    [Arguments("wrong-member")]
+    [Arguments("event-only")]
+    public async Task BreadMode_KnownKnifeSource_TravelsToObserveOrReleasesUnchangedWork(string sourceCase)
+    {
+        // Reconstructed metadata and perception; no live-game setup or earned
+        // resource claim. Every displacement/terminal below uses the real actor.
+        var (actor, session) = CreateActorOnUniqueWorld("food-known-knife");
+        using var fixture = new HardBreadFixture(actor);
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 700);
+        actor.Character.LaborPower = 96;
+        GameplayActorTestRig.GrantItem(actor, NeedsFarmModuleOptions.BarleyItemId, 10);
+        GameplayActorTestRig.SeedTradeItemTemplate(8326, 50, 10, false);
+        var templates = (Dictionary<uint, NpcTemplate>)GameplayActorTestRig.GetField(NpcManager.Instance, "<Templates>k__BackingField");
+        var goods = (Dictionary<uint, MerchantGoods>)GameplayActorTestRig.GetField(NpcManager.Instance, "<Goods>k__BackingField");
+        var previousTemplate = templates.GetValueOrDefault(1921u);
+        var previousPack = goods.GetValueOrDefault(145u);
+        templates[1921] = new NpcTemplate { Id = 1921, Merchant = sourceCase != "not-merchant", MerchantPackId = 145 };
+        var pack = new MerchantGoods(145);
+        if (sourceCase != "no-stock") pack.AddItemToStock(8326, 0);
+        goods[145] = pack;
+        var sourcePosition = sourceCase == "exhausted"
+            ? TestPosition + new Vector3(2, 0, 60)
+            : TestPosition + new Vector3(100, 0, 0);
+        if (sourceCase == "outside") sourcePosition = TestPosition + new Vector3(151, 0, 0);
+        if (sourceCase == "nonfinite") sourcePosition = new Vector3(float.NaN, TestPosition.Y, TestPosition.Z);
+        var source = new NpcSpawner
+        {
+            Id = 98145, UnitId = 1921, ParentWorld = session.World,
+            Position = new WorldSpawnPosition { WorldId = session.World.Id, X = sourcePosition.X, Y = sourcePosition.Y, Z = sourcePosition.Z },
+            Template = new NpcSpawnerTemplate
+            {
+                Npcs = [new NpcSpawnerNpc { MemberId = sourceCase == "wrong-member" ? 7756u : 1921u, MemberType = "Npc" }]
+            }
+        };
+        if (sourceCase == "foreign") source.ParentWorld = CreateActorOnUniqueWorld("food-foreign-source").Session.World;
+        var sourceMap = (Dictionary<uint, List<NpcSpawner>>)GameplayActorTestRig.GetField(session.World.SpawnManager,
+            sourceCase == "event-only" ? "<NpcEventSpawners>k__BackingField" : "<NpcSpawners>k__BackingField");
+        sourceMap[98145] = [source];
+        var clock = new FakeTimeProvider();
+        var bot = NewBot(actor);
+        var options = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true };
+        Npc? merchant = null;
+        BotGoalArbiter arbiter = null!;
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = options, ActorFactory = _ => actor, TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100), RoamSpeed = 5f,
+            RoamLegTimeout = sourceCase == "timed-out" ? TimeSpan.FromMilliseconds(250) : TimeSpan.FromSeconds(60),
+            ActiveActivityProvider = id => arbiter.GetActiveActivity(id),
+            GroundHeightProvider = (_, _) => TestPosition.Z,
+            NearbyNpcProvider = (character, radius) => merchant != null
+                && MathUtil.CalculateDistance(character.Transform.World.Position, merchant.Transform.World.Position, true) <= radius
+                ? [merchant] : [],
+            NearbyDoodadProvider = (_, _) => []
+        };
+        var module = new NeedsFarmActivityModule(options) { FoodEligibilityProvider = executor.FoodBlockedReason };
+        arbiter = new BotGoalArbiter([module, new PresenceRoamProbe()]);
+        var steps = new BotGoalArbiterStepExecutor(arbiter, executor, () => 12f);
+        var patrol = new BotPath([TestPosition + new Vector3(0, 20, 0)], BotPath.LoopMode.Loop);
+        executor.SetRoamRoute(actor.Character, patrol);
+        if (sourceCase == "exhausted")
+        {
+            // Isolate genuine flat-arrival/three-approach exhaustion from the
+            // separate native stuck-failure and timed-out navigation paths.
+            actor.NoProgressWindow = TimeSpan.Zero;
+            actor.MaxUnstickNudges = 0;
+        }
+        try
+        {
+            await steps.StepAsync(bot, CancellationToken.None);
+            var state = executor.GetBotState(bot.CharacterId)!;
+            var validSource = sourceCase is "reached" or "exhausted" or "merchant" or "timed-out";
+            if (validSource)
+            {
+                await Assert.That(state.NeedsFarmPhase).IsEqualTo(NeedsFarmLoopPhase.Traveling);
+                await Assert.That(actor.ActiveRequest!.MoveOwner).IsEqualTo("OTHER:needs-farm-travel");
+                await Assert.That(actor.ActiveRequest.TargetId).IsEqualTo(0u);
+                await Assert.That(actor.ActiveRequest.Destination).IsEqualTo((Vector3?)sourcePosition);
+                if (sourceCase == "merchant")
+                {
+                    // The actor must actually walk into local perception before
+                    // a seller is revealed; the source never gives Buy an ID.
+                    for (var i = 0; i < 80 && MathUtil.CalculateDistance(actor.Character.Transform.World.Position, sourcePosition, true) > 45f; i++)
+                    {
+                        clock.Advance(TimeSpan.FromMilliseconds(500));
+                        await steps.StepAsync(bot, CancellationToken.None);
+                    }
+                    await Assert.That(MathUtil.CalculateDistance(actor.Character.Transform.World.Position, sourcePosition, true)).IsLessThanOrEqualTo(45f);
+                    var merchantId = GameplayActorTestRig.SpawnMerchantNpc(session, npcTemplateId: 1921, packId: 145);
+                    GameplayActorTestRig.SetNpcPosition(session, merchantId, sourcePosition);
+                    merchant = session.World.GetNpc(merchantId)!;
+                    for (var i = 0; i < 80 && GameplayActorTestRig.BagCount(actor, 8326) == 0; i++)
+                    {
+                        clock.Advance(TimeSpan.FromMilliseconds(500));
+                        await steps.StepAsync(bot, CancellationToken.None);
+                    }
+                    await Assert.That(GameplayActorTestRig.BagCount(actor, 8326)).IsEqualTo(1);
+                    await Assert.That(actor.Character.Money).IsEqualTo(650L);
+                    await Assert.That(GameplayActorTestRig.BagCount(actor, 8005)).IsEqualTo(10);
+                    await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(0);
+                    await Assert.That(actor.Character.LaborPower).IsEqualTo((short)96);
+                    await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Buy && r.Result == ActorLifecycleState.Completed)).IsEqualTo(1);
+                    return;
+                }
+                var positionBeforeBlockedWake = actor.Character.Transform.World.Position;
+                for (var i = 0; i < 160 && state.NeedsFoodBlockedReason == null; i++)
+                {
+                    positionBeforeBlockedWake = actor.Character.Transform.World.Position;
+                    clock.Advance(TimeSpan.FromMilliseconds(500));
+                    await steps.StepAsync(bot, CancellationToken.None);
+                }
+                await Assert.That(state.NeedsFoodBlockedReason).IsNotNull();
+                await Assert.That(state.NeedsFarmSoilAttempts).IsEqualTo(BotRoamStepExecutor.NeedsFarmMaxSoilAttempts);
+                if (sourceCase == "reached")
+                    await Assert.That(MathUtil.CalculateDistance(positionBeforeBlockedWake, sourcePosition, true))
+                        .IsLessThanOrEqualTo(GameplayActor.ArrivalRadius);
+                else if (sourceCase == "exhausted")
+                    await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move && r.Result != ActorLifecycleState.Completed)).IsGreaterThanOrEqualTo(BotRoamStepExecutor.NeedsFarmMaxSoilAttempts);
+                else
+                    await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Move
+                        && r.MoveOwner == "OTHER:needs-farm-travel" && r.Result == ActorLifecycleState.TimedOut
+                        && r.Failure == ActorFailureReason.Navigation)).IsTrue();
+            }
+            await Assert.That(state.NeedsLegActive).IsFalse();
+            await Assert.That(ReferenceEquals(executor.GetRoamRoute(bot.CharacterId), patrol)).IsTrue();
+            if (actor.ActiveRequest == null)
+            {
+                // A failure settled after Tick releases the source now; the
+                // next ordinary wake dispatches the restored useful patrol.
+                clock.Advance(TimeSpan.FromMilliseconds(50));
+                await steps.StepAsync(bot, CancellationToken.None);
+            }
+            var usefulMove = actor.ActiveRequest!;
+            var before = actor.Character.Transform.World.Position;
+            var stops = actor.AuditTrace.Count(r => r.Action == ActorActionType.Stop);
+            for (var i = 0; i < 4; i++)
+            {
+                clock.Advance(TimeSpan.FromMilliseconds(sourceCase == "timed-out" ? 50 : 500));
+                await steps.StepAsync(bot, CancellationToken.None);
+            }
+            await Assert.That(actor.Character.Transform.World.Position != before).IsTrue();
+            await Assert.That(ReferenceEquals(actor.ActiveRequest, usefulMove) && !usefulMove.IsTerminal).IsTrue();
+            await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Stop)).IsEqualTo(stops);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 8005)).IsEqualTo(10);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 8326)).IsEqualTo(0);
+            await Assert.That(actor.Character.Money).IsEqualTo(700L);
+            if (validSource && sourceCase != "timed-out")
+            {
+                // Even after the static source is spent, a newly observed real
+                // merchant is a relevant change and retains ordinary approach.
+                var livePosition = actor.Character.Transform.World.Position + new Vector3(20, 0, 0);
+                var merchantId = GameplayActorTestRig.SpawnMerchantNpc(session, npcTemplateId: 1921, packId: 145);
+                GameplayActorTestRig.SetNpcPosition(session, merchantId, livePosition);
+                merchant = session.World.GetNpc(merchantId)!;
+                await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+                clock.Advance(TimeSpan.FromMilliseconds(500));
+                await steps.StepAsync(bot, CancellationToken.None);
+                var approach = actor.ActiveRequest!;
+                var distance = MathUtil.CalculateDistance(actor.Character.Transform.World.Position, livePosition, true);
+                await Assert.That(approach.MoveOwner).IsEqualTo("OTHER:needs-farm-travel");
+                stops = actor.AuditTrace.Count(r => r.Action == ActorActionType.Stop);
+                clock.Advance(TimeSpan.FromMilliseconds(500));
+                await steps.StepAsync(bot, CancellationToken.None);
+                await Assert.That(ReferenceEquals(actor.ActiveRequest, approach) && !approach.IsTerminal).IsTrue();
+                await Assert.That(MathUtil.CalculateDistance(actor.Character.Transform.World.Position, livePosition, true)).IsLessThan(distance);
+                await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Stop)).IsEqualTo(stops);
+            }
+        }
+        finally
+        {
+            actor.PreemptCurrent("known knife source fixture cleanup");
+            if (previousTemplate == null) templates.Remove(1921);
+            else templates[1921] = previousTemplate;
+            if (previousPack == null) goods.Remove(145);
+            else goods[145] = previousPack;
+        }
+    }
+
+    [Test]
+    public async Task BreadMode_KnownKnifeHintFailsAfterMerchantAppears_StationaryProfileAdmitsActualSeller()
+    {
+        // Reconstructed needs-only public-seam profile: deliberately no
+        // PresenceRoam module, so a missing route cannot silently re-arm a
+        // default patrol and invalidate a bad refusal through displacement.
+        var (actor, session) = CreateActorOnUniqueWorld("food-hint-live-seller");
+        using var fixture = new HardBreadFixture(actor);
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 700);
+        actor.Character.LaborPower = 96;
+        GameplayActorTestRig.GrantItem(actor, NeedsFarmModuleOptions.BarleyItemId, 10);
+        GameplayActorTestRig.SeedTradeItemTemplate(8326, 50, 10, false);
+        var templates = (Dictionary<uint, NpcTemplate>)GameplayActorTestRig.GetField(NpcManager.Instance, "<Templates>k__BackingField");
+        var goods = (Dictionary<uint, MerchantGoods>)GameplayActorTestRig.GetField(NpcManager.Instance, "<Goods>k__BackingField");
+        var previousTemplate = templates.GetValueOrDefault(1921u);
+        var previousPack = goods.GetValueOrDefault(145u);
+        templates[1921] = new NpcTemplate { Id = 1921, Merchant = true, MerchantPackId = 145 };
+        var pack = new MerchantGoods(145);
+        pack.AddItemToStock(8326, 0);
+        goods[145] = pack;
+        var sourcePosition = TestPosition + new Vector3(100, 0, 0);
+        var sourceMap = (Dictionary<uint, List<NpcSpawner>>)GameplayActorTestRig.GetField(session.World.SpawnManager, "<NpcSpawners>k__BackingField");
+        sourceMap[98145] = [new NpcSpawner
+        {
+            Id = 98145, UnitId = 1921, ParentWorld = session.World,
+            Position = new WorldSpawnPosition { WorldId = session.World.Id, X = sourcePosition.X, Y = sourcePosition.Y, Z = sourcePosition.Z },
+            Template = new NpcSpawnerTemplate { Npcs = [new NpcSpawnerNpc { MemberId = 1921, MemberType = "Npc" }] }
+        }];
+        var clock = new FakeTimeProvider();
+        var bot = NewBot(actor);
+        var options = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true };
+        Npc? merchant = null;
+        BotGoalArbiter arbiter = null!;
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = options, ActorFactory = _ => actor, TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100), RoamLegTimeout = TimeSpan.FromMilliseconds(250),
+            ActiveActivityProvider = id => arbiter.GetActiveActivity(id),
+            GroundHeightProvider = (_, _) => TestPosition.Z,
+            NearbyNpcProvider = (character, radius) => merchant != null
+                && MathUtil.CalculateDistance(character.Transform.World.Position, merchant.Transform.World.Position, true) <= radius
+                ? [merchant] : [],
+            NearbyDoodadProvider = (_, _) => []
+        };
+        var module = new NeedsFarmActivityModule(options) { FoodEligibilityProvider = executor.FoodBlockedReason };
+        arbiter = new BotGoalArbiter([module]);
+        var steps = new BotGoalArbiterStepExecutor(arbiter, executor, () => 12f);
+        try
+        {
+            // No patrol is installed and no fallback module can install one.
+            await steps.StepAsync(bot, CancellationToken.None);
+            var hint = actor.ActiveRequest!;
+            await Assert.That(hint.State).IsEqualTo(ActorLifecycleState.Running);
+            await Assert.That(hint.MoveOwner).IsEqualTo("OTHER:needs-farm-travel");
+            await Assert.That(hint.TargetId).IsEqualTo(0u);
+            var stationaryPosition = actor.Character.Transform.World.Position;
+            var merchantId = GameplayActorTestRig.SpawnMerchantNpc(session, npcTemplateId: 1921, packId: 145);
+            GameplayActorTestRig.SetNpcPosition(session, merchantId, stationaryPosition + new Vector3(2, 0, 0));
+            merchant = session.World.GetNpc(merchantId)!;
+            await Assert.That(MathUtil.CalculateDistance(stationaryPosition, merchant.Transform.World.Position, true))
+                .IsLessThanOrEqualTo(GameplayActor.MaxShopRange);
+
+            // Reveal precedes the genuine native timeout, unlike the earlier
+            // changed-availability control that revealed only after blocking.
+            clock.Advance(TimeSpan.FromMilliseconds(200));
+            await steps.StepAsync(bot, CancellationToken.None);
+            await Assert.That(hint.State).IsEqualTo(ActorLifecycleState.TimedOut);
+            await Assert.That(hint.Failure).IsEqualTo(ActorFailureReason.Navigation);
+            await Assert.That(actor.ActiveRequest).IsNull();
+            await Assert.That(executor.GetRoamRoute(bot.CharacterId)).IsNull();
+            await Assert.That(actor.Character.Transform.World.Position).IsEqualTo(stationaryPosition);
+            await Assert.That(executor.GetBotState(bot.CharacterId)!.NeedsFoodBlockedReason).IsNull();
+            await Assert.That(module.CanActivate(ContextFor(bot)).CanActivate).IsTrue();
+
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await steps.StepAsync(bot, CancellationToken.None);
+            var buy = actor.AuditTrace.Single(r => r.Action == ActorActionType.Buy);
+            await Assert.That(buy.Result).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(buy.TargetId).IsEqualTo(merchantId);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 8326)).IsEqualTo(1);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 8005)).IsEqualTo(10);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, 30902)).IsEqualTo(0);
+            await Assert.That(actor.Character.Money).IsEqualTo(650L);
+            await Assert.That(actor.Character.LaborPower).IsEqualTo((short)96);
+            await Assert.That(actor.Character.Transform.World.Position).IsEqualTo(stationaryPosition);
+            await Assert.That(executor.GetRoamRoute(bot.CharacterId)).IsNull();
+            await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move)).IsEqualTo(1);
+        }
+        finally
+        {
+            actor.PreemptCurrent("merchant-before-hint-failure fixture cleanup");
+            if (previousTemplate == null) templates.Remove(1921);
+            else templates[1921] = previousTemplate;
+            if (previousPack == null) goods.Remove(145);
+            else goods[145] = previousPack;
+        }
+    }
+
+    [Test]
+    public async Task RefusedFarmTravelLegTwice_StandsAsideBoundedly_AndTheLowerBandTakesOver()
+    {
+        // The farm module acts on the outcome the executor itself reported through
+        // T4's channel: the same travel leg refused the same way twice means the
+        // farm's own leg keeps failing, so it denies with an observable reason and
+        // the lower band (roam) takes over instead of the same farm wake
+        // repeating. Only a hard refusal counts - a timed-out leg keeps the
+        // executor's own attempt bookkeeping as its owner. The rig rejects the
+        // request the executor issued; the outcome is built by the real executor
+        // from the real leg's terminal state and no reason is injected.
+        var (actor, session) = CreateActorOnUniqueWorld("food-refused-travel");
+        using var fixture = new HardBreadFixture(actor);
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        GameplayActorTestRig.SetMoney(actor, 700);
+        actor.Character.LaborPower = 96;
+        GameplayActorTestRig.GrantItem(actor, NeedsFarmModuleOptions.BarleyItemId, 10);
+        GameplayActorTestRig.SeedTradeItemTemplate(8326, 50, 10, false);
+        var templates = (Dictionary<uint, NpcTemplate>)GameplayActorTestRig.GetField(NpcManager.Instance, "<Templates>k__BackingField");
+        var goods = (Dictionary<uint, MerchantGoods>)GameplayActorTestRig.GetField(NpcManager.Instance, "<Goods>k__BackingField");
+        var previousTemplate = templates.GetValueOrDefault(1921u);
+        var previousPack = goods.GetValueOrDefault(145u);
+        templates[1921] = new NpcTemplate { Id = 1921, Merchant = true, MerchantPackId = 145 };
+        var pack = new MerchantGoods(145);
+        pack.AddItemToStock(8326, 0);
+        goods[145] = pack;
+        var sourcePosition = TestPosition + new Vector3(100, 0, 0);
+        var sourceMap = (Dictionary<uint, List<NpcSpawner>>)GameplayActorTestRig.GetField(session.World.SpawnManager, "<NpcSpawners>k__BackingField");
+        sourceMap[98145] = [new NpcSpawner
+        {
+            Id = 98145, UnitId = 1921, ParentWorld = session.World,
+            Position = new WorldSpawnPosition { WorldId = session.World.Id, X = sourcePosition.X, Y = sourcePosition.Y, Z = sourcePosition.Z },
+            Template = new NpcSpawnerTemplate { Npcs = [new NpcSpawnerNpc { MemberId = 1921, MemberType = "Npc" }] }
+        }];
+        var clock = new FakeTimeProvider();
+        var bot = NewBot(actor);
+        var options = new NeedsFarmModuleOptions { Enabled = true, ProduceHardBread = true };
+        Npc? merchant = null;
+        BotGoalArbiter arbiter = null!;
+        BotRoamStepExecutor executor = new()
+        {
+            NeedsFarmOptions = options, ActorFactory = _ => actor, TimeProvider = clock,
+            ActiveCadence = TimeSpan.FromMilliseconds(100), RoamSpeed = 5f,
+            RoamLegTimeout = TimeSpan.FromSeconds(60),
+            ActiveActivityProvider = id => arbiter.GetActiveActivity(id),
+            GroundHeightProvider = (_, _) => TestPosition.Z,
+            NearbyNpcProvider = (character, radius) => merchant != null
+                && MathUtil.CalculateDistance(character.Transform.World.Position, merchant.Transform.World.Position, true) <= radius
+                ? [merchant] : [],
+            NearbyDoodadProvider = (_, _) => []
+        };
+        var module = new NeedsFarmActivityModule(options) { FoodEligibilityProvider = executor.FoodBlockedReason };
+        var roam = new PresenceRoamProbe();
+        arbiter = new BotGoalArbiter([module, roam]);
+        // Production parity (Program.cs): the executor is the only thing that sees
+        // a leg end, so it reports it to the arbiter that hands it to the owner.
+        executor.LegOutcomeSink = arbiter.ReportLegOutcome;
+        var steps = new BotGoalArbiterStepExecutor(arbiter, executor, () => 12f);
+        try
+        {
+            await steps.StepAsync(bot, CancellationToken.None);
+            var travel = actor.ActiveRequest!;
+            await Assert.That(travel.State).IsEqualTo(ActorLifecycleState.Running);
+            await Assert.That(travel.MoveOwner).IsEqualTo("OTHER:needs-farm-travel");
+
+            var refusals = 0;
+            var reasons = new List<string>();
+            for (var wake = 0; wake < 12 && !reasons.Any(r => r.Contains("standing aside", StringComparison.Ordinal)); wake++)
+            {
+                if (actor.ActiveRequest is { IsTerminal: false } request)
+                {
+                    request.Reject(ActorFailureReason.Navigation, "no path to the seed source");
+                    refusals++;
+                }
+                clock.Advance(TimeSpan.FromMilliseconds(500));
+                await steps.StepAsync(bot, CancellationToken.None);
+                reasons.Add(steps.GetLastDecision(bot.CharacterId)?.Reason ?? "");
+            }
+
+            await Assert.That(refusals).IsGreaterThanOrEqualTo(2);
+            var standAside = reasons.First(r => r.Contains("standing aside", StringComparison.Ordinal));
+            // Bounded and observable: the reason names the count, the failure and
+            // how long the farm will stay out.
+            await Assert.That(standAside).Contains("failed 2 times the same way");
+            await Assert.That(standAside).Contains("no path to the seed source");
+            await Assert.That(standAside).Contains($"{options.LegFailureStandAsideWakes} elections");
+            // The lower band is in charge, not the same farm wake.
+            await Assert.That(arbiter.GetActiveActivity(bot.CharacterId)).IsEqualTo("presence.roam");
+            await Assert.That(roam.Activations).IsGreaterThanOrEqualTo(1);
+
+            // The stand-aside holds for its bounded number of elections, then the
+            // farm tries again - it is not a permanent disable.
+            var heldWakes = 0;
+            for (var wake = 0; wake < options.LegFailureStandAsideWakes + 4; wake++)
+            {
+                clock.Advance(TimeSpan.FromMilliseconds(500));
+                await steps.StepAsync(bot, CancellationToken.None);
+                var reason = steps.GetLastDecision(bot.CharacterId)?.Reason ?? "";
+                if (reason.Contains("standing aside", StringComparison.Ordinal))
+                {
+                    heldWakes++;
+                    continue;
+                }
+                break;
+            }
+            await Assert.That(heldWakes).IsGreaterThan(0);
+            var after = steps.GetLastDecision(bot.CharacterId)?.Reason ?? "";
+            await Assert.That(after.Contains("standing aside", StringComparison.Ordinal)).IsFalse();
+        }
+        finally
+        {
+            actor.PreemptCurrent("refused farm travel fixture cleanup");
+            if (previousTemplate == null) templates.Remove(1921);
+            else templates[1921] = previousTemplate;
+            if (previousPack == null) goods.Remove(145);
+            else goods[145] = previousPack;
+        }
+    }
+
+    // Explicit native fixture metadata; canonical production timing/yields belong
+    // to the isolated earned-input test, not these short policy controls.
+    internal sealed class HardBreadFixture : IDisposable
+    {
+        private readonly Dictionary<uint, AAEmu.Game.Models.Game.Items.Templates.ItemTemplate> _items =
+            (Dictionary<uint, AAEmu.Game.Models.Game.Items.Templates.ItemTemplate>)GameplayActorTestRig.GetField(ItemManager.Instance, "_templates");
+        private readonly Dictionary<uint, AAEmu.Game.Models.Game.Items.Templates.ItemTemplate?> _before = [];
+        private readonly Dictionary<uint, AAEmu.Game.Models.Game.Crafts.Craft> _crafts;
+        private readonly AAEmu.Game.Models.Game.Crafts.Craft? _beforeCraft;
+        private readonly Dictionary<uint, AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate> _skills;
+        private readonly AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate? _beforeBreadSkill;
+        public Item Bread { get; }
+
+        public HardBreadFixture(GameplayActor actor)
+        {
+            GameplayActorTestRig.SeedCraftSurface();
+            foreach (var id in new uint[] { 15652, 8005, 8326, 30902, 17664 })
+            {
+                _before[id] = _items.GetValueOrDefault(id);
+                _items[id] = new AAEmu.Game.Models.Game.Items.Templates.ItemTemplate { Id = id, MaxCount = 1000 };
+            }
+            _skills = (Dictionary<uint, AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate>)GameplayActorTestRig.GetField(SkillManager.Instance, "_skills");
+            _beforeBreadSkill = _skills.GetValueOrDefault(18664u);
+            _skills.Remove(18664);
+            Bread = OrdinaryRecoveryTestRig.StockHeal(actor, 17664, 40);
+            Bread.Count = 0;
+            _crafts = (Dictionary<uint, AAEmu.Game.Models.Game.Crafts.Craft>)GameplayActorTestRig.GetField(CraftManager.Instance, "_crafts");
+            _beforeCraft = _crafts.GetValueOrDefault(6751u);
+            _crafts[6751] = new AAEmu.Game.Models.Game.Crafts.Craft
+            {
+                Id = 6751, SkillId = GameplayActorTestRig.CraftTestSkillId, ReqDoodadId = 525,
+                CraftMaterials = [new AAEmu.Game.Models.Game.Crafts.CraftMaterial { ItemId = 30902, Amount = 4 }],
+                CraftProducts = [new AAEmu.Game.Models.Game.Crafts.CraftProduct { ItemId = 17664, Amount = 10, Rate = 100 }]
+            };
+        }
+
+        public void Dispose()
+        {
+            foreach (var (id, previous) in _before)
+            {
+                if (previous == null) _items.Remove(id);
+                else _items[id] = previous;
+            }
+            if (_beforeCraft == null) _crafts.Remove(6751);
+            else _crafts[6751] = _beforeCraft;
+            if (_beforeBreadSkill == null) _skills.Remove(18664);
+            else _skills[18664] = _beforeBreadSkill;
+        }
     }
 }

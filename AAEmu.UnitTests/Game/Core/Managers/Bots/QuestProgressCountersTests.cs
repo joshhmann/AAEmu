@@ -105,6 +105,15 @@ public class QuestProgressCountersTests
 
     private sealed class NullLifecycle : IPlayerBotLifecycleService
     {
+        public bool RetirementResult { get; set; } = true;
+        public List<(PlayerBotRuntime Owner, ulong Generation, string Reason)> RetirementCalls { get; } = [];
+
+        public bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason)
+        {
+            RetirementCalls.Add((expectedOwner, expectedGeneration, reason));
+            return RetirementResult;
+        }
+
         public bool ActivateHeadless(AAEmu.Game.Models.Game.Char.Character character, object botContext) => true;
         public bool Deactivate(AAEmu.Game.Models.Game.Char.Character character, string reason) => true;
     }

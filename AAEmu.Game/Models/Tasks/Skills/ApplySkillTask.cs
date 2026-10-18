@@ -14,6 +14,17 @@ public class ApplySkillTask(
 {
     public override void Execute()
     {
+        if (skill.ExecutionLock != null)
+        {
+            lock (skill.ExecutionLock)
+            {
+                if (!skill.CanExecuteObserved(caster))
+                    return;
+                skill.ApplyEffects(caster, casterCaster, target, targetCaster, skillObject);
+                skill.EndSkill(caster);
+            }
+            return;
+        }
         skill.ApplyEffects(caster, casterCaster, target, targetCaster, skillObject);
         skill.EndSkill(caster);
     }

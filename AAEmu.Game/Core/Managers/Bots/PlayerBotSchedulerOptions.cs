@@ -30,10 +30,25 @@ public sealed class PlayerBotSchedulerOptions
     /// <summary>Bounded work channel capacity (backpressure for the pool). Default 256.</summary>
     public int WorkChannelCapacity { get; init; } = 256;
 
+    /// <summary>
+    /// Maximum ordinary bot steps one tick drain executes on the execution
+    /// boundary. Steps over budget stay in the marshal queue for the next
+    /// tick — deferred, never dropped — so a crowded tick cannot monopolise
+    /// the game loop. Native retirements (control-plane teardown carrying
+    /// their own timeout) are neither counted nor deferred. Default 32
+    /// (≈3,200 steps/s at the 10 ms default drain cadence, far above the
+    /// 256-slot channel's fill rate). 0 or negative = unbounded.
+    /// </summary>
+    public int MaxStepsPerTick { get; init; } = 32;
+
     /// <summary>Per-step timeout; the lease is revoked and the step cancelled when exceeded. Default 30 s. Zero/negative disables.</summary>
     public TimeSpan StepTimeout { get; init; } = TimeSpan.FromSeconds(30);
 
-    /// <summary>How long StopAsync waits for in-flight steps before giving up. Default 10 s.</summary>
+    /// <summary>
+    /// How long StopAsync waits for in-flight steps, and the finite native
+    /// retirement acknowledgement bound before physical leave-save. Default
+    /// 10 s. Retirement refuses a non-positive or unsupported wait bound.
+    /// </summary>
     public TimeSpan ShutdownTimeout { get; init; } = TimeSpan.FromSeconds(10);
 
     /// <summary>

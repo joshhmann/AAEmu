@@ -12,6 +12,14 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// PendingInvitationOwnerId/PartyLeaderObjId/PartyLeaderTargetObjId), all
 /// copied from the observation snapshot. Existing field names never change;
 /// old consumers ignore the new keys.
+///
+/// <para><b>Declared unavailable at this seam</b> (audit L1.2, Stage A / A2).
+/// Nearby candidates are object ids only (no level, hp or hostility), and no
+/// skill cost, cooldown, global-cooldown, availability or visibility fact is
+/// carried. A precondition or scenario MUST NOT assume one: read the
+/// authoritative server service at action time, or treat the fact as unknown
+/// and let the actor reject the request. Same declaration as
+/// <see cref="ActorObservation"/>.</para>
 /// </summary>
 public sealed record BotObservedContext
 {

@@ -235,7 +235,20 @@ public sealed class BotBehaviorRuntime
             CurrentPhase = "quest-leg-running";
             return true;
         }
-        var landed = result.WorkSelected && result.Request?.State == ActorLifecycleState.Completed;
+        // A Completed terminal only means the step machine ran; the request's
+        // payload carries the applied verdict (false = ran but changed nothing,
+        // e.g. a declined advance). That is not landed progress — report a wake
+        // that produced none instead of letting the caller read success.
+        var completedTerminal = result.Request?.State == ActorLifecycleState.Completed;
+        var appliedNothing = result.WorkSelected && completedTerminal && result.Request!.Result is false;
+        var landed = result.WorkSelected && completedTerminal && !appliedNothing;
+        if (appliedNothing)
+        {
+            Status = BotBehaviorStatus.Blocked;
+            CurrentPhase = "ran-without-progress";
+            LastFailure = result.Request!.Detail;
+            return false;
+        }
         if (landed)
         {
             Status = BotBehaviorStatus.Completed;
@@ -273,7 +286,7 @@ public sealed class BotBehaviorRuntime
         BehaviorInstanceId = options.CycleId;
         StartedAt = _utcNow();
         NextWake = null;
-        if (request.State == ActorLifecycleState.Completed)
+        if (request.State == ActorLifecycleState.Completed && request.Result is not false)
         {
             Status = BotBehaviorStatus.Completed;
             CurrentPhase = request.Action.ToString();
@@ -283,10 +296,26 @@ public sealed class BotBehaviorRuntime
                 FeedQuestTerminals(actor, [request.TargetId]);
             return true;
         }
+        if (request.State == ActorLifecycleState.Completed)
+        {
+            // Ran but applied nothing (a declined step): Completed by design, the
+            // payload is the applied verdict. Consume it as a wake that produced no
+            // progress — never as landed work — and still own the wake for a quest
+            // leg so the old patrol cannot start a Move under it.
+            Status = BotBehaviorStatus.Blocked;
+            CurrentPhase = "ran-without-progress";
+            LastFailure = request.Detail;
+            // The elected-name vocabulary is declared once (plan T9, audit L3-a):
+            // this wake belongs to a quest leg exactly when the surface says so.
+            return BotActivityDispatchSurface.Resolve(activity) == BotActivityCarrier.Quest;
+        }
         Status = BotBehaviorStatus.Failed;
         CurrentPhase = "execute";
         LastFailure = $"{request.Action} ended {request.State} ({request.Detail})";
-        return false;
+        // Consuming this exact quest request owns the wake even on failure.
+        // Otherwise the old patrol can start a new Move before the following
+        // quest decision. Keep Failed and the original progress timestamp.
+        return BotActivityDispatchSurface.Resolve(activity) == BotActivityCarrier.Quest;
     }
 
     /// <summary>

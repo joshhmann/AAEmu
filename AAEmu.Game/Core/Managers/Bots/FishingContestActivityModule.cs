@@ -49,6 +49,9 @@ public sealed class FishingContestActivityModule : IBotActivityModule
 
     public int Priority { get; } = 60;
 
+    /// <inheritdoc />
+    public IReadOnlyList<string> DeclaredActivities => [ActivityName];
+
     /// <summary>Stable activity name (the arbiter's unit of change).</summary>
     public const string ActivityName = "fishing.contest";
 

@@ -2,7 +2,7 @@ namespace AAEmu.Game.Core.Managers.Bots;
 
 /// <summary>
 /// Immutable diagnostics snapshot of the player bot registry (slice #5).
-/// <c>Registered</c>/<c>Active</c>/<c>Deactivated</c> are current state
+/// Registered, active, deactivated and quiesced lifecycle fields are current state
 /// counts; the <c>Total*</c>/<c>Failed*</c> counters are cumulative and
 /// monotonic for the lifetime of the manager.
 /// </summary>
@@ -26,6 +26,12 @@ public sealed record PlayerBotDiagnostics(
     long FailedActivations,
     long FailedDeactivations)
 {
-    /// <summary>Total registry entries (Registered + Active + Deactivated).</summary>
-    public int Total => Registered + Active + Deactivated;
+    /// <summary>Owners currently completing the physical leave/save callback.</summary>
+    public int Deactivating { get; init; }
+
+    /// <summary>Retained, non-admissible owners whose physical leave failed.</summary>
+    public int DeactivationFailed { get; init; }
+
+    /// <summary>Total registry entries, including both quiesced lifecycle states.</summary>
+    public int Total => Registered + Active + Deactivated + Deactivating + DeactivationFailed;
 }

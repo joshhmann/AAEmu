@@ -25,6 +25,12 @@ public sealed class PresenceRoamActivityModule : IBotActivityModule
     public string Name => "PresenceRoam";
     public int Priority { get; } = 50;
 
+    /// <summary>The elected name of the patrol loop this module owns.</summary>
+    public const string ActivityName = "presence.roam";
+
+    /// <inheritdoc />
+    public IReadOnlyList<string> DeclaredActivities => [ActivityName];
+
     public PresenceRoamActivityModule(
         BotScheduleOptions options,
         IBotScheduleBehavior behavior,
@@ -52,7 +58,7 @@ public sealed class PresenceRoamActivityModule : IBotActivityModule
         // activity's whole reason for existing); a bot already walking one has
         // the activity satisfied and holds cheaply.
         var hasLiveRoute = _stepExecutor.GetRoamRoute(context.Bot.CharacterId) is { IsFinished: false };
-        return BotActivityDecision.Allow("presence.roam",
+        return BotActivityDecision.Allow(ActivityName,
             hasLiveRoute ? BotActivityMotivation.Satisfied : BotActivityMotivation.Needs);
     }
 
@@ -66,7 +72,7 @@ public sealed class PresenceRoamActivityModule : IBotActivityModule
         // A live route IS the current activity — keep it (never reset walk
         // progress mid-patrol). Only a route-less bot gets the standard loop.
         if (_stepExecutor.GetRoamRoute(bot.CharacterId) is { IsFinished: false })
-            return new BotActivity("presence.roam", Name);
+            return new BotActivity(ActivityName, Name);
 
         var metadata = _metadataProvider(bot.CharacterId);
         var fallbackCenter = metadata.HasHome
@@ -74,7 +80,7 @@ public sealed class PresenceRoamActivityModule : IBotActivityModule
             : bot.Character.Transform.World.Position;
 
         _behavior.ResumeRoam(bot, metadata.Schedule, fallbackCenter);
-        return new BotActivity("presence.roam", Name);
+        return new BotActivity(ActivityName, Name);
     }
 
     private static PlayerBotMetadata DefaultMetadataProvider(uint characterId) =>

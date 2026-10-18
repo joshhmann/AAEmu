@@ -103,7 +103,7 @@ internal static class TravelLegDispatch
     /// the leg that actually RAN is the one banked (<c>null</c> for a proposal the
     /// caller's own fallback rule produced, which banks nothing).
     /// </summary>
-    internal readonly record struct TravelDispatchParams(TravelDecision? Decision);
+    internal readonly record struct TravelDispatchParams(TravelDecision? Decision, TravelIntentStore.Intent? Journey = null);
 
     // ---------------------------------------------------------------- journey
 
@@ -207,7 +207,13 @@ internal static class TravelLegDispatch
             LegDestination: Vector3.Zero,
             RetreatRequested: false,
             ThreatObjId: 0,
-            ThreatPosition: Vector3.Zero), legOwner: legOwner);
+            ThreatPosition: Vector3.Zero)
+        {
+            // Pursuit's combat gate uses ordinary 3D, model-adjusted reach.
+            // A flat arrival here can hold forever beneath an elevated target
+            // and hide the movement failure from the existing repath budget.
+            UseUnitInteractionDistance = legOwner == PursuitMoveOwner
+        }, legOwner: legOwner);
 
         // THE STORE'S STICKINESS, made real for the consumer: a journey that already
         // reached a terminal re-reads that NAMED verdict instead of deciding again,
@@ -460,10 +466,13 @@ internal static class TravelLegDispatch
     ///    actor, so the next wake simply re-decides);
     ///  - no such leg ever dispatched → <see cref="TravelLegOutcome.None"/>.
     /// </summary>
-    internal static TravelLegOutcome MapLegOutcome(IGameplayActor actor, uint targetObjId, string moveOwner)
+    internal static TravelLegOutcome MapLegOutcome(IGameplayActor actor, uint targetObjId, string moveOwner, uint questId = 0)
     {
         ArgumentNullException.ThrowIfNull(actor);
-        if (IsOurLiveLeg(actor.ActiveRequest, targetObjId, moveOwner))
+        if (questId == 0 && moveOwner == PursuitMoveOwner
+            && TravelIntentStore.TryGet(actor.ActorId, out var intent, moveOwner))
+            questId = intent.PursuitQuestId;
+        if (IsOurLiveLeg(actor.ActiveRequest, targetObjId, moveOwner, questId))
             return TravelLegOutcome.Running;
 
         var trace = actor.AuditTrace;
@@ -471,7 +480,8 @@ internal static class TravelLegDispatch
         for (var i = trace.Count - 1; i >= 0 && scanned < TraceScanRows; i--, scanned++)
         {
             var row = trace[i];
-            if (row.Action != ActorActionType.Move || row.MoveOwner != moveOwner || row.TargetId != targetObjId)
+            if (row.Action != ActorActionType.Move || row.MoveOwner != moveOwner || row.TargetId != targetObjId
+                || (questId != 0 && row.DecisionQuestId != questId))
                 continue;
             return row.Result switch
             {
@@ -490,10 +500,11 @@ internal static class TravelLegDispatch
     }
 
     /// <summary>True when the request is a live Move the caller itself issued on this target (owner-tagged).</summary>
-    internal static bool IsOurLiveLeg(ActorRequest? request, uint targetObjId, string moveOwner)
+    internal static bool IsOurLiveLeg(ActorRequest? request, uint targetObjId, string moveOwner, uint questId = 0)
         => request is { IsTerminal: false, Action: ActorActionType.Move }
            && request.TargetId == targetObjId
-           && request.MoveOwner == moveOwner;
+           && request.MoveOwner == moveOwner
+           && (questId == 0 || request.DecisionQuestId == questId);
 
     /// <summary>
     /// True for the interrupt details the brain stack itself issues over its own leg

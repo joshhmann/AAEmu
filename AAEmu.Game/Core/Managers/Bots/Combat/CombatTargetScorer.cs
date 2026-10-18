@@ -16,7 +16,7 @@ namespace AAEmu.Game.Core.Managers.Bots.Combat;
 ///
 /// Ordering is a TOTAL order — score desc, then ObjId ASC — so the same input
 /// set always yields the same winner and ties are meaningful rather than
-/// incidental (the same discipline <c>AttentionScorer.Rank</c> applies).
+/// incidental.
 ///
 /// Hysteresis contract (the reason this class exists rather than a bare
 /// <c>OrderBy</c>): a challenger replaces the incumbent only when it beats the

@@ -43,6 +43,13 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// resolving (≈0 for an immediately observed effect, ≈window for a
 /// no-change expiry).
 /// </param>
+/// <param name="CommandOrigin">
+/// Additive: who asked for the action — null = the bot's own decision path,
+/// <c>"control-api"</c> = an operator-injected control-plane command. Any
+/// other non-null value is caller-supplied; only the control API stages one
+/// today. Telemetry only; it never changes Result and is never read by
+/// behavior.
+/// </param>
 public sealed record ActorAuditRecord(
     Guid TraceId,
     uint ActorId,
@@ -67,7 +74,8 @@ public sealed record ActorAuditRecord(
     string? DecisionCycleId = null,
     long? WakeSequence = null,
     string? MoveOwner = null,
-    uint? DecisionQuestId = null)
+    uint? DecisionQuestId = null,
+    string? CommandOrigin = null)
 {
     /// <summary>Stable one-line log form (structured fields, no packet content).</summary>
     public override string ToString()
@@ -121,7 +129,11 @@ public sealed record ActorAuditRecord(
             wake_sequence = WakeSequence,
             // Movement owner: which dispatch path owns this Move/Drive leg
             // (telemetry only, null when unstaged). Old consumers ignore it.
-            move_owner = MoveOwner
+            move_owner = MoveOwner,
+            // Who asked: null = the bot's own decision, "control-api" = an
+            // operator-injected command. Keeps an injected row from reading
+            // as the bot's own decision. Additive; old consumers ignore it.
+            command_origin = CommandOrigin
         });
 }
 

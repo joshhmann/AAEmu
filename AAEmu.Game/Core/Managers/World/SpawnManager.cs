@@ -1,3 +1,5 @@
+using System.Numerics;
+
 using AAEmu.Commons.Exceptions;
 using AAEmu.Commons.IO;
 using AAEmu.Commons.Utils;
@@ -736,7 +738,10 @@ public class SpawnManager(WorldInstance parentWorld)
         {
             // Sorting required to make sure parenting doesn't produce invalid parents (normally)
 
-            command.CommandText = "SELECT * FROM doodads WHERE owner_type = @OwnerType";
+            command.CommandText = "SELECT id, owner_id, owner_type, attach_point, template_id, current_phase_id, plant_time, growth_time, phase_time, "
+                + "CAST(x AS DOUBLE) AS x, CAST(y AS DOUBLE) AS y, CAST(z AS DOUBLE) AS z, roll, pitch, yaw, scale, "
+                + "item_id, house_id, parent_doodad, item_template_id, item_container_id, data, farm_type "
+                + "FROM doodads WHERE owner_type = @OwnerType";
             if (ownerToSpawnId >= 0)
                 command.CommandText += " AND house_id = @OwnerId";
             command.CommandText += " ORDER BY `plant_time`";
@@ -750,9 +755,9 @@ public class SpawnManager(WorldInstance parentWorld)
                     var templateId = reader.GetUInt32("template_id");
                     var dbId = reader.GetUInt32("id");
                     var phaseId = reader.GetUInt32("current_phase_id");
-                    var x = reader.GetFloat("x");
-                    var y = reader.GetFloat("y");
-                    var z = reader.GetFloat("z");
+                    var x = (float)reader.GetDouble("x");
+                    var y = (float)reader.GetDouble("y");
+                    var z = (float)reader.GetDouble("z");
                     var roll = reader.GetFloat("roll");
                     var pitch = reader.GetFloat("pitch");
                     var yaw = reader.GetFloat("yaw");
@@ -1201,6 +1206,65 @@ public class SpawnManager(WorldInstance parentWorld)
         }
 
         return active;
+    }
+
+    /// <summary>
+    /// Finds a nearby authored merchant source in this world's ordinary loaded
+    /// spawners. This is a search destination, not a live NPC or stock claim;
+    /// spawning, schedules and visibility remain owned by their native paths.
+    /// </summary>
+    internal bool TryNearestMerchantSourcePosition(uint itemTemplateId, Vector3 origin,
+        float radius, out Vector3 position)
+    {
+        position = default;
+        if (itemTemplateId == 0 || !float.IsFinite(origin.X) || !float.IsFinite(origin.Y)
+            || !float.IsFinite(origin.Z) || !float.IsFinite(radius) || radius <= 0)
+            return false;
+        var nearestSquared = radius * radius;
+        if (!float.IsFinite(nearestSquared))
+            return false;
+        var found = false;
+        lock (NpcSpawners)
+        {
+            foreach (var entry in NpcSpawners)
+            {
+                foreach (var spawner in entry.Value)
+                {
+                    if (!ReferenceEquals(spawner.ParentWorld, World) || spawner.Position == null
+                        || spawner.Position.WorldId != World.Id || spawner.Template?.Npcs == null)
+                        continue;
+                    var candidate = spawner.Position.AsPositionVector();
+                    if (!float.IsFinite(candidate.X) || !float.IsFinite(candidate.Y) || !float.IsFinite(candidate.Z))
+                        continue;
+                    var distanceSquared = Vector3.DistanceSquared(origin, candidate);
+                    if (!float.IsFinite(distanceSquared) || distanceSquared > nearestSquared)
+                        continue;
+                    var template = NpcManager.Instance.GetTemplate(spawner.UnitId);
+                    if (template is not { Merchant: true, MerchantPackId: not 0 }
+                        || NpcManager.Instance.GetGoods(template.MerchantPackId)?.SellsItem(itemTemplateId) != true)
+                        continue;
+                    var declaresNpc = false;
+                    foreach (var member in spawner.Template.Npcs)
+                    {
+                        if (member.MemberType == "Npc" && member.MemberId == spawner.UnitId)
+                        {
+                            declaresNpc = true;
+                            break;
+                        }
+                    }
+                    if (!declaresNpc)
+                        continue;
+                    if (found && distanceSquared == nearestSquared
+                        && (candidate.X > position.X || candidate.X == position.X
+                            && (candidate.Y > position.Y || candidate.Y == position.Y && candidate.Z >= position.Z)))
+                        continue;
+                    found = true;
+                    nearestSquared = distanceSquared;
+                    position = candidate;
+                }
+            }
+        }
+        return found;
     }
 
     /// <summary>

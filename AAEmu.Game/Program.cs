@@ -260,7 +260,11 @@ public static class Program
                 // Real lifecycle: CharacterLifecycleService (the shared
                 // activation core) + region placement (PRESENCE PROOF — the
                 // headless equivalent of the first CSMoveUnitPacket placement).
-                services.AddSingleton<PlayerBotLifecycleAdapter>();
+                // Resolve the concrete retirement boundary lazily to avoid the
+                // manager -> adapter -> scheduler -> manager construction cycle.
+                services.AddSingleton(sp => new PlayerBotLifecycleAdapter(
+                    sp.GetRequiredService<ICharacterLifecycleService>(),
+                    new Lazy<PlayerBotScheduler>(sp.GetRequiredService<PlayerBotScheduler>)));
                 services.AddSingleton<IPlayerBotLifecycleService>(sp => sp.GetRequiredService<PlayerBotLifecycleAdapter>());
 
                 services.AddSingleton<PlayerBotManager>();
@@ -323,6 +327,8 @@ public static class Program
                     var executor = new BotRoamStepExecutor
                     {
                         ActiveActivityProvider = characterId => arbiter.Value.GetActiveActivity(characterId),
+                        NeedsFarmOptions = sp.GetRequiredService<NeedsFarmModuleOptions>(),
+                        Assignments = sp.GetRequiredService<IBotAssignmentRegistry>(),
                     };
                     // E-66 Gap 1: the owner module reads the opportunity
                     // listing off the bot's LIVE quest-leg actor — wire the
@@ -341,6 +347,20 @@ public static class Program
                     // existing execution path (module unset = 0 = unscoped).
                     executor.QuestChosenProvider = characterId =>
                         questModule.Value?.GetChosenQuest(characterId) ?? 0;
+                    // Plan T4 (audit L3-b): the return path — every leg this
+                    // executor ends is reported once to the arbiter, which hands
+                    // it to the owning module's next CanActivate. Resolved
+                    // lazily like the activity provider above, so the same
+                    // resolution cycle stays unbroken.
+                    executor.LegOutcomeSink = outcome => arbiter.Value.ReportLegOutcome(outcome);
+                    // Plan T5 (audit L1-f): retirement is the single point
+                    // where a MANAGED bot leaves the world (a raw
+                    // CharacterLifecycleService exit never carried arbiter
+                    // memory), so the arbiter's memory for it is dropped
+                    // there — a re-enrolled bot is elected afresh instead of
+                    // being reported Unchanged. Same lazy resolution as the
+                    // two seams above.
+                    executor.RetiredBotSink = characterId => arbiter.Value.Forget(characterId);
                     return executor;
                 });
 
@@ -348,6 +368,7 @@ public static class Program
                 // negotiate ONE active activity per bot per scheduler wake —
                 // highest priority wins, ties break by registration order.
                 // The existing behaviors are the first modules:
+                //   AssignedTravel(110) — operator assignment band (plan T1)
                 //   Schedules(100) — C1 phase behavior when EnableSchedules is on
                 //   ConflictJoin(75) — war-horn join in active-conflict zones
                 //   FishingContest(60) — M9.5 scheduled contest window (default OFF)
@@ -366,8 +387,16 @@ public static class Program
                 services.AddSingleton(_ => FishingContestModuleOptions.FromEnvironment());
                 services.AddSingleton(_ => QuestBootstrapModuleOptions.FromEnvironment());
                 services.AddSingleton(_ => NeedsFarmModuleOptions.FromEnvironment());
-                services.AddSingleton<IBotActivityModule, OutOfCombatRecoveryModule>();
-                services.AddSingleton<OutOfCombatRecoveryModule>();
+                services.AddSingleton<OutOfCombatRecoveryModule>(sp =>
+                {
+                    var executor = new Lazy<BotRoamStepExecutor>(sp.GetRequiredService<BotRoamStepExecutor>);
+                    return new OutOfCombatRecoveryModule
+                    {
+                        RecoveryEligibilityProvider = bot =>
+                            executor.Value.RecoveryBlockedReason(bot.CharacterId, bot.Generation),
+                    };
+                });
+                services.AddSingleton<IBotActivityModule>(sp => sp.GetRequiredService<OutOfCombatRecoveryModule>());
                 services.AddSingleton<IBotActivityModule, PresenceRoamActivityModule>();
                 services.AddSingleton<IBotActivityModule, ConflictJoinActivityModule>();
                 // The four pressure-gated modules are constructed with the real
@@ -386,11 +415,58 @@ public static class Program
                         sp.GetRequiredService<QuestBootstrapModuleOptions>(),
                         pressureProbe: () => sp.GetRequiredService<Lazy<IPopulationDirector>>().Value.Pressure));
                 services.AddSingleton<IBotActivityModule>(sp =>
-                    new NeedsFarmActivityModule(
+                {
+                    var executor = new Lazy<BotRoamStepExecutor>(sp.GetRequiredService<BotRoamStepExecutor>);
+                    return new NeedsFarmActivityModule(
                         sp.GetRequiredService<NeedsFarmModuleOptions>(),
-                        pressureProbe: () => sp.GetRequiredService<Lazy<IPopulationDirector>>().Value.Pressure));
+                        pressureProbe: () => sp.GetRequiredService<Lazy<IPopulationDirector>>().Value.Pressure)
+                    {
+                        FoodEligibilityProvider = bot => executor.Value.FoodBlockedReason(bot),
+                    };
+                });
+                // Operator assignment plane (plan T1): the ONE store the HTTP
+                // route, the E2E bridge, the executor's assigned-travel leg and
+                // the assignment band all read and write. The band sits above
+                // Schedules(100) by construction, so a live assignment preempts
+                // ordinary election instead of competing with it — and because
+                // every assignment carries an expiry, it cannot hold election
+                // forever.
+                services.AddSingleton<IBotAssignmentRegistry>(sp => new BotAssignmentRegistry
+                {
+                    // An operator instruction must reach a bot the scheduler has
+                    // stopped waking: an idle bot's wake returns null and the
+                    // scheduler parks it until something re-arms it, so the
+                    // assignment itself wakes the bot. Resolved lazily inside the
+                    // hook — the scheduler is registered later in this method.
+                    Wake = characterId => sp.GetRequiredService<IPlayerBotScheduler>().Wake(characterId),
+                });
+                services.AddSingleton<IBotActivityModule>(sp =>
+                    new AssignedTravelActivityModule(
+                        sp.GetRequiredService<IBotAssignmentRegistry>(),
+                        sp.GetRequiredService<BotRoamStepExecutor>()));
                 services.AddSingleton<IBotActivityModule, IdleActivityModule>();
-                services.AddSingleton<BotGoalArbiter>();
+                // Plan T6: the arbiter's goal-continuity record persists through
+                // the bot metadata row's planner_state column (its production
+                // writer; the column had none since the dead planner cursor was
+                // removed). Both seams read and write the legacy singleton
+                // directly — it is not a DI service — and both are called only
+                // on an election outcome change or a bot's first election, never
+                // per tick.
+                services.AddSingleton<BotGoalArbiter>(sp => new BotGoalArbiter(
+                    sp.GetRequiredService<IEnumerable<IBotActivityModule>>())
+                {
+                    ContinuityProvider = characterId =>
+                        BotGoalContinuity.TryParse(PlayerBotMetadataStore.Instance.GetForRead(characterId).PlannerState),
+                    ContinuitySink = (characterId, record) =>
+                        PlayerBotMetadataStore.Instance.RecordPlannerState(characterId, record.ToJson()),
+                    // Plan T9 (audit L3-a "dispatcher-or-deny"): an allowance is
+                    // only honoured when the bot can actually perform the
+                    // activity. Wired to the same declaration the executor's
+                    // dispatch gates resolve through, so a module that elects
+                    // work nobody carries is refused with a reason instead of
+                    // reporting Activated.
+                    ActivityCarrier = BotActivityDispatchSurface.IsCarried,
+                });
                 services.AddSingleton<IBotGoalArbiter>(sp => sp.GetRequiredService<BotGoalArbiter>());
 
                 // Production IBotStepExecutor binding: the arbitration
@@ -412,8 +488,10 @@ public static class Program
                 services.AddSingleton<BotActionCommandQueue>();
 
                 // Due-time scheduler + bounded worker pool (4-8, spec §5). Not
-                // auto-started: the BotPresenceCoordinator (or admin command)
-                // calls Start(), so an unwired deployment stays inert.
+                // auto-started: every caller arms it through the one owner
+                // (IPlayerBotScheduler.Arm — presence/startup bootstrap, admin
+                // command, E2E control host), so an unwired deployment stays
+                // inert.
                 services.AddSingleton<PlayerBotScheduler>();
                 services.AddSingleton<IPlayerBotScheduler>(sp => sp.GetRequiredService<PlayerBotScheduler>());
 
@@ -461,6 +539,10 @@ public static class Program
                 // AAEMU_BOT_SCHEDULES_ENABLED); while off the service never
                 // subscribes to the tick, writes metadata, or changes bot
                 // behavior. BotScheduleBootstrap only calls Start() then.
+                // Plan T8 (audit L1-g): the service reads its one-writer
+                // ownership fact from the arbiter through the registered
+                // Lazy<IBotGoalArbiter> — a phase transition is deferred while
+                // an elected activity owns the bot's route.
                 services.AddSingleton<BotScheduleService>();
 
                 services.AddSingleton<PublicFarmManager>();
@@ -647,6 +729,11 @@ public static class Program
                 services.AddSingleton(sp => new Lazy<ICharacterManager>(sp.GetRequiredService<ICharacterManager>));
                 // HousingManager ↔ MailManager circular dep: MailManager takes Lazy<IHousingManager>.
                 services.AddSingleton(sp => new Lazy<IHousingManager>(sp.GetRequiredService<IHousingManager>));
+                // BotScheduleService → arbiter (plan T8 route ownership): the
+                // arbiter is built FROM the activity modules, one of which takes
+                // the service, so the service reads it through this wrapper
+                // instead of a construction-time edge.
+                services.AddSingleton(sp => new Lazy<IBotGoalArbiter>(sp.GetRequiredService<IBotGoalArbiter>));
 
                 // -- Orchestrator --
                 // Expose the ServiceCollection itself so ManagerOrchestrator can inspect registrations.

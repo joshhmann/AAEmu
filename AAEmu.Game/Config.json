@@ -33,5 +33,9 @@
     "HeightMapsEnable": true,
     "DebugInfo": true,
     "DebugInfoLevel": 100,
-	"DefaultLanguage" : "en_us"
+	"DefaultLanguage" : "en_us",
+    "Bots": {
+        "EnableStartupArming": false,
+        "StartupBotCount": 2
+    }
 }

@@ -4,6 +4,7 @@ using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Core.Network.Game;
 using AAEmu.Game.Core.Packets.G2C;
 using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Units;
 using NLog;
 
@@ -121,9 +122,35 @@ public class GameObject : IGameObject
 
     public virtual void Delete()
     {
-        Hide();
-        Transform?.DetachAll();
-        ParentWorld.RemoveObject(this);
+        var stage = "Hide";
+        try
+        {
+            Hide();
+            stage = "DetachAll";
+            Transform?.DetachAll();
+            stage = "RemoveObject";
+            ParentWorld.RemoveObject(this);
+        }
+        catch (NullReferenceException exception)
+        {
+            var doodad = this as Doodad;
+            var transform = Transform;
+            var world = ParentWorld;
+            var region = Region;
+            var spawner = doodad?.Spawner;
+            Logger.Error(exception,
+                "GameObject.Delete failed at {Stage}: type={ObjectType}, objId={ObjId}, templateId={TemplateId}, dbId={DbId}, " +
+                "worldId={WorldId}, regionId={RegionId}, zoneKey={ZoneKey}, transformInstanceId={TransformInstanceId}, transformWorldId={TransformWorldId}, " +
+                "parentObjId={ParentObjId}, transformParentObjId={TransformParentObjId}, stickyParentObjId={StickyParentObjId}, childCount={ChildCount}, " +
+                "spawnerIndex={SpawnerIndex}, spawnerId={SpawnerId}, spawnerWorldId={SpawnerWorldId}, spawnerLastObjId={SpawnerLastObjId}, spawnedCount={SpawnedCount}, " +
+                "ownerType={OwnerType}, ownerId={OwnerId}",
+                stage, GetType().FullName, ObjId, (this as BaseUnit)?.TemplateId, doodad?.DbId,
+                world?.Id, region?.Id, region?.ZoneKey, transform?.InstanceId, transform?.WorldId,
+                ParentObj?.ObjId, transform?.Parent?.GameObject?.ObjId, transform?.StickyParent?.GameObject?.ObjId, transform?.Children?.Count,
+                spawner?.Id, spawner?.SpawnerId, spawner?.ParentWorld?.Id, spawner?.Last?.ObjId, spawner?._spawned?.Count,
+                doodad?.OwnerType, doodad?.OwnerId);
+            throw;
+        }
     }
 
     public virtual void Show()

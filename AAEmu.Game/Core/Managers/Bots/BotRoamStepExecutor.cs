@@ -15,6 +15,7 @@ using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.DoodadObj;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
 using AAEmu.Game.Models.Game.Faction;
 using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Models;
@@ -26,6 +27,7 @@ using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units.Movements;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.StaticValues;
@@ -351,6 +353,26 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <summary>Movement-owner tag of quest-travel route legs (armed by ArmQuestTravel).</summary>
     public const string QuestTravelMoveOwner = "QUEST_TRAVEL";
 
+    /// <summary>Movement-owner tag of operator-assignment route legs (armed by ArmAssignedTravelRoute).</summary>
+    public const string AssignedTravelMoveOwner = "ASSIGNED_TRAVEL";
+
+    /// <summary>
+    /// Detail the route layer's own arrival halt carries (phase 3a issues
+    /// <c>Stop()</c> once the bot is inside the route's arrival radius). An
+    /// assigned leg interrupted with THIS detail reached the destination when
+    /// the position is inside the radius; outside it, the same detail means a
+    /// foreign <c>Stop()</c> (party assist-in-range) and suspends the leg.
+    /// </summary>
+    internal const string ArrivalHaltDetail = "stop requested";
+
+    /// <summary>
+    /// How close a terminal leg's destination must be to the assignment's own
+    /// destination to count as the FINAL chunk of a multi-waypoint assignment
+    /// route. Intermediate waypoints sit a whole chunk (tens of metres) away, so
+    /// this only tolerates the float round-trip of the same coordinate.
+    /// </summary>
+    internal const float AssignmentDestinationMatchMeters = 0.05f;
+
     /// <summary>Nearby NPC detection seam (null → WorldManager.GetAround&lt;Npc&gt;).</summary>
     public Func<Character, float, IEnumerable<Npc>>? NearbyNpcProvider { get; init; }
 
@@ -361,6 +383,14 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// Null (default) preserves today's behavior exactly.
     /// </summary>
     public Func<uint, string?>? ActiveActivityProvider { get; init; }
+
+    /// <summary>
+    /// Operator assignment registry (plan T1). The ONE store the assignment
+    /// route reads and reports into. Null — the default, and every existing
+    /// test rig — means the assigned-travel leg is inert: no assignment can
+    /// exist, so nothing about ordinary behavior changes.
+    /// </summary>
+    public IBotAssignmentRegistry? Assignments { get; init; }
 
     /// <summary>
     /// Quest-terminal feed (E-66 Gap 2): per completed quest the owning
@@ -385,6 +415,32 @@ public sealed class BotRoamStepExecutor : IBotStepExecutor
     /// <c>GetChosenQuest</c>; the executor never resolves DI.
     /// </summary>
     public Func<uint, uint>? QuestChosenProvider { get; set; }
+
+    /// <summary>
+    /// Leg-outcome return path (plan T4, audit L3-b): called ONCE per leg this
+    /// executor issued, on the first wake that sees the leg terminal — whether
+    /// the leg completed, failed (rejected/timed out) or was interrupted. The
+    /// leg is the executor's own <c>PendingLeg</c> slot, so this is the one
+    /// place every leg's fate is observable without touching each of the many
+    /// sites that clear that slot.
+    ///
+    /// Null (default) = no module enrolled: zero behavior change (one null
+    /// field read at the wake top). Production wires the arbiter's
+    /// <c>ReportLegOutcome</c>; the executor never resolves DI.
+    /// </summary>
+    public Action<BotLegOutcome>? LegOutcomeSink { get; set; }
+
+    /// <summary>
+    /// Retirement notification (plan T5, audit L1-f): called with the
+    /// character id when native retirement SUCCEEDS — the bot is leaving the
+    /// world and this owner is dropping its per-bot execution ownership.
+    /// Production wires the arbiter's <c>Forget</c>, so no election memory
+    /// outlives the bot and a re-enrolled bot is elected afresh instead of
+    /// being reported <c>Unchanged</c>. Null (default) = no module enrolled:
+    /// zero behavior change (one null field read at the retirement owner).
+    /// The executor never resolves DI.
+    /// </summary>
+    public Action<uint>? RetiredBotSink { get; set; }
 
     /// <summary>
     /// PvP attackability gate (default: the real CanAttack path). Test seam
@@ -486,7 +542,121 @@ public enum NeedsFarmLoopPhase
         public bool GenerationBound { get; set; }
         public required IGameplayActor Actor { get; init; }
         public BotPath? Path { get; set; }
-        public ActorRequest? PendingLeg { get; set; }
+
+        /// <summary>
+        /// The one leg slot this executor owns. Every assignment and every
+        /// clear reports the leg it drops through <see cref="LegEnded"/> — the
+        /// leg that was already reported from a wake top is skipped — so a leg
+        /// that is issued and then dropped inside a single wake (a rejected move
+        /// the route advances past) is still published, exactly once, and the
+        /// leg's owner is stamped where it is issued rather than one wake later.
+        /// </summary>
+        public ActorRequest? PendingLeg
+        {
+            get => _pendingLeg;
+            set
+            {
+                var outgoing = _pendingLeg;
+                var outgoingOwner = PendingLegOwner;
+                var outgoingReported = PendingLegReported;
+                _pendingLeg = value;
+
+                // A different leg in the slot has not been reported yet. The
+                // same leg re-assigned keeps the flag it already earned, so a
+                // leg reported at a wake top is never reported again when the
+                // wake body hands the slot the very same request.
+                if (!ReferenceEquals(outgoing, value))
+                    PendingLegReported = false;
+
+                // A leg is stamped with the activity that was in force when it
+                // was issued: LastElectedActivity is read at the top of the
+                // wake that issues the leg and is only overwritten after that
+                // wake's publish, so a handover performed by the issuing wake
+                // cannot leak into the stamp.
+                if (value is not null && value.TraceId != OwnerStampedLegTraceId)
+                {
+                    PendingLegOwner = LastElectedActivity;
+                    OwnerStampedLegTraceId = value.TraceId;
+                }
+
+                // The slot reports the leg it drops — unless that leg was
+                // already reported from the wake top.
+                if (outgoing is not null && !ReferenceEquals(outgoing, value) && !outgoingReported)
+                    LegEnded?.Invoke(this, outgoing, outgoingOwner);
+            }
+        }
+
+        private ActorRequest? _pendingLeg;
+
+        /// <summary>
+        /// T4 return path: called with a leg this slot dropped (replaced or
+        /// cleared) and the activity that was in force while that leg ran.
+        /// Attached once per state by the executor; null in states nobody
+        /// steps.
+        /// </summary>
+        public Action<BotRoamState, ActorRequest, string?>? LegEnded { get; set; }
+
+        /// <summary>
+        /// T4 return path: the pending leg as it stood at the top of the
+        /// previous wake. A leg that ended and was then replaced inside the
+        /// same wake never appears as <see cref="PendingLeg"/> again, so the
+        /// wake top reports this snapshot too — together the two slots cover
+        /// every leg without touching the sites that clear the live one.
+        /// </summary>
+        public ActorRequest? PreviousLeg { get; set; }
+
+        /// <summary>
+        /// T4 return path: the activity read at the top of the last wake. A leg
+        /// is issued in a wake's body, so this is the activity that was in force
+        /// while the leg ran — the stamp <see cref="PendingLeg"/>'s setter puts
+        /// on it.
+        /// </summary>
+        public string? LastElectedActivity { get; set; }
+
+        /// <summary>
+        /// T4 return path: the activity that was in force while
+        /// <see cref="PendingLeg"/> ran (null only while no activity provider
+        /// is wired, or when it answered null).
+        /// </summary>
+        public string? PendingLegOwner { get; set; }
+
+        /// <summary>T4 return path: the same stamp, kept for <see cref="PreviousLeg"/>.</summary>
+        public string? PreviousLegOwner { get; set; }
+
+        /// <summary>
+        /// T4 return path: the trace id of the leg <see cref="PendingLegOwner"/>
+        /// was captured for. A new leg takes a fresh stamp; the leg that was
+        /// already there keeps the one it was given.
+        /// </summary>
+        public Guid OwnerStampedLegTraceId { get; set; }
+
+        /// <summary>
+        /// T4 return path: whether <see cref="PendingLeg"/> has already been
+        /// reported. The flag belongs to the slot, not to a trace id, so a leg
+        /// stays reported no matter how many other legs end between its report
+        /// and the next time the slot offers it.
+        /// </summary>
+        public bool PendingLegReported { get; set; }
+
+        /// <summary>
+        /// T4 return path: whether <see cref="PreviousLeg"/> has already been
+        /// reported (it travels with the leg when the live slot becomes the
+        /// previous one).
+        /// </summary>
+        public bool PreviousLegReported { get; set; }
+
+        public bool RecoveryActive { get; set; }
+        public bool RecoveryOwnsSit { get; set; }
+        public ActorRequest? RecoveryRequest { get; set; }
+        public int RecoveryRequestHp { get; set; }
+        public int RecoveryLastHp { get; set; }
+        public int RecoveryLastMp { get; set; }
+        public DateTime RecoveryLastProgressUtc { get; set; }
+        public RecoveryStepResult? RecoveryResult { get; set; }
+        public string? RecoveryBlockedDetail { get; set; }
+        public int RecoveryBlockedFacts { get; set; }
+        public bool RecoveryBlockedVitalsRelevant { get; set; }
+        public bool RecoveryBlockedManaRelevant { get; set; }
         public DateTime LastBroadcastUtc { get; set; } = DateTime.MinValue;
         public long? LastBroadcastTicks { get; set; }
         public long? NextBroadcastTicks { get; set; }
@@ -582,6 +752,26 @@ public enum NeedsFarmLoopPhase
         /// armed. Telemetry only — never read by behavior.
         /// </summary>
         public string? PendingMoveOwner { get; set; }
+
+        /// <summary>
+        /// Operator-assignment observability: the assigned-travel leg this
+        /// executor owns (null = none). A private copy on purpose — the shared
+        /// <see cref="PendingLeg"/> article is consumed by the generic route
+        /// layer (phase 3b), so arrival and failure are judged from this
+        /// reference before that happens.
+        /// </summary>
+        public ActorRequest? AssignedLeg { get; set; }
+
+        /// <summary>True while this executor owns an armed operator-assignment route.</summary>
+        public bool AssignedTravelArmed { get; set; }
+
+        /// <summary>
+        /// Set when the operator-assignment leg ran work this wake — the flag
+        /// the hunt/butcher sites stand down on. The assignment preempts
+        /// ordinary acquisition; it never overrides party, PvP or survival
+        /// handling.
+        /// </summary>
+        public bool AssignedTravelActive { get; set; }
 
         /// <summary>
         /// Quest-decision observability (diagnostic): the last quest-leg
@@ -691,8 +881,14 @@ public enum NeedsFarmLoopPhase
         /// <summary>Timestamp until which the bot loiters after planting before moving again.</summary>
         public DateTime PlantingUntilUtc { get; set; } = DateTime.MinValue;
 
-        /// <summary>Timestamp until which the bot loiters after harvesting before moving again.</summary>
-        public DateTime HarvestingUntilUtc { get; set; } = DateTime.MinValue;
+        /// <summary>The exact farm harvest request whose native cast owns the wait.</summary>
+        public ActorRequest? NeedsFarmHarvestRequest { get; set; }
+        public string NeedsFarmHarvestNote { get; set; } = "";
+        public ActorRequest? NeedsFoodRequest { get; set; }
+        public BotDecisionProposal? NeedsFoodProposal { get; set; }
+        public string? NeedsFoodBlockedReason { get; set; }
+        public FoodFacts? NeedsFoodBlockedFacts { get; set; }
+        public (uint ObjId, Vector3 Position)? NeedsFoodApproachTarget { get; set; }
     }
 
     private readonly ConcurrentDictionary<uint, BotRoamState> _states = [];
@@ -882,6 +1078,8 @@ public enum NeedsFarmLoopPhase
     {
         if (!_states.TryGetValue(characterId, out var state))
             return;
+        ReleaseRecoveryState(state, reason);
+        state.RecoveryBlockedDetail = null;
         RetireQuestDiscovery(state, reason);
         if (_questRuntimes.TryGetValue(characterId, out var runtime)
             && _questRuntimeGenerations.TryGetValue(characterId, out var runtimeGen)
@@ -894,6 +1092,338 @@ public enum NeedsFarmLoopPhase
         }
     }
 
+    /// <summary>Releases only this executor's recovery request and sitting posture.</summary>
+    public void ReleaseRecovery(uint characterId, string reason)
+    {
+        if (_states.TryGetValue(characterId, out var state))
+            ReleaseRecoveryState(state, reason);
+    }
+
+    /// <summary>
+    /// Called only by the scheduler on its genuine execution boundary, under
+    /// the exact manager entry's Sync after admission closes. Never creates,
+    /// replaces or steps an actor; its terminal audit and ledger stay intact.
+    /// </summary>
+    internal bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason)
+    {
+        if (expectedOwner is null || !Monitor.IsEntered(expectedOwner.Sync)
+            || expectedOwner.Character.Id != expectedOwner.CharacterId
+            || expectedOwner.Generation != expectedGeneration
+            || expectedOwner.State != PlayerBotState.Deactivating)
+            return false;
+
+        ExecutionBoundary.AssertOnExecutionThread("bot native retirement");
+        var characterId = expectedOwner.CharacterId;
+        if (!_states.TryGetValue(characterId, out var state))
+        {
+            // The scheduler has checked the exact current manager claim.
+            // This dictionary is the executor's only actor ownership store;
+            // absence is no-work only if no orphan sidecar contradicts it.
+            var clear = !_questRuntimes.ContainsKey(characterId)
+                && !_questRuntimeGenerations.ContainsKey(characterId)
+                && !_homesteadRunners.ContainsKey(characterId)
+                && !_homesteadContexts.ContainsKey(characterId)
+                && !_homesteadGenerations.ContainsKey(characterId)
+                && !_lastStepUtc.ContainsKey(characterId);
+            if (clear)
+                RetiredBotSink?.Invoke(characterId);
+            return clear;
+        }
+        if (state.Generation != expectedGeneration
+            || !ReferenceEquals(state.Actor.Character, expectedOwner.Character)
+            || state.Actor is not GameplayActor actor)
+            return false;
+
+        _questRuntimes.TryGetValue(characterId, out var questRuntime);
+        if ((questRuntime != null || _questRuntimeGenerations.ContainsKey(characterId))
+            && (questRuntime == null
+                || !_questRuntimeGenerations.TryGetValue(characterId, out var questGeneration)
+                || questGeneration != expectedGeneration))
+            return false;
+        if ((_homesteadRunners.ContainsKey(characterId) || _homesteadContexts.ContainsKey(characterId)
+                || _homesteadGenerations.ContainsKey(characterId))
+            && (!_homesteadRunners.ContainsKey(characterId) || !_homesteadContexts.ContainsKey(characterId)
+                || !_homesteadGenerations.TryGetValue(characterId, out var homesteadGeneration)
+                || homesteadGeneration != expectedGeneration))
+            return false;
+
+        // A nonterminal cached pointer that is not this actor's current
+        // request is unknown ownership, not permission to discard evidence.
+        if (!IsKnownRetirementRequest(actor, state.PendingLeg)
+            || !IsKnownRetirementRequest(actor, state.RecoveryRequest)
+            || !IsKnownRetirementRequest(actor, state.NeedsFoodRequest)
+            || !IsKnownRetirementRequest(actor, state.NeedsFarmHarvestRequest)
+            || !IsKnownRetirementRequest(actor, questRuntime?.CurrentActorRequest))
+            return false;
+
+        // Use the native cancellation/observation chain: a committed item,
+        // craft or harvest remains Completed with its real costs and ledger.
+        if (actor.ActiveRequest is { IsTerminal: false } && !actor.PreemptCurrent(reason))
+            return false;
+        if (!actor.IsNativeWorkQuiescent)
+            return false;
+
+        var ownedSit = state.RecoveryOwnsSit;
+        ReleaseRecoveryState(state, reason);
+        if (ownedSit && expectedOwner.Character.Stance == UnitStance.Sit)
+            return false;
+        questRuntime?.Cancel(reason);
+
+        // Only now drop retired execution/route ownership. Retain the same
+        // Actor, terminal requests in its audit/ledger, and committed crops.
+        state.Path = null;
+        state.PendingLeg = null;
+        state.PendingMoveOwner = null;
+        // Retired execution ownership includes the operator-assignment route: a
+        // reused state that still said "armed" would arm a phantom route (no leg,
+        // no verdict) until the lazy expiry (code review 2026-10-16, note 1).
+        state.AssignedLeg = null;
+        state.AssignedTravelArmed = false;
+        state.WasMoving = false;
+        state.QuestDiscoveryActive = false;
+        state.QuestTravelTarget = null;
+        ClearQuestTravelPurpose(state);
+        state.NeedsFarmStashedRoute = null;
+        state.NeedsFarmSoilTarget = null;
+        state.NeedsFoodApproachTarget = null;
+        state.NeedsFarmHarvestRequest = null;
+        state.NeedsFoodRequest = null;
+        state.NeedsFoodProposal = null;
+        state.NeedsLegActive = false;
+        state.QuestLegActive = false;
+        state.HomesteadLegActive = false;
+        state.SurvivalWakeOwned = false;
+        var retired = actor.IsNativeWorkQuiescent;
+        if (retired)
+            RetiredBotSink?.Invoke(characterId);
+        return retired;
+    }
+
+    private static bool IsKnownRetirementRequest(GameplayActor actor, ActorRequest? request)
+        => request is null || request.IsTerminal || ReferenceEquals(actor.ActiveRequest, request);
+
+    /// <summary>Pure election read: a prior generation never vetoes a fresh activation.</summary>
+    public string? RecoveryBlockedReason(uint characterId, ulong generation)
+    {
+        if (!_states.TryGetValue(characterId, out var state) || state.Generation != generation
+            || state.RecoveryBlockedDetail == null)
+            return null;
+        var character = state.Actor.Character;
+        if (OutOfCombatRecoveryModule.IsRecoveryComplete(character))
+            return null;
+        return CaptureRecoveryFacts(character, state.RecoveryBlockedVitalsRelevant,
+            state.RecoveryBlockedManaRelevant) == state.RecoveryBlockedFacts
+            ? state.RecoveryBlockedDetail : null;
+    }
+
+    private static void ReleaseRecoveryState(BotRoamState state, string reason)
+    {
+        var held = state.RecoveryActive || state.RecoveryOwnsSit || state.RecoveryRequest != null;
+        if (state.RecoveryRequest is { IsTerminal: false } owned
+            && ReferenceEquals(state.Actor.ActiveRequest, owned))
+            state.Actor.PreemptCurrent(reason);
+        if (state.RecoveryOwnsSit)
+            OutOfCombatRecoveryModule.ExitSittingStance(state.Actor.Character);
+        state.RecoveryOwnsSit = false;
+        state.RecoveryRequest = null;
+        state.RecoveryActive = false;
+        state.RecoveryRequestHp = 0;
+        state.RecoveryLastHp = 0;
+        state.RecoveryLastMp = 0;
+        state.RecoveryLastProgressUtc = default;
+        if (held)
+            state.RecoveryResult = OutOfCombatRecoveryModule.IsRecoveryComplete(state.Actor.Character)
+                ? new(RecoveryStatus.Completed, RecoveryStage.None, "recovery.complete")
+                : new(RecoveryStatus.Interrupted, RecoveryStage.None, $"recovery.interrupted: {reason}");
+    }
+
+    private static int CaptureRecoveryFacts(Character character, bool includeVitals, bool includeMana)
+    {
+        var facts = new HashCode();
+        facts.Add(character.Level);
+        facts.Add(character.IsInBattle);
+        facts.Add(character.IsDead);
+        facts.Add(character.IsDrowning);
+        facts.Add(character.IsInPostCast);
+        facts.Add(character.HpRegen);
+        facts.Add(character.HealMul);
+        facts.Add(character.IsInPostCast ? character.PersistentMpRegen : character.MpRegen);
+        facts.Add(character.MaxHp);
+        facts.Add(character.MaxMp);
+        if (includeVitals)
+            facts.Add(character.Hp);
+        if (includeVitals || includeMana)
+            facts.Add(character.Mp);
+        facts.Add(OutOfCombatRecoveryModule.HasActiveHealthRecoveryBuff(character));
+        var bag = character.Inventory?.Bag;
+        if (bag != null)
+        {
+            foreach (var item in bag.GetItemsSnapshot())
+            {
+                if (item.Template?.UseSkillId is not > 0)
+                    continue;
+                facts.Add(item.TemplateId);
+                facts.Add(item.Count);
+                facts.Add(item.Template.UseSkillId);
+                facts.Add(item.Template.LevelRequirement);
+                facts.Add(OutOfCombatRecoveryModule.IsProtectedRecoveryItem(character, item));
+                facts.Add(OutOfCombatRecoveryModule.TryGetHealthSupport(item, out var buffId));
+                facts.Add(buffId);
+                facts.Add(character.Cooldowns.Cooldowns.TryGetValue(item.Template.UseSkillId, out var end)
+                    && end - DateTime.UtcNow > TimeSpan.FromMilliseconds(250));
+            }
+        }
+        return facts.ToHashCode();
+    }
+
+    private void BlockRecovery(BotRoamState state, string detail, bool vitalsRelevant = false, bool manaRelevant = false)
+    {
+        ReleaseRecoveryState(state, detail);
+        state.RecoveryBlockedDetail = detail;
+        state.RecoveryBlockedVitalsRelevant = vitalsRelevant;
+        state.RecoveryBlockedManaRelevant = manaRelevant;
+        state.RecoveryBlockedFacts = CaptureRecoveryFacts(state.Actor.Character, vitalsRelevant, manaRelevant);
+        state.RecoveryResult = new(RecoveryStatus.Blocked, RecoveryStage.None, detail);
+    }
+
+    // This is a no-progress bound, not a regeneration rate or completion promise.
+    internal static readonly TimeSpan RecoveryNoProgressTimeout = TimeSpan.FromSeconds(30);
+
+    private void StepRecovery(PlayerBotRuntime bot, BotRoamState state, DateTime now)
+    {
+        var character = bot.Character;
+        var actor = state.Actor;
+        if (OutOfCombatRecoveryModule.IsRecoveryComplete(character))
+        {
+            ReleaseRecoveryState(state, "recovery complete");
+            state.RecoveryBlockedDetail = null;
+            state.RecoveryResult = new(RecoveryStatus.Completed, RecoveryStage.None, "recovery.complete");
+            return;
+        }
+        if (RecoveryBlockedReason(bot.CharacterId, bot.Generation) != null)
+            return;
+        state.RecoveryBlockedDetail = null;
+
+        if (actor.ActiveRequest is { IsTerminal: false } foreign
+            && !ReferenceEquals(foreign, state.RecoveryRequest))
+        {
+            if (state.RecoveryOwnsSit)
+                OutOfCombatRecoveryModule.ExitSittingStance(character);
+            state.RecoveryOwnsSit = false;
+            state.RecoveryLastProgressUtc = now;
+            state.RecoveryResult = new(RecoveryStatus.Idle, RecoveryStage.None, "recovery.waiting-safe-boundary");
+            return;
+        }
+        if (!state.RecoveryActive)
+        {
+            // The old quest execution is now at a legal boundary. Retain its
+            // chosen purpose in the module, but never resume a stale route/plan.
+            if (_questRuntimes.TryGetValue(bot.CharacterId, out var questRuntime)
+                && _questRuntimeGenerations.TryGetValue(bot.CharacterId, out var generation)
+                && generation == state.Generation)
+                questRuntime.Cancel("ordinary recovery owns safe boundary");
+            if (state.PendingMoveOwner == QuestTravelMoveOwner)
+                SupersedeQuestTravelRoute(state, "ordinary recovery owns safe boundary");
+            state.QuestDiscoveryActive = false;
+            state.RecoveryActive = true;
+            state.RecoveryLastHp = character.Hp;
+            state.RecoveryLastMp = character.Mp;
+            state.RecoveryLastProgressUtc = now;
+        }
+
+        if (character.Hp > state.RecoveryLastHp || character.Mp > state.RecoveryLastMp)
+            state.RecoveryLastProgressUtc = now;
+        state.RecoveryLastHp = character.Hp;
+        state.RecoveryLastMp = character.Mp;
+
+        if (state.RecoveryRequest is { } owned)
+        {
+            if (!owned.IsTerminal)
+            {
+                state.RecoveryResult = new(RecoveryStatus.Eating, RecoveryStage.FoodDrink, "recovery.item-pending", Request: owned);
+                return;
+            }
+            state.RecoveryRequest = null;
+            if (owned.State != ActorLifecycleState.Completed)
+            {
+                BlockRecovery(state, $"recovery.item-refused: {owned.State}: {owned.Detail}",
+                    manaRelevant: owned.Detail?.Contains("LackMana", StringComparison.Ordinal) == true);
+                return;
+            }
+            if (character.Hp <= state.RecoveryRequestHp
+                && !OutOfCombatRecoveryModule.HasActiveHealthRecoveryBuff(character))
+            {
+                BlockRecovery(state, "recovery.item-no-progress");
+                return;
+            }
+            // Consume this terminal once; no second item is dispatched this wake.
+            SitForRecovery(state);
+            state.RecoveryResult = new(RecoveryStatus.Resting, RecoveryStage.RestSit, "recovery.item-effect-observed");
+            return;
+        }
+
+        var activeHealthBuff = OutOfCombatRecoveryModule.HasActiveHealthRecoveryBuff(character);
+        if (now - state.RecoveryLastProgressUtc >= RecoveryNoProgressTimeout)
+        {
+            BlockRecovery(state, "recovery.native-no-progress", vitalsRelevant: true);
+            return;
+        }
+        var item = activeHealthBuff ? null : OutOfCombatRecoveryModule.SelectHealthConsumable(character);
+        if (item != null)
+        {
+            if (state.RecoveryOwnsSit)
+                OutOfCombatRecoveryModule.ExitSittingStance(character);
+            state.RecoveryOwnsSit = false;
+            state.RecoveryRequestHp = character.Hp;
+            var result = OutOfCombatRecoveryModule.UseRecoveryItem(character, actor, item);
+            state.RecoveryResult = result;
+            if (result.Status == RecoveryStatus.Blocked)
+            {
+                BlockRecovery(state, result.Detail,
+                    manaRelevant: result.Request?.Detail?.Contains("LackMana", StringComparison.Ordinal) == true);
+                return;
+            }
+            if (result.Request is { IsTerminal: false })
+                state.RecoveryRequest = result.Request;
+            else
+                SitForRecovery(state);
+            return;
+        }
+
+        SitForRecovery(state);
+        var needsHp = character.Hp < character.MaxHp * OutOfCombatRecoveryModule.DefaultHpExitFraction;
+        var needsMp = character.Mp < character.MaxMp * OutOfCombatRecoveryModule.DefaultMpExitFraction;
+        if (character.IsDrowning || needsHp && character.HpRegen <= 0 && !activeHealthBuff
+            || needsMp && character.MpRegen <= 0 && character.PersistentMpRegen <= 0)
+        {
+            BlockRecovery(state, "recovery.unsupported-shortage", vitalsRelevant: true);
+            return;
+        }
+        state.RecoveryResult = new(RecoveryStatus.Resting, RecoveryStage.RestSit, "recovery.awaiting-native-progress");
+    }
+
+    private static void SitForRecovery(BotRoamState state)
+    {
+        var character = state.Actor.Character;
+        if (character.Stance == UnitStance.Sit)
+            return;
+        state.RecoveryOwnsSit = OutOfCombatRecoveryModule.EnterSittingStance(character);
+        if (state.RecoveryOwnsSit)
+            BroadcastStandstill(character);
+    }
+
+    private TimeSpan TickActor(PlayerBotRuntime bot, BotRoamState state, DateTime now)
+    {
+        var elapsed = _lastStepUtc.TryGetValue(bot.CharacterId, out var last) ? now - last : ActiveCadence;
+        _lastStepUtc[bot.CharacterId] = now;
+        if (elapsed > MaxStepElapsed)
+            elapsed = MaxStepElapsed;
+        state.Actor.Tick(elapsed);
+        SettleNeedsFarmHarvest(bot, state);
+        SettleNeedsFoodRequest(bot, state);
+        return elapsed;
+    }
+
     private static void RetireQuestDiscovery(BotRoamState state, string reason)
     {
         if (!state.QuestDiscoveryActive)
@@ -904,6 +1434,294 @@ public enum NeedsFarmLoopPhase
             state.Actor.PreemptCurrent(reason);
         SupersedeQuestTravelRoute(state, reason);
         state.QuestDiscoveryActive = false;
+    }
+
+    /// <summary>
+    /// Operator-assignment leg (plan T1): walks the destination of the live
+    /// assignment the registry holds for this bot, judges the leg from its
+    /// TERMINAL state and reports the outcome back into the registry. Returns
+    /// true when the assignment owns this wake (the hunt/butcher sites stand
+    /// down on it).
+    ///
+    /// The route is armed in place and issued by the ordinary route layer, so
+    /// there is still exactly ONE writer for the bot's route. It is released
+    /// the moment the assignment ends — completed, failed, expired, replaced
+    /// or superseded.
+    /// </summary>
+    private bool StepAssignedTravelLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
+    {
+        var registry = Assignments;
+        if (registry == null || !registry.TryGetLive(bot.CharacterId, out var assignment) || assignment == null)
+        {
+            // No live assignment: whatever route this executor still owns was
+            // superseded (completed, failed, expired or replaced) — release it
+            // and stand down so ordinary election resumes.
+            if (state.AssignedTravelArmed)
+                ReleaseAssignedRoute(state, "assignment no longer live");
+            return false;
+        }
+
+        // Remember the leg article before the generic route layer consumes it.
+        if (state.PendingLeg is { Action: ActorActionType.Move } live
+            && live.MoveOwner == AssignedTravelMoveOwner)
+            state.AssignedLeg = live;
+
+        // Death ends the assignment with a recorded reason (plan §3): the
+        // assignment band denies for a dead bot, so the recovery band holds
+        // this wake while this leg reports the failure.
+        if (bot.Character.IsDead || bot.Character.Hp <= 0)
+        {
+            FailAssignedTravel(state, registry, assignment, "the bot died or was incapacitated during the assignment");
+            return false;
+        }
+
+        if (state.AssignedTravelArmed && JudgeAssignedTravel(bot, state, registry, assignment))
+            return false;
+
+        // The operator replaced the instruction mid-walk: walk to the new
+        // destination instead of finishing the superseded one and reporting a
+        // failure the operator never asked for. The test is the route's FINAL
+        // waypoint — a chunked route's current waypoint is legitimately short of
+        // the destination, so comparing the cursor would re-arm on every wake.
+        if (state.AssignedTravelArmed
+            && state.Path is { IsFinished: false } superseded
+            && superseded.Waypoints.Count > 0
+            && Vector3.Distance(superseded.Waypoints[^1], new Vector3(assignment.X, assignment.Y, assignment.Z))
+                > superseded.ArrivalRadius)
+        {
+            ReleaseAssignedRoute(state, "assignment destination changed");
+            Logger.Info("Bot assignment destination changed: bot {CharacterId} re-armed to ({X:F0},{Y:F0},{Z:F0})",
+                bot.CharacterId, assignment.X, assignment.Y, assignment.Z);
+        }
+
+        if (!state.AssignedTravelArmed)
+            ArmAssignedTravelRoute(bot, actor, state, assignment);
+
+        return true;
+    }
+
+    /// <summary>
+    /// Ends a live assignment when the bot died on a wake a survival wake owned
+    /// (the ordinary assignment leg is skipped on those wakes, so this is the
+    /// only place the death verdict is read). Returns true when it ended one.
+    /// </summary>
+    private bool FailAssignedTravelOnDeath(PlayerBotRuntime bot, BotRoamState state)
+    {
+        if (Assignments is not { } registry
+            || !registry.TryGetLive(bot.CharacterId, out var assignment)
+            || assignment == null)
+            return false;
+        if (!bot.Character.IsDead && bot.Character.Hp > 0)
+            return false;
+
+        return FailAssignedTravel(state, registry, assignment, "the bot died or was incapacitated during the assignment");
+    }
+
+    /// <summary>
+    /// Judges the assignment's leg from its terminal state. Arrival needs the
+    /// leg's own arrival verdict AND the position inside the route's arrival
+    /// radius; a timeout or a rejection ends the assignment with the leg's own
+    /// detail (never a silent retry loop); a terminal leg that walked an
+    /// intermediate chunk of a multi-waypoint route advances the route instead
+    /// of ending anything; and a leg another owner ended is a suspension, not a
+    /// failure. Returns true when the assignment owns this wake.
+    /// </summary>
+    private bool JudgeAssignedTravel(PlayerBotRuntime bot, BotRoamState state, IBotAssignmentRegistry registry, BotAssignment assignment)
+    {
+        var destination = new Vector3(assignment.X, assignment.Y, assignment.Z);
+        var flat = MathUtil.CalculateDistance(bot.Character.Transform.World.Position, destination, false);
+        var arrivalRadius = state.Path?.ArrivalRadius ?? BotPath.ArrivalRadiusDefault;
+        var leg = state.AssignedLeg;
+
+        if (leg is { IsTerminal: true })
+        {
+            // A far destination is armed as a MULTI-WAYPOINT route (one leg per
+            // chunk, see ArmAssignedTravelRoute): a terminal leg that walked an
+            // INTERMEDIATE chunk is never a verdict about the assignment. The
+            // ordinary route advance (3b) normally consumes it in the same wake,
+            // but it stands down on a wake a survival leg, a work leg or a target
+            // owns — so the cursor is moved here with the same rules 3b uses: an
+            // arrival steps onto the next waypoint, an unreachable chunk is
+            // SKIPPED (a blocked chunk must not pin the walk), and a foreign
+            // interruption suspends instead of blaming the operator's instruction.
+            if (leg.Destination is { } legTarget
+                && Vector3.Distance(legTarget, destination) > AssignmentDestinationMatchMeters)
+            {
+                state.AssignedLeg = null;
+                if (state.Path is not { IsFinished: false } chunked)
+                    return false;
+
+                if (IsArrivedMoveLeg(leg))
+                    _ = chunked.Move(bot.Character.Transform.World.Position, flatArrival: true);
+                else if (leg.State == ActorLifecycleState.Interrupted)
+                    return SuspendAssignedTravel(state, registry, assignment, leg.Detail);
+                else
+                    chunked.SkipCurrentWaypoint();
+
+                if (!chunked.IsFinished)
+                {
+                    state.PendingLeg = IssueRouteMove(state.Actor, state, chunked.CurrentTarget);
+                    return true;
+                }
+
+                return flat <= arrivalRadius
+                    ? CompleteAssignedTravel(state, registry, assignment, $"arrived ({flat:F2}m from the destination)")
+                    : FailAssignedTravel(state, registry, assignment, $"the route finished {flat:F2}m short of the destination");
+            }
+
+            switch (leg.State)
+            {
+                case ActorLifecycleState.Rejected:
+                    return FailAssignedTravel(state, registry, assignment, $"the travel leg was rejected: {leg.Detail}");
+                case ActorLifecycleState.TimedOut:
+                    return FailAssignedTravel(state, registry, assignment, $"the travel leg timed out: {leg.Detail}");
+            }
+
+            if (flat <= arrivalRadius)
+                return CompleteAssignedTravel(state, registry, assignment, $"arrived ({flat:F2}m from the destination)");
+
+            // Terminal without arrival, outside the radius. The actor's own halt
+            // ("stop requested") is the route layer's arrival stop and only means
+            // arrival INSIDE the radius, so here somebody else ended the leg:
+            // party follow/assist, a survival flee retrack, a controller
+            // interrupt. The operator's instruction did not fail — party and PvP
+            // handling outrank the assignment for that wake (they run before this
+            // leg) — so the leg is suspended and the walk resumes (code review
+            // 2026-10-16, P1-2: this used to fail a live assignment with a reason
+            // blaming the wrong actor).
+            if (leg.State == ActorLifecycleState.Interrupted)
+                return SuspendAssignedTravel(state, registry, assignment, leg.Detail);
+
+            return FailAssignedTravel(state, registry, assignment, $"the travel leg ended {flat:F2}m short of the destination ({leg.State}: {leg.Detail})");
+        }
+
+        // The route layer consumed the leg before this wake (the arrival halt
+        // and the cursor advance land in the same wake): the finished route plus
+        // the position is then the honest verdict, and a route that finished
+        // short is a failure.
+        if (state.Path is { IsFinished: true })
+        {
+            return flat <= arrivalRadius
+                ? CompleteAssignedTravel(state, registry, assignment, $"arrived ({flat:F2}m from the destination)")
+                : FailAssignedTravel(state, registry, assignment, $"the route finished {flat:F2}m short of the destination");
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// The assignment's own leg was ended by another owner (party follow/assist,
+    /// a survival flee retrack, a controller interrupt) — a SUSPENSION, not a
+    /// verdict. Only the leg article is dropped: the armed route and its cursor
+    /// stay exactly where they are, so the ordinary route layer re-issues the leg
+    /// for the same waypoint as soon as the actor is free — the walk resumes
+    /// without preempting the work that outranked the assignment, and the
+    /// preempting owner never becomes the assignment's failure reason. The
+    /// record stays LIVE (the expiry still bounds it) and carries the
+    /// suspension, so the operator's read-back shows why the bot paused.
+    /// </summary>
+    private static bool SuspendAssignedTravel(BotRoamState state, IBotAssignmentRegistry registry, BotAssignment assignment, string detail)
+    {
+        state.AssignedLeg = null;
+        registry.MarkActive(assignment.CharacterId, $"the travel leg was interrupted ({detail}); resuming");
+        Logger.Info("Bot assignment leg suspended: bot {CharacterId} {Activity} — interrupted ({Detail}); the armed route resumes",
+            assignment.CharacterId, assignment.Activity, detail);
+        return false;
+    }
+
+    private bool CompleteAssignedTravel(BotRoamState state, IBotAssignmentRegistry registry, BotAssignment assignment, string reason)
+    {
+        registry.Complete(assignment.CharacterId, reason);
+        ReleaseAssignedRoute(state, reason);
+        Logger.Info("Bot assignment completed: bot {CharacterId} {Activity} — {Reason}", assignment.CharacterId, assignment.Activity, reason);
+        return true;
+    }
+
+    private bool FailAssignedTravel(BotRoamState state, IBotAssignmentRegistry registry, BotAssignment assignment, string reason)
+    {
+        registry.Fail(assignment.CharacterId, reason);
+        ReleaseAssignedRoute(state, reason);
+        Logger.Warn("Bot assignment failed: bot {CharacterId} {Activity} — {Reason}", assignment.CharacterId, assignment.Activity, reason);
+        return true;
+    }
+
+    /// <summary>
+    /// Arms the assignment's route and supersedes whatever the bot was doing: a
+    /// live foreign leg is preempted BY OWNER with a reason its audit row
+    /// carries (the orphan window the assignment path closes), then the route is
+    /// armed in place — the generic route layer issues the leg in this same
+    /// wake, so there is still exactly one writer for the bot's route.
+    /// </summary>
+    private void ArmAssignedTravelRoute(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state, BotAssignment assignment)
+    {
+        if (actor.ActiveRequest is { IsTerminal: false } live
+            && live.MoveOwner != AssignedTravelMoveOwner
+            && ReferenceEquals(actor.ActiveRequest, live))
+        {
+            var owner = live.MoveOwner ?? live.Action.ToString();
+            actor.PreemptCurrent($"operator assignment supersedes {owner}");
+            Logger.Info("Bot assignment for {CharacterId} preempted a live {Action} leg owned by {Owner}",
+                bot.CharacterId, live.Action, owner);
+        }
+
+        var destination = new Vector3(assignment.X, assignment.Y, assignment.Z);
+        // One leg can only honestly walk one navigation budget (RoamSpeed x
+        // RoamLegTimeout, cut by the chunk margin and capped by the stuck-recovery
+        // envelope), so a longer destination is armed as the SAME straight line
+        // subdivided into chunks — the quest-travel builder, byte-identical to the
+        // single-leg route when the destination is inside one chunk. Without this
+        // an operator assignment beyond ~75 m ended TimedOut on its first leg and
+        // the walk never happened (code review 2026-10-16, P1-1).
+        state.Path = QuestTravelRouteTo(bot.Character.Transform.World.Position, destination);
+        state.PendingLeg = null;
+        state.AssignedLeg = null;
+        // Staged AFTER the route is set: SetRoamRoute stamps "ROAM" and would
+        // otherwise leave the assignment leg untagged.
+        state.PendingMoveOwner = AssignedTravelMoveOwner;
+        state.AssignedTravelArmed = true;
+        // The bot is walking NOW: the operator's read-back must not keep reporting
+        // "Accepted — nothing has run yet" for the whole walk, which is what a
+        // re-issued instruction did when only the arbiter's election could mark it
+        // active (code review 2026-10-16, P3-3).
+        Assignments?.MarkActive(bot.CharacterId, "the assignment route is armed; the bot is walking");
+        Logger.Info("Bot assignment route armed: bot {CharacterId} {Activity} -> ({X:F0},{Y:F0},{Z:F0})",
+            bot.CharacterId, assignment.Activity, destination.X, destination.Y, destination.Z);
+    }
+
+    /// <summary>
+    /// Releases the operator-assignment route this executor owns: preempts the
+    /// live assigned leg BY OWNER (never a foreign leg), then clears the route,
+    /// the leg article and the owner tag. Idempotent; a route it does not own
+    /// is untouched.
+    /// </summary>
+    private static void ReleaseAssignedRoute(BotRoamState state, string reason)
+    {
+        if (state.PendingMoveOwner == AssignedTravelMoveOwner
+            && state.PendingLeg is { IsTerminal: false, Action: ActorActionType.Move } pending
+            && pending.MoveOwner == AssignedTravelMoveOwner
+            && ReferenceEquals(state.Actor.ActiveRequest, pending))
+            state.Actor.PreemptCurrent(reason);
+
+        if (state.Path == null && state.AssignedLeg == null && !state.AssignedTravelArmed)
+            return;
+
+        state.Path = null;
+        state.PendingLeg = null;
+        state.AssignedLeg = null;
+        state.AssignedTravelArmed = false;
+        if (state.PendingMoveOwner == AssignedTravelMoveOwner)
+            state.PendingMoveOwner = null;
+    }
+
+    /// <summary>
+    /// Releases the operator-assignment route this executor owns for a bot —
+    /// the retirement seam the assignment module calls when its activity is
+    /// superseded. Never touches a route this executor does not own.
+    /// </summary>
+    public void ReleaseAssignedTravel(uint characterId, string reason)
+    {
+        if (_states.TryGetValue(characterId, out var state))
+            ReleaseAssignedRoute(state, reason);
     }
 
     /// <summary>
@@ -1045,6 +1863,210 @@ public enum NeedsFarmLoopPhase
         }
     }
 
+    private void FinalizeMovement(PlayerBotRuntime bot, BotRoamState state, DateTime now, TimeSpan elapsed)
+    {
+        var actor = state.Actor;
+        // 4a. Ground clamp — continuous slope-constrained following
+        var position = bot.Character.Transform.World.Position;
+        var clampedZ = GroundHeightProvider != null
+            ? GroundHeightProvider(position, bot.Character.Transform.ZoneId)
+            : (WorldManager.PeekInstance?.GetTerrainHeight(bot.Character.Transform.ZoneId, position.X, position.Y) is { } th && th != 0f
+                ? th
+                : WorldManager.PeekInstance?.GetReferenceHeight(
+                    null, position.X, position.Y, position.Z, bot.Character.Transform.ZoneId) ?? 0f);
+
+        if (clampedZ != 0f)
+        {
+            var dz = clampedZ - position.Z;
+            if (Math.Abs(dz) > 0.001f)
+            {
+                float targetZ;
+                if (Math.Abs(dz) > 3.0f)
+                {
+                    targetZ = clampedZ;
+                }
+                else
+                {
+                    var currentMoveSpeed = state.TargetNpcObjId != 0 || state.TargetButcherDoodadObjId != 0 ? HuntChaseSpeed : RoamSpeed;
+                    var maxDz = Math.Max(0.2f, (currentMoveSpeed * (float)elapsed.TotalSeconds) * 1.5f);
+                    targetZ = Math.Abs(dz) <= maxDz ? clampedZ : position.Z + Math.Sign(dz) * maxDz;
+                }
+
+                bot.Character.Transform.Local.SetPosition(position.X, position.Y, targetZ);
+                bot.Character.Transform.FinalizeTransform();
+                position = bot.Character.Transform.World.Position;
+                // Telemetry: out-of-request Z write — attribute it so the
+                // next attribution read names the clamp, not a stale leg.
+                if (actor is GameplayActor clampActor)
+                    clampActor.NoteExternalPositionWrite("OTHER:ground-clamp", position);
+            }
+        }
+
+        // 4b. Movement broadcast with monotonic fixed schedule and standstill packet on stop.
+        var currentTicks = TimeProvider.GetTimestamp();
+        var freq = TimeProvider.TimestampFrequency;
+        var effectiveBroadcastInterval = state.BroadcastIntervalOverride ?? BroadcastInterval;
+        var intervalTicks = freq > 0 ? (long)(effectiveBroadcastInterval.TotalSeconds * freq) : 0L;
+
+        if (state.NextBroadcastTicks is null)
+        {
+            state.NextBroadcastTicks = currentTicks;
+            state.LastBroadcastTicks = currentTicks;
+            state.LastBroadcastPosition = position;
+        }
+
+        if (currentTicks >= state.NextBroadcastTicks.Value)
+        {
+            var elapsedTicks = currentTicks - (state.LastBroadcastTicks ?? currentTicks);
+            var dtSeconds = freq > 0 ? (float)elapsedTicks / freq : (float)effectiveBroadcastInterval.TotalSeconds;
+            if (dtSeconds <= 0.001f)
+                dtSeconds = (float)effectiveBroadcastInterval.TotalSeconds;
+
+            if (state.LastBroadcastPosition is { } lastPos &&
+                Vector3.Distance(lastPos, position) > 0.005f)
+            {
+                state.WasMoving = true;
+                if (bot.Character.Region?.HasHumanObservers() == true)
+                {
+                    var currentSpeed = state.TargetNpcObjId != 0 || state.TargetButcherDoodadObjId != 0 ? HuntChaseSpeed : RoamSpeed;
+                    var targetDest = state.PendingLeg?.Destination ?? state.Path?.CurrentTarget ?? position;
+                    var moveType = BuildMoveType(bot.Character, position, targetDest, lastPos, dtSeconds, state, currentSpeed);
+                    bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
+
+                    if (state.TelemetryLogging)
+                    {
+                        Logger.Info("[BotTelemetry] {Bot} Pos=({X:F2},{Y:F2},{Z:F2}) Vel=({Vx},{Vy},{Vz}) Yaw={Yaw:F1} dt={Dt:F3}s",
+                            bot.Character.Name, position.X, position.Y, position.Z, moveType.VelX, moveType.VelY, moveType.VelZ, state.CurrentYawDegrees, dtSeconds);
+                    }
+                }
+            }
+            else if (state.WasMoving)
+            {
+                state.WasMoving = false;
+                if (bot.Character.Region?.HasHumanObservers() == true)
+                {
+                    var moveType = BuildStopMoveType(bot.Character, position);
+                    bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
+
+                    if (state.TelemetryLogging)
+                    {
+                        Logger.Info("[BotTelemetry] {Bot} STOP Pos=({X:F2},{Y:F2},{Z:F2})",
+                            bot.Character.Name, position.X, position.Y, position.Z);
+                    }
+                }
+            }
+
+            state.LastBroadcastTicks = currentTicks;
+            state.LastBroadcastPosition = position;
+            state.LastBroadcastUtc = now;
+
+            var nextTicks = state.NextBroadcastTicks.Value;
+            while (currentTicks >= nextTicks && intervalTicks > 0)
+            {
+                nextTicks += intervalTicks;
+            }
+            state.NextBroadcastTicks = nextTicks;
+        }
+    }
+
+    /// <summary>
+    /// T4 return path (plan §7, audit L3-b): reports the terminal outcome of the
+    /// legs this executor issued, at most once per leg, from the one place every
+    /// wake passes. Runs AFTER the generation rebinding, so a leg that died with
+    /// its activation is dropped with that activation's state instead of being
+    /// reported against the new one.
+    ///
+    /// Two slots are checked because a leg can be replaced inside the wake that
+    /// ended it: <see cref="BotRoamState.PreviousLeg"/> (the live slot as it
+    /// stood at the last wake top) catches that case, <see cref="BotRoamState.PendingLeg"/>
+    /// catches the leg that is still pending, and a leg that never reaches
+    /// either slot — issued and dropped inside one wake — is reported from the
+    /// slot's own setter (<see cref="OnLegEnded"/>). Each slot carries whether
+    /// its leg has already been reported (<see cref="BotRoamState.PendingLegReported"/> /
+    /// <see cref="BotRoamState.PreviousLegReported"/>, kept in step by
+    /// <see cref="MarkReported"/> when both slots hold the same leg), so a leg
+    /// that stays pending across wakes, a leg already reported at a wake top,
+    /// and a leg reported through the slot's setter are each reported exactly
+    /// once. Reports are ordered oldest first, so when two legs end in one wake
+    /// the newer one is the one the sink sees last.
+    ///
+    /// Each leg carries the activity that was in force while it ran
+    /// (<see cref="BotRoamState.PendingLegOwner"/> / <see cref="BotRoamState.PreviousLegOwner"/>),
+    /// so the fact says who owned the leg rather than who owns the bot now.
+    ///
+    /// Nothing is reported while no sink is wired (the default). A sink that is
+    /// enrolled later hears the first leg outcome that becomes available after
+    /// it — including a leg that was already in flight — because the executor
+    /// cannot know what the sink saw before it arrived.
+    /// </summary>
+    private void PublishEndedLegs(PlayerBotRuntime bot, BotRoamState state)
+    {
+        var sink = LegOutcomeSink;
+        if (sink != null)
+        {
+            var previous = state.PreviousLeg;
+            if (!state.PreviousLegReported && previous is not null
+                && ReportEndedLeg(sink, bot.CharacterId, previous, state.PreviousLegOwner))
+                MarkReported(state, previous);
+
+            var live = state.PendingLeg;
+            if (!state.PendingLegReported && live is not null
+                && ReportEndedLeg(sink, bot.CharacterId, live, state.PendingLegOwner))
+                MarkReported(state, live);
+        }
+
+        // Carry the slots AFTER reporting, so the flag a leg just earned travels
+        // with it into the previous slot.
+        state.PreviousLeg = state.PendingLeg;
+        state.PreviousLegOwner = state.PendingLegOwner;
+        state.PreviousLegReported = state.PendingLegReported;
+    }
+
+    /// <summary>
+    /// T4 return path: a leg this bot's state dropped. The slot reports the leg
+    /// it replaced or cleared, which is the only way a leg issued and dropped
+    /// inside one wake is ever seen. The slot already skipped the legs it had
+    /// reported, so this reports unconditionally.
+    /// </summary>
+    private void OnLegEnded(BotRoamState state, ActorRequest leg, string? owner)
+    {
+        if (LegOutcomeSink is not { } sink)
+            return;
+
+        if (ReportEndedLeg(sink, state.Actor.Character.Id, leg, owner))
+            MarkReported(state, leg);
+    }
+
+    /// <summary>
+    /// T4 return path: notes that a leg has been reported, in every slot that
+    /// still holds it. The wake top carries the live leg into the previous slot,
+    /// so the same leg can sit in both — a report through either path must stop
+    /// the other one.
+    /// </summary>
+    private static void MarkReported(BotRoamState state, ActorRequest leg)
+    {
+        if (ReferenceEquals(state.PendingLeg, leg))
+            state.PendingLegReported = true;
+
+        if (ReferenceEquals(state.PreviousLeg, leg))
+            state.PreviousLegReported = true;
+    }
+
+    /// <summary>
+    /// Reports ONE leg when it is terminal. A running leg is not a fact about
+    /// anything; whether the leg was reported before is tracked by the slot that
+    /// holds it. Returns true when the sink heard about this leg.
+    /// </summary>
+    private static bool ReportEndedLeg(Action<BotLegOutcome> sink, uint characterId, ActorRequest? leg, string? owner)
+    {
+        if (leg is not { IsTerminal: true })
+            return false;
+
+        sink(new BotLegOutcome(characterId, leg.Action, leg.State, leg.Detail ?? string.Empty,
+            leg.MoveOwner, leg.TraceId, owner));
+        return true;
+    }
+
     public Task<TimeSpan?> StepAsync(PlayerBotRuntime bot, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -1064,6 +2086,11 @@ public enum NeedsFarmLoopPhase
                 RetireQuestDiscovery(state, "discovery activation changed");
             if (state != null)
                 SupersedeQuestTravelRoute(state, "generation changed");
+            if (state != null)
+                ReleaseRecoveryState(state, "generation changed");
+            if (state?.NeedsFoodRequest is { IsTerminal: false } oldFood
+                && ReferenceEquals(state.Actor.ActiveRequest, oldFood))
+                state.Actor.PreemptCurrent("food generation changed");
             // Generation binding: stale caches from a prior activation are
             // evicted (actor + sidecar entries) and recreated bound to the
             // live generation. Fresh bots (gen 0 runtime, no state) just create.
@@ -1079,8 +2106,30 @@ public enum NeedsFarmLoopPhase
             _states[bot.CharacterId] = state;
         }
         var actor = state.Actor;
-        if (state.QuestDiscoveryActive
-            && ActiveActivityProvider?.Invoke(bot.CharacterId) != QuestBootstrapActivityModule.DiscoveryActivityName)
+        state.LegEnded ??= OnLegEnded;
+        PublishEndedLegs(bot, state);
+        var electedActivity = ActiveActivityProvider?.Invoke(bot.CharacterId);
+        // T4: the activity in force during THIS wake. Every leg issued below is
+        // stamped with it where it is issued, so the stamp says who owned the
+        // leg — not who owns the bot when the leg's outcome is finally read.
+        state.LastElectedActivity = electedActivity;
+        // The elected name resolves through the one dispatch surface (plan T9,
+        // audit L3-a): the gate that runs the work and the declaration of who
+        // carries it are the same list, so a name cannot be gated here without
+        // being declared there.
+        var recoveryElected = BotActivityDispatchSurface.Resolve(electedActivity) == BotActivityCarrier.Recovery;
+        // A live operator assignment keeps this bot waking through this wake AND
+        // the next one (the cadence decision at the tail reads this): the arrival
+        // verdict is read on the wake AFTER the route layer consumes the terminal
+        // leg, and the idle-wake gate is off by default — going dormant there
+        // would strand an assignment in Accepted forever. The extra wake after a
+        // verdict is what lets ordinary election (presence roam) re-arm the bot.
+        var assignmentLiveAtWakeStart = Assignments?.TryGetLive(bot.CharacterId, out _) == true;
+        if (state.RecoveryActive && (!recoveryElected || bot.Character.IsDead
+            || bot.Character.Hp <= 0 || bot.Character.IsInBattle))
+            ReleaseRecoveryState(state, "recovery superseded or unsafe");
+        if (state.QuestDiscoveryActive && !recoveryElected
+            && electedActivity != QuestBootstrapActivityModule.DiscoveryActivityName)
             RetireQuestDiscovery(state, "discovery activity superseded");
         ValidateQuestTravelAuthorization(bot, state);
 
@@ -1241,10 +2290,46 @@ public enum NeedsFarmLoopPhase
         var pvpEngaged = false;
         if (!handledByParty && !state.SurvivalWakeOwned
             && ActiveActivityProvider?.Invoke(bot.CharacterId) is string pvpActivity
-            && pvpActivity.StartsWith("conflict.", StringComparison.Ordinal))
+            && BotActivityDispatchSurface.Resolve(pvpActivity) == BotActivityCarrier.Conflict)
         {
             pvpEngaged = StepPvpEngagement(bot, actor, state, now);
         }
+
+        // 0d. Operator assignment leg (plan T1): a live assignment walks its
+        // destination through the ordinary route layer, with its own move-owner
+        // tag. Deliberately NOT gated on the elected activity name — the
+        // assignment module denies for a dead bot (so the recovery band holds
+        // that wake) and the assignment must still end with a recorded reason.
+        // Party and PvP handling always outrank the assignment; a survival wake
+        // outranks its route work but never its death verdict.
+        state.AssignedTravelActive = false;
+        if (!handledByParty && !pvpEngaged)
+        {
+            // A live survival wake (fleeing/eating) owns the wake, but death must
+            // still end the assignment: the assignment band denies for a dead bot,
+            // so no later election would ever finish the record.
+            state.AssignedTravelActive = state.SurvivalWakeOwned
+                ? FailAssignedTravelOnDeath(bot, state)
+                : StepAssignedTravelLeg(bot, actor, state);
+        }
+
+        // Recovery is continuous executor work, not gameplay during election.
+        // A foreign pending request retains its exact identity through its native
+        // terminal; no quest cancellation, hunting or route fallback runs here.
+        if (recoveryElected && !handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
+            && !bot.Character.IsDead && bot.Character.Hp > 0 && !bot.Character.IsInBattle)
+        {
+            StepRecovery(bot, state, now);
+            var recoveryElapsed = TickActor(bot, state, now);
+            FinalizeMovement(bot, state, now, recoveryElapsed);
+            if (JevShadow.Enabled)
+                JevShadow.ReleaseWakeIfUnemitted(actor.ActorId);
+            return Task.FromResult<TimeSpan?>(state.RecoveryBlockedDetail != null
+                ? IdleWakeInterval : ActiveCadence);
+        }
+        if (state.RecoveryActive)
+            ReleaseRecoveryState(state, "higher-priority safety owns wake");
+
         // 0b. Tier 0 needs-farm leg: while the arbiter holds a needs.*
         // activity, run one NeedsDecisionScenario leg per wake against the
         // bot's existing actor (GetOrCreateActor — the SAME actor the
@@ -1257,14 +2342,17 @@ public enum NeedsFarmLoopPhase
         // trade legs are never interrupted — the former advances through the
         // route layer, the latter ARE the landed work. Null provider
         // preserves today's behavior exactly.
-        state.NeedsLegActive = false;
+        state.NeedsLegActive = !handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
+            && state.NeedsFoodRequest is { IsTerminal: false } ownedFood
+            && ReferenceEquals(actor.ActiveRequest, ownedFood);
         if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
             && ActiveActivityProvider?.Invoke(bot.CharacterId) is string needsActivity
-            && needsActivity.StartsWith("needs.", StringComparison.Ordinal))
+            && BotActivityDispatchSurface.Resolve(needsActivity) == BotActivityCarrier.Needs)
         {
             if (actor.ActiveRequest is { IsTerminal: false } liveNeeds
                 && liveNeeds.Action == ActorActionType.Move
-                && state.NeedsFarmPhase != NeedsFarmLoopPhase.Traveling)
+                && state.NeedsFarmPhase != NeedsFarmLoopPhase.Traveling
+                && (!NeedsFarmOptions.ProduceHardBread || ReferenceEquals(state.PendingLeg, liveNeeds)))
             {
                 // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
                 LogQuestTravelHaltCaller(bot, state, "other", "needs-preempt");
@@ -1290,7 +2378,7 @@ public enum NeedsFarmLoopPhase
         if (CharacterQuests.DiagEnabled)
         {
             var gateActivity = ActiveActivityProvider?.Invoke(bot.CharacterId);
-            var gateQuestHeld = gateActivity != null && gateActivity.StartsWith("quest.", StringComparison.Ordinal);
+            var gateQuestHeld = gateActivity != null && BotActivityDispatchSurface.Resolve(gateActivity) == BotActivityCarrier.Quest;
             var gateActorBusy = actor.ActiveRequest is { IsTerminal: false };
             Logger.Warn($"[QuestRemove] REMOVER=report-walk-sched party={handledByParty} pvp={pvpEngaged} survivalOwned={state.SurvivalWakeOwned} activity={gateActivity ?? "<null>"} questHeld={gateQuestHeld} actorBusy={gateActorBusy} scheduled={!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned && gateQuestHeld && !gateActorBusy}");
             // TEMPORARY live-lane diagnostic (read-only witness, never branched on): busy-holder identity — which live request (action/owner/trace/dest/detail) holds the 0a actor-idle guard off this wake; actorBusy with no live holder is itself the finding.
@@ -1311,6 +2399,29 @@ public enum NeedsFarmLoopPhase
             && ownedGen == state.Generation
             && ownedRuntime.OwnsRunningRequest(liveBusy);
         var questActivity = ActiveActivityProvider?.Invoke(bot.CharacterId);
+        // Patrol pause for the quest decision tick (the 0b needs-preempt
+        // discipline, applied to the 0a owner). A presence ring never finishes,
+        // so its live Move holds the actor-idle guard off at EVERY wake and
+        // starves both the discovery arm and StepQuestLeg forever — the
+        // arbitration runs before the step, so the module sees that busy actor
+        // every time and its opportunity listing can never become
+        // authoritative. Scoped to the ROAM owner exactly (the same owner
+        // ArmQuestTravel already exempts): quest travel, the pursuit/return/
+        // approach legs and every other owner's pause/resume stay
+        // byte-identical.
+        if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
+            && questActivity != null
+            && BotActivityDispatchSurface.Resolve(questActivity) == BotActivityCarrier.Quest
+            && actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move } livePatrol
+            && string.Equals(livePatrol.MoveOwner, "ROAM", StringComparison.Ordinal))
+        {
+            // TEMPORARY live-lane diagnostic (read-only witness, never branched on).
+            LogQuestTravelHaltCaller(bot, state, "other", "quest-preempt");
+            _ = actor.Stop();
+            // The patrol article is retired with the leg: 3b must not advance
+            // or re-issue it once the quest route replaces the ring.
+            state.PendingLeg = null;
+        }
         if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
             && questActivity == QuestBootstrapActivityModule.DiscoveryActivityName)
         {
@@ -1327,7 +2438,7 @@ public enum NeedsFarmLoopPhase
         }
         else if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
             && questActivity != null
-            && questActivity.StartsWith("quest.", StringComparison.Ordinal)
+            && BotActivityDispatchSurface.Resolve(questActivity) == BotActivityCarrier.Quest
             && (actor.ActiveRequest is not { IsTerminal: false } || ownedBusy))
         {
             state.QuestLegActive = StepQuestLeg(bot, actor, state, questActivity);
@@ -1353,7 +2464,7 @@ public enum NeedsFarmLoopPhase
         state.HomesteadLegActive = false;
         if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
             && ActiveActivityProvider?.Invoke(bot.CharacterId) is string homeActivity
-            && homeActivity.StartsWith("homestead.", StringComparison.Ordinal)
+            && BotActivityDispatchSurface.Resolve(homeActivity) == BotActivityCarrier.Homestead
             && actor.ActiveRequest is not { IsTerminal: false })
         {
             state.HomesteadLegActive = StepHomesteadLeg(bot, actor, state);
@@ -1373,7 +2484,7 @@ public enum NeedsFarmLoopPhase
             && holdGen == state.Generation
             && holdRuntime.OwnsRunningRequest(liveHold);
         if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
-            && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeHunt
+            && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !state.AssignedTravelActive && !isFarmingActive && EnableWildlifeHunt
             && !questOwnedHold && !state.QuestDiscoveryActive)
         {
             if (state.TargetNpcObjId != 0)
@@ -1562,7 +2673,7 @@ public enum NeedsFarmLoopPhase
         // ActorRequest. Logging only on the terminal outcome (slice 1/3
         // idiom) — zero success-path change. Skipped while a work leg landed
         // or while actively farming (needs/quest/homestead preempt butcher acquisition/engagement).
-        if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !isFarmingActive && EnableWildlifeButcher
+        if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !state.AssignedTravelActive && !isFarmingActive && EnableWildlifeButcher
             && !questOwnedHold && !state.QuestDiscoveryActive)
         {
             if (state.TargetButcherDoodadObjId != 0)
@@ -1699,12 +2810,14 @@ public enum NeedsFarmLoopPhase
         // quest leg defers to the hold (QuestLegActive only covers landed).
         if (!handledByParty && !state.SurvivalWakeOwned && !state.NeedsLegActive && !state.QuestLegActive && !state.HomesteadLegActive && !questOwnedHold
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
-            && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false })
+            && state.TargetNpcObjId == 0 && state.TargetButcherDoodadObjId == 0 && actor.ActiveRequest is not { IsTerminal: false } && state.Path is { IsFinished: false }
+            && !IsUnreachableRouteLeg(state))
         {
             var target = state.Path.CurrentTarget;
             var leg = IssueRouteMove(actor, state, target);
             state.PendingLeg = leg;
-            if (leg.IsTerminal && leg.State != ActorLifecycleState.Completed)
+            if (leg.IsTerminal && leg.State != ActorLifecycleState.Completed
+                && !ReleaseFailedKnownFoodApproach(bot, state))
             {
                 Logger.Warn("Roam leg rejected for bot {CharacterId}: {State} ({Reason}) — advancing route",
                     bot.CharacterId, leg.State, leg.Detail);
@@ -1725,16 +2838,11 @@ public enum NeedsFarmLoopPhase
             }
         }
 
-        // 3. Tick the actor (advances the active leg through the Transform).
-        var elapsed = _lastStepUtc.TryGetValue(bot.CharacterId, out var last)
-            ? now - last
-            : ActiveCadence;
-        _lastStepUtc[bot.CharacterId] = now;
-        if (elapsed > MaxStepElapsed)
-            elapsed = MaxStepElapsed;
-
+        // 3. Tick the same generation-bound actor through its ordinary lifecycle.
         ValidateQuestTravelAuthorization(bot, state);
-        actor.Tick(elapsed);
+        var elapsed = TickActor(bot, state, now);
+        if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned)
+            ReleaseFailedKnownFoodApproach(bot, state);
 
         // Read the exact failed quest Move before route turnover consumes it.
         // Recovery relocates only after ordinary nudge/failure/retry, never credits arrival.
@@ -1781,7 +2889,8 @@ public enum NeedsFarmLoopPhase
             && state.NeedsFarmPhase != NeedsFarmLoopPhase.WaitingMaturity
             && state.TargetNpcObjId == 0
             && state.TargetButcherDoodadObjId == 0
-            && state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move }
+            && (IsArrivedMoveLeg(state.PendingLeg) || IsUnreachableRouteLeg(state))
+            && IsRouteLegForCurrentWaypoint(state)
             && state.Path is { IsFinished: false })
         {
             // TEMPORARY live-lane diagnostic (read-only witnesses, never branched on): pre-turnover cursor snapshot — Path.Move steps CurrentIndex and may set IsFinished; capture before.
@@ -1789,8 +2898,21 @@ public enum NeedsFarmLoopPhase
             var turnoverTarget = state.Path.CurrentTarget;
             var turnoverCount = state.Path.Waypoints.Count;
             var turnoverIndex = state.Path.CurrentIndex;
+            var unreachable = IsUnreachableRouteLeg(state);
+            if (unreachable)
+                Logger.Warn("Roam leg for bot {CharacterId} never reached waypoint {TargetX}/{TargetY}: {State} ({Detail}) — advancing past the unreachable point",
+                    bot.CharacterId, turnoverTarget.X, turnoverTarget.Y, turnoverArticle!.State, turnoverArticle.Detail);
             LogQuestTravelArticle(state, "route-advance", turnoverArticle);
-            _ = state.Path.Move(bot.Character.Transform.World.Position, flatArrival: true);
+            if (unreachable)
+            {
+                // The bot is still short of the waypoint by definition, so the
+                // position-gated Move below could not advance the cursor at all.
+                state.Path.SkipCurrentWaypoint();
+            }
+            else
+            {
+                _ = state.Path.Move(bot.Character.Transform.World.Position, flatArrival: true);
+            }
             var turnoverRemaining = turnoverCount - 1 - turnoverIndex;
             if (state.Path.IsFinished)
             {
@@ -1807,107 +2929,7 @@ public enum NeedsFarmLoopPhase
             }
         }
 
-        // 4a. Ground clamp — continuous slope-constrained following
-        var position = bot.Character.Transform.World.Position;
-        var clampedZ = GroundHeightProvider != null
-            ? GroundHeightProvider(position, bot.Character.Transform.ZoneId)
-            : (WorldManager.PeekInstance?.GetTerrainHeight(bot.Character.Transform.ZoneId, position.X, position.Y) is { } th && th != 0f
-                ? th
-                : WorldManager.PeekInstance?.GetReferenceHeight(
-                    null, position.X, position.Y, position.Z, bot.Character.Transform.ZoneId) ?? 0f);
-
-        if (clampedZ != 0f)
-        {
-            var dz = clampedZ - position.Z;
-            if (Math.Abs(dz) > 0.001f)
-            {
-                float targetZ;
-                if (Math.Abs(dz) > 3.0f)
-                {
-                    targetZ = clampedZ;
-                }
-                else
-                {
-                    var currentMoveSpeed = state.TargetNpcObjId != 0 || state.TargetButcherDoodadObjId != 0 ? HuntChaseSpeed : RoamSpeed;
-                    var maxDz = Math.Max(0.2f, (currentMoveSpeed * (float)elapsed.TotalSeconds) * 1.5f);
-                    targetZ = Math.Abs(dz) <= maxDz ? clampedZ : position.Z + Math.Sign(dz) * maxDz;
-                }
-
-                bot.Character.Transform.Local.SetPosition(position.X, position.Y, targetZ);
-                bot.Character.Transform.FinalizeTransform();
-                position = bot.Character.Transform.World.Position;
-                // Telemetry: out-of-request Z write — attribute it so the
-                // next attribution read names the clamp, not a stale leg.
-                if (actor is GameplayActor clampActor)
-                    clampActor.NoteExternalPositionWrite("OTHER:ground-clamp", position);
-            }
-        }
-
-        // 4b. Movement broadcast with monotonic fixed schedule and standstill packet on stop.
-        var currentTicks = TimeProvider.GetTimestamp();
-        var freq = TimeProvider.TimestampFrequency;
-        var effectiveBroadcastInterval = state.BroadcastIntervalOverride ?? BroadcastInterval;
-        var intervalTicks = freq > 0 ? (long)(effectiveBroadcastInterval.TotalSeconds * freq) : 0L;
-
-        if (state.NextBroadcastTicks is null)
-        {
-            state.NextBroadcastTicks = currentTicks;
-            state.LastBroadcastTicks = currentTicks;
-            state.LastBroadcastPosition = position;
-        }
-
-        if (currentTicks >= state.NextBroadcastTicks.Value)
-        {
-            var elapsedTicks = currentTicks - (state.LastBroadcastTicks ?? currentTicks);
-            var dtSeconds = freq > 0 ? (float)elapsedTicks / freq : (float)effectiveBroadcastInterval.TotalSeconds;
-            if (dtSeconds <= 0.001f)
-                dtSeconds = (float)effectiveBroadcastInterval.TotalSeconds;
-
-            if (state.LastBroadcastPosition is { } lastPos &&
-                Vector3.Distance(lastPos, position) > 0.005f)
-            {
-                state.WasMoving = true;
-                if (bot.Character.Region?.HasHumanObservers() == true)
-                {
-                    var currentSpeed = state.TargetNpcObjId != 0 || state.TargetButcherDoodadObjId != 0 ? HuntChaseSpeed : RoamSpeed;
-                    var targetDest = state.PendingLeg?.Destination ?? state.Path?.CurrentTarget ?? position;
-                    var moveType = BuildMoveType(bot.Character, position, targetDest, lastPos, dtSeconds, state, currentSpeed);
-                    bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
-
-                    if (state.TelemetryLogging)
-                    {
-                        Logger.Info("[BotTelemetry] {Bot} Pos=({X:F2},{Y:F2},{Z:F2}) Vel=({Vx},{Vy},{Vz}) Yaw={Yaw:F1} dt={Dt:F3}s",
-                            bot.Character.Name, position.X, position.Y, position.Z, moveType.VelX, moveType.VelY, moveType.VelZ, state.CurrentYawDegrees, dtSeconds);
-                    }
-                }
-            }
-            else if (state.WasMoving)
-            {
-                state.WasMoving = false;
-                if (bot.Character.Region?.HasHumanObservers() == true)
-                {
-                    var moveType = BuildStopMoveType(bot.Character, position);
-                    bot.Character.BroadcastPacket(new SCOneUnitMovementPacket(bot.Character.ObjId, moveType), true);
-
-                    if (state.TelemetryLogging)
-                    {
-                        Logger.Info("[BotTelemetry] {Bot} STOP Pos=({X:F2},{Y:F2},{Z:F2})",
-                            bot.Character.Name, position.X, position.Y, position.Z);
-                    }
-                }
-            }
-
-            state.LastBroadcastTicks = currentTicks;
-            state.LastBroadcastPosition = position;
-            state.LastBroadcastUtc = now;
-
-            var nextTicks = state.NextBroadcastTicks.Value;
-            while (currentTicks >= nextTicks && intervalTicks > 0)
-            {
-                nextTicks += intervalTicks;
-            }
-            state.NextBroadcastTicks = nextTicks;
-        }
+        FinalizeMovement(bot, state, now, elapsed);
 
         var live = actor.ActiveRequest is { IsTerminal: false };
         var routeActive = state.Path is { IsFinished: false };
@@ -1934,7 +2956,7 @@ public enum NeedsFarmLoopPhase
         // state.CadenceOverride is deliberately NOT honored here: it is a
         // per-bot present/broadcast-rate seam, and an idle wake must stay low
         // and bounded no matter what rate the bot was set to roam at.
-        if (live || routeActive || hunting || butchering)
+        if (live || routeActive || hunting || butchering || assignmentLiveAtWakeStart)
         {
             return state.CadenceOverride.HasValue
                 ? Task.FromResult<TimeSpan?>(effectiveCadence)
@@ -1964,6 +2986,8 @@ public enum NeedsFarmLoopPhase
     public const uint NeedsFarmSeedItemTemplateId = 15659;
     public const uint NeedsFarmFoodItemTemplateId = 7992;
     public const long NeedsFarmSeedUnitPrice = 25;
+
+    public NeedsFarmModuleOptions NeedsFarmOptions { get; init; } = new();
     /// <summary>
     /// Bounded perception radius for needs-farm discovery when no injectable
     /// provider is set (the hunt/butcher loop discipline: prefer the shared
@@ -2426,7 +3450,12 @@ public enum NeedsFarmLoopPhase
             return false;
 
         var character = bot.Character;
-        var target = ResolveQuestTravelTarget(actor, band);
+        var discoveryOnly = questActivity == QuestBootstrapActivityModule.DiscoveryActivityName;
+        // Discovery has no retained quest. Accepted but deferred work must
+        // not send this search back to its own failed objective or reporter.
+        var target = discoveryOnly
+            ? ResolveQuestOffererTarget(actor, band)
+            : ResolveQuestTravelTarget(actor, band);
         if (target == null)
         {
             state.QuestTravelReason = "no walkable quest target (nothing ready-unspawned, nothing in-band to discover)";
@@ -2467,7 +3496,7 @@ public enum NeedsFarmLoopPhase
         // object the spawn path materialises in place, so "3 arms and no kill"
         // genuinely does mean unreachable, and that is the behaviour this bound
         // was written for.
-        if (character.Quests != null
+        if (!discoveryOnly && character.Quests != null
             && ResolveQuestObjectiveSource(actor, band.ChosenQuestId, out var source, out var sourceTemplate, out var sourceIsPrey)
             && target.Value.Equals(source))
         {
@@ -2734,6 +3763,47 @@ public enum NeedsFarmLoopPhase
             && state.PendingLeg.Detail != "stop requested";
 
     /// <summary>
+    /// True when a terminal Move leg ended because the bot REACHED its waypoint:
+    /// the leg completed, or the route layer's own arrival halt interrupted it
+    /// ("stop requested" — the 3a flat-arrival Stop and the executor's own settle
+    /// Stops, all of which keep route authorization). A timeout, a rejection or a
+    /// foreign interruption is NOT an arrival, so the route cursor must never step
+    /// past a waypoint the bot never walked.
+    /// </summary>
+    internal static bool IsArrivedMoveLeg(ActorRequest? leg)
+        => leg is { IsTerminal: true, Action: ActorActionType.Move }
+            && (leg.State == ActorLifecycleState.Completed
+                || (leg.State == ActorLifecycleState.Interrupted && leg.Detail == "stop requested"));
+
+    /// <summary>
+    /// True when the pending leg is the ROUTE's own leg for the waypoint the
+    /// cursor is on. Several other dispatchers stage their legs on the same
+    /// <c>BotRoamState.PendingLeg</c> field (party follow, hunt chase, butcher
+    /// approach, survival flee), so the route cursor may only move for a leg
+    /// issued against the current waypoint: same destination, same owner.
+    /// </summary>
+    internal static bool IsRouteLegForCurrentWaypoint(BotRoamState state)
+        => state.Path is { IsFinished: false } path
+            && state.PendingLeg is { Action: ActorActionType.Move, Destination: { } destination, MoveOwner: { } owner }
+            && destination == path.CurrentTarget
+            && owner == (state.PendingMoveOwner ?? "ROAM");
+
+    /// <summary>
+    /// True when the ROUTE's own leg for the current waypoint ended without
+    /// reaching it — the actor's stuck window or the leg budget expired it
+    /// (TimedOut). The route cursor must step past such a waypoint: re-issuing
+    /// it forever pins the route, because the next wake would walk the same
+    /// unreachable point again (code review 2026-10-16, F1). A foreign
+    /// interruption is NOT this case — the preempting owner resumes the
+    /// waypoint — and neither is a quest-travel leg, whose stuck recovery needs
+    /// the waypoint to stay put until it relocates (HandleStuckQuestTravel).
+    /// </summary>
+    internal static bool IsUnreachableRouteLeg(BotRoamState state)
+        => state.PendingMoveOwner != QuestTravelMoveOwner
+            && state.PendingLeg is { IsTerminal: true, Action: ActorActionType.Move, State: ActorLifecycleState.TimedOut }
+            && IsRouteLegForCurrentWaypoint(state);
+
+    /// <summary>
     /// The world position the quest leg should walk toward: the spawner of a
     /// Ready quest's report NPC when that NPC is not spawned, otherwise the
     /// NEAREST of the active quest's uncredited gather/interact objective's
@@ -2885,27 +3955,9 @@ public enum NeedsFarmLoopPhase
         //    Fail-closed like TrySpawnerPosition: no spawner tables, no walk
         //    target — the bot idles instead of crashing the wake. The tail
         //    also still returns null when nothing in band is walkable.
-        var allSpawners = world.SpawnManager?.GetAllSpawners();
-        if (allSpawners == null)
-            return objectiveSource; // no spawner tables: arm 1b's source if any, else fail closed
         var here = character.Transform.World.Position;
-        var best = (Vector3?)null;
-        var bestDist = float.MaxValue;
-        foreach (var spawner in allSpawners.SelectMany(s => s.Value))
-        {
-            if (spawner.UnitId == 0)
-                continue;
-            if (!OffersWalkableQuest(actor, spawner.UnitId, band))
-                continue;
-            var p = spawner.Position;
-            var position = new Vector3(p.X, p.Y, p.Z);
-            var d = Vector3.Distance(here, position);
-            if (d < bestDist)
-            {
-                bestDist = d;
-                best = position;
-            }
-        }
+        var best = ResolveQuestOffererTarget(actor, band);
+        var bestDist = best.HasValue ? Vector3.Distance(here, best.Value) : float.MaxValue;
         // Arm 2 found nothing walkable. Keep arm 1b's source if it had one —
         // today's behaviour exactly — otherwise decline fail-closed, same
         // null and the same caller's reason string as before.
@@ -2940,6 +3992,38 @@ public enum NeedsFarmLoopPhase
         if (objectiveSource != null && Vector3.Distance(here, objectiveSource.Value) < bestDist)
             return objectiveSource; // the source is nearer than the offerer
         return best;                  // the offerer is nearer (or exactly equal is not)
+    }
+
+    /// <summary>Existing in-band giver search, shared with discovery travel.</summary>
+    private static Vector3? ResolveQuestOffererTarget(GameplayActor actor,
+        QuestDecisionScenario.QuestOptions band)
+    {
+        var character = actor.Character;
+        var world = character.ParentWorld;
+        if (world == null)
+            return null;
+        var allSpawners = world.SpawnManager?.GetAllSpawners();
+        if (allSpawners == null)
+            return null; // no spawner tables: availability is unknown
+        var here = character.Transform.World.Position;
+        var best = (Vector3?)null;
+        var bestDist = float.MaxValue;
+        foreach (var spawner in allSpawners.SelectMany(s => s.Value))
+        {
+            if (spawner.UnitId == 0)
+                continue;
+            if (!OffersWalkableQuest(actor, spawner.UnitId, band))
+                continue;
+            var p = spawner.Position;
+            var position = new Vector3(p.X, p.Y, p.Z);
+            var d = Vector3.Distance(here, position);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = position;
+            }
+        }
+        return best;
     }
 
     /// <summary>
@@ -3042,12 +4126,32 @@ public enum NeedsFarmLoopPhase
             QuestFixtureRow row;
             try
             {
-                row = QuestFixtureRow.FromQuestData(questId);
+                row = QuestDirector.PlanWake(BotObservedContext.Capture(actor), questId, character)
+                    .FirstOrDefault().Fixture ?? QuestFixtureRow.FromQuestData(questId);
             }
             catch
             {
                 continue;
             }
+            // Native hunts search their own source, never a later gather in
+            // the same quest. Observed legal prey belongs to the hunt legs.
+            if (row.HuntActId != 0)
+            {
+                if (QuestBehavior.HasKnownHuntSearch(character, row)
+                    && !QuestBehavior.HasPerceivedLivingPrey(actor, BotObservedContext.Capture(actor), row)
+                    && QuestBehavior.TryNearestHuntNpcSpawnerPosition(world, row, here,
+                        out var huntTemplate, out var huntPosition))
+                {
+                    source = huntPosition;
+                    sourceTemplate = huntTemplate;
+                    sourceIsPrey = true;
+                    return true;
+                }
+                continue;
+            }
+            if (quest.Template?.Score > 0 && QuestDirector.ObjectivesPermitAdvance(quest,
+                    QuestDirector.ReadObjectiveGroups(quest)))
+                continue;
             // The gather arm's answer for THIS row, held back when the row also
             // names a prey so the prey arm below gets its turn; read only when
             // that same row's prey arm declines. Scoped to the iteration, so one
@@ -3084,7 +4188,7 @@ public enum NeedsFarmLoopPhase
                     // no spawner (or whose prey is already perceived) still
                     // travels exactly where it did before. A PURE-doodad row
                     // derives PreyTemplate == 0, so it returns here unchanged.
-                    if (row.PreyTemplate == 0)
+                    if (row.GatherNpcSources.Count == 0)
                     {
                         source = gatherPos;
                         sourceTemplate = gatherTemplate;
@@ -3146,14 +4250,14 @@ public enum NeedsFarmLoopPhase
             //     gather act, a credited objective, no prey template, a Deliver
             //     shape, or a prey with no spawner all fall through to the same
             //     `false` as before.
-            if (row.GatherActId != 0 && row.PreyTemplate != 0
+            if (row.GatherActId != 0 && row.GatherNpcSources.Count != 0
                 && row.ObjectivePattern != AAEmu.Game.Models.Game.Quests.Director.QuestPattern.Deliver
                 && !QuestBehavior.GatherCredited(questId, quest, row)
-                && !QuestBehavior.HasPerceivedLivingPrey(actor, BotObservedContext.Capture(actor), row.PreyTemplate)
-                && QuestBehavior.TryNearestNpcPreySpawnerPosition(world, row.PreyTemplate, here) is { } preyPos)
+                && !QuestBehavior.HasPerceivedLivingPrey(actor, BotObservedContext.Capture(actor), row)
+                && QuestBehavior.TryNearestGatherNpcSpawnerPosition(world, row, here, out var preyTemplate, out var preyPos))
             {
                 source = preyPos;
-                sourceTemplate = row.PreyTemplate;
+                sourceTemplate = preyTemplate;
                 sourceIsPrey = true;
                 return true;
             }
@@ -3260,16 +4364,20 @@ public enum NeedsFarmLoopPhase
     /// </summary>
     private bool StepNeedsFarmLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
     {
+        state.NeedsLegActive = false;
         var character = bot.Character;
         var position = character.Transform.World.Position;
         var now = TimeProvider.GetUtcNow().UtcDateTime;
 
-        // Post-action standstill cadences (human-like pacing)
-        if (now < state.HarvestingUntilUtc)
-        {
-            BroadcastStandstill(character);
+        if (state.NeedsFarmHarvestRequest != null)
             return false;
+        if (state.NeedsFoodRequest != null)
+        {
+            state.NeedsLegActive = true;
+            return true;
         }
+        if (NeedsFarmOptions.ProduceHardBread && StepNeedsFoodLeg(bot, actor, state))
+            return state.NeedsLegActive;
 
         if (now < state.PlantingUntilUtc)
         {
@@ -3326,6 +4434,9 @@ public enum NeedsFarmLoopPhase
         var merchantObjId = merchantDist <= GameplayActor.MaxShopRange ? nearestMerchant?.ObjId ?? 0 : 0;
         if (SeedInBag(character) > 0)
         {
+            if (NeedsFarmOptions.ProduceHardBread
+                && NeedsFarmModuleOptions.HasProtectedIngredient(character, NeedsFarmOptions.SeedItemTemplateId))
+                return HoldNeedsFood(bot, state, "protected barley seed cannot be selected by the ordinary Plant path");
             var tooCloseToMerchant = nearestMerchant != null && merchantDist <= 5.0f;
             if (IsValidFarmSoil(character, position) && !tooCloseToMerchant)
             {
@@ -3707,7 +4818,7 @@ public enum NeedsFarmLoopPhase
         BotRoamState state, Vector3 position, Npc? nearestMerchant, bool soilSearch, bool cropArm)
         => new(
             SelfPosition: position,
-            SeedItemTemplateId: NeedsFarmSeedItemTemplateId,
+            SeedItemTemplateId: NeedsFarmOptions.SeedItemTemplateId,
             SeedReadable: true,
             SeedCount: 0, // the planner reads the bag itself from the template id (Request.Bare's shape)
             CropEnRoute: false,
@@ -3836,19 +4947,14 @@ public enum NeedsFarmLoopPhase
                     $"plant dispatched ({result.Request?.State}){brainNote}");
                 break;
             case ActorActionType.Harvest when landed:
-                var harvested = state.NeedsFarmCropObjId;
-                state.NeedsFarmCropObjId = 0;
-                state.NeedsFarmCropTemplateId = 0;
-                var castSeconds = 4.0;
-                if (result.Request?.Payload is HarvestParams hp && hp.CastTimeMs > 0)
-                {
-                    castSeconds = hp.CastTimeMs / 1000.0;
-                }
-                state.HarvestingUntilUtc = TimeProvider.GetUtcNow().UtcDateTime.AddSeconds(castSeconds);
-                SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Replanting,
-                    $"harvested crop {harvested} — re-evaluating (seed+output → replant){brainNote}");
+                CompleteNeedsFarmHarvest(state, bot, result.Request!, brainNote);
                 break;
             case ActorActionType.Harvest:
+                if (result.Request is { IsTerminal: false } pendingHarvest)
+                {
+                    state.NeedsFarmHarvestRequest = pendingHarvest;
+                    state.NeedsFarmHarvestNote = brainNote;
+                }
                 SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Harvesting,
                     $"harvest dispatched ({result.Request?.State}){brainNote}");
                 break;
@@ -3871,11 +4977,300 @@ public enum NeedsFarmLoopPhase
         return landed;
     }
 
+    private void SettleNeedsFarmHarvest(PlayerBotRuntime bot, BotRoamState state)
+    {
+        if (state.NeedsFarmHarvestRequest is not { IsTerminal: true } harvest)
+            return;
+        state.NeedsFarmHarvestRequest = null;
+        var note = state.NeedsFarmHarvestNote;
+        state.NeedsFarmHarvestNote = "";
+        // Settlement is observation only. Updated needs/safety can withdraw
+        // farm admission without retaining a completed request indefinitely.
+        if (harvest.State == ActorLifecycleState.Completed)
+            CompleteNeedsFarmHarvest(state, bot, harvest, note);
+        else
+            SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle,
+                $"harvest {harvest.State}: {harvest.Detail} — re-evaluating{note}");
+    }
+
+    private void CompleteNeedsFarmHarvest(BotRoamState state, PlayerBotRuntime bot, ActorRequest request, string brainNote)
+    {
+        state.NeedsFarmCropObjId = 0;
+        state.NeedsFarmCropTemplateId = 0;
+        SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Replanting,
+            $"harvested crop {request.TargetId} — re-evaluating (seed+output → replant){brainNote}");
+    }
+
+    private bool StepNeedsFoodLeg(PlayerBotRuntime bot, IGameplayActor actor, BotRoamState state)
+    {
+        var character = bot.Character;
+        if (NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmModuleOptions.HardBreadItemId, true) >= NeedsFarmOptions.FoodTarget)
+        {
+            state.NeedsFoodBlockedReason = null;
+            return true;
+        }
+        var processed = NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmModuleOptions.ProcessedGrainItemId);
+        var raw = NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmModuleOptions.BarleyItemId);
+        if (NeedsFarmModuleOptions.HasProtectedIngredient(character, NeedsFarmModuleOptions.ProcessedGrainItemId))
+            return HoldNeedsFood(bot, state, "processed grain is protected");
+        if (processed < 4 && (NeedsFarmModuleOptions.HasProtectedIngredient(character, NeedsFarmModuleOptions.BarleyItemId)
+            || NeedsFarmModuleOptions.HasProtectedIngredient(character, NeedsFarmModuleOptions.ProcessingKnifeItemId)))
+            return HoldNeedsFood(bot, state, "processing ingredients are protected");
+        if (FoodBlockedReason(bot) is { } blocked)
+            return HoldNeedsFood(bot, state, blocked);
+        state.NeedsFoodBlockedFacts = null;
+        if (processed < 4 && raw < 10)
+            return false;
+        if (actor is not GameplayActor concrete)
+            return true;
+
+        var position = character.Transform.World.Position;
+        uint merchantObjId = 0, benchObjId = 0;
+        if (processed >= 4)
+        {
+            Doodad? bench = null;
+            var distance = float.MaxValue;
+            foreach (var candidate in (NearbyDoodadProvider ?? DefaultNearbyDoodads)(character, NeedsFarmPerceptionRadius))
+            {
+                if (candidate.TemplateId != NeedsFarmModuleOptions.CookingDoodadId
+                    || candidate.Despawn > DateTime.MinValue || candidate.FuncPermission != DoodadFuncPermission.Any)
+                    continue;
+                var d = MathUtil.CalculateDistance(position, candidate.Transform.World.Position, true);
+                if (d < distance)
+                {
+                    distance = d;
+                    bench = candidate;
+                }
+            }
+            if (bench == null)
+                return HoldNeedsFood(bot, state, "no observed public cooking bench");
+            if (distance > GameplayActor.MaxInteractRange)
+                return ApproachNeedsFood(bot, state, bench.ObjId, bench.Transform.World.Position, $"cooking bench {bench.ObjId}");
+            benchObjId = bench.ObjId;
+        }
+        else
+        {
+            if (NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmModuleOptions.ProcessingKnifeItemId) == 0)
+            {
+                var (merchant, distance) = ResolveNearestSeedMerchant(character, position, NeedsFarmModuleOptions.ProcessingKnifeItemId);
+                if (merchant == null)
+                {
+                    // A configured source is only a place to look. It never
+                    // supplies a live object ID, stock or permission to buy.
+                    Vector3 source;
+                    if (state.NeedsFoodApproachTarget is { ObjId: 0 } known)
+                        source = known.Position;
+                    else if (character.ParentWorld?.SpawnManager == null
+                        || !character.ParentWorld.SpawnManager.TryNearestMerchantSourcePosition(
+                            NeedsFarmModuleOptions.ProcessingKnifeItemId, position,
+                            NeedsFarmSoilDiscoveryRadius, out source))
+                        return HoldNeedsFood(bot, state, "no observed processing-knife merchant");
+                    if (MathUtil.CalculateDistance(position, source, true) <= GameplayActor.ArrivalRadius)
+                    {
+                        state.NeedsFoodApproachTarget = (0, source);
+                        state.NeedsFarmSoilAttempts = NeedsFarmMaxSoilAttempts;
+                        return HoldNeedsFood(bot, state, "processing-knife merchant source reached without an observed seller");
+                    }
+                    return ApproachNeedsFood(bot, state, 0, source, "known processing-knife merchant source");
+                }
+                if (distance > GameplayActor.MaxShopRange)
+                    return ApproachNeedsFood(bot, state, merchant.ObjId, merchant.Transform.World.Position, $"knife merchant {merchant.ObjId}");
+                merchantObjId = merchant.ObjId;
+            }
+        }
+        RestoreFarmRoute(state, bot, "food production in reach");
+        state.NeedsFarmSoilAttempts = 0;
+        var result = NeedsDecisionScenario.Run(concrete, new NeedsDecisionScenario.NeedsOptions
+        {
+            CycleId = $"needs-food-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}",
+            ProduceHardBread = true,
+            FoodItemTemplateId = NeedsFarmModuleOptions.HardBreadItemId,
+            Thresholds = new BotNeedsThresholds(FoodTarget: NeedsFarmOptions.FoodTarget, RestUrgency: 0),
+            MerchantNpcObjId = merchantObjId,
+            BuyItemTemplateId = NeedsFarmModuleOptions.ProcessingKnifeItemId,
+            BuyUnitPrice = 50,
+            CraftId = processed >= 4 ? NeedsFarmModuleOptions.HardBreadCraftId : 0,
+            CraftBenchObjId = benchObjId,
+            CraftMaterialItemId = NeedsFarmModuleOptions.ProcessedGrainItemId,
+            CraftMaterialAmount = 4,
+            CraftLaborCost = SkillManager.Instance.GetSkillTemplate(
+                CraftManager.Instance.GetCraftById(NeedsFarmModuleOptions.HardBreadCraftId)?.SkillId ?? 0) is { } craftSkill
+                ? Skill.GetLaborCost(craftSkill, character) : int.MaxValue
+        });
+        state.NeedsLegActive = true;
+        if (result.Request is { IsTerminal: false } pending)
+        {
+            state.NeedsFoodRequest = pending;
+            state.NeedsFoodProposal = result.SelectedProposal;
+        }
+        else if (result.Request?.State != ActorLifecycleState.Completed || !result.WorkSelected)
+        {
+            state.NeedsFoodBlockedFacts = CaptureFoodFacts(character);
+            HoldNeedsFood(bot, state, result.FailReason ?? result.Request?.Detail ?? "food production unavailable");
+        }
+        else
+            state.NeedsFoodBlockedReason = null;
+        return true;
+    }
+
+    private bool ApproachNeedsFood(PlayerBotRuntime bot, BotRoamState state, uint targetObjId, Vector3 target, string reason)
+    {
+        if (state.NeedsFoodApproachTarget != (targetObjId, target))
+        {
+            state.NeedsFoodApproachTarget = (targetObjId, target);
+            state.NeedsFarmSoilAttempts = 0;
+        }
+        if (state.NeedsFarmSoilTarget is { } previous && MathUtil.CalculateDistance(previous, target, false) <= GameplayActor.ArrivalRadius
+            && state.Path is { IsFinished: false })
+            return true;
+        if (state.NeedsFarmSoilAttempts >= NeedsFarmMaxSoilAttempts)
+            return HoldNeedsFood(bot, state, $"{reason} unreachable");
+        state.NeedsFarmSoilAttempts++;
+        ArmFarmRoute(state, bot, target, reason);
+        SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Traveling, reason);
+        return true;
+    }
+
+    private bool ReleaseFailedKnownFoodApproach(PlayerBotRuntime bot, BotRoamState state)
+    {
+        if (!NeedsFarmOptions.ProduceHardBread || state.NeedsFoodApproachTarget is not { ObjId: 0 }
+            || state.PendingMoveOwner != "OTHER:needs-farm-travel"
+            || state.PendingLeg is not { IsTerminal: true, Action: ActorActionType.Move, Failure: not null })
+            return false;
+        state.NeedsFarmSoilAttempts = NeedsFarmMaxSoilAttempts;
+        state.PendingLeg = null;
+        var (merchant, _) = ResolveNearestSeedMerchant(bot.Character,
+            bot.Character.Transform.World.Position, NeedsFarmModuleOptions.ProcessingKnifeItemId);
+        if (merchant != null)
+        {
+            // Retire the failed hint, not the already observed real seller.
+            // The next ordinary food plan owns its approach and Buy gates.
+            state.NeedsFoodBlockedReason = null;
+            state.NeedsFoodBlockedFacts = null;
+            state.NeedsLegActive = false;
+            if (state.NeedsFarmStashedRoute == null)
+                SetRoamRoute(bot.Character, null);
+            RestoreFarmRoute(state, bot, "failed merchant hint released to observed seller");
+            SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle, "observed knife merchant after hint failure");
+            return true;
+        }
+        HoldNeedsFood(bot, state, "known processing-knife merchant source navigation failed");
+        return true;
+    }
+
+    private bool HoldNeedsFood(PlayerBotRuntime bot, BotRoamState state, string reason)
+    {
+        state.NeedsFoodBlockedReason = reason;
+        state.NeedsFoodBlockedFacts = CaptureFoodFacts(bot.Character);
+        state.NeedsLegActive = false;
+        var foodRoute = state.NeedsFarmSoilTarget != null && state.PendingMoveOwner == "OTHER:needs-farm-travel";
+        if (foodRoute && state.PendingLeg is { IsTerminal: false } ownMove
+            && ReferenceEquals(state.Actor.ActiveRequest, ownMove))
+        {
+            state.Actor.PreemptCurrent("food production blocked: " + reason);
+            state.PendingLeg = null;
+        }
+        if (foodRoute && state.NeedsFarmStashedRoute == null)
+            SetRoamRoute(bot.Character, null);
+        RestoreFarmRoute(state, bot, "food production blocked — useful work released");
+        SetNeedsFarmPhase(state, bot, NeedsFarmLoopPhase.Idle, "blocked: " + reason + " — released");
+        return true;
+    }
+
+    internal readonly record struct FoodFacts(
+        long Money, int Labor, int Mana, int Seeds, int Raw, int Processed, int Knives, int Bread,
+        bool ProtectedSeed, bool ProtectedRaw, bool ProtectedProcessed, bool ProtectedKnife,
+        Vector3 Position, uint Bench, Vector3 BenchPosition, uint Merchant, Vector3 MerchantPosition,
+        uint ProcessSkill, uint CraftSkill, bool ProcessReady, bool CraftReady);
+
+    /// <summary>Election-only read; never creates an actor or changes blocked state.</summary>
+    public string? FoodBlockedReason(PlayerBotRuntime bot)
+    {
+        if (!NeedsFarmOptions.ProduceHardBread || !_states.TryGetValue(bot.CharacterId, out var state)
+            || state.Generation != bot.Generation || state.NeedsFoodBlockedReason == null
+            || state.NeedsFoodBlockedFacts is not { } blocked)
+            return null;
+        return blocked == CaptureFoodFacts(bot.Character) ? state.NeedsFoodBlockedReason : null;
+    }
+
+    private FoodFacts CaptureFoodFacts(Character character)
+    {
+        var position = character.Transform.World.Position;
+        var raw = NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmModuleOptions.BarleyItemId);
+        var processed = NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmModuleOptions.ProcessedGrainItemId);
+        var knives = NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmModuleOptions.ProcessingKnifeItemId);
+        Doodad? bench = null;
+        Npc? merchant = null;
+        if (processed >= 4)
+        {
+            var nearest = float.MaxValue;
+            foreach (var candidate in (NearbyDoodadProvider ?? DefaultNearbyDoodads)(character, NeedsFarmPerceptionRadius))
+            {
+                if (candidate == null || candidate.TemplateId != NeedsFarmModuleOptions.CookingDoodadId
+                    || candidate.Despawn > DateTime.MinValue || candidate.FuncPermission != DoodadFuncPermission.Any)
+                    continue;
+                var distance = MathUtil.CalculateDistance(position, candidate.Transform.World.Position, true);
+                if (distance >= nearest) continue;
+                nearest = distance;
+                bench = candidate;
+            }
+        }
+        else if (raw >= 10 && knives == 0)
+            merchant = ResolveNearestSeedMerchant(character, position, NeedsFarmModuleOptions.ProcessingKnifeItemId).Merchant;
+        var processSkill = processed < 4 && raw >= 10
+            ? ItemManager.Instance.GetTemplate(NeedsFarmModuleOptions.BarleyItemId)?.UseSkillId ?? 0 : 0;
+        var craftSkill = processed >= 4
+            ? CraftManager.Instance.GetCraftById(NeedsFarmModuleOptions.HardBreadCraftId)?.SkillId ?? 0 : 0;
+        var now = DateTime.UtcNow;
+        bool Ready(uint skill)
+        {
+            var template = skill != 0 ? SkillManager.Instance.GetSkillTemplate(skill) : null;
+            return template != null
+                && (!character.Cooldowns.Cooldowns.TryGetValue(skill, out var until) || until <= now)
+                && (template.IgnoreGlobalCooldown || !character.IsGlobalCooldownDone)
+                // These food-production skill IDs use the ordinary non-autoattack
+                // Skill.Use interval (150ms). This is an election fact, not a bypass.
+                && character.SkillLastUsed.AddMilliseconds(150) <= now;
+        }
+        return new FoodFacts(
+            knives == 0 && raw >= 10 && processed < 4 && merchant != null ? character.Money : 0,
+            bench != null || processed < 4 && raw >= 10 && knives > 0 ? character.LaborPower : 0,
+            bench != null || processed < 4 && raw >= 10 && knives > 0 ? character.Mp : 0,
+            processed < 4 && raw < 10 ? SeedInBag(character) : 0,
+            processed < 4 ? raw : 0, processed, processed < 4 ? knives : 0,
+            NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmModuleOptions.HardBreadItemId, true),
+            processed < 4 && raw < 10 && NeedsFarmModuleOptions.HasProtectedIngredient(character, NeedsFarmOptions.SeedItemTemplateId),
+            processed < 4 && NeedsFarmModuleOptions.HasProtectedIngredient(character, NeedsFarmModuleOptions.BarleyItemId),
+            NeedsFarmModuleOptions.HasProtectedIngredient(character, NeedsFarmModuleOptions.ProcessedGrainItemId),
+            processed < 4 && NeedsFarmModuleOptions.HasProtectedIngredient(character, NeedsFarmModuleOptions.ProcessingKnifeItemId),
+            processed < 4 && raw >= 10 && knives == 0 && merchant == null ? default : position,
+            bench?.ObjId ?? 0, bench?.Transform.World.Position ?? default,
+            merchant?.ObjId ?? 0, merchant?.Transform.World.Position ?? default,
+            processSkill, craftSkill, Ready(processSkill), Ready(craftSkill));
+    }
+
+    private void SettleNeedsFoodRequest(PlayerBotRuntime bot, BotRoamState state)
+    {
+        if (state.NeedsFoodRequest is not { IsTerminal: true } request)
+            return;
+        var proposal = state.NeedsFoodProposal;
+        state.NeedsFoodRequest = null;
+        state.NeedsFoodProposal = null;
+        if (request.State != ActorLifecycleState.Completed
+            || proposal?.ExpectedPostcondition.IsSatisfied(BotObservedContext.Capture(state.Actor)) == false)
+        {
+            state.NeedsFoodBlockedFacts = CaptureFoodFacts(bot.Character);
+            HoldNeedsFood(bot, state, $"food {request.State}: {request.Detail}");
+        }
+        else
+            state.NeedsFoodBlockedReason = null;
+    }
+
     /// <summary>
     /// Nearest seed merchant in perception radius, regardless of shop range.
     /// Returns the merchant NPC and distance, or null if none found in perception.
     /// </summary>
-    private (Npc? Merchant, float Distance) ResolveNearestSeedMerchant(Character character, Vector3 position)
+    private (Npc? Merchant, float Distance) ResolveNearestSeedMerchant(Character character, Vector3 position, uint itemTemplateId = 0)
     {
         var world = character.ParentWorld;
         if (world == null)
@@ -3888,9 +5283,9 @@ public enum NeedsFarmLoopPhase
             if (npc?.Template == null || !npc.Template.Merchant || npc.Template.MerchantPackId == 0)
                 continue;
             var pack = NpcManager.Instance.GetGoods(npc.Template.MerchantPackId);
-            if (pack == null || !pack.SellsItem(NeedsFarmSeedItemTemplateId))
+            if (pack == null || !pack.SellsItem(itemTemplateId != 0 ? itemTemplateId : NeedsFarmOptions.SeedItemTemplateId))
                 continue;
-            var d = MathUtil.CalculateDistance(position, npc.Transform.World.Position, false);
+            var d = MathUtil.CalculateDistance(position, npc.Transform.World.Position, NeedsFarmOptions.ProduceHardBread);
             if (d < bestDist)
             {
                 bestDist = d;
@@ -3925,6 +5320,8 @@ public enum NeedsFarmLoopPhase
                 continue;
             if (!IsNeedsFarmCrop(doodad, character))
                 continue;
+            if (NeedsFarmOptions.ProduceHardBread && doodad.TemplateId != 2252)
+                continue;
             var d = MathUtil.CalculateDistance(position, doodad.Transform.World.Position, false);
             if (d < bestDist)
             {
@@ -3935,8 +5332,16 @@ public enum NeedsFarmLoopPhase
         return best;
     }
 
-    private static int SeedInBag(Character character)
-        => character.Inventory?.GetItemsCount(SlotType.Inventory, NeedsFarmSeedItemTemplateId) ?? 0;
+    private int SeedInBag(Character character)
+    {
+        if (NeedsFarmOptions.ProduceHardBread)
+            return NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmOptions.SeedItemTemplateId);
+        var count = 0;
+        foreach (var item in character.Inventory.Bag.Items)
+            if (item != null && item.TemplateId == NeedsFarmSeedItemTemplateId)
+                count += item.Count;
+        return count;
+    }
 
     private Doodad? ResolveDoodad(Character character, uint doodadObjId)
         => DoodadResolver != null
@@ -3992,7 +5397,7 @@ public enum NeedsFarmLoopPhase
                 return null;
             }
         }
-        return NeedsSoil.Probe(character.ParentWorld, position, NeedsFarmSeedItemTemplateId);
+        return NeedsSoil.Probe(character.ParentWorld, position, NeedsFarmOptions.SeedItemTemplateId);
     }
 
     /// <summary>Valid plant soil for our seed: a readable probe that answered yes (an unreadable surface is never a yes).</summary>
@@ -4191,20 +5596,23 @@ public enum NeedsFarmLoopPhase
         {
             CycleId = $"needs-farm-{bot.CharacterId}-{TimeProvider.GetUtcNow().UtcTicks}",
             HarvestDoodadObjId = cropObjId,
-            PlantSeedItemTemplateId = offerPlant ? NeedsFarmSeedItemTemplateId : 0,
+            PlantSeedItemTemplateId = offerPlant ? NeedsFarmOptions.SeedItemTemplateId : 0,
             PlantPosition = plantPos,
             MerchantNpcObjId = merchantObjId,
-            BuyItemTemplateId = NeedsFarmSeedItemTemplateId,
+            BuyItemTemplateId = NeedsFarmOptions.SeedItemTemplateId,
             BuyCount = 1,
-            BuyUnitPrice = NeedsFarmSeedUnitPrice,
-            FoodItemTemplateId = NeedsFarmFoodItemTemplateId,
+            BuyUnitPrice = NeedsFarmOptions.SeedUnitPrice,
+            FoodItemTemplateId = NeedsFarmOptions.HarvestItemTemplateId,
+            Thresholds = NeedsFarmOptions.ProduceHardBread
+                ? new BotNeedsThresholds(FoodTarget: 10, RestUrgency: 0)
+                : new(),
             // Earn leg: the same in-range seed merchant is the sell target
             // (Sell needs ANY live merchant — no pack/range gate), and the
             // harvested food output is the sellable surplus. The seed itself
             // is excluded by the surplus-not-seed precondition, so the loop
             // can never liquidate the seed it needs to plant.
             SellMerchantNpcObjId = merchantObjId,
-            SellSurplusItemTemplateId = NeedsFarmFoodItemTemplateId
+            SellSurplusItemTemplateId = NeedsFarmOptions.ProduceHardBread ? 0 : NeedsFarmFoodItemTemplateId
         });
     }
 

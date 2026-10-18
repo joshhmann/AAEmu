@@ -56,6 +56,9 @@ public sealed class SchedulePhaseActivityModule : IBotActivityModule
     public string Name => "Schedules";
     public int Priority { get; } = 100;
 
+    /// <inheritdoc />
+    public IReadOnlyList<string> DeclaredActivities => [ActivityPrefix];
+
     public SchedulePhaseActivityModule(
         BotScheduleOptions options,
         IBotScheduleBehavior behavior,
@@ -89,6 +92,15 @@ public sealed class SchedulePhaseActivityModule : IBotActivityModule
 
         if (context.Bot.Character.IsInBattle)
             return BotActivityDecision.Deny("bot in battle");
+
+        // Plan T8 (audit L1-g): ONE writer per route. ActiveActivity is the
+        // arbiter's live single-active authority — the same fact the
+        // tick-driven BotScheduleService reads from the arbiter before it arms
+        // a route — so this path must not overwrite an elected work leg's route
+        // either. Idle and the schedule layer's own phases own no route, so a
+        // route-less bot still gets its phase applied here.
+        if (BotRouteOwnership.OwnsRoute(context.ActiveActivity))
+            return BotActivityDecision.Deny($"route owned by elected work ({context.ActiveActivity})");
 
         return BotActivityDecision.Allow(ActivityPrefix + ResolvePhase(context).ToString().ToLowerInvariant());
     }

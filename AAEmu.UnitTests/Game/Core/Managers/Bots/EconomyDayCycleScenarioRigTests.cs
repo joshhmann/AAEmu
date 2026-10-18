@@ -23,6 +23,7 @@ using AAEmu.Game.Models.Game.DoodadObj.Templates;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Skills.Effects;
+using AAEmu.Game.Models.Game.Skills.Effects.Enums;
 using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Trading;
 using AAEmu.Game.Models.Game.Units;
@@ -144,7 +145,9 @@ public class EconomyDayCycleScenarioRigTests
     }
 
     [Test]
-    public async Task EconomyDayCycle_TwoCycles_OnFixtureWorld_ReconcilesFullLedger()
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task EconomyDayCycle_TwoCycles_OnFixtureWorld_ReconcilesFullLedger(bool deferHarvestObservation)
     {
         SeedSurfaces();
         var (actor, session) = GameplayActorTestRig.CreateActor("m8ec-rig");
@@ -159,7 +162,7 @@ public class EconomyDayCycleScenarioRigTests
         GameplayActorTestRig.SpawnCraftBench(session, actor);
 
         var world = new FixtureCycleWorld(seedMerchantObjId, generalMerchantObjId);
-        var pump = new FixtureCyclePump(session, actor);
+        using var pump = new FixtureCyclePump(session, actor, deferHarvestObservation);
 
         var options = new EconomyDayCycleScenario.CycleOptions
         {
@@ -274,9 +277,10 @@ public class EconomyDayCycleScenarioRigTests
         };
 
         var sink = new EconomyDayCycleScenario.EconomyDayCycleLedger();
+        using var pump = new FixtureCyclePump(session, actor);
         var result = EconomyDayCycleScenario.Run(actor.Character,
             new FixtureCycleWorld(seedMerchantObjId, generalMerchantObjId),
-            new FixtureCyclePump(session, actor), options, sink);
+            pump, options, sink);
 
         await Assert.That(result.Passed).IsFalse();
         await Assert.That(result.FailStage).Contains("CRAFT");
@@ -331,9 +335,10 @@ public class EconomyDayCycleScenarioRigTests
         };
 
         var sink = new EconomyDayCycleScenario.EconomyDayCycleLedger();
+        using var pump = new FixtureCyclePump(session, actor);
         var result = EconomyDayCycleScenario.Run(actor.Character,
             new FixtureCycleWorld(seedMerchantObjId, generalMerchantObjId),
-            new FixtureCyclePump(session, actor), options, sink);
+            pump, options, sink);
         await Assert.That(result.Passed).IsTrue().Because(result.Evidence());
 
         // Baseline: every reconcile criterion passes.
@@ -469,7 +474,7 @@ public class EconomyDayCycleScenarioRigTests
             GameplayActorTestRig.SpawnCraftBench(session, actor);
 
             var world = new FixtureCycleWorld(seedMerchantObjId, generalMerchantObjId, goldTraderObjId);
-            var pump = new FixtureCyclePump(session, actor);
+            using var pump = new FixtureCyclePump(session, actor);
 
             var options = new EconomyDayCycleScenario.CycleOptions
             {
@@ -651,14 +656,20 @@ public class EconomyDayCycleScenarioRigTests
             {
                 Id = RigCraftSkillId,
                 ManaCost = 0,
-                CastingTime = 0,
+                CastingTime = 150, // Explicit shortened native fixture cast.
                 CooldownTime = 0,
                 MinRange = 0,
                 MaxRange = 100,
                 ConsumeLaborPower = RigCraftLaborCost,
                 ActabilityGroupId = 0,
                 TargetType = SkillTargetType.Doodad,
-                TargetSelection = SkillTargetSelection.Target
+                TargetSelection = SkillTargetSelection.Target,
+                Effects = [new SkillEffect
+                {
+                    Template = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart },
+                    Chance = 100, Friendly = true, NonFriendly = true, AlwaysHit = true,
+                    EndLevel = byte.MaxValue, ApplicationMethod = SkillEffectApplicationMethod.Target
+                }]
             };
         }
     }
@@ -702,14 +713,20 @@ public class EconomyDayCycleScenarioRigTests
             {
                 Id = RigPackCraftSkillId,
                 ManaCost = 0,
-                CastingTime = 0,
+                CastingTime = 150, // Explicit shortened native fixture cast.
                 CooldownTime = 0,
                 MinRange = 0,
                 MaxRange = 100,
                 ConsumeLaborPower = RigPackCraftLaborCost,
                 ActabilityGroupId = 0,
                 TargetType = SkillTargetType.Doodad,
-                TargetSelection = SkillTargetSelection.Target
+                TargetSelection = SkillTargetSelection.Target,
+                Effects = [new SkillEffect
+                {
+                    Template = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart },
+                    Chance = 100, Friendly = true, NonFriendly = true, AlwaysHit = true,
+                    EndLevel = byte.MaxValue, ApplicationMethod = SkillEffectApplicationMethod.Target
+                }]
             };
         }
     }
@@ -1069,50 +1086,34 @@ public class EconomyDayCycleScenarioRigTests
     }
 
     /// <summary>
-    /// Fixture pump: drives in-flight requests deterministically (no wall
-    /// clock) and applies the REAL CraftEffect once the engine queue is
-    /// active (the M3aM4 rig's Drive convention); crop maturity resolves
-    /// immediately because ProvisionCropAtBoundary materializes crops AT THE
-    /// MATURE PHASE (the accepted Harvest-rig convention, verbatim).
+    /// Fixture pump observes real scheduled skill callbacks on wall time.
+    /// Harvest/craft casts use explicit 150ms metadata, not canonical timings.
+    /// Crops are independent initially-mature fixtures; growth is not proved.
     /// </summary>
-    private sealed class FixtureCyclePump(HeadlessSession session, GameplayActor actor)
-        : EconomyDayCycleScenario.ICyclePump
+    private sealed class FixtureCyclePump(HeadlessSession session, GameplayActor actor, bool deferHarvestObservation = false)
+        : EconomyDayCycleScenario.ICyclePump, IDisposable
     {
-        private Guid? _craftStepTraceId;
+        private readonly GameplayActorUseItemPacketTests.NativeScheduler _scheduler = new();
+        private readonly GameplayActorHarvestTests.NativeHarvestSkill _harvest = new(150);
 
         public ActorRequest Drive(GameplayActor a, ActorRequest request, TimeSpan maxWait)
         {
+            if (deferHarvestObservation && request.Action == ActorActionType.Harvest && !request.IsTerminal)
+            {
+                _scheduler.PumpFor(null, TimeSpan.FromMilliseconds(350)).GetAwaiter().GetResult();
+                if (a.Character.ParentWorld.GetDoodad(request.TargetId) != null || request.IsTerminal)
+                    throw new InvalidOperationException("Native harvest did not commit before the pump observation boundary");
+                return request; // Real callback committed; original actor has not observed it yet.
+            }
             var deadline = Environment.TickCount64 + (long)maxWait.TotalMilliseconds;
             while (!request.IsTerminal && Environment.TickCount64 < deadline)
             {
-                a.Tick(TimeSpan.FromMilliseconds(20));
-                if (request.Action == ActorActionType.Craft
-                    && a.Character.Craft is { IsCraftQueueActive: true }
-                    && _craftStepTraceId != request.TraceId)
-                {
-                    // The engine craft queue drains when the skill pipeline
-                    // completes its step — apply the REAL CraftEffect (the
-                    // exact chain CharacterCraft's CraftTask runs), ONCE PER
-                    // REQUEST (multi-cycle runs issue several crafts). The
-                    // CastSkill id mirrors the request's recipe skill (the
-                    // hauler pack recipe carries its own skill); EndCraft
-                    // itself charges the QUEUE's craft skill labor.
-                    var bench = a.Character.ParentWorld?.GetAllDoodads()
-                        .FirstOrDefault(d => d.TemplateId == GameplayActorTestRig.CraftBenchTemplateId);
-                    var effect = new CraftEffect { WorldInteraction = WorldInteractionType.CraftStart };
-                    effect.Apply(a.Character, null, bench, null,
-                        new CastSkill(CraftSkillFor(request.TargetId), 0), new EffectSource(), null, DateTime.UtcNow);
-                    _craftStepTraceId = request.TraceId;
-                }
-
-                Thread.Sleep(5);
+                _scheduler.PumpFor(a, TimeSpan.FromMilliseconds(20)).GetAwaiter().GetResult();
             }
 
             return request;
         }
 
-        private static uint CraftSkillFor(uint craftId)
-            => craftId == RigPackCraftId ? RigPackCraftSkillId : RigCraftSkillId;
 
         public bool WaitForCropMaturity(Character character, uint cropObjId, TimeSpan maxWait)
         {
@@ -1187,5 +1188,11 @@ public class EconomyDayCycleScenarioRigTests
         private static uint s_nextCropObjId = 0x8000_0000;
 
         private static uint NextCropObjId() => s_nextCropObjId++;
+
+        public void Dispose()
+        {
+            _harvest.Dispose();
+            _scheduler.Dispose();
+        }
     }
 }

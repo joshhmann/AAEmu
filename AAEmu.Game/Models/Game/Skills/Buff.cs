@@ -246,7 +246,7 @@ public class Buff
             ScheduleEffect(false);
         else if (State != EffectState.Finished)
         {
-            State = EffectState.Finishing;
+            State = EffectState.Finished;
             StopEffectTask(false);
         }
     }

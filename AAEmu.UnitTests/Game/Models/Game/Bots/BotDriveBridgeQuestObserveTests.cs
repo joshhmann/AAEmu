@@ -271,8 +271,10 @@ public class BotDriveBridgeQuestObserveTests
             if (!addedSession)
                 throw new InvalidOperationException("Observer fixture session identity collision");
             var executor = new BotRoamStepExecutor();
-            var manager = new PlayerBotManager(new PlayerBotLifecycleAdapter(new CharacterLifecycleService()));
-            var scheduler = new PlayerBotScheduler(manager, executor,
+            PlayerBotScheduler scheduler = null!;
+            var manager = new PlayerBotManager(new PlayerBotLifecycleAdapter(
+                new CharacterLifecycleService(), new Lazy<PlayerBotScheduler>(() => scheduler)));
+            scheduler = new PlayerBotScheduler(manager, executor,
                 new PlayerBotSchedulerOptions { SubscribeToTickManager = false });
             provider = new ServiceCollection()
                 .AddSingleton<IPlayerBotManager>(manager)

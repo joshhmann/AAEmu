@@ -975,9 +975,10 @@ internal static class PopulationDirectorProximityBootstrap
                 // (no presence demo, no schedules flag) starts NO loop — the
                 // due path's wakes AND materialization wakes would queue up
                 // forever. Arm it here, gated behind this bootstrap's already-
-                // non-default proximity-fidelity flag; Start() is idempotent,
-                // so a later presence/schedules start stays a no-op.
-                services.GetRequiredService<IPlayerBotScheduler>().Start();
+                // non-default proximity-fidelity flag; the one arming owner
+                // never consults a switch of its own, so this gate is
+                // unchanged, and a later presence/schedules arm stays a no-op.
+                services.GetRequiredService<IPlayerBotScheduler>().Arm("proximity-bootstrap");
 
                 if (director.Start())
                     Logger.Info("PopulationDirectorBootstrap: proximity fidelity armed");

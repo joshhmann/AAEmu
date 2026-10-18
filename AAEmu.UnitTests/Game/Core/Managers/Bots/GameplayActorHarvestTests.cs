@@ -1,11 +1,23 @@
 using System.Numerics;
+using System.Reflection;
 
 using AAEmu.Commons.Utils;
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game;
 using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.GameData;
+using AAEmu.Game.Models.Game.Char;
+using AAEmu.Game.Models.Game.Char.Templates;
+using AAEmu.Game.Models.Game.CommonFarm;
+using AAEmu.Game.Models.Game.DoodadObj.Static;
+using AAEmu.Game.Models.Game.Items.Loots;
+using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Static;
+using AAEmu.Game.Models.Game.Skills.Templates;
+using AAEmu.Game.Models.Tasks.Skills;
 using AAEmu.Game.Models.Game.DoodadObj;
 using AAEmu.Game.Models.Game.Housing;
 using AAEmu.Game.Models.Game.World;
@@ -15,10 +27,9 @@ using AAEmu.UnitTests.Game.Models.Game.DoodadObj;
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 /// <summary>
-/// M5.1 Harvest contract tests (t_f9b19050) — the economy action through
-/// the REAL engine path: the same doodad.Use(caster, harvestSkill) chain
-/// the client's harvest interaction drives on a mature crop (potato loop,
-/// canonical 1.2 ids from CropHarvestLoopTests).
+/// Harvest contract tests — ordinary Skill.Use with a Doodad target drives
+/// the same crop interaction as the client. Instant metadata is an explicit
+/// legacy fixture; native callback controls below use queued timed casts.
 ///
 /// Acceptance:
 ///  - Full lifecycle + §17 failure taxonomy (RejectedAction for world/range/
@@ -293,6 +304,268 @@ public class GameplayActorHarvestTests
         await Assert.That(json).Contains("\"state_changes\"");
     }
 
+    [Test]
+    public async Task Harvest_NativeCast_HoldsRunningThenGrantsOnce()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("harvest-native-cast");
+        var crop = PlantMatureCrop(actor, session);
+        actor.Character.LaborPower = 100;
+        using var fixture = new NativeHarvestSkill(150);
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var request = actor.Harvest(crop.ObjId, "native-harvest");
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        await Assert.That(crop.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+        await Assert.That(BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsEqualTo(0);
+        await Assert.That(actor.Character.LaborPower).IsEqualTo((short)100);
+        await scheduler.PumpFor(actor, TimeSpan.FromMilliseconds(50));
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        await scheduler.WaitForTerminal(actor, request);
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.LaborPower).IsEqualTo((short)99);
+        var after = BagCount(actor, CropHarvestLoopTests.PotatoItemId);
+        await Assert.That(after).IsGreaterThanOrEqualTo(2);
+        await Assert.That(actor.Harvest(crop.ObjId, "native-harvest").State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(actor.Harvest(crop.ObjId, "native-harvest-fresh").State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsEqualTo(after);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task Harvest_NoLabor_NativeAndActorHaveNoCropEffect(bool depleteAfterStart)
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("harvest-labor-" + depleteAfterStart);
+        var crop = PlantMatureCrop(actor, session);
+        actor.Character.LaborPower = depleteAfterStart ? (short)100 : (short)0;
+        using var fixture = new NativeHarvestSkill(150, vocation: 20);
+        var vocationBefore = actor.Character.VocationPoint;
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var request = actor.Harvest(crop.ObjId);
+        if (depleteAfterStart)
+        {
+            await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+            actor.Character.LaborPower = 0;
+            await scheduler.WaitForTerminal(actor, request);
+        }
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+        await Assert.That(crop.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+        await Assert.That(BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsEqualTo(0);
+        await Assert.That(actor.Character.LaborPower).IsEqualTo((short)0);
+        await Assert.That(actor.Character.VocationPoint).IsEqualTo(vocationBefore);
+        await Assert.That(actor.Character.SkillTask).IsNull();
+        await Assert.That(actor.ActiveRequest).IsNull();
+
+        // The ordinary human-style native caller is guarded too, not only
+        // the actor preflight. Its accepted cast must leave no effect.
+        var native = StartNativeHarvest(actor, crop);
+        await scheduler.PumpFor(null, TimeSpan.FromMilliseconds(350));
+        await Assert.That(crop.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+        await Assert.That(BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsEqualTo(0);
+        await Assert.That(native.Cancelled).IsTrue();
+        await Assert.That(native.TlId).IsEqualTo((ushort)0);
+        await Assert.That(actor.Character.VocationPoint).IsEqualTo(vocationBefore);
+        await Assert.That(actor.Character.SkillTask).IsNull();
+    }
+
+    [Test]
+    [Arguments(10, 5, 8)]
+    [Arguments(0, 0, 0)]
+    public async Task Harvest_AdjustedAndZeroLabor_UseNativeCost(int baseCost, byte step, short labor)
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("harvest-discount-" + baseCost);
+        var crop = PlantMatureCrop(actor, session);
+        actor.Character.LaborPower = labor;
+        actor.Character.Actability.Actabilities[6] = new Actability(new ActabilityTemplate { Id = 6 }) { Step = step };
+        var limits = (Dictionary<int, ExpertLimit>)typeof(CharacterManager)
+            .GetField("_expertLimits", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(CharacterManager.Instance)!;
+        var hadLimit = limits.TryGetValue(step, out var previousLimit);
+        limits[step] = new ExpertLimit { UpLimit = int.MaxValue }; // Disclosed proficiency metadata fixture.
+        using var fixture = new NativeHarvestSkill(150, baseCost);
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        try
+        {
+            var request = actor.Harvest(crop.ObjId);
+            await scheduler.WaitForTerminal(actor, request);
+            await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(actor.Character.LaborPower).IsEqualTo((short)0);
+            await Assert.That(BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsGreaterThanOrEqualTo(2);
+        }
+        finally
+        {
+            if (hadLimit) limits[step] = previousLimit!;
+            else limits.Remove(step);
+        }
+    }
+
+    [Test]
+    public async Task Harvest_ProtectedForeignCrop_NativeGuardRefusesWithoutTheft()
+    {
+        GameplayActorTestRig.SeedPlantSurface();
+        var (actor, session) = CreateActorOnUniqueWorld("harvest-foreign-protected");
+        var crop = PlantMatureCrop(actor, session);
+        actor.Character.LaborPower = 100;
+        crop.OwnerType = DoodadOwnerType.Character;
+        crop.OwnerId = actor.Character.Id + 1;
+        var previousGroup = crop.Template.GroupId;
+        crop.Template.GroupId = 12;
+        var field = typeof(CommonFarmGameData).GetField("_doodadGroups", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var previous = field.GetValue(CommonFarmGameData.Instance);
+        field.SetValue(CommonFarmGameData.Instance, new Dictionary<uint, DoodadGroups>
+        {
+            [12] = new() { Id = 12, GuardOnFieldTime = 86400 }
+        });
+        GameplayActorTestRig.SetFarmGateEnabled(true);
+        using var fixture = new NativeHarvestSkill(150);
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        try
+        {
+            var request = actor.Harvest(crop.ObjId);
+            await scheduler.WaitForTerminal(actor, request);
+            await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Rejected);
+            await Assert.That(crop.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+            await Assert.That(BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsEqualTo(0);
+            await Assert.That(actor.Character.LaborPower).IsEqualTo((short)100);
+            await Assert.That(actor.Character.CrimePoint).IsEqualTo((short)0);
+        }
+        finally
+        {
+            GameplayActorTestRig.SetFarmGateEnabled(false);
+            crop.Template.GroupId = previousGroup;
+            field.SetValue(CommonFarmGameData.Instance, previous);
+        }
+    }
+
+    [Test]
+    [Arguments("interrupt")]
+    [Arguments("death")]
+    [Arguments("timeout")]
+    [Arguments("foreign-skill")]
+    public async Task Harvest_NativeCancellation_ConservesAndPreservesForeignSkill(string mode)
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("harvest-cancel-" + mode);
+        var crop = PlantMatureCrop(actor, session);
+        actor.Character.LaborPower = 100;
+        using var fixture = new NativeHarvestSkill(150);
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var request = actor.Harvest(crop.ObjId);
+        Skill? foreign = null;
+        switch (mode)
+        {
+            case "interrupt": actor.PreemptCurrent("native harvest interrupted"); break;
+            case "death": actor.Character.Hp = 0; actor.Tick(TimeSpan.FromMilliseconds(1)); break;
+            case "timeout": actor.Tick(GameplayActor.DefaultHarvestTimeout + TimeSpan.FromSeconds(1)); break;
+            case "foreign-skill":
+                foreign = new Skill(SkillManager.Instance.GetSkillTemplate(CropHarvestLoopTests.HarvestSkillId));
+                actor.Character.SkillTask = new CastTask(foreign, actor.Character, null, crop, null, null);
+                break;
+        }
+        await scheduler.PumpFor(actor, TimeSpan.FromMilliseconds(350));
+        await Assert.That(request.State).IsEqualTo(mode == "timeout" ? ActorLifecycleState.TimedOut : ActorLifecycleState.Interrupted);
+        await Assert.That(crop.FuncGroupId).IsEqualTo(CropHarvestLoopTests.MaturePhase);
+        await Assert.That(BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsEqualTo(0);
+        await Assert.That(actor.Character.LaborPower).IsEqualTo((short)100);
+        await Assert.That(actor.ActiveRequest).IsNull();
+        if (foreign != null)
+        {
+            await Assert.That(ReferenceEquals(actor.Character.SkillTask?.Skill, foreign)).IsTrue();
+            actor.Character.SkillTask = null;
+        }
+    }
+
+    [Test]
+    public async Task Harvest_CommittedNativeCallback_WinsInterruptAndLeavesForeignReplacement()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("harvest-committed");
+        var crop = PlantMatureCrop(actor, session);
+        actor.Character.LaborPower = 100;
+        using var fixture = new NativeHarvestSkill(150);
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        var request = actor.Harvest(crop.ObjId);
+        await scheduler.PumpFor(null, TimeSpan.FromMilliseconds(350));
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+        var foreign = new Skill(SkillManager.Instance.GetSkillTemplate(CropHarvestLoopTests.HarvestSkillId));
+        actor.Character.SkillTask = new CastTask(foreign, actor.Character, null, crop, null, null);
+        actor.PreemptCurrent("interrupt after native commit");
+        await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(ReferenceEquals(actor.Character.SkillTask?.Skill, foreign)).IsTrue();
+        await Assert.That(actor.Character.LaborPower).IsEqualTo((short)99);
+        actor.Character.SkillTask = null;
+    }
+
+    [Test]
+    public async Task Harvest_NativePhaseAdvanceWithoutOutput_IsNotCompleted()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("harvest-empty-native-pack");
+        var crop = PlantMatureCrop(actor, session);
+        var packs = (Dictionary<uint, LootPack>)typeof(LootGameData)
+            .GetField("_lootPacks", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(LootGameData.Instance)!;
+        var previous = packs[CropHarvestLoopTests.PotatoLootPackId];
+        // Explicit negative metadata fixture: the native loot effect runs,
+        // but there are no rows to award. No success can be inferred from phase.
+        packs[CropHarvestLoopTests.PotatoLootPackId] = new LootPack
+        {
+            Id = CropHarvestLoopTests.PotatoLootPackId,
+            Loots = [],
+            Groups = [],
+            ActabilityGroups = [],
+            LootsByGroupNo = []
+        };
+        using var fixture = new NativeHarvestSkill(150);
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        try
+        {
+            var request = actor.Harvest(crop.ObjId);
+            await scheduler.WaitForTerminal(actor, request);
+            await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Interrupted);
+            await Assert.That(crop.FuncGroupId).IsEqualTo(CropHarvestLoopTests.FinalPhase);
+            await Assert.That(BagCount(actor, CropHarvestLoopTests.PotatoItemId)).IsEqualTo(0);
+            await Assert.That(actor.Character.LaborPower).IsEqualTo((short)99);
+            await Assert.That(actor.ActiveRequest).IsNull();
+        }
+        finally
+        {
+            packs[CropHarvestLoopTests.PotatoLootPackId] = previous;
+        }
+    }
+
+    internal sealed class NativeHarvestSkill : IDisposable
+    {
+        private readonly SkillTemplate _template = SkillManager.Instance.GetSkillTemplate(CropHarvestLoopTests.HarvestSkillId);
+        private readonly int _castTime;
+        private readonly int _labor;
+        private readonly int _vocation;
+
+        public NativeHarvestSkill(int castTime = 150, int labor = 1, int vocation = 0)
+        {
+            _castTime = _template.CastingTime;
+            _labor = _template.ConsumeLaborPower;
+            _vocation = _template.GainLifePoint;
+            _template.CastingTime = castTime;
+            _template.ConsumeLaborPower = labor;
+            _template.GainLifePoint = vocation;
+        }
+
+        public void Dispose()
+        {
+            _template.CastingTime = _castTime;
+            _template.ConsumeLaborPower = _labor;
+            _template.GainLifePoint = _vocation;
+        }
+    }
+
+    private static Skill StartNativeHarvest(GameplayActor actor, Doodad crop)
+    {
+        var skill = new Skill(SkillManager.Instance.GetSkillTemplate(CropHarvestLoopTests.HarvestSkillId));
+        var caster = SkillCaster.GetByType(SkillCasterType.Unit);
+        caster.ObjId = actor.Character.ObjId;
+        var target = SkillCastTarget.GetByType(SkillCastTargetType.Doodad);
+        target.ObjId = crop.ObjId;
+        var result = skill.Use(actor.Character, caster, target, new SkillObject(), false, out _);
+        if (result != SkillResult.Success)
+            throw new InvalidOperationException($"Native harvest fixture was not admitted: {result}");
+        return skill;
+    }
+
     // ------------------------------------------------------------- helpers
 
     /// <summary>
@@ -303,9 +576,10 @@ public class GameplayActorHarvestTests
     /// on THIS world instead of the first test's. The world Id backing field
     /// is compiler-generated for the init-only primary-ctor property.
     /// </summary>
-    private static (GameplayActor Actor, HeadlessSession Session) CreateActorOnUniqueWorld(string name)
+    internal static (GameplayActor Actor, HeadlessSession Session) CreateActorOnUniqueWorld(string name)
     {
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        actor.Character.LaborPower = 100; // Supplied fixture labor, not earned acquisition.
 
         var uniqueWorldId = _nextWorldInstanceId++;
         var worldIdField = typeof(WorldInstance).GetField("<Id>k__BackingField",
@@ -323,7 +597,7 @@ public class GameplayActorHarvestTests
     /// <summary>Stocks one seed, plants, repositions the crop onto the actor,
     /// and grows it to the mature phase through the REAL scheduled growth
     /// tasks (no wall clock).</summary>
-    private static Doodad PlantMatureCrop(GameplayActor actor, HeadlessSession session)
+    internal static Doodad PlantMatureCrop(GameplayActor actor, HeadlessSession session)
     {
         StockSeed(actor);
         var crop = CropHarvestLoopRig.Plant(actor.Character, session.World,

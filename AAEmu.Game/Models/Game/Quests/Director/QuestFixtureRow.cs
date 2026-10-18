@@ -43,9 +43,9 @@ namespace AAEmu.Game.Models.Game.Quests.Director;
 ///   GatherActId / PreyItem / Need — the Progress component's first
 ///     QuestActObjItemGather (act id, item id, count), in (component id, act
 ///     id) order.
-///   PreyTemplate / PreyPack — the loot chain for PreyItem: the
-///     loot_pack_dropping_npcs row whose loot pack actually carries the item,
-///     preferring a default-pack row, then the lowest (npc, pack) ids.
+///   GatherNpcSources — every loaded NPC→pack pair whose pack grants PreyItem,
+///     ordered default-pack first, then NPC id and pack id. PreyTemplate /
+///     PreyPack retain the first pair as the legacy representative.
 ///   UseItemActId / UseItemTemplateId / UseItemNeed — the Progress component's
 ///     first QuestActObjItemUse (act id, item template, count), the item-use
 ///     objective's own facts (distinct from the gather act's).
@@ -90,6 +90,39 @@ public sealed record QuestFixtureRow(
     uint ReporterTemplate,
     uint RewardItem)
 {
+    /// <summary>One native NPC template and its pack that grants the gather item.</summary>
+    public readonly record struct NpcDropSource(uint NpcTemplateId, uint LootPackId);
+
+    // Derived facts travel with the existing memoized row. A record `with`
+    // copies these private fields, so the identity below prevents a changed
+    // scalar item/template/pack from reusing a stale multi-source set.
+    private IReadOnlyList<NpcDropSource> DerivedNpcSources { get; init; } = Array.Empty<NpcDropSource>();
+    private uint DerivedNpcItem { get; init; }
+    private uint DerivedNpcTemplate { get; init; }
+    private uint DerivedNpcPack { get; init; }
+
+    /// <summary>
+    /// Every loaded NPC→pack link that grants this one gather item, in the
+    /// representative's existing default-pack/NPC/pack order. A hand-built
+    /// row or a `with` override uses its scalar pair alone. Zero fields mean
+    /// no NPC source; callers still validate live source and loot permission.
+    /// </summary>
+    public IReadOnlyList<NpcDropSource> GatherNpcSources
+    {
+        get
+        {
+            if (PreyItem == 0 || PreyTemplate == 0 || PreyPack == 0)
+                return Array.Empty<NpcDropSource>();
+            // A copied derived row naming another item has no proven NPC link.
+            if (DerivedNpcSources.Count != 0 && PreyItem != DerivedNpcItem)
+                return Array.Empty<NpcDropSource>();
+            if (PreyItem == DerivedNpcItem && PreyTemplate == DerivedNpcTemplate
+                && PreyPack == DerivedNpcPack && DerivedNpcSources.Count != 0)
+                return DerivedNpcSources;
+            return Array.AsReadOnly(new[] { new NpcDropSource(PreyTemplate, PreyPack) });
+        }
+    }
+
     /// <summary>
     /// The selected objective shape, or the first Progress objective for a
     /// whole-template row (see the type doc). <see cref="QuestPattern.Unknown"/> with
@@ -328,14 +361,14 @@ public sealed record QuestFixtureRow(
     /// letting an earlier, already-credited objective choose its shape.</summary>
     public static QuestFixtureRow FromQuestData(uint questId, QuestActTemplate? objective)
     {
-        // Preserve the established combined hunt/loot facts while the original
-        // objective still needs work. Scope facts only when moving past it.
+        // Preserve combined source facts for the established first gather act.
+        // Hunt acts must remain scoped: a later gather cannot change their plan.
         if (objective != null)
         {
             var first = QuestManager.Instance.GetTemplate(questId)?.GetComponents(QuestComponentKind.Progress)
                 .SelectMany(c => c.ActTemplates).Where(a => a.CountsAsAnObjective)
                 .OrderBy(a => a.ParentComponent.Id).ThenBy(a => a.ActId).FirstOrDefault();
-            if (first?.ActId == objective.ActId)
+            if (first?.ActId == objective.ActId && objective is QuestActObjItemGather)
                 objective = null;
         }
         var key = (questId, objective?.ActId ?? 0);
@@ -514,7 +547,9 @@ public sealed record QuestFixtureRow(
             // Unreadable quest surface: keep whatever resolved.
         }
 
-        var (preyTemplate, preyPack) = ResolveDropSource(preyItem);
+        var npcSources = ResolveDropSources(preyItem);
+        var preyTemplate = npcSources.Count == 0 ? 0u : npcSources[0].NpcTemplateId;
+        var preyPack = npcSources.Count == 0 ? 0u : npcSources[0].LootPackId;
         var gatherDoodads = ResolveDoodadSources(preyItem);
         var gatherDoodad = gatherDoodads.Count == 0 ? 0 : gatherDoodads[0];
 
@@ -541,6 +576,10 @@ public sealed record QuestFixtureRow(
         return new QuestFixtureRow(
             questId, gatherActId, preyItem, need, preyTemplate, preyPack, reporterTemplate, rewardItem)
         {
+            DerivedNpcSources = npcSources,
+            DerivedNpcItem = preyItem,
+            DerivedNpcTemplate = preyTemplate,
+            DerivedNpcPack = preyPack,
             ObjectivePattern = objectivePattern,
             ObjectiveActType = objectiveActType,
             UseItemActId = useItemActId,
@@ -670,47 +709,42 @@ public sealed record QuestFixtureRow(
             .FirstOrDefault();
 
     /// <summary>
-    /// Inverts the npc→loot-pack→loot chain for <paramref name="itemId"/>: the
-    /// (npc template, loot pack) whose pack carries the item. Prefers a
-    /// default-pack row, then the lowest npc id, then the lowest pack id, so
-    /// the result is deterministic for any item. Never throws (a bare or
-    /// unloaded loot surface yields (0, 0)).
+    /// Inverts the loaded NPC→pack→item rows once per derived fixture row.
+    /// Preserve the old representative's total order: default packs first,
+    /// then NPC id, then pack id. Duplicate links collapse to one pair.
+    /// No live-world read, item grant, or per-wake database query occurs here.
     /// </summary>
-    private static (uint PreyTemplate, uint PreyPack) ResolveDropSource(uint itemId)
+    private static IReadOnlyList<NpcDropSource> ResolveDropSources(uint itemId)
     {
         if (itemId == 0)
-            return (0, 0);
+            return Array.Empty<NpcDropSource>();
 
         try
         {
-            // Invert npc→pack→item in one pass over the ~15k rows: each row
-            // probes its pack's loot list and the best row wins by a total
-            // order (default-pack, npc id, pack id), so the result never
-            // depends on enumeration order.
-            uint bestTemplate = 0;
-            uint bestPack = 0;
-            var bestDefault = false;
+            var found = new List<(NpcDropSource Source, bool DefaultPack)>();
             foreach (var row in ItemManager.Instance.GetAllLootPackDroppingNpcs())
             {
+                if (row.NpcId == 0 || row.LootPackId == 0)
+                    continue;
                 var pack = LootGameData.Instance.GetPack(row.LootPackId);
                 if (pack?.Loots == null || !HasLoot(pack.Loots, itemId))
                     continue;
-                var better = bestPack == 0
-                             || (row.DefaultPack && !bestDefault)
-                             || (row.DefaultPack == bestDefault
-                                 && (row.NpcId < bestTemplate
-                                     || (row.NpcId == bestTemplate && row.LootPackId < bestPack)));
-                if (!better)
-                    continue;
-                bestTemplate = row.NpcId;
-                bestPack = row.LootPackId;
-                bestDefault = row.DefaultPack;
+                found.Add((new NpcDropSource(row.NpcId, row.LootPackId), row.DefaultPack));
             }
-            return (bestTemplate, bestPack);
+            if (found.Count == 0)
+                return Array.Empty<NpcDropSource>();
+            found.Sort(static (a, b) =>
+            {
+                var byDefault = b.DefaultPack.CompareTo(a.DefaultPack);
+                if (byDefault != 0) return byDefault;
+                var byNpc = a.Source.NpcTemplateId.CompareTo(b.Source.NpcTemplateId);
+                return byNpc != 0 ? byNpc : a.Source.LootPackId.CompareTo(b.Source.LootPackId);
+            });
+            return Array.AsReadOnly(found.Select(entry => entry.Source).Distinct().ToArray());
         }
         catch
         {
-            return (0, 0);
+            return Array.Empty<NpcDropSource>();
         }
     }
 

@@ -18,6 +18,18 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// PendingInvitationOwnerId/PartyLeaderObjId/PartyLeaderTargetObjId), all
 /// read through ordinary Character/TeamManager services at Observe() time.
 /// Existing field names never change; old consumers ignore the new keys.
+///
+/// <para><b>Declared unavailable at this seam</b> (audit L1.2, Stage A / A2).
+/// The snapshot carries <i>object ids only</i> for nearby candidates — no
+/// per-candidate level, hp or hostility — and it carries no skill cost,
+/// cooldown, global-cooldown or availability fact, and no visibility verdict
+/// (<c>CanSeeTarget</c> is deliberately not applied to the bulk region lists;
+/// each caller applies it). Policy and decision code MUST NOT assume any of
+/// these: read the authoritative server service at action time (for example
+/// <c>Character.Cooldowns</c> for a skill's cooldown, the candidate's own unit
+/// state for its hp/hostility) or treat the fact as unknown and let the actor
+/// reject the request. Making one of these facts part of the seam is an
+/// additive change and must be declared here and in the audit's L1.2 row.</para>
 /// </summary>
 public sealed class ActorObservation
 {

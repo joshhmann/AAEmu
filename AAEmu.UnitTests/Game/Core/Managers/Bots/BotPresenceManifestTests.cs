@@ -370,6 +370,8 @@ public class BotPresenceManifestTests
 
         public bool Spawn(Character character, string owner) { SpawnCalls++; return true; }
         public bool Activate(uint characterId, object? botContext, string owner) { ActivateCalls++; return true; }
+        public bool LeaveHeadlessCharacter(Character expected, AAEmu.Game.Core.Managers.CharacterLifecycleReason reason,
+            out bool savedThisCall, Func<bool>? releaseCachedSession = null) => throw new NotSupportedException("not used by this rig");
         public bool Deactivate(uint characterId, string reason) => true;
         public bool TryGet(uint characterId, out PlayerBotRuntime? runtime) { runtime = null; return false; }
         public bool Remove(uint characterId) => true;
@@ -386,8 +388,14 @@ public class BotPresenceManifestTests
         public int StartCalls;
         public List<uint> Wakes { get; } = [];
 
-        public void Start() => StartCalls++;
+        // T2: the one arming owner. StartCalls counts armings, so the existing
+        // "armed once" assertions keep their meaning.
+        public string? ArmedBy { get; private set; }
+        public bool Arm(string reason) { StartCalls++; ArmedBy ??= reason; return true; }
         public Task StopAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        // A1 stop owner: this rig never enrols a bot, so a disarm is inert.
+        public BotHostTeardownReport Disarm(string reason) => new(reason, false, 0, 0, 0, []);
         public bool Wake(uint characterId) { Wakes.Add(characterId); return true; }
         public bool WakeAt(uint characterId, DateTime utcDue) => true;
         public bool WakeAfter(uint characterId, TimeSpan delay) => true;

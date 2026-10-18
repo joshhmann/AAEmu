@@ -835,7 +835,7 @@ public static class AdventurerSpikeScenario
 
             if (healItemTemplateId > 0)
             {
-                var use = actor.UseItem(healItemTemplateId);
+                var use = drive(actor.UseItem(healItemTemplateId));
                 Collect(actor, traceRecords);
                 stages.Add(Stage("SUSTAIN-HEAL", healItemTemplateId, use));
             }

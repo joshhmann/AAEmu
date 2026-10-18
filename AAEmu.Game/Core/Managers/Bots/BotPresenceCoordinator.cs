@@ -2,6 +2,7 @@ using System.Numerics;
 
 using AAEmu.Commons.IO;
 using AAEmu.Game.Core.Managers;
+using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Bots;
@@ -62,6 +63,10 @@ public sealed class BotPresenceCoordinator
     private readonly Func<string, string, Race, Gender, byte, HeadlessSession> _provisioner;
     private readonly Func<Vector3, uint, float> _groundHeightProvider;
     private readonly Func<IReadOnlyList<PresenceManifestEntry>?>? _manifestProvider;
+    // The name of the bot character a managed account already owns (T2
+    // reconciliation seam; null when the account owns none). Injectable so the
+    // rig stays free of the provisioning service and MySQL.
+    private readonly Func<string, string?> _existingBotName;
 
     public sealed record BotPresenceConfig(
         int BotCount,
@@ -73,6 +78,22 @@ public sealed class BotPresenceCoordinator
         string NamePrefix,
         string AccountPrefix,
         int MaxPresenceBots = DefaultMaxPresenceBots);
+
+    /// <summary>
+    /// What one enrollment run actually did (T2 supported arming) — reported,
+    /// never assumed. <see cref="Enrolled"/> counts the bots that reached the
+    /// world in this run: newly provisioned or adopted from a row an earlier
+    /// boot created, so a restart reports its re-enrollment instead of a false
+    /// zero. <see cref="Adopted"/> is the in-process re-enrollment subset (a
+    /// bot already registered under the roster index's name). The idempotent
+    /// skip reports <see cref="Enrolled"/> 0 with <see cref="AlreadyEmbodied"/>
+    /// true, which is the one shape a caller must never read as "enrolled".
+    /// </summary>
+    public readonly record struct BotEnrollmentOutcome(int Enrolled, int Adopted, bool AlreadyEmbodied)
+    {
+        /// <summary>True when this run put at least one bot in the world.</summary>
+        public bool Any => Enrolled > 0;
+    }
 
     /// <summary>
     /// DI-friendly constructor. Tests inject fakes for the loop pieces and
@@ -89,7 +110,8 @@ public sealed class BotPresenceCoordinator
         Func<BotPresenceConfig, Vector3>? homeResolver = null,
         Func<string, string, Race, Gender, byte, HeadlessSession>? provisioner = null,
         Func<Vector3, uint, float>? groundHeightProvider = null,
-        Func<IReadOnlyList<PresenceManifestEntry>?>? manifestProvider = null)
+        Func<IReadOnlyList<PresenceManifestEntry>?>? manifestProvider = null,
+        Func<string, string?>? existingBotName = null)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         _scheduler = scheduler ?? throw new ArgumentNullException(nameof(scheduler));
@@ -99,6 +121,7 @@ public sealed class BotPresenceCoordinator
         _provisioner = provisioner ?? DefaultProvisioner;
         _groundHeightProvider = groundHeightProvider ?? DefaultGroundHeightProvider;
         _manifestProvider = manifestProvider ?? DefaultManifestProvider;
+        _existingBotName = existingBotName ?? DefaultExistingBotName;
     }
 
     /// <summary>
@@ -298,6 +321,24 @@ public sealed class BotPresenceCoordinator
     }
 
     /// <summary>
+    /// What the most recent <see cref="Start"/> did (T2 supported arming). A
+    /// fresh value per run: the coordinator instance is created per boot, and
+    /// <see cref="Start"/> resets it before it enrolls anything.
+    /// </summary>
+    public BotEnrollmentOutcome LastEnrollment { get; private set; }
+
+    /// <summary>
+    /// T2 supported-arming seam: runs the enrollment and reports what it did,
+    /// so the deployment switch cannot claim an enrollment that did not
+    /// happen (review D1).
+    /// </summary>
+    public BotEnrollmentOutcome Enroll(BotPresenceConfig config)
+    {
+        Start(config);
+        return LastEnrollment;
+    }
+
+    /// <summary>
     /// Runs the presence demo: provisions <see cref="BotPresenceConfig.BotCount"/>
     /// bots, spawns them, assigns Full fidelity, and arms a bounded roam route
     /// around home. Idempotent: a second call skips when bots are already up.
@@ -309,11 +350,13 @@ public sealed class BotPresenceCoordinator
     public bool Start(BotPresenceConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
+        LastEnrollment = default;
 
         if (_director.EmbodiedCount >= config.BotCount)
         {
             Logger.Info("BotPresenceCoordinator: {Count} bots already embodied — skipping (idempotent)",
                 _director.EmbodiedCount);
+            LastEnrollment = new BotEnrollmentOutcome(0, 0, AlreadyEmbodied: true);
             return true;
         }
 
@@ -354,7 +397,7 @@ public sealed class BotPresenceCoordinator
         Logger.Info("BotPresenceCoordinator: provisioning {Count} manifest bots (home {Home}, zone {ZoneId})",
             clampedRoster.Count, defaultHome, config.ZoneId);
 
-        _scheduler.Start();
+        _scheduler.Arm("presence-manifest");
 
         var spawned = 0;
         for (var i = 0; i < clampedRoster.Count; i++)
@@ -436,6 +479,7 @@ public sealed class BotPresenceCoordinator
 
         Logger.Info("BotPresenceCoordinator: presence demo up — {Spawned}/{Count} manifest bots roaming",
             spawned, clampedRoster.Count);
+        LastEnrollment = new BotEnrollmentOutcome(spawned, 0, AlreadyEmbodied: false);
         return spawned > 0;
     }
 
@@ -449,20 +493,37 @@ public sealed class BotPresenceCoordinator
         Logger.Info("BotPresenceCoordinator: provisioning {Count} citizen bots (home {Home}, zone {ZoneId})",
             config.BotCount, defaultHome, config.ZoneId);
 
-        _scheduler.Start();
+        _scheduler.Arm("presence-demo");
 
         var spawned = 0;
+        var adopted = 0;
         for (var i = 0; i < config.BotCount; i++)
         {
             var accountName = $"{BotAccountProvisioningService.ManagedUsernamePrefix}{config.AccountPrefix}_{i + 1:D3}";
-            // In-world names, not CitizenNN: with no prefix configured the name
-            // comes from the data-backed pool (deterministic in the roster index,
-            // stepped past any name already registered in NameManager). A caller
-            // that pins NamePrefix keeps the historical {prefix}{NN} shape.
-            var name = BotNameGenerator.NameFor(i, config.NamePrefix, ProductionNameProbe);
+            // The roster index's identity is its managed account (T2, audit
+            // L1-e): when that account already owns a bot character, this
+            // index re-enrols THAT character under the name it already has.
+            // Generating a fresh name instead would step past the bot's own
+            // registered name and provision a SECOND character for the same
+            // index on every restart. Names are only generated for an index
+            // whose account owns nothing yet; the name comes from the
+            // data-backed pool, deterministic in the roster index.
+            var name = _existingBotName(accountName)
+                ?? BotNameGenerator.NameFor(i, config.NamePrefix, ProductionNameProbe);
 
             try
             {
+                // In-process reconciliation: a bot already enrolled under this
+                // name (a second Start with a larger count, or a re-arm) is
+                // re-enrolled instead of provisioned again.
+                var enrolled = FindEnrolledByName(name);
+                if (enrolled is not null)
+                {
+                    if (ReEnroll(enrolled, i, config, defaultHome, name))
+                        adopted++;
+                    continue;
+                }
+
                 var session = _provisioner(accountName, name, Race.Nuian, Gender.Male, config.Level);
                 if (session == null)
                 {
@@ -500,13 +561,7 @@ public sealed class BotPresenceCoordinator
                     continue;
                 }
 
-                // Full fidelity for the demo set (single-step ladder: Dormant → Reduced → Full).
-                var reduced = _director.TrySetFidelity(character.Id, BotFidelity.Reduced, "presence-demo");
-                if (reduced != FidelityTransitionResult.Applied)
-                    Logger.Warn("BotPresenceCoordinator: fidelity Reduced {Result} for {Name}", reduced, name);
-                var full = _director.TrySetFidelity(character.Id, BotFidelity.Full, "presence-demo");
-                if (full != FidelityTransitionResult.Applied)
-                    Logger.Warn("BotPresenceCoordinator: fidelity Full {Result} for {Name}", full, name);
+                ApplyFullFidelity(character.Id, name);
 
                 // Bounded patrol route around home — offset each bot's start so
                 // they don't all walk the same circle in lockstep. Waypoint Z is
@@ -544,16 +599,137 @@ public sealed class BotPresenceCoordinator
             }
         }
 
-        Logger.Info("BotPresenceCoordinator: presence demo up — {Spawned}/{Count} citizen bots roaming",
-            spawned, config.BotCount);
-        return spawned > 0;
+        Logger.Info("BotPresenceCoordinator: presence demo up — {Spawned}/{Count} citizen bots roaming ({Adopted} re-enrolled)",
+            spawned, config.BotCount, adopted);
+        LastEnrollment = new BotEnrollmentOutcome(spawned + adopted, adopted, AlreadyEmbodied: false);
+        // A re-enrolled bot counts as the roster coming up: the caller's
+        // question is "are the configured bots in the world", not "did we
+        // create rows this time" (T2 supported arming reports this result).
+        return spawned > 0 || adopted > 0;
+    }
+
+    /// <summary>
+    /// Production seam for <see cref="StartLegacy"/>'s name resolution: the
+    /// name of the bot character this managed account already owns, or null
+    /// when it owns none. The account row is provisioned idempotently here
+    /// (the same call the provisioner makes a moment later) and its characters
+    /// are read back from the game DB, so a restart re-adopts the existing bot
+    /// instead of adding a second character to the same account (audit L1-e).
+    /// </summary>
+    private static string? DefaultExistingBotName(string accountName)
+    {
+        try
+        {
+            var account = BotAccountProvisioningService.Instance.ProvisionBotAccount(accountName);
+            var owned = CharacterManager.LoadCharacters(account.AccountId);
+            if (SelectOldestOwned(owned.Select(c => (c.Id, c.Name)).ToList()) is not { } selected)
+                return null;
+
+            // More than one row means a previous boot provisioned duplicates
+            // (the pre-reconciliation behaviour); they are reported, never
+            // silently enrolled. The rows left unenrolled are the NEWER ones —
+            // the oldest is the one being re-enrolled (review D5).
+            if (selected.Residue > 0)
+                Logger.Warn("BotPresenceCoordinator: managed account {Account} owns {Count} characters — re-enrolling the oldest ({Name}); {Residue} newer duplicate row(s) stay unenrolled",
+                    accountName, owned.Count, selected.Name, selected.Residue);
+            return selected.Name;
+        }
+        catch (Exception ex)
+        {
+            // Name resolution must never take the demo down: fall back to the
+            // generator (the pre-T2 behaviour).
+            Logger.Warn(ex, "BotPresenceCoordinator: could not read the existing bot name for {Account} — generating a new one", accountName);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Pure selection seam for <see cref="DefaultExistingBotName"/> (T2, audit
+    /// L1-e): the roster index re-enrols the OLDEST character its managed
+    /// account owns, and reports how many newer duplicate rows stay
+    /// unenrolled. Null when the account owns nothing. Split out so the rule
+    /// is unit-testable without the account/character store.
+    /// </summary>
+    internal static (string Name, int Residue)? SelectOldestOwned(IReadOnlyList<(uint Id, string Name)> owned)
+    {
+        if (owned.Count == 0)
+            return null;
+
+        var oldest = owned.OrderBy(row => row.Id).First();
+        return (oldest.Name, owned.Count - 1);
+    }
+
+    /// <summary>
+    /// The enrolled bot holding <paramref name="name"/> (case-insensitive), or
+    /// null. Mirrors BotAdminService.FindByName: <see cref="IPlayerBotManager"/>
+    /// has no by-name lookup.
+    /// </summary>
+    private PlayerBotRuntime? FindEnrolledByName(string name)
+        => _manager.GetAll().FirstOrDefault(r =>
+            r.Character is { } character && character.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Re-enrols an already-registered bot for a roster index (T2, audit
+    /// L1-e): brings it back to Active when it was left deactivated, re-arms
+    /// its patrol route from its resolved home, re-records home and schedule
+    /// and wakes it. No second character row and no second account.
+    /// </summary>
+    private bool ReEnroll(PlayerBotRuntime runtime, int index, BotPresenceConfig config, Vector3 defaultHome, string name)
+    {
+        var character = runtime.Character;
+        var metadata = PlayerBotMetadataStore.Instance.GetForRead(character.Id);
+        var home = ResolveHome(config.HomePosition, metadata, defaultHome);
+        if (config.HomePosition != default || metadata.HasHome)
+            character.Transform.Local.SetPosition(home.X, home.Y, home.Z);
+
+        var previousState = runtime.State;
+        if (previousState != PlayerBotState.Active &&
+            !_manager.Activate(character.Id, new BotContext { BotId = character.Id, Name = name }, "presence-demo"))
+        {
+            Logger.Warn("BotPresenceCoordinator: re-enrollment activation failed for {Name} (state {State})", name, previousState);
+            return false;
+        }
+
+        if (previousState != PlayerBotState.Active)
+            ApplyFullFidelity(character.Id, name);
+
+        var route = BuildRoamRoute(home, config.RoamRadius, index, character.Transform.ZoneId, _groundHeightProvider);
+        _stepExecutor.SetRoamRoute(character, route);
+
+        var store = PlayerBotMetadataStore.Instance;
+        store.RecordHome(character.Id, character.Transform.WorldId, character.Transform.ZoneId,
+            home.X, home.Y, home.Z);
+        store.RecordSchedule(character.Id,
+            BotSchedulePayload.PreserveExtensions(metadata.Schedule, BuildRoamScheduleJson(home, route, config.RoamRadius, index)));
+
+        _scheduler.Wake(character.Id);
+        Logger.Info("BotPresenceCoordinator: re-enrolled {Name} (id {Id}, state was {State}) — adopted, no new provision",
+            name, character.Id, previousState);
+        return true;
+    }
+
+    /// <summary>
+    /// Full fidelity for the demo set (single-step ladder: Dormant → Reduced →
+    /// Full). Shared by the fresh enrollment path and the reconciliation path
+    /// so both leave the bot exactly as visible to a human nearby.
+    /// </summary>
+    private void ApplyFullFidelity(uint characterId, string name)
+    {
+        var reduced = _director.TrySetFidelity(characterId, BotFidelity.Reduced, "presence-demo");
+        if (reduced != FidelityTransitionResult.Applied)
+            Logger.Warn("BotPresenceCoordinator: fidelity Reduced {Result} for {Name}", reduced, name);
+        var full = _director.TrySetFidelity(characterId, BotFidelity.Full, "presence-demo");
+        if (full != FidelityTransitionResult.Applied)
+            Logger.Warn("BotPresenceCoordinator: fidelity Full {Result} for {Name}", full, name);
     }
 
     /// <summary>
     /// Production "is this character name already taken?" probe — the live
     /// NameManager registry, which is loaded from the characters table at boot.
     /// Injected into <see cref="BotNameGenerator.NameFor"/> so name assignment
-    /// itself stays a pure, hermetic function of the roster index.
+    /// itself stays a pure, hermetic function of the roster index. Only reached
+    /// for an index whose managed account owns no bot character yet (T2
+    /// reconciliation resolves the existing name first).
     /// </summary>
     private static bool ProductionNameProbe(string name)
         => NameManager.Instance.GetCharacterId(name) != 0;

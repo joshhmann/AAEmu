@@ -15,6 +15,53 @@ public sealed record NeedsFarmModuleOptions
     /// <summary>Master gate. Default OFF.</summary>
     public bool Enabled { get; init; }
 
+    /// <summary>Opt-in hardbread supply through the existing public-farm loop; potato remains the default.</summary>
+    public bool ProduceHardBread { get; init; }
+
+    public const uint BarleySeedItemId = 15652;
+    public const uint BarleyItemId = 8005;
+    public const uint ProcessingKnifeItemId = 8326;
+    public const uint ProcessedGrainItemId = 30902;
+    public const uint HardBreadItemId = 17664;
+    public const uint HardBreadCraftId = 6751;
+    public const uint CookingDoodadId = 525;
+
+    public uint SeedItemTemplateId => ProduceHardBread ? BarleySeedItemId : BotRoamStepExecutor.NeedsFarmSeedItemTemplateId;
+    public uint HarvestItemTemplateId => ProduceHardBread ? BarleyItemId : BotRoamStepExecutor.NeedsFarmFoodItemTemplateId;
+    public long SeedUnitPrice => ProduceHardBread ? 75 : BotRoamStepExecutor.NeedsFarmSeedUnitPrice;
+
+    internal static int CountUnprotected(Character character, uint templateId, bool requireHealing = false)
+    {
+        var bag = character.Inventory?.Bag;
+        if (bag == null)
+            return 0;
+        var count = 0;
+        foreach (var item in bag.Items)
+        {
+            if (item.TemplateId == templateId && item.Template != null
+                && !OutOfCombatRecoveryModule.IsProtectedRecoveryItem(character, item)
+                && (!requireHealing || item.Template.LevelRequirement <= character.Level
+                    && OutOfCombatRecoveryModule.IsSupportedHealthConsumable(item)))
+                count += item.Count;
+        }
+        return count;
+    }
+
+    // Native reagent consumption may choose any matching stack. If any is
+    // protected, a policy cannot authorize that ingredient by counting another.
+    internal static bool HasProtectedIngredient(Character character, uint templateId)
+    {
+        var bag = character.Inventory?.Bag;
+        if (bag == null)
+            return true;
+        foreach (var item in bag.Items)
+        {
+            if (item.TemplateId == templateId && OutOfCombatRecoveryModule.IsProtectedRecoveryItem(character, item))
+                return true;
+        }
+        return false;
+    }
+
     /// <summary>Urgency above which a needy bot farms instead of roaming (the scenario rest line).</summary>
     public double UrgencyThreshold { get; init; } = 0.2;
 
@@ -23,6 +70,19 @@ public sealed record NeedsFarmModuleOptions
 
     /// <summary>Bag-count line the food need is measured against.</summary>
     public int FoodTarget { get; init; } = 5;
+
+    /// <summary>
+    /// Identical farm-leg failures (same action, same detail) before the module
+    /// stands aside (the T4 return path). One failure is a fact about one wake,
+    /// not about the farm.
+    /// </summary>
+    public int LegFailureThreshold { get; init; } = 2;
+
+    /// <summary>
+    /// Elections the module stands aside for once that bound is reached. Bounded
+    /// on purpose: a transient block must not disable the farm for the session.
+    /// </summary>
+    public int LegFailureStandAsideWakes { get; init; } = 20;
 
     /// <summary>Bag-count line the lumber need is measured against.</summary>
     public int LumberTarget { get; init; } = 5;
@@ -46,10 +106,9 @@ public sealed record NeedsFarmModuleOptions
     public static NeedsFarmModuleOptions FromEnvironment()
     {
         var env = Environment.GetEnvironmentVariable("AAEMU_NEEDS_FARM_ENABLED");
-        if (env is "0" or "false" or "False")
-            return new NeedsFarmModuleOptions { Enabled = false };
-        if (env is "1" or "true" or "True")
-            return new NeedsFarmModuleOptions { Enabled = true };
+        var breadEnv = Environment.GetEnvironmentVariable("AAEMU_FOOD_SUPPLY_ENABLED");
+        var enabled = env is "1" or "true" or "True";
+        var bread = breadEnv is "1" or "true" or "True";
         try
         {
             const string localConfig = "Config.Local.json";
@@ -57,16 +116,20 @@ public sealed record NeedsFarmModuleOptions
             {
                 var text = File.ReadAllText(localConfig);
                 using var doc = System.Text.Json.JsonDocument.Parse(text);
-                if (doc.RootElement.TryGetProperty("Bots", out var bots)
-                    && bots.TryGetProperty("EnableNeedsFarm", out var prop)
-                    && prop.ValueKind == System.Text.Json.JsonValueKind.True)
-                    return new NeedsFarmModuleOptions { Enabled = true };
+                if (doc.RootElement.TryGetProperty("Bots", out var bots))
+                {
+                    if (env is not ("0" or "false" or "False" or "1" or "true" or "True")
+                        && bots.TryGetProperty("EnableNeedsFarm", out var prop))
+                        enabled = prop.ValueKind == System.Text.Json.JsonValueKind.True;
+                    if (breadEnv == null && bots.TryGetProperty("ProduceHardBread", out var food))
+                        bread = food.ValueKind == System.Text.Json.JsonValueKind.True;
+                }
             }
         }
         catch
         {
         }
-        return new NeedsFarmModuleOptions { Enabled = false };
+        return new NeedsFarmModuleOptions { Enabled = enabled, ProduceHardBread = bread };
     }
 }
 
@@ -93,11 +156,28 @@ public sealed class NeedsFarmActivityModule : IBotActivityModule
 
     public int Priority { get; } = 55;
 
+    /// <inheritdoc />
+    public IReadOnlyList<string> DeclaredActivities => [ActivityName];
+
     /// <summary>Stable activity name (the arbiter's unit of change).</summary>
     public const string ActivityName = "needs.farm";
 
+    private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
     private readonly NeedsFarmModuleOptions _options;
     private readonly Func<ServerPressure> _pressureProbe;
+
+    // T4 return path (plan §7 T4, audit L3-b): this module's OWN leg, as the
+    // executor reported it (the arbiter hands the fact to the module that owned
+    // the leg, once). Identity is (action, detail): the same leg failing the same
+    // way is the farm being blocked or exhausted, a different failure is a fresh
+    // fact. The stand-aside is bounded by the options and dropped by a leg that
+    // did not fail and by a lifecycle generation change.
+    private sealed record LegFailure(ulong Generation, ActorActionType Action, string Detail, int Count, int StandAside);
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, LegFailure> _legFailures = new();
+    /// <summary>Read-only, generation-bound refusal for unchanged food-production facts.</summary>
+    public Func<PlayerBotRuntime, string?>? FoodEligibilityProvider { get; init; }
 
     public NeedsFarmActivityModule(
         NeedsFarmModuleOptions options,
@@ -125,6 +205,25 @@ public sealed class NeedsFarmActivityModule : IBotActivityModule
         if (_pressureProbe() is { } pressure && pressure >= ServerPressure.High)
             return BotActivityDecision.Deny($"held: server pressure {pressure} (world-budget observance)");
 
+        // T4 return path (plan §7 T4, audit L3-b): the leg this module's own
+        // activity issued came back terminal. One failure is a fact about one
+        // wake; the same failure twice means the farm is blocked or exhausted, so
+        // the module stands aside for a bounded number of elections and denies
+        // with the reason — the next band (roam) takes over instead of the same
+        // farm wake repeating.
+        if (StandAsideReason(context) is { } asideReason)
+            return BotActivityDecision.Deny(asideReason);
+
+
+        if (_options.ProduceHardBread)
+        {
+            if (FoodEligibilityProvider?.Invoke(context.Bot) is { } blocked)
+                return BotActivityDecision.Deny(blocked);
+            var bread = NeedsFarmModuleOptions.CountUnprotected(character, NeedsFarmModuleOptions.HardBreadItemId, requireHealing: true);
+            return bread < _options.FoodTarget
+                ? BotActivityDecision.Allow(ActivityName)
+                : BotActivityDecision.Deny($"usable hardbread reserve met ({bread}/{_options.FoodTarget})");
+        }
         // Needs peek straight off the ordinary Character record — no temp
         // actor, no observation plumbing: the module seam must stay cheap
         // and side-effect free. Unconfigured food/lumber dimensions count
@@ -158,6 +257,72 @@ public sealed class NeedsFarmActivityModule : IBotActivityModule
         ArgumentNullException.ThrowIfNull(context);
 
         return new BotActivity(ActivityName, Name);
+    }
+
+    /// <summary>
+    /// The module's own terminal leg, as reported through the T4 return path.
+    /// Returns the stand-aside reason while the farm is stepping aside, and null
+    /// otherwise — no fact, a leg that did not fail (which clears the memory), or
+    /// a failure that has not earned the bound yet (the farm is still tried).
+    /// </summary>
+    private string? StandAsideReason(BotActivityContext context)
+    {
+        var characterId = context.Bot.CharacterId;
+        if (context.LastLegOutcome is not { } leg)
+        {
+            if (_legFailures.TryGetValue(characterId, out var standing) && standing.StandAside > 0)
+            {
+                var left = standing.StandAside - 1;
+                if (left > 0)
+                {
+                    _legFailures[characterId] = standing with { StandAside = left };
+                    return $"farm still standing aside after {standing.Count} failed legs ({standing.Detail}); {left} elections left";
+                }
+
+                _legFailures.TryRemove(characterId, out _);
+                Logger.Info("Farm stand-aside over for bot {CharacterId}: trying the farm again after {Count} failed legs ({Detail})",
+                    characterId, standing.Count, standing.Detail);
+            }
+            return null;
+        }
+
+        if (leg.State != ActorLifecycleState.Rejected)
+        {
+            // Only a hard refusal counts as the farm being blocked or exhausted.
+            // A timed-out leg may still be recovered: the executor's own attempt
+            // bookkeeping already surfaces that class through
+            // FoodEligibilityProvider. A completed leg is progress and clears the
+            // memory; an interrupted or expired one leaves the streak as it was.
+            if (leg.State == ActorLifecycleState.Completed)
+                _legFailures.TryRemove(characterId, out _);
+            return null;
+        }
+
+        var detail = string.IsNullOrWhiteSpace(leg.Detail) ? leg.Action.ToString() : leg.Detail;
+        var same = _legFailures.TryGetValue(characterId, out var saved)
+            && saved.Generation == context.Bot.Generation
+            && saved.Action == leg.Action
+            && string.Equals(saved.Detail, detail, StringComparison.Ordinal);
+        var count = same ? saved!.Count + 1 : 1;
+        if (count < _options.LegFailureThreshold)
+        {
+            _legFailures[characterId] = new LegFailure(context.Bot.Generation, leg.Action, detail, count, 0);
+            Logger.Debug("Farm leg failed bot {CharacterId}: {Action} ({Detail}) {Count}/{Threshold} — still farming",
+                characterId, leg.Action, detail, count, _options.LegFailureThreshold);
+            return null;
+        }
+
+        var standAside = _options.LegFailureStandAsideWakes;
+        if (standAside <= 0)
+        {
+            _legFailures.TryRemove(characterId, out _);
+            return null;
+        }
+
+        _legFailures[characterId] = new LegFailure(context.Bot.Generation, leg.Action, detail, count, standAside);
+        var reason = $"farm leg failed {count} times the same way ({detail}) — standing aside for {standAside} elections";
+        Logger.Warn("Farm stand-aside bot {CharacterId}: {Reason}", characterId, reason);
+        return reason;
     }
 
     private static int CountInBag(Character character, uint templateId)

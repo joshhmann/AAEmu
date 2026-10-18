@@ -77,6 +77,9 @@ public class GameplayActor : IGameplayActor
     /// <summary>Default navigation budget for a Move request.</summary>
     public static readonly TimeSpan DefaultMoveTimeout = TimeSpan.FromSeconds(30);
 
+    /// <summary>Bounded wait for the ordinary item skill's native completion.</summary>
+    public static readonly TimeSpan DefaultItemUseTimeout = TimeSpan.FromSeconds(30);
+
     /// <summary>
     /// Default bounded post-cast effect-observation window (M7 hardening
     /// #4). Long enough to cover retail's delayed ApplySkillTask damage
@@ -231,13 +234,52 @@ public class GameplayActor : IGameplayActor
     /// <inheritdoc />
     public void SetPendingWakeSequence(long? wakeSequence) => _pendingWakeSeq = wakeSequence;
 
+    /// <summary>
+    /// Pending command origin for the next created request (the pending
+    /// pattern, same as the cycle-id staging). Staged by the control plane
+    /// before an operator-injected command runs; null = the bot's own
+    /// decision path.
+    /// </summary>
+    private string? _pendingCommandOrigin;
+
+    /// <inheritdoc />
+    public void SetPendingCommandOrigin(string? origin) => _pendingCommandOrigin = origin;
+
     public uint ActorId => Character.ObjId;
 
     public Character Character { get; }
 
     public ActorRequest? ActiveRequest => _active;
 
-    public IReadOnlyList<ActorAuditRecord> AuditTrace => _trace;
+    /// <summary>
+    /// Actual executor-owned work, read only on the game-loop boundary after
+    /// native cancellation. Pending cast-effect rows are read-only observations
+    /// of already-committed casts, not cancellable native requests. This is not
+    /// a substitute for the independent ordinary Character-idle check.
+    /// </summary>
+    internal bool IsNativeWorkQuiescent =>
+        _active is null
+        && _moveTarget is null
+        && _moveWaypoints is null
+        && _unstickWaypoint is null
+        && _moveCurrentSpeed == 0f
+        && _driveTarget is null
+        && _driveVehicle is null
+        && _pendingPutDownPackId is null
+        && _pendingItemUse is null
+        && _pendingCraft is null
+        && _craftMaterialSnapshot is null
+        && _craftProductSnapshot is null
+        && _pendingHarvest is null;
+
+    public IReadOnlyList<ActorAuditRecord> AuditTrace
+    {
+        get
+        {
+            lock (_trace)
+                return _trace.ToArray();
+        }
+    }
 
     /// <summary>
     /// Clock stamped onto every request this actor creates, so a request's
@@ -828,14 +870,8 @@ public class GameplayActor : IGameplayActor
         }
 
         // Determine appropriate auto-attack skill (2 = melee, 4 = ranged)
-        var dist = MathUtil.CalculateDistance(Character.Transform.World.Position, target.Transform.World.Position, false);
-        var role = CombatDecisionTree.InferRole(Character);
-        var hasRangedWeapon = Character.Inventory?.Equipment?.GetItemBySlot((int)EquipmentItemSlot.Ranged) != null
-            || Character.Equipment?.GetItemBySlot((int)EquipmentItemSlot.Ranged) != null;
-
-        uint autoAttackSkillId = (role == CombatRole.RangedPhysical || (dist > 4.0f && hasRangedWeapon))
-            ? CombatDecisionTree.BasicRangedAutoAttackSkillId   // 4u: 원거리 공격 (Ranged Auto Attack)
-            : CombatDecisionTree.BasicMeleeAutoAttackSkillId;  // 2u: 근접 공격 (Melee Auto Attack)
+        var autoAttackSkillId = CombatDecisionTree.SelectAutoAttackSkillId(
+            Character, Character.GetDistanceTo(target, true));
 
         // If already auto-attacking with the exact same skill on this target, complete immediately
         if (Character.IsAutoAttack && Character.AutoAttackTask?.Skill?.Template?.Id == autoAttackSkillId)
@@ -1044,8 +1080,12 @@ public class GameplayActor : IGameplayActor
         // world-state change. The token rides the row so a lane or an audit
         // reader can tell a landed advance from a declined one without
         // inferring it from prose — the terminal alone says Completed for both.
+        // The PAYLOAD is the applied verdict, not the terminal: Completed means
+        // "the step machine ran", so a step that changed nothing must not carry a
+        // success payload — consumers (the quest leg's landed flag, the sweep
+        // diagnostic) read this instead of inferring progress from the terminal.
         if (!ran && !progressed)
-            return Complete(request, true,
+            return Complete(request, false,
                 $"quest {questId} did not advance — step machine declined current step (step {stepAfter}, status {statusAfter})" +
                 $" [{QuestAdvanceOutcome.From(accepted: true, applied: false).Token}]");
 
@@ -1886,9 +1926,16 @@ public class GameplayActor : IGameplayActor
 
     public ActorRequest UseItem(uint itemTemplateId, uint targetObjId = 0, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.UseItem, itemTemplateId, idempotencyKey: idempotencyKey);
+        ExecutionBoundary.AssertOnExecutionThread("UseItem");
+
+        var request = NewRequest(ActorActionType.UseItem, itemTemplateId,
+            timeout: DefaultItemUseTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "use item"))
             return request;
+        if (Character.IsDead)
+            return Reject(request, ActorFailureReason.RejectedAction, "cannot use an item while dead");
+        if (Character.SkillTask != null || Character.ActivePlotState != null)
+            return Reject(request, ActorFailureReason.StateTransition, "character already has a native skill in progress");
 
         // 1. Resolve the item through NORMAL inventory services — the same
         //    template lookup the client's use-item path performs. Only the
@@ -1936,40 +1983,35 @@ public class GameplayActor : IGameplayActor
         //    unit-lookup hackfix (a parameterless SkillItem defaults to
         //    SkillCasterType.Unit and NoTargets through GetUnit(0)).
         var skill = new Skill(skillTemplate);
+        skill.ObserveExecution(request);
+        _pendingItemUse = (request, skill, item.Id);
         var caster = new SkillItem(Character.ObjId, item.Id, item.TemplateId);
         var castTarget = SkillCastTarget.GetByType(SkillCastTargetType.Unit);
         castTarget.ObjId = target.ObjId;
-        // Retain the ordinary skill-object metadata through both cast paths.
-        // Skill.Use only normalizes its local argument; passing null again to
-        // the manual completion would omit the fired packet's mandatory flag.
+        // Keep the mandatory metadata on the ordinary instant and queued paths.
         var skillObject = new SkillObject();
-        var result = skill.Use(Character, caster, castTarget, skillObject, false, out _);
-        if (result != SkillResult.Success)
-            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} use refused by engine: {result}");
-
-        // 4. Cast-time completion: casting-time skills (e.g. the farm-wagon
-        //    summon scroll's 5 s cast) apply their effects through a
-        //    CastTask scheduled on the task scheduler. That scheduler is
-        //    unreliable for headless bots (silent cancellation, late fires —
-        //    observed live: the cast landed minutes late or never). Drive
-        //    the cast synchronously instead — the exact call the CastTask
-        //    would make — then mark the skill cancelled so the stray
-        //    scheduled task bails out (CastTask checks Skill.Cancelled)
-        //    instead of double-casting.
-        if (Character.SkillTask != null)
+        SkillResult result;
+        try
         {
-            Character.SkillTask = null;
-            skill.Cast(Character, caster, target, castTarget, skillObject);
-            skill.Cancelled = true;
+            result = skill.Use(Character, caster, castTarget, skillObject, false, out _);
+        }
+        catch (Exception ex)
+        {
+            CancelOwnedItemSkill(skill);
+            _pendingItemUse = null;
+            return Interrupt(request, $"item {itemTemplateId} native skill failed: {ex.GetType().Name}: {ex.Message}");
+        }
+        if (result != SkillResult.Success)
+        {
+            CancelOwnedItemSkill(skill);
+            _pendingItemUse = null;
+            return Reject(request, ActorFailureReason.RejectedAction, $"item {itemTemplateId} use refused by engine: {result}");
         }
 
-        // 5. Record the applied-effect fingerprint (B1 idempotency layer):
-        //    correlation for the M8 economic audit. The request-level key
-        //    dedupe is the PRIMARY retry guard — a same-key retry is
-        //    rejected pre-flight, so the item can never be consumed twice
-        //    by a retry; the item charge count is the engine-true backstop.
-        _ledger.RecordEffect(ActorIdempotency.EffectKey("itemuse", itemTemplateId, item.Id.ToString()), request.TraceId);
-        return Complete(request, result, $"item {itemTemplateId} used (skill {itemTemplate.UseSkillId})");
+        // Success accepts the cast, not its future effects. Tick only observes
+        // this exact skill; CastTask/ApplySkillTask/plots remain engine-owned.
+        ObserveItemUse(request);
+        return request;
     }
 
     public ActorRequest Equip(uint itemTemplateId, string? idempotencyKey = null)
@@ -3763,11 +3805,19 @@ public class GameplayActor : IGameplayActor
         "DoodadFuncCutdowning"
     ];
 
+    public static readonly TimeSpan DefaultHarvestTimeout = TimeSpan.FromSeconds(30);
+    private (ActorRequest Request, Skill Skill, Doodad Doodad, uint Phase, int InventoryUnits)? _pendingHarvest;
+
     public ActorRequest Harvest(uint doodadObjId, string? idempotencyKey = null)
     {
-        var request = NewRequest(ActorActionType.Harvest, doodadObjId, idempotencyKey: idempotencyKey);
+        var request = NewRequest(ActorActionType.Harvest, doodadObjId,
+            timeout: DefaultHarvestTimeout, idempotencyKey: idempotencyKey);
         if (!TryBegin(request, "harvest"))
             return request;
+        if (Character.IsDead)
+            return Reject(request, ActorFailureReason.RejectedAction, "cannot harvest while dead");
+        if (Character.SkillTask != null || Character.ActivePlotState != null)
+            return Reject(request, ActorFailureReason.StateTransition, "character already has a native skill in progress");
 
         var doodad = Character.ParentWorld?.GetDoodad(doodadObjId);
         if (doodad == null)
@@ -3788,105 +3838,98 @@ public class GameplayActor : IGameplayActor
             return Reject(request, ActorFailureReason.StateTransition,
                 $"doodad {doodadObjId} not harvestable in phase {doodad.FuncGroupId} (no loot-linked interaction func)");
 
+        var harvestSkillTemplate = SkillManager.Instance.GetSkillTemplate(harvestSkillId);
+        if (harvestSkillTemplate == null)
+            return Reject(request, ActorFailureReason.RejectedAction, $"harvest skill {harvestSkillId} not found in game data");
+        var skill = new Skill(harvestSkillTemplate);
+        var laborCost = skill.GetLaborCost(Character);
+        if (Character.LaborPower < laborCost)
+            return Reject(request, ActorFailureReason.RejectedAction,
+                $"harvest requires {laborCost} labor (has {Character.LaborPower})");
+
         // Turn character to face the crop doodad
         var angle = MathUtil.CalculateAngleFrom(Character.Transform.World.Position, doodad.Transform.World.Position);
         Character.Transform.Local.SetRotationDegree(0f, 0f, (float)angle - 90);
         Character.Transform.FinalizeTransform();
 
-        var phaseBefore = doodad.FuncGroupId;
-        var yieldBefore = InventoryUnitCount();
-        request.Start($"harvesting doodad {doodadObjId} (phase {phaseBefore}, skill {harvestSkillId})");
+        request.Payload = new HarvestParams(harvestSkillId, harvestSkillTemplate.CastingTime);
+        request.Start($"harvesting doodad {doodadObjId} (phase {doodad.FuncGroupId}, skill {harvestSkillId})");
+        skill.ObserveExecution(request);
+        _pendingHarvest = (request, skill, doodad, doodad.FuncGroupId, InventoryUnitCount());
+        var caster = SkillCaster.GetByType(SkillCasterType.Unit);
+        caster.ObjId = Character.ObjId;
+        var target = SkillCastTarget.GetByType(SkillCastTargetType.Doodad);
+        target.ObjId = doodadObjId;
 
-        // Broadcast skill start so observers in the world see the harvest animation
-        var harvestSkillTemplate = SkillManager.Instance.GetSkillTemplate(harvestSkillId);
-        var castTimeMs = (int)(harvestSkillTemplate?.CastingTime ?? 4000);
-        request.Payload = new HarvestParams(harvestSkillId, castTimeMs);
-
-        if (harvestSkillTemplate != null)
+        // Q-harvest-seam: the ordinary common-skill branch owns cast timing,
+        // packets, protection, adjusted labor and vocation. Only its exact
+        // native execution is observed/cancelled; no hand-completed crop loop.
+        SkillResult result;
+        try
         {
-            var skill = new Skill(harvestSkillTemplate);
-            var caster = SkillCaster.GetByType(SkillCasterType.Unit);
-            caster.ObjId = Character.ObjId;
-            var target = SkillCastTarget.GetByType(SkillCastTargetType.Doodad);
-            target.ObjId = doodad.ObjId;
-            Character.BroadcastPacket(new SCSkillStartedPacket(harvestSkillId, 0, caster, target, skill, new SkillObject())
-            {
-                BaseCastTimeDiv10 = (ushort)(harvestSkillTemplate.CastingTime / 10),
-                RealCastTimeDiv10 = (ushort)(harvestSkillTemplate.CastingTime / 10)
-            }, true);
+            result = skill.Use(Character, caster, target, new SkillObject(), false, out _);
         }
-
-        var doodadTemplateId = doodad.TemplateId;
-
-        // The REAL engine path: the same doodad.Use(caster, skill) chain the
-        // client's harvest interaction drives. Inside this single call the
-        // phase machine runs the whole crop loop synchronously (proven by
-        // CropHarvestLoopTests): mature → looting (DoodadFuncLootPack grants
-        // the pack through the ordinary inventory grant path) → final →
-        // doodad deleted (plot reset).
-        //
-        // Q-harvest-seam (Phase-0 decision, for Phase-1 implementation): this
-        // synchronous call + the authored Started/Fired/Ended packets below
-        // must converge onto Skill.Use with a Doodad target and
-        // bypassGcd=false (the CSStartSkillPacket common-skill branch), with
-        // async completion through the real CastTask (hold Running, verify
-        // post-state as today). Labor then flows through the pipeline
-        // (EndSkill: actability multiplier + sufficiency + vocation) and the
-        // manual ChangeLabor below plus all three authored packets are
-        // deleted — observer packets must be engine emissions. Pre-validation
-        // (resolve/range/despawn/phase-skill), facing, post-verification, and
-        // the harvest:<objId> effect fingerprint stay exactly as they are.
-        doodad.Use(Character, harvestSkillId);
-
-        // Emit canonical skill fired, deduct labor power, and emit skill ended (matches wire trace)
-        if (harvestSkillTemplate != null)
+        catch (Exception ex)
         {
-            var skill = new Skill(harvestSkillTemplate);
-            var caster = SkillCaster.GetByType(SkillCasterType.Unit);
-            caster.ObjId = Character.ObjId;
-            var target = SkillCastTarget.GetByType(SkillCastTargetType.Doodad);
-            target.ObjId = doodadObjId;
-            Character.BroadcastPacket(new SCSkillFiredPacket(harvestSkillId, 0, caster, target, skill, new SkillObject()), true);
+            CancelOwnedItemSkill(skill);
+            _pendingHarvest = null;
+            return Interrupt(request, $"harvest native skill failed: {ex.GetType().Name}: {ex.Message}");
         }
-
-        var laborCost = harvestSkillTemplate?.ConsumeLaborPower ?? 0;
-        if (laborCost > 0 && Character.LaborPower >= laborCost)
+        if (result != SkillResult.Success)
         {
-            Character.ChangeLabor((short)-laborCost, harvestSkillTemplate?.ActabilityGroupId ?? 0);
-            if (PlayerTraceService.Instance.IsActive)
+            CancelOwnedItemSkill(skill);
+            _pendingHarvest = null;
+            return Reject(request, ActorFailureReason.RejectedAction, $"harvest refused by engine: {result}");
+        }
+        ObserveHarvest(request);
+        return request;
+    }
+
+    private bool ObserveHarvest(ActorRequest request, string? interruptedDetail = null, bool timedOut = false)
+    {
+        if (_pendingHarvest is not { } pending || !ReferenceEquals(pending.Request, request))
+            return false;
+        lock (pending.Skill.ExecutionLock)
+        {
+            var state = pending.Skill.ExecutionState;
+            if (state == SkillExecutionState.Pending)
+                return false;
+            var yieldDelta = InventoryUnitCount() - pending.InventoryUnits;
+            var phaseChanged = pending.Doodad.FuncGroupId != pending.Phase;
+            _pendingHarvest = null;
+            if (state == SkillExecutionState.Completed && phaseChanged && yieldDelta > 0)
             {
-                PlayerTraceService.Instance.RecordResource(Character, "labor_spent", "labor", -laborCost, Character.LaborPower, new
-                {
-                    ActabilityId = harvestSkillTemplate?.ActabilityGroupId ?? 0
-                });
+                _ledger.RecordEffect(ActorIdempotency.EffectKey("harvest", request.TargetId), request.TraceId);
+                Complete(request, yieldDelta,
+                    $"harvested doodad {request.TargetId} (phase {pending.Phase} → {pending.Doodad.FuncGroupId}, yield {yieldDelta} unit(s))");
+                return true;
             }
+            CancelOwnedItemSkill(pending.Skill);
+            if (timedOut || state == SkillExecutionState.TimedOut)
+                Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action), "harvest native execution exceeded action budget"));
+            else if (!phaseChanged && yieldDelta == 0 && interruptedDetail == null
+                && (state == SkillExecutionState.Completed || Character.SkillCancelled || state == SkillExecutionState.Refused))
+                Reject(request, ActorFailureReason.RejectedAction,
+                    $"doodad {request.TargetId} harvest refused by engine (phase {pending.Phase} unchanged)");
+            else
+                Interrupt(request, interruptedDetail ?? $"harvest native execution {state} (phase changed: {phaseChanged}, yield {yieldDelta})");
+            return true;
         }
+    }
 
-        Character.BroadcastPacket(new SCSkillEndedPacket(0), true);
-
-        if (PlayerTraceService.Instance.IsActive)
+    private bool CancelOwnedHarvest(ActorRequest request, string detail, bool timedOut = false)
+    {
+        if (_pendingHarvest is not { } pending || !ReferenceEquals(pending.Request, request))
+            return false;
+        lock (pending.Skill.ExecutionLock)
         {
-            PlayerTraceService.Instance.RecordInteraction(Character, "doodad_use", doodadObjId, "Doodad", new
-            {
-                TemplateId = doodadTemplateId,
-                Phase = phaseBefore,
-                SkillId = harvestSkillId
-            });
+            // A committed callback wins even when an interrupt reaches the
+            // actor before its next observation tick.
+            if (ObserveHarvest(request))
+                return true;
+            CancelOwnedItemSkill(pending.Skill);
+            return ObserveHarvest(request, detail, timedOut);
         }
-
-        // Post-state verification: the crop must be gone (final phase deletes
-        // it) or at least advanced. An unchanged phase means the engine
-        // refused the interaction (permissions/conditions) — surface that as
-        // a Rejected instead of a silent no-op.
-        var after = Character.ParentWorld?.GetDoodad(doodadObjId);
-        if (after != null && after.FuncGroupId == phaseBefore)
-            return Reject(request, ActorFailureReason.RejectedAction,
-                $"doodad {doodadObjId} harvest refused by engine (phase {phaseBefore} unchanged)");
-
-        var yieldDelta = InventoryUnitCount() - yieldBefore;
-        _ledger.RecordEffect(ActorIdempotency.EffectKey("harvest", doodadObjId), request.TraceId);
-        return Complete(request, yieldDelta,
-            $"harvested doodad {doodadObjId} (phase {phaseBefore} → {(after == null ? "deleted" : after.FuncGroupId.ToString())}, yield {yieldDelta} unit(s))");
     }
 
     /// <summary>
@@ -3941,6 +3984,7 @@ public class GameplayActor : IGameplayActor
     /// </summary>
     private Dictionary<uint, int>? _craftMaterialSnapshot;
     private Dictionary<uint, int>? _craftProductSnapshot;
+    private (ActorRequest Request, Skill Skill, Doodad? Doodad)? _pendingCraft;
 
     public ActorRequest Craft(uint craftId, uint doodadObjId, TimeSpan? timeout = null, string? idempotencyKey = null)
     {
@@ -4034,12 +4078,15 @@ public class GameplayActor : IGameplayActor
             .ToDictionary(g => g.Key, g => GetCraftItemCount(g.Key));
 
         request.Start($"crafting {craftId} (bench {doodadObjId}, skill {craft.SkillId})");
+        var skill = new Skill(skillTemplate);
+        skill.ObserveExecution(request);
+        _pendingCraft = (request, skill, Character.ParentWorld?.GetDoodad(doodadObjId));
 
         // The REAL engine entry: the exact call CSExecuteCraft makes
         // (count=1 — one engine step). The queue runs through the normal
         // skill pipeline (CraftTask → cast → CraftEffect.Apply → EndCraft);
         // Tick() observes the queue drain and completes the request.
-        Character.Craft.Craft(craft, 1, doodadObjId);
+        Character.Craft.Craft(craft, 1, doodadObjId, skill);
         return request;
     }
 
@@ -4063,6 +4110,64 @@ public class GameplayActor : IGameplayActor
     {
         _craftMaterialSnapshot = null;
         _craftProductSnapshot = null;
+        _pendingCraft = null;
+    }
+
+    private bool ObserveCraft(ActorRequest request, string? interruptedDetail = null, bool timedOut = false)
+    {
+        if (_pendingCraft is not { } pending || !ReferenceEquals(pending.Request, request))
+            return false;
+        lock (pending.Skill.ExecutionLock)
+        {
+            var state = pending.Skill.ExecutionState;
+            if (state == SkillExecutionState.Pending ||
+                state == SkillExecutionState.Completed && Character.Craft.OwnsCraft(pending.Skill))
+                return false;
+            if (state != SkillExecutionState.Completed)
+            {
+                Character.Craft.CancelCraft(pending.Skill, pending.Doodad);
+                ClearCraftSnapshot();
+                if (timedOut || state == SkillExecutionState.TimedOut)
+                    Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action), "craft native execution exceeded action budget"));
+                else
+                    Interrupt(request, interruptedDetail ?? $"craft {request.TargetId} native skill interrupted");
+                return true;
+            }
+
+            var craft = CraftManager.Instance.GetCraftById(request.TargetId);
+            var consumedAll = craft != null && (craft.CraftMaterials.Count == 0
+                ? _craftProductSnapshot.Any(kv => GetCraftItemCount(kv.Key) > kv.Value)
+                : craft.CraftMaterials.All(m => _craftMaterialSnapshot.GetValueOrDefault(m.ItemId, 0)
+                    - GetCraftItemCount(m.ItemId) >= m.Amount));
+            if (!consumedAll)
+            {
+                ClearCraftSnapshot();
+                Finish(request, request.Reject(ActorFailureReason.RejectedAction,
+                    $"craft {request.TargetId} step refused by engine (materials not consumed)"));
+                return true;
+            }
+
+            var granted = _craftProductSnapshot
+                .Where(kv => GetCraftItemCount(kv.Key) > kv.Value)
+                .Select(kv => new CraftProductGrant(kv.Key, GetCraftItemCount(kv.Key) - kv.Value))
+                .ToList();
+            _ledger.RecordEffect(ActorIdempotency.EffectKey("craft", request.TargetId), request.TraceId);
+            ClearCraftSnapshot();
+            Finish(request, request.Complete(new CraftResult(request.TargetId, granted),
+                $"craft {request.TargetId} step completed (materials consumed, {granted.Count} product row(s) granted)"));
+            return true;
+        }
+    }
+
+    private bool CancelOwnedCraft(ActorRequest request, string detail, bool timedOut = false)
+    {
+        if (_pendingCraft is not { } pending || !ReferenceEquals(pending.Request, request))
+            return false;
+        lock (pending.Skill.ExecutionLock)
+        {
+            Character.Craft.CancelCraft(pending.Skill, pending.Doodad);
+            return ObserveCraft(request, detail, timedOut);
+        }
     }
 
     #endregion
@@ -4268,6 +4373,7 @@ public class GameplayActor : IGameplayActor
     private float _driveSpeed;
     private BaseUnit? _driveVehicle;
     private ulong? _pendingPutDownPackId;
+    private (ActorRequest Request, Skill Skill, ulong ItemId)? _pendingItemUse;
     private readonly List<PendingCastEffect> _pendingCastEffects = [];
 
     /// <summary>
@@ -4292,6 +4398,28 @@ public class GameplayActor : IGameplayActor
         if (_active is not { IsTerminal: false } request)
             return;
 
+        if (_pendingItemUse is { } pendingItem && ReferenceEquals(pendingItem.Request, request))
+        {
+            if (Character.IsDead)
+                CancelOwnedItemSkill(pendingItem.Skill);
+            if (ObserveItemUse(request, Character.IsDead ? "item use interrupted by death" : null))
+                return;
+        }
+        if (_pendingCraft is { } pendingCraft && ReferenceEquals(pendingCraft.Request, request))
+        {
+            if (Character.IsDead && CancelOwnedCraft(request, "craft interrupted by death"))
+                return;
+            if (ObserveCraft(request))
+                return;
+        }
+        if (_pendingHarvest is { } pendingHarvest && ReferenceEquals(pendingHarvest.Request, request))
+        {
+            if (Character.IsDead && CancelOwnedHarvest(request, "harvest interrupted by death"))
+                return;
+            if (ObserveHarvest(request))
+                return;
+        }
+
         request.AddElapsed(elapsed);
 
         // Timeout enforcement on EVERY action that carries a budget — not
@@ -4303,66 +4431,33 @@ public class GameplayActor : IGameplayActor
             // must see the standstill (dossier §1.6).
             if (request.Action is ActorActionType.Move && _moveTarget != null)
                 BroadcastStop();
+            if (_pendingItemUse is { } timedItem && ReferenceEquals(timedItem.Request, request))
+            {
+                CancelOwnedItemSkill(timedItem.Skill);
+                // A native callback may have completed just before cancellation.
+                if (timedItem.Skill.ExecutionState == SkillExecutionState.Completed)
+                {
+                    ObserveItemUse(request);
+                    return;
+                }
+                _pendingItemUse = null;
+            }
+            if (CancelOwnedCraft(request, "craft action budget exceeded", timedOut: true))
+                return;
+            if (CancelOwnedHarvest(request, "harvest action budget exceeded", timedOut: true))
+                return;
             Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action),
                 request.Action is ActorActionType.Move or ActorActionType.Drive ? "navigation budget exceeded" : "action budget exceeded"));
             ClearMovementState();
             ClearCraftSnapshot();
             return;
         }
-
-        // Craft completion: the request is Running while the engine craft
-        // queue is active. When the queue drains, the engine step finished
-        // (EndCraft ran — products granted + materials consumed, or the
-        // engine refused mid-step). Outcome is read from the bag snapshot
-        // taken before the step.
-        if (request.Action == ActorActionType.Craft && _craftMaterialSnapshot != null)
-        {
-            var craft = CraftManager.Instance.GetCraftById(request.TargetId);
-            if (craft == null)
-            {
-                ClearCraftSnapshot();
-                Finish(request, request.Reject(ActorFailureReason.RejectedAction,
-                    $"craft {request.TargetId} vanished from manager"));
-                return;
-            }
-
-            if (Character.Craft?.IsCraftQueueActive == true)
-                return; // engine step still running — keep waiting
-
-            // Queue drained. Success signal: every material row was
-            // consumed (EndCraft consumes BEFORE granting, so consumption
-            // proves the step executed). A rate-failed product row still
-            // counts as a completed step (canonical behavior).
-            var consumedAll = craft.CraftMaterials.Count == 0
-                ? _craftProductSnapshot.Any(kv => GetCraftItemCount(kv.Key) > kv.Value)
-                : craft.CraftMaterials.All(m =>
-                    _craftMaterialSnapshot.GetValueOrDefault(m.ItemId, 0)
-                    - GetCraftItemCount(m.ItemId) >= m.Amount);
-
-            if (!consumedAll)
-            {
-                ClearCraftSnapshot();
-                Finish(request, request.Reject(ActorFailureReason.RejectedAction,
-                    $"craft {request.TargetId} step refused by engine (materials not consumed)"));
-                return;
-            }
-
-            var granted = _craftProductSnapshot
-                .Where(kv => GetCraftItemCount(kv.Key) > kv.Value)
-                .Select(kv => new CraftProductGrant(kv.Key,
-                    GetCraftItemCount(kv.Key) - kv.Value))
-                .ToList();
-            // Record the applied-effect fingerprint (B1 idempotency layer):
-            // correlation for the M8 economic audit — the trace that
-            // crafted this recipe. The request-level key dedupe is the
-            // PRIMARY retry guard; the consumed materials are the
-            // engine-true backstop (a fresh-key retry finds nothing left).
-            _ledger.RecordEffect(ActorIdempotency.EffectKey("craft", request.TargetId), request.TraceId);
-            ClearCraftSnapshot();
-            Finish(request, request.Complete(new CraftResult(request.TargetId, granted),
-                $"craft {request.TargetId} step completed (materials consumed, {granted.Count} product row(s) granted)"));
+        if (request.Action is ActorActionType.UseItem or ActorActionType.Harvest)
             return;
-        }
+
+
+        if (request.Action == ActorActionType.Craft)
+            return;
 
         // Put-down completion: the live pack put-down skills are plot-only
         // (the engine dispatches the plot via Task.Run and returns Success
@@ -4751,6 +4846,43 @@ public class GameplayActor : IGameplayActor
         ClearDriveState();
     }
 
+    private bool ObserveItemUse(ActorRequest request, string? interruptedDetail = null)
+    {
+        if (_pendingItemUse is not { } pending || !ReferenceEquals(pending.Request, request))
+            return false;
+        var state = pending.Skill.ExecutionState;
+        if (state == SkillExecutionState.Pending)
+            return false;
+
+        _pendingItemUse = null;
+        if (state == SkillExecutionState.Completed)
+        {
+            _ledger.RecordEffect(ActorIdempotency.EffectKey("itemuse", request.TargetId, pending.ItemId.ToString()), request.TraceId);
+            Complete(request, SkillResult.Success, $"item {request.TargetId} used (skill {pending.Skill.Id}, ordinary effects completed)");
+        }
+        else
+        {
+            CancelOwnedItemSkill(pending.Skill);
+            if (state == SkillExecutionState.Refused)
+                Reject(request, ActorFailureReason.RejectedAction, $"item {request.TargetId} native cast refused its source item");
+            else if (state == SkillExecutionState.TimedOut)
+                Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action), "item skill native callback exceeded action budget"));
+            else
+                Interrupt(request, interruptedDetail ?? $"item {request.TargetId} native skill " +
+                    (state == SkillExecutionState.Failed ? "failed" : "interrupted"));
+        }
+        return true;
+    }
+
+    private void CancelOwnedItemSkill(Skill skill)
+    {
+        var task = Character.SkillTask;
+        if (task is AAEmu.Game.Models.Tasks.Skills.EndChannelingTask channel && ReferenceEquals(channel.Skill, skill))
+            skill.Stop(Character, channel._channelDoodad);
+        else
+            skill.Stop(Character);
+    }
+
     private void ClearDriveState()
     {
         _driveTarget = null;
@@ -4825,16 +4957,21 @@ public class GameplayActor : IGameplayActor
     /// </summary>
     private void AttachCastEffectObservation(PendingCastEffect pending, int hpAfter, bool observed)
     {
-        var index = _trace.FindIndex(r => r.TraceId == pending.TraceId);
-        if (index < 0)
-            return;
-        _trace[index] = _trace[index] with
+        ActorAuditRecord record;
+        lock (_trace)
         {
-            TargetHpBefore = pending.HpBefore,
-            TargetHpAfter = hpAfter,
-            EffectObserved = observed,
-            EffectWait = pending.Elapsed
-        };
+            var index = _trace.FindIndex(r => r.TraceId == pending.TraceId);
+            if (index < 0)
+                return;
+            record = _trace[index] with
+            {
+                TargetHpBefore = pending.HpBefore,
+                TargetHpAfter = hpAfter,
+                EffectObserved = observed,
+                EffectWait = pending.Elapsed
+            };
+            _trace[index] = record;
+        }
 
         // Telemetry (M7 hardening #4 surfacing): the audit ring is in-memory
         // only, so the engine's OWN before/after for a swing was written and
@@ -4846,7 +4983,7 @@ public class GameplayActor : IGameplayActor
         Logger.Info(
             "BotCastEffectResolved trace={TraceId} actor={ActorId} target={TargetId} action={Action} " +
             "hpBefore={HpBefore} hpAfter={HpAfter} delta={Delta} observed={Observed} waitMs={WaitMs:F0}",
-            pending.TraceId, ActorId, pending.Target.ObjId, _trace[index].Action,
+            pending.TraceId, ActorId, pending.Target.ObjId, record.Action,
             pending.HpBefore, hpAfter, hpAfter - pending.HpBefore, observed,
             pending.Elapsed.TotalMilliseconds);
     }
@@ -4883,6 +5020,11 @@ public class GameplayActor : IGameplayActor
         {
             request.SetMoveOwner(_pendingMoveOwner);
             _pendingMoveOwner = null;
+        }
+        if (_pendingCommandOrigin != null)
+        {
+            request.SetCommandOrigin(_pendingCommandOrigin);
+            _pendingCommandOrigin = null;
         }
         return request;
     }
@@ -4940,13 +5082,29 @@ public class GameplayActor : IGameplayActor
         }
         if (_active is { IsTerminal: false } request)
         {
+            if (_pendingItemUse is { } pendingItem && ReferenceEquals(pendingItem.Request, request))
+            {
+                CancelOwnedItemSkill(pendingItem.Skill);
+                if (ObserveItemUse(request, detail))
+                {
+                    ClearMovementState();
+                    ClearCraftSnapshot();
+                    return;
+                }
+            }
+            if (CancelOwnedCraft(request, detail))
+            {
+                ClearMovementState();
+                return;
+            }
+            if (CancelOwnedHarvest(request, detail))
+            {
+                ClearMovementState();
+                return;
+            }
             Finish(request, request.Interrupt(detail));
         }
         ClearMovementState();
-        // An interrupted craft request stops watching the engine queue; the
-        // queue itself is engine truth and keeps running (the step either
-        // lands or not — a fresh-key retry is protected by the consumed
-        // materials / active-queue gates).
         ClearCraftSnapshot();
     }
 
@@ -4986,7 +5144,7 @@ public class GameplayActor : IGameplayActor
         // replace the original (possibly locked) outcome under the key.
         if (!request.IsDedupeRejection)
             _ledger.TryRecordOutcome(request.IdempotencyKey, request.TraceId, request.State, request.Failure);
-        _trace.Add(new ActorAuditRecord(
+        var record = new ActorAuditRecord(
             request.TraceId, ActorId, request.Action, request.TargetId,
             request.RequestedAtUtc, request.StartedAtUtc, request.CompletedAtUtc,
             request.State, request.Failure, request.Detail, request.StateChanges.ToList(),
@@ -4994,23 +5152,30 @@ public class GameplayActor : IGameplayActor
             DecisionCandidates: request.DecisionCandidates, DecisionRejections: request.DecisionRejections,
             DecisionSeed: request.DecisionSeed, DecisionCycleId: request.DecisionCycleId,
             WakeSequence: request.WakeSequence, MoveOwner: request.MoveOwner,
-            DecisionQuestId: request.DecisionQuestId));
+            DecisionQuestId: request.DecisionQuestId, CommandOrigin: request.CommandOrigin);
+        lock (_trace)
+        {
+            _trace.Add(record);
+            if (_trace.Count > MaxTraceRecords)
+                _trace.RemoveRange(0, _trace.Count - MaxTraceRecords);
+        }
         // Telemetry: one bounded line per terminal transition so a lane log
         // joins ACCEPTED→Running (BotMoveStart) to its terminal outcome.
         // Move/Drive legs log at Info (legs are seconds-to-minutes long);
         // all other actions stay at Debug.
         LogMoveTerminal(request);
         LogQuestTravelTerminal(request);
-        if (_trace.Count > MaxTraceRecords)
-            _trace.RemoveRange(0, _trace.Count - MaxTraceRecords);
         if (ReferenceEquals(_active, request))
             _active = null;
     }
 
     public ActorAuditRecord? FindByKey(string idempotencyKey)
-        => _ledger.TryGetOutcome(idempotencyKey, out var entry)
-            ? _trace.LastOrDefault(r => r.TraceId == entry.TraceId)
-            : null;
+    {
+        if (!_ledger.TryGetOutcome(idempotencyKey, out var entry))
+            return null;
+        lock (_trace)
+            return _trace.LastOrDefault(r => r.TraceId == entry.TraceId);
+    }
 
     /// <inheritdoc />
     /// <remarks>
@@ -5037,7 +5202,9 @@ public class GameplayActor : IGameplayActor
                 return new CastEffectObservation(CastEffectResolution.Pending, pending.HpBefore);
         }
 
-        var record = _trace.LastOrDefault(r => r.TraceId == traceId);
+        ActorAuditRecord? record;
+        lock (_trace)
+            record = _trace.LastOrDefault(r => r.TraceId == traceId);
         if (record is null || (record.TargetHpBefore is null && record.TargetHpAfter is null && record.EffectObserved is null))
             return default;
 
@@ -5047,6 +5214,29 @@ public class GameplayActor : IGameplayActor
     /// <inheritdoc />
     public bool RecordBackstopTimeout(ActorRequest request)
     {
+        if (!request.IsTerminal && _pendingItemUse is { } pending
+            && ReferenceEquals(pending.Request, request) && ReferenceEquals(ActiveRequest, request))
+        {
+            if (ObserveItemUse(request))
+                return true;
+            CancelOwnedItemSkill(pending.Skill);
+            if (pending.Skill.ExecutionState == SkillExecutionState.Completed)
+                return ObserveItemUse(request);
+            _pendingItemUse = null;
+            Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action),
+                "action budget exceeded (queue backstop)"));
+            return true;
+        }
+        if (!request.IsTerminal && _pendingCraft is { } pendingCraft
+            && ReferenceEquals(pendingCraft.Request, request) && ReferenceEquals(ActiveRequest, request))
+        {
+            if (ObserveCraft(request))
+                return true;
+            return CancelOwnedCraft(request, "action budget exceeded (queue backstop)", timedOut: true);
+        }
+        if (!request.IsTerminal && _pendingHarvest is { } pendingHarvest
+            && ReferenceEquals(pendingHarvest.Request, request) && ReferenceEquals(ActiveRequest, request))
+            return CancelOwnedHarvest(request, "action budget exceeded (queue backstop)", timedOut: true);
         // Q-ledger parity: the queue expired this request past its budget
         // without Finish running. Lock the explicit key as TimedOut — the
         // execution started and the effect may have applied, exactly like

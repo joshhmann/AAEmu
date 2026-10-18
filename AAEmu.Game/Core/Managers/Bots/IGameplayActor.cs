@@ -77,6 +77,16 @@ public interface IGameplayActor
     /// </summary>
     void SetPendingWakeSequence(long? wakeSequence);
 
+    /// <summary>
+    /// Stages who asked for the next created request — <c>"control-api"</c>
+    /// for an operator-injected control-plane command, null for the bot's own
+    /// decision path (any other non-null value is caller-supplied). Copied
+    /// into the request and its audit record at Finish so an injected row is
+    /// never read as the bot's own decision. Telemetry only: it never changes
+    /// a request's lifecycle or outcome.
+    /// </summary>
+    void SetPendingCommandOrigin(string? origin);
+
     /// <summary>Structured trace of every request (newest last, bounded).</summary>
     IReadOnlyList<ActorAuditRecord> AuditTrace { get; }
 
@@ -84,6 +94,10 @@ public interface IGameplayActor
     /// Observation snapshot — direct server-state query (region lists,
     /// WorldManager, character state). NO packets (spec §8).
     /// Emits an audit record (Observe, Completed).
+    /// Nearby candidates are object ids only: no per-candidate level/hp/
+    /// hostility and no skill cost, cooldown, GCD, availability or visibility
+    /// fact is carried (audit L1.2, Stage A / A2) — consumers read the
+    /// authoritative service at action time instead of assuming one.
     /// </summary>
     ActorObservation Observe();
 
@@ -915,13 +929,12 @@ public interface IGameplayActor
     /// </summary>
     CastEffectObservation GetCastEffectObservation(Guid traceId) => default;
     /// <summary>
-    /// Records a queue-backstop expiry as a ledger outcome: the request was
-    /// force-transitioned to TimedOut without the actor's Finish running, so
-    /// without this the explicit idempotency key stays unrecorded and a
-    /// same-key retry would execute instead of being dedupe-refused.
-    /// Returns true when an outcome was recorded. Default no-op (false) so
-    /// delegating/fake implementations are unaffected; the production actor
-    /// overrides this to lock the key exactly like any other TimedOut.
+    /// Reconciles a queue backstop before external expiry. An owned pending
+    /// item first observes native completion or cancels its exact skill and
+    /// records expiry; true means the request is settled. Otherwise records
+    /// an already TimedOut request so its explicit key cannot execute again.
+    /// Default false leaves expiry/ledger recording to the caller for actors
+    /// without an independently scheduled item lifecycle.
     /// </summary>
     bool RecordBackstopTimeout(ActorRequest request) => false;
 

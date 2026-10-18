@@ -761,6 +761,64 @@ public class QuestObjectiveCombatTests
     /// whatever distance it happens to be standing at.
     /// </summary>
     [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task MeleeRole_EquippedBowUsesOrdinaryRange_IncludingHeight(bool elevated)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("cb-melee-bow-" + elevated);
+        actor.Character.Ability1 = AbilityType.Fight;
+        actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
+        const uint bowTemplateId = 90771;
+        GameplayActorTestRig.SeedEquipItemTemplate(bowTemplateId,
+            AAEmu.Game.Models.Game.Items.EquipmentItemSlotType.Ranged);
+        var bow = (AAEmu.Game.Models.Game.Items.Templates.WeaponTemplate)ItemManager.Instance.GetTemplate(bowTemplateId);
+        bow.HoldableTemplate.KindId = 29;
+        bow.HoldableTemplate.Speed = 2000;
+        bow.HoldableTemplate.MinRange = 0;
+        bow.HoldableTemplate.MaxRange = 20;
+        GameplayActorTestRig.StockItem(session, bowTemplateId, 1);
+        await Assert.That(actor.Equip(bowTemplateId).State).IsEqualTo(ActorLifecycleState.Completed);
+
+        // Canonical basic4 reach fields, no effects: this verifies choice and
+        // normal skill submission, not damage or a live combat outcome.
+        var templates = (Dictionary<uint, AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate>)typeof(SkillManager)
+            .GetField("_skills", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(SkillManager.Instance)!;
+        templates.TryGetValue(4, out var previous);
+        templates[4] = new AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate
+        {
+            Id = 4, MinRange = 4, MaxRange = 25, WeaponSlotForRangeId = 17,
+            WeaponSlotForAutoAttackId = 17, TargetType = SkillTargetType.Hostile,
+            TargetSelection = SkillTargetSelection.Target
+        };
+        try
+        {
+            var position = elevated ? new Vector3(2, 0, 14) : new Vector3(14, 0, 0);
+            var id = SpawnBoar(session, actor, Vector3.Zero, position);
+            Activate251(actor.Character);
+            actor.Character.CurrentTarget = session.World.GetNpc(id);
+            CombatBrainEngagement.ClearAll();
+            var wake = QuestDecisionScenario.Run(actor, (_, _) => [],
+                new QuestDecisionScenario.QuestOptions { CycleId = "cb-melee-bow-range" });
+            await Assert.That(wake.SelectedAction).IsEqualTo(ActorActionType.AutoAttack);
+            await Assert.That(wake.Request!.TargetId).IsEqualTo(id);
+            await Assert.That(wake.Request.Detail).Contains("auto-attack started (4)");
+            await Assert.That(actor.Character.AutoAttackTask!.Skill.Template.Id).IsEqualTo(4u);
+            var task = actor.Character.AutoAttackTask;
+            actor.AutoAttack(id);
+            await Assert.That(ReferenceEquals(task, actor.Character.AutoAttackTask)).IsTrue();
+            await Assert.That(actor.Character.Quests.HasQuestCompleted(251)).IsFalse();
+        }
+        finally
+        {
+            actor.StopAutoAttack();
+            actor.PreemptCurrent("bow range fixture cleanup");
+            CombatBrainEngagement.ClearAll();
+            if (previous == null) templates.Remove(4); else templates[4] = previous;
+        }
+    }
+
+    [Test]
     public async Task MeleeRole_ClosesThenAttacks_Unchanged()
     {
         var (actor, session) = GameplayActorTestRig.CreateActor("cb-band-melee");
@@ -1149,6 +1207,240 @@ public class QuestObjectiveCombatTests
     }
 
     // ------------------------------------------------------------ fixture
+
+    [Test]
+    [Arguments(7f, false)]
+    [Arguments(9f, false)]
+    [Arguments(7f, true)]
+    [Arguments(9f, true)]
+    public async Task MeleeBow_InsideRangedFloor_UsesCombatSpacing(float distance, bool elevated)
+        => await WithMeleeBowControl("bow-spacing", elevated
+                ? new Vector3(2, 0, distance) : new Vector3(distance, 0, 0), 20,
+            async (actor, session, id) =>
+            {
+                var wake = QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = "bow-spacing" });
+                await Assert.That(wake.SelectedAction).IsEqualTo(ActorActionType.Move);
+                await Assert.That(wake.LegEvidence.Single(e => e.Leg == QuestLegId.Combat).Detail)
+                    .Contains("brain=arm=BackOff");
+                await Assert.That(wake.LegEvidence.Single(e => e.Leg == QuestLegId.Pursuit).Detail)
+                    .Contains("reason=inside-combat-band");
+                await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AutoAttack)).IsFalse();
+                await Assert.That(actor.Character.Ability1).IsEqualTo(AbilityType.Fight);
+            });
+
+    [Test]
+    [Arguments(21f, 20)]
+    [Arguments(14f, -1)]
+    [Arguments(14f, 0)]
+    public async Task MeleeBow_UnreachableOrUnreadableBow_KeepsPursuit(float distance, int bowRange)
+        => await WithMeleeBowControl("bow-no-reach", new Vector3(distance, 0, 0), bowRange,
+            async (actor, session, id) =>
+            {
+                var nativeDistance = actor.Character.GetDistanceTo(session.World.GetNpc(id)!, true);
+                await Assert.That(CombatDecisionTree.TryGetRangedAutoAttackRange(
+                    actor.Character, nativeDistance, out _)).IsFalse();
+                var wake = QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = "bow-no-reach" });
+                await Assert.That(wake.SelectedAction).IsEqualTo(ActorActionType.Move);
+                await Assert.That(wake.LegEvidence.Single(e => e.Leg == QuestLegId.Combat).Detail)
+                    .Contains("validate=out-of-range");
+                await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AutoAttack)).IsFalse();
+            });
+
+    [Test]
+    public async Task MeleeBow_ValidPendingPursuitMove_KeepsItsExactTrace()
+        => await WithMeleeBowControl("bow-pending", new Vector3(14, 0, 0), 20,
+            async (actor, session, id) =>
+            {
+                actor.SetPendingMoveOwner(TravelLegDispatch.PursuitMoveOwner);
+                actor.SetPendingDecision("QUEST_PURSUIT", "bow-control", 1, 0, null, Quest251);
+                var pending = actor.MoveToUnit(id, timeout: TimeSpan.FromSeconds(30));
+                await Assert.That(pending.IsTerminal).IsFalse();
+                await Assert.That(pending.MoveOwner).IsEqualTo(TravelLegDispatch.PursuitMoveOwner);
+                _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = "bow-pending" });
+                await Assert.That(actor.ActiveRequest!.TraceId).IsEqualTo(pending.TraceId);
+                await Assert.That(actor.ActiveRequest.IsTerminal).IsFalse();
+                await Assert.That(actor.ActiveRequest.TargetId).IsEqualTo(id);
+                await Assert.That(actor.ActiveRequest.DecisionQuestId).IsEqualTo(Quest251);
+                await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AutoAttack)).IsFalse();
+            });
+
+    [Test]
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task MeleeBow_LearnedSkillRejectsFalseFlatOrUnionReach(bool flatOnly)
+        => await WithMeleeBowControl("bow-learned-reach", flatOnly
+                ? new Vector3(2, 0, 14) : new Vector3(21, 0, 0), 20,
+            async (actor, session, id) =>
+            {
+                var templates = CombatControlSkillTemplates();
+                const uint learned = CombatDecisionTree.BattlerageChargeSkillId;
+                templates.TryGetValue(learned, out var prior);
+                templates[learned] = new AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate
+                {
+                    Id = learned, MinRange = 0, MaxRange = flatOnly ? 4 : 25,
+                    WeaponSlotForRangeId = flatOnly ? 0 : 17,
+                    TargetType = SkillTargetType.Hostile, TargetSelection = SkillTargetSelection.Target
+                };
+                try
+                {
+                    var npc = session.World.GetNpc(id)!;
+                    var nativeDistance = actor.Character.GetDistanceTo(npc, true);
+                    await Assert.That(nativeDistance).IsGreaterThan(flatOnly ? 4f : 20f);
+                    await Assert.That(CombatDecisionTree.IsSkillInRangeAndReady(
+                        actor.Character, npc, learned, nativeDistance)).IsFalse();
+                    await Assert.That(CombatDecisionTree.SelectPrioritizedSkill(
+                        actor.Character, npc, CombatRole.Melee, new uint[] { learned })).IsEqualTo(0u);
+                    // Positive boundary: the same candidate remains preferred when reachable.
+                    GameplayActorTestRig.SetNpcPosition(session, id, new Vector3(flatOnly ? 3 : 14, 0, 0));
+                    await Assert.That(CombatDecisionTree.SelectPrioritizedSkill(
+                        actor.Character, npc, CombatRole.Melee, new uint[] { learned })).IsEqualTo(learned);
+                }
+                finally
+                {
+                    if (prior == null) templates.Remove(learned); else templates[learned] = prior;
+                }
+            });
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task MeleeBow_ExhaustedApproachAndDamageStall_RetiresUntilOwnProgressOrNewTarget(bool newTarget)
+        => await WithMeleeBowControl("bow-exhausted-stall", new Vector3(14, 0, 0), 20,
+            async (actor, session, id) =>
+            {
+                var npc = session.World.GetNpc(id)!;
+                var nativeDistance = actor.Character.GetDistanceTo(npc, true);
+                TravelLegDispatch.EnsureJourney(actor, id, npc.Transform.World.Position, 3, 2,
+                    TravelLegDispatch.PursuitMoveOwner);
+                TravelIntentStore.SetPursuitPurpose(actor.ActorId, Quest251);
+                TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+                    TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner,
+                    actor.Character.Transform.World.Position, npc.Transform.World.Position);
+                await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, id, Quest251)).IsFalse();
+                // Try the alternative through the whole quest proposal path.
+                // Its availability must not erase the real failed approach.
+                var attempt = QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = "bow-after-exhausted-approach" });
+                await Assert.That(attempt.SelectedAction).IsEqualTo(ActorActionType.AutoAttack);
+                await Assert.That(attempt.Request!.Detail).Contains("auto-attack started (4)");
+                await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var retained,
+                    TravelLegDispatch.PursuitMoveOwner)).IsTrue();
+                await Assert.That(retained.FailedApproaches.Any(f => f.TargetObjId == id && f.QuestId == Quest251)).IsTrue();
+                for (var wake = 1; wake <= QuestBehavior.CombatStallWakes; wake++)
+                {
+                    var tripped = QuestBehavior.CountCombatStallWake(actor.ActorId, id, npc.Hp,
+                        $"bow-stall-{wake}", out var count, selfAttributed: false);
+                    await Assert.That(count).IsEqualTo(wake);
+                    await Assert.That(tripped).IsEqualTo(wake == QuestBehavior.CombatStallWakes);
+                }
+                await Assert.That(QuestBehavior.CombatOwnsInsideBand(actor.Character, nativeDistance, id)).IsFalse();
+                await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, id, Quest251)).IsTrue();
+                var giveUps = new List<QuestGiveUp>();
+                for (var wake = 0; wake < 12; wake++)
+                    giveUps.AddRange(QuestDecisionScenario.Run(actor, (_, _) => [],
+                        new QuestDecisionScenario.QuestOptions { CycleId = $"bow-no-damage-retirement-{wake}" }).GiveUps);
+                await Assert.That(giveUps.Any(g => g.QuestId == Quest251)).IsTrue();
+                if (newTarget)
+                {
+                    var other = SpawnExtraBoar(session, new Vector3(14.5f, 0, 0));
+                    var otherDistance = actor.Character.GetDistanceTo(session.World.GetNpc(other)!, true);
+                    await Assert.That(QuestBehavior.CombatOwnsInsideBand(actor.Character, otherDistance, other)).IsTrue();
+                    await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, other, Quest251)).IsFalse();
+                }
+                else
+                {
+                    // Synthetic attributed HP input proves reset semantics, not earned damage.
+                    _ = QuestBehavior.CountCombatStallWake(actor.ActorId, id, npc.Hp - 1,
+                        "bow-own-progress", out _, selfAttributed: true);
+                    await Assert.That(QuestBehavior.CombatOwnsInsideBand(actor.Character, nativeDistance, id)).IsTrue();
+                    await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, id, Quest251)).IsFalse();
+                }
+            });
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task MeleeBow_DeadActorOrInvisiblePrey_DoesNotAttack(bool invisiblePrey)
+        => await WithMeleeBowControl("bow-illegal", new Vector3(14, 0, 0), 20,
+            async (actor, session, id) =>
+            {
+                if (invisiblePrey) session.World.GetNpc(id)!.IsVisible = false;
+                else actor.Character.Hp = 0;
+                _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = "bow-illegal" });
+                await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AutoAttack
+                    || r.Action == ActorActionType.Cast)).IsFalse();
+            });
+
+    private static Dictionary<uint, AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate> CombatControlSkillTemplates()
+        => (Dictionary<uint, AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate>)typeof(SkillManager)
+            .GetField("_skills", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(SkillManager.Instance)!;
+
+    // Same native actor/equipment/basic4 setup as the two existing14m positives.
+    // bowRange=-1 deliberately omits the bow; zero tests readable but unusable range.
+    private static async Task WithMeleeBowControl(string name, Vector3 targetPosition, int bowRange,
+        Func<GameplayActor, HeadlessSession, uint, Task> check)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        actor.Character.Ability1 = AbilityType.Fight;
+        actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
+        QuestBehavior.ClearCombatStallMemory();
+        CombatBrainEngagement.ClearAll();
+        var templates = CombatControlSkillTemplates();
+        templates.TryGetValue(4, out var priorSkill);
+        AAEmu.Game.Models.Game.Items.Templates.WeaponTemplate? bow = null;
+        (uint Kind, int Speed, int Min, int Max) priorBow = default;
+        try
+        {
+            if (bowRange >= 0)
+            {
+                const uint bowTemplateId = 90771;
+                GameplayActorTestRig.SeedEquipItemTemplate(bowTemplateId,
+                    AAEmu.Game.Models.Game.Items.EquipmentItemSlotType.Ranged);
+                bow = (AAEmu.Game.Models.Game.Items.Templates.WeaponTemplate)ItemManager.Instance.GetTemplate(bowTemplateId);
+                priorBow = (bow.HoldableTemplate.KindId, bow.HoldableTemplate.Speed,
+                    bow.HoldableTemplate.MinRange, bow.HoldableTemplate.MaxRange);
+                bow.HoldableTemplate.KindId = 29;
+                bow.HoldableTemplate.Speed = 2000;
+                bow.HoldableTemplate.MinRange = 0;
+                bow.HoldableTemplate.MaxRange = bowRange;
+                GameplayActorTestRig.StockItem(session, bowTemplateId, 1);
+                await Assert.That(actor.Equip(bowTemplateId).State).IsEqualTo(ActorLifecycleState.Completed);
+            }
+            templates[4] = new AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate
+            {
+                Id = 4, MinRange = 4, MaxRange = 25, WeaponSlotForRangeId = 17,
+                WeaponSlotForAutoAttackId = 17, TargetType = SkillTargetType.Hostile,
+                TargetSelection = SkillTargetSelection.Target
+            };
+            var id = SpawnBoar(session, actor, Vector3.Zero, targetPosition);
+            Activate251(actor.Character);
+            actor.Character.CurrentTarget = session.World.GetNpc(id);
+            await check(actor, session, id);
+            await Assert.That(actor.Character.Ability1).IsEqualTo(AbilityType.Fight);
+            await Assert.That(actor.Character.Quests.HasQuestCompleted(Quest251)).IsFalse();
+        }
+        finally
+        {
+            actor.StopAutoAttack();
+            actor.PreemptCurrent("bow controls cleanup");
+            QuestBehavior.ClearCombatStallMemory();
+            CombatBrainEngagement.ClearAll();
+            TravelLegDispatch.EndJourney(actor, TravelLegDispatch.PursuitMoveOwner);
+            if (priorSkill == null) templates.Remove(4); else templates[4] = priorSkill;
+            if (bow != null)
+            {
+                bow.HoldableTemplate.KindId = priorBow.Kind;
+                bow.HoldableTemplate.Speed = priorBow.Speed;
+                bow.HoldableTemplate.MinRange = priorBow.Min;
+                bow.HoldableTemplate.MaxRange = priorBow.Max;
+            }
+        }
+    }
 
     private static void Activate251(Character character)
     {

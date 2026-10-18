@@ -1,6 +1,7 @@
 using System.Numerics;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Faction;
+using AAEmu.Game.Models.Game.Items;
 using AAEmu.Game.Models.Game.Items.Templates;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Skills;
@@ -110,6 +111,33 @@ public static class CombatDecisionTree
     // Basic continuous auto-attack skills
     public const uint BasicMeleeAutoAttackSkillId = 2;      // 근접 공격 (Melee Auto Attack)
     public const uint BasicRangedAutoAttackSkillId = 4;     // 원거리 공격 (Ranged Auto Attack)
+
+    /// <summary>Basic weapon choice at the ordinary, height-aware attack distance.</summary>
+    public static uint SelectAutoAttackSkillId(Character character, float distanceM)
+    {
+        var hasRangedWeapon = character.Equipment?.GetItemBySlot((int)EquipmentItemSlot.Ranged) != null;
+        return InferRole(character) == CombatRole.RangedPhysical || (distanceM > 4f && hasRangedWeapon)
+            ? BasicRangedAutoAttackSkillId : BasicMeleeAutoAttackSkillId;
+    }
+
+    /// <summary>A real equipped ranged weapon can supply an attack at this distance.</summary>
+    public static bool TryGetRangedAutoAttackRange(Character? character, float distanceM,
+        out (float MinRange, float MaxRange) range)
+    {
+        range = default;
+        if (character == null || !float.IsFinite(distanceM)
+            || SelectAutoAttackSkillId(character, distanceM) != BasicRangedAutoAttackSkillId
+            || character.Equipment?.GetItemBySlot((int)EquipmentItemSlot.Ranged)?.Template
+                is not WeaponTemplate { HoldableTemplate: not null })
+            return false;
+        var template = SkillManager.PeekInstance?.GetSkillTemplate(BasicRangedAutoAttackSkillId);
+        if (template == null || template.WeaponSlotForRangeId != (int)EquipmentItemSlot.Ranged)
+            return false;
+        range = GetSkillEnforcedRange(template, character);
+        return float.IsFinite(range.MinRange) && float.IsFinite(range.MaxRange)
+            && range.MinRange >= 0f && range.MaxRange > 0f && range.MinRange <= range.MaxRange
+            && distanceM >= range.MinRange && distanceM <= range.MaxRange;
+    }
 
     // Canonical starter combo skill IDs
     // Battlerage (Fight)
@@ -308,7 +336,7 @@ public static class CombatDecisionTree
 
                 if (target != null)
                 {
-                    var (minRange, maxRange) = GetSkillEffectiveRange(template, bot);
+                    var (minRange, maxRange) = GetSkillEnforcedRange(template, bot);
                     if (distance < minRange || distance > maxRange)
                         return false;
                 }
@@ -363,7 +391,7 @@ public static class CombatDecisionTree
 
         var candidates = new HashSet<uint>(availableSkills);
         var distance = target != null
-            ? MathUtil.CalculateDistance(bot.Transform.World.Position, target.Transform.World.Position, false)
+            ? bot.GetDistanceTo(target, true)
             : 0f;
 
         // Class combo rotations

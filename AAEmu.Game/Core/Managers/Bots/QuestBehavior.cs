@@ -15,6 +15,7 @@ using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Utils;
 
@@ -647,7 +648,7 @@ public static class QuestBehavior
 
     private static void NotePinnedCorpse(uint actorId, uint objId, uint templateId, QuestFixtureRow fixture, string cycleId, long instanceToken = 0)
     {
-        if (objId == 0 || templateId != fixture.PreyTemplate)
+        if (objId == 0 || !QuestObjectiveTargetSelector.IsQuestNpcSource(fixture, templateId))
             return;
         lock (PursuitSync)
         {
@@ -788,7 +789,7 @@ public static class QuestBehavior
     private static string NoteDeadSelection(IGameplayActor actor, QuestDecisionScenario.QuestOptions opts,
         QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel, Npc npc)
     {
-        if (npc.Hp > 0 || npc.TemplateId != funnel.Fixture.PreyTemplate)
+        if (npc.Hp > 0 || !QuestObjectiveTargetSelector.IsQuestNpcSource(funnel.Fixture, npc.TemplateId))
             return "";
         NotePinnedCorpse(actor.ActorId, npc.ObjId, npc.TemplateId, funnel.Fixture, opts.CycleId, LootCorpseIdentity.GetToken(npc));
         var probe = ProbeCorpse(actor.Character, npc);
@@ -887,7 +888,7 @@ public static class QuestBehavior
         // before, so the corpse a Stop landed on is still recognised with no
         // change; otherwise the issue record wins, which is that record's own
         // meaning — "the prey this actor is hunting".
-        if (holdPin != 0 && (HoldPinsLivePrey(character, holdPin, funnel.Fixture.PreyTemplate) || pin == 0))
+        if (holdPin != 0 && (HoldPinsLivePrey(character, holdPin, funnel.Fixture) || pin == 0))
             pin = holdPin;
         // A pin naming a corpse this actor already terminally looted is spent
         // (kill25): the loot-once arm withholds it on every later wake, so
@@ -898,7 +899,7 @@ public static class QuestBehavior
             && !IsLootDispatched(actor.ActorId, character?.ParentWorld?.GetNpc(pin)))
         {
             var fresh = character?.ParentWorld?.GetNpc(pin);
-            if (fresh != null && fresh.Hp <= 0 && fresh.TemplateId == funnel.Fixture.PreyTemplate
+            if (fresh != null && fresh.Hp <= 0 && QuestObjectiveTargetSelector.IsQuestNpcSource(funnel.Fixture, fresh.TemplateId)
                 && !IsTerminalEmptyCorpse(character, fresh)
                 && (character == null || fresh.LootingContainer.GetNpcLootPermission(character) != false))
             {
@@ -1011,7 +1012,7 @@ public static class QuestBehavior
             // fresh-prey arms below are never reached. Same owner-scoped fact,
             // same exclusion as the census scan — the pin falls through to the
             // ordinary arms instead of shadowing them.
-            if (npc != null && npc.Hp <= 0 && npc.TemplateId == funnel.Fixture.PreyTemplate
+            if (npc != null && npc.Hp <= 0 && QuestObjectiveTargetSelector.IsQuestNpcSource(funnel.Fixture, npc.TemplateId)
                 && !IsLootDispatched(actor.ActorId, npc)
                 && !IsTerminalEmptyCorpse(character, npc)
                 && (character == null || npc.LootingContainer.GetNpcLootPermission(character) != false))
@@ -1088,8 +1089,8 @@ public static class QuestBehavior
         uint excludeObjId, double nearerThanM)
     {
         var character = actor.Character;
-        var preyTemplate = funnel.Fixture.PreyTemplate;
-        if (preyTemplate == 0 || observation == null || character?.ParentWorld == null)
+        var sources = QuestObjectiveTargetSelector.ValidNpcSources(funnel.Fixture).Select(s => s.NpcTemplateId).ToHashSet();
+        if (sources.Count == 0 || observation == null || character?.ParentWorld == null)
             return "";
 
         var here = character.Transform.World.Position;
@@ -1101,7 +1102,7 @@ public static class QuestBehavior
             if (objId == excludeObjId)
                 continue;
             var npc = character.ParentWorld.GetNpc(objId);
-            if (npc == null || npc.Hp > 0 || npc.TemplateId != preyTemplate)
+            if (npc == null || npc.Hp > 0 || !sources.Contains(npc.TemplateId))
                 continue;
             // SPENT-CORPSE EXCLUSION (kill25: the same looted corpse re-resolved
             // every wake — 39 already-looted verdicts, one per wake, while the
@@ -1161,12 +1162,12 @@ public static class QuestBehavior
     /// Read-only, and called OUTSIDE <see cref="PursuitSync"/> so the world read
     /// never runs under the lock.
     /// </summary>
-    private static bool HoldPinsLivePrey(Character? character, uint holdPin, uint preyTemplate)
+    private static bool HoldPinsLivePrey(Character? character, uint holdPin, QuestFixtureRow fixture)
     {
-        if (character?.ParentWorld == null || preyTemplate == 0)
+        if (character?.ParentWorld == null || fixture.GatherNpcSources.Count == 0)
             return false;
         var held = character.ParentWorld.GetNpc(holdPin);
-        return held != null && held.Hp > 0 && held.TemplateId == preyTemplate;
+        return held != null && held.Hp > 0 && QuestObjectiveTargetSelector.IsQuestNpcSource(fixture, held.TemplateId);
     }
     /// <summary>Diagnostic-only raw sweep objId census bound (objId:templateId:flatM, no spaces).</summary>
     private const int SweepDiagRawIdsShown = 12;
@@ -1258,6 +1259,8 @@ public static class QuestBehavior
                 }
                 var questId = plan.QuestId;
                 var fixture = plan.Fixture;
+                if (HasObjectiveSlice(plan) && opts.ChosenQuestId == questId)
+                    TravelIntentStore.SetPursuitPurpose(actor.ActorId, questId, PursuitProgress(actor.Character, questId));
                 // Stage 4: one plan per quest per wake (assembled by
                 // QuestDirector.PlanWake from the wake's single perception),
                 // driven here as a generic leg loop. The plan's declaration
@@ -1278,6 +1281,10 @@ public static class QuestBehavior
                 };
                 var wake = new QuestLegWake();
                 QuestObjectiveTargetSelector.ObjectiveTargetFunnel? planFunnel = null;
+                BotDecisionProposal? preparedLoot = null;
+                var preparedLootDiag = QuestLegWake.NoProposal;
+                var lootEvaluated = false;
+                var awaitingCorpseLoop = false;
                 foreach (var leg in plan.Legs)
                 {
                     // NeedsFunnel marks the objective group: the plan's shared
@@ -1292,6 +1299,37 @@ public static class QuestBehavior
                         objectiveFixture ??= fixture;
                         objectiveFunnel ??= planFunnel;
                         legContext = legContext with { Funnel = planFunnel };
+                        // Another live source must not hide the progress already
+                        // waiting in this quest's corpse. Keep a valid living
+                        // combat target; otherwise ask the existing loot leg once
+                        // before offering a fresh fight. Its ordinary safety,
+                        // permission, reach and loop-release gates still decide.
+                        var character = actor.Character;
+                        var keepsLivingTarget = character?.CurrentTarget is Unit { Hp: > 0 } current
+                            && ReferenceEquals(character.ParentWorld?.GetBaseUnit(current.ObjId), current)
+                            && character.CanAttack(current) && character.CanSeeTarget(current)
+                            && CombatDecisionTree.IsHostileTarget(character, current);
+                        if (opts.ChosenQuestId == questId && !keepsLivingTarget
+                            && planFunnel.ObjectiveResolved && planFunnel.SourceResolved && planFunnel.Relevance
+                            && fixture!.GatherNpcSources.Count > 0)
+                        {
+                            var corpseFragment = ObservePinnedCorpse(actor, opts, planFunnel, context);
+                            var lootLeg = plan.Legs.FirstOrDefault(candidate => candidate.Id == QuestLegId.Loot);
+                            if (corpseFragment.Length > 0 && lootLeg != null
+                                && lootLeg.Enter?.Invoke(legContext, wake) == null)
+                            {
+                                var lootHpBefore = wake.HpBefore;
+                                preparedLoot = LootEmit(legContext, ref preparedLootDiag, ref lootHpBefore,
+                                    out awaitingCorpseLoop);
+                                lootEvaluated = true;
+                            }
+                        }
+                    }
+                    if ((preparedLoot != null || awaitingCorpseLoop)
+                        && leg.Id is QuestLegId.Target or QuestLegId.Pursuit or QuestLegId.Combat)
+                    {
+                        wake.RecordSkip(questId, leg.Id, "useful-corpse-before-fresh-prey");
+                        continue;
                     }
                     // The leg's own entry gate decides whether it runs this wake
                     // and, when it does not, names why — the loop never invents a
@@ -1304,7 +1342,14 @@ public static class QuestBehavior
                     }
                     var diag = QuestLegWake.NoProposal;
                     var hpBefore = wake.HpBefore;
-                    var proposal = leg.Emit(legContext, ref diag, ref hpBefore);
+                    BotDecisionProposal? proposal;
+                    if (leg.Id == QuestLegId.Loot && lootEvaluated)
+                    {
+                        proposal = preparedLoot;
+                        diag = preparedLootDiag;
+                    }
+                    else
+                        proposal = leg.Emit(legContext, ref diag, ref hpBefore);
                     wake.HpBefore = hpBefore;
                     // The leg's convergence check (only Return has one) reads the
                     // proposal it just emitted; its verdict is wake state TurnIn's
@@ -1327,7 +1372,7 @@ public static class QuestBehavior
                     // world, and the reason is the slice's own named detail
                     // (objective/source/selection), never a generic phrase. A
                     // resolved slice clears the streak immediately.
-                    var unresolved = UnresolvedTargetReason(questId, planFunnel);
+                    var unresolved = UnresolvedTargetReason(actor, questId, planFunnel);
                     if (unresolved.Length == 0)
                     {
                         ClearGiveUpWake(actor.ActorId, questId);
@@ -2922,10 +2967,21 @@ public static class QuestBehavior
             return false;
         if (row == null)
             return false;
+        // A scored quest's ordinary combined readiness can finish without
+        // every alternative source. Never withhold its advance for a search.
+        if (quest.Template?.Score > 0 && QuestDirector.ObjectivesPermitAdvance(quest,
+                QuestDirector.ReadObjectiveGroups(quest)))
+            return false;
         var world = character.ParentWorld;
         if (world?.SpawnManager == null)
             return false;
         var here = character.Transform.World.Position;
+        if (row.HuntActId != 0 && HasKnownHuntSearch(character, row)
+            && !HasPerceivedLivingPrey(context.Actor,
+                context.Observation ?? BotObservedContext.Capture(context.Actor), row)
+            && TryNearestHuntNpcSpawnerPosition(world, row, here, out _, out var huntPos)
+            && MathUtil.CalculateDistance(here, huntPos, false) > GameplayActor.MaxInteractRange)
+            return true;
         // (1) requirements: the fixture row's granting set (single-id rows fall
         // back to the single id). (2) nearby: a perceived granting source
         // short-circuits travel — the gather leg owns this wake, no spawner walk.
@@ -2945,13 +3001,13 @@ public static class QuestBehavior
         // The same NPC-loot source arm as ordinary quest travel. A steady,
         // unfinished objective cannot advance while its prey is still outside
         // perception; leave that wake to the existing travel fallback.
-        if (row.GatherActId != 0 && row.PreyTemplate != 0
+        if (row.GatherActId != 0 && row.GatherNpcSources.Count != 0
             && row.ObjectivePattern != AAEmu.Game.Models.Game.Quests.Director.QuestPattern.Deliver
             && !GatherCredited(context.QuestId, quest, row)
             && (!HasGatherTemplates(row) || ResolveGatherDoodad(context, row).ObjId == 0)
             && !HasPerceivedLivingPrey(context.Actor,
-                context.Observation ?? BotObservedContext.Capture(context.Actor), row.PreyTemplate)
-            && TryNearestNpcPreySpawnerPosition(world, row.PreyTemplate, here) is { } preyPos
+                context.Observation ?? BotObservedContext.Capture(context.Actor), row)
+            && TryNearestGatherNpcSpawnerPosition(world, row, here, out _, out var preyPos)
             && MathUtil.CalculateDistance(here, preyPos, false) > GameplayActor.MaxInteractRange)
             return true;
         return false;
@@ -2979,22 +3035,82 @@ public static class QuestBehavior
     /// Reporter lookup above deliberately retains its existing policy.
     /// </summary>
     internal static Vector3? TryNearestNpcPreySpawnerPosition(WorldInstance world, uint npcTemplateId, Vector3 here)
+        => TryNearestNpcSourcePosition(world, new HashSet<uint> { npcTemplateId }, here, out _, out var position) ? position : null;
+
+    internal static bool TryNearestGatherNpcSpawnerPosition(WorldInstance world, QuestFixtureRow fixture,
+        Vector3 here, out uint templateId, out Vector3 position)
+        => TryNearestNpcSourcePosition(world,
+            QuestObjectiveTargetSelector.ValidNpcSources(fixture).Select(s => s.NpcTemplateId).ToHashSet(),
+            here, out templateId, out position);
+
+    // A matching reference location permits inspection, never a claim that a
+    // living mob, reachable route, loot right or objective credit is present.
+    internal static bool HasKnownHuntSearch(Character character, QuestFixtureRow fixture)
     {
-        if (npcTemplateId == 0 || !float.IsFinite(here.X) || !float.IsFinite(here.Y) || !float.IsFinite(here.Z))
-            return null;
+        var quest = character.Quests?.ActiveQuests.GetValueOrDefault(fixture.QuestId);
+        if (fixture.HuntActId == 0 || quest is not { Status: QuestStatus.Progress }
+            || QuestDirector.ObjectivesPermitAdvance(quest, QuestDirector.ReadObjectiveGroups(quest)))
+            return false;
+        return QuestDirector.ReadObjectiveGroups(quest).Any(g => g.Active
+                && g.Remaining.Any(a => a.ActId == fixture.HuntActId))
+            && TryNearestHuntNpcSpawnerPosition(character.ParentWorld, fixture,
+                character.Transform.World.Position, out _, out _);
+    }
+
+    internal static bool TryNearestHuntNpcSpawnerPosition(WorldInstance world, QuestFixtureRow fixture,
+        Vector3 here, out uint templateId, out Vector3 position)
+    {
+        templateId = 0;
+        position = default;
+        if (fixture.HuntActId == 0)
+            return false;
+        var all = world?.SpawnManager?.GetAllSpawners();
+        if (all == null)
+            return false;
+        var templates = all.SelectMany(s => s.Value).Select(s => s.UnitId).Distinct()
+            .Where(t => QuestObjectiveTargetSelector.IsQuestNpcSource(fixture, t)).ToHashSet();
+        return TryNearestNpcSourcePosition(world!, templates, here, out templateId, out position);
+    }
+
+    private static bool TryNearestNpcSourcePosition(WorldInstance world, IReadOnlySet<uint> templates,
+        Vector3 here, out uint templateId, out Vector3 position)
+    {
+        templateId = 0;
+        position = default;
+        if (templates.Count == 0 || !float.IsFinite(here.X) || !float.IsFinite(here.Y) || !float.IsFinite(here.Z))
+            return false;
         var all = world.SpawnManager?.GetAllSpawners();
         if (all == null)
-            return null;
-        return all.SelectMany(s => s.Value)
-            .Where(s => s.UnitId == npcTemplateId && s.Position != null)
-            .Select(s => (s.Id, Position: new Vector3(s.Position.X, s.Position.Y, s.Position.Z)))
+            return false;
+        var nearest = all.SelectMany(s => s.Value)
+            .Where(s => s.UnitId != 0 && templates.Contains(s.UnitId) && s.Position != null)
+            .Select(s => (s.Id, s.UnitId, Position: new Vector3(s.Position.X, s.Position.Y, s.Position.Z)))
             .Where(s => float.IsFinite(s.Position.X) && float.IsFinite(s.Position.Y) && float.IsFinite(s.Position.Z))
-            .Select(s => (s.Id, s.Position, Distance: MathUtil.CalculateDistance(here, s.Position, false)))
+            .Select(s => (s.Id, s.UnitId, s.Position, Distance: MathUtil.CalculateDistance(here, s.Position, false)))
             .Where(s => float.IsFinite(s.Distance))
             .OrderBy(s => s.Distance)
             .ThenBy(s => s.Position.X).ThenBy(s => s.Position.Y).ThenBy(s => s.Position.Z).ThenBy(s => s.Id)
-            .Select(s => (Vector3?)s.Position)
             .FirstOrDefault();
+        if (nearest.UnitId == 0)
+            return false;
+        templateId = nearest.UnitId;
+        position = nearest.Position;
+        return true;
+    }
+
+    internal static bool HasPerceivedLivingPrey(IGameplayActor actor, BotObservedContext snapshot, QuestFixtureRow fixture)
+    {
+        var world = actor.Character.ParentWorld;
+        foreach (var objId in QuestObjectiveTargetSelector.PreyCandidates(snapshot))
+        {
+            if (world?.GetNpc(objId) is { } live
+                && QuestObjectiveTargetSelector.IsQuestNpcSource(fixture, live.TemplateId)
+                && QuestObjectiveTargetSelector.IsSuitableLivingPrey(actor.Character, live, live.TemplateId)
+                && MathUtil.CalculateDistance(actor.Character.Transform.World.Position, live.Transform.World.Position, false)
+                    < QuestObjectiveTargetSelector.LivingPreyScanRadiusM)
+                return true;
+        }
+        return false;
     }
 
     internal static bool HasPerceivedLivingPrey(IGameplayActor actor, BotObservedContext snapshot, uint preyTemplate)
@@ -3365,11 +3481,11 @@ public static class QuestBehavior
             tieBreakKey: $"target:{fixture.QuestId}:{selected:D10}",
             hardPreconditions:
             [
+                SurvivalVetoClear(actor),
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                    observed => QuestObjectiveTargetSelector.IsRelevant(actor.Character, observed, fixture)),
                 new BotProposalPrecondition("target-unassigned",
-                    observed => observed.CurrentTargetObjId != selected),
-                SurvivalVetoClear(actor)
+                    observed => observed.CurrentTargetObjId != selected)
             ]);
     }
 
@@ -3495,9 +3611,29 @@ public static class QuestBehavior
         // reads an actor request), then what the travel chain asks for this wake.
         // The journey is OWNER-TAGGED so the return leg's own boundary can never
         // disarm it (one actor walks one journey PER OWNING LEG).
+        if (HasExhaustedPursuit(character, selected, context.QuestId))
+        {
+            TravelIntentStore.TryGet(actor.ActorId, out var remembered, TravelLegDispatch.PursuitMoveOwner);
+            var reason = remembered.FailedApproaches.Count(f => f.QuestId == context.QuestId) >= TravelIntentStore.FailedApproachBound
+                ? "failed-approach-budget-reached" : "unchanged-unreachable-approach";
+            diag = $"validate=ok:rangeM={M(dist)}:dispatch=withdrawn:reason={reason}";
+            return null;
+        }
         var legOutcome = TravelLegDispatch.MapLegOutcome(
-            actor, selected, TravelLegDispatch.PursuitMoveOwner);
-        var (liveMove, legLive, driftText) = PursuitLegState(actor, selected, npcPos);
+            actor, selected, TravelLegDispatch.PursuitMoveOwner, context.QuestId);
+        var (liveMove, legLive, driftText) = PursuitLegState(actor, selected, npcPos, context.QuestId);
+        // Reconsider a genuinely different approach through the same owner.
+        // Unchanged failures keep their spent budget; a new target never inherits it.
+        if (!liveMove && TravelIntentStore.TryGet(actor.ActorId, out var failedPursuit, TravelLegDispatch.PursuitMoveOwner)
+            && ((failedPursuit.TargetObjId == selected && failedPursuit.Terminal == TravelTerminal.Unreachable
+                    && !HasFailedPursuitApproach(character, selected, context.QuestId))
+                || (failedPursuit.FailedApproaches.Count != 0
+                    && failedPursuit.FailedApproaches.All(f => f.SelfPosition.HasValue
+                        && Vector3.Distance(character.Transform.World.Position, f.SelfPosition.Value) > TravelBrain.LegDriftToleranceM))))
+        {
+            TravelLegDispatch.EndJourney(actor, TravelLegDispatch.PursuitMoveOwner);
+            legOutcome = TravelLegOutcome.None;
+        }
         var brain = CaptureTravelPrepared(TravelLegDispatch.Prepare(
             actor, selected, npcPos, PursuitStopRadiusM, legLive, legOutcome,
             legOwner: TravelLegDispatch.PursuitMoveOwner));
@@ -3509,7 +3645,9 @@ public static class QuestBehavior
         var travelFrag = brain is { } prepared
             ? $":travel={prepared.Decision.Describe()}:routed=true"
             : ":travel=fallback";
-        var payload = new TravelLegDispatch.TravelDispatchParams(verdict.Decision);
+        var payload = new TravelLegDispatch.TravelDispatchParams(verdict.Decision,
+            TravelIntentStore.TryGet(actor.ActorId, out var preparedJourney, TravelLegDispatch.PursuitMoveOwner)
+                ? preparedJourney : null);
 
         if (dist <= PursuitStopRadiusM)
         {
@@ -3560,7 +3698,7 @@ public static class QuestBehavior
                     _ => true),
                 idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:pursuit-stop:{fixture.QuestId}:{selected}",
                 timeout: TimeSpan.FromSeconds(30),
-                rationale: $"quest {fixture.QuestId} pursuit: live {fixture.PreyTemplate} {selected} at {M(dist)}m (inside {PursuitStopRadiusM:F1}m stop radius) — hold, no attack",
+                rationale: $"quest {fixture.QuestId} pursuit: live {funnel.SelectedTemplateId} {selected} at {M(dist)}m (inside {PursuitStopRadiusM:F1}m stop radius) — hold, no attack",
                 policyVersion: opts.PolicyVersion,
                 priority: opts.ObjectivePursuitPriority,
                 tieBreakKey: $"pursuit:{fixture.QuestId}:{selected:D10}",
@@ -3568,7 +3706,7 @@ public static class QuestBehavior
                 hardPreconditions:
                 [
                     new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                        observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                        observed => QuestObjectiveTargetSelector.IsRelevant(actor.Character, observed, fixture)),
                     // Survival-veto precondition (the CombatBrain fact): while a
                     // survival condition owns the actor's wake, the pursuit leg
                     // does not dispatch — the retreat/recovery leg owns it. The
@@ -3603,7 +3741,7 @@ public static class QuestBehavior
         // The journey ends with the arm that withdraws: the closing leg's own
         // boundary, so a commitment to walk toward a prey this actor no longer
         // needs to walk toward cannot outlive the wake.
-        if (CombatOwnsInsideBand(character, dist))
+        if (CombatOwnsInsideBand(character, dist, selected))
         {
             // NO-PROGRESS STALL TRIP. The yield above is open-ended: when the live
             // AutoAttack loop deals no damage (refused at the range edge, mob regen
@@ -3628,7 +3766,7 @@ public static class QuestBehavior
                         _ => true),
                     idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:pursuit-stall:{fixture.QuestId}:{selected}",
                     timeout: TimeSpan.FromSeconds(30),
-                    rationale: $"quest {fixture.QuestId} pursuit: live {fixture.PreyTemplate} {selected} at {M(dist)}m with no HP progress for {stallWakes} wakes — closing to contact",
+                    rationale: $"quest {fixture.QuestId} pursuit: live {funnel.SelectedTemplateId} {selected} at {M(dist)}m with no HP progress for {stallWakes} wakes — closing to contact",
                     policyVersion: opts.PolicyVersion,
                     priority: opts.ObjectivePursuitPriority,
                     tieBreakKey: $"pursuit:{fixture.QuestId}:{selected:D10}",
@@ -3636,11 +3774,15 @@ public static class QuestBehavior
                     hardPreconditions:
                     [
                         new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                            observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                            observed => QuestObjectiveTargetSelector.IsRelevant(actor.Character, observed, fixture)),
                         SurvivalVetoClear(actor)
                     ]);
             }
-            TravelLegDispatch.EndJourney(actor, TravelLegDispatch.PursuitMoveOwner);
+            // A newly usable bow is an alternative attack, not evidence that
+            // the earlier melee route worked. Keep that failure for recovery if
+            // the existing damage-stall policy rejects the ranged attempt too.
+            if (!HasFailedPursuitApproach(character, selected, context.QuestId))
+                TravelLegDispatch.EndJourney(actor, TravelLegDispatch.PursuitMoveOwner);
             diag = $"validate=ok:rangeM={M(dist)}:dispatch=held:reason=inside-combat-band{travelFrag}";
             return null;
         }
@@ -3654,7 +3796,7 @@ public static class QuestBehavior
                 _ => true),
             idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:pursuit:{fixture.QuestId}:{selected}",
             timeout: TimeSpan.FromSeconds(30),
-            rationale: $"quest {fixture.QuestId} pursuit: live {fixture.PreyTemplate} {selected} at {M(dist)}m (outside {PursuitStopRadiusM:F1}m stop radius), drift {driftText} — closing",
+            rationale: $"quest {fixture.QuestId} pursuit: live {funnel.SelectedTemplateId} {selected} at {M(dist)}m (outside {PursuitStopRadiusM:F1}m stop radius), drift {driftText} — closing",
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectivePursuitPriority,
             tieBreakKey: $"pursuit:{fixture.QuestId}:{selected:D10}",
@@ -3662,7 +3804,7 @@ public static class QuestBehavior
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                    observed => QuestObjectiveTargetSelector.IsRelevant(actor.Character, observed, fixture)),
                 SurvivalVetoClear(actor)
             ]);
     }
@@ -3680,11 +3822,11 @@ public static class QuestBehavior
     /// reachable verdict was BackOff. Derived from the band, the brain is consulted
     /// from the distance where its own arms are legal.
     ///
-    /// A melee role keeps the stop radius and gains only its own reach
-    /// (max(3.0, 3.5) = 3.5 m, and with an unarmed rig the engine's own fist
-    /// reach of 3.0 m), so it still closes to contact — and because the
-    /// pursuit Stop is emitted for everything at or inside 3.0 m at the HIGHER
-    /// priority, no melee wake changes owner.
+    /// A melee role keeps its contact band unless its equipped ranged weapon
+    /// supplies an attack at the current ordinary distance. That alternative
+    /// uses the existing ranged stance; the actor's abilities remain unchanged.
+    /// The existing damage-stall policy can reject that alternative, retaining
+    /// any failed melee approach so the owner can retire the work finitely.
     ///
     /// The ceiling is the band BOUNDED BY THE ACTOR'S REAL REACH (see
     /// <see cref="AutoAttackReachM"/>). An archer holding a 20 m bow is
@@ -3696,10 +3838,16 @@ public static class QuestBehavior
     /// This decides only whether the brain is ASKED; the engine's own range refusal
     /// (<c>Skill.Use</c> TooClose/TooFar) still owns legality at dispatch.
     /// </summary>
-    internal static float CombatAdmissionRadiusM(Character? character)
+    internal static float CombatAdmissionRadiusM(Character? character, float distanceM = float.NaN, uint targetObjId = 0)
     {
-        var (bandMin, bandMax) = CombatBrain.RoleBand(
-            character != null ? CombatDecisionTree.InferRole(character) : CombatRole.Melee);
+        var role = character != null ? CombatDecisionTree.InferRole(character) : CombatRole.Melee;
+        // A class preference must not hide the ordinary bow attack the actor
+        // would use here. Existing no-progress memory still retires a failed fight.
+        if (role == CombatRole.Melee && character != null
+            && !IsRangedFallbackStalled(character.ObjId, targetObjId)
+            && CombatDecisionTree.TryGetRangedAutoAttackRange(character, distanceM, out _))
+            role = CombatRole.RangedPhysical;
+        var (bandMin, bandMax) = CombatBrain.RoleBand(role);
 
         // A ceiling the actor's own weapon cannot reach is not a ceiling, it is a
         // parking spot: the actor is admitted, the closing leg stands down, and
@@ -3785,8 +3933,15 @@ public static class QuestBehavior
     /// own range refusal (<c>Skill.Use</c> TooClose/TooFar) still owns legality
     /// at dispatch.
     /// </summary>
-    internal static bool CombatOwnsInsideBand(Character? character, float distanceM)
-        => distanceM <= CombatAdmissionRadiusM(character);
+    internal static bool CombatOwnsInsideBand(Character? character, float distanceM, uint targetObjId = 0)
+        => distanceM <= CombatAdmissionRadiusM(character, distanceM, targetObjId);
+
+    private static bool IsRangedFallbackStalled(uint actorObjId, uint targetObjId)
+    {
+        lock (PursuitSync)
+            return targetObjId != 0 && CombatStallStreaks.TryGetValue((actorObjId, targetObjId), out var streak)
+                && streak.Wakes >= BotBrainTuningStore.ResolveCombatStallWakes();
+    }
 
     /// <summary>
     /// G6 combat proposal (the wired quest only): AutoAttack for the G4-selected
@@ -3848,7 +4003,7 @@ public static class QuestBehavior
             // spent budget carried onto an identity that no longer exists.
             CombatTravelDispatch.EndJourney(actor);
             var corpseFrag = ObservePinnedCorpse(actor, opts, funnel, context.Observation);
-            diag = $"validate=target-lost:target={selected}:template={fixture.PreyTemplate}:alive=NA:visible=NA:hostile=NA:legal=NA:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
+            diag = $"validate=target-lost:target={selected}:template={funnel.SelectedTemplateId}:alive=NA:visible=NA:hostile=NA:legal=NA:distM=NA:verb=none:hpBefore=NA{corpseFrag}";
             return null;
         }
         var alive = npc.Hp > 0;
@@ -3921,7 +4076,7 @@ public static class QuestBehavior
         // cast run" are judged by ONE number instead of two that disagree by
         // the two model radii and the elevation drop.
         var dist = character.GetDistanceTo(npc, true);
-        if (dist > CombatAdmissionRadiusM(character))
+        if (dist > CombatAdmissionRadiusM(character, dist, selected))
         {
             diag = $"validate=out-of-range:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true:distM={M(dist)}:verb=none:hpBefore={npc.Hp}";
             return null;
@@ -4046,6 +4201,18 @@ public static class QuestBehavior
         var kiteFrag = brainVerb == CombatVerb.Move
             ? $":travel={CombatTravelDispatch.Describe(kite)}"
             : "";
+        if (brainVerb is CombatVerb.AutoAttack or CombatVerb.Cast
+            && actor.ActiveRequest is { IsTerminal: false } pending)
+        {
+            var (ownedPursuit, stillServing, _) = PursuitLegState(actor, selected, npc.Transform.World.Position, context.QuestId);
+            // Keep evaluating threats and movement retirement, but do not
+            // submit an attack over a valid running action.
+            if (!ownedPursuit || stillServing)
+            {
+                diag = $"validate=actor-busy:target={selected}:verb=none:pending={pending.TraceId}:reason=await-active-request:brain={brainDecision.Describe()}";
+                return null;
+            }
+        }
         if (brainVerb == CombatVerb.Move
             && kite.Verb is CombatTravelDispatch.KiteLegVerb.Held or CombatTravelDispatch.KiteLegVerb.Withdraw)
         {
@@ -4074,7 +4241,7 @@ public static class QuestBehavior
                 _ => true),
             idempotencyKey: $"quest:{actor.ActorId}:{opts.CycleId}:combat:{fixture.QuestId}:{selected}",
             timeout: TimeSpan.FromSeconds(30),
-            rationale: $"quest {fixture.QuestId} combat: live {fixture.PreyTemplate} {selected} at {M(dist)}m, hp {npc.Hp} — {verbText} ({brainDecision.Describe()})",
+            rationale: $"quest {fixture.QuestId} combat: live {npc.TemplateId} {selected} at {M(dist)}m, hp {npc.Hp} — {verbText} ({brainDecision.Describe()})",
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectiveCombatPriority,
             tieBreakKey: $"combat:{fixture.QuestId}:{selected:D10}",
@@ -4084,7 +4251,7 @@ public static class QuestBehavior
             hardPreconditions:
             [
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                    observed => QuestObjectiveTargetSelector.IsRelevant(actor.Character, observed, fixture)),
                 new BotProposalPrecondition("target-assigned",
                     observed => observed.CurrentTargetObjId == selected),
                 // The combat arm yields the wake while a survival condition owns
@@ -4132,14 +4299,20 @@ public static class QuestBehavior
     /// fragment).
     /// </summary>
     internal static BotDecisionProposal? LootEmit(QuestLegContext context, ref string diag, ref int hpBefore)
+        => LootEmit(context, ref diag, ref hpBefore, out _);
+
+    private static BotDecisionProposal? LootEmit(QuestLegContext context, ref string diag, ref int hpBefore,
+        out bool awaitingCorpseLoop)
     {
+        awaitingCorpseLoop = false;
         var actor = context.Actor;
         var opts = context.Options;
         var fixture = context.Fixture!;
         QuestCorpseRecord? rec;
         lock (PursuitSync)
             LastCorpse.TryGetValue(actor.ActorId, out rec);
-        QuestCorpseRecord? candidate = rec != null && rec.QuestId == fixture.QuestId ? rec : null;
+        QuestCorpseRecord? candidate = rec != null && rec.QuestId == fixture.QuestId
+            && QuestObjectiveTargetSelector.IsQuestNpcSource(fixture, rec.TemplateId) ? rec : null;
 
         var already = candidate != null && IsLootDispatched(actor.ActorId, actor.Character?.ParentWorld?.GetNpc(candidate.ObjId));
 
@@ -4149,7 +4322,7 @@ public static class QuestBehavior
             context.Observation,
             new LootBrainPlanner.Request(
                 CorpseObjId: candidate?.ObjId ?? 0,
-                PreyTemplateId: fixture.PreyTemplate,
+                PreyTemplateId: candidate?.TemplateId ?? 0,
                 MinContainerValueCopper: opts.MinContainerValueCopper,
                 AlreadyLooted: already,
                 // LOOP RELEASE is the CORPSE's loop, never the actor's: the kill leg
@@ -4168,6 +4341,10 @@ public static class QuestBehavior
                 NowUtc: DateTime.UtcNow));
 
         var decision = prepared.Decision;
+        // Keep the corpse as the old attack loop's target until its ordinary
+        // next tick ends it. Retargeting now would keep that loop attacking new
+        // prey instead of allowing the required take on the following wake.
+        awaitingCorpseLoop = decision.Reason == LootReason.LoopLive;
         var validate = LootBrain.ValidateToken(decision.Reason);
         // Flat, bracket-free key list (nested brackets would nest inside the
         // DECIDE/loot brackets a lane parser scans, so the brain's own fragment
@@ -4267,7 +4444,7 @@ public static class QuestBehavior
                 _ => true),
             idempotencyKey: $"quest:{actor.ActorId}:loot:{fixture.QuestId}:{decision.CorpseObjId}:instance:{prepared.CorpseToken}",
             timeout: TimeSpan.FromSeconds(30),
-            rationale: $"quest {fixture.QuestId} loot: dead {fixture.PreyTemplate} {decision.CorpseObjId} container={prepared.Inputs.ContainerItemCount} — Loot once ({LootBrain.Describe(decision)})",
+            rationale: $"quest {fixture.QuestId} loot: dead {prepared.ExpectedCorpse?.TemplateId ?? 0} {decision.CorpseObjId} container={prepared.Inputs.ContainerItemCount} — Loot once ({LootBrain.Describe(decision)})",
             policyVersion: opts.PolicyVersion,
             priority: opts.ObjectiveLootPriority,
             tieBreakKey: $"loot:{fixture.QuestId}:{decision.CorpseObjId:D10}",
@@ -4276,7 +4453,7 @@ public static class QuestBehavior
             [
                 new BotProposalPrecondition("corpse-instance-current", _ => prepared.IsCurrent),
                 new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                    observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                    observed => QuestObjectiveTargetSelector.IsRelevant(actor.Character, observed, fixture)),
                 SurvivalVetoClear(actor)
             ]);
     }
@@ -4317,7 +4494,7 @@ public static class QuestBehavior
         var (liveMove, legLive, driftText) = LootApproachLegState(actor, corpseObjId);
         var brain = LootTravelDispatch.Prepare(actor, new LootTravelDispatch.Request(
             CorpseObjId: corpseObjId,
-            PreyTemplateId: fixture.PreyTemplate,
+            PreyTemplateId: prepared.ExpectedCorpse?.TemplateId ?? 0,
             ArrivalRadiusM: LootTravelDispatch.ApproachArrivalRadiusM,
             LegOutcome: legOutcome,
             LegLive: legLive,
@@ -4346,7 +4523,7 @@ public static class QuestBehavior
                     _ => true),
                 idempotencyKey: $"{opts.CycleId}:loot-approach:{fixture.QuestId}:{corpseObjId}",
                 timeout: TimeSpan.FromSeconds(30),
-                rationale: $"quest {fixture.QuestId} corpse approach: prey {fixture.PreyTemplate} {corpseObjId} out of loot range — closing ({verdict.Reason})",
+                rationale: $"quest {fixture.QuestId} corpse approach: prey {prepared.ExpectedCorpse?.TemplateId ?? 0} {corpseObjId} out of loot range — closing ({verdict.Reason})",
                 policyVersion: opts.PolicyVersion,
                 priority: opts.ObjectiveLootPriority,
                 tieBreakKey: $"loot-approach:{fixture.QuestId}:{corpseObjId:D10}",
@@ -4367,7 +4544,7 @@ public static class QuestBehavior
         =>
         [
             new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
-                observed => QuestObjectiveTargetSelector.IsRelevant(observed, fixture)),
+                observed => QuestObjectiveTargetSelector.IsRelevant(actor.Character, observed, fixture)),
             SurvivalVetoClear(actor)
         ];
 
@@ -4624,10 +4801,10 @@ public static class QuestBehavior
     /// caller's own drift reading (<c>fresh</c> before any issue).
     /// </summary>
     private static (bool LiveMove, bool LegLive, string DriftText) PursuitLegState(
-        IGameplayActor actor, uint preyObjId, Vector3 preyPos)
+        IGameplayActor actor, uint preyObjId, Vector3 preyPos, uint questId)
     {
         var liveMove = TravelLegDispatch.IsOurLiveLeg(
-            actor.ActiveRequest, preyObjId, TravelLegDispatch.PursuitMoveOwner);
+            actor.ActiveRequest, preyObjId, TravelLegDispatch.PursuitMoveOwner, questId);
         var driftText = "fresh";
         var legLive = liveMove;
         lock (PursuitSync)
@@ -4796,7 +4973,40 @@ public static class QuestBehavior
     /// source resolution, selection) — so a give-up cites the real missing
     /// piece and never a phrase this loop invented.
     /// </summary>
-    private static string UnresolvedTargetReason(uint questId, QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel)
+    private static string PursuitProgress(Character character, uint questId)
+        => character.Quests.ActiveQuests.TryGetValue(questId, out var quest)
+            ? $"{quest.Status}:{quest.Step}:{string.Join(',', quest.Objectives)}" : "";
+
+    internal static bool HasExhaustedPursuit(Character character, uint targetObjId, uint questId = 0)
+    {
+        if (!HasFailedPursuitApproach(character, targetObjId, questId)
+            || character.ParentWorld?.GetNpc(targetObjId) is not { Hp: > 0 } npc)
+            return false;
+        return !CombatOwnsInsideBand(character, character.GetDistanceTo(npc, true), targetObjId);
+    }
+
+    private static bool HasFailedPursuitApproach(Character character, uint targetObjId, uint questId)
+    {
+        if (!TravelIntentStore.TryGet(character.ObjId, out var intent, TravelLegDispatch.PursuitMoveOwner)
+            || character.ParentWorld?.GetNpc(targetObjId) is not { Hp: > 0 } npc)
+            return false;
+        questId = questId == 0 ? intent.PursuitQuestId : questId;
+        var progress = PursuitProgress(character, questId);
+        var failures = intent.FailedApproaches.Where(f => f.QuestId == questId
+            && (f.Progress.Length == 0 || f.Progress == progress)).ToArray();
+        var failed = failures.FirstOrDefault(f => f.TargetObjId == targetObjId);
+        if (failed.TargetObjId != 0)
+            return (!failed.SelfPosition.HasValue
+                    || Vector3.Distance(character.Transform.World.Position, failed.SelfPosition.Value) <= TravelBrain.LegDriftToleranceM)
+                && Vector3.Distance(npc.Transform.World.Position, failed.TargetPosition) <= TravelBrain.LegDriftToleranceM;
+        // The supported attempt budget must not evict failures into fresh retries.
+        // A genuinely different actor approach can reconsider the bounded set.
+        return failures.Length >= TravelIntentStore.FailedApproachBound
+            && failures.Any(f => !f.SelfPosition.HasValue
+                || Vector3.Distance(character.Transform.World.Position, f.SelfPosition.Value) <= TravelBrain.LegDriftToleranceM);
+    }
+
+    private static string UnresolvedTargetReason(IGameplayActor actor, uint questId, QuestObjectiveTargetSelector.ObjectiveTargetFunnel funnel)
     {
         if (!funnel.ObjectiveResolved)
             return $"GIVE-UP/UNRESOLVED-TARGET quest={questId} stage=OBJECTIVE detail={funnel.ObjectiveDetail}";
@@ -4804,6 +5014,16 @@ public static class QuestBehavior
             return $"GIVE-UP/UNRESOLVED-TARGET quest={questId} stage=SOURCE detail={funnel.SourceDetail}";
         if (funnel.SelectedObjId == 0)
             return $"GIVE-UP/UNRESOLVED-TARGET quest={questId} stage=SELECT detail=no-target raw={funnel.RawCount} relevant={funnel.RelevantCount}";
+        // A living selection is not useful progress when the existing movement
+        // owner has exhausted this exact pursuit. Keep its sticky terminal so
+        // the ordinary give-up budget can release the quest without a retry loop.
+        if (HasExhaustedPursuit(actor.Character, funnel.SelectedObjId, questId))
+        {
+            TravelIntentStore.TryGet(actor.ActorId, out var intent, TravelLegDispatch.PursuitMoveOwner);
+            var detail = intent.FailedApproaches.Count(f => f.QuestId == questId) >= TravelIntentStore.FailedApproachBound
+                ? "failed-approach-budget-reached" : "unchanged-unreachable-approach";
+            return $"GIVE-UP/UNRESOLVED-TARGET quest={questId} stage=PURSUIT detail={detail}";
+        }
         return "";
     }
     private static ActorRequest Dispatch(IGameplayActor gameplayActor, BotDecisionProposal proposal)
@@ -4907,6 +5127,12 @@ public static class QuestBehavior
     /// </summary>
     private static ActorRequest DispatchPursuitMove(IGameplayActor gameplayActor, BotDecisionProposal proposal)
     {
+        var questId = QuestIdOf(proposal);
+        if (proposal.Payload is TravelLegDispatch.TravelDispatchParams { Journey: { } journey }
+            && journey.TargetObjId == proposal.TargetId)
+            TravelIntentStore.RestorePreparedJourney(gameplayActor.ActorId, journey, TravelLegDispatch.PursuitMoveOwner);
+        TravelIntentStore.SetPursuitPurpose(gameplayActor.ActorId, questId,
+            PursuitProgress(gameplayActor.Character, questId));
         if (gameplayActor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move })
             gameplayActor.PreemptCurrent(TravelLegDispatch.PursuitRetrackDetail);
         // Telemetry: this leg owns as PURSUIT_MOVE_TO_UNIT (staged before
@@ -5376,7 +5602,7 @@ public static class QuestBehavior
         SweepDiagLog.Info(
             "QuestObjectiveLootDiag cycle={Cycle} char={CharId} actor={ActorObjId} quest={Quest} target={Target} template={Template} verb=Loot " +
             "trace={Trace} state={State} grant={Grant} detail=[{Detail}]",
-            opts.CycleId, actor.Character?.Id ?? 0, actor.ActorId, fixture.QuestId, selected.TargetId, fixture.PreyTemplate,
+            opts.CycleId, actor.Character?.Id ?? 0, actor.ActorId, fixture.QuestId, selected.TargetId, actor.Character?.ParentWorld?.GetNpc(selected.TargetId)?.TemplateId ?? 0,
             request.TraceId, request.State, request.Result, TruncateSweep(detail, 200));
     }
 

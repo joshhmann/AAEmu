@@ -33,8 +33,8 @@ public sealed class ConsumeFoodAction : GoapActionBase
 
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
-        var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        return effectiveActor.UseItem(FoodTemplateId);
+        ArgumentNullException.ThrowIfNull(actor);
+        return actor.UseItem(FoodTemplateId);
     }
 
     public override GoapActionStatus EvaluateStatus(
@@ -150,8 +150,8 @@ public sealed class DrinkPotionAction : GoapActionBase
 
     public override ActorRequest? CreateActorRequest(PlayerBotRuntime bot, IGameplayActor? actor = null)
     {
-        var effectiveActor = actor ?? new GameplayActor(bot.Character);
-        return effectiveActor.UseItem(PotionTemplateId);
+        ArgumentNullException.ThrowIfNull(actor);
+        return actor.UseItem(PotionTemplateId);
     }
 
     public override GoapActionStatus EvaluateStatus(

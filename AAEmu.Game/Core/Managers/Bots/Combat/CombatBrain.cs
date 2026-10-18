@@ -50,10 +50,9 @@ namespace AAEmu.Game.Core.Managers.Bots.Combat;
 public static class CombatBrain
 {
     /// <summary>
-    /// The aggro band the scorer reads: the same flat radius the perception
-    /// census uses (<c>BotRadarProjection.PerceivedRadiusM</c>, 25 m). Quoted as
-    /// a literal because the decision paths may not reference the perception
-    /// stack's types, and the value is pinned by the perception tests.
+    /// The aggro band the scorer reads: 25 m, the radius the retired perception
+    /// stack used for its census. The combat tests read this constant rather
+    /// than repeating a literal.
     /// </summary>
     public const float AggroBandM = 25f;
 
@@ -143,7 +142,7 @@ public static class CombatBrain
 
     /// <summary>
     /// The wake's threat verdict, derived from the decision layer's own
-    /// primitives (never the belief stack's <c>ThreatLevel</c>).
+    /// primitives.
     ///
     /// Escalation degrades DOWNWARD on unreadable input: no hostile at all is
     /// <see cref="CombatThreat.None"/> regardless of hp (a low bar with nothing

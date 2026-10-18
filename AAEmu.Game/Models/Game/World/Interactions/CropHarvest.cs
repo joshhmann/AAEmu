@@ -32,6 +32,21 @@ public class CropHarvest : IWorldInteraction
                 }
             }
 
+            // The crop phase/loot effect must not precede labor sufficiency.
+            // Recheck at the actual native callback: labor can change during
+            // casting. SkillCancelled follows the existing protection refusal
+            // path and prevents EndSkill labor/vocation after this no-effect.
+            if (caster is Character harvestingCharacter)
+            {
+                var template = SkillManager.Instance.GetSkillTemplate(skillId);
+                if (template != null && harvestingCharacter.LaborPower < Skill.GetLaborCost(template, harvestingCharacter))
+                {
+                    harvestingCharacter.SendErrorMessage(ErrorMessageType.LaborPowerNeeded);
+                    harvestingCharacter.SkillCancelled = true;
+                    return;
+                }
+            }
+
             doodad.Use(caster, skillId);
         }
     }

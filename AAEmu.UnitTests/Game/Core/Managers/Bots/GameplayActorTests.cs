@@ -409,6 +409,29 @@ public class GameplayActorTests
     }
 
     [Test]
+    public async Task AuditTrace_RetainedSnapshot_PreservesOriginalSequenceAfterNativeStopTrimsHistory()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("audit-snapshot");
+        for (var i = 0; i < 512; i++)
+            actor.Stop();
+        var retained = actor.AuditTrace;
+        var originalTraceIds = retained.Select(r => r.TraceId).ToArray();
+        await Assert.That(originalTraceIds.Length).IsEqualTo(512);
+
+        // A real terminal appends the next record and trims the native bounded
+        // history. No list mutation, null injection or logging configuration.
+        var next = actor.Stop();
+        var fresh = actor.AuditTrace;
+        await Assert.That(next.State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(fresh.Count).IsEqualTo(512);
+        await Assert.That(fresh.Select(r => r.TraceId)
+            .SequenceEqual(originalTraceIds.Skip(1).Append(next.TraceId))).IsTrue();
+        await Assert.That(fresh.Any(r => r.TraceId == next.TraceId)).IsTrue();
+        await Assert.That(retained.Select(r => r.TraceId).SequenceEqual(originalTraceIds)).IsTrue();
+        await Assert.That(retained.Any(r => r.TraceId == next.TraceId)).IsFalse();
+    }
+
+    [Test]
     public async Task Move_WhileBusy_RejectedWithStateTransition()
     {
         var (actor, _) = GameplayActorTestRig.CreateActor("move-5");

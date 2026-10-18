@@ -6,11 +6,13 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using AAEmu.Commons.Utils;
+using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Skills;
+using Microsoft.Extensions.DependencyInjection;
 using NLog;
 
 namespace AAEmu.Game.Core.Managers;
@@ -336,8 +338,16 @@ public sealed class BotProvisioningControlHost
             ? parsedReason
             : CharacterLifecycleReason.Logout;
 
-        CharacterLifecycleService.Instance.Deactivate(character, reason);
-        return Ok(new { name = character.Name, characterId = character.Id, reason = reason.ToString(), saved = true });
+        // Connected humans retain the ordinary native leave path, never a bot registry reservation.
+        if (character.Connection != null)
+        {
+            CharacterLifecycleService.Instance.Deactivate(character, reason);
+            return Ok(new { name = character.Name, characterId = character.Id, reason = reason.ToString(), saved = true });
+        }
+        var manager = SingletonContainer.ServiceProvider?.GetService<IPlayerBotManager>();
+        if (manager == null || !manager.LeaveHeadlessCharacter(character, reason, out var savedThisCall))
+            return Err("deactivate: exact owner did not complete its leave-save transition");
+        return Ok(new { name = character.Name, characterId = character.Id, reason = reason.ToString(), saved = savedThisCall });
     }
 
     private static Character FindCharacter(JsonElement root)

@@ -32,6 +32,7 @@ public class HomesteadRuntimeTests
         public void SetPendingDecision(string? goal, string? policy, int candidates, int rejections, string? seed, uint? questId) { }
         public void SetPendingCycleId(string? cycleId) { }
         public void SetPendingWakeSequence(long? wakeSequence) { }
+        public void SetPendingCommandOrigin(string? origin) { }
         public bool PreemptCurrent(string reason) => false;
         public ActorObservation Observe() => new() { ActorId = ActorId };
         public void Tick(TimeSpan elapsed) { }

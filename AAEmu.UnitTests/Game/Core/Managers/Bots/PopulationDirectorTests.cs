@@ -25,6 +25,17 @@ public class PopulationDirectorTests
 {
     private sealed class RecordingLifecycle : IPlayerBotLifecycleService
     {
+        public RecordingLifecycle() => GameplayActorTestRig.Seed();
+
+        public bool RetirementResult { get; set; } = true;
+        public List<(PlayerBotRuntime Owner, ulong Generation, string Reason)> RetirementCalls { get; } = [];
+
+        public bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason)
+        {
+            RetirementCalls.Add((expectedOwner, expectedGeneration, reason));
+            return RetirementResult;
+        }
+
         public bool ActivateHeadless(Character character, object? botContext) => true;
 
         public bool Deactivate(Character character, string reason) => true;

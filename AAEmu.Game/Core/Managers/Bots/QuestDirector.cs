@@ -329,7 +329,19 @@ public static class QuestDirector
     }
 
     internal static bool ObjectiveCredited(QuestActTemplate act, Quest quest)
-        => act.GetObjective(quest) >= (act is QuestActObjTalk or QuestActObjTalkNpcGroup ? 1 : act.Count);
+        // Scored acts contribute points to one ordinary quest result. A weight
+        // is not an individual completion count; keep useful acts available
+        // until the server's combined readiness says the work is sufficient.
+        => quest.Template.Score > 0
+            ? quest.GetQuestObjectiveStatus() >= QuestObjectiveStatus.QuestComplete
+            : act.GetObjective(quest) >= (act is QuestActObjTalk or QuestActObjTalkNpcGroup ? 1 : act.Count);
+
+    // Single-act full-score count for hunt choice/diagnostics. Other acts may
+    // earn readiness sooner; the native overall result always withdraws work.
+    internal static int ObjectiveCountForFullCredit(QuestActTemplate act, Quest quest)
+        => quest.Template.Score > 0 && act.Count > 0
+            ? (int)Math.Ceiling((double)quest.Template.Score / act.Count)
+            : act is QuestActObjTalk or QuestActObjTalkNpcGroup ? 1 : act.Count;
 
     internal static bool ObjectivesPermitAdvance(Quest quest, IReadOnlyList<ObjectiveGroup> groups)
     {

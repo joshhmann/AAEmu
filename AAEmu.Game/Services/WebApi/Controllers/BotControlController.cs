@@ -146,6 +146,109 @@ internal class BotControlController : BaseController
     }
 
     /// <summary>
+    /// Operator assignment plane (plan T1): hand ONE running bot a bounded
+    /// activity — today <c>assigned.travel</c>, one destination and one expiry.
+    /// The assignment lands in the ONE registry that the arbitration band, the
+    /// executor's travel leg, the brain read-back and the E2E bridge all share;
+    /// the arbiter elects it on the next wake, so the assignment band preempts
+    /// the bot's ordinary activity instead of competing with it. Same gate as
+    /// the rest of this surface (disabled by default, token required).
+    /// Body: {"nameOrId":"Bot","activity":"assigned.travel","x":..,"y":..,"z":..,"expirySeconds":600}
+    /// </summary>
+    [WebApiPost("^/api/bots/assign$")]
+    public HttpResponse Assign(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var body = Deserialize<AssignBotRequest>(request);
+            if (body == null || string.IsNullOrWhiteSpace(body.NameOrId))
+                return BadRequestJson(new ErrorModel("nameOrId is required"));
+            if (string.IsNullOrWhiteSpace(body.Activity))
+                return BadRequestJson(new ErrorModel("activity is required"));
+            if (!body.X.HasValue || !body.Y.HasValue || !body.Z.HasValue)
+                return BadRequestJson(new ErrorModel("x, y and z are required"));
+
+            var manager = SingletonContainer.ServiceProvider?.GetService<IPlayerBotManager>();
+            var registry = SingletonContainer.ServiceProvider?.GetService<IBotAssignmentRegistry>();
+            if (manager == null || registry == null)
+                return JsonResponse(HttpStatusCode.ServiceUnavailable,
+                    new ErrorModel("bot manager/assignment registry unavailable in DI"));
+            if (!TryResolveBot(manager, body.NameOrId, out var runtime) || runtime == null)
+                return JsonResponse(HttpStatusCode.NotFound, new ErrorModel($"unknown bot '{body.NameOrId}'"));
+
+            var expiry = TimeSpan.FromSeconds(body.ExpirySeconds is > 0
+                ? body.ExpirySeconds.Value
+                : BotAssignmentRegistry.DefaultExpirySeconds);
+            var assignment = registry.Accept(
+                runtime.CharacterId, body.Activity, body.X.Value, body.Y.Value, body.Z.Value,
+                expiry, "operator-api");
+            if (assignment == null)
+                return BadRequestJson(new ErrorModel(
+                    $"unsupported activity '{body.Activity}' (supported: {BotAssignmentActivities.Travel})"));
+
+            Logger.Info("BotControl: assignment accepted for {Bot} ({CharacterId}) — {Activity} to ({X:F0},{Y:F0},{Z:F0}) until {Expires:O}",
+                runtime.Character.Name, runtime.CharacterId, assignment.Activity,
+                assignment.X, assignment.Y, assignment.Z, assignment.ExpiresUtc);
+            return OkJson(new BotAssignmentResponse(true,
+                $"assignment accepted for {runtime.Character.Name}: {assignment.Activity} until {assignment.ExpiresUtc:O}",
+                assignment));
+        }
+        catch (JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "BotControl: assign failed");
+        }
+    }
+
+    /// <summary>
+    /// A1 stop owner: disarm the bot host through the ONE production owner —
+    /// the scheduler every arming path (presence bootstrap, proximity
+    /// bootstrap, admin ArmRoam, control host) already starts. It asks every
+    /// enrolled bot to leave through the ordinary manager/leave path while the
+    /// host is still running (native retirement needs the running execution
+    /// boundary), then stops the scheduler, drops and COUNTS the queued steps
+    /// the stopped boundary can no longer run (releasing their leases), and
+    /// re-checks for bots that landed un-safely-deactivated, so a stopped host
+    /// never leaves a bot Active with its native work abandoned.
+    /// Idempotent; same gate as the rest of this surface (disabled by default,
+    /// token required). Body may be empty; optional {"reason": "..."}.
+    /// </summary>
+    [WebApiPost("^/api/bots/host/stop$")]
+    public HttpResponse StopHost(HttpRequest request)
+    {
+        var gate = CheckGate(request);
+        if (gate != null)
+            return gate;
+        try
+        {
+            var scheduler = SingletonContainer.ServiceProvider?.GetService<IPlayerBotScheduler>();
+            if (scheduler == null)
+                return JsonResponse(HttpStatusCode.ServiceUnavailable,
+                    new ErrorModel("bot scheduler unavailable in DI"));
+
+            var body = Deserialize<StopBotHostRequest>(request);
+            var reason = string.IsNullOrWhiteSpace(body?.Reason) ? "api-host-stop" : body.Reason.Trim();
+            var report = scheduler.Disarm(reason);
+            Logger.Info("BotControl: host stop ({Reason}) — {Report}", reason, report);
+            return OkJson(new BotHostStopResponse(report.Converged, report.ToString(), report));
+        }
+        catch (JsonException)
+        {
+            return BadRequestJson(new ErrorModel("Invalid JSON body"));
+        }
+        catch (Exception ex)
+        {
+            return Error(ex, "BotControl: host stop failed");
+        }
+    }
+
+    /// <summary>
     /// Brain Inspector fleet view (Phase 1 diagnostics): state/leg counts
     /// over all registered bots plus the already-available scheduler metrics
     /// passthrough. Read-only: flag reads + metric snapshot, no wakes, no
@@ -227,6 +330,13 @@ internal class BotControlController : BaseController
             var pos = acting.Transform.World.Position;
             var target = acting.CurrentTarget;
             var travel = state?.QuestTravelTarget;
+            // Operator assignment read-back (plan T1): the last assignment the
+            // registry recorded for this bot — live or already ended, with the
+            // reason it ended. No second inspection route.
+            var assignment = sp?.GetService<IBotAssignmentRegistry>() is { } registry
+                && registry.TryGet(runtime.CharacterId, out var recorded)
+                    ? recorded
+                    : null;
             return OkJson(BotBrainProjection.Capture(
                 runtime.CharacterId,
                 runtime.Character.Name,
@@ -243,7 +353,13 @@ internal class BotControlController : BaseController
                 state?.Actor.AuditTrace,
                 state?.QuestLegActive ?? false,
                 travel?.X, travel?.Y, travel?.Z,
-                state?.QuestTravelReason));
+                state?.QuestTravelReason,
+                assignment: assignment,
+                // Operator decision read-back (plan T7): the last arbitration
+                // decision this decorator saw — outcome, elected activity, the
+                // arbiter's own refusal reason and the counts — on the same
+                // surface that already carries the assignment read-back.
+                decision: decorator?.GetLastDecision(runtime.CharacterId)));
         }
         catch (Exception ex)
         {

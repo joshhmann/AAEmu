@@ -10,11 +10,8 @@ namespace AAEmu.Game.Core.Managers.Bots.Combat;
 /// <summary>
 /// The decision-layer threat verdict for ONE wake.
 ///
-/// This is the COMBAT layer's own reading of the frame it was handed, and it is
-/// deliberately NOT the perception stack's <c>ThreatLevel</c>: the belief layer
-/// (<c>...Bots.Belief</c>) is a planning/diagnostic surface the decision paths
-/// must not reference (see <c>PerceptionStackSurfaceTests</c>), so the combat
-/// brain derives its own verdict from the primitives on
+/// This is the COMBAT layer's own reading of the frame it was handed, derived
+/// from the primitives on
 /// <see cref="CombatBrainInputs"/> using thresholds that live in exactly one
 /// place — <see cref="CombatDecisionTree.DefaultEmergencyFleeHpPercent"/> for the
 /// critical band, <see cref="CombatDecisionTree.DefaultDefensiveHealHpPercent"/>
@@ -144,9 +141,8 @@ public enum CombatDisengageReason
 
 /// <summary>
 /// The named reason a decision took its arm. An ENUM rather than a built string:
-/// the wake path formats text only when a diagnostic actually reads it (the same
-/// discipline <c>BotBeliefState.SnapshotId</c> follows), so a per-wake decision
-/// allocates nothing.
+/// the wake path formats text only when a diagnostic actually reads it, so a
+/// per-wake decision allocates nothing.
 /// </summary>
 public enum CombatReason
 {

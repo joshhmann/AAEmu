@@ -240,6 +240,45 @@ public class BotNeedsEvaluatorTests
         await Assert.That(result.Request?.State).IsEqualTo(ActorLifecycleState.Completed);
     }
 
+    [Test]
+    public async Task Run_NativeCraftPending_RetainsSelectedWorkWithoutFailure()
+    {
+        var (actor, session) = CreateActorOnUniqueWorld("needs-native-pending");
+        GameplayActorTestRig.SeedCraftSurface();
+        GameplayActorTestRig.SetPosition(actor, TestPosition);
+        actor.Character.LaborPower = 100;
+        GameplayActorTestRig.GrantItem(actor, GameplayActorTestRig.CraftMaterialTemplateId, 2);
+        var bench = GameplayActorTestRig.SpawnCraftBench(session, actor);
+        using var native = new GameplayActorCraftTests.NativeCraftSkill();
+        using var scheduler = new GameplayActorUseItemPacketTests.NativeScheduler();
+        try
+        {
+            var result = NeedsDecisionScenario.Run(actor, new NeedsDecisionScenario.NeedsOptions
+            {
+                CycleId = "needs-native-pending",
+                CraftId = GameplayActorTestRig.CraftTestCraftId,
+                CraftBenchObjId = bench,
+                CraftMaterialItemId = GameplayActorTestRig.CraftMaterialTemplateId,
+                CraftMaterialAmount = 2,
+                CraftLaborCost = 10
+            });
+            await Assert.That(result.Request!.State).IsEqualTo(ActorLifecycleState.Running);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.CraftMaterialTemplateId)).IsEqualTo(2);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.CraftProductTemplateId)).IsEqualTo(0);
+            await Assert.That(actor.Character.LaborPower).IsEqualTo((short)100);
+            await Assert.That(result.WorkSelected).IsTrue();
+            await Assert.That(result.FailStage).IsEqualTo("");
+            await scheduler.WaitForTerminal(actor, result.Request);
+            await Assert.That(result.Request.State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.CraftMaterialTemplateId)).IsEqualTo(0);
+            await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.CraftProductTemplateId)).IsEqualTo(1);
+        }
+        finally
+        {
+            actor.PreemptCurrent("native needs test cleanup");
+        }
+    }
+
     // ------------------------------------------------------------ rig below
 
     private static (GameplayActor Actor, HeadlessSession Session) CreateActorOnUniqueWorld(string name)

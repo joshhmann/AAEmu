@@ -26,8 +26,28 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// </summary>
 public interface IPlayerBotScheduler
 {
-    /// <summary>Starts the wake-scan loop and the bounded worker pool. Idempotent.</summary>
-    void Start();
+    /// <summary>
+    /// Arms the bot host: starts the wake-scan loop and the bounded worker
+    /// pool. This is the ONE production arming owner (T2 supported arming):
+    /// every caller that used to start the scheduler itself — presence
+    /// bootstrap, proximity bootstrap, GM/admin roam and the E2E control host
+    /// — calls this instead, and the owner never consults a feature switch, so
+    /// no caller's own gate semantics change.
+    ///
+    /// Idempotent and never throws. The first caller that arms records its
+    /// reason (<see cref="ArmedBy"/>); a later call reports false and leaves
+    /// the running host untouched. A host already disarmed in this process
+    /// refuses to arm — the stop tears down the execution boundary the bots
+    /// step on and is terminal for the process — and that refusal is reported
+    /// as false, not thrown.
+    /// </summary>
+    bool Arm(string reason);
+
+    /// <summary>
+    /// The reason recorded by the caller that armed the host, or null when the
+    /// host was never armed through <see cref="Arm"/> in this process.
+    /// </summary>
+    string? ArmedBy { get; }
 
     /// <summary>
     /// Stops the scheduler: the wake-scan stops accepting new work, queued
@@ -35,6 +55,22 @@ public interface IPlayerBotScheduler
     /// Idempotent.
     /// </summary>
     Task StopAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The single host owner's disarm (A1 converging teardown). Deactivates
+    /// every enrolled bot through the ordinary manager/leave path FIRST, while
+    /// the scheduler is still running — native retirement runs on the
+    /// execution boundary the stop tears down, so asking the host to leave
+    /// after stopping it would refuse every bot (live-lane finding
+    /// 2026-10-16, see <c>PlayerBotScheduler.cs</c>). It then stops the
+    /// scheduler, drops and counts the queued steps the stopped execution
+    /// boundary can no longer run (releasing their leases), and re-checks for
+    /// bots that landed un-safely-deactivated during the stop. Returns what
+    /// actually happened — a report with failures is a partial teardown.
+    /// Idempotent; the production entry points are host shutdown and the
+    /// token-gated control route, never a bot step.
+    /// </summary>
+    BotHostTeardownReport Disarm(string reason);
 
     /// <summary>
     /// Wakes a bot now (event queue). No-op when the scheduler is stopped.
@@ -65,6 +101,6 @@ public interface IPlayerBotScheduler
     /// <summary>Configured worker count (clamped to 4-8).</summary>
     int WorkerCount { get; }
 
-    /// <summary>True between Start() and StopAsync().</summary>
+    /// <summary>True between <see cref="Arm"/> and <see cref="StopAsync"/>.</summary>
     bool IsRunning { get; }
 }

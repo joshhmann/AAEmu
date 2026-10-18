@@ -3,6 +3,7 @@ using System.Reflection;
 
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.Core.Managers.Bots;
+using AAEmu.Game.Core.Managers.Bots.Travel;
 using AAEmu.Game.Core.Managers.UnitManagers;
 using AAEmu.Game.Core.Managers.World;
 using AAEmu.Game.GameData;
@@ -17,6 +18,7 @@ using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.World;
 using AAEmu.Game.Models.Game.World.Transform;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
@@ -67,6 +69,313 @@ public class QuestOwnerHandoffTests
         QuestBehavior.ClearGiveUpMemory();
         if (_recoveryWorldTemplate != null)
             _recoveryWorldTemplate.ZoneKeyByRegions = _previousRecoveryZones;
+    }
+
+    [Test]
+    public async Task NewQuestPurpose_DoesNotReadOldQuestMoveTerminalAsItsOwn()
+    {
+        var (actor, _, _, steps, bot, clock, _, session) = CreateRig("owner-old-quest-audit");
+        await Step(steps, bot, clock);
+        var prey = SpawnPrey(session, Origin + new Vector3(18, 0, 0));
+        for (var wake = 0; wake < 8 && actor.ActiveRequest is not
+            { IsTerminal: false, Action: ActorActionType.Move, MoveOwner: TravelLegDispatch.PursuitMoveOwner }; wake++)
+            await Step(steps, bot, clock);
+        await Assert.That(actor.ActiveRequest?.DecisionQuestId).IsEqualTo(FirstQuest);
+        actor.PreemptCurrent("A-only navigation interruption");
+        // Explicit ownership boundary fixture: no B quest or credit is supplied.
+        TravelIntentStore.SetPursuitPurpose(actor.ActorId, SecondQuest);
+        await Assert.That(TravelLegDispatch.MapLegOutcome(actor, prey,
+            TravelLegDispatch.PursuitMoveOwner)).IsEqualTo(TravelLegOutcome.None);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task UnchosenTwoActiveQuests_AttributePursuitToDispatchedQuest(bool alternativeAvailable)
+    {
+        // Explicit two-quest setup exercises the unchosen-policy boundary;
+        // this is an ownership control, not independent quest acquisition proof.
+        var (actor, _, _, steps, bot, clock, _, session) = CreateRig("owner-unchosen-attribution", gatherFollowUp: true);
+        await Step(steps, bot, clock);
+        await Assert.That(actor.AcceptQuest(SecondQuest, QuestAcceptorType.Npc, Giver).State).IsEqualTo(ActorLifecycleState.Completed);
+        var prey = SpawnPrey(session, Origin + new Vector3(18, 0, 0));
+        actor.Character.CurrentTarget = session.World.GetNpc(prey);
+        // Disclosed fake source mapping gives B a distinct prey; no DB is edited.
+        const uint otherTemplate = 97_120;
+        var other = SpawnExtraPrey(session, Origin + new Vector3(24, 0, 0));
+        session.World.GetNpc(other)!.Template = new NpcTemplate { Id = otherTemplate, Scale = 1f };
+        if (alternativeAvailable) session.World.GetNpc(other)!.TemplateId = otherTemplate;
+        var links = (Dictionary<uint, List<AAEmu.Game.Models.Game.Items.Loots.LootPackDroppingNpc>>)typeof(ItemManager)
+            .GetField("_lootPackDroppingNpc", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(ItemManager.Instance)!;
+        links[otherTemplate] = [new AAEmu.Game.Models.Game.Items.Loots.LootPackDroppingNpc
+            { Id = otherTemplate, NpcId = otherTemplate, LootPackId = Pack4530 }];
+        var plans = new[]
+        {
+            QuestDirector.Plan(FirstQuest, QuestFixtureRow.FromQuestData(FirstQuest)),
+            QuestDirector.Plan(SecondQuest, QuestFixtureRow.FromQuestData(SecondQuest) with { PreyTemplate = otherTemplate })
+        };
+        var result = QuestBehavior.Run(actor,
+            new QuestDecisionScenario.QuestOptions { CycleId = "unchosen-two-active", ChosenQuestId = 0,
+                ObjectiveTargetPriority = 0 }, BotObservedContext.Capture(actor), plans, (_, _) => []);
+        links.Remove(otherTemplate);
+        await Assert.That(result.Request?.Action).IsEqualTo(ActorActionType.Move);
+        await Assert.That(result.Request?.DecisionQuestId).IsEqualTo(FirstQuest);
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var intent,
+            TravelLegDispatch.PursuitMoveOwner)).IsTrue();
+        await Assert.That(intent.PursuitQuestId).IsEqualTo(FirstQuest);
+        await Assert.That(intent.TargetObjId).IsEqualTo(result.Request!.TargetId);
+        actor.PreemptCurrent("unchosen ownership cleanup");
+    }
+
+    [Test]
+    public async Task ExhaustedQuestA_IndependentQuestB_CanTryTheSamePrey()
+    {
+        var (actor, module, executor, steps, bot, clock, _, session) = CreateRig("owner-same-prey-followup", gatherFollowUp: true);
+        await Step(steps, bot, clock);
+        var prey = SpawnPrey(session, Origin + new Vector3(18, 0, 0));
+        for (var wake = 0; wake < 8 && actor.ActiveRequest is not
+            { IsTerminal: false, Action: ActorActionType.Move, MoveOwner: TravelLegDispatch.PursuitMoveOwner }; wake++)
+            await Step(steps, bot, clock);
+        await Assert.That(actor.ActiveRequest?.DecisionQuestId).IsEqualTo(FirstQuest);
+        actor.PreemptCurrent("A-only blocked approach");
+        TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+            TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner, Origin,
+            session.World.GetNpc(prey)!.Transform.World.Position);
+        var bMoved = false;
+        for (var wake = 0; wake < 35 && !bMoved; wake++)
+        {
+            await Step(steps, bot, clock);
+            bMoved = actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move,
+                MoveOwner: TravelLegDispatch.PursuitMoveOwner } request
+                && request.DecisionQuestId == SecondQuest && request.TargetId == prey;
+        }
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(SecondQuest);
+        await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(SecondQuest)).IsTrue();
+        await Assert.That(bMoved).IsTrue();
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var bIntent,
+            TravelLegDispatch.PursuitMoveOwner)).IsTrue();
+        await Assert.That(bIntent.RepathCount).IsEqualTo(0);
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(SecondQuest)).IsFalse();
+        actor.PreemptCurrent("same-prey followup cleanup");
+    }
+
+    [Test]
+    public async Task RememberedFailedPrey_PreserveUsefulThirdPrey_AndChangedApproach()
+    {
+        var (actor, _, _, steps, bot, clock, _, session) = CreateRig("owner-third-prey", eligibleFollowUp: false);
+        await Step(steps, bot, clock);
+        var first = SpawnPrey(session, Origin + new Vector3(18, 0, 0));
+        var second = SpawnExtraPrey(session, Origin + new Vector3(24, 0, 0));
+        var third = SpawnExtraPrey(session, Origin + new Vector3(30, 0, 0));
+        foreach (var target in new[] { first, second })
+        {
+            TravelLegDispatch.EnsureJourney(actor, target, session.World.GetNpc(target)!.Transform.World.Position,
+                3, 2, TravelLegDispatch.PursuitMoveOwner);
+            TravelIntentStore.SetPursuitPurpose(actor.ActorId, FirstQuest);
+            TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+                TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner, Origin,
+                session.World.GetNpc(target)!.Transform.World.Position);
+        }
+        actor.Character.CurrentTarget = session.World.GetNpc(second);
+        var row = QuestFixtureRow.FromQuestData(FirstQuest);
+        await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, first)).IsTrue();
+        await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, second)).IsTrue();
+        await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character,
+            BotObservedContext.Capture(actor), "third", row).SelectedObjId).IsEqualTo(third);
+        GameplayActorTestRig.SetNpcPosition(session, first, Origin + new Vector3(22, 0, 0));
+        await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, first)).IsFalse();
+        await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, second)).IsTrue();
+        GameplayActorTestRig.SetPosition(actor, Origin - new Vector3(4, 0, 0));
+        await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, second)).IsFalse();
+        actor.PreemptCurrent("third-prey cleanup");
+    }
+
+    [Test]
+    public async Task FailedApproachCapacity_DoesNotEvictIntoRetries_ChangedActorCanReconsider()
+    {
+        var (actor, _, _, steps, bot, clock, _, session) = CreateRig("owner-prey-capacity", eligibleFollowUp: false);
+        await Step(steps, bot, clock);
+        for (var index = 0; index < TravelIntentStore.FailedApproachBound + 1; index++)
+        {
+            var target = SpawnExtraPrey(session, Origin + new Vector3(18 + index, 0, 0));
+            TravelLegDispatch.EnsureJourney(actor, target, session.World.GetNpc(target)!.Transform.World.Position,
+                3, 2, TravelLegDispatch.PursuitMoveOwner);
+            TravelIntentStore.SetPursuitPurpose(actor.ActorId, FirstQuest);
+            TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+                TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner, Origin,
+                session.World.GetNpc(target)!.Transform.World.Position);
+            await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, target)).IsTrue();
+        }
+        await Assert.That(TravelIntentStore.TryGet(actor.ActorId, out var intent,
+            TravelLegDispatch.PursuitMoveOwner)).IsTrue();
+        await Assert.That(intent.FailedApproaches.Count).IsEqualTo(TravelIntentStore.FailedApproachBound);
+        GameplayActorTestRig.SetPosition(actor, Origin - new Vector3(4, 0, 0));
+        await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, intent.TargetObjId)).IsFalse();
+        actor.PreemptCurrent("failure-capacity cleanup");
+    }
+
+    [Test]
+    public async Task TwoOwnerFailedPrey_EarnFiniteGiveUp_WithoutOscillatingOrCreditingQuest()
+    {
+        var (actor, module, executor, steps, bot, clock, _, session) =
+            CreateRig("owner-two-exhausted-prey", eligibleFollowUp: false);
+        await Step(steps, bot, clock);
+        var first = SpawnPrey(session, Origin + new Vector3(18, 0, 0));
+        var second = SpawnExtraPrey(session, Origin + new Vector3(24, 0, 0));
+        var preyIds = new HashSet<uint> { first, second };
+        var failedTargets = new List<uint>();
+        QuestGiveUp? earned = null;
+
+        for (var wake = 0; wake < 80 && earned == null; wake++)
+        {
+            // Disclosed blocked-approach fixture: the world and both living prey
+            // stay at the same poses. The owner still chooses every target.
+            GameplayActorTestRig.SetPosition(actor, Origin);
+            await Step(steps, bot, clock);
+            executor.TryGetQuestRuntime(bot.CharacterId, out var runtime);
+            earned = runtime?.LastResult?.GiveUps.FirstOrDefault(q => q.QuestId == FirstQuest);
+            if (earned?.Threshold == 0) earned = null;
+            if (earned != null) break;
+
+            var selected = actor.Character.CurrentTarget?.ObjId ?? 0;
+            if (!preyIds.Contains(selected)
+                || !TravelIntentStore.TryGet(actor.ActorId, out var intent,
+                    TravelLegDispatch.PursuitMoveOwner)
+                || intent.TargetObjId != selected
+                || intent.Terminal != TravelTerminal.None
+                || actor.ActiveRequest is not
+                    { IsTerminal: false, Action: ActorActionType.Move,
+                      MoveOwner: TravelLegDispatch.PursuitMoveOwner })
+                continue;
+
+            // Signal failure only for the request the quest owner actually
+            // dispatched to its own current prey. Neither prey is assigned by
+            // the fixture, and no objective, item or quest credit is injected.
+            actor.PreemptCurrent("blocked approach fixture");
+            TravelIntentStore.SetPursuitPurpose(actor.ActorId, FirstQuest);
+            TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+                TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner,
+                actor.Character.Transform.World.Position,
+                session.World.GetNpc(selected)!.Transform.World.Position);
+            failedTargets.Add(selected);
+        }
+
+        await Assert.That(failedTargets.Distinct().Count()).IsEqualTo(2);
+        await Assert.That(earned.HasValue).IsTrue();
+        await Assert.That(earned!.Value.Wakes).IsEqualTo(10);
+        await Assert.That(earned.Value.Reason).Contains($"quest={FirstQuest} stage=PURSUIT");
+        await Assert.That(actor.Character.Quests.ActiveQuests[FirstQuest].Objectives[0]).IsEqualTo(0);
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsNotEqualTo(FirstQuest);
+        actor.PreemptCurrent("two-prey fixture cleanup");
+    }
+
+    [Test]
+    public async Task ExhaustedApproach_InsideExistingRangedCombatBand_RemainsUseful()
+    {
+        var (actor, _, _, steps, bot, clock, _, session) = CreateRig("owner-exhausted-ranged");
+        await Step(steps, bot, clock);
+        actor.Character.Ability1 = AbilityType.Wild;
+        var prey = SpawnPrey(session, Origin + new Vector3(18, 0, 0));
+        actor.Character.CurrentTarget = session.World.GetNpc(prey);
+        TravelLegDispatch.EnsureJourney(actor, prey, Origin + new Vector3(18, 0, 0), 3, 2,
+            TravelLegDispatch.PursuitMoveOwner);
+        TravelIntentStore.SetPursuitPurpose(actor.ActorId, FirstQuest);
+        TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+            TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner,
+            Origin, Origin + new Vector3(18, 0, 0));
+        await Assert.That(QuestBehavior.CombatOwnsInsideBand(actor.Character,
+            actor.Character.GetDistanceTo(session.World.GetNpc(prey)!, true))).IsTrue();
+        await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, prey)).IsFalse();
+        await Assert.That(BotOpportunityListing.List(actor).ActiveWork.Any(q => q.QuestId == FirstQuest
+            && q.Reason.EndsWith("-source-perceived", StringComparison.Ordinal))).IsTrue();
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task ExhaustedPursuit_UnchangedPoseStaysDeferred_ChangedApproachReadmits(bool moveActor)
+    {
+        var (actor, module, _, steps, bot, clock, _, session) = CreateRig("owner-exhausted-readmit", eligibleFollowUp: false);
+        await Step(steps, bot, clock);
+        var prey = SpawnPrey(session, Origin + new Vector3(18, 0, 0));
+        actor.Character.CurrentTarget = session.World.GetNpc(prey);
+        TravelLegDispatch.EnsureJourney(actor, prey, Origin + new Vector3(18, 0, 0), 3, 2,
+            TravelLegDispatch.PursuitMoveOwner);
+        TravelIntentStore.SetPursuitPurpose(actor.ActorId, FirstQuest);
+        TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+            TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner,
+            Origin, Origin + new Vector3(18, 0, 0));
+        for (var wake = 0; wake < 15; wake++) await Step(steps, bot, clock);
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsNotEqualTo(FirstQuest);
+        var attempts = actor.AuditTrace.Count(r => r.DecisionQuestId == FirstQuest);
+        for (var wake = 0; wake < 6; wake++) await Step(steps, bot, clock);
+        await Assert.That(actor.AuditTrace.Count(r => r.DecisionQuestId == FirstQuest)).IsEqualTo(attempts);
+        if (moveActor)
+            GameplayActorTestRig.SetPosition(actor, Origin + new Vector3(-4, 0, 0));
+        else
+            GameplayActorTestRig.SetNpcPosition(session, prey, Origin + new Vector3(22, 0, 0));
+        for (var wake = 0; wake < 6 && module.GetChosenQuest(bot.CharacterId) != FirstQuest; wake++)
+            await Step(steps, bot, clock);
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(FirstQuest);
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
+        actor.PreemptCurrent("readmission test cleanup");
+    }
+
+    [Test]
+    public async Task ExhaustedPursuit_PrefersObservedAlternative_AndContactRemainsUseful()
+    {
+        var (actor, _, _, steps, bot, clock, _, session) = CreateRig("owner-exhausted-alternative");
+        await Step(steps, bot, clock);
+        var stuck = SpawnPrey(session, Origin + new Vector3(18, 0, 0));
+        var alternative = SpawnExtraPrey(session, Origin + new Vector3(24, 0, 0));
+        actor.Character.CurrentTarget = session.World.GetNpc(stuck);
+        var row = QuestFixtureRow.FromQuestData(FirstQuest);
+        var snapshot = BotObservedContext.Capture(actor);
+        TravelLegDispatch.EnsureJourney(actor, stuck, Origin + new Vector3(18, 0, 0), 3, 2,
+            TravelLegDispatch.PursuitMoveOwner);
+        // Under-budget commitment remains valid.
+        await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character, snapshot, "live", row).SelectedObjId).IsEqualTo(stuck);
+        TravelIntentStore.SetPursuitPurpose(actor.ActorId, FirstQuest);
+        TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+            TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner);
+        await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character, snapshot, "exhausted", row).SelectedObjId).IsEqualTo(alternative);
+        GameplayActorTestRig.SetNpcPosition(session, stuck, Origin + new Vector3(2, 0, 0));
+        await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, stuck)).IsFalse();
+        await Assert.That(QuestObjectiveTargetSelector.Evaluate(actor.Character, snapshot, "contact", row).SelectedObjId).IsEqualTo(stuck);
+        // Another target's failure never demotes this actor's valid commitment.
+        TravelIntentStore.Disarm(actor.ActorId, TravelLegDispatch.PursuitMoveOwner);
+    }
+
+    [Test]
+    public async Task ExhaustedOutOfReachPursuit_EarnsFiniteGiveUp_WithoutCompletingQuest()
+    {
+        var (actor, module, executor, steps, bot, clock, _, session) = CreateRig("owner-exhausted-pursuit");
+        await Step(steps, bot, clock);
+        var prey = SpawnPrey(session, Origin + new Vector3(18, 0, 0));
+        actor.Character.CurrentTarget = session.World.GetNpc(prey);
+        // Disclosed rig input: exercise the owner's reaction to the existing
+        // authoritative movement terminal, rather than fake a walking success.
+        TravelLegDispatch.EnsureJourney(actor, prey, Origin + new Vector3(18, 0, 0), 3, 2,
+            TravelLegDispatch.PursuitMoveOwner);
+        TravelIntentStore.SetPursuitPurpose(actor.ActorId, FirstQuest);
+        TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+            TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner);
+        QuestGiveUp? earned = null;
+        for (var wake = 0; wake < 15 && earned == null; wake++)
+        {
+            await Step(steps, bot, clock);
+            executor.TryGetQuestRuntime(bot.CharacterId, out var runtime);
+            earned = runtime?.LastResult?.GiveUps.FirstOrDefault(q => q.QuestId == FirstQuest);
+            if (earned?.Threshold == 0) earned = null;
+        }
+        await Assert.That(earned.HasValue).IsTrue();
+        await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(FirstQuest)).IsTrue();
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
+        for (var wake = 0; wake < 4 && module.GetChosenQuest(bot.CharacterId) != SecondQuest; wake++)
+            await Step(steps, bot, clock);
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(SecondQuest);
     }
 
     [Test]
@@ -173,6 +482,78 @@ public class QuestOwnerHandoffTests
         await Assert.That(runtime!.LastResult!.GiveUps).IsEmpty();
         await Assert.That(actor.AuditTrace.Count(r => r.DecisionQuestId == FirstQuest)
             + (actor.ActiveRequest?.DecisionQuestId == FirstQuest ? 1 : 0)).IsGreaterThan(retiredRequests);
+    }
+
+    [Test]
+    public async Task AllSupportedWorkDeferred_AllowsOrdinaryDiscoveryWithoutErasingQuests()
+    {
+        var (actor, module, _, steps, bot, clock, _, _) = CreateRig("owner-deferred-discovery", eligibleFollowUp: false);
+        for (var wake = 0; wake < 32; wake++)
+            await Step(steps, bot, clock);
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(0u);
+        await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(FirstQuest)).IsTrue();
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
+        var decision = module.CanActivate(new BotActivityContext { Bot = bot, GameHour = 12f });
+        Console.WriteLine($"DEFERRED-DISCOVERY allowed={decision.CanActivate} activity={decision.ActivityName} reason={decision.WhyNot}");
+        await Assert.That(decision.CanActivate).IsTrue();
+        await Assert.That(decision.ActivityName).IsEqualTo(QuestBootstrapActivityModule.DiscoveryActivityName);
+    }
+
+    [Test]
+    public async Task DeferredWork_DiscoveryWaitsForMovementThenWalksToEligibleGiver()
+    {
+        var (actor, module, executor, steps, bot, clock, giver, session) = CreateRig(
+            "owner-discovery-walk", eligibleFollowUp: false);
+        for (var wake = 0; wake < 32; wake++)
+            await Step(steps, bot, clock);
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(0u);
+        var retiredAdvances = actor.AuditTrace.Count(r => r.Action == ActorActionType.AdvanceQuest
+            && r.DecisionQuestId == FirstQuest);
+
+        // Disclosed world fixtures: the same giver is now distant and B's
+        // ordinary level requirement is satisfied. No quest/target is assigned.
+        var destination = Origin + new Vector3(80, 0, 0);
+        GameplayActorTestRig.SetNpcPosition(session, giver, destination);
+        GameplayActorTestRig.SeedQuestComponentLevelRequirement(97_204, 1);
+        SeedNpcSource(actor, Origin + new Vector3(20, 0, 0));
+        var spawners = (Dictionary<uint, List<NpcSpawner>>)typeof(SpawnManager)
+            .GetProperty("NpcSpawners", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(actor.Character.ParentWorld!.SpawnManager)!;
+        spawners[97_310] = [new NpcSpawner { Id = 97_310, UnitId = Giver,
+            Position = new WorldSpawnPosition { X = destination.X, Y = destination.Y, Z = destination.Z } }];
+
+        // A finite unrelated move is a running-action preservation control.
+        // Actor.Tick completes ordinary movement; no terminal is injected.
+        actor.BroadcastMovement = false;
+        var foreignMove = actor.MoveTo(Origin + new Vector3(0, 4, 0), speed: 5f);
+        await Assert.That(foreignMove.IsTerminal).IsFalse();
+        for (var wake = 0; wake < 3; wake++)
+            await Step(steps, bot, clock);
+        await Assert.That(actor.ActiveRequest).IsSameReferenceAs(foreignMove);
+        await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(SecondQuest)).IsFalse();
+        for (var tick = 0; tick < 100 && !foreignMove.IsTerminal; tick++)
+            actor.Tick(TimeSpan.FromMilliseconds(100));
+        await Assert.That(foreignMove.State).IsEqualTo(ActorLifecycleState.Completed);
+
+        await Step(steps, bot, clock);
+        await Assert.That(actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move,
+            MoveOwner: "QUEST_TRAVEL", DecisionQuestId: null }).IsTrue();
+        await Assert.That(executor.GetRoamRoute(bot.CharacterId)!.Waypoints.Last()).IsEqualTo(destination);
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
+        for (var wake = 0; wake < 400 && !actor.Character.Quests.ActiveQuests.ContainsKey(SecondQuest); wake++)
+        {
+            actor.Tick(TimeSpan.FromMilliseconds(100));
+            await Step(steps, bot, clock);
+        }
+        await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(SecondQuest)).IsTrue();
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(SecondQuest);
+        await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(IneligibleQuest)).IsFalse();
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AcceptQuest
+            && r.TargetId == SecondQuest && r.Result == ActorLifecycleState.Completed)).IsTrue();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.AdvanceQuest
+            && r.DecisionQuestId == FirstQuest)).IsEqualTo(retiredAdvances);
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
+        actor.PreemptCurrent("discovery movement regression teardown");
     }
 
     [Test]
@@ -806,6 +1187,193 @@ public class QuestOwnerHandoffTests
         }
     }
 
+    [Test]
+    public async Task RepeatedIdenticalOwnLegFailure_AtTheBound_AbandonsTheQuest_AndTheBandMovesOn()
+    {
+        // The quest module acts on the outcome the executor itself reported
+        // through T4's channel (LastLegOutcome): the same leg failing the same
+        // way three times makes it abandon that quest with an observable reason
+        // instead of re-electing the same dead-end wake. The rig rejects the
+        // request the executor issued (the idiom BotLegOutcomePublishTests uses);
+        // the outcome is still built by the real executor from the real leg's
+        // terminal state, and no verdict is injected.
+        var rig = CreateRigCore("owner-leg-giveup");
+        SeedNpcSources(rig.Actor, Origin + new Vector3(80, 0, 0));
+        await Step(rig.Steps, rig.Bot, rig.Clock);
+        await Step(rig.Steps, rig.Bot, rig.Clock);
+        await Assert.That(rig.Module.GetChosenQuest(rig.Bot.CharacterId)).IsEqualTo(FirstQuest);
+        await Assert.That(rig.Actor.ActiveRequest is { IsTerminal: false, MoveOwner: "QUEST_TRAVEL" }).IsTrue();
+
+        var rejected = 0;
+        var chosenAfterFailure = new List<uint>();
+        var armingReason = (string?)null;
+        for (var wake = 0; wake < 16 && armingReason == null; wake++)
+        {
+            if (rig.Actor.ActiveRequest is { IsTerminal: false } request)
+            {
+                request.Reject(ActorFailureReason.Navigation, "no path to the waypoint");
+                rejected++;
+            }
+            await Step(rig.Steps, rig.Bot, rig.Clock);
+            chosenAfterFailure.Add(rig.Module.GetChosenQuest(rig.Bot.CharacterId));
+            var reason = rig.Steps.GetLastDecision(rig.Bot.CharacterId)?.Reason;
+            if (reason != null && reason.Contains("gave up on", StringComparison.Ordinal))
+                armingReason = reason;
+        }
+
+        await Assert.That(rejected).IsGreaterThanOrEqualTo(3);
+        await Assert.That(armingReason).IsNotNull();
+        // Bounded and observable: the reason names the count, the bound and the failure.
+        await Assert.That(armingReason!).Contains("after 3 failed legs");
+        await Assert.That(armingReason!).Contains("no path to the waypoint");
+        await Assert.That(armingReason!).Contains(FirstQuest.ToString());
+        // Below the bound the same quest stayed chosen - the give-up is not a
+        // first-failure panic.
+        await Assert.That(chosenAfterFailure.Take(2).All(id => id == FirstQuest)).IsTrue();
+        await Assert.That(rig.Module.GetChosenQuest(rig.Bot.CharacterId)).IsNotEqualTo(FirstQuest);
+        // The abandonment is a purpose decision, not a quest deletion: the quest
+        // record stays exactly as the world gave it.
+        await Assert.That(rig.Actor.Character.Quests.ActiveQuests.ContainsKey(FirstQuest)).IsTrue();
+
+        // The band moves on: another quest is taken rather than the same dead end,
+        // and the abandoned quest is never chosen again.
+        for (var wake = 0; wake < 6 && rig.Module.GetChosenQuest(rig.Bot.CharacterId) != SecondQuest; wake++)
+        {
+            await Step(rig.Steps, rig.Bot, rig.Clock);
+            await Assert.That(rig.Module.GetChosenQuest(rig.Bot.CharacterId)).IsNotEqualTo(FirstQuest);
+        }
+
+        await Assert.That(rig.Module.GetChosenQuest(rig.Bot.CharacterId)).IsEqualTo(SecondQuest);
+        await Assert.That(rig.Actor.Character.Quests.ActiveQuests.ContainsKey(SecondQuest)).IsTrue();
+        await Assert.That(rig.Actor.Character.Quests.HasQuestCompleted(FirstQuest)).IsFalse();
+    }
+
+    [Test]
+    public async Task DifferentLegFailureDetails_NeverAccumulateIntoAGiveUp()
+    {
+        // The bound counts the SAME failure repeating. A leg that fails a
+        // different way each wake is five separate facts, so the quest stays
+        // chosen and no give-up is reported - the policy cannot turn unrelated
+        // transient failures into an abandonment.
+        var rig = CreateRigCore("owner-leg-different-details");
+        SeedNpcSources(rig.Actor, Origin + new Vector3(80, 0, 0));
+        await Step(rig.Steps, rig.Bot, rig.Clock);
+        await Step(rig.Steps, rig.Bot, rig.Clock);
+        await Assert.That(rig.Module.GetChosenQuest(rig.Bot.CharacterId)).IsEqualTo(FirstQuest);
+        await Assert.That(rig.Actor.ActiveRequest is { IsTerminal: false, MoveOwner: "QUEST_TRAVEL" }).IsTrue();
+
+        var rejected = 0;
+        // Five refusals, each with its own detail: well under the quest runtime's
+        // own ten-wake unresolved-target budget, so only this policy could give up.
+        for (var wake = 0; wake < 5; wake++)
+        {
+            if (rig.Actor.ActiveRequest is { IsTerminal: false } request)
+                request.Reject(ActorFailureReason.Navigation, $"no path to waypoint {++rejected}");
+            await Step(rig.Steps, rig.Bot, rig.Clock);
+            var reason = rig.Steps.GetLastDecision(rig.Bot.CharacterId)?.Reason ?? "";
+            await Assert.That(reason.Contains("gave up on", StringComparison.Ordinal)).IsFalse();
+        }
+
+        await Assert.That(rejected).IsGreaterThanOrEqualTo(4);
+        await Assert.That(rig.Module.GetChosenQuest(rig.Bot.CharacterId)).IsEqualTo(FirstQuest);
+    }
+
+    [Test]
+    public async Task AbandonedQuest_IsDeferredThroughTheExistingOwner_AndReleasedWhenItsFactsChange()
+    {
+        // The give-up hands the abandoned ACCEPTED quest to the module's existing
+        // deferral owner - the same owner the quest runtime's own give-up verdicts
+        // use - so the quest's OWN facts decide when it may be tried again, and a
+        // quest with no Quest record is the only thing remembered per generation.
+        // This is the mechanism the two tests above cannot see (both mechanisms
+        // produce the same election), so it is asserted on the deferral state and
+        // on the release firing when the quest's facts change.
+        var rig = CreateRigCore("owner-leg-giveup-deferral");
+        SeedNpcSources(rig.Actor, Origin + new Vector3(80, 0, 0));
+        await Step(rig.Steps, rig.Bot, rig.Clock);
+        await Step(rig.Steps, rig.Bot, rig.Clock);
+
+        var armingReason = (string?)null;
+        for (var wake = 0; wake < 16 && armingReason == null; wake++)
+        {
+            if (rig.Actor.ActiveRequest is { IsTerminal: false } request)
+                request.Reject(ActorFailureReason.Navigation, "no path to the waypoint");
+            await Step(rig.Steps, rig.Bot, rig.Clock);
+            var reason = rig.Steps.GetLastDecision(rig.Bot.CharacterId)?.Reason;
+            if (reason != null && reason.Contains("gave up on", StringComparison.Ordinal))
+                armingReason = reason;
+        }
+
+        await Assert.That(armingReason).IsNotNull();
+        // The deferral owner recorded the give-up for the retained quest, with the
+        // module's own verdict as its reason.
+        var deferred = DeferredQuests(rig.Module, rig.Bot.CharacterId);
+        await Assert.That(deferred.ContainsKey(FirstQuest)).IsTrue();
+        await Assert.That(deferred[FirstQuest]).Contains("GIVE-UP/LEG-FAILED");
+        // An accepted quest is the deferral owner's business, NOT the generation-scoped
+        // block: if it also landed there, the release above would be invisible and the
+        // quest would stay unpickable for the rest of the generation.
+        await Assert.That(GenerationAbandoned(rig.Module, rig.Bot.CharacterId).Contains(FirstQuest)).IsFalse();
+
+        // The release rule is the quest's own facts, not the bot's generation: one
+        // objective changing releases the deferral on the next election, so the
+        // quest can be tried again without waiting for a lifecycle change.
+        rig.Actor.Character.Quests.ActiveQuests[FirstQuest].Objectives[0] = 1;
+        await Step(rig.Steps, rig.Bot, rig.Clock);
+        await Assert.That(DeferredQuests(rig.Module, rig.Bot.CharacterId).ContainsKey(FirstQuest)).IsFalse();
+        await Assert.That(GenerationAbandoned(rig.Module, rig.Bot.CharacterId).Contains(FirstQuest)).IsFalse();
+    }
+
+    /// <summary>
+    /// Reads the module's generation-scoped abandonment set for one bot: the quest
+    /// ids given up on with no <c>Quest</c> record to defer (white-box, like the
+    /// deferral read above).
+    /// </summary>
+    private static HashSet<uint> GenerationAbandoned(QuestBootstrapActivityModule module, uint characterId)
+    {
+        var field = typeof(QuestBootstrapActivityModule)
+            .GetField("_legAbandoned", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var abandoned = (System.Collections.IDictionary)field.GetValue(module)!;
+        if (!abandoned.Contains(characterId))
+            return [];
+        var perBot = abandoned[characterId]!;
+        var quests = (System.Collections.IEnumerable)perBot.GetType()
+            .GetProperty("Quests")!.GetValue(perBot)!;
+        var result = new HashSet<uint>();
+        foreach (var quest in quests)
+            result.Add((uint)quest);
+
+        return result;
+    }
+
+    /// <summary>
+    /// Reads the module's deferral owner for one bot (white-box, like the executor
+    /// state reads this rig already does): quest id to the give-up reason recorded
+    /// with it.
+    /// </summary>
+    private static Dictionary<uint, string> DeferredQuests(QuestBootstrapActivityModule module, uint characterId)
+    {
+        var field = typeof(QuestBootstrapActivityModule)
+            .GetField("_deferrals", BindingFlags.NonPublic | BindingFlags.Instance)!;
+        var deferrals = (System.Collections.IDictionary)field.GetValue(module)!;
+        var result = new Dictionary<uint, string>();
+        if (!deferrals.Contains(characterId))
+            return result;
+        var perBot = deferrals[characterId]!;
+        var quests = (System.Collections.IEnumerable)perBot.GetType()
+            .GetProperty("Quests")!.GetValue(perBot)!;
+        foreach (var pair in quests)
+        {
+            var pairType = pair.GetType();
+            var key = (uint)pairType.GetProperty("Key")!.GetValue(pair)!;
+            var deferredQuest = pairType.GetProperty("Value")!.GetValue(pair)!;
+            var outcome = deferredQuest.GetType().GetProperty("Outcome")!.GetValue(deferredQuest)!;
+            result[key] = (string)outcome.GetType().GetProperty("Reason")!.GetValue(outcome)!;
+        }
+
+        return result;
+    }
+
     private static void SeedNpcSource(GameplayActor actor, Vector3 position)
     {
         var world = actor.Character.ParentWorld!;
@@ -889,8 +1457,20 @@ public class QuestOwnerHandoffTests
         await steps.StepAsync(bot, CancellationToken.None);
     }
 
+    /// <summary>Full rig identity, including the arbiter the projection drops.</summary>
+    private sealed record QuestRig(GameplayActor Actor, QuestBootstrapActivityModule Module,
+        BotRoamStepExecutor Executor, BotGoalArbiter Arbiter, BotGoalArbiterStepExecutor Steps,
+        PlayerBotRuntime Bot, FakeTimeProvider Clock, uint GiverObjId, HeadlessSession Session);
+
     private static (GameplayActor Actor, QuestBootstrapActivityModule Module, BotRoamStepExecutor Executor,
-        BotGoalArbiterStepExecutor Steps, PlayerBotRuntime Bot, FakeTimeProvider Clock, uint GiverObjId, HeadlessSession Session) CreateRig(string name, bool eligibleFollowUp = true, float groundHeight = 0f, Func<Vector3, uint, float>? groundProvider = null)
+        BotGoalArbiterStepExecutor Steps, PlayerBotRuntime Bot, FakeTimeProvider Clock, uint GiverObjId, HeadlessSession Session) CreateRig(string name, bool eligibleFollowUp = true, float groundHeight = 0f, Func<Vector3, uint, float>? groundProvider = null, bool gatherFollowUp = false)
+    {
+        var rig = CreateRigCore(name, eligibleFollowUp, groundHeight, groundProvider, gatherFollowUp);
+        return (rig.Actor, rig.Module, rig.Executor, rig.Steps, rig.Bot, rig.Clock, rig.GiverObjId, rig.Session);
+    }
+
+    private static QuestRig CreateRigCore(string name, bool eligibleFollowUp = true, float groundHeight = 0f,
+        Func<Vector3, uint, float>? groundProvider = null, bool gatherFollowUp = false)
     {
         GameplayActorTestRig.SeedQuestHunt(FirstQuest, 97_201, 97_202, 97_203, Giver, Boar3475, Giver, level: 1);
         var component = QuestManager.Instance.GetTemplate(FirstQuest)!.GetComponents(QuestComponentKind.Progress).Single();
@@ -907,6 +1487,18 @@ public class QuestOwnerHandoffTests
             acts[nameof(QuestActObjItemGather)] = gathers = [];
         gathers[gather.DetailId] = gather;
         GameplayActorTestRig.SeedQuestHunt(SecondQuest, 97_204, 97_205, 97_206, Giver, Boar3475, Giver, level: 1);
+        if (gatherFollowUp)
+        {
+            var next = QuestManager.Instance.GetTemplate(SecondQuest)!.GetComponents(QuestComponentKind.Progress).Single();
+            next.ActTemplates.Clear();
+            var nextGather = new QuestActObjItemGather(next)
+            {
+                ActId = 97_205, DetailId = 97_205, DetailType = nameof(QuestActObjItemGather),
+                ItemId = Meat4058, Count = 3, ThisComponentObjectiveIndex = 0
+            };
+            next.ActTemplates.Add(nextGather);
+            gathers[nextGather.DetailId] = nextGather;
+        }
         GameplayActorTestRig.SeedQuestComponentLevelRequirement(97_204, eligibleFollowUp ? 1u : 20u);
         GameplayActorTestRig.SeedQuestHunt(IneligibleQuest, 97_207, 97_208, 97_209, Giver, Boar3475, Giver, level: 20);
         GameplayActorTestRig.SeedQuestComponentLevelRequirement(97_207, 20);
@@ -936,11 +1528,14 @@ public class QuestOwnerHandoffTests
             EnableWildlifeHunt = false, EnableWildlifeButcher = false, GroundHeightProvider = groundProvider ?? ((_, _) => groundHeight),
             ActiveActivityProvider = arbiter.GetActiveActivity, NearbyDoodadProvider = (_, _) => [],
             QuestChosenProvider = module.GetChosenQuest, QuestTerminalSink = module.NotifyQuestTerminal,
-            QuestGiveUpSink = module.NotifyQuestGiveUp
+            QuestGiveUpSink = module.NotifyQuestGiveUp,
+            // Production parity (Program.cs): the executor's leg outcome goes back
+            // to the arbiter, which hands it to the module that owned the activity.
+            LegOutcomeSink = arbiter.ReportLegOutcome
         };
         executor.GetOrCreateActor(actor.Character);
         QuestLegActor.SetResolver(executor.TryGetActor);
-        return (actor, module, executor, new BotGoalArbiterStepExecutor(arbiter, executor, () => 12f),
+        return new QuestRig(actor, module, executor, arbiter, new BotGoalArbiterStepExecutor(arbiter, executor, () => 12f),
             new PlayerBotRuntime(actor.Character, name), clock, giver, session);
     }
 

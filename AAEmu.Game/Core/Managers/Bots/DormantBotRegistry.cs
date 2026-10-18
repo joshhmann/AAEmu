@@ -185,7 +185,7 @@ public sealed class DormantBotRegistry
             {
                 // A stale discovery entry must never shadow an embodied bot.
                 if (_manager.TryGet(spec.CharacterId, out var runtime) &&
-                    runtime!.State == PlayerBotState.Active)
+                    runtime!.State is not (PlayerBotState.Registered or PlayerBotState.Deactivated))
                     continue;
                 result.Add(spec);
             }
@@ -213,8 +213,8 @@ public sealed class DormantBotRegistry
         ArgumentNullException.ThrowIfNull(spec);
 
         if (_manager.TryGet(spec.CharacterId, out var existing) &&
-            existing!.State == PlayerBotState.Active)
-            return false; // already embodied
+            existing!.State is not (PlayerBotState.Registered or PlayerBotState.Deactivated))
+            return false; // Only stable inactive owners are eligible.
 
         var latencyStopwatch = Stopwatch.StartNew();
 
@@ -317,7 +317,7 @@ public sealed class DormantBotRegistry
                 // A spec whose character is already embodied is not dormant —
                 // discovery can race a boot-time provisioning.
                 if (_manager.TryGet(spec.CharacterId, out var runtime) &&
-                    runtime!.State == PlayerBotState.Active)
+                    runtime!.State is not (PlayerBotState.Registered or PlayerBotState.Deactivated))
                     continue;
                 discovered[spec.CharacterId] = spec;
             }

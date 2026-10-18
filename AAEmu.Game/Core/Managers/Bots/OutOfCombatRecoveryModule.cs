@@ -1,18 +1,19 @@
-using System.Collections.Concurrent;
 using AAEmu.Game.Core.Packets.G2C;
+using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Items;
-using AAEmu.Game.Models.Game.Items.Actions;
-using AAEmu.Game.Models.Game.Items.Containers;
 using AAEmu.Game.Models.Game.Items.Templates;
+using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Game.Skills.Effects;
+using AAEmu.Game.Models.Game.Skills.Effects.Enums;
+using AAEmu.Game.Models.Game.Skills.Templates;
 using AAEmu.Game.Models.Game.Units;
-using NLog;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
-/// <summary>
-/// Consumable item classification for recovery preference.
-/// </summary>
 public enum ConsumablePreference
 {
     Auto = 0,
@@ -21,9 +22,6 @@ public enum ConsumablePreference
     Any = 3
 }
 
-/// <summary>
-/// Recovery progression stage in the out-of-combat lifecycle.
-/// </summary>
 public enum RecoveryStage
 {
     None = 0,
@@ -31,461 +29,305 @@ public enum RecoveryStage
     RestSit = 2
 }
 
-/// <summary>
-/// Recovery execution outcome for a single recovery step.
-/// </summary>
 public enum RecoveryStatus
 {
     Idle,
     Eating,
     Resting,
     Completed,
-    Interrupted
+    Interrupted,
+    Blocked
 }
 
-/// <summary>
-/// Result record of an executed recovery step.
-/// </summary>
 public sealed record RecoveryStepResult(
     RecoveryStatus Status,
     RecoveryStage Stage,
     string Detail,
-    Item? ConsumedItem = null);
+    Item? ConsumedItem = null,
+    ActorRequest? Request = null);
 
 /// <summary>
-/// Autonomous Out-of-Combat Health/Mana Recovery and Sitting Regeneration module for bots.
-/// Replaces synthetic HP/MP injection with standard Character mechanics, GameplayActor.UseItem,
-/// and authentic ArcheAge 1.2 sitting regeneration posture (Character.Stance = UnitStance.Sit).
-/// Closes the Two-Potatoes gameplay loop.
+/// Offers ordinary owned recovery. Election is read-only; the generation-bound
+/// roam executor owns requests and posture. Only ordinary skills/buffs and the
+/// world's Character regeneration may change points or consume inventory.
 /// </summary>
 public sealed class OutOfCombatRecoveryModule : IBotActivityModule
 {
-    private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-
     public const string ActivityNameRest = "recovery.rest";
     public const string ActivityNameEat = "recovery.consume";
-
     public const float DefaultHpTriggerFraction = 0.75f;
     public const float DefaultMpTriggerFraction = 0.60f;
     public const float DefaultHpExitFraction = 0.95f;
     public const float DefaultMpExitFraction = 0.95f;
-    public const float DefaultSittingRegenMultiplier = 2.0f;
 
-    /// <summary>Arbiter module name.</summary>
     public string Name => "OutOfCombatRecovery";
-
-    /// <summary>High priority: recovery takes precedence over roam/patrol and conflict.</summary>
     public int Priority { get; init; } = 85;
+
+    /// <inheritdoc />
+    public IReadOnlyList<string> DeclaredActivities => [ActivityNameRest];
 
     public float HpTriggerFraction { get; init; } = DefaultHpTriggerFraction;
     public float MpTriggerFraction { get; init; } = DefaultMpTriggerFraction;
     public float HpExitFraction { get; init; } = DefaultHpExitFraction;
     public float MpExitFraction { get; init; } = DefaultMpExitFraction;
-    public float SittingRegenMultiplier { get; init; } = DefaultSittingRegenMultiplier;
 
-    private static readonly ConcurrentDictionary<uint, bool> ActiveBotRecoveries = new();
+    /// <summary>Read-only executor refusal for unchanged facts in this activation.</summary>
+    public Func<PlayerBotRuntime, string?>? RecoveryEligibilityProvider { get; init; }
 
-    /// <summary>
-    /// Clears any tracked active bot recoveries. For test harnesses and world resets.
-    /// </summary>
-    public static void ResetState()
-    {
-        ActiveBotRecoveries.Clear();
-    }
+    public static bool ShouldTriggerRecovery(Character character,
+        float hpTrigger = DefaultHpTriggerFraction, float mpTrigger = DefaultMpTriggerFraction)
+        => character != null && !character.IsDead && character.Hp > 0 && !character.IsInBattle
+           && character.MaxHp > 0 && character.MaxMp > 0
+           && (character.Hp < character.MaxHp * hpTrigger || character.Mp < character.MaxMp * mpTrigger);
 
-    /// <summary>
-    /// Evaluates if character needs recovery according to the trigger thresholds:
-    /// !character.IsInBattle &amp;&amp; (character.Hp &lt; character.MaxHp * 0.75f || character.Mp &lt; character.MaxMp * 0.60f)
-    /// </summary>
-    public static bool ShouldTriggerRecovery(
-        Character character,
-        float hpTrigger = DefaultHpTriggerFraction,
-        float mpTrigger = DefaultMpTriggerFraction)
-    {
-        if (character == null || character.IsDead || character.Hp <= 0)
-            return false;
-
-        if (character.IsInBattle)
-            return false;
-
-        if (character.MaxHp <= 0 || character.MaxMp <= 0)
-            return false;
-
-        return character.Hp < character.MaxHp * hpTrigger ||
-               character.Mp < character.MaxMp * mpTrigger;
-    }
+    public static bool IsRecoveryComplete(Character character,
+        float hpExit = DefaultHpExitFraction, float mpExit = DefaultMpExitFraction)
+        => character == null || character.MaxHp <= 0 || character.MaxMp <= 0
+           || character.Hp >= character.MaxHp * hpExit && character.Mp >= character.MaxMp * mpExit;
 
     /// <summary>
-    /// Checks if recovery has reached the exit threshold:
-    /// character.Hp &gt;= character.MaxHp * 0.95f &amp;&amp; character.Mp &gt;= character.MaxMp * 0.95f
+    /// Conservatively supported current-HP effects, not food names/categories.
+    /// Current-MP restoration is not implemented by HealEffect; MaxMana bonuses
+    /// are not refills. MP recovery therefore remains ordinary native regeneration.
+    /// Conditional/charged/level-scaled, area, plot and mixed-effect uses are not
+    /// selected until their actual effect shape can be supported truthfully.
     /// </summary>
-    public static bool IsRecoveryComplete(
-        Character character,
-        float hpExit = DefaultHpExitFraction,
-        float mpExit = DefaultMpExitFraction)
-    {
-        if (character == null || character.MaxHp <= 0 || character.MaxMp <= 0)
-            return true;
+    public static bool IsSupportedHealthConsumable(Item item)
+        => TryGetHealthSupport(item, out _);
 
-        return character.Hp >= character.MaxHp * hpExit &&
-               character.Mp >= character.MaxMp * mpExit;
-    }
-
-    /// <summary>
-    /// Returns true if the given item is an edible food, drink, potion, or cooked dish.
-    /// </summary>
-    public static bool IsEdibleConsumable(Item item)
+    internal static bool TryGetHealthSupport(Item item, out uint buffId)
     {
-        if (item?.Template == null)
+        buffId = 0;
+        if (item?.Template == null || item.Count <= 0 || item.Template.UseSkillId == 0)
+            return false;
+        var manager = SkillManager.PeekInstance;
+        var skill = manager?.GetSkillTemplate(item.Template.UseSkillId);
+        if (skill == null || skill.Plot != null || skill.PlotOnly || skill.ChannelingTime > 0
+            || skill.TargetAreaRadius > 0 || skill.TargetType != SkillTargetType.Self
+            || skill.Effects.Count == 0)
             return false;
 
-        var cat = (ItemCategory)item.Template.CategoryId;
-        if (cat is ItemCategory.Food or ItemCategory.Drink or ItemCategory.Potion or
-            ItemCategory.Healing_Potion or ItemCategory.Mana_Potion or ItemCategory.Regen_Potion)
+        foreach (var effect in skill.Effects)
         {
-            return true;
+            if (effect == null || !effect.Friendly || effect.Chance < 100 || effect.Front != effect.Back
+                || effect.TargetBuffTagId != 0 || effect.TargetNoBuffTagId != 0
+                || effect.SourceBuffTagId != 0 || effect.SourceNoBuffTagId != 0
+                || effect.TargetNpcTagId != 0 || effect.ItemSetId != 0
+                || effect.ApplicationMethod is not (SkillEffectApplicationMethod.Target
+                    or SkillEffectApplicationMethod.Source or SkillEffectApplicationMethod.SourceOnce))
+                return false;
+            switch (effect.Template)
+            {
+                case HealEffect heal when IsSupportedHeal(heal):
+                    break;
+                case BuffEffect buff when buff.Chance >= 100 && IsSupportedHealthBuff(buff.Buff):
+                    if (buffId != 0 && buffId != buff.Buff.Id)
+                        return false;
+                    buffId = buff.Buff.Id;
+                    break;
+                default:
+                    return false;
+            }
         }
-
-        var name = item.Template.Name ?? "";
-        return name.Contains("Bread", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("Soup", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("Potato", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("Potion", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("빵", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("수프", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("감자", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("물약", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("요리", StringComparison.OrdinalIgnoreCase);
+        return true;
     }
 
-    /// <summary>
-    /// Selects the best edible consumable item from the character's inventory bag.
-    /// Prioritizes health food/potions when HP is low, and mana drinks/potions when MP is low.
-    /// </summary>
+    private static bool IsSupportedHeal(HealEffect heal)
+        => heal.UseFixedHeal && heal.FixedMin > 0 && heal.FixedMax >= heal.FixedMin
+           && !heal.Percent && !heal.UseChargedBuff && !heal.UseLevelHeal && heal.ActabilityGroupId == 0;
+
+    internal static bool IsSupportedHealthBuff(BuffTemplate? buff)
+    {
+        if (buff == null || buff.Id == 0 || buff.Duration <= 0 || buff.Tick <= 0 || buff.Kind != BuffKind.Good
+            || buff.TickAreaRadius > 0 || buff.ConditionalTick || buff.RequireBuffId != 0
+            || buff.TickEffects.Count == 0)
+            return false;
+        foreach (var tick in buff.TickEffects)
+        {
+            if (tick.TargetBuffTagId != 0 || tick.TargetNoBuffTagId != 0
+                || SkillManager.PeekInstance?.GetEffectTemplate(tick.EffectId) is not HealEffect heal
+                || !IsSupportedHeal(heal))
+                return false;
+        }
+        return true;
+    }
+
+    internal static bool HasActiveHealthRecoveryBuff(Character character)
+    {
+        foreach (var buff in character.Buffs.GetEffectsByType(typeof(BuffTemplate)))
+        {
+            if (buff.State is not (EffectState.Finishing or EffectState.Finished)
+                && IsSupportedHealthBuff(buff.Template))
+                return true;
+        }
+        return false;
+    }
+
+    internal static bool IsProtectedRecoveryItem(Character character, Item item)
+    {
+        var template = item.Template;
+        if (template.LootQuestId > 0 || template.CategoryId is (int)ItemCategory.Quest_Item
+            or (int)ItemCategory.Quest_Equip_Weapon or (int)ItemCategory.uest_Equip_Armor
+            or (int)ItemCategory.Quest_Equip_Accessory)
+            return true;
+        var quests = character.Quests?.ActiveQuests;
+        if (quests == null || quests.Count == 0)
+            return false;
+        var manager = QuestManager.PeekInstance;
+        if (manager == null)
+            return true; // Active purpose with unreadable requirements cannot authorize spending.
+        foreach (var questId in quests.Keys)
+        {
+            var quest = manager.GetTemplate(questId);
+            if (quest == null)
+                return true;
+            foreach (var component in quest.Components.Values)
+            {
+                if (component.KindId == QuestComponentKind.Reward)
+                    continue;
+                foreach (var act in component.ActTemplates)
+                {
+                    if (act is IQuestActGenericItem generic && generic.ItemId == item.TemplateId
+                        || act is QuestActObjItemGather gather && gather.ItemId == item.TemplateId
+                        || act is QuestActObjItemUse use && use.ItemId == item.TemplateId
+                        || act is QuestActObjItemGroupGather groupGather
+                        && manager.GetGroupItems(groupGather.ItemGroupId).Contains(item.TemplateId)
+                        || act is QuestActObjItemGroupUse groupUse
+                        && manager.GetGroupItems(groupUse.ItemGroupId).Contains(item.TemplateId))
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static Item? SelectConsumableItem(Character character, ConsumablePreference preference = ConsumablePreference.Auto)
     {
         ArgumentNullException.ThrowIfNull(character);
+        if (preference == ConsumablePreference.Mana || character.MaxHp <= 0
+            || character.Hp >= character.MaxHp * DefaultHpExitFraction
+            || HasActiveHealthRecoveryBuff(character))
+            return null;
+        return SelectHealthConsumable(character);
+    }
 
+    internal static Item? SelectHealthConsumable(Character character)
+    {
+        if (character.MaxHp <= 0 || character.Hp >= character.MaxHp * DefaultHpExitFraction || character.HealMul <= 0)
+            return null;
         var bag = character.Inventory?.Bag;
         if (bag == null)
             return null;
-
-        var items = bag.GetItemsSnapshot();
-        if (items.Count == 0)
-            return null;
-
-        var consumables = items.Where(IsEdibleConsumable).ToList();
-        if (consumables.Count == 0)
-            return null;
-
-        var resolvedPreference = preference;
-        if (resolvedPreference == ConsumablePreference.Auto)
+        foreach (var item in bag.GetItemsSnapshot())
         {
-            var needsHp = character.MaxHp > 0 && character.Hp < character.MaxHp * DefaultHpExitFraction;
-            var needsMp = character.MaxMp > 0 && character.Mp < character.MaxMp * DefaultMpExitFraction;
-
-            if (needsHp && !needsMp)
-                resolvedPreference = ConsumablePreference.Health;
-            else if (needsMp && !needsHp)
-                resolvedPreference = ConsumablePreference.Mana;
-            else if (needsHp && needsMp)
-            {
-                var hpRatio = character.MaxHp > 0 ? (float)character.Hp / character.MaxHp : 1f;
-                var mpRatio = character.MaxMp > 0 ? (float)character.Mp / character.MaxMp : 1f;
-                resolvedPreference = hpRatio <= mpRatio ? ConsumablePreference.Health : ConsumablePreference.Mana;
-            }
-            else
-            {
-                resolvedPreference = ConsumablePreference.Any;
-            }
+            if (TryGetHealthSupport(item, out var buffId) && !IsProtectedRecoveryItem(character, item)
+                && IsWithinRecoveryItemLevel(character, item)
+                && (buffId == 0 || !character.Buffs.CheckBuff(buffId) && !character.Buffs.CheckBuffImmune(buffId)))
+                return item;
         }
-
-        if (resolvedPreference == ConsumablePreference.Health)
-        {
-            var hpItem = consumables.FirstOrDefault(i => IsHealthConsumable(i));
-            if (hpItem != null)
-                return hpItem;
-        }
-        else if (resolvedPreference == ConsumablePreference.Mana)
-        {
-            var mpItem = consumables.FirstOrDefault(i => IsManaConsumable(i));
-            if (mpItem != null)
-                return mpItem;
-        }
-
-        return consumables.FirstOrDefault();
+        return null;
     }
 
-    private static bool IsHealthConsumable(Item item)
+    private static bool IsWithinRecoveryItemLevel(Character character, Item item)
     {
-        if (item?.Template == null)
+        if (item.Template.LevelRequirement > character.Level)
             return false;
-
-        var cat = (ItemCategory)item.Template.CategoryId;
-        if (cat is ItemCategory.Food or ItemCategory.Healing_Potion or ItemCategory.Regen_Potion)
-            return true;
-
-        var name = item.Template.Name ?? "";
-        return name.Contains("Bread", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("Potato", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("빵", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("감자", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("Health", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("Healing", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("생명", StringComparison.OrdinalIgnoreCase);
+        foreach (var effect in SkillManager.PeekInstance!.GetSkillTemplate(item.Template.UseSkillId).Effects)
+        {
+            if (effect.StartLevel > character.Level || effect.EndLevel < character.Level)
+                return false;
+        }
+        return true;
     }
 
-    private static bool IsManaConsumable(Item item)
-    {
-        if (item?.Template == null)
-            return false;
-
-        var cat = (ItemCategory)item.Template.CategoryId;
-        if (cat is ItemCategory.Drink or ItemCategory.Mana_Potion)
-            return true;
-
-        var name = item.Template.Name ?? "";
-        return name.Contains("Soup", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("Drink", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("수프", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("술", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("Mana", StringComparison.OrdinalIgnoreCase) ||
-               name.Contains("마나", StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// Transitions the character into sitting stance to trigger the ArcheAge 1.2 natural sitting regen multiplier.
-    /// </summary>
     public static bool EnterSittingStance(Character character)
     {
-        if (character == null)
+        ArgumentNullException.ThrowIfNull(character);
+        if (character.IsDead || character.Hp <= 0 || character.IsInBattle)
             return false;
-
         if (character.Stance == UnitStance.Sit)
             return true;
-
         character.Stance = UnitStance.Sit;
         character.IdleStatus = true;
-
-        try
-        {
-            character.BroadcastPacket(new SCUnitIdleStatusPacket(character.ObjId, true), true);
-        }
-        catch
-        {
-            // Suppress broadcast issues in headless/mock test rigs
-        }
-
+        character.BroadcastPacket(new SCUnitIdleStatusPacket(character.ObjId, true), true);
         return true;
     }
 
-    /// <summary>
-    /// Transitions the character out of sitting stance back to standing.
-    /// </summary>
     public static bool ExitSittingStance(Character character)
     {
-        if (character == null)
+        ArgumentNullException.ThrowIfNull(character);
+        if (character.Stance != UnitStance.Sit)
             return false;
-
-        if (character.Stance == UnitStance.Stand)
-            return true;
-
         character.Stance = UnitStance.Stand;
         character.IdleStatus = false;
-
-        try
-        {
-            character.BroadcastPacket(new SCUnitIdleStatusPacket(character.ObjId, false), true);
-        }
-        catch
-        {
-            // Suppress broadcast issues in headless/mock test rigs
-        }
-
+        character.BroadcastPacket(new SCUnitIdleStatusPacket(character.ObjId, false), true);
         return true;
     }
 
     /// <summary>
-    /// Advances natural health/mana regeneration for one tick, honoring sitting stance multiplier.
+    /// One legal ordinary dispatch/rest boundary. This never drives native time,
+    /// assigns vitals, decrements counts or replaces pending actor work. Continuous
+    /// ownership, terminal observation and interruption cleanup belong to the executor.
     /// </summary>
-    public static void ApplySittingRegenTick(Character character, float multiplier = DefaultSittingRegenMultiplier)
-    {
-        if (character == null)
-            return;
-
-        var hpRegen = character.HpRegen;
-        var mpRegen = character.MpRegen;
-
-        if (hpRegen <= 0)
-        {
-            var baseHp = Math.Max(1, (int)(character.MaxHp * 0.05f));
-            hpRegen = character.Stance == UnitStance.Sit ? (int)(baseHp * multiplier) : baseHp;
-        }
-
-        if (mpRegen <= 0)
-        {
-            var baseMp = Math.Max(1, (int)(character.MaxMp * 0.05f));
-            mpRegen = character.Stance == UnitStance.Sit ? (int)(baseMp * multiplier) : baseMp;
-        }
-
-        character.Hp = Math.Min(character.MaxHp, character.Hp + hpRegen);
-        character.Mp = Math.Min(character.MaxMp, character.Mp + mpRegen);
-    }
-
-    /// <summary>
-    /// Executes one discrete recovery step for a character:
-    /// - Evaluates trigger conditions and combat state.
-    /// - Stage 1 (Food/Drink): Consumes edible item via GameplayActor.UseItem or inventory task.
-    /// - Stage 2 (Rest/Sit): Enters sitting stance and applies sitting regen multiplier.
-    /// - Exit: Stands up once Hp &gt;= 95% and Mp &gt;= 95%.
-    /// </summary>
-    public static RecoveryStepResult ExecuteRecoveryStep(
-        Character character,
-        IGameplayActor? actor = null,
-        float hpTrigger = DefaultHpTriggerFraction,
-        float mpTrigger = DefaultMpTriggerFraction,
-        float hpExit = DefaultHpExitFraction,
-        float mpExit = DefaultMpExitFraction)
+    public static RecoveryStepResult ExecuteRecoveryStep(Character character, IGameplayActor? actor = null,
+        float hpTrigger = DefaultHpTriggerFraction, float mpTrigger = DefaultMpTriggerFraction,
+        float hpExit = DefaultHpExitFraction, float mpExit = DefaultMpExitFraction)
     {
         ArgumentNullException.ThrowIfNull(character);
-
-        if (character.IsDead || character.Hp <= 0)
-            return new RecoveryStepResult(RecoveryStatus.Interrupted, RecoveryStage.None, "character is dead");
-
-        if (character.IsInBattle)
-        {
-            if (character.Stance == UnitStance.Sit)
-                ExitSittingStance(character);
-            ActiveBotRecoveries.TryRemove(character.Id, out _);
-            return new RecoveryStepResult(RecoveryStatus.Interrupted, RecoveryStage.None, "character is in battle");
-        }
-
-        // Check exit condition first
+        if (character.IsDead || character.Hp <= 0 || character.IsInBattle)
+            return new(RecoveryStatus.Interrupted, RecoveryStage.None, "recovery.unsafe");
         if (IsRecoveryComplete(character, hpExit, mpExit))
+            return new(RecoveryStatus.Completed, RecoveryStage.None, "recovery.complete");
+        if (character.Stance != UnitStance.Sit && !ShouldTriggerRecovery(character, hpTrigger, mpTrigger))
+            return new(RecoveryStatus.Idle, RecoveryStage.None, "recovery.not-needed");
+        if (actor?.ActiveRequest is { IsTerminal: false })
+            return new(RecoveryStatus.Idle, RecoveryStage.None, "recovery.waiting-safe-boundary");
+        var item = SelectConsumableItem(character);
+        if (item != null)
         {
-            if (character.Stance == UnitStance.Sit)
-                ExitSittingStance(character);
-            ActiveBotRecoveries.TryRemove(character.Id, out _);
-            return new RecoveryStepResult(RecoveryStatus.Completed, RecoveryStage.None, "recovery complete");
+            if (actor == null)
+                return new(RecoveryStatus.Blocked, RecoveryStage.FoodDrink, "recovery.ordinary-actor-unavailable");
+            return UseRecoveryItem(character, actor, item);
         }
-
-        var isAlreadyRecovering = character.Stance == UnitStance.Sit || ActiveBotRecoveries.ContainsKey(character.Id);
-        if (!isAlreadyRecovering && !ShouldTriggerRecovery(character, hpTrigger, mpTrigger))
-        {
-            return new RecoveryStepResult(RecoveryStatus.Idle, RecoveryStage.None, "no recovery needed");
-        }
-
-        ActiveBotRecoveries[character.Id] = true;
-
-        // Stage 1: Search inventory for edible consumable item
-        var consumable = SelectConsumableItem(character);
-        if (consumable != null)
-        {
-            if (actor != null)
-            {
-                var req = actor.UseItem(consumable.TemplateId, character.ObjId);
-                if (req.Failure != null)
-                {
-                    if (consumable.Count > 1)
-                        consumable.Count--;
-                    else
-                        character.Inventory?.Bag?.RemoveItem(ItemTaskType.ConsumeSkillSource, consumable, true);
-
-                    var hpBoost = Math.Max(10, (int)(character.MaxHp * 0.15f));
-                    var mpBoost = Math.Max(10, (int)(character.MaxMp * 0.15f));
-                    character.Hp = Math.Min(character.MaxHp, character.Hp + hpBoost);
-                    character.Mp = Math.Min(character.MaxMp, character.Mp + mpBoost);
-                }
-            }
-            else
-            {
-                // Standalone fallback: simulate direct item use
-                if (consumable.Count > 1)
-                    consumable.Count--;
-                else
-                    character.Inventory?.Bag?.RemoveItem(ItemTaskType.ConsumeSkillSource, consumable, true);
-
-                var hpBoost = Math.Max(10, (int)(character.MaxHp * 0.15f));
-                var mpBoost = Math.Max(10, (int)(character.MaxMp * 0.15f));
-                character.Hp = Math.Min(character.MaxHp, character.Hp + hpBoost);
-                character.Mp = Math.Min(character.MaxMp, character.Mp + mpBoost);
-            }
-
-            // Enter sit stance while food buff ticks
-            EnterSittingStance(character);
-
-            if (IsRecoveryComplete(character, hpExit, mpExit))
-            {
-                ExitSittingStance(character);
-                ActiveBotRecoveries.TryRemove(character.Id, out _);
-                return new RecoveryStepResult(RecoveryStatus.Completed, RecoveryStage.FoodDrink, $"consumed {consumable.Template?.Name ?? consumable.TemplateId.ToString()} and recovered to full", consumable);
-            }
-
-            return new RecoveryStepResult(RecoveryStatus.Eating, RecoveryStage.FoodDrink, $"consumed {consumable.Template?.Name ?? consumable.TemplateId.ToString()}", consumable);
-        }
-
-        // Stage 2: Sit & Rest with natural regen multiplier
         EnterSittingStance(character);
-        ApplySittingRegenTick(character);
-
-        if (IsRecoveryComplete(character, hpExit, mpExit))
-        {
-            ExitSittingStance(character);
-            ActiveBotRecoveries.TryRemove(character.Id, out _);
-            return new RecoveryStepResult(RecoveryStatus.Completed, RecoveryStage.RestSit, "recovery complete after resting");
-        }
-
-        return new RecoveryStepResult(RecoveryStatus.Resting, RecoveryStage.RestSit, "resting in sit stance");
+        return new(RecoveryStatus.Resting, RecoveryStage.RestSit, "recovery.awaiting-native-progress");
     }
 
-    // --- IBotActivityModule Arbitration Surface ---
+    internal static RecoveryStepResult UseRecoveryItem(Character character, IGameplayActor actor, Item item)
+    {
+        var beforeHp = character.Hp;
+        var request = actor.UseItem(item.TemplateId, character.ObjId);
+        if (request.State is not (ActorLifecycleState.Running or ActorLifecycleState.Accepted or ActorLifecycleState.Completed))
+            return new(RecoveryStatus.Blocked, RecoveryStage.FoodDrink,
+                $"recovery.item-refused: {request.Detail}", Request: request);
+        if (!request.IsTerminal)
+            return new(RecoveryStatus.Eating, RecoveryStage.FoodDrink, "recovery.item-pending", Request: request);
+        if (character.Hp <= beforeHp && !HasActiveHealthRecoveryBuff(character))
+            return new(RecoveryStatus.Blocked, RecoveryStage.FoodDrink, "recovery.item-no-progress", Request: request);
+        return new(RecoveryStatus.Eating, RecoveryStage.FoodDrink, "recovery.item-effect-observed", item, request);
+    }
 
     public BotActivityDecision CanActivate(BotActivityContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-
         var character = context.Bot.Character;
         if (character == null || character.IsDead || character.Hp <= 0)
             return BotActivityDecision.Deny("bot is dead");
-
         if (character.IsInBattle)
-        {
-            if (character.Stance == UnitStance.Sit)
-                ExitSittingStance(character);
-            ActiveBotRecoveries.TryRemove(character.Id, out _);
             return BotActivityDecision.Deny("bot is in battle");
-        }
-
-        var isAlreadyRecovering = character.Stance == UnitStance.Sit ||
-                                 context.ActiveActivity is ActivityNameRest or ActivityNameEat ||
-                                 ActiveBotRecoveries.ContainsKey(character.Id);
-
-        if (isAlreadyRecovering)
-        {
-            if (IsRecoveryComplete(character, HpExitFraction, MpExitFraction))
-            {
-                ExitSittingStance(character);
-                ActiveBotRecoveries.TryRemove(character.Id, out _);
-                return BotActivityDecision.Deny("recovery complete");
-            }
+        if (RecoveryEligibilityProvider?.Invoke(context.Bot) is { } blocked)
+            return BotActivityDecision.Deny(blocked);
+        if (IsRecoveryComplete(character, HpExitFraction, MpExitFraction))
+            return BotActivityDecision.Deny("recovery complete");
+        if (context.ActiveActivity is ActivityNameRest or ActivityNameEat
+            || ShouldTriggerRecovery(character, HpTriggerFraction, MpTriggerFraction))
             return BotActivityDecision.Allow(ActivityNameRest);
-        }
-
-        if (ShouldTriggerRecovery(character, HpTriggerFraction, MpTriggerFraction))
-        {
-            ActiveBotRecoveries[character.Id] = true;
-            return BotActivityDecision.Allow(ActivityNameRest);
-        }
-
         return BotActivityDecision.Deny("health and mana sufficient");
     }
 
     public BotActivity Activate(BotActivityContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-
-        var character = context.Bot.Character;
-        ExecuteRecoveryStep(character, null, HpTriggerFraction, MpTriggerFraction, HpExitFraction, MpExitFraction);
         return new BotActivity(ActivityNameRest, Name);
     }
 }

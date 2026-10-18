@@ -3,6 +3,8 @@ using AAEmu.Game.Core.Managers;
 using AAEmu.Game.GameData;
 using AAEmu.Game.Models.Game.Bots;
 using AAEmu.Game.Models.Game.CommonFarm.Static;
+using AAEmu.Game.Core.Managers.UnitManagers;
+using AAEmu.Game.Models.Game.Skills;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -84,6 +86,9 @@ public static class NeedsDecisionScenario
 
         /// <summary>Copper price per unit the buy candidate expects (0 = unconfigured).</summary>
         public long BuyUnitPrice { get; init; }
+
+        /// <summary>Only the canonical barley-to-hardbread supply variant enables processing.</summary>
+        public bool ProduceHardBread { get; init; }
 
         /// <summary>Craft recipe id the craft candidate runs (0 = unconfigured).</summary>
         public uint CraftId { get; init; }
@@ -210,10 +215,12 @@ public static class NeedsDecisionScenario
             };
             if (needs.Urgency > opts.Thresholds.RestUrgency)
             {
-                proposals.Add(CraftProposal(actor, opts, materialBefore));
+                proposals.Add(CraftProposal(actor, opts, materialBefore, foodBefore));
                 proposals.Add(PlantProposal(actor, opts, seedBefore, plantOnPublicFarm, plantDoodadAllowed));
                 proposals.Add(BuyProposal(actor, opts, buyItemBefore));
                 proposals.Add(HarvestProposal(actor, opts, foodBefore));
+                if (opts.ProduceHardBread)
+                    proposals.Add(ProcessGrainProposal(actor, opts, context));
                 proposals.Add(SellProposal(actor, opts, moneyBefore));
             }
             // Opt-in only: a flag-off wake pays nothing for the observer-only
@@ -246,12 +253,8 @@ public static class NeedsDecisionScenario
                 actor.SetPendingCycleId(null);
             }
             var request = execution.Request;
-            if (!request.IsTerminal)
-            {
-                return Fail("EXECUTE", ActorFailureReason.Starvation,
-                    $"{request.Action} left the terminal surface (no tick service in N1)",
-                    actor, needs, decision.Proposal.Action, decision.Rejections, request);
-            }
+            // Native timed work remains owned by the caller's ordinary actor tick.
+            // Pending is not failure, and its postcondition is not yet satisfied.
 
             var workSelected = decision.Proposal.Action != ActorActionType.Stop;
             return new NeedsRunResult
@@ -279,14 +282,18 @@ public static class NeedsDecisionScenario
                 BotNeedsEvaluator.Evaluate(null), null, []);
         }
     }
-    private static BotDecisionProposal CraftProposal(GameplayActor actor, NeedsOptions opts, int materialBefore)
-        => new(
+    private static BotDecisionProposal CraftProposal(GameplayActor actor, NeedsOptions opts, int materialBefore, int foodBefore)
+    {
+        var protectedMaterial = opts.ProduceHardBread
+            && NeedsFarmModuleOptions.HasProtectedIngredient(actor.Character, opts.CraftMaterialItemId);
+        return new(
             goal: "needs.craft",
             action: ActorActionType.Craft,
             targetId: opts.CraftId,
             expectedPostcondition: new BotProposalPostcondition(
                 $"craft {opts.CraftId} consumes item {opts.CraftMaterialItemId} below the {materialBefore} before the step",
-                observed => BagCountOf(observed, opts.CraftMaterialItemId) < materialBefore),
+                observed => BagCountOf(observed, opts.CraftMaterialItemId) < materialBefore
+                    && (!opts.ProduceHardBread || BagCountOf(observed, NeedsFarmModuleOptions.HardBreadItemId) > foodBefore)),
             idempotencyKey: $"needs:{actor.ActorId}:{opts.CycleId}:craft",
             timeout: TimeSpan.FromSeconds(30),
             rationale: "work off the lumber/material need at the bench",
@@ -300,9 +307,11 @@ public static class NeedsDecisionScenario
                 new BotProposalPrecondition("bench-configured", _ => opts.CraftBenchObjId != 0),
                 new BotProposalPrecondition("materials-present",
                     observed => BagCountOf(observed, opts.CraftMaterialItemId) >= opts.CraftMaterialAmount),
+                new BotProposalPrecondition("materials-unprotected", _ => !protectedMaterial),
                 new BotProposalPrecondition("labor-sufficient",
                     observed => observed.LaborPower >= opts.CraftLaborCost)
             ]);
+    }
     private static BotDecisionProposal PlantProposal(GameplayActor actor, NeedsOptions opts, int seedBefore, bool onPublicFarm, bool doodadAllowed)
         => new(
             goal: "needs.plant",
@@ -359,6 +368,36 @@ public static class NeedsDecisionScenario
     }
     private static int BagCountOf(BotObservedContext context, uint itemTemplateId)
         => itemTemplateId != 0 && context.BagItemCounts.TryGetValue(itemTemplateId, out var count) ? count : 0;
+
+    private static BotDecisionProposal ProcessGrainProposal(GameplayActor actor, NeedsOptions opts, BotObservedContext context)
+    {
+        var processedBefore = BagCountOf(context, NeedsFarmModuleOptions.ProcessedGrainItemId);
+        var inputsProtected = NeedsFarmModuleOptions.HasProtectedIngredient(actor.Character, NeedsFarmModuleOptions.BarleyItemId)
+            || NeedsFarmModuleOptions.HasProtectedIngredient(actor.Character, NeedsFarmModuleOptions.ProcessingKnifeItemId);
+        var useSkill = SkillManager.Instance.GetSkillTemplate(ItemManager.Instance.GetTemplate(NeedsFarmModuleOptions.BarleyItemId)?.UseSkillId ?? 0);
+        var labor = useSkill == null ? int.MaxValue : Skill.GetLaborCost(useSkill, actor.Character);
+        return new(
+            goal: "needs.process-grain",
+            action: ActorActionType.UseItem,
+            targetId: NeedsFarmModuleOptions.BarleyItemId,
+            expectedPostcondition: new BotProposalPostcondition(
+                "ordinary grain processing adds processed grain",
+                observed => BagCountOf(observed, NeedsFarmModuleOptions.ProcessedGrainItemId) > processedBefore),
+            idempotencyKey: $"needs:{actor.ActorId}:{opts.CycleId}:process-grain",
+            timeout: TimeSpan.FromSeconds(30),
+            rationale: "process earned grain for hardbread",
+            policyVersion: opts.PolicyVersion,
+            priority: opts.CraftPriority,
+            tieBreakKey: "process-grain",
+            payload: null,
+            hardPreconditions:
+            [
+                new BotProposalPrecondition("raw-grain-present", observed => BagCountOf(observed, NeedsFarmModuleOptions.BarleyItemId) >= 10),
+                new BotProposalPrecondition("knife-present", observed => BagCountOf(observed, NeedsFarmModuleOptions.ProcessingKnifeItemId) >= 1),
+                new BotProposalPrecondition("ingredients-unprotected", _ => !inputsProtected),
+                new BotProposalPrecondition("labor-sufficient", observed => observed.LaborPower >= labor)
+            ]);
+    }
 
     private static BotDecisionProposal BuyProposal(GameplayActor actor, NeedsOptions opts, int itemBefore)
         => new(
@@ -511,6 +550,7 @@ public static class NeedsDecisionScenario
                 proposal.TargetId, sell.ItemId, proposal.IdempotencyKey),
             ActorActionType.Harvest => gameplayActor.Harvest(
                 proposal.TargetId, proposal.IdempotencyKey),
+            ActorActionType.UseItem => gameplayActor.UseItem(proposal.TargetId, idempotencyKey: proposal.IdempotencyKey),
             ActorActionType.Stop => gameplayActor.Stop(),
             _ => throw new InvalidOperationException($"needs decision cannot dispatch {proposal.Action}")
         };

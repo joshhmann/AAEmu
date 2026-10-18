@@ -157,7 +157,13 @@ public class PlayerBotMetadataStore : Singleton<PlayerBotMetadataStore>
         }
     }
 
-    /// <summary>Records (and persists) the bot's serialized planner state (JSON).</summary>
+    /// <summary>
+    /// Records (and persists) the bot's serialized goal-continuity record
+    /// (JSON): the goal its last election put in force and, when it replaced
+    /// one, the goal that was interrupted and why (plan T6). The column existed
+    /// with no writer since the dead planner cursor was removed; the arbiter is
+    /// its production writer.
+    /// </summary>
     public void RecordPlannerState(uint characterId, string plannerStateJson)
     {
         lock (_ioLock)

@@ -14,7 +14,13 @@ public enum PlayerBotState : byte
     Active = 1,
 
     /// <summary>Embodiment torn down; record retained for diagnostics/audit.</summary>
-    Deactivated = 2
+    Deactivated = 2,
+
+    /// <summary>Admission closed while the exact embodiment is leaving and saving.</summary>
+    Deactivating = 3,
+
+    /// <summary>Physical leave failed or was refused; quiesced, not safely deactivated.</summary>
+    DeactivationFailed = 4
 }
 
 /// <summary>

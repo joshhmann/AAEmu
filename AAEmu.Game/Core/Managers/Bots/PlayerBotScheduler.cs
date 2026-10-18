@@ -59,6 +59,18 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     // boundary — the game-loop thread (TickManager OnTick, useAsync: false).
     private readonly ConcurrentQueue<BotStep> _tickQueue = new();
 
+    /// <summary>
+    /// Guards the compound take operations on <see cref="_tickQueue"/>: the
+    /// boundary's peek-then-dequeue and the drop path's drain. Without it a
+    /// step peeked for execution can be dequeued and counted as dropped by the
+    /// shutdown thread in between (code review 2026-10-16, F3). Enqueue is not
+    /// gated — producers never wait on the boundary.
+    /// </summary>
+    private readonly object _tickQueueGate = new();
+    // The same concrete instance used by Start's existing subscription:
+    // AsyncLocal execution pins are not physical game-loop thread identity.
+    private TickManager? _tickManager;
+
     // Bounded work channel consumed by the worker pool (wake marshalling only).
     private Channel<BotStep> _work = null!;
     private Task[] _workers = [];
@@ -67,11 +79,21 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
 
     private int _started;
     private int _stopped;
+    // The reason recorded by the caller that armed the host through Arm().
+    private string? _armedBy;
     private long _startedAtTicks;
 
     // Metrics (Interlocked; Volatile.Read for snapshots).
     private int _activeWorkers;
     private long _totalStepsRun;
+    // A1 converging teardown: steps that were queued when the execution
+    // boundary stopped. Dropped with a record (and lease release) instead of
+    // sitting in the marshal queue unaccounted.
+    private long _totalStepsDropped;
+    // L2-b per-tick budget: steps left in the marshal queue when one tick
+    // drain hit its budget. Deferred (they run on a later tick), never
+    // dropped — counted separately so a crowded tick is visible.
+    private long _totalStepsDeferred;
     private long _totalStepsSkipped;
     private long _totalStepsFailed;
     private long _totalStepsTimedOut;
@@ -120,12 +142,58 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     /// <inheritdoc />
     public bool IsRunning => Volatile.Read(ref _started) != 0 && Volatile.Read(ref _stopped) == 0;
 
-    /// <inheritdoc />
+    /// <summary>
+    /// The low-level primitive: starts the wake-scan loop and the bounded
+    /// worker pool without recording an arming reason. Production callers use
+    /// <see cref="Arm"/> — the one arming owner — and this stays for the unit
+    /// rigs that drive the scheduler directly.
+    /// </summary>
     public void Start()
     {
         if (Interlocked.Exchange(ref _started, 1) != 0)
             return;
 
+        StartCore();
+    }
+
+    /// <inheritdoc />
+    public string? ArmedBy => Volatile.Read(ref _armedBy);
+
+    /// <inheritdoc />
+    public bool Arm(string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            reason = "host-arm";
+
+        // A host disarmed in this process is terminal: the scan loop, the
+        // worker pool and the tick drain are torn down and _stopped is never
+        // reset, so "arming" again would claim a host that can never step.
+        // Report the refusal; never throw (callers are bootstrap paths and
+        // GM/admin commands).
+        if (Volatile.Read(ref _stopped) != 0)
+        {
+            Logger.Warn("Bot host arm refused ({Reason}): this host was already disarmed", reason);
+            return false;
+        }
+
+        if (Interlocked.Exchange(ref _started, 1) != 0)
+        {
+            Logger.Info("Bot host already armed by {ArmedBy}; {Reason} needs no second arming",
+                ArmedBy ?? "an unrecorded caller", reason);
+            return false;
+        }
+
+        _armedBy = reason;
+        StartCore();
+        Logger.Info("Bot host armed by {Reason}", reason);
+        return true;
+    }
+
+    /// <summary>
+    /// The arming work itself, after <c>_started</c> has been claimed.
+    /// </summary>
+    private void StartCore()
+    {
         _scanCts = new CancellationTokenSource();
         _work = Channel.CreateBounded<BotStep>(new BoundedChannelOptions(_options.WorkChannelCapacity)
         {
@@ -152,7 +220,10 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         // The rig sets SubscribeToTickManager=false and pumps the drain
         // manually on its simulated boundary thread.
         if (_options.SubscribeToTickManager)
-            TickManager.Instance.OnTick.Subscribe(TickDrain, _options.TickDrainInterval, useAsync: false, name: "PlayerBotScheduler.TickDrain");
+        {
+            _tickManager = TickManager.Instance;
+            _tickManager.OnTick.Subscribe(TickDrain, _options.TickDrainInterval, useAsync: false, name: "PlayerBotScheduler.TickDrain");
+        }
 
         Logger.Debug("PlayerBotScheduler started: {WorkerCount} workers, scan {ScanIntervalMs}ms, tick drain {TickDrainMs}ms",
             WorkerCount, _options.ScanInterval.TotalMilliseconds, _options.TickDrainInterval.TotalMilliseconds);
@@ -166,17 +237,21 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         if (Interlocked.Exchange(ref _stopped, 1) != 0)
             return;
 
+        // Every retirement registers before enqueueing. Cancellation fails
+        // queued AND already-dequeued acknowledgements, including a caller
+        // racing shutdown; an abandoned item can never authorize leave-save.
+        _scanCts.Cancel();
+
         // Unsubscribe the marshal drain: after this, no bot step can execute
         // anywhere (the boundary is the only execution path).
         if (_options.SubscribeToTickManager)
-            TickManager.Instance.OnTick.UnSubscribe(TickDrain);
+            _tickManager?.OnTick.UnSubscribe(TickDrain);
 
         // Stop the wake-scan; workers finish marshalling the remaining queued
         // steps into the tick queue. Steps that were never drained are
         // DROPPED — the execution boundary (game loop) is gone at shutdown,
         // and executing them off-boundary would violate the M5 contract
         // (nothing may mutate Character/world off the single boundary).
-        _scanCts.Cancel();
         _work.Writer.TryComplete();
 
         try
@@ -190,7 +265,259 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         }
 
         await _scanTask.WaitAsync(cancellationToken);
-        Logger.Debug("PlayerBotScheduler stopped (steps run: {StepsRun})", Volatile.Read(ref _totalStepsRun));
+
+        // A1 converging teardown: the steps the stopped execution boundary can
+        // no longer run are dropped WITH a record (and their leases released)
+        // instead of sitting in the marshal queue unaccounted.
+        var dropped = DrainDroppedSteps("scheduler-stopped");
+        Logger.Debug("PlayerBotScheduler stopped (steps run: {StepsRun}, queued steps dropped: {Dropped})",
+            Volatile.Read(ref _totalStepsRun), dropped);
+    }
+
+    /// <inheritdoc />
+    public BotHostTeardownReport Disarm(string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            reason = "host-disarm";
+
+        var wasRunning = IsRunning;
+        // The stop drains and counts the queued steps itself; report the TOTAL
+        // this disarm dropped, not just what was left after the stop.
+        var droppedBefore = Interlocked.Read(ref _totalStepsDropped);
+
+        // Ownership convergence FIRST, while this host still owns the native
+        // retirement path. A retirement is refused outright once the scheduler
+        // is not running (TryRetireNativeWork :321) and its step runs on the
+        // execution boundary this stop is about to tear down, so stopping
+        // first left every enrolled bot in DeactivationFailed on a real host
+        // shutdown (live lane 2026-10-16: `disarmed (host-shutdown)
+        // running=true deactivated=0 failed=2`, "Native retirement was
+        // refused or abandoned"). Each bot now leaves through the ordinary
+        // manager path (its own leave-save) while the host is still up.
+        var deactivated = 0;
+        var failed = 0;
+        List<string>? failures = null;
+        var counted = new HashSet<uint>();
+        // Bots this loop counted as failures, kept by reference so a leave that
+        // finishes during the stop can be reconciled afterwards (runtime.State
+        // is mutated in place by the manager).
+        var countedAsFailed = new List<PlayerBotRuntime>();
+        foreach (var runtime in _manager.GetAll())
+        {
+            // Deactivated = already left (the manager retains the record for
+            // diagnostics). Registered = known but never embodied, so there is
+            // no world presence and no leave-save to take.
+            if (runtime.State is PlayerBotState.Deactivated or PlayerBotState.Registered)
+                continue;
+
+            counted.Add(runtime.CharacterId);
+
+            if (runtime.State != PlayerBotState.Active)
+            {
+                // Already leaving or already failed before this disarm: it did
+                // NOT leave the Active lifecycle, so a green report would be a
+                // false claim (code review 2026-10-16, F2a — DeactivationFailed
+                // is terminal and never retried).
+                failed++;
+                countedAsFailed.Add(runtime);
+                (failures ??= []).Add($"{runtime.CharacterId}:{runtime.State}");
+                Logger.Warn("PlayerBotScheduler disarm: character {CharacterId} was already {State} — not safely deactivated",
+                    runtime.CharacterId, runtime.State);
+                continue;
+            }
+
+            bool left;
+            try
+            {
+                left = _manager.Deactivate(runtime.CharacterId, reason);
+            }
+            catch (Exception ex)
+            {
+                left = false;
+                Logger.Error(ex, "PlayerBotScheduler disarm: deactivation threw for character {CharacterId}",
+                    runtime.CharacterId);
+            }
+
+            if (left)
+            {
+                deactivated++;
+            }
+            else
+            {
+                failed++;
+                (failures ??= []).Add($"{runtime.CharacterId}:{runtime.State}");
+                Logger.Warn("PlayerBotScheduler disarm: character {CharacterId} stayed {State} — leave refused",
+                    runtime.CharacterId, runtime.State);
+            }
+        }
+
+        // Then the host itself: the execution boundary is gone after this, so
+        // whatever is still queued is dropped WITH a record.
+        if (wasRunning)
+        {
+            try
+            {
+                StopAsync().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "PlayerBotScheduler disarm: stopping the scheduler failed");
+            }
+        }
+
+        DrainDroppedSteps(reason);
+        var dropped = (int)(Interlocked.Read(ref _totalStepsDropped) - droppedBefore);
+
+        // A leave that was still in flight when the stop began can land in
+        // DeactivationFailed AFTER the loop above: StopAsync cancels the scan
+        // registration first, which fails the retirement acknowledgement even
+        // when its step was already dequeued (code review 2026-10-16, F2b).
+        // Re-scan so the report cannot claim convergence for a bot that never
+        // left, and so the operator route's response matches the final state.
+        foreach (var runtime in _manager.GetAll())
+        {
+            if (counted.Contains(runtime.CharacterId))
+                continue;
+            if (runtime.State is PlayerBotState.Deactivated or PlayerBotState.Registered)
+                continue;
+
+            failed++;
+            (failures ??= []).Add($"{runtime.CharacterId}:{runtime.State}");
+            Logger.Warn("PlayerBotScheduler disarm: character {CharacterId} landed in {State} while the host stopped — not safely deactivated",
+                runtime.CharacterId, runtime.State);
+        }
+
+        // The mirror case: a bot counted as failed above because it was already
+        // leaving can still finish its leave while the host stops, so a report
+        // that keeps it as a failure would be wrong in the other direction.
+        foreach (var runtime in countedAsFailed)
+        {
+            if (runtime.State != PlayerBotState.Deactivated)
+                continue;
+
+            failed--;
+            deactivated++;
+            failures?.RemoveAll(entry => entry.StartsWith($"{runtime.CharacterId}:", StringComparison.Ordinal));
+            Logger.Info("PlayerBotScheduler disarm: character {CharacterId} finished its leave while the host stopped — counted as deactivated",
+                runtime.CharacterId);
+        }
+
+        Logger.Info("PlayerBotScheduler disarmed ({Reason}): running={WasRunning} deactivated={Deactivated} failed={Failed} queuedStepsDropped={Dropped}",
+            reason, wasRunning, deactivated, failed, dropped);
+
+        return new BotHostTeardownReport(reason, wasRunning, dropped, deactivated, failed,
+            failures ?? (IReadOnlyList<string>)[]);
+    }
+
+    /// <summary>
+    /// Drops whatever is still on the marshal queue and counts it (A1). The
+    /// stopped execution boundary (the game loop) can no longer run those
+    /// steps, and running them off-boundary would violate the M5 contract, so
+    /// they are dropped with a per-step record instead of leaking silently.
+    /// Their leases are released so a later <see cref="Start"/> is not blocked
+    /// by a phantom in-flight step.
+    /// </summary>
+    private int DrainDroppedSteps(string reason)
+    {
+        var dropped = 0;
+        lock (_tickQueueGate)
+        {
+            while (_tickQueue.TryDequeue(out var step))
+            {
+                dropped++;
+                ReleaseLease(step.BotId);
+                Logger.Info("PlayerBot step dropped ({Reason}): character {CharacterId} (due {DueUtc:O}, generation {Generation})",
+                    reason, step.BotId, step.DueUtc, step.Generation);
+            }
+        }
+
+        if (dropped > 0)
+            Interlocked.Add(ref _totalStepsDropped, dropped);
+
+        return dropped;
+    }
+
+    /// <summary>
+    /// Retires this exact closed-admission embodiment before physical leave.
+    /// The manager must release owner.Sync before calling: the boundary needs
+    /// that lock to revalidate ownership, not to admit an ordinary bot step.
+    /// </summary>
+    internal bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason)
+    {
+        if (expectedOwner is null || Monitor.IsEntered(expectedOwner.Sync) || !IsRunning)
+            return false;
+
+        var timeout = _options.ShutdownTimeout;
+        if (timeout <= TimeSpan.Zero || timeout > TimeSpan.FromMilliseconds(int.MaxValue)
+            || (_options.SubscribeToTickManager && _tickManager is null))
+            return false;
+
+        var retirement = new NativeRetirement(expectedOwner, expectedGeneration, reason, timeout);
+        using var stopRegistration = _scanCts.Token.Register(
+            static state => ((NativeRetirement)state!).Completion.TrySetResult(false), retirement);
+        if (!IsRunning || !retirement.IsPending)
+        {
+            retirement.Completion.TrySetResult(false);
+            return false;
+        }
+
+        // Dormancy is called inline from the real game loop. Only manual
+        // rigs may substitute an existing pin; never pin an HTTP caller.
+        if (IsNativeRetirementBoundary)
+            ExecuteNativeRetirement(retirement);
+        else
+        {
+            _tickQueue.Enqueue(new BotStep(expectedOwner.CharacterId, default, expectedGeneration, retirement));
+            if (!IsRunning)
+                retirement.Completion.TrySetResult(false);
+        }
+
+        // A finite blocking acknowledgement uses no new worker or timer.
+        // Timeout wins even if boundary cancellation finishes just afterward.
+        var remaining = retirement.Remaining;
+        if (remaining <= TimeSpan.Zero || !retirement.Completion.Task.Wait(remaining))
+        {
+            retirement.Completion.TrySetResult(false);
+            return false;
+        }
+        return IsRunning && !retirement.HasExpired && retirement.Completion.Task.Result;
+    }
+
+    private bool IsNativeRetirementBoundary => _options.SubscribeToTickManager
+        ? _tickManager?.IsTickThread == true
+        : ExecutionBoundary.IsExecutionThread;
+
+    private void ExecuteNativeRetirement(NativeRetirement retirement)
+    {
+        var retired = false;
+        try
+        {
+            if (IsRunning && IsNativeRetirementBoundary && retirement.IsPending)
+            {
+                var owner = retirement.ExpectedOwner;
+                lock (owner.Sync)
+                {
+                    if (IsRunning && retirement.IsPending
+                        && _manager.TryGet(owner.CharacterId, out var current)
+                        && ReferenceEquals(current, owner)
+                        && ReferenceEquals(owner.Character, retirement.ExpectedCharacter)
+                        && owner.Character.Id == owner.CharacterId
+                        && owner.Generation == retirement.ExpectedGeneration
+                        && owner.State == PlayerBotState.Deactivating
+                        && TryGetRoamExecutor(out var roam))
+                    {
+                        retired = roam!.TryRetireNativeWork(owner, retirement.ExpectedGeneration, retirement.Reason);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn(ex, "PlayerBot native retirement refused: character {CharacterId}", retirement.ExpectedOwner.CharacterId);
+        }
+        // Cancellation can finish after abandonment, but this acknowledgement
+        // cannot turn success later or itself perform a physical leave/save.
+        retirement.Completion.TrySetResult(retired && IsRunning && !retirement.HasExpired);
     }
 
     /// <summary>UTC now from the injectable clock (TimeProvider returns DateTimeOffset).</summary>
@@ -238,6 +565,8 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                 TotalStepsSkipped: Volatile.Read(ref _totalStepsSkipped),
                 TotalStepsFailed: Volatile.Read(ref _totalStepsFailed),
                 TotalStepsTimedOut: Volatile.Read(ref _totalStepsTimedOut),
+                TotalStepsDropped: Volatile.Read(ref _totalStepsDropped),
+                TotalStepsDeferred: Volatile.Read(ref _totalStepsDeferred),
                 TotalDuePopped: Volatile.Read(ref _totalDuePopped),
                 LastCycleDue: Volatile.Read(ref _lastCycleDue),
                 MaxCycleDue: Volatile.Read(ref _maxCycleDue),
@@ -367,14 +696,27 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
 
         Interlocked.Increment(ref _activeWorkers);
         var startTimestamp = Stopwatch.GetTimestamp(); // allocation-free busy-time probe (Stopwatch.StartNew allocated per step)
+        object? runtimeSync = null;
+        var runtimeLockTaken = false;
         try
         {
             // Registry consumption: resolve the runtime now; a bot that left the
             // Active set while queued is skipped, never stepped.
-            if (!_manager.TryGet(step.BotId, out var runtime) || runtime is null || runtime!.State != PlayerBotState.Active)
+            if (!_manager.TryGet(step.BotId, out var runtime) || runtime is null || runtime.State != PlayerBotState.Active)
             {
                 var reason = runtime is null ? "TryGet-miss" : $"State={runtime.State}";
                 Logger.Debug("PlayerBot step skipped: character {CharacterId} ({Reason})", step.BotId, reason);
+                Interlocked.Increment(ref _totalStepsSkipped);
+                RecordBotStepOutcome(step.BotId, BotStepOutcomeKind.Skipped);
+                ReleaseLease(step.BotId);
+                return;
+            }
+
+            runtimeSync = runtime.Sync;
+            Monitor.Enter(runtimeSync, ref runtimeLockTaken);
+            if (!_manager.TryGet(step.BotId, out var current) || !ReferenceEquals(current, runtime)
+                || runtime.State != PlayerBotState.Active)
+            {
                 Interlocked.Increment(ref _totalStepsSkipped);
                 RecordBotStepOutcome(step.BotId, BotStepOutcomeKind.Skipped);
                 ReleaseLease(step.BotId);
@@ -508,6 +850,8 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         }
         finally
         {
+            if (runtimeLockTaken)
+                Monitor.Exit(runtimeSync!);
             Interlocked.Decrement(ref _activeWorkers);
             Interlocked.Add(ref _busyTicks, Stopwatch.GetTimestamp() - startTimestamp);
         }
@@ -746,6 +1090,14 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     private void TickDrain(TimeSpan delta) => DrainTickQueue();
 
     /// <summary>
+    /// Steps marshalled and waiting for the execution boundary (the next tick
+    /// drain). Internal so a rig can wait for a batch to LAND without draining
+    /// it: worker threads marshal asynchronously, so "the scan cycle returned"
+    /// does not mean "the steps are queued yet".
+    /// </summary>
+    internal int TickQueueDepth => _tickQueue.Count;
+
+    /// <summary>
     /// Drains the marshal queue on the single execution boundary (the
     /// game-loop thread). Each queued step executes synchronously here;
     /// worker threads never run steps (M5 A1). Internal so the rig can pump
@@ -762,10 +1114,69 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         // the rig = its test thread (or an explicit test pin).
         ExecutionBoundary.RegisterExecutionThread();
 
-        while (Volatile.Read(ref _stopped) == 0 && _tickQueue.TryDequeue(out var step))
+        // Per-tick budget (L2-b): a crowded tick defers the remainder to the
+        // next tick instead of running every queued step on the game-loop
+        // thread. Deferred steps are neither reordered nor dropped and their
+        // leases stay held. Native retirements are control-plane teardown with
+        // their own timeout: never counted, never deferred.
+        var executed = 0;
+        var budget = _options.MaxStepsPerTick;
+        while (Volatile.Read(ref _stopped) == 0)
+        {
+            BotStep step;
+            lock (_tickQueueGate)
+            {
+                if (!_tickQueue.TryPeek(out step))
+                    break;
+
+                // Budget applies to ordinary steps only; a retirement is
+                // control-plane teardown with its own timeout.
+                if (step.Retirement is null && budget > 0 && executed >= budget)
+                    break;
+
+                // The peeked step leaves the queue here, under the gate the
+                // drop path takes, so it cannot be executed AND counted as
+                // dropped (code review 2026-10-16, F3). Executing happens
+                // outside the gate: a step must never run holding it.
+                _tickQueue.TryDequeue(out _);
+            }
+
+            if (step.Retirement is not null)
+            {
+                ExecuteNativeRetirement(step.Retirement!);
+                continue;
+            }
+
+            executed++;
             ExecuteStepOnExecutionBoundary(step);
+        }
+
+        var deferred = _tickQueue.Count;
+        if (deferred > 0)
+        {
+            Interlocked.Add(ref _totalStepsDeferred, deferred);
+            Logger.Debug("PlayerBotScheduler tick budget reached: {Executed} steps run, {Deferred} deferred to the next tick",
+                executed, deferred);
+        }
     }
 
-    /// <summary>A step handed from the due queue to the worker pool.</summary>
-    private readonly record struct BotStep(uint BotId, DateTime DueUtc, ulong Generation);
+    /// <summary>
+    /// Existing queue value: ordinary steps retain their allocation-free
+    /// representation; only retirement creates a payload and completion.
+    /// </summary>
+    private readonly record struct BotStep(uint BotId, DateTime DueUtc, ulong Generation, NativeRetirement? Retirement = null);
+
+    private sealed class NativeRetirement(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason, TimeSpan timeout)
+    {
+        private readonly long _startedAt = Stopwatch.GetTimestamp();
+
+        public PlayerBotRuntime ExpectedOwner { get; } = expectedOwner;
+        public Character ExpectedCharacter { get; } = expectedOwner.Character;
+        public ulong ExpectedGeneration { get; } = expectedGeneration;
+        public string Reason { get; } = reason;
+        public TaskCompletionSource<bool> Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TimeSpan Remaining => timeout - Stopwatch.GetElapsedTime(_startedAt);
+        public bool HasExpired => Remaining <= TimeSpan.Zero;
+        public bool IsPending => !Completion.Task.IsCompleted && !HasExpired;
+    }
 }

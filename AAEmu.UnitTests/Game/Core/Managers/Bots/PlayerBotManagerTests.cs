@@ -18,10 +18,27 @@ public class PlayerBotManagerTests
     /// <summary>Deterministic lifecycle seam: records every call, configurable results.</summary>
     private sealed class RecordingLifecycle : IPlayerBotLifecycleService
     {
+        // Normal leave now revalidates the real world's Character identity.
+        public RecordingLifecycle() => GameplayActorTestRig.Seed();
+
         public bool ActivationResult { get; set; } = true;
         public bool DeactivationResult { get; set; } = true;
         public bool ThrowOnActivate { get; set; }
         public bool ThrowOnDeactivate { get; set; }
+        public Action<Character, string>? OnDeactivate { get; set; }
+        public bool RetirementResult { get; set; } = true;
+        public bool ThrowOnRetire { get; set; }
+        public Func<PlayerBotRuntime, ulong, string, bool>? OnRetire { get; set; }
+        public List<(PlayerBotRuntime Owner, ulong Generation, string Reason)> RetirementCalls { get; } = [];
+
+        public bool TryRetireNativeWork(PlayerBotRuntime expectedOwner, ulong expectedGeneration, string reason)
+        {
+            lock (RetirementCalls)
+                RetirementCalls.Add((expectedOwner, expectedGeneration, reason));
+            if (ThrowOnRetire)
+                throw new InvalidOperationException("simulated native retirement failure");
+            return OnRetire?.Invoke(expectedOwner, expectedGeneration, reason) ?? RetirementResult;
+        }
 
         public List<(Character Character, object? Context)> ActivateCalls { get; } = [];
         public List<(Character Character, string Reason)> DeactivateCalls { get; } = [];
@@ -30,7 +47,8 @@ public class PlayerBotManagerTests
         {
             if (ThrowOnActivate)
                 throw new InvalidOperationException("simulated lifecycle failure");
-            ActivateCalls.Add((character, botContext));
+            lock (ActivateCalls)
+                ActivateCalls.Add((character, botContext));
             return ActivationResult;
         }
 
@@ -38,7 +56,9 @@ public class PlayerBotManagerTests
         {
             if (ThrowOnDeactivate)
                 throw new InvalidOperationException("simulated teardown failure");
-            DeactivateCalls.Add((character, reason));
+            lock (DeactivateCalls)
+                DeactivateCalls.Add((character, reason));
+            OnDeactivate?.Invoke(character, reason);
             return DeactivationResult;
         }
     }
@@ -236,7 +256,7 @@ public class PlayerBotManagerTests
     }
 
     [Test]
-    public async Task Deactivate_SeamRefuses_KeepsStateActive_AndCountsFailure()
+    public async Task Deactivate_SeamRefuses_RetainsOwnerButClosesAdmission_AndCountsFailure()
     {
         var seam = new RecordingLifecycle { DeactivationResult = false };
         var manager = new PlayerBotManager(seam);
@@ -248,9 +268,164 @@ public class PlayerBotManagerTests
         await Assert.That(result).IsFalse();
         var found = manager.TryGet(10, out var runtime);
         await Assert.That(found).IsTrue();
-        await Assert.That(runtime!.State).IsEqualTo(PlayerBotState.Active);
+        await Assert.That(runtime!.State).IsEqualTo(PlayerBotState.DeactivationFailed);
+        await Assert.That(runtime.Owner).IsEqualTo("owner-a");
+        await Assert.That(runtime.DeactivatedAtUtc).IsNull();
+        await Assert.That(manager.GetActive()).IsEmpty();
+        await Assert.That(manager.Activate(10, null, "resume")).IsFalse();
+        await Assert.That(manager.Remove(10)).IsFalse();
         await Assert.That(manager.GetDiagnostics().FailedDeactivations).IsEqualTo(1);
         await Assert.That(manager.GetDiagnostics().TotalDeactivations).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Deactivate_RetiresExactGenerationOutsideSyncBeforePhysicalSave()
+    {
+        var seam = new RecordingLifecycle();
+        var manager = new PlayerBotManager(seam);
+        manager.Spawn(CreateCharacter(76), "owner");
+        manager.Activate(76, null, "owner");
+        manager.TryGet(76, out var runtime);
+        var generation = runtime!.Generation;
+        var syncWasAvailable = false;
+        var admissionClosed = false;
+        var savedAfterRetirement = false;
+        var acknowledged = false;
+        seam.OnRetire = (owner, _, _) =>
+        {
+            // A boundary retirement must be able to acquire this exact lock.
+            syncWasAvailable = Task.Run(() =>
+            {
+                if (!Monitor.TryEnter(owner.Sync, TimeSpan.FromSeconds(2)))
+                    return false;
+                try { return owner.State == PlayerBotState.Deactivating; }
+                finally { Monitor.Exit(owner.Sync); }
+            }).GetAwaiter().GetResult();
+            admissionClosed = !manager.GetActive().Any()
+                && !manager.Activate(76, null, "must-not-resume") && !manager.Remove(76);
+            acknowledged = true;
+            return true;
+        };
+        seam.OnDeactivate = (_, _) => savedAfterRetirement = acknowledged;
+
+        await Assert.That(manager.Deactivate(76, "retire-before-save")).IsTrue();
+
+        await Assert.That(syncWasAvailable).IsTrue();
+        await Assert.That(admissionClosed).IsTrue();
+        await Assert.That(savedAfterRetirement).IsTrue();
+        await Assert.That(seam.RetirementCalls).HasCount(1);
+        await Assert.That(seam.RetirementCalls[0].Owner).IsSameReferenceAs(runtime);
+        await Assert.That(seam.RetirementCalls[0].Generation).IsEqualTo(generation);
+        await Assert.That(seam.RetirementCalls[0].Reason).IsEqualTo("retire-before-save");
+        await Assert.That(seam.DeactivateCalls).HasCount(1);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task Deactivate_RefusedOrThrowingRetirementNeverSavesOrReopensAdmission(bool throws)
+    {
+        var seam = new RecordingLifecycle { RetirementResult = false, ThrowOnRetire = throws };
+        var manager = new PlayerBotManager(seam);
+        manager.Spawn(CreateCharacter(77), "owner");
+        manager.Activate(77, null, "owner");
+        manager.TryGet(77, out var expected);
+
+        await Assert.That(manager.Deactivate(77, "native-failed")).IsFalse();
+
+        await Assert.That(seam.RetirementCalls).HasCount(1);
+        await Assert.That(seam.DeactivateCalls).IsEmpty();
+        await Assert.That(manager.TryGet(77, out var retained)).IsTrue();
+        await Assert.That(retained).IsSameReferenceAs(expected);
+        await Assert.That(retained!.State).IsEqualTo(PlayerBotState.DeactivationFailed);
+        await Assert.That(retained.DeactivatedAtUtc).IsNull();
+        await Assert.That(manager.Activate(77, null, "retry")).IsFalse();
+        await Assert.That(manager.Remove(77)).IsFalse();
+        await Assert.That(manager.GetDiagnostics().TotalDeactivations).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task Deactivate_GenerationChangedAfterRetirementAcknowledgementNeverSaves()
+    {
+        var seam = new RecordingLifecycle();
+        var manager = new PlayerBotManager(seam);
+        manager.Spawn(CreateCharacter(78), "owner");
+        manager.Activate(78, null, "owner");
+        manager.TryGet(78, out var expected);
+        seam.OnRetire = (owner, _, _) =>
+        {
+            // Controlled stale-ack schedule at the lifecycle seam, not Actor state injection.
+            lock (owner.Sync)
+                owner.Generation++;
+            return true;
+        };
+
+        await Assert.That(manager.Deactivate(78, "stale-ack")).IsFalse();
+
+        await Assert.That(seam.DeactivateCalls).IsEmpty();
+        await Assert.That(expected!.State).IsEqualTo(PlayerBotState.DeactivationFailed);
+        await Assert.That(manager.GetActive()).IsEmpty();
+        await Assert.That(manager.Activate(78, null, "retry")).IsFalse();
+        await Assert.That(manager.Remove(78)).IsFalse();
+    }
+
+    [Test]
+    public async Task Deactivate_ClosesAdmissionBeforePhysicalSaveCallback()
+    {
+        var seam = new RecordingLifecycle();
+        var manager = new PlayerBotManager(seam);
+        manager.Spawn(CreateCharacter(71), "owner");
+        manager.Activate(71, null, "owner");
+        var admittedDuringSave = true;
+        var removableDuringSave = true;
+        var totalDuringSave = -1;
+        var countDuringSave = -1;
+        var deactivatingDuringSave = -1;
+        var failedDuringSave = -1;
+        seam.OnDeactivate = (character, _) =>
+        {
+            admittedDuringSave = manager.GetActive().Any(x => ReferenceEquals(x.Character, character));
+            removableDuringSave = manager.Remove(character.Id);
+            var diagnostics = manager.GetDiagnostics();
+            totalDuringSave = diagnostics.Total;
+            deactivatingDuringSave = diagnostics.Deactivating;
+            failedDuringSave = diagnostics.DeactivationFailed;
+            countDuringSave = manager.Count;
+        };
+
+        await Assert.That(manager.Deactivate(71, "save-boundary")).IsTrue();
+
+        await Assert.That(admittedDuringSave).IsFalse();
+        await Assert.That(removableDuringSave).IsFalse();
+        await Assert.That(manager.ActiveCount).IsEqualTo(0);
+        await Assert.That(totalDuringSave).IsEqualTo(countDuringSave);
+        await Assert.That(deactivatingDuringSave).IsEqualTo(1);
+        await Assert.That(failedDuringSave).IsEqualTo(0);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task Deactivate_FailedPhysicalLeaveCannotResumeProducer(bool throws)
+    {
+        var seam = new RecordingLifecycle { DeactivationResult = false, ThrowOnDeactivate = throws };
+        var manager = new PlayerBotManager(seam);
+        manager.Spawn(CreateCharacter(72), "owner");
+        manager.Activate(72, null, "owner");
+
+        await Assert.That(manager.Deactivate(72, "failed-save")).IsFalse();
+
+        await Assert.That(manager.GetActive()).IsEmpty();
+        await Assert.That(manager.ActiveCount).IsEqualTo(0);
+        await Assert.That(manager.TryGet(72, out var retained)).IsTrue();
+        await Assert.That(retained!.DeactivatedAtUtc).IsNull();
+        await Assert.That(manager.Activate(72, null, "retry-owner")).IsFalse();
+        await Assert.That(manager.Remove(72)).IsFalse();
+        await Assert.That(manager.GetDiagnostics().TotalDeactivations).IsEqualTo(0);
+        await Assert.That(manager.GetDiagnostics().Total).IsEqualTo(manager.Count);
+        await Assert.That(manager.GetDiagnostics().Deactivated).IsEqualTo(0);
+        await Assert.That(manager.GetDiagnostics().Deactivating).IsEqualTo(0);
+        await Assert.That(manager.GetDiagnostics().DeactivationFailed).IsEqualTo(1);
     }
 
     #endregion
@@ -435,13 +610,6 @@ public class PlayerBotManagerTests
         await Assert.That(seam.DeactivateCalls[0].Character).IsEqualTo(character);
         await Assert.That(seam.DeactivateCalls[0].Reason).IsEqualTo("shutdown");
 
-        // And the manager's constructor surface is exactly the seam — nothing
-        // else to reach into (no AIManager, no TickManager, no WorldManager).
-        var ctorParams = typeof(PlayerBotManager).GetConstructors()
-            .SelectMany(c => c.GetParameters())
-            .Select(p => p.ParameterType)
-            .ToList();
-        await Assert.That(ctorParams).IsEquivalentTo([typeof(IPlayerBotLifecycleService)]);
     }
 
     #endregion

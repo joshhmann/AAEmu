@@ -25,6 +25,7 @@ public class CombatDecisionTreeTests
         var target = new Npc
         {
             ObjId = 8881,
+            Template = new NpcTemplate { Id = 8881, Scale = 1f },
             Name = "Forest Wolf",
             MaxHp = 500,
             Hp = 500

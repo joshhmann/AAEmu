@@ -14,6 +14,9 @@ public class TickManager : Singleton<TickManager>, ITickManager
     private Thread TickThread;
     private readonly Stopwatch _metricsLogSw = new();
 
+    /// <summary>True only on this manager's existing physical game-loop thread.</summary>
+    public bool IsTickThread => Thread.CurrentThread == TickThread;
+
     /// <summary>
     /// Gets a snapshot of the tick duration metrics (invoke p50/p95/max, per-subscriber durations, subscriber count).
     /// </summary>

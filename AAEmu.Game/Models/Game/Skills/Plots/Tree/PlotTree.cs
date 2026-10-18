@@ -39,7 +39,8 @@ public class PlotTree(uint plotId)
                 var item = queue.Dequeue();
                 var now = DateTime.UtcNow;
                 var node = item.node;
-                if (state.IsChanneling && state.ChannelingFinishRequested())
+                if (state.IsChanneling && state.ChannelingFinishRequested()
+                    && (state.ActiveSkill.ExecutionLock == null || !state.CancellationRequested()))
                 {
                     HandleChannelingFinish(node, state, queue, item);
                     lastEvent = 0;
@@ -145,12 +146,28 @@ public class PlotTree(uint plotId)
         catch (Exception e)
         {
             Logger.Error($"Main Loop Error: {e.Message}\n {e.StackTrace}");
+            state.ActiveSkill.MarkObservedExecutionFailed();
         }
 
         DoPlotEnd(state);
         Logger.Trace($"Tree with ID {PlotId} has finished executing took {treeWatch.ElapsedMilliseconds}ms");
     }
     private void HandleChannelingFinish(PlotNode node, PlotState state, Queue<(PlotNode node, DateTime timestamp, PlotTargetInfo targetInfo)> queue, (PlotNode node, DateTime timestamp, PlotTargetInfo targetInfo) item)
+    {
+        if (state?.ActiveSkill.ExecutionLock is { } executionLock)
+        {
+            lock (executionLock)
+            {
+                if (state.CancellationRequested() || !state.ActiveSkill.CanExecuteObserved(state.Caster))
+                    return;
+                HandleChannelingFinishCore(node, state, queue, item);
+            }
+            return;
+        }
+        HandleChannelingFinishCore(node, state, queue, item);
+    }
+
+    private void HandleChannelingFinishCore(PlotNode node, PlotState state, Queue<(PlotNode node, DateTime timestamp, PlotTargetInfo targetInfo)> queue, (PlotNode node, DateTime timestamp, PlotTargetInfo targetInfo) item)
     {
         if (node == null || state == null || queue == null || item.targetInfo == null)
         {
@@ -223,10 +240,34 @@ public class PlotTree(uint plotId)
     }
     private static void FlushExecutionQueue(Queue<(PlotNode node, PlotTargetInfo targetInfo)> executeQueue, PlotState state)
     {
+        if (state.ActiveSkill.ExecutionLock is { } executionLock)
+        {
+            lock (executionLock)
+            {
+                if (state.CancellationRequested() || !state.ActiveSkill.CanExecuteObserved(state.Caster))
+                {
+                    executeQueue.Clear();
+                    return;
+                }
+                FlushExecutionQueueCore(executeQueue, state);
+            }
+            return;
+        }
+        FlushExecutionQueueCore(executeQueue, state);
+    }
+
+    private static void FlushExecutionQueueCore(Queue<(PlotNode node, PlotTargetInfo targetInfo)> executeQueue, PlotState state)
+    {
 
         var packets = new CompressedGamePackets();
         while (executeQueue.Count > 0)
         {
+            if (state.ActiveSkill.ExecutionLock != null &&
+                (state.CancellationRequested() || !state.ActiveSkill.CanExecuteObserved(state.Caster)))
+            {
+                executeQueue.Clear();
+                break;
+            }
             var item = executeQueue.Dequeue();
             item.node.Execute(state, item.targetInfo, packets);
         }
@@ -265,7 +306,7 @@ public class PlotTree(uint plotId)
         state.ActiveSkill.TlId = 0;
 
         state.Caster?.OnSkillEnd(state.ActiveSkill);
-        state.ActiveSkill.Callback?.Invoke();
+        state.ActiveSkill.InvokeCallback();
         if (state.Caster?.ActivePlotState == state)
             state.Caster.ActivePlotState = null;
     }

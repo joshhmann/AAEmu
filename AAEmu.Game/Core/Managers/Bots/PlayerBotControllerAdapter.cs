@@ -50,6 +50,8 @@ public sealed class PlayerBotControllerAdapter : IGameplayActor
 
     public void SetPendingWakeSequence(long? wakeSequence) => Actor.SetPendingWakeSequence(wakeSequence);
 
+    public void SetPendingCommandOrigin(string? origin) => Actor.SetPendingCommandOrigin(origin);
+
     public ActorObservation Observe() => Actor.Observe();
 
     public ActorRequest MoveTo(System.Numerics.Vector3 destination, float speed = 5f, TimeSpan? timeout = null, string? idempotencyKey = null)
