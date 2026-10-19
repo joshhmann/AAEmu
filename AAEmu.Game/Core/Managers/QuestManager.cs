@@ -2134,6 +2134,35 @@ public partial class QuestManager(ITaskManager taskManager, IZoneManager zoneMan
             nameof(QuestActConAcceptNpc), a => a.NpcId == npcTemplateId);
 
     /// <summary>
+    /// <see cref="GetQuestsOfferedByNpc"/> for every NPC template at once, in
+    /// one pass over the accept acts: template id → offered quest ids, each
+    /// list in the same order the single-template call returns. Built fresh
+    /// on every call, so it is as current as the single-template call; a
+    /// caller asking about many templates reads this once instead of scanning
+    /// every accept act per template.
+    /// </summary>
+    public Dictionary<uint, List<uint>> GetQuestOffersByNpc()
+    {
+        var result = new Dictionary<uint, List<uint>>();
+        if (!_actTemplatesByDetailType.TryGetValue(nameof(QuestActConAcceptNpc), out var acts))
+            return result;
+        foreach (var act in acts.Values)
+        {
+            if (act is not QuestActConAcceptNpc accept
+                || accept.ParentComponent?.KindId != QuestComponentKind.Start)
+                continue;
+            var questId = accept.ParentComponent.ParentQuestTemplate?.Id ?? 0;
+            if (questId == 0)
+                continue;
+            if (!result.TryGetValue(accept.NpcId, out var quests))
+                result[accept.NpcId] = quests = [];
+            if (!quests.Contains(questId))
+                quests.Add(questId);
+        }
+        return result;
+    }
+
+    /// <summary>
     /// Quest template ids OFFERED by a doodad template (quest boards et al.)
     /// — the Start components carrying a QuestActConAcceptDoodad act for
     /// that doodad. Same linkage rule as <see cref="GetQuestsOfferedByNpc"/>.

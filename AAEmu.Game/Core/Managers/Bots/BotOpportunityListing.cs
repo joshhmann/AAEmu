@@ -159,8 +159,11 @@ public static class BotOpportunityListing
         if (coverageValid)
         {
             var actorPos = character.Transform.World.Position;
+            BotStepProfile.Mark("listing-setup");
             var questOffersUnknown = CollectEligibleQuests(actor, character, actorPos, eligible, seenQuests);
+            BotStepProfile.Mark("listing-self-offers");
             CollectViableHunts(character, actorPos, hunts);
+            BotStepProfile.Mark("listing-hunts");
             var recovery = AssessRecovery(character);
             eligible.Sort(static (a, b) => a.QuestId.CompareTo(b.QuestId));
             hunts.Sort(static (a, b) =>
@@ -168,7 +171,9 @@ public static class BotOpportunityListing
                 var byDist = a.DistanceM.CompareTo(b.DistanceM);
                 return byDist != 0 ? byDist : a.TargetObjId.CompareTo(b.TargetObjId);
             });
+            BotStepProfile.Mark("listing-recovery");
             CollectActiveWork(character, hunts, out var active, out var blocked);
+            BotStepProfile.Mark("listing-active-work");
             return new OpportunityListing(coverageValid, coverageReason, eligible, hunts, recovery, questOffersUnknown, active, blocked);
         }
         return new OpportunityListing(coverageValid, coverageReason, eligible, hunts, AssessRecovery(character), false,
@@ -217,6 +222,8 @@ public static class BotOpportunityListing
                     $"offered-by-{offering.AcceptorType}-{offering.AcceptorId}-in-range-passes-accept-gate"));
             }
         }
+
+        BotStepProfile.Mark("listing-npc-offers");
 
         // Self-perceivable channels (item/sphere/level): the actor's OWN state,
         // no world target — the same triples the engine's auto-start paths

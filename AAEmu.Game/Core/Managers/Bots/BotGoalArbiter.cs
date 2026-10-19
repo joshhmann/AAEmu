@@ -285,6 +285,7 @@ public sealed class BotGoalArbiter : IBotGoalArbiter
         // decides the wake; every lower band is never asked, so priority stays
         // the safety ordering and an expensive eligibility probe below a winner
         // stays unrun.
+        BotStepProfile.Mark("arbiter");
         var bandStart = 0;
         while (bandStart < snapshot.Count)
         {
@@ -302,6 +303,7 @@ public sealed class BotGoalArbiter : IBotGoalArbiter
                 try
                 {
                     decision = module.CanActivate(ModuleContextFor(bot.CharacterId, module, context, continuity));
+                    BotStepProfile.Mark(module.Name);
                 }
                 catch (Exception ex)
                 {
@@ -474,6 +476,7 @@ public sealed class BotGoalArbiter : IBotGoalArbiter
         try
         {
             activity = best.Module.Activate(activateContext);
+            BotStepProfile.Mark("activate");
         }
         catch (Exception ex)
         {

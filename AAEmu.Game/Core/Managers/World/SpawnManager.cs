@@ -1268,6 +1268,19 @@ public class SpawnManager(WorldInstance parentWorld)
     }
 
     /// <summary>
+    /// Number of NPC spawner groups, read without copying the table. Readers
+    /// that cache the table (the bots' spawner index) rebuild when it changes.
+    /// </summary>
+    public int NpcSpawnerGroupCount
+    {
+        get
+        {
+            lock (NpcSpawners)
+                return NpcSpawners.Count;
+        }
+    }
+
+    /// <summary>
     /// Gets all Spawners.
     /// </summary>
     public Dictionary<uint, List<NpcSpawner>> GetAllSpawners()

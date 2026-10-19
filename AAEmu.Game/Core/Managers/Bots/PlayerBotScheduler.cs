@@ -125,6 +125,20 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
     // hot path — so steady-state stepping allocates nothing extra.
     private readonly ConcurrentDictionary<uint, BotStepOutcome> _botStepOutcomes = new();
 
+    // Step-cost attribution (pop-tick-spikes). Written only on the execution
+    // boundary; the cumulative table is also read by GetStepPhaseCosts, so it
+    // is guarded by its own small lock. Measurement only: nothing here feeds
+    // a bot decision.
+    private readonly List<(string Phase, long Ticks)> _stepPhases = [];
+    private readonly Dictionary<string, long> _drainPhaseTicks = [];
+    private readonly object _phaseCostLock = new();
+    private readonly Dictionary<string, StepPhaseCost> _phaseCosts = [];
+    private uint _drainSlowestBot;
+    private long _drainSlowestTicks;
+    private string _drainSlowestDetail = "-";
+    private long _lastCostSummaryTimestamp;
+    private long _slowDrains;
+
     public PlayerBotScheduler(
         IPlayerBotManager manager,
         IBotStepExecutor executor,
@@ -813,6 +827,7 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             TimeSpan? nextDelay = null;
             var ok = true;
             ExecutionBoundary.EnterBotStep();
+            BotStepProfile.Begin();
             try
             {
                 if (_options.ResurrectionEnabled && runtime.Character.IsDead)
@@ -830,6 +845,7 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
                     // boundary thread.
                     ReleaseDeathHold(step.BotId);
                     HandleDeathWatch(step.BotId, runtime.Character);
+                    BotStepProfile.Mark("death-watch");
                     nextDelay = _options.DeathPollInterval;
                 }
                 else
@@ -871,6 +887,8 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             finally
             {
                 ExecutionBoundary.ExitBotStep();
+                BotStepProfile.End(_stepPhases);
+                RecordStepCost(step.BotId);
             }
 
             if (ok)
@@ -1188,6 +1206,9 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
         // thread. Deferred steps are neither reordered nor dropped and their
         // leases stay held. Native retirements are control-plane teardown with
         // their own timeout: never counted, never deferred.
+        var drainStarted = Stopwatch.GetTimestamp();
+        _drainPhaseTicks.Clear();
+        _drainSlowestTicks = 0;
         var executed = 0;
         var budget = _options.MaxStepsPerTick;
         while (Volatile.Read(ref _stopped) == 0)
@@ -1212,7 +1233,9 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
 
             if (step.Retirement is not null)
             {
+                var retirementStarted = Stopwatch.GetTimestamp();
                 ExecuteNativeRetirement(step.Retirement!);
+                AddDrainPhase("retirement", Stopwatch.GetTimestamp() - retirementStarted);
                 continue;
             }
 
@@ -1227,7 +1250,106 @@ public sealed class PlayerBotScheduler : IPlayerBotScheduler
             Logger.Debug("PlayerBotScheduler tick budget reached: {Executed} steps run, {Deferred} deferred to the next tick",
                 executed, deferred);
         }
+
+        ReportDrainCost(drainStarted, executed);
     }
+
+    /// <summary>
+    /// Folds the step just profiled into this drain's per-part totals, the
+    /// drain's slowest step, and the cumulative cost table.
+    /// </summary>
+    private void RecordStepCost(uint botId)
+    {
+        long total = 0;
+        foreach (var (phase, ticks) in _stepPhases)
+        {
+            total += ticks;
+            AddDrainPhase(phase, ticks);
+        }
+        if (total > _drainSlowestTicks)
+        {
+            _drainSlowestTicks = total;
+            _drainSlowestBot = botId;
+            // Formatted only when it might be reported: a cheap step never
+            // pays for the string.
+            _drainSlowestDetail = BotStepProfile.ToMs(total) >= 10
+                ? BotStepProfile.Describe(_stepPhases)
+                : "-";
+        }
+        lock (_phaseCostLock)
+        {
+            foreach (var (phase, ticks) in _stepPhases)
+            {
+                _phaseCosts.TryGetValue(phase, out var cost);
+                _phaseCosts[phase] = cost with
+                {
+                    Steps = cost.Steps + 1,
+                    TotalTicks = cost.TotalTicks + ticks,
+                    MaxTicks = Math.Max(cost.MaxTicks, ticks),
+                };
+            }
+        }
+    }
+
+    private void AddDrainPhase(string phase, long ticks)
+    {
+        _drainPhaseTicks.TryGetValue(phase, out var sum);
+        _drainPhaseTicks[phase] = sum + ticks;
+    }
+
+    private void ReportDrainCost(long drainStarted, int executed)
+    {
+        var now = Stopwatch.GetTimestamp();
+        var drainMs = BotStepProfile.ToMs(now - drainStarted);
+        var threshold = _options.SlowDrainWarnThreshold;
+        if (threshold > TimeSpan.Zero && drainMs >= threshold.TotalMilliseconds)
+        {
+            Interlocked.Increment(ref _slowDrains);
+            Logger.Warn("PlayerBotScheduler slow drain {DrainMs:F1}ms: {Steps} steps; slowest bot {BotId} {SlowestMs:F1}ms [{Slowest}]; drain parts [{Parts}]",
+                drainMs, executed, _drainSlowestBot, BotStepProfile.ToMs(_drainSlowestTicks), _drainSlowestDetail,
+                BotStepProfile.Describe(_drainPhaseTicks.Select(p => (p.Key, p.Value)), minMs: 1));
+        }
+
+        var interval = _options.StepCostSummaryInterval;
+        if (interval <= TimeSpan.Zero)
+            return;
+        if (_lastCostSummaryTimestamp == 0)
+        {
+            _lastCostSummaryTimestamp = now;
+            return;
+        }
+        if (BotStepProfile.ToMs(now - _lastCostSummaryTimestamp) < interval.TotalMilliseconds)
+            return;
+        _lastCostSummaryTimestamp = now;
+        var costs = GetStepPhaseCosts();
+        Logger.Info("PlayerBotScheduler step cost so far ({SlowDrains} slow drains): {Costs}",
+            Interlocked.Read(ref _slowDrains),
+            string.Join(" ", costs.Take(10).Select(c => $"{c.Phase}=total {c.TotalMs:F0}ms/max {c.MaxMs:F1}ms/{c.Steps} steps")));
+    }
+
+    /// <summary>
+    /// Cumulative time per part of a bot's turn since start, costliest first.
+    /// Read-only; safe from any thread.
+    /// </summary>
+    public IReadOnlyList<StepPhaseCostView> GetStepPhaseCosts()
+    {
+        lock (_phaseCostLock)
+        {
+            return _phaseCosts
+                .Select(p => new StepPhaseCostView(p.Key, p.Value.Steps,
+                    BotStepProfile.ToMs(p.Value.TotalTicks), BotStepProfile.ToMs(p.Value.MaxTicks)))
+                .OrderByDescending(c => c.TotalMs)
+                .ToList();
+        }
+    }
+
+    /// <summary>Slow drains seen so far (at or above <see cref="PlayerBotSchedulerOptions.SlowDrainWarnThreshold"/>).</summary>
+    public long SlowDrainCount => Interlocked.Read(ref _slowDrains);
+
+    private readonly record struct StepPhaseCost(long Steps, long TotalTicks, long MaxTicks);
+
+    /// <summary>One section of a bot's turn: how many steps ran it, total and worst time.</summary>
+    public sealed record StepPhaseCostView(string Phase, long Steps, double TotalMs, double MaxMs);
 
     /// <summary>
     /// Existing queue value: ordinary steps retain their allocation-free

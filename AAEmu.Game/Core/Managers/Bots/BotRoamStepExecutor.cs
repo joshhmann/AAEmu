@@ -2180,7 +2180,9 @@ public enum NeedsFarmLoopPhase
         // the arbiter elects recovery.rest or nothing at all. Only a Flee verdict
         // owns the wake; Hold/Recover leave every existing branch exactly as it is,
         // so healthy wakes are byte-identical to the pre-gate behavior.
+        BotStepProfile.Mark("roam-setup");
         state.SurvivalWakeOwned = StepSurvivalWake(bot, actor, state);
+        BotStepProfile.Mark("survival");
 
         // 0. Party coordination (PB-002 follow & assist):
         // Auto-accept pending party invites, and if in a party as member, follow/assist the leader.
@@ -2284,6 +2286,8 @@ public enum NeedsFarmLoopPhase
             Logger.Trace(ex, "Bot party step evaluation skipped.");
         }
 
+        BotStepProfile.Mark("party");
+
         // 0. Conflict PvP engagement (war-horn model): while the arbiter holds
         // a conflict.* activity, hostile players preempt wildlife. Same
         // scan/approach/cast shape as the hunt loop below, but targets are
@@ -2319,6 +2323,8 @@ public enum NeedsFarmLoopPhase
                 EndSelfDefence(bot, actor, state);
         }
 
+        BotStepProfile.Mark("fight");
+
         // 0d. Operator assignment leg (plan T1): a live assignment walks its
         // destination through the ordinary route layer, with its own move-owner
         // tag. Deliberately NOT gated on the elected activity name — the
@@ -2337,6 +2343,8 @@ public enum NeedsFarmLoopPhase
                 : StepAssignedTravelLeg(bot, actor, state);
         }
 
+        BotStepProfile.Mark("assignment");
+
         // Recovery is continuous executor work, not gameplay during election.
         // A foreign pending request retains its exact identity through its native
         // terminal; no quest cancellation, hunting or route fallback runs here.
@@ -2344,7 +2352,9 @@ public enum NeedsFarmLoopPhase
             && !bot.Character.IsDead && bot.Character.Hp > 0 && !bot.Character.IsInBattle)
         {
             StepRecovery(bot, state, now);
+            BotStepProfile.Mark("recovery");
             var recoveryElapsed = TickActor(bot, state, now);
+            BotStepProfile.Mark("tick-actor");
             FinalizeMovement(bot, state, now, recoveryElapsed);
             if (JevShadow.Enabled)
                 JevShadow.ReleaseWakeIfUnemitted(actor.ActorId);
@@ -2353,6 +2363,8 @@ public enum NeedsFarmLoopPhase
         }
         if (state.RecoveryActive)
             ReleaseRecoveryState(state, "higher-priority safety owns wake");
+
+        BotStepProfile.Mark("recovery");
 
         // 0b. Tier 0 needs-farm leg: while the arbiter holds a needs.*
         // activity, run one NeedsDecisionScenario leg per wake against the
@@ -2387,6 +2399,8 @@ public enum NeedsFarmLoopPhase
                 state.NeedsLegActive = StepNeedsFarmLeg(bot, actor, state);
             }
         }
+
+        BotStepProfile.Mark("needs");
 
         // 0a. Copper-bootstrap quest leg: while the arbiter holds a quest.*
         // activity, run one runtime-hosted QuestBehavior tick per wake against
@@ -2458,6 +2472,7 @@ public enum NeedsFarmLoopPhase
                     SupersedeQuestTravelRoute(state, "discovery move interrupted");
                 ArmQuestTravel(bot, discoveryActor, state, OfferBandFor(discoveryActor),
                     QuestBootstrapActivityModule.DiscoveryActivityName);
+                BotStepProfile.Mark("quest-discovery");
             }
         }
         else if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned
@@ -2466,6 +2481,7 @@ public enum NeedsFarmLoopPhase
             && (actor.ActiveRequest is not { IsTerminal: false } || ownedBusy))
         {
             state.QuestLegActive = StepQuestLeg(bot, actor, state, questActivity);
+            BotStepProfile.Mark("quest-leg");
         }
         else if (state.SurvivalWakeOwned && _questRuntimes.TryGetValue(bot.CharacterId, out var fleeQuest))
         {
@@ -2483,6 +2499,8 @@ public enum NeedsFarmLoopPhase
             idleQuest.Cancel("quest activity not held");
         }
 
+        BotStepProfile.Mark("quest");
+
         // 0c. Homestead progression leg: while the arbiter holds a homestead.*
         // activity, run one GOAP plan step per wake against the bot's actor.
         state.HomesteadLegActive = false;
@@ -2493,6 +2511,8 @@ public enum NeedsFarmLoopPhase
         {
             state.HomesteadLegActive = StepHomesteadLeg(bot, actor, state);
         }
+
+        BotStepProfile.Mark("homestead");
 
         // 1. Opportunistic wildlife hunt loop (skipped while fighting players,
         // or while a work leg landed, or while actively farming — needs/quest/homestead preempt hunt acquisition/engagement).
@@ -2687,6 +2707,8 @@ public enum NeedsFarmLoopPhase
             }
         }
 
+        BotStepProfile.Mark("hunt");
+
         // 1b. Opportunistic livestock-butcher loop (wildlife slice 4, Option A
         // livestock-only): works on EXISTING livestock doodad chains only
         // (canonical cow 5782 → butchered 5790 → LootPack 79 → 9907, pack 6390
@@ -2810,6 +2832,8 @@ public enum NeedsFarmLoopPhase
                 }
             }
         }
+        BotStepProfile.Mark("butcher");
+
         // 1b. Stale quest-travel guard (G5): a QUEST_TRAVEL route whose
         // pending leg was foreign-interrupted lost its authorization — drop
         // it BEFORE the issue/advance sites below can reissue a leg against
@@ -2865,9 +2889,12 @@ public enum NeedsFarmLoopPhase
             }
         }
 
+        BotStepProfile.Mark("route-issue");
+
         // 3. Tick the same generation-bound actor through its ordinary lifecycle.
         ValidateQuestTravelAuthorization(bot, state);
         var elapsed = TickActor(bot, state, now);
+        BotStepProfile.Mark("tick-actor");
         if (!handledByParty && !pvpEngaged && !state.SurvivalWakeOwned)
             ReleaseFailedKnownFoodApproach(bot, state);
 
@@ -3483,6 +3510,7 @@ public enum NeedsFarmLoopPhase
         var target = discoveryOnly
             ? ResolveQuestOffererTarget(actor, band)
             : ResolveQuestTravelTarget(actor, band);
+        BotStepProfile.Mark("travel-target");
         if (target == null)
         {
             state.QuestTravelReason = "no walkable quest target (nothing ready-unspawned, nothing in-band to discover)";
@@ -4029,32 +4057,45 @@ public enum NeedsFarmLoopPhase
         var world = character.ParentWorld;
         if (world == null)
             return null;
-        var allSpawners = world.SpawnManager?.GetAllSpawners();
-        if (allSpawners == null)
+        var index = BotSpawnerIndex.For(world);
+        if (index == null)
             return null; // no spawner tables: availability is unknown
         var here = character.Transform.World.Position;
         var best = (Vector3?)null;
         var bestDist = float.MaxValue;
-        foreach (var spawner in allSpawners.SelectMany(s => s.Value))
+        var bestOrdinal = int.MaxValue;
+        // Each NPC template's quests are checked once, not once per spawner
+        // (populated-area run 5: 260-300 ms per search), and the offer table is
+        // read in one pass, not one scan of every accept act per template
+        // (run 6: still up to 400 ms). Nearest wins; an exact distance tie goes
+        // to the spawner earlier in table order, the same winner the old
+        // whole-table scan picked.
+        var offers = QuestManager.Instance.GetQuestOffersByNpc();
+        foreach (var (templateId, spawners) in index.ByTemplate)
         {
-            if (spawner.UnitId == 0)
+            if (templateId == 0)
                 continue;
-            if (!OffersWalkableQuest(actor, spawner.UnitId, band))
+            if (!offers.TryGetValue(templateId, out var offered)
+                || !OffersWalkableQuestAmong(actor, offered, band))
                 continue;
-            var p = spawner.Position;
-            var position = new Vector3(p.X, p.Y, p.Z);
-            var d = Vector3.Distance(here, position);
-            if (d < bestDist)
+            foreach (var spawner in spawners)
             {
-                bestDist = d;
-                best = position;
+                if (spawner.Position is not { } position)
+                    continue;
+                var d = Vector3.Distance(here, position);
+                if (d < bestDist || (d == bestDist && spawner.Ordinal < bestOrdinal))
+                {
+                    bestDist = d;
+                    bestOrdinal = spawner.Ordinal;
+                    best = position;
+                }
             }
         }
         return best;
     }
 
     /// <summary>
-    /// True when this NPC template offers at least one quest the bot could
+    /// True when one of an NPC template's offered quests is one the bot could
     /// still legally take AND that the decision policy would actually accept.
     /// Legality rides the SAME <see cref="GameplayActor.IsDiscoverable"/> gate
     /// discovery itself applies; the band is a PRE-FILTER ON TOP of it, never
@@ -4068,8 +4109,13 @@ public enum NeedsFarmLoopPhase
     /// </summary>
     private static bool OffersWalkableQuest(GameplayActor actor, uint npcTemplateId,
         QuestDecisionScenario.QuestOptions band)
+        => OffersWalkableQuestAmong(actor, QuestManager.Instance.GetQuestsOfferedByNpc(npcTemplateId), band);
+
+    /// <summary><see cref="OffersWalkableQuest"/> over an NPC template's already-read offers.</summary>
+    private static bool OffersWalkableQuestAmong(GameplayActor actor, IReadOnlyList<uint> offeredQuests,
+        QuestDecisionScenario.QuestOptions band)
     {
-        foreach (var questId in QuestManager.Instance.GetQuestsOfferedByNpc(npcTemplateId))
+        foreach (var questId in offeredQuests)
         {
             if (band.ChosenQuestId != 0 && questId != band.ChosenQuestId)
                 continue;

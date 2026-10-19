@@ -462,6 +462,32 @@ public class PlayerBotSchedulerTests
 
     #endregion
 
+    #region Step cost attribution (pop-tick-spikes)
+
+    [Test]
+    public async Task StepCost_NamesThePartOfTheTurnThatTookTheTime()
+    {
+        using var rig = new Rig();
+        var bot = rig.AddActiveBot(1);
+        rig.Executor.OnStep = _ =>
+        {
+            BotStepProfile.Mark("cheap-part");
+            Thread.Sleep(30);
+            BotStepProfile.Mark("slow-part");
+        };
+
+        rig.Scheduler.Wake(bot);
+        rig.Pump();
+        await rig.WaitUntilAsync(() => !rig.Scheduler.IsLeased(bot) && rig.Executor.CountStarts(bot) == 1);
+
+        var costs = rig.Scheduler.GetStepPhaseCosts();
+        await Assert.That(costs[0].Phase).IsEqualTo("slow-part");
+        await Assert.That(costs[0].MaxMs).IsGreaterThanOrEqualTo(25d);
+        await Assert.That(costs.Single(c => c.Phase == "slow-part").Steps).IsEqualTo(1);
+    }
+
+    #endregion
+
     #region Cadence: next-delay vs dormant
 
     [Test]

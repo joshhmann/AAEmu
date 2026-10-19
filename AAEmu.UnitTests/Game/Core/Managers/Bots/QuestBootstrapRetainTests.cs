@@ -14,6 +14,8 @@ using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
 
+using Microsoft.Extensions.Time.Testing;
+
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
 [NotInParallel]
@@ -192,6 +194,62 @@ public class QuestBootstrapRetainTests
         await Assert.That(first.CanActivate).IsTrue().Because($"why={first.WhyNot}");
         await Assert.That(second.CanActivate).IsTrue().Because($"why={second.WhyNot}");
         await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(q);
+    }
+
+    [Test]
+    public async Task HeldQuest_BotIdleInOneSpot_GivenUpAfterIdleLimit_UntilItMoves()
+    {
+        // Populated-area run 6: a bot held one quest for 435 s at one spot
+        // with no leg and no action. The hold now ends at the idle limit.
+        const uint q = 93_131; const uint start = 93_141; const uint prog = 93_142;
+        const uint offer = 93_151; const uint talkNpc = 93_152;
+        var (actor, session) = GameplayActorTestRig.CreateActor("retain-idle");
+        Place(actor, session);
+        GameplayActorTestRig.SeedQuestTalkObjective(q, start, prog, offer, talkNpc, level: 1);
+        QuestFixtureRow.InvalidateAll();
+        Accept(actor, q, offer, "retain-idle-1");
+
+        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var module = new QuestBootstrapActivityModule(
+            new QuestBootstrapModuleOptions { Enabled = true, IdleGiveUpAfter = TimeSpan.FromMinutes(3) },
+            time: clock);
+        var bot = new PlayerBotRuntime(actor.Character, "quest-retain-tests");
+
+        // Wakes every 5 s for this many seconds, each one still holding the quest.
+        async Task HoldFor(int seconds)
+        {
+            for (var t = 0; t < seconds; t += 5)
+            {
+                clock.Advance(TimeSpan.FromSeconds(5));
+                var held = module.CanActivate(Ctx(bot));
+                await Assert.That(held.CanActivate).IsTrue().Because($"why={held.WhyNot}");
+            }
+        }
+
+        await Assert.That(module.CanActivate(Ctx(bot)).CanActivate).IsTrue();
+        await HoldFor(170);
+
+        // Moving restarts the watch: the bot was doing something for the quest.
+        GameplayActorTestRig.SetPosition(actor, SeedPos + new Vector3(5, 0, 0));
+        await HoldFor(170);
+
+        // Four minutes when the module was not asked (a fight, a rest) is not
+        // idle time: the first hold afterwards restarts the watch.
+        clock.Advance(TimeSpan.FromMinutes(4));
+        await Assert.That(module.CanActivate(Ctx(bot)).CanActivate).IsTrue();
+        await HoldFor(175);
+
+        clock.Advance(TimeSpan.FromSeconds(10));
+        var givenUp = module.CanActivate(Ctx(bot));
+        await Assert.That(givenUp.CanActivate).IsFalse();
+        await Assert.That(givenUp.WhyNot!).Contains($"gave up on quest {q}");
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(0u);
+        // The quest stays accepted on the character; only the module lets go.
+        await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(q)).IsTrue();
+
+        var next = module.CanActivate(Ctx(bot));
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsNotEqualTo(q)
+            .Because($"allowed={next.CanActivate} activity={next.ActivityName} why={next.WhyNot}");
     }
 
     [Test]

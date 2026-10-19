@@ -1090,6 +1090,10 @@ public class QuestOwnerHandoffTests
             Position = new WorldSpawnPosition { X = Origin.X + 1, Y = Origin.Y, Z = 0 } }];
         await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, Boar3475, Origin)).IsEqualTo((Vector3?)left);
         sources[97_300].Reverse();
+        // This test edits the spawner lists in place through reflection, which
+        // the game never does (it only adds groups or clears the table), so it
+        // tells the bots' spawner index to rebuild.
+        BotSpawnerIndex.Invalidate();
         await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, Boar3475, Origin)).IsEqualTo((Vector3?)left);
         // The reporter's legacy first-match lookup is deliberately unchanged.
         await Assert.That(QuestBehavior.TryNpcSpawnerPosition(world, 97_999)).IsEqualTo((Vector3?)(Origin + new Vector3(1, 0, 0)));
@@ -1098,6 +1102,7 @@ public class QuestOwnerHandoffTests
         var (other, _) = GameplayActorTestRig.CreateActor("other-world-source");
         SeedNpcSources(other, Origin + new Vector3(1, 0, 0));
         sources[97_300].Clear();
+        BotSpawnerIndex.Invalidate();
         await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, Boar3475, Origin)).IsNull();
         SeedNpcSources(actor, new Vector3(float.MaxValue, 0, 0));
         await Assert.That(QuestBehavior.TryNearestNpcPreySpawnerPosition(world, Boar3475, Origin)).IsNull();
@@ -1400,6 +1405,7 @@ public class QuestOwnerHandoffTests
             Id = (uint)(97_300 + i), UnitId = Boar3475,
             Position = new WorldSpawnPosition { X = p.X, Y = p.Y, Z = p.Z }
         }).ToList();
+        BotSpawnerIndex.Invalidate(); // overwrites a group in place (see the spawn fallback test)
     }
 
     private static uint SpawnPrey(HeadlessSession session, Vector3? at = null)

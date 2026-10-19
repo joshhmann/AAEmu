@@ -41,6 +41,17 @@ public sealed class PlayerBotSchedulerOptions
     /// </summary>
     public int MaxStepsPerTick { get; init; } = 32;
 
+    /// <summary>
+    /// A tick drain at or above this logs one warning naming its slowest bot
+    /// step and the parts of that step's turn that took the time (see
+    /// <see cref="BotStepProfile"/>). Default 100 ms, the game tick budget.
+    /// Zero or negative disables the warning; the cost summary still runs.
+    /// </summary>
+    public TimeSpan SlowDrainWarnThreshold { get; init; } = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>How often the cumulative per-part step cost is logged. Default 5 min. Zero or negative disables.</summary>
+    public TimeSpan StepCostSummaryInterval { get; init; } = TimeSpan.FromMinutes(5);
+
     /// <summary>Per-step timeout; the lease is revoked and the step cancelled when exceeded. Default 30 s. Zero/negative disables.</summary>
     public TimeSpan StepTimeout { get; init; } = TimeSpan.FromSeconds(30);
 

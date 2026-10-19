@@ -28,6 +28,16 @@ public sealed record QuestBootstrapModuleOptions
     /// </summary>
     public int LegFailureGiveUpThreshold { get; init; } = 3;
 
+    /// <summary>
+    /// How long the module may hold one quest while the bot stands idle in the
+    /// same spot with no leg, no live action and no change to that quest before
+    /// it gives the quest up. Populated-area run 6: a bot held quest.progress
+    /// for 435 s at one spot after a turn-in, every quest leg answering "no
+    /// legal quest proposal", and no other give-up rule could see it because
+    /// nothing was ever refused. Zero disables the rule.
+    /// </summary>
+    public TimeSpan IdleGiveUpAfter { get; init; } = TimeSpan.FromMinutes(3);
+
     /// <summary>Reads the deployment gate from the environment (default OFF).</summary>
     public static QuestBootstrapModuleOptions FromEnvironment()
     {
@@ -68,13 +78,16 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
 
     private readonly QuestBootstrapModuleOptions _options;
     private readonly Func<ServerPressure> _pressureProbe;
+    private readonly TimeProvider _time;
 
     public QuestBootstrapActivityModule(
         QuestBootstrapModuleOptions options,
-        Func<ServerPressure>? pressureProbe = null)
+        Func<ServerPressure>? pressureProbe = null,
+        TimeProvider? time = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _pressureProbe = pressureProbe ?? (() => ServerPressure.Healthy);
+        _time = time ?? TimeProvider.System;
     }
 
     /// <summary>
@@ -129,6 +142,20 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, AbandonedQuests> _legAbandoned = new();
 
+    // Idle watch: the quest this module holds and the facts seen when the bot
+    // last stood still for it (quest state, spot). Any leg, live action, move
+    // or quest change restarts it.
+    private sealed record IdleWatch(ulong Generation, uint QuestId, string QuestFacts,
+        System.Numerics.Vector3 Position, DateTime Since, DateTime LastSeen);
+
+    // A hold must be seen on consecutive wakes to count as idle: time spent
+    // while another module owned the wake (a fight, a rest) or while this
+    // module denied (battle, recovery, server pressure) is not time spent
+    // standing idle for the quest. Wakes come every few seconds.
+    private static readonly TimeSpan IdleWatchMaxGap = TimeSpan.FromSeconds(30);
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<uint, IdleWatch> _idleWatch = new();
+
     // Admission memory, not spawner knowledge: a busy actor can only retain
     // discovery already elected for this activation. Unknown offers never
     // create a new discovery disposition.
@@ -147,6 +174,7 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         _deferrals.TryRemove(characterId, out _);
         _legFailures.TryRemove(characterId, out _);
         _legAbandoned.TryRemove(characterId, out _);
+        _idleWatch.TryRemove(characterId, out _);
     }
 
     /// <summary>
@@ -202,7 +230,8 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
                 || quest.Status != saved.Status || quest.Step != saved.Step
                 || !quest.Objectives.SequenceEqual(saved.Objectives)
                 || (!saved.SourceAvailable && sourceAvailable
-                    && saved.Outcome.Reason.StartsWith("GIVE-UP/UNRESOLVED-TARGET", StringComparison.Ordinal)))
+                    && (saved.Outcome.Reason.StartsWith("GIVE-UP/UNRESOLVED-TARGET", StringComparison.Ordinal)
+                        || saved.Outcome.Reason.StartsWith(IdleGiveUpPrefix, StringComparison.Ordinal))))
                 deferred.Quests.TryRemove(questId, out _);
             else if (saved.SourceAvailable && !sourceAvailable)
                 deferred.Quests.TryUpdate(questId, saved with { SourceAvailable = false }, saved);
@@ -297,6 +326,63 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
             _ => new AbandonedQuests(generation),
             (_, prior) => prior.Generation == generation ? prior : new AbandonedQuests(generation));
 
+    private const string IdleGiveUpPrefix = "GIVE-UP/IDLE";
+
+    /// <summary>
+    /// Holds <paramref name="questId"/> for this wake, or gives it up when the
+    /// bot has stood idle for it longer than
+    /// <see cref="QuestBootstrapModuleOptions.IdleGiveUpAfter"/>: same spot
+    /// (within 2 m), no live action, no leg reported back, and the quest's own
+    /// status, step and objective counts unchanged. A bot that is walking,
+    /// fighting, casting or getting credit is never idle, and only holds seen on
+    /// consecutive wakes count (a gap while another module owned the bot
+    /// restarts the watch). The give-up goes
+    /// through the same deferral as the other give-ups, so the quest comes back
+    /// once its facts change (or, like an unresolved target, once its source is
+    /// seen again).
+    /// </summary>
+    private BotActivityDecision HoldQuest(BotActivityContext context, IGameplayActor actor,
+        QuestDeferrals deferred, uint questId)
+    {
+        var characterId = context.Bot.CharacterId;
+        if (_options.IdleGiveUpAfter <= TimeSpan.Zero)
+            return BotActivityDecision.Allow(ActivityName);
+
+        var now = _time.GetUtcNow().UtcDateTime;
+        var position = actor.Character.Transform.World.Position;
+        var quest = actor.Character.Quests?.ActiveQuests.GetValueOrDefault(questId);
+        var facts = quest == null
+            ? "offer"
+            : $"{quest.Status}/{quest.Step}/{string.Join(",", quest.Objectives)}";
+        var busy = actor.ActiveRequest is { IsTerminal: false } || context.LastLegOutcome != null;
+        if (busy
+            || !_idleWatch.TryGetValue(characterId, out var watch)
+            || watch.Generation != context.Bot.Generation
+            || watch.QuestId != questId
+            || !string.Equals(watch.QuestFacts, facts, StringComparison.Ordinal)
+            || System.Numerics.Vector3.Distance(watch.Position, position) > 2f
+            || now - watch.LastSeen > IdleWatchMaxGap)
+        {
+            _idleWatch[characterId] = new IdleWatch(context.Bot.Generation, questId, facts, position, now, now);
+            return BotActivityDecision.Allow(ActivityName);
+        }
+        if (now - watch.Since < _options.IdleGiveUpAfter)
+        {
+            _idleWatch[characterId] = watch with { LastSeen = now };
+            return BotActivityDecision.Allow(ActivityName);
+        }
+
+        _idleWatch.TryRemove(characterId, out _);
+        var idleSeconds = (int)(now - watch.Since).TotalSeconds;
+        var reason = $"gave up on quest {questId} after standing idle {idleSeconds}s with nothing to do for it ({facts})";
+        Logger.Warn("Quest give-up bot {CharacterId}: {Reason}", characterId, reason);
+        NotifyQuestGiveUp(characterId, new QuestGiveUp(questId, $"{IdleGiveUpPrefix}: idle {idleSeconds}s", 1, 1));
+        _chosenQuest.TryRemove(characterId, out _);
+        if (!deferred.Quests.ContainsKey(questId))
+            AbandonedFor(characterId, context.Bot.Generation).Quests.Add(questId);
+        return BotActivityDecision.Deny(reason);
+    }
+
     /// <inheritdoc />
     public BotActivityDecision CanActivate(BotActivityContext context)
     {
@@ -387,12 +473,12 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
             && (keptWork == null || keptWork.Leg != "hunt" || keptHunted || IsKnownHuntSearch(keptWork)))
         {
             _discoveryGeneration.TryRemove(characterId, out _);
-            return BotActivityDecision.Allow(ActivityName);
+            return HoldQuest(context, actor, deferred, kept);
         }
         if (kept != 0 && !IsCompleted(characterId, kept) && listing.QuestOffersUnknown)
         {
             _discoveryGeneration.TryRemove(characterId, out _);
-            return BotActivityDecision.Allow(ActivityName);
+            return HoldQuest(context, actor, deferred, kept);
         }
 
         // Reconsider on actual results or changed conditions: completion,
@@ -440,8 +526,11 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
             return BotActivityDecision.Allow(DiscoveryActivityName);
         }
         _discoveryGeneration.TryRemove(characterId, out _);
+        if (GetChosenQuest(characterId) != pick)
+            Logger.Info("Quest purpose bot {CharacterId}: now quest {QuestId} (was {Previous})",
+                characterId, pick, kept);
         _chosenQuest[characterId] = pick;
-        return BotActivityDecision.Allow(ActivityName);
+        return HoldQuest(context, actor, deferred, pick);
     }
 
     /// <summary>

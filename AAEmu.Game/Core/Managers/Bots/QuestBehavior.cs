@@ -3017,15 +3017,12 @@ public static class QuestBehavior
     // travel uses the distance-ranked helper below; unknown tables stay unknown.
     internal static Vector3? TryNpcSpawnerPosition(WorldInstance world, uint npcTemplateId)
     {
-        var allSpawners = world.SpawnManager?.GetAllSpawners();
-        if (allSpawners == null)
+        // First spawner of the template in table order, read from the
+        // bot spawner index instead of a copy of the whole table.
+        var index = BotSpawnerIndex.For(world);
+        if (index == null || !index.ByTemplate.TryGetValue(npcTemplateId, out var entries))
             return null;
-        var spawner = allSpawners
-            .SelectMany(s => s.Value)
-            .FirstOrDefault(s => s.UnitId == npcTemplateId);
-        return spawner == null
-            ? null
-            : new Vector3(spawner.Position.X, spawner.Position.Y, spawner.Position.Z);
+        return entries[0].Position;
     }
 
     /// <summary>
@@ -3064,11 +3061,11 @@ public static class QuestBehavior
         position = default;
         if (fixture.HuntActId == 0)
             return false;
-        var all = world?.SpawnManager?.GetAllSpawners();
-        if (all == null)
+        var index = BotSpawnerIndex.For(world);
+        if (index == null)
             return false;
-        var templates = all.SelectMany(s => s.Value).Select(s => s.UnitId).Distinct()
-            .Where(t => QuestObjectiveTargetSelector.IsQuestNpcSource(fixture, t)).ToHashSet();
+        var isSource = QuestObjectiveTargetSelector.QuestNpcSourceMatcher(fixture);
+        var templates = index.ByTemplate.Keys.Where(isSource).ToHashSet();
         return TryNearestNpcSourcePosition(world!, templates, here, out templateId, out position);
     }
 
@@ -3079,12 +3076,16 @@ public static class QuestBehavior
         position = default;
         if (templates.Count == 0 || !float.IsFinite(here.X) || !float.IsFinite(here.Y) || !float.IsFinite(here.Z))
             return false;
-        var all = world.SpawnManager?.GetAllSpawners();
-        if (all == null)
+        var index = BotSpawnerIndex.For(world);
+        if (index == null)
             return false;
-        var nearest = all.SelectMany(s => s.Value)
-            .Where(s => s.UnitId != 0 && templates.Contains(s.UnitId) && s.Position != null)
-            .Select(s => (s.Id, s.UnitId, Position: new Vector3(s.Position.X, s.Position.Y, s.Position.Z)))
+        // Only the wanted templates' spawners are visited; the ranking below
+        // is a total order, so the winner is the same as over the whole table.
+        var nearest = templates
+            .Where(t => t != 0 && index.ByTemplate.ContainsKey(t))
+            .SelectMany(t => index.ByTemplate[t])
+            .Where(s => s.Position != null)
+            .Select(s => (s.Id, s.UnitId, Position: s.Position!.Value))
             .Where(s => float.IsFinite(s.Position.X) && float.IsFinite(s.Position.Y) && float.IsFinite(s.Position.Z))
             .Select(s => (s.Id, s.UnitId, s.Position, Distance: MathUtil.CalculateDistance(here, s.Position, false)))
             .Where(s => float.IsFinite(s.Distance))

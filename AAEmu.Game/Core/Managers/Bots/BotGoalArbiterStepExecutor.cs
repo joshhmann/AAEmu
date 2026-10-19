@@ -82,6 +82,7 @@ public sealed class BotGoalArbiterStepExecutor : IBotStepExecutor
         _lastDecision[bot.CharacterId] = Describe(arbitration);
         StageArbitrationTrace(bot, arbitration);
         StageWakeSequence(bot, wakeSeq);
+        BotStepProfile.Mark("arbiter");
 
         return _inner.StepAsync(bot, cancellationToken);
     }

@@ -72,6 +72,29 @@ public static class QuestObjectiveTargetSelector
             ? HuntMatches(fixture, templateId)
             : ValidNpcSources(fixture).Any(s => s.NpcTemplateId == templateId);
 
+    /// <summary>
+    /// <see cref="IsQuestNpcSource"/> for many templates: the quest's hunt
+    /// objective (or its valid drop sources) is read once, then each template
+    /// is a plain comparison. Same answers as calling it per template; the
+    /// spawner search tests every template in the world, and re-reading the
+    /// quest per template made it one of the costliest parts of a bot's turn
+    /// (populated-area run 6).
+    /// </summary>
+    internal static Func<uint, bool> QuestNpcSourceMatcher(QuestFixtureRow fixture)
+    {
+        if (fixture.HuntActId == 0)
+        {
+            var sources = ValidNpcSources(fixture).Select(s => s.NpcTemplateId).ToHashSet();
+            return sources.Contains;
+        }
+        return HuntObjective(fixture) switch
+        {
+            QuestActObjMonsterHunt hunt => templateId => hunt.NpcId == templateId,
+            QuestActObjMonsterGroupHunt hunt => templateId => QuestManager.Instance.CheckGroupNpc(hunt.QuestMonsterGroupId, templateId),
+            _ => static _ => false
+        };
+    }
+
     private static QuestActTemplate? HuntObjective(QuestFixtureRow fixture)
     {
         var act = QuestManager.Instance.GetTemplate(fixture.QuestId)?
