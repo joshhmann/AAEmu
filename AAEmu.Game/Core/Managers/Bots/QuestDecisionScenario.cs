@@ -203,6 +203,13 @@ public static class QuestDecisionScenario
         /// </summary>
         public int GiveUpAfterPlanFailures { get; init; } = 10;
         /// <summary>
+        /// Consecutive identical engine refusals (same quest, action and detail)
+        /// of a dispatched quest action before the quest is given up with that
+        /// refusal as the named reason. 0 disables the rule. Populated-area run 3:
+        /// ten bots retried a refused quest-261 item use ~3,400 times each.
+        /// </summary>
+        public int GiveUpAfterRefusedActions { get; init; } = 5;
+        /// <summary>
         /// Chosen quest purpose carried from the owning activity module (0 = none).
         /// When set, ordinary quest work is scoped to this quest: proposals for
         /// other quests are not emitted, so the recorded choice determines the

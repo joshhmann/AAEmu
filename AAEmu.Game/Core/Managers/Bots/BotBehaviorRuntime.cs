@@ -66,6 +66,10 @@ public sealed class BotBehaviorRuntime
     /// </summary>
     private bool _ownsRunning;
 
+    /// <summary>The last engine refusal of a dispatched quest action and how many times it repeated.</summary>
+    private (uint QuestId, ActorActionType Action, string Detail)? _refusal;
+    private int _refusalCount;
+
     /// <summary>
     /// True when <paramref name="request"/> is this runtime's live owned
     /// Running job (identity by reference — the actor's single-writer slot
@@ -251,6 +255,8 @@ public sealed class BotBehaviorRuntime
         }
         if (landed)
         {
+            _refusal = null;
+            _refusalCount = 0;
             Status = BotBehaviorStatus.Completed;
             CurrentPhase = result.SelectedAction?.ToString() ?? "completed";
             LastProgressAt = _utcNow();
@@ -272,7 +278,34 @@ public sealed class BotBehaviorRuntime
         Status = BotBehaviorStatus.Failed;
         CurrentPhase = result.FailStage.ToLowerInvariant();
         LastFailure = result.FailReason;
+        CountRefusal(actor, result.Request, options);
         return false;
+    }
+
+    /// <summary>
+    /// Gives a quest up when the engine refuses the SAME dispatched action the
+    /// same way <see cref="QuestDecisionScenario.QuestOptions.GiveUpAfterRefusedActions"/>
+    /// times in a row: the next decision would only make the identical request
+    /// again (populated-area run 3: a quest-261 item use refused "UrkTargetNpc"
+    /// ~3,400 times per bot). The give-up names the refusal verbatim and goes
+    /// through the ordinary give-up sink, so the owning module defers the quest
+    /// exactly like any other earned give-up. Landed progress clears the count.
+    /// </summary>
+    private void CountRefusal(IGameplayActor actor, ActorRequest? request, QuestDecisionScenario.QuestOptions options)
+    {
+        if (request is not { State: ActorLifecycleState.Rejected, DecisionQuestId: { } questId and not 0 }
+            || options.GiveUpAfterRefusedActions <= 0)
+            return;
+        var key = (questId, request.Action, request.Detail ?? "");
+        _refusalCount = _refusal == key ? _refusalCount + 1 : 1;
+        _refusal = key;
+        if (_refusalCount < options.GiveUpAfterRefusedActions)
+            return;
+        var giveUp = new QuestGiveUp(questId, $"GIVE-UP/ACTION-REFUSED: {request.Action} ({request.Detail})",
+            _refusalCount, options.GiveUpAfterRefusedActions);
+        _refusal = null;
+        _refusalCount = 0;
+        QuestGiveUpSink?.Invoke(actor.Character.Id, giveUp);
     }
     /// <summary>
     /// Consumes the owned request's exact terminal once (the hold released
@@ -288,6 +321,8 @@ public sealed class BotBehaviorRuntime
         NextWake = null;
         if (request.State == ActorLifecycleState.Completed && request.Result is not false)
         {
+            _refusal = null;
+            _refusalCount = 0;
             Status = BotBehaviorStatus.Completed;
             CurrentPhase = request.Action.ToString();
             LastProgressAt = _utcNow();
@@ -312,6 +347,7 @@ public sealed class BotBehaviorRuntime
         Status = BotBehaviorStatus.Failed;
         CurrentPhase = "execute";
         LastFailure = $"{request.Action} ended {request.State} ({request.Detail})";
+        CountRefusal(actor, request, options);
         // Consuming this exact quest request owns the wake even on failure.
         // Otherwise the old patrol can start a new Move before the following
         // quest decision. Keep Failed and the original progress timestamp.

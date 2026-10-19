@@ -36,7 +36,8 @@ public class TickManager : Singleton<TickManager>, ITickManager
             OnTick.Invoke();
             var time = sw.Elapsed - before;
             if (time > TimeSpan.FromMilliseconds(100))
-                Logger.Warn("Tick took {0}ms to finish", time.TotalMilliseconds);
+                Logger.Warn("Tick took {0}ms to finish (slowest subscriber: {1} {2:F1}ms)",
+                    time.TotalMilliseconds, OnTick.LastSlowestSubscriber, OnTick.LastSlowestMs);
 
             // Periodic metrics summary — at most once per 60s (the loop itself runs at ~20ms sleep)
             if (_metricsLogSw.Elapsed >= TimeSpan.FromSeconds(60))
@@ -98,9 +99,17 @@ public class TickManager : Singleton<TickManager>, ITickManager
             _sw.Start();
         }
 
+        /// <summary>The inline subscriber that took longest in the most recent Invoke (slow-tick attribution).</summary>
+        public string LastSlowestSubscriber { get; private set; } = "-";
+
+        /// <summary>Duration of <see cref="LastSlowestSubscriber"/> in the most recent Invoke.</summary>
+        public double LastSlowestMs { get; private set; }
+
         public void Invoke()
         {
             var invokeSw = Stopwatch.StartNew();
+            var slowestName = "-";
+            var slowestMs = 0d;
 
             lock (_lock)
             {
@@ -163,10 +172,18 @@ public class TickManager : Singleton<TickManager>, ITickManager
                         {
                             subSw.Stop();
                             Metrics.RecordSubscriber(ev.Name, subSw.Elapsed);
+                            if (subSw.Elapsed.TotalMilliseconds > slowestMs)
+                            {
+                                slowestMs = subSw.Elapsed.TotalMilliseconds;
+                                slowestName = ev.Name;
+                            }
                         }
                     }
                 }
             }
+
+            LastSlowestSubscriber = slowestName;
+            LastSlowestMs = slowestMs;
 
             invokeSw.Stop();
             Metrics.RecordInvoke(invokeSw.Elapsed);
