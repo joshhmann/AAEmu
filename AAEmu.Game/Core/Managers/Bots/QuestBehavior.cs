@@ -488,13 +488,21 @@ public static class QuestBehavior
     /// <summary>Drops every stall streak for one actor: its target identity is gone (lost/dead/unselected), so no streak may survive onto the next fight.</summary>
     private static void ClearCombatStallActor(uint actorId)
     {
-        ClearNoProgressActor(CombatStallStreaks, actorId);
-        lock (PursuitSync)
-            CombatStallActorWakes.Remove(actorId);
+        ClearAttackStallActor(actorId);
         // The stale-pin watchdog keys on the same live identity: a gone target
         // ends its fight, so the leash streak ends here too — one fused release,
         // never a streak surviving onto the next fight.
         ClearLeashStaleActor(actorId);
+    }
+
+    // An attack that is not running has no ongoing damage failure to count.
+    // Keep separate failed-approach/leash evidence: starting an attack does
+    // not demonstrate that an earlier route or attack succeeded.
+    private static void ClearAttackStallActor(uint actorId)
+    {
+        ClearNoProgressActor(CombatStallStreaks, actorId);
+        lock (PursuitSync)
+            CombatStallActorWakes.Remove(actorId);
     }
     /// <summary>Drops every no-progress streak in one map for one actor.</summary>
     private static void ClearNoProgressActor(Dictionary<(uint ActorId, uint TargetObjId), CombatStallStreak> streaks, uint actorId)
@@ -3051,11 +3059,11 @@ public static class QuestBehavior
         return QuestDirector.ReadObjectiveGroups(quest).Any(g => g.Active
                 && g.Remaining.Any(a => a.ActId == fixture.HuntActId))
             && TryNearestHuntNpcSpawnerPosition(character.ParentWorld, fixture,
-                character.Transform.World.Position, out _, out _);
+                character.Transform.World.Position, out _, out _, includeBlockedSources: true);
     }
 
     internal static bool TryNearestHuntNpcSpawnerPosition(WorldInstance world, QuestFixtureRow fixture,
-        Vector3 here, out uint templateId, out Vector3 position)
+        Vector3 here, out uint templateId, out Vector3 position, bool includeBlockedSources = false)
     {
         templateId = 0;
         position = default;
@@ -3066,11 +3074,11 @@ public static class QuestBehavior
             return false;
         var isSource = QuestObjectiveTargetSelector.QuestNpcSourceMatcher(fixture);
         var templates = index.ByTemplate.Keys.Where(isSource).ToHashSet();
-        return TryNearestNpcSourcePosition(world!, templates, here, out templateId, out position);
+        return TryNearestNpcSourcePosition(world!, templates, here, out templateId, out position, includeBlockedSources);
     }
 
     private static bool TryNearestNpcSourcePosition(WorldInstance world, IReadOnlySet<uint> templates,
-        Vector3 here, out uint templateId, out Vector3 position)
+        Vector3 here, out uint templateId, out Vector3 position, bool includeBlockedSources = false)
     {
         templateId = 0;
         position = default;
@@ -3085,6 +3093,9 @@ public static class QuestBehavior
             .Where(t => t != 0 && index.ByTemplate.ContainsKey(t))
             .SelectMany(t => index.ByTemplate[t])
             .Where(s => s.Position != null)
+            // Static coordinates remain knowledge. Only current positive native
+            // blockage evidence rules a destination out of this travel choice.
+            .Where(s => includeBlockedSources || s.Spawner?.IsSearchBlocked(s.UnitId) != true)
             .Select(s => (s.Id, s.UnitId, Position: s.Position!.Value))
             .Where(s => float.IsFinite(s.Position.X) && float.IsFinite(s.Position.Y) && float.IsFinite(s.Position.Z))
             .Select(s => (s.Id, s.UnitId, s.Position, Distance: MathUtil.CalculateDistance(here, s.Position, false)))
@@ -3744,6 +3755,15 @@ public static class QuestBehavior
         // needs to walk toward cannot outlive the wake.
         if (CombatOwnsInsideBand(character, dist, selected))
         {
+            // Being able to attack is not an executing attack. A stopped,
+            // missing or cancelled native loop must get its ordinary startup
+            // before no-damage recovery can force another close-in journey.
+            // Otherwise an archer repeatedly chases to contact and retreats,
+            // while this higher-priority move prevents its first ranged shot.
+            var nativeAttackRunning = character.IsAutoAttack
+                && character.AutoAttackTask is { Cancelled: false };
+            if (!nativeAttackRunning)
+                ClearAttackStallActor(actor.ActorId);
             // NO-PROGRESS STALL TRIP. The yield above is open-ended: when the live
             // AutoAttack loop deals no damage (refused at the range edge, mob regen
             // outpaces DPS), both legs yield null every wake forever. After
@@ -3755,7 +3775,7 @@ public static class QuestBehavior
             // the contact pose is the same one melee roles already fight from.
             // Fail-closed: unreadable HP (npc null here is impossible — validated
             // above — but Hp is still read live) resets inside the counter.
-            if (CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out var stallWakes, ReadSelfDamageAttribution(character, npc, actor.ActorId)))
+            if (nativeAttackRunning && CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out var stallWakes, ReadSelfDamageAttribution(character, npc, actor.ActorId)))
             {
                 diag = $"validate=ok:rangeM={M(dist)}:dispatch=move:reason=stall-close-in(stall={stallWakes}wakes_hp={npc.Hp}){travelFrag}";
                 return new BotDecisionProposal(
@@ -3771,7 +3791,7 @@ public static class QuestBehavior
                     policyVersion: opts.PolicyVersion,
                     priority: opts.ObjectivePursuitPriority,
                     tieBreakKey: $"pursuit:{fixture.QuestId}:{selected:D10}",
-                    payload: payload,
+                    payload: payload with { CloseToContact = true },
                     hardPreconditions:
                     [
                         new BotProposalPrecondition($"quest-{fixture.QuestId}-relevant",
@@ -4039,14 +4059,19 @@ public static class QuestBehavior
         // longer serves (selection switched after the Target leg re-pointed
         // CurrentTarget — the loop's struck target still names the old prey),
         // or a loop the stall trip already condemned (CombatStallWakes
-        // no-progress hold-wakes), is torn down and re-dispatched on the
+        // no-progress hold-wakes), is re-affirmed through the actor on the
         // current selection instead of withdrawn. The loop's target is the
         // engine's own struck target (the auto-attack task's skill), read off
         // the same live character surface this gate already reads — never a
-        // memory. Fail-closed: an unreadable loop target keeps the historical
-        // withdraw (covers hand-raised test flags with no task behind them).
-        var redispatchStaleLoop = false;
-        if (character.IsAutoAttack)
+        // memory. Native execution follows CurrentTarget instead. Fail-closed: an unreadable loop target keeps the historical
+        // withdraw for a real task whose last-strike target is unreadable. A raised
+        // flag without a task is recovered below, not treated as a live loop.
+        // A flag without an executable task is not a running attack. Recover
+        // through the same actor verb, including when the combat brain holds
+        // because it saw that stale flag.
+        var redispatchStaleLoop = character.IsAutoAttack
+            && character.AutoAttackTask is not { Cancelled: false };
+        if (character.IsAutoAttack && !redispatchStaleLoop)
         {
             // Same streak the pursuit in-band yield feeds (cycle-deduped there): an
             // already-live loop that deals no damage is the same stall from the
@@ -4054,7 +4079,7 @@ public static class QuestBehavior
             // (Stop branch inside 3 m) still accrue — the trip itself always fires
             // from pursuit, so there is exactly one re-dispatch path.
             var stallTripped = CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _, ReadSelfDamageAttribution(character, npc, actor.ActorId));
-            var loopTarget = ReadLiveLoopTarget(character);
+            var loopTarget = ReadLastAutoAttackTarget(character);
             if (loopTarget.HasValue && (loopTarget.Value != selected || stallTripped))
             {
                 // Armed: fall through to the dispatch below (range + brain), and
@@ -4186,7 +4211,8 @@ public static class QuestBehavior
         {
             // Same streak as the pre-brain gate above (cycle-deduped): the brain's
             // own Hold is the third name for "loop live, no new dispatch".
-            CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _, ReadSelfDamageAttribution(character, npc, actor.ActorId));
+            if (character.IsAutoAttack && character.AutoAttackTask is { Cancelled: false })
+                CountCombatStallWake(actor.ActorId, selected, npc.Hp, opts.CycleId, out _, ReadSelfDamageAttribution(character, npc, actor.ActorId));
             diag = $"validate=already-live:target={selected}:template={npc.TemplateId}:alive=true:visible=true:hostile=true:legal=true" +
                    $":distM={M(dist)}:verb=none:hpBefore={npc.Hp}:brain={brainDecision.Describe()}{leashFrag}";
             return null;
@@ -4905,7 +4931,7 @@ public static class QuestBehavior
             "relevance={Relevance} have={Have} need={Need} raw={Raw} relevant={Relevant} legal={Legal} " +
             "selected={Selected} template={Template} distM={Dist} " +
             "rejects=[unresolved={Unresolved} dead={Dead} template={TemplateRejects} hostile={Hostile} attack={Attack} stealth={Stealth}] " +
-            "candidates=[{Candidates}] pursuit=[{Pursuit}] combat=[{Combat}] loot=[{Loot}] return=[{Return}]",
+            "candidates=[{Candidates}] pursuit=[{Pursuit}] combat=[{Combat}] loot=[{Loot}] return=[{Return}] auto=[{AutoAttack}]",
             opts.CycleId, actor.Character.Id, actor.ActorId, funnel.QuestId,
             funnel.ObjectiveResolved ? $"ok:{funnel.ObjectiveDetail}" : $"FAIL-OBJECTIVE:{funnel.ObjectiveDetail}",
             funnel.SourceResolved ? $"ok:{funnel.SourceDetail}" : $"FAIL-SOURCE:{funnel.SourceDetail}",
@@ -4918,7 +4944,30 @@ public static class QuestBehavior
             funnel.RejectHostile, funnel.RejectAttack, funnel.RejectStealth,
             string.Join(",", rows),
             wake.Detail(QuestLegId.Pursuit), wake.Detail(QuestLegId.Combat),
-            wake.Detail(QuestLegId.Loot), wake.Detail(QuestLegId.Return));
+            wake.Detail(QuestLegId.Loot), wake.Detail(QuestLegId.Return), DescribeNativeAutoAttack(actor.Character));
+        if (BotSourceDiagnostics.EnabledFor(actor.Character.Id))
+        {
+            try
+            {
+                var sources = BotSourceDiagnostics.Capture(actor.Character.ParentWorld,
+                    QuestObjectiveTargetSelector.QuestNpcSourceMatcher(funnel.Fixture));
+                SweepDiagLog.Info("QuestSourceDiag cycle={Cycle} char={CharId} quest={Quest} snapshot={Snapshot}",
+                    opts.CycleId, actor.Character.Id, funnel.QuestId, BotSourceDiagnostics.Serialize(sources));
+            }
+            catch (Exception ex)
+            {
+                // Observability must never own or fail a gameplay decision.
+                SweepDiagLog.Warn(ex, "QuestSourceDiag unavailable char={CharId} quest={Quest}",
+                    actor.Character.Id, funnel.QuestId);
+            }
+        }
+    }
+
+    internal static string DescribeNativeAutoAttack(Character character)
+    {
+        var task = character.AutoAttackTask;
+        var tick = (task as AAEmu.Game.Models.Tasks.Skills.UseAutoAttackSkillTask)?.LastTick;
+        return FormattableString.Invariant($"enabled={character.IsAutoAttack}:task={task?.Id}:cancelled={task?.Cancelled}:skill={task?.Skill?.Template?.Id}:skillCancelled={task?.Skill?.Cancelled}:executions={task?.ExecuteCount}:next={task?.TriggerTime:O}:currentTarget={character.CurrentTarget?.ObjId}:lastStrike={task?.Skill?.InitialTarget?.ObjId}:casting={character.SkillTask?.Skill?.Template?.Id}:gcd={character.GlobalCooldown:O}:last={tick?.State ?? "unobserved"}:result={tick?.Result}:tickTarget={tick?.TargetId}:tickUtc={tick?.Utc:O}:distance={tick?.Distance}:maxRange={tick?.MaxRange}");
     }
 
     /// <summary>
@@ -5147,6 +5196,45 @@ public static class QuestBehavior
     }
 
     /// <summary>
+    /// Observe only the runtime's exact owned chase while it is moving. Its
+    /// original destination cannot say whether the prey is still legal or
+    /// combat can already take over. Other owners and forced contact recovery
+    /// retain their existing execution; no new goal or target is selected here.
+    /// </summary>
+    internal static bool TryRetireOwnedPursuit(IGameplayActor actor, ActorRequest request,
+        BotDecisionProposal? proposal)
+    {
+        if (request is not { IsTerminal: false, Action: ActorActionType.Move }
+            || request.MoveOwner != TravelLegDispatch.PursuitMoveOwner
+            || !ReferenceEquals(actor.ActiveRequest, request)
+            || proposal?.Goal != PursuitGoal || proposal.TargetId != request.TargetId)
+            return false;
+
+        var character = actor.Character;
+        var npc = character.ParentWorld?.GetNpc(request.TargetId);
+        var available = npc != null
+            && QuestObjectiveTargetSelector.IsSuitableLivingPrey(character, npc, npc.TemplateId);
+        if (available)
+        {
+            var distance = character.GetDistanceTo(npc!, true);
+            if (!CombatOwnsInsideBand(character, distance, request.TargetId)
+                || (distance > PursuitStopRadiusM
+                    && proposal.Payload is TravelLegDispatch.TravelDispatchParams { CloseToContact: true }))
+                return false;
+            _ = DispatchPursuitStop(actor, proposal);
+        }
+        else
+        {
+            _ = actor.Stop();
+            TravelLegDispatch.EndJourney(actor, TravelLegDispatch.PursuitMoveOwner);
+        }
+        SweepDiagLog.Info("Quest pursuit stopped actor={ActorId} quest={QuestId} target={TargetId} trace={TraceId}: {Reason}",
+            actor.ActorId, request.DecisionQuestId, request.TargetId, request.TraceId,
+            available ? "combat range reached" : "target unavailable");
+        return true;
+    }
+
+    /// <summary>
     /// G5 pursuit dispatch: preempt a live Move leg (retrack only), issue the
     /// unit-relative MoveToUnit leg, and record the committed target's live
     /// position for the next wake's drift gate. Never touches _move state or
@@ -5326,13 +5414,13 @@ public static class QuestBehavior
     }
 
     /// <summary>
-    /// The engine's own struck target of the live auto-attack loop: the
+    /// The loop skill's last struck target, not the next execution's target: the
     /// <c>InitialTarget</c> the loop's skill struck when <c>GameplayActor.AutoAttack</c>
     /// fired it (the same wake that raised <c>IsAutoAttack</c>). Null when no task
     /// runs, the skill is unreadable, or the struck target is gone — every one of
     /// those is "unknown", and the caller fails closed to the historical withdraw.
     /// </summary>
-    private static uint? ReadLiveLoopTarget(Character character)
+    private static uint? ReadLastAutoAttackTarget(Character character)
     {
         try
         {

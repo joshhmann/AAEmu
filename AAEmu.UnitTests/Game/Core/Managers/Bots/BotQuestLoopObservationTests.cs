@@ -1,6 +1,8 @@
 using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Acts;
+using AAEmu.Game.Models.Game.Quests.Templates;
 
 using AAEmu.UnitTests.Game.Housing;
 
@@ -26,6 +28,47 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 [ParallelLimiter<SequentialParallelLimit>]
 public class BotQuestLoopObservationTests
 {
+    [Test]
+    public async Task RetainedSnapshot_DoesNotChangeWhenNativeObjectiveCounterChanges()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("quest-observation-copy");
+        var quest = new Quest(actor.Character)
+        { TemplateId = 6198u, Status = QuestStatus.Progress, Step = QuestComponentKind.Progress, Objectives = [1, 0, 0, 0, 0] };
+        actor.Character.Quests.ActiveQuests[6198u] = quest;
+        var first = BotQuestLoopObservation.Capture(actor.Character, false);
+        quest.Objectives[0] = 2;
+        var later = BotQuestLoopObservation.Capture(actor.Character, false);
+        await Assert.That(first.ActiveQuests.Single().Objectives[0]).IsEqualTo(1);
+        await Assert.That(later.ActiveQuests.Single().Objectives[0]).IsEqualTo(2);
+    }
+
+    [Test]
+    public async Task StationaryGathering_ReportsActualItemGainsWithoutChangingRetainedCounts()
+    {
+        var (actor, _) = GameplayActorTestRig.CreateActor("quest-item-observation");
+        const uint itemId = 0x7B0001;
+        const uint unrelatedItem = 0x7B0002;
+        GameplayActorTestRig.SeedItemTemplate(itemId);
+        GameplayActorTestRig.SeedItemTemplate(unrelatedItem);
+        var quest = new Quest(actor.Character) { TemplateId = 0x7B0003 };
+        var step = new QuestStep(QuestComponentKind.Progress, quest);
+        var template = new QuestComponentTemplate(new QuestTemplate { Id = quest.TemplateId }) { Id = 0x7B0004 };
+        var component = new QuestComponent(step, template);
+        component.Acts.Add(new QuestAct(component, new QuestActObjItemGather(template) { ItemId = itemId }));
+        step.Components[template.Id] = component;
+        quest.QuestSteps[QuestComponentKind.Progress] = step;
+        actor.Character.Quests.ActiveQuests[quest.TemplateId] = quest;
+        var before = BotQuestLoopObservation.Capture(actor.Character, false);
+        GameplayActorTestRig.GrantItem(actor, itemId, 2);
+        GameplayActorTestRig.GrantItem(actor, unrelatedItem, 3);
+        var after = BotQuestLoopObservation.Capture(actor.Character, false);
+        await Assert.That(before.ObjectiveItemCounts![itemId]).IsEqualTo(0);
+        await Assert.That(after.ObjectiveItemCounts![itemId]).IsEqualTo(2);
+        await Assert.That(after.ObjectiveItemCounts.ContainsKey(unrelatedItem)).IsFalse();
+        await Assert.That(after.X).IsEqualTo(before.X);
+        await Assert.That(after.Experience).IsEqualTo(actor.Character.Experience);
+    }
+
     /// <summary>
     /// A character with NO quest work projects an empty, non-throwing snapshot:
     /// zero active rows, zero arc flags set, and an arc that is not "complete".

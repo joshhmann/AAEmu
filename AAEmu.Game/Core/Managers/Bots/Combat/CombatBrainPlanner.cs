@@ -223,6 +223,15 @@ public static class CombatBrainPlanner
             }
         }
 
+        if (selectedSkill == 0 && role == CombatRole.RangedPhysical && incumbentValid
+            && CombatDecisionTree.TryReadRangedAutoAttackRange(character, out var fallbackBowRange))
+        {
+            // A natural archer needs the same native bow limit as a melee
+            // character borrowing its bow. Otherwise fallback retreat can land
+            // outside the attack/admission range and pursuit closes in again.
+            (skillMin, skillMax) = fallbackBowRange;
+        }
+
         if (selectedSkill == 0 && role == CombatRole.Melee && incumbentValid
             && CombatDecisionTree.TryGetRangedAutoAttackRange(character, incumbentDistance, out var rangedRange))
         {

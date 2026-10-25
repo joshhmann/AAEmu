@@ -305,7 +305,9 @@ public class ChallengeV1RecoveryTests
         var npcObjId = SpawnPrey(session, actor, new Vector3(30, 10, 0), originalPosition);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        // A running attack needs its native task, not only the enabled flag.
+        _ = actor.AutoAttack(npcObjId);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         await Assert.That(QuestBehavior.CombatOwnsInsideBand(actor.Character, 6f)).IsTrue();
         await Assert.That(actor.Observe().NearbyNpcObjIds.Contains(npcObjId)).IsTrue();
 

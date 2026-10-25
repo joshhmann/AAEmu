@@ -741,13 +741,11 @@ public class QuestBootstrapModuleTests
     }
 
     [Test]
-    public async Task StepAsync_QuestActiveAdvanceDeclines_DoesNotClaimWake()
+    public async Task StepAsync_QuestActiveAdvanceDeclines_ReservesWakeWithoutProgress()
     {
-        // Same staged quest with its gather objective UNCREDITED (0/3 meat): the
-        // step machine runs and applies nothing. The advance is Completed by
-        // design, but A3 makes the payload the applied verdict, so the wake is
-        // NOT landed work and the quest leg must not claim it — the bot falls
-        // through to the travel/hunt legs that can actually make progress.
+        // The native advance applies nothing. With no useful quest travel,
+        // reserve the elected quest wake so unrelated patrol cannot keep
+        // resetting idle recovery. Ownership is not progress credit.
         var rigged = GameplayActorTestRig.CreateActor("qb-leg-declined");
         var (actor, session) = rigged;
         var character = session.Character;
@@ -759,14 +757,17 @@ public class QuestBootstrapModuleTests
             nearbyNpcs: (_, _) => []);
 
         clock.Advance(TimeSpan.FromMilliseconds(100));
-        await executor.StepAsync(runtime, CancellationToken.None);
+        var nextWake = await executor.StepAsync(runtime, CancellationToken.None);
 
         await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AdvanceQuest
             && r.Result == ActorLifecycleState.Completed)).IsTrue();
         var row = actor.AuditTrace.Last(r => r.Action == ActorActionType.AdvanceQuest);
         await Assert.That(row.Detail ?? "").Contains(
             QuestAdvanceOutcome.From(accepted: true, applied: false).Token);
-        await Assert.That(executor.GetBotState(runtime.CharacterId)?.QuestLegActive ?? true).IsFalse();
+        await Assert.That(executor.GetBotState(runtime.CharacterId)?.QuestLegActive ?? false).IsTrue();
+        await Assert.That(nextWake).IsEqualTo(executor.IdleWakeInterval);
+        await Assert.That(executor.TryGetQuestRuntime(runtime.CharacterId, out var questRuntime)).IsTrue();
+        await Assert.That(questRuntime!.LastProgressAt).IsNull();
     }
 
     [Test]

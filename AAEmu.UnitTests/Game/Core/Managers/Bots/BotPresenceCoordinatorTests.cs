@@ -29,6 +29,24 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 [NotInParallel]
 public class BotPresenceCoordinatorTests
 {
+    private object? _previousMetadataStore;
+
+    [Before(Test)]
+    public void IsolateMetadata()
+    {
+        // These fixtures reuse character IDs. One test's recorded patrol home
+        // must not turn another test's fresh character into a returning bot.
+        var field = typeof(Singleton<PlayerBotMetadataStore>).GetField("s_instance",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+        _previousMetadataStore = field.GetValue(null);
+        field.SetValue(null, new PlayerBotMetadataStore());
+    }
+
+    [After(Test)]
+    public void RestoreMetadata()
+        => typeof(Singleton<PlayerBotMetadataStore>).GetField("s_instance",
+            BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, _previousMetadataStore);
+
     private sealed class RecordingManager : IPlayerBotManager
     {
         public int SpawnCalls;
@@ -392,6 +410,55 @@ public class BotPresenceCoordinatorTests
         var home = BotPresenceCoordinator.DefaultHomeResolver(config);
 
         await Assert.That(home).IsEqualTo(overrideHome);
+    }
+
+    [Test]
+    [Arguments("legacy", false)]
+    [Arguments("manifest", false)]
+    [Arguments("reenroll", false)]
+    [Arguments("legacy", true)]
+    [Arguments("manifest", true)]
+    [Arguments("reenroll", true)]
+    public async Task StoredHome_AnchorsPatrolWithoutReplacingCurrentPosition(string path, bool explicitOverride)
+    {
+        SeedFixtureSingletons();
+        var singleton = typeof(Singleton<PlayerBotMetadataStore>).GetField("s_instance",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+        var previous = singleton.GetValue(null);
+        var store = new PlayerBotMetadataStore();
+        singleton.SetValue(null, store);
+        try
+        {
+            // Loaded/current coordinates and metadata are setup. No DB reload
+            // or persistence claim: this checks the real enrollment owner.
+            var session = HeadlessSession.Create(990_700, "SavedTraveler", 5, Race.Nuian);
+            var character = session.Character;
+            var current = new Vector3(1000, 1500, 30);
+            var storedHome = new Vector3(20, 30, 10);
+            var overrideHome = new Vector3(200, 300, 15);
+            character.Transform.Local.SetPosition(current.X, current.Y, current.Z);
+            store.RecordHome(character.Id, character.Transform.WorldId, character.Transform.ZoneId,
+                storedHome.X, storedHome.Y, storedHome.Z);
+            var manager = new RecordingManager();
+            if (path == "reenroll") manager.Enroll(character);
+            var executor = new BotRoamStepExecutor { GroundHeightProvider = (_, _) => 0f };
+            var coordinator = new BotPresenceCoordinator(manager, new RecordingScheduler(), new RecordingDirector(),
+                executor, _ => new Vector3(5, 5, 5), (_, _, _, _, _) => session,
+                groundHeightProvider: (_, _) => 0f,
+                manifestProvider: path == "manifest" ? () => [new PresenceManifestEntry(
+                    character.Name, Race.Nuian, Gender.Male, 5, Home: explicitOverride ? overrideHome : null)] : () => null,
+                existingBotName: _ => character.Name);
+            var config = Config(1) with { HomePosition = explicitOverride && path != "manifest" ? overrideHome : default };
+            await Assert.That(coordinator.Start(config)).IsTrue();
+            await Assert.That(character.Transform.Local.Position).IsEqualTo(explicitOverride ? overrideHome : current);
+            var anchor = explicitOverride ? overrideHome : storedHome;
+            await Assert.That(executor.GetRoamRoute(character.Id)!.AllWaypointsWithin(anchor, 31f)).IsTrue();
+            await Assert.That(store.GetForRead(character.Id).HomeX).IsEqualTo(anchor.X);
+        }
+        finally
+        {
+            singleton.SetValue(null, previous);
+        }
     }
 
     [Test]

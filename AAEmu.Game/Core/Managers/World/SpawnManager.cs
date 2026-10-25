@@ -1046,6 +1046,30 @@ public class SpawnManager(WorldInstance parentWorld)
         }
     }
 
+    // Diagnostic snapshots own their arrays. Release each queue lock before
+    // callers inspect entities, spawner membership or tagging.
+    internal sealed record QueueSnapshot(GameObject[] Respawns, int RespawnTotal,
+        GameObject[] Despawns, int DespawnTotal);
+
+    internal QueueSnapshot CaptureQueues(int limit)
+    {
+        if (limit is <= 0 or > 4096)
+            throw new ArgumentOutOfRangeException(nameof(limit));
+        GameObject[] respawns, despawns;
+        int respawnTotal, despawnTotal;
+        lock (Respawns)
+        {
+            respawnTotal = Respawns.Count;
+            respawns = Respawns.Take(limit).ToArray();
+        }
+        lock (Despawns)
+        {
+            despawnTotal = Despawns.Count;
+            despawns = Despawns.Take(limit).ToArray();
+        }
+        return new QueueSnapshot(respawns, respawnTotal, despawns, despawnTotal);
+    }
+
     public void AddRespawn(GameObject obj)
     {
         lock (Respawns)

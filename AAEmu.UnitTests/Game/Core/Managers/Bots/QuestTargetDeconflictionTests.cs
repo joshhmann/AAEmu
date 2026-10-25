@@ -17,6 +17,7 @@ using AAEmu.Game.Models;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
 using System.Numerics;
 using System.Reflection;
+using Microsoft.Extensions.Time.Testing;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -492,8 +493,8 @@ public class QuestTargetDeconflictionTests
 
     [Test]
     [Arguments("all-contested")]
+    [Arguments("all-contested-committed")]
     [Arguments("own-tag")]
-    [Arguments("committed")]
     [Arguments("self-defense")]
     [Arguments("real-party")]
     public async Task ClaimPreference_PreservesSupportedFallbacksAndOwnership(string control)
@@ -512,8 +513,9 @@ public class QuestTargetDeconflictionTests
             await Assert.That(owner.PartyAccept().State).IsEqualTo(ActorLifecycleState.Completed);
         }
         npc.CharacterTagging.AddTagger(control == "own-tag" ? actor.Character : owner.Character, 60);
-        if (control == "all-contested") session.World.GetNpc(far)!.CharacterTagging.AddTagger(owner.Character, 60);
-        if (control == "committed") actor.SetTarget(near);
+        if (control.StartsWith("all-contested", StringComparison.Ordinal))
+            session.World.GetNpc(far)!.CharacterTagging.AddTagger(owner.Character, 60);
+        if (control == "all-contested-committed") actor.SetTarget(near);
         if (control == "self-defense") npc.CurrentAggroTarget = actor.Character;
         var running = actor.MoveTo(new Vector3(100, 0, 0));
         var chosen = QuestObjectiveTargetSelector.Evaluate(actor.Character, BotObservedContext.From(actor.Observe()), "claim-control", Fixture());
@@ -524,7 +526,874 @@ public class QuestTargetDeconflictionTests
         actor.Stop();
     }
 
+    [Test]
+    [Arguments(true, false)]
+    [Arguments(false, true)]
+    [Arguments(true, true)]
+    public async Task GatherItem_ForeignClaimLosesToUsableAlternative_EvenWhenCommitted(bool alreadyCommitted, bool siblingOnAlternative)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("gather-claim-choice");
+        var (owner, _) = GameplayActorTestRig.CreateActor("gather-claim-owner");
+        JoinSiblingToRegion(session, owner, new Vector3(2, 0, 0));
+        var near = SpawnBoar(session, actor, Vector3.Zero, new Vector3(6, 0, 0));
+        var far = SpawnExtraBoar(session, new Vector3(18, 0, 0));
+        Activate251(actor.Character);
+        session.World.GetNpc(near)!.CharacterTagging.AddTagger(owner.Character, 60);
+        if (alreadyCommitted) actor.SetTarget(near);
+        if (siblingOnAlternative) owner.SetTarget(far);
+
+        var snapshot = BotObservedContext.Capture(actor);
+        var before = actor.Character.CurrentTarget;
+        var issued = actor.AuditTrace.Count;
+        var chosen = QuestObjectiveTargetSelector.Evaluate(actor.Character,
+            snapshot, "gather-foreign-commitment", Fixture());
+
+        await Assert.That(chosen.SelectedObjId).IsEqualTo(far);
+        await Assert.That(chosen.LegalCount).IsEqualTo(2);
+        await Assert.That(chosen.Candidates.Single(c => c.ObjId == near).HasCompetingClaim).IsTrue();
+        await Assert.That(chosen.Candidates.Single(c => c.ObjId == far).HasCompetingClaim).IsFalse();
+        // Selection only: no target mutation, attack, loot or quest credit.
+        await Assert.That(ReferenceEquals(actor.Character.CurrentTarget, before)).IsTrue();
+        await Assert.That(actor.AuditTrace.Count).IsEqualTo(issued);
+
+        try
+        {
+            ActorRequest? pursuit = null;
+            for (var wake = 0; wake < 5 && pursuit == null; wake++)
+            {
+                var result = QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = $"gather-claim-execute-{wake}" });
+                if (result.Request is { Action: ActorActionType.Move, TargetId: var target } move && target == far)
+                    pursuit = move;
+            }
+            await Assert.That(actor.Character.CurrentTarget?.ObjId).IsEqualTo(far);
+            await Assert.That(pursuit).IsNotNull();
+            await Assert.That(pursuit!.MoveOwner).IsEqualTo(TravelLegDispatch.PursuitMoveOwner);
+            var position = actor.Character.Transform.World.Position;
+            actor.Tick(TimeSpan.FromMilliseconds(100));
+            await Assert.That(Vector3.Distance(actor.Character.Transform.World.Position, new Vector3(18, 0, 0)))
+                .IsLessThan(Vector3.Distance(position, new Vector3(18, 0, 0)));
+            await Assert.That(actor.Character.Quests.ActiveQuests[Quest251].Objectives.All(x => x == 0)).IsTrue();
+        }
+        finally
+        {
+            actor.StopAutoAttack();
+            actor.Stop();
+            TravelIntentStore.Disarm(actor.ActorId, TravelLegDispatch.PursuitMoveOwner);
+        }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task GatherItem_UnusableAlternativeDoesNotDisplaceForeignFallback(bool exhaustedApproach)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("gather-claim-recovery");
+        var (owner, _) = GameplayActorTestRig.CreateActor("gather-claim-recovery-owner");
+        JoinSiblingToRegion(session, owner, new Vector3(2, 0, 0));
+        var near = SpawnBoar(session, actor, Vector3.Zero, new Vector3(6, 0, 0));
+        var far = SpawnExtraBoar(session, new Vector3(18, 0, 0));
+        Activate251(actor.Character);
+        session.World.GetNpc(near)!.CharacterTagging.AddTagger(owner.Character, 60);
+        QuestBehavior.ClearLeashStaleMemory();
+        try
+        {
+            if (exhaustedApproach)
+            {
+                TravelLegDispatch.EnsureJourney(actor, far, new Vector3(18, 0, 0), 3, 2,
+                    TravelLegDispatch.PursuitMoveOwner);
+                TravelIntentStore.SetPursuitPurpose(actor.ActorId, Quest251);
+                TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+                    TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner);
+                await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, far, Quest251)).IsTrue();
+            }
+            else
+            {
+                for (var i = 0; i < QuestBehavior.CombatStallWakes; i++)
+                    QuestBehavior.CountLeashStaleWake(actor.ActorId, far, 100, $"claim-stale-{i}", out _);
+                await Assert.That(QuestBehavior.IsLeashStaleTarget(actor.ActorId, far)).IsTrue();
+            }
+            var chosen = QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "gather-unusable-alternative", Fixture());
+            await Assert.That(chosen.SelectedObjId).IsEqualTo(near);
+            await Assert.That(chosen.LegalCount).IsEqualTo(2);
+        }
+        finally
+        {
+            QuestBehavior.ClearLeashStaleMemory();
+            TravelIntentStore.Disarm(actor.ActorId, TravelLegDispatch.PursuitMoveOwner);
+            actor.Stop();
+        }
+    }
+
+    [Test]
+    public async Task GatherItem_SoleForeignPreyRemainsSelectable()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("gather-sole-foreign");
+        var (owner, _) = GameplayActorTestRig.CreateActor("gather-sole-owner");
+        var prey = SpawnBoar(session, actor, Vector3.Zero, new Vector3(6, 0, 0));
+        Activate251(actor.Character);
+        session.World.GetNpc(prey)!.CharacterTagging.AddTagger(owner.Character, 60);
+        var chosen = QuestObjectiveTargetSelector.Evaluate(actor.Character,
+            BotObservedContext.Capture(actor), "gather-sole-foreign", Fixture());
+        await Assert.That(chosen.SelectedObjId).IsEqualTo(prey);
+        await Assert.That(chosen.LegalCount).IsEqualTo(1);
+    }
+
+    [Test]
+    [Arguments(false, false, false)]
+    [Arguments(false, true, false)]
+    [Arguments(true, false, false)]
+    [Arguments(true, true, false)]
+    [Arguments(false, false, true)]
+    [Arguments(false, true, true)]
+    [Arguments(true, false, true)]
+    [Arguments(true, true, true)]
+    public async Task HuntObjective_ClaimPreferenceFollowsNativeCredit(bool sharedHuntCredit, bool committed,
+        bool siblingOnAlternative)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("hunt-foreign-control");
+        var (owner, _) = GameplayActorTestRig.CreateActor("hunt-foreign-owner");
+        JoinSiblingToRegion(session, owner, new Vector3(2, 0, 0));
+        var row = QuestFixtureRow.FromQuestData(266);
+        // Canonical group-hunt quest; native group membership determines relevance.
+        await Assert.That(row.HuntActId).IsNotEqualTo(0u);
+        SpawnBoar(session, actor, Vector3.Zero, new Vector3(80, 0, 0));
+        var near = SpawnNpcAt(session, 3494, new Vector3(6, 0, 0));
+        var alternative = SpawnNpcAt(session, 3494, new Vector3(18, 0, 0));
+        actor.Character.Quests.ActiveQuests[266] = new Quest(QuestManager.Instance.GetTemplate(266), actor.Character)
+        {
+            Status = QuestStatus.Progress, Step = QuestComponentKind.Progress,
+            Objectives = [0, 0, 0, 0, 0],
+        };
+        session.World.GetNpc(near)!.CharacterTagging.AddTagger(owner.Character, 60);
+        if (siblingOnAlternative)
+            owner.Character.CurrentTarget = session.World.GetNpc(alternative);
+        if (committed)
+            actor.SetTarget(near);
+        var oldSharing = AppConfiguration.Instance.World.TagShareEnabled;
+        try
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = sharedHuntCredit;
+            var chosen = QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "hunt-native-credit", row);
+            // With shared credit enabled, preserve the existing committed hunt.
+            // Otherwise prefer a real opportunity to earn native tag/team credit.
+            await Assert.That(chosen.SelectedObjId).IsEqualTo(sharedHuntCredit && (committed || siblingOnAlternative) ? near : alternative);
+            await Assert.That(chosen.LegalCount).IsEqualTo(2);
+        }
+        finally
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = oldSharing;
+        }
+    }
+
+    [Test]
+    [Arguments(false, "sole")]
+    [Arguments(true, "sole")]
+    [Arguments(false, "stale")]
+    [Arguments(true, "stale")]
+    [Arguments(false, "exhausted")]
+    [Arguments(true, "exhausted")]
+    public async Task HuntObjective_ClaimPreferenceKeepsLegalFallback(bool sharedHuntCredit, string alternativeState)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("hunt-claim-fallback");
+        var (owner, _) = GameplayActorTestRig.CreateActor("hunt-claim-fallback-owner");
+        SpawnBoar(session, actor, Vector3.Zero, new Vector3(80, 0, 0));
+        var near = SpawnNpcAt(session, 3494, new Vector3(6, 0, 0));
+        var far = alternativeState == "sole" ? 0u : SpawnNpcAt(session, 3494, new Vector3(18, 0, 0));
+        var row = QuestFixtureRow.FromQuestData(266);
+        actor.Character.Quests.ActiveQuests[266] = new Quest(QuestManager.Instance.GetTemplate(266), actor.Character)
+        {
+            Status = QuestStatus.Progress, Step = QuestComponentKind.Progress,
+            Objectives = [0, 0, 0, 0, 0],
+        };
+        session.World.GetNpc(near)!.CharacterTagging.AddTagger(owner.Character, 60);
+        var oldSharing = AppConfiguration.Instance.World.TagShareEnabled;
+        QuestBehavior.ClearLeashStaleMemory();
+        try
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = sharedHuntCredit;
+            if (alternativeState == "exhausted")
+            {
+                TravelLegDispatch.EnsureJourney(actor, far, new Vector3(18, 0, 0), 3, 2,
+                    TravelLegDispatch.PursuitMoveOwner);
+                TravelIntentStore.SetPursuitPurpose(actor.ActorId, 266);
+                TravelIntentStore.BankTerminal(actor.ActorId, TravelTerminal.Unreachable,
+                    TravelReason.RepathExhausted, TravelLegDispatch.PursuitMoveOwner);
+                await Assert.That(QuestBehavior.HasExhaustedPursuit(actor.Character, far, 266)).IsTrue();
+            }
+            else if (alternativeState == "stale")
+            {
+                for (var i = 0; i < QuestBehavior.CombatStallWakes; i++)
+                    QuestBehavior.CountLeashStaleWake(actor.ActorId, far, 100, $"hunt-claim-stale-{i}", out _);
+                await Assert.That(QuestBehavior.IsLeashStaleTarget(actor.ActorId, far)).IsTrue();
+            }
+            var chosen = QuestObjectiveTargetSelector.Evaluate(actor.Character,
+                BotObservedContext.Capture(actor), "hunt-native-credit-fallback", row);
+            await Assert.That(chosen.SelectedObjId).IsEqualTo(near);
+            await Assert.That(chosen.LegalCount).IsEqualTo(far == 0 ? 1 : 2);
+        }
+        finally
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = oldSharing;
+            QuestBehavior.ClearLeashStaleMemory();
+            TravelIntentStore.Disarm(actor.ActorId, TravelLegDispatch.PursuitMoveOwner);
+            actor.Stop();
+        }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task CrowdedGather_KeepsAcceptedQuest_AndAcceptsOtherEligibleWork(bool blockedCorpse)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("crowded-next-goal");
+        var (owner, _) = GameplayActorTestRig.CreateActor("crowded-native-owner");
+        JoinSiblingToRegion(session, owner, new Vector3(2, 0, 0));
+        var prey = SpawnBoar(session, actor, Vector3.Zero, new Vector3(3, 0, 0));
+        ActivateGatherGoal(actor.Character);
+        actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
+        QuestLegActor.SetResolver(null);
+        QuestLegActor.Stage(actor.Character.Id, actor);
+        try
+        {
+            var module = new QuestBootstrapActivityModule(new QuestBootstrapModuleOptions { Enabled = true });
+            var arbiter = new BotGoalArbiter([module]);
+            var bot = new PlayerBotRuntime(actor.Character, "crowded-next-goal");
+            _ = arbiter.Arbitrate(bot, 12f);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(Quest251);
+
+            // Native foreign claim is the supplied world change. The next offer
+            // is a supplied opportunity, not an externally assigned bot goal.
+            session.World.GetNpc(prey)!.CharacterTagging.AddTagger(owner.Character, 60);
+            if (blockedCorpse)
+            {
+                ActivateGatherGoal(owner.Character);
+                MakeBlockedCorpse(session.World.GetNpc(prey)!, owner.Character);
+            }
+            var crowded = BotOpportunityListing.List(actor).ActiveWork.Single(w => w.QuestId == Quest251);
+            await Assert.That(crowded.PreySourceContended).IsTrue().Because(
+                $"work={crowded}; claim={QuestObjectiveTargetSelector.HasCompetingClaim(actor.Character, session.World.GetNpc(prey)!)}; doodads={string.Join(',', Fixture().GatherDoodadTemplates)}");
+            GameplayActorTestRig.SeedQuestTalkObjective(93_211, 93_212, 93_213, 93_214, 93_215, level: 1);
+            var giver = session.SpawnNpc(93_214);
+            GameplayActorTestRig.SetNpcPosition(session, giver, new Vector3(2, 0, 0));
+            var npc = session.World.GetNpc(giver)!;
+            actor.Character.Region.AddObject(npc);
+            npc.Region = actor.Character.Region;
+            QuestFixtureRow.InvalidateAll();
+            _ = arbiter.Arbitrate(bot, 12f);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(93_211u);
+            var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            var executor = new BotRoamStepExecutor
+            {
+                ActorFactory = _ => actor, TimeProvider = clock,
+                ActiveActivityProvider = arbiter.GetActiveActivity,
+                QuestChosenProvider = module.GetChosenQuest,
+                QuestTerminalSink = module.NotifyQuestTerminal,
+                QuestGiveUpSink = module.NotifyQuestGiveUp,
+                LegOutcomeSink = arbiter.ReportLegOutcome,
+            };
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AcceptQuest
+                && r.TargetId == 93_211u && r.Result == ActorLifecycleState.Completed)).IsTrue();
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(93_211u)).IsTrue();
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(Quest251)).IsTrue();
+            await Assert.That(actor.Character.Quests.HasQuestCompleted(Quest251)).IsFalse();
+            await Assert.That(actor.Character.Quests.ActiveQuests[Quest251].Objectives[0]).IsEqualTo(0);
+            // A new unclaimed boar must not steal the new accepted purpose.
+            session.World.GetNpc(prey)!.CharacterTagging.ClearAllTaggers();
+            _ = arbiter.Arbitrate(bot, 12f);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(93_211u);
+        }
+        finally
+        {
+            actor.PreemptCurrent("crowded next-goal teardown");
+            QuestLegActor.ClearAll();
+            QuestLegActor.SetResolver(null);
+        }
+    }
+
+    [Test]
+    public async Task CrowdedGather_WithNoOtherOffer_SeeksWork_AndReturnsWhenClaimChanges()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("crowded-search-return");
+        var (owner, _) = GameplayActorTestRig.CreateActor("crowded-search-owner");
+        JoinSiblingToRegion(session, owner, new Vector3(2, 0, 0));
+        var prey = SpawnBoar(session, actor, Vector3.Zero, new Vector3(3, 0, 0));
+        ActivateGatherGoal(actor.Character);
+        actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
+        QuestLegActor.SetResolver(null);
+        QuestLegActor.Stage(actor.Character.Id, actor);
+        try
+        {
+            var module = new QuestBootstrapActivityModule(new QuestBootstrapModuleOptions { Enabled = true });
+            var bot = new PlayerBotRuntime(actor.Character, "crowded-search-return");
+            var context = new BotActivityContext { Bot = bot, GameHour = 12f };
+            await Assert.That(module.CanActivate(context).CanActivate).IsTrue();
+            session.World.GetNpc(prey)!.CharacterTagging.AddTagger(owner.Character, 60);
+            var crowded = BotOpportunityListing.List(actor).ActiveWork.Single(w => w.QuestId == Quest251);
+            await Assert.That(crowded.PreySourceContended).IsTrue().Because(
+                $"work={crowded}; claim={QuestObjectiveTargetSelector.HasCompetingClaim(actor.Character, session.World.GetNpc(prey)!)}; doodads={string.Join(',', Fixture().GatherDoodadTemplates)}");
+            var waiting = module.CanActivate(context);
+            await Assert.That(waiting.CanActivate).IsTrue();
+            await Assert.That(waiting.ActivityName).IsEqualTo(QuestBootstrapActivityModule.DiscoveryActivityName);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(0u);
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(Quest251)).IsTrue();
+            session.World.GetNpc(prey)!.CharacterTagging.ClearAllTaggers();
+            await Assert.That(module.CanActivate(context).ActivityName).IsEqualTo(QuestBootstrapActivityModule.ActivityName);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(Quest251);
+        }
+        finally
+        {
+            QuestLegActor.ClearAll();
+            QuestLegActor.SetResolver(null);
+        }
+    }
+
     // --------------------------------------------------------------- fixture
+
+    [Test]
+    [Arguments("own-tag")]
+    [Arguments("unclaimed-alternative")]
+    [Arguments("real-party")]
+    [Arguments("self-defense")]
+    [Arguments("missing-prey")]
+    public async Task GatherChoice_PreservesUsefulAndUnknownOpportunities(string control)
+    {
+        var (actor, owner, session, prey, module, bot, context) = CrowdedGoalRig("gather-control-" + control);
+        try
+        {
+            await Assert.That(module.CanActivate(context).CanActivate).IsTrue();
+            if (control == "real-party")
+            {
+                GameplayActorTestRig.ForceSeedTeamManager();
+                await Assert.That(actor.PartyInvite(owner.Character.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+                await Assert.That(owner.PartyAccept().State).IsEqualTo(ActorLifecycleState.Completed);
+            }
+            prey.CharacterTagging.AddTagger(control == "own-tag" ? actor.Character : owner.Character, 60);
+            if (control == "self-defense") prey.CurrentAggroTarget = actor.Character;
+            if (control == "unclaimed-alternative") _ = SpawnExtraBoar(session, new Vector3(12, 0, 0));
+            if (control == "missing-prey")
+                GameplayActorTestRig.SetNpcPosition(session, prey.ObjId, new Vector3(500, 0, 0));
+            var work = BotOpportunityListing.List(actor).ActiveWork.Single(w => w.QuestId == Quest251);
+            await Assert.That(work.PreySourceContended).IsFalse();
+            await Assert.That(module.CanActivate(context).ActivityName).IsEqualTo(QuestBootstrapActivityModule.ActivityName);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(Quest251);
+            await Assert.That(actor.Character.Quests.HasQuestCompleted(Quest251)).IsFalse();
+        }
+        finally { EndCrowdedGoal(actor); }
+    }
+
+    [Test]
+    [Arguments("move")]
+    [Arguments("auto-attack")]
+    [Arguments("item-cast")]
+    public async Task CrowdedGather_WaitsForNativeActionBoundary(string action)
+    {
+        var (actor, owner, session, prey, module, bot, context) = CrowdedGoalRig("gather-busy-" + action);
+        var itemSkill = SkillManager.Instance.GetSkillTemplate(GameplayActorTestRig.TestItemUseSkillId);
+        var oldCastingTime = itemSkill.CastingTime;
+        try
+        {
+            await Assert.That(module.CanActivate(context).CanActivate).IsTrue();
+            prey.CharacterTagging.AddTagger(owner.Character, 60);
+            ActorRequest request;
+            if (action == "auto-attack")
+            {
+                request = actor.AutoAttack(prey.ObjId);
+                await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed);
+                await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
+            }
+            else if (action == "item-cast")
+            {
+                GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestItemTemplateId, 1);
+                itemSkill.CastingTime = 5000;
+                request = actor.UseItem(GameplayActorTestRig.TestItemTemplateId);
+                await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+            }
+            else
+            {
+                request = actor.MoveTo(new Vector3(100, 0, 0));
+                await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+            }
+            var before = actor.AuditTrace.Count;
+            var nativeAttack = actor.Character.AutoAttackTask;
+            _ = module.CanActivate(context);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(Quest251);
+            if (action == "auto-attack")
+                await Assert.That(actor.Character.AutoAttackTask).IsSameReferenceAs(nativeAttack);
+            else
+            {
+                await Assert.That(actor.ActiveRequest).IsSameReferenceAs(request);
+                await Assert.That(actor.AuditTrace.Count).IsEqualTo(before);
+            }
+            if (action == "auto-attack")
+            {
+                await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
+                actor.StopAutoAttack();
+            }
+            else actor.PreemptCurrent("supplied safe action boundary");
+            await Assert.That(module.CanActivate(context).ActivityName).IsEqualTo(QuestBootstrapActivityModule.DiscoveryActivityName);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(0u);
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(Quest251)).IsTrue();
+        }
+        finally
+        {
+            itemSkill.CastingTime = oldCastingTime;
+            actor.StopAutoAttack();
+            EndCrowdedGoal(actor);
+        }
+    }
+
+    [Test]
+    [Arguments("unknown")]
+    [Arguments("own")]
+    [Arguments("foreign")]
+    public async Task GatherChoice_ResolvesCorpsePermissionBeforeDeferring(string permission)
+    {
+        var (actor, owner, session, prey, module, bot, context) = CrowdedGoalRig("gather-corpse-" + permission);
+        try
+        {
+            _ = module.CanActivate(context);
+            prey.CharacterTagging.AddTagger(owner.Character, 60);
+            var corpse = session.World.GetNpc(SpawnExtraBoar(session, new Vector3(5, 0, 0)))!;
+            GameplayActorTestRig.SeedItemTemplate(Meat4058);
+            corpse.Hp = 0;
+            if (permission == "unknown") GameplayActorTestRig.SeedLootContainer(corpse, (Meat4058, 1));
+            else
+            {
+                ActivateGatherGoal(owner.Character);
+                var recipient = permission == "own" ? actor.Character : owner.Character;
+                corpse.CharacterTagging.AddTagger(recipient, 60);
+                corpse.LootingContainer.GenerateLoot(recipient);
+            }
+            await Assert.That(corpse.LootingContainer.ItemEntryCount).IsGreaterThan(0);
+            await Assert.That(corpse.LootingContainer.GetNpcLootPermission(actor.Character))
+                .IsEqualTo(permission == "unknown" ? (bool?)null : permission == "own");
+            var work = BotOpportunityListing.List(actor).ActiveWork.Single(w => w.QuestId == Quest251);
+            await Assert.That(work.PreySourceContended).IsEqualTo(permission == "foreign");
+            _ = module.CanActivate(context);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(permission == "foreign" ? 0u : Quest251);
+            await Assert.That(actor.Character.Quests.HasQuestCompleted(Quest251)).IsFalse();
+        }
+        finally { EndCrowdedGoal(actor); }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task CrowdedGather_DoesNotHideAnotherObjectiveOrComponent(bool selective)
+    {
+        var (actor, owner, session, prey, _, _, _) = CrowdedGoalRig("gather-other-objective-" + selective);
+        try
+        {
+            actor.Character.Quests.ActiveQuests.Clear();
+            prey.CharacterTagging.AddTagger(owner.Character, 60);
+            // Supplied two-objective quest. The crowded gather is evaluated
+            // first, but the ordinary talk objective is useful now.
+            var questId = selective ? 93_231u : 93_221u;
+            GameplayActorTestRig.SeedQuestTalkObjective(questId, questId + 1, questId + 2, questId + 3, questId + 4, level: 1);
+            var template = QuestManager.Instance.GetTemplate(questId);
+            template.Selective = selective;
+            var component = template.GetComponents(QuestComponentKind.Progress).Single();
+            if (selective)
+            {
+                component = new QuestComponentTemplate(template) { Id = questId - 1, KindId = QuestComponentKind.Progress };
+                template.Components[component.Id] = component;
+                var components = (Dictionary<uint, QuestComponentTemplate>)typeof(QuestManager)
+                    .GetField("_componentTemplates", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(QuestManager.Instance)!;
+                components[component.Id] = component;
+            }
+            component.ActTemplates.Add(new QuestActObjItemGather(component)
+            { ActId = 1, DetailId = questId + 5, Count = 3, ItemId = Meat4058, ThisComponentObjectiveIndex = 1 });
+            QuestFixtureRow.InvalidateAll();
+            actor.Character.Quests.ActiveQuests[questId] = new Quest(template, actor.Character)
+            { Status = QuestStatus.Progress, Step = QuestComponentKind.Progress, Objectives = [0, 0, 0, 0, 0] };
+            _ = SpawnNpcAt(session, questId + 4, new Vector3(4, 0, 0));
+            var work = BotOpportunityListing.List(actor).ActiveWork.Single(w => w.QuestId == questId);
+            await Assert.That(work.Leg).IsEqualTo("talk");
+            await Assert.That(work.PreySourceContended).IsFalse();
+            var module = new QuestBootstrapActivityModule(new QuestBootstrapModuleOptions { Enabled = true });
+            var bot = new PlayerBotRuntime(actor.Character, "other-objective");
+            await Assert.That(module.CanActivate(new BotActivityContext { Bot = bot, GameHour = 12 }).CanActivate).IsTrue();
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(questId);
+            var plan = QuestDirector.PlanWake(BotObservedContext.Capture(actor), questId, actor.Character).Single();
+            await Assert.That(plan.Fixture!.TalkActId).IsNotEqualTo(0u)
+                .Because("the useful talk objective must actually execute, not just appear in the opportunity summary");
+            var liveQuest = actor.Character.Quests.ActiveQuests[questId];
+            for (var wake = 0; wake < 3 && !actor.AuditTrace.Any(r => r.Action == ActorActionType.Talk); wake++)
+                QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = $"mixed-talk-{selective}-{wake}" });
+            await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Talk
+                && r.Result == ActorLifecycleState.Completed)).IsTrue();
+            var talk = template.GetComponents(QuestComponentKind.Progress).SelectMany(c => c.ActTemplates)
+                .OfType<QuestActObjTalk>().Single();
+            // Native completion may remove/reset the active objective record.
+            await Assert.That(talk.GetObjective(liveQuest) > 0
+                || actor.Character.Quests.HasQuestCompleted(questId)).IsTrue();
+        }
+        finally { EndCrowdedGoal(actor); }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task CrowdedHunt_UsesNativeCreditRule_AndWaitsForUsefulClaimChange(bool sharedHuntCredit)
+    {
+        var (actor, owner, session, _, module, bot, context) = CrowdedGoalRig("hunt-goal-" + sharedHuntCredit);
+        var previous = AppConfiguration.Instance.World.TagShareEnabled;
+        try
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = sharedHuntCredit;
+            actor.Character.Quests.ActiveQuests.Clear();
+            actor.Character.Quests.ActiveQuests[266] = new Quest(QuestManager.Instance.GetTemplate(266), actor.Character)
+            { Status = QuestStatus.Progress, Step = QuestComponentKind.Progress, Objectives = [0, 0, 0, 0, 0] };
+            var prey = session.World.GetNpc(SpawnNpcAt(session, 3494, new Vector3(5, 0, 0)))!;
+            _ = module.CanActivate(context);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(266u);
+            prey.CharacterTagging.AddTagger(owner.Character, 60);
+            var decision = module.CanActivate(context);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(sharedHuntCredit ? 266u : 0u);
+            await Assert.That(decision.ActivityName).IsEqualTo(sharedHuntCredit
+                ? QuestBootstrapActivityModule.ActivityName : QuestBootstrapActivityModule.DiscoveryActivityName);
+            // The same attackable foreign prey is not a changed opportunity.
+            _ = module.CanActivate(context);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(sharedHuntCredit ? 266u : 0u);
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(266)).IsTrue();
+            await Assert.That(actor.Character.Quests.ActiveQuests[266].Objectives.All(v => v == 0)).IsTrue();
+            prey.CharacterTagging.ClearAllTaggers();
+            _ = module.CanActivate(context);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(266u);
+        }
+        finally
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = previous;
+            EndCrowdedGoal(actor);
+        }
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task CrowdedHunt_PreservesSuppliedDeliveryOnlyWhenItemExists(bool hasItem)
+    {
+        var (actor, owner, session, _, module, bot, context) = CrowdedGoalRig("hunt-delivery-" + hasItem);
+        var previous = AppConfiguration.Instance.World.TagShareEnabled;
+        try
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = false;
+            actor.Character.Quests.ActiveQuests.Clear();
+            var questId = hasItem ? 93_501u : 93_511u;
+            GameplayActorTestRig.SeedQuestTalkObjective(questId, questId + 1, questId + 2, questId + 3, questId + 4, level: 1);
+            var template = QuestManager.Instance.GetTemplate(questId);
+            var progress = template.GetComponents(QuestComponentKind.Progress).Single();
+            progress.ActTemplates.Clear();
+            progress.ActTemplates.Add(new QuestActObjMonsterHunt(progress)
+            { ActId = 1, DetailId = questId + 5, Count = 5, NpcId = 3494, ThisComponentObjectiveIndex = 0 });
+            progress.ActTemplates.Add(new QuestActObjItemGather(progress)
+            { ActId = 2, DetailId = questId + 6, Count = 3, ItemId = Meat4058, ThisComponentObjectiveIndex = 1 });
+            var supply = new QuestComponentTemplate(template) { Id = questId + 7, KindId = QuestComponentKind.Supply };
+            supply.ActTemplates.Add(new QuestActSupplyItem(supply)
+            { ActId = 3, DetailId = questId + 8, Count = 3, ItemId = Meat4058 });
+            template.Components[supply.Id] = supply;
+            GameplayActorTestRig.SeedItemTemplate(Meat4058);
+            if (hasItem) GameplayActorTestRig.StockItem(session, Meat4058, 3);
+            QuestFixtureRow.InvalidateAll();
+            actor.Character.Quests.ActiveQuests[questId] = new Quest(template, actor.Character)
+            { Status = QuestStatus.Progress, Step = QuestComponentKind.Progress, Objectives = [0, 0, 0, 0, 0] };
+            var prey = session.World.GetNpc(SpawnNpcAt(session, 3494, new Vector3(5, 0, 0)))!;
+            prey.CharacterTagging.AddTagger(owner.Character, 60);
+            var work = BotOpportunityListing.List(actor).ActiveWork.Single(w => w.QuestId == questId);
+            await Assert.That(work.PreySourceContended).IsEqualTo(!hasItem);
+            await Assert.That(work.UsefulSourcePerceived).IsEqualTo(hasItem);
+            _ = module.CanActivate(context);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(hasItem ? questId : 0u);
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(questId)).IsTrue();
+        }
+        finally
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = previous;
+            EndCrowdedGoal(actor);
+        }
+    }
+
+    [Test]
+    [Arguments("own-tag")]
+    [Arguments("unclaimed-alternative")]
+    [Arguments("real-party")]
+    [Arguments("self-defense")]
+    [Arguments("missing-prey")]
+    public async Task HuntChoice_PreservesUsefulAndUnknownOpportunities(string control)
+    {
+        var (actor, owner, session, _, module, bot, context) = CrowdedGoalRig("hunt-control-" + control);
+        var previous = AppConfiguration.Instance.World.TagShareEnabled;
+        try
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = false;
+            actor.Character.Quests.ActiveQuests.Clear();
+            actor.Character.Quests.ActiveQuests[266] = new Quest(QuestManager.Instance.GetTemplate(266), actor.Character)
+            { Status = QuestStatus.Progress, Step = QuestComponentKind.Progress, Objectives = [0, 0, 0, 0, 0] };
+            var prey = session.World.GetNpc(SpawnNpcAt(session, 3494, new Vector3(5, 0, 0)))!;
+            _ = module.CanActivate(context);
+            if (control == "real-party")
+            {
+                GameplayActorTestRig.ForceSeedTeamManager();
+                await Assert.That(actor.PartyInvite(owner.Character.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+                await Assert.That(owner.PartyAccept().State).IsEqualTo(ActorLifecycleState.Completed);
+            }
+            prey.CharacterTagging.AddTagger(control == "own-tag" ? actor.Character : owner.Character, 60);
+            if (control == "self-defense") prey.CurrentAggroTarget = actor.Character;
+            if (control == "unclaimed-alternative") _ = SpawnNpcAt(session, 3494, new Vector3(12, 0, 0));
+            if (control == "missing-prey")
+                GameplayActorTestRig.SetNpcPosition(session, prey.ObjId, new Vector3(500, 0, 0));
+            var work = BotOpportunityListing.List(actor).ActiveWork.Single(w => w.QuestId == 266);
+            await Assert.That(work.PreySourceContended).IsFalse();
+            if (control != "missing-prey")
+            {
+                await Assert.That(work.UsefulSourcePerceived).IsTrue();
+                _ = module.CanActivate(context);
+                await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(266u);
+            }
+            else await Assert.That(work.UsefulSourcePerceived).IsFalse();
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(266)).IsTrue();
+        }
+        finally
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = previous;
+            EndCrowdedGoal(actor);
+        }
+    }
+
+    [Test]
+    public async Task CrowdedHunt_ActuallyAcceptsAnotherEligibleQuest_AndKeepsHuntAccepted()
+    {
+        var (actor, owner, session, _, module, bot, _) = CrowdedGoalRig("hunt-other-work");
+        var previous = AppConfiguration.Instance.World.TagShareEnabled;
+        try
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = false;
+            actor.Character.Quests.ActiveQuests.Clear();
+            actor.Character.Quests.ActiveQuests[266] = new Quest(QuestManager.Instance.GetTemplate(266), actor.Character)
+            { Status = QuestStatus.Progress, Step = QuestComponentKind.Progress, Objectives = [0, 0, 0, 0, 0] };
+            var prey = session.World.GetNpc(SpawnNpcAt(session, 3494, new Vector3(5, 0, 0)))!;
+            var arbiter = new BotGoalArbiter([module]);
+            _ = arbiter.Arbitrate(bot, 12);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(266u);
+            prey.CharacterTagging.AddTagger(owner.Character, 60);
+            GameplayActorTestRig.SeedQuestTalkObjective(93_401, 93_402, 93_403, 93_404, 93_405, level: 1);
+            _ = SpawnNpcAt(session, 93_404, new Vector3(3, 0, 0));
+            QuestFixtureRow.InvalidateAll();
+            _ = arbiter.Arbitrate(bot, 12);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(93_401u);
+            var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+            var executor = new BotRoamStepExecutor
+            {
+                ActorFactory = _ => actor, TimeProvider = clock,
+                ActiveActivityProvider = arbiter.GetActiveActivity,
+                QuestChosenProvider = module.GetChosenQuest,
+                QuestTerminalSink = module.NotifyQuestTerminal,
+                QuestGiveUpSink = module.NotifyQuestGiveUp,
+                LegOutcomeSink = arbiter.ReportLegOutcome,
+            };
+            clock.Advance(TimeSpan.FromMilliseconds(100));
+            await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AcceptQuest
+                && r.TargetId == 93_401u && r.Result == ActorLifecycleState.Completed)).IsTrue();
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(266)).IsTrue();
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(93_401)).IsTrue();
+            prey.CharacterTagging.ClearAllTaggers();
+            _ = arbiter.Arbitrate(bot, 12);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(93_401u);
+        }
+        finally
+        {
+            AppConfiguration.Instance.World.TagShareEnabled = previous;
+            EndCrowdedGoal(actor);
+        }
+    }
+
+    [Test]
+    [Arguments("foreign-blocked")]
+    [Arguments("own")]
+    [Arguments("unknown-claim")]
+    [Arguments("unknown-spawner")]
+    [Arguments("unblocked-spawner")]
+    [Arguments("living-alternative")]
+    public async Task DeadGatherSource_UsesActualLootPermissionAndSpawnState(string condition)
+    {
+        var (actor, owner, session, prey, module, bot, context) = CrowdedGoalRig("dead-source-" + condition);
+        try
+        {
+            _ = module.CanActivate(context);
+            ActivateGatherGoal(owner.Character);
+            var recipient = condition == "own" ? actor.Character : owner.Character;
+            MakeBlockedCorpse(prey, recipient, condition != "unknown-claim");
+            if (condition == "unknown-spawner") prey.Spawner = null;
+            if (condition == "unblocked-spawner") prey.Spawner.SpawnedNpcs.Clear();
+            if (condition == "living-alternative") _ = SpawnExtraBoar(session, new Vector3(12, 0, 0));
+            var permission = prey.LootingContainer.GetNpcLootPermission(actor.Character);
+            await Assert.That(permission).IsEqualTo(condition == "unknown-claim" ? (bool?)null : condition == "own");
+            var contended = condition == "foreign-blocked";
+            var work = BotOpportunityListing.List(actor).ActiveWork.Single(w => w.QuestId == Quest251);
+            await Assert.That(work.PreySourceContended).IsEqualTo(contended);
+            _ = module.CanActivate(context);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(contended ? 0u : Quest251);
+            // Re-observing the same foreign corpse does not restore a useful source.
+            _ = module.CanActivate(context);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(contended ? 0u : Quest251);
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(Quest251)).IsTrue();
+            await Assert.That(actor.Character.Quests.ActiveQuests[Quest251].Objectives.All(x => x == 0)).IsTrue();
+            if (contended)
+            {
+                _ = SpawnExtraBoar(session, new Vector3(12, 0, 0));
+                _ = module.CanActivate(context);
+                await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(Quest251);
+            }
+        }
+        finally { EndCrowdedGoal(actor); }
+    }
+
+    private static void MakeBlockedCorpse(Npc prey, Character recipient, bool generateClaim = true)
+    {
+        // Supplied death/spawn membership for observation controls; this is
+        // not a proof of earning the kill. The ordinary container resolves rights.
+        GameplayActorTestRig.SeedItemTemplate(Meat4058);
+        prey.CharacterTagging.AddTagger(recipient, 60);
+        prey.Hp = 0;
+        if (generateClaim) prey.LootingContainer.GenerateLoot(recipient);
+        else GameplayActorTestRig.SeedLootContainer(prey, (Meat4058, 1));
+        prey.Spawner = new NpcSpawner { SpawnerId = prey.ObjId, UnitId = prey.TemplateId, ParentWorld = prey.ParentWorld };
+        prey.Spawner.SpawnedNpcs[prey.Spawner.SpawnerId] = [prey];
+    }
+
+    [Test]
+    public async Task Discovery_AlreadyRunningToOtherWork_DoesNotTurnBackForReleasedPrey()
+    {
+        var (actor, owner, _, prey, module, bot, context) = CrowdedGoalRig("gather-discovery-journey");
+        try
+        {
+            _ = module.CanActivate(context);
+            prey.CharacterTagging.AddTagger(owner.Character, 60);
+            await Assert.That(module.CanActivate(context).ActivityName).IsEqualTo(QuestBootstrapActivityModule.DiscoveryActivityName);
+            actor.SetPendingMoveOwner(BotRoamStepExecutor.QuestTravelMoveOwner);
+            var journey = actor.MoveTo(new Vector3(100, 0, 0));
+            await Assert.That(journey.IsTerminal).IsFalse();
+            prey.CharacterTagging.ClearAllTaggers();
+            var before = actor.AuditTrace.Count;
+            await Assert.That(module.CanActivate(context).ActivityName).IsEqualTo(QuestBootstrapActivityModule.DiscoveryActivityName);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(0u);
+            await Assert.That(actor.ActiveRequest).IsSameReferenceAs(journey);
+            await Assert.That(actor.AuditTrace.Count).IsEqualTo(before);
+            actor.PreemptCurrent("supplied end of discovery journey");
+            await Assert.That(module.CanActivate(context).ActivityName).IsEqualTo(QuestBootstrapActivityModule.ActivityName);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(Quest251);
+        }
+        finally { EndCrowdedGoal(actor); }
+    }
+
+    [Test]
+    [Arguments("new-choice-unknown-source")]
+    [Arguments("new-choice-useful-source")]
+    [Arguments("retained-journey")]
+    [Arguments("unknown-without-offer")]
+    public async Task NewGoalChoice_PrefersNativeNearbyOfferOverUnobservedSource(string condition)
+    {
+        var (actor, _, session, prey, module, bot, context) = CrowdedGoalRig("nearby-offer-" + condition);
+        try
+        {
+            const uint offeredQuest = 94_761;
+            if (condition != "new-choice-useful-source")
+                GameplayActorTestRig.SetNpcPosition(session, prey.ObjId, new Vector3(500, 0, 0));
+            if (condition == "retained-journey")
+            {
+                _ = module.CanActivate(context);
+                await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(Quest251);
+                actor.SetPendingMoveOwner(BotRoamStepExecutor.QuestTravelMoveOwner);
+                await Assert.That(actor.MoveTo(new Vector3(100, 0, 0)).IsTerminal).IsFalse();
+            }
+            if (condition != "unknown-without-offer")
+            {
+                GameplayActorTestRig.SeedQuestTalkObjective(offeredQuest, 94_762, 94_763, 94_764, 94_765, level: 1);
+                _ = SpawnNpcAt(session, 94_764, new Vector3(3, 0, 0));
+                QuestFixtureRow.InvalidateAll();
+            }
+            var listing = BotOpportunityListing.List(actor);
+            var work = listing.ActiveWork.Single(w => w.QuestId == Quest251);
+            await Assert.That(work.UsefulSourcePerceived).IsEqualTo(condition == "new-choice-useful-source");
+            if (condition is "new-choice-unknown-source" or "new-choice-useful-source")
+                await Assert.That(listing.EligibleQuests.Any(q => q.QuestId == offeredQuest)).IsTrue();
+            var journey = actor.ActiveRequest;
+            var arbiter = new BotGoalArbiter([module]);
+            _ = arbiter.Arbitrate(bot, 12);
+            var expected = condition == "new-choice-unknown-source" ? offeredQuest : Quest251;
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(expected);
+            await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(Quest251)).IsTrue();
+            if (condition == "retained-journey")
+            {
+                await Assert.That(actor.ActiveRequest).IsSameReferenceAs(journey);
+                await Assert.That(actor.ActiveRequest!.IsTerminal).IsFalse();
+            }
+            if (expected == offeredQuest)
+            {
+                var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+                var executor = new BotRoamStepExecutor
+                {
+                    ActorFactory = _ => actor, TimeProvider = clock,
+                    ActiveActivityProvider = arbiter.GetActiveActivity,
+                    QuestChosenProvider = module.GetChosenQuest,
+                    QuestTerminalSink = module.NotifyQuestTerminal,
+                    QuestGiveUpSink = module.NotifyQuestGiveUp,
+                    LegOutcomeSink = arbiter.ReportLegOutcome,
+                };
+                clock.Advance(TimeSpan.FromMilliseconds(100));
+                await executor.StepAsync(bot, CancellationToken.None);
+                await Assert.That(actor.AuditTrace.Any(a => a.Action == ActorActionType.AcceptQuest
+                    && a.TargetId == offeredQuest && a.Result == ActorLifecycleState.Completed)).IsTrue();
+                await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(offeredQuest)).IsTrue();
+                await Assert.That(actor.Character.Quests.ActiveQuests[Quest251].Objectives.All(n => n == 0)).IsTrue();
+            }
+        }
+        finally { EndCrowdedGoal(actor); }
+    }
+
+    private static (GameplayActor Actor, GameplayActor Owner, HeadlessSession Session, Npc Prey,
+        QuestBootstrapActivityModule Module, PlayerBotRuntime Bot, BotActivityContext Context) CrowdedGoalRig(string name)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor(name);
+        var (owner, _) = GameplayActorTestRig.CreateActor(name + "-owner");
+        JoinSiblingToRegion(session, owner, new Vector3(2, 0, 0));
+        var prey = session.World.GetNpc(SpawnBoar(session, actor, Vector3.Zero, new Vector3(3, 0, 0)))!;
+        ActivateGatherGoal(actor.Character);
+        actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
+        QuestLegActor.SetResolver(null);
+        QuestLegActor.Stage(actor.Character.Id, actor);
+        var module = new QuestBootstrapActivityModule(new QuestBootstrapModuleOptions { Enabled = true });
+        var bot = new PlayerBotRuntime(actor.Character, name);
+        return (actor, owner, session, prey, module, bot, new BotActivityContext { Bot = bot, GameHour = 12 });
+    }
+
+    private static void EndCrowdedGoal(GameplayActor actor)
+    {
+        actor.PreemptCurrent("crowded goal test teardown");
+        QuestLegActor.ClearAll();
+        QuestLegActor.SetResolver(null);
+    }
+
+    private static void ActivateGatherGoal(Character character)
+    {
+        // Goal interpretation requires native quest steps, unlike the older
+        // snapshot-only selector fixtures which deliberately stage ids only.
+        character.Quests.ActiveQuests[Quest251] = new Quest(QuestManager.Instance.GetTemplate(Quest251), character)
+        {
+            Status = QuestStatus.Progress, Step = QuestComponentKind.Progress,
+            Objectives = [0, 0, 0, 0, 0],
+        };
+    }
 
     private static QuestFixtureRow Fixture()
         => QuestFixtureRow.FromQuestData(Quest251);

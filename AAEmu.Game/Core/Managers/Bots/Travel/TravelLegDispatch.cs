@@ -103,7 +103,11 @@ internal static class TravelLegDispatch
     /// the leg that actually RAN is the one banked (<c>null</c> for a proposal the
     /// caller's own fallback rule produced, which banks nothing).
     /// </summary>
-    internal readonly record struct TravelDispatchParams(TravelDecision? Decision, TravelIntentStore.Intent? Journey = null);
+    internal readonly record struct TravelDispatchParams(TravelDecision? Decision, TravelIntentStore.Intent? Journey = null)
+    {
+        /// <summary>A deliberately chosen contact recovery must pass through the normal ranged combat band.</summary>
+        public bool CloseToContact { get; init; }
+    }
 
     // ---------------------------------------------------------------- journey
 

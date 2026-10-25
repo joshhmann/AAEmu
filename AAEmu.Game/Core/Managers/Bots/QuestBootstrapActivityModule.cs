@@ -108,7 +108,7 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
     // gameplay quest. It lasts only while the observed quest/source facts are
     // unchanged and is discarded on lifecycle generation change or Forget.
     private sealed record DeferredQuest(Quest Quest, QuestStatus Status, QuestComponentKind Step,
-        int[] Objectives, bool SourceAvailable, QuestGiveUp Outcome);
+        int[] Objectives, bool SourceAvailable, string Reason);
 
     private sealed class QuestDeferrals(ulong generation)
     {
@@ -209,14 +209,15 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
             return;
 
         deferred.Quests[giveUp.QuestId] = new DeferredQuest(quest, quest.Status, quest.Step,
-            [.. quest.Objectives], SourceAvailable(deferred.LastListing, giveUp.QuestId), giveUp);
+            [.. quest.Objectives], SourceAvailable(deferred.LastListing, giveUp.QuestId), giveUp.Reason);
         _chosenQuest.TryRemove(characterId, out _);
     }
 
     private static bool SourceAvailable(BotOpportunityListing.OpportunityListing? listing, uint questId)
         => listing != null && (listing.ViableHunts.Any(h => h.QuestId == questId)
+                && !listing.ActiveWork.Any(w => w.QuestId == questId && w.PreySourceContended)
             || listing.ActiveWork.Any(w => w.QuestId == questId
-                && (w.Reason.EndsWith("-source-perceived", StringComparison.Ordinal)
+                && (w.UsefulSourcePerceived || w.Reason.EndsWith("-source-perceived", StringComparison.Ordinal)
                     || w.Reason.EndsWith("-target-perceived", StringComparison.Ordinal))));
 
     private static void RefreshDeferrals(Character character, QuestDeferrals deferred,
@@ -230,8 +231,9 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
                 || quest.Status != saved.Status || quest.Step != saved.Step
                 || !quest.Objectives.SequenceEqual(saved.Objectives)
                 || (!saved.SourceAvailable && sourceAvailable
-                    && (saved.Outcome.Reason.StartsWith("GIVE-UP/UNRESOLVED-TARGET", StringComparison.Ordinal)
-                        || saved.Outcome.Reason.StartsWith(IdleGiveUpPrefix, StringComparison.Ordinal))))
+                    && (saved.Reason.StartsWith("GIVE-UP/UNRESOLVED-TARGET", StringComparison.Ordinal)
+                        || saved.Reason.StartsWith(IdleGiveUpPrefix, StringComparison.Ordinal)
+                        || saved.Reason == ContendedPreyReason)))
                 deferred.Quests.TryRemove(questId, out _);
             else if (saved.SourceAvailable && !sourceAvailable)
                 deferred.Quests.TryUpdate(questId, saved with { SourceAvailable = false }, saved);
@@ -325,6 +327,33 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         => _legAbandoned.AddOrUpdate(characterId,
             _ => new AbandonedQuests(generation),
             (_, prior) => prior.Generation == generation ? prior : new AbandonedQuests(generation));
+
+    private const string ContendedPreyReason = "waiting for nearby quest prey claimed by others";
+
+    private void DeferContendedPrey(BotActivityContext context, IGameplayActor actor,
+        QuestDeferrals deferred, BotOpportunityListing.OpportunityListing listing)
+    {
+        var character = actor.Character;
+        // Completed attack/cast requests can still have native work underway.
+        // The goal owner waits for that work; it never cancels it to re-rank.
+        if (actor.ActiveRequest is { IsTerminal: false }
+            || character.SkillTask is { Cancelled: false } || character.ActivePlotState != null
+            || (character.IsAutoAttack && character.AutoAttackTask is { Cancelled: false }))
+            return;
+
+        foreach (var work in listing.ActiveWork.Where(work => work.PreySourceContended))
+        {
+            if (!character.Quests.ActiveQuests.TryGetValue(work.QuestId, out var quest)
+                || deferred.Quests.ContainsKey(work.QuestId))
+                continue;
+            deferred.Quests[work.QuestId] = new DeferredQuest(quest, quest.Status, quest.Step,
+                [.. quest.Objectives], false, ContendedPreyReason);
+            if (GetChosenQuest(context.Bot.CharacterId) == work.QuestId)
+                _chosenQuest.TryRemove(context.Bot.CharacterId, out _);
+            Logger.Info("Quest waiting bot {CharacterId}: quest {QuestId} has only nearby prey claimed by others; keeping it accepted and looking for other work",
+                context.Bot.CharacterId, work.QuestId);
+        }
+    }
 
     private const string IdleGiveUpPrefix = "GIVE-UP/IDLE";
 
@@ -446,6 +475,14 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
         if (_discoveryGeneration.TryGetValue(characterId, out var discoveryGeneration)
             && discoveryGeneration != bot.Generation)
             _discoveryGeneration.TryRemove(characterId, out _);
+        // A discovery move already elected by this owner keeps its ordinary
+        // journey. A new local opportunity must not repeatedly turn it around.
+        if (_discoveryGeneration.TryGetValue(characterId, out var runningDiscoveryGeneration)
+            && runningDiscoveryGeneration == bot.Generation
+            && actor.ActiveRequest is { IsTerminal: false, Action: ActorActionType.Move,
+                MoveOwner: BotRoamStepExecutor.QuestTravelMoveOwner })
+            return BotActivityDecision.Allow(DiscoveryActivityName);
+        DeferContendedPrey(context, actor, deferred, listing);
         if (_chosenQuest.TryGetValue(characterId, out var kept)
             && !IsCompleted(characterId, kept)
             && listing.BlockedWork.Any(b => b.QuestId == kept))
@@ -538,9 +575,9 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
     /// second scan). Order: (1) an ACTIVE quest with a viable hunt and unmet
     /// need (nearest hunt wins — ordinary hunting where mechanics permit);
     /// (2) accepted work with a named NON-HUNT leg (credited progress,
-    /// perceived source/target, supported resource legs, then unresolved work —
-    /// talk/delivery/gather/return/wait legs continue without another offer
-    /// or live prey); (3) the nearest observed eligible offer. Quest ids
+    /// perceived source/target); (3) the nearest observed eligible offer;
+    /// (4) unresolved accepted work or supported resource searches when no
+    /// useful local work is observed. Quest ids
     /// settle equal usefulness/cost. A hunt-leg row without live prey never
     /// outranks a quest with prey or an offer (a prey-less hunt hold would
     /// pin the bot). Completed quests (terminal feedback) and blocked quests
@@ -575,19 +612,23 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
             .ThenBy(q => q.QuestId)
             .ToArray();
         var work = workCandidates.FirstOrDefault();
-        if (work != null)
-        {
-            Logger.Debug("Quest choice bot {CharacterId}: quest {QuestId}, active {Leg}, usefulness {Usefulness}, fact {Reason}; alternatives {Alternatives}",
-                characterId, work.QuestId, work.Leg, WorkUsefulness(work), work.Reason,
-                string.Join("; ", workCandidates.Skip(1).Take(8).Select(q => $"quest {q.QuestId}: usefulness {WorkUsefulness(q)}, {q.Reason}")));
-            return work.QuestId;
-        }
         var offerCandidates = listing.EligibleQuests
             .Where(q => !IsCompleted(characterId, q.QuestId) && !blocked.Contains(q.QuestId))
             .OrderBy(q => float.IsFinite(q.DistanceM) && q.DistanceM >= 0 ? q.DistanceM : float.PositiveInfinity)
             .ThenBy(q => q.QuestId)
             .ToArray();
         var eligible = offerCandidates.FirstOrDefault();
+        // On a new choice, a real eligible offer nearby is more useful than
+        // an accepted quest whose source has not been observed. Keep useful
+        // accepted work first, and retain unknown work when there is no offer.
+        // The existing retention above still protects a committed journey.
+        if (work != null && (eligible == null || WorkUsefulness(work) >= 2))
+        {
+            Logger.Debug("Quest choice bot {CharacterId}: quest {QuestId}, active {Leg}, usefulness {Usefulness}, fact {Reason}; alternatives {Alternatives}",
+                characterId, work.QuestId, work.Leg, WorkUsefulness(work), work.Reason,
+                string.Join("; ", workCandidates.Skip(1).Take(8).Select(q => $"quest {q.QuestId}: usefulness {WorkUsefulness(q)}, {q.Reason}")));
+            return work.QuestId;
+        }
         if (eligible != null)
             Logger.Debug("Quest choice bot {CharacterId}: quest {QuestId}, eligible offer distance {DistanceM}m, fact {Reason}; alternatives {Alternatives}",
                 characterId, eligible.QuestId, eligible.DistanceM, eligible.Reason,
@@ -603,8 +644,7 @@ public sealed class QuestBootstrapActivityModule : IBotActivityModule
 
     private static int WorkUsefulness(BotOpportunityListing.ActiveQuestWork work)
         => work.Leg is "advance" or "return" or "turn-in" ? 3
-            : work.Reason.EndsWith("-source-perceived", StringComparison.Ordinal)
-                || work.Reason.EndsWith("-target-perceived", StringComparison.Ordinal) ? 2
+            : work.UsefulSourcePerceived ? 2
             : work.Leg is "delivery" or "use-item" or "gather" ? 1 : 0;
 
     private bool IsCompleted(uint characterId, uint questId)

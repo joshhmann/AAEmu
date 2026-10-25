@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 
 using AAEmu.Game.Models.Game.World;
+using AAEmu.Game.Models.Game.NPChar;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -28,7 +29,12 @@ public static class BotSpawnerIndex
 {
     public static TimeSpan RefreshInterval { get; set; } = TimeSpan.FromSeconds(60);
 
-    public readonly record struct Entry(uint Id, uint UnitId, Vector3? Position, int Ordinal);
+    public readonly record struct Entry(uint Id, uint UnitId, Vector3? Position, int Ordinal)
+    {
+        // Cache placement only. Membership changes as NPCs die/despawn/spawn,
+        // and must be observed at selection time rather than on the 60s refresh.
+        public NpcSpawner? Spawner { get; init; }
+    }
 
     public sealed class Snapshot
     {
@@ -39,6 +45,10 @@ public static class BotSpawnerIndex
 
     private static readonly ConditionalWeakTable<WorldInstance, Snapshot> s_snapshots = new();
     private static readonly object s_buildLock = new();
+
+    // Inspection must not warm or refresh the bot's placement knowledge.
+    internal static Snapshot? Peek(WorldInstance? world)
+        => world != null && s_snapshots.TryGetValue(world, out var snapshot) ? snapshot : null;
 
     /// <summary>The world's current snapshot, or null when it has no spawner tables.</summary>
     public static Snapshot? For(WorldInstance? world)
@@ -62,7 +72,7 @@ public static class BotSpawnerIndex
             {
                 var p = spawner.Position;
                 var entry = new Entry(spawner.Id, spawner.UnitId,
-                    p == null ? null : new Vector3(p.X, p.Y, p.Z), ordinal++);
+                    p == null ? null : new Vector3(p.X, p.Y, p.Z), ordinal++) { Spawner = spawner };
                 if (!byTemplate.TryGetValue(spawner.UnitId, out var list))
                     byTemplate[spawner.UnitId] = list = [];
                 list.Add(entry);

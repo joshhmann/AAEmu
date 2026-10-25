@@ -125,18 +125,27 @@ public static class CombatDecisionTree
         out (float MinRange, float MaxRange) range)
     {
         range = default;
-        if (character == null || !float.IsFinite(distanceM)
-            || SelectAutoAttackSkillId(character, distanceM) != BasicRangedAutoAttackSkillId
-            || character.Equipment?.GetItemBySlot((int)EquipmentItemSlot.Ranged)?.Template
-                is not WeaponTemplate { HoldableTemplate: not null })
+        return character != null && float.IsFinite(distanceM)
+            && SelectAutoAttackSkillId(character, distanceM) == BasicRangedAutoAttackSkillId
+            && TryReadRangedAutoAttackRange(character, out range)
+            && distanceM >= range.MinRange && distanceM <= range.MaxRange;
+    }
+
+    // Read reach even outside it: spacing must be able to correct an invalid
+    // pose. The caller above still requires an attack usable at this distance.
+    internal static bool TryReadRangedAutoAttackRange(Character? character,
+        out (float MinRange, float MaxRange) range)
+    {
+        range = default;
+        if (character?.Equipment?.GetItemBySlot((int)EquipmentItemSlot.Ranged)?.Template
+            is not WeaponTemplate { HoldableTemplate: not null })
             return false;
         var template = SkillManager.PeekInstance?.GetSkillTemplate(BasicRangedAutoAttackSkillId);
         if (template == null || template.WeaponSlotForRangeId != (int)EquipmentItemSlot.Ranged)
             return false;
         range = GetSkillEnforcedRange(template, character);
         return float.IsFinite(range.MinRange) && float.IsFinite(range.MaxRange)
-            && range.MinRange >= 0f && range.MaxRange > 0f && range.MinRange <= range.MaxRange
-            && distanceM >= range.MinRange && distanceM <= range.MaxRange;
+            && range.MinRange >= 0f && range.MaxRange > 0f && range.MinRange <= range.MaxRange;
     }
 
     // Canonical starter combo skill IDs

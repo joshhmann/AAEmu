@@ -19,6 +19,7 @@ using AAEmu.Game.Models.Game.Quests.Acts;
 using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
+using AAEmu.Game.Models.Game.Skills;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.UnitTests.Game.Quests.Playerbot;
@@ -55,6 +56,7 @@ public class QuestRunningOwnershipTests
         PlayerbotPilotRig.SeedPilotSingletons();
         GameplayActorTestRig.Seed();
         TravelIntentStore.ClearAll();
+        QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
         SurvivalVetoState.ClearAll();
         SeedQuest251GatherAct();
@@ -67,6 +69,7 @@ public class QuestRunningOwnershipTests
         SurvivalVetoState.ClearAll();
         CombatBrainEngagement.ClearAll();
         TravelIntentStore.ClearAll();
+        QuestBehavior.ClearCombatStallMemory();
     }
 
     /// <summary>
@@ -204,6 +207,141 @@ public class QuestRunningOwnershipTests
         // Ownership is gone with the leg: the next quest wake re-decides.
         await Assert.That(executor.TryGetQuestRuntime(runtime.CharacterId, out var questRuntime)).IsTrue();
         await Assert.That(questRuntime!.OwnsRunningRequest(actor.ActiveRequest)).IsFalse();
+    }
+
+    [Test]
+    public async Task OwnedPursuit_TargetDies_StopsWithoutWaitingForNavigationTimeout()
+    {
+        var (executor, actor, runtime, clock, session) = CreateQuestRigWithWildlife("own-dead-prey",
+            "quest.progress", new Vector3(100, 100, 10), new Vector3(130, 100, 10), null);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var owned = actor.ActiveRequest!;
+        await Assert.That(owned is { IsTerminal: false, Action: ActorActionType.Move }).IsTrue();
+        var prey = session.World.GetNpc(owned.TargetId)!;
+        var objectives = actor.Character.Quests.ActiveQuests[Quest251].Objectives.ToArray();
+
+        // A competing player killing the prey is supplied world change. The
+        // production executor, not the test, must retire the obsolete move.
+        prey.Hp = 0;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        var nextWake = await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(nextWake).IsEqualTo(executor.ActiveCadence)
+            .Because("retiring a chase must promptly recheck combat or replacement prey");
+
+        await Assert.That(owned.State).IsEqualTo(ActorLifecycleState.Interrupted);
+        await Assert.That(owned.Elapsed).IsLessThan(TimeSpan.FromSeconds(1));
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == owned.TraceId)).IsEqualTo(1);
+        await Assert.That(actor.Character.Quests.ActiveQuests[Quest251].Objectives.SequenceEqual(objectives)).IsTrue();
+        await Assert.That(executor.TryGetQuestRuntime(runtime.CharacterId, out var questRuntime)).IsTrue();
+        await Assert.That(questRuntime!.OwnsRunningRequest(owned)).IsFalse();
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task OwnedPursuit_ReachesCombatRange_StopsBeforeWalkingOntoThePrey(bool ranged)
+    {
+        var (executor, actor, runtime, clock, session) = CreateQuestRigWithWildlife("own-combat-range",
+            "quest.progress", new Vector3(100, 100, 10), new Vector3(130, 100, 10), null);
+        if (ranged)
+            actor.Character.Ability1 = AbilityType.Wild;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var owned = actor.ActiveRequest!;
+        var prey = session.World.GetNpc(owned.TargetId)!;
+        await Assert.That(owned is { IsTerminal: false, Action: ActorActionType.Move }).IsTrue();
+
+        // Native movement reaches the combat policy's own range. It still
+        // has distance left to the exact unit position, so a blind hold loses
+        // attack time even though the existing combat policy can take over.
+        for (var i = 0; i < 100 && !owned.IsTerminal
+            && !QuestBehavior.CombatOwnsInsideBand(actor.Character, actor.Character.GetDistanceTo(prey, true), prey.ObjId); i++)
+            actor.Tick(TimeSpan.FromMilliseconds(100));
+        await Assert.That(owned.IsTerminal).IsFalse();
+        await Assert.That(QuestBehavior.CombatOwnsInsideBand(actor.Character,
+            actor.Character.GetDistanceTo(prey, true), prey.ObjId)).IsTrue();
+        var movesBefore = actor.AuditTrace.Count(r => r.Action == ActorActionType.Move);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        var nextWake = await executor.StepAsync(runtime, CancellationToken.None);
+        await Assert.That(nextWake).IsEqualTo(executor.ActiveCadence)
+            .Because("retiring a chase must promptly recheck combat or replacement prey");
+
+        await Assert.That(owned.State).IsEqualTo(ActorLifecycleState.Interrupted);
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == owned.TraceId)).IsEqualTo(1);
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move)).IsEqualTo(movesBefore + 1);
+        await Assert.That(executor.TryGetQuestRuntime(runtime.CharacterId, out var questRuntime)).IsTrue();
+        await Assert.That(questRuntime!.LastProgressAt).IsNull()
+            .Because("ending a chase is not quest progress or a fabricated arrival");
+
+        try
+        {
+            for (var i = 0; i < 3 && !actor.AuditTrace.Any(r => r.Action == ActorActionType.AutoAttack); i++)
+            {
+                clock.Advance(TimeSpan.FromMilliseconds(100));
+                await executor.StepAsync(runtime, CancellationToken.None);
+            }
+            await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AutoAttack
+                && r.TargetId == prey.ObjId)).IsTrue()
+                .Because("the normal combat action must be attempted after the retired chase; the engine still owns its result");
+        }
+        finally
+        {
+            actor.StopAutoAttack();
+        }
+    }
+
+    [Test]
+    public async Task OwnedPursuit_ContactRecoveryAcrossTargets_RemainsOwnedInsideRangedBand()
+    {
+        var (executor, actor, runtime, clock, session) = CreateQuestRigWithWildlife("own-contact-recovery",
+            "quest.progress", new Vector3(100, 100, 10), new Vector3(118, 100, 10), null);
+        actor.Character.Ability1 = AbilityType.Wild;
+        GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicMeleeAutoAttackSkillId);
+        GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicRangedAutoAttackSkillId);
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget!.ObjId).State)
+            .IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
+        // Supply past no-damage observations across DIFFERENT prey. The
+        // production pursuit must preserve the actor-wide contact decision,
+        // even when the new target has no target-specific stall streak yet.
+        for (var i = 0; i < BotBrainTuningStore.ResolveCombatStallWakes() - 1; i++)
+            _ = QuestBehavior.CountCombatStallWake(actor.ActorId, (uint)(0x72000 + i), 100, $"prior-{i}", out _);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var owned = actor.ActiveRequest!;
+        await Assert.That(owned is { IsTerminal: false, Action: ActorActionType.Move }).IsTrue();
+        await Assert.That(owned.MoveOwner).IsEqualTo(TravelLegDispatch.PursuitMoveOwner);
+        var prey = session.World.GetNpc(owned.TargetId)!;
+        await Assert.That(QuestBehavior.CombatOwnsInsideBand(actor.Character,
+            actor.Character.GetDistanceTo(prey, true), prey.ObjId)).IsTrue();
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.ActiveRequest).IsSameReferenceAs(owned);
+        await Assert.That(owned.IsTerminal).IsFalse()
+            .Because("an intentional contact recovery must continue through the ranged band");
+    }
+
+    [Test]
+    public async Task OwnedPursuit_ReplacedByAnotherMove_DoesNotStopTheNewOwner()
+    {
+        var (executor, actor, runtime, clock, session) = CreateQuestRigWithWildlife("own-replaced-prey",
+            "quest.progress", new Vector3(100, 100, 10), new Vector3(130, 100, 10), null);
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+        var owned = actor.ActiveRequest!;
+        var prey = session.World.GetNpc(owned.TargetId)!;
+        actor.PreemptCurrent("operator replaced the pursuit");
+        actor.SetPendingMoveOwner("OTHER:operator");
+        var replacement = actor.MoveTo(new Vector3(160, 100, 10));
+        prey.Hp = 0;
+        clock.Advance(TimeSpan.FromMilliseconds(100));
+        await executor.StepAsync(runtime, CancellationToken.None);
+
+        await Assert.That(actor.ActiveRequest).IsSameReferenceAs(replacement);
+        await Assert.That(replacement.IsTerminal).IsFalse();
+        await Assert.That(actor.AuditTrace.Count(r => r.TraceId == owned.TraceId)).IsEqualTo(1);
     }
 
     // ------------------------------------------------------------ rig

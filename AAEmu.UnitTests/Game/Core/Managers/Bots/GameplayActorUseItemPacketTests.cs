@@ -121,6 +121,83 @@ public class GameplayActorUseItemPacketTests
     }
 
     [Test]
+    public async Task UseItem_TickDuringNativeEffect_DoesNotWaitOrCompleteEarly()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("item-poll-during-effect");
+        GameplayActorTestRig.StockItem(session, GameplayActorTestRig.TestItemTemplateId, 2);
+        using var fixture = new ItemSkillFixture(150, 100);
+        using var effect = new PausedItemEffect();
+        fixture.AddEffect(effect);
+        using var scheduler = new NativeScheduler();
+        var request = actor.UseItem(GameplayActorTestRig.TestItemTemplateId);
+        using var tickReturned = new ManualResetEventSlim();
+        var forcedRelease = false;
+        Task? releaseWatch = null;
+        try
+        {
+            var effectDeadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+            while (!effect.Entered.IsSet && DateTime.UtcNow < effectDeadline)
+                await scheduler.PumpFor(null, TimeSpan.FromMilliseconds(20));
+            await Assert.That(effect.Entered.IsSet).IsTrue();
+            // Only the safety watchdog releases the effect if Tick blocks.
+            // A responsive poll returns while the effect is still paused.
+            releaseWatch = Task.Run(() =>
+            {
+                if (!tickReturned.Wait(TimeSpan.FromSeconds(1)))
+                {
+                    forcedRelease = true;
+                    effect.Release.Set();
+                }
+            });
+            actor.Tick(TimeSpan.FromMilliseconds(20));
+            tickReturned.Set();
+            await releaseWatch;
+            await Assert.That(forcedRelease).IsFalse();
+            await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Running);
+            await Assert.That(ReferenceEquals(actor.ActiveRequest, request)).IsTrue();
+            effect.Release.Set();
+            await scheduler.WaitForTerminal(actor, request);
+            await Assert.That(request.State).IsEqualTo(ActorLifecycleState.Completed, request.Detail ?? "");
+            await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.TestItemTemplateId)).IsEqualTo(1);
+            actor.Tick(TimeSpan.FromMilliseconds(20));
+            await Assert.That(GameplayActorTestRig.BagCount(actor, GameplayActorTestRig.TestItemTemplateId)).IsEqualTo(1);
+        }
+        finally
+        {
+            tickReturned.Set();
+            effect.Release.Set();
+            if (releaseWatch != null)
+                await releaseWatch;
+            await scheduler.PumpFor(null, TimeSpan.FromMilliseconds(100));
+            actor.PreemptCurrent("test cleanup");
+        }
+    }
+
+    private sealed class PausedItemEffect : EffectTemplate, IDisposable
+    {
+        public override bool OnActionTime => false;
+        public ManualResetEventSlim Entered { get; } = new();
+        public ManualResetEventSlim Release { get; } = new();
+
+        public override void Apply(AAEmu.Game.Models.Game.Units.BaseUnit caster, SkillCaster casterObj,
+            AAEmu.Game.Models.Game.Units.BaseUnit target, SkillCastTarget targetObj,
+            CastAction castObj, EffectSource source, SkillObject skillObject, DateTime time,
+            AAEmu.Game.Core.Packets.CompressedGamePackets packetBuilder = null)
+        {
+            Entered.Set();
+            if (!Release.Wait(TimeSpan.FromSeconds(5)))
+                throw new TimeoutException("native item effect barrier was not released");
+        }
+
+        public void Dispose()
+        {
+            Release.Set();
+            Entered.Dispose();
+            Release.Dispose();
+        }
+    }
+
+    [Test]
     public async Task UseItem_InstantHeal_CompletesAfterOrdinaryEffect()
     {
         var (actor, session) = GameplayActorTestRig.CreateActor("item-instant-heal");

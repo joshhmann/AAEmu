@@ -167,8 +167,9 @@ public sealed class BotBehaviorRuntime
     /// <summary>
     /// Runs one quest leg tick: perceive → propose → shared-select → stage →
     /// dispatch → observe, via <see cref="QuestBehavior"/>. Returns true when
-    /// decision work landed (a terminal Completed request) OR when an owned
-    /// Running request still holds the actor — the caller keeps its
+    /// the quest owns the wake: applied work, an unchanged quest advance, or
+    /// an owned Running request. Status and LastProgressAt distinguish progress
+    /// from a hold — the caller keeps its
     /// route/cadence discipline byte-identical either way.
     /// A Running dispatch becomes owned: later ticks hold it (same request,
     /// no new decision) until its exact terminal lands, which is consumed
@@ -186,12 +187,28 @@ public sealed class BotBehaviorRuntime
         // Single-owner hold (P0.4): while we own a Running job and the actor
         // still carries that exact request, hold it — no re-selection. Holds
         // any Running request (quest or quest-travel), because either is the
-        // quest slice's own landed work. Only the executor's top-of-wake
-        // safety gate and generation binding may supersede this: survival
+        // quest slice's own landed work. Its pursuit observes only the live
+        // target and useful combat range; it never selects new work here.
+        // The executor's top-of-wake safety gate may also supersede it: survival
         // preempts through the actor first (StepSurvivalWake), so a retired
         // leg falls through to fresh work below by identity, never by flag.
         if (_ownsRunning && CurrentActorRequest is { } ownedRunning)
         {
+            if (!ownedRunning.IsTerminal
+                && QuestBehavior.TryRetireOwnedPursuit(actor, ownedRunning, LastResult?.SelectedProposal))
+            {
+                // The exact chase was stopped through the ordinary actor. Its
+                // interruption is already audited; reaching attack range or
+                // losing prey is neither navigation failure nor quest credit.
+                _ownsRunning = false;
+                CurrentActorRequest = null;
+                LastResult = null;
+                Status = BotBehaviorStatus.Blocked;
+                CurrentPhase = "pursuit-recheck";
+                LastFailure = null;
+                NextWake = null;
+                return true;
+            }
             if (!ownedRunning.IsTerminal)
             {
                 Status = BotBehaviorStatus.Running;
@@ -251,7 +268,10 @@ public sealed class BotBehaviorRuntime
             Status = BotBehaviorStatus.Blocked;
             CurrentPhase = "ran-without-progress";
             LastFailure = result.Request!.Detail;
-            return false;
+            // The elected quest still owns this turn. Returning unhandled here
+            // starts an unrelated patrol, which is stopped next turn and keeps
+            // resetting the goal owner's existing idle recovery.
+            return BotActivityDispatchSurface.Resolve(activity) == BotActivityCarrier.Quest;
         }
         if (landed)
         {

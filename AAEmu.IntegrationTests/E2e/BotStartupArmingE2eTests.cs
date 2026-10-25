@@ -325,13 +325,14 @@ public class BotStartupArmingE2eTests
         return last.Where(b => b.State == "Active").ToList();
     }
 
-    internal static async Task<JsonElement> GetBrainAsync(HttpClient client, string bot)
+    internal static async Task<JsonElement> GetBrainAsync(HttpClient client, string bot, CancellationToken cancellationToken = default)
     {
-        using var response = await client.GetAsync($"/api/bots/brain/{bot}");
-        var text = await response.Content.ReadAsStringAsync();
+        using var response = await client.GetAsync($"/api/bots/brain/{bot}", cancellationToken);
+        var text = await response.Content.ReadAsStringAsync(cancellationToken);
         if (!response.IsSuccessStatusCode)
             throw new InvalidOperationException($"GET /api/bots/brain/{bot} → {(int)response.StatusCode}: {text}");
         using var doc = JsonDocument.Parse(text);
+        cancellationToken.ThrowIfCancellationRequested();
         return doc.RootElement.Clone();
     }
 

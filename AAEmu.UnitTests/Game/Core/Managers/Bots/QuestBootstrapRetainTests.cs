@@ -201,8 +201,10 @@ public class QuestBootstrapRetainTests
     {
         // Populated-area run 6: a bot held one quest for 435 s at one spot
         // with no leg and no action. The hold now ends at the idle limit.
-        const uint q = 93_131; const uint start = 93_141; const uint prog = 93_142;
-        const uint offer = 93_151; const uint talkNpc = 93_152;
+        // Components are shared across fixtures; the ready-quest test uses
+        // 93141/93142, so this quest needs its own component namespace.
+        const uint q = 93_601; const uint start = 93_602; const uint prog = 93_603;
+        const uint offer = 93_604; const uint talkNpc = 93_605;
         var (actor, session) = GameplayActorTestRig.CreateActor("retain-idle");
         Place(actor, session);
         GameplayActorTestRig.SeedQuestTalkObjective(q, start, prog, offer, talkNpc, level: 1);
@@ -226,7 +228,8 @@ public class QuestBootstrapRetainTests
             }
         }
 
-        await Assert.That(module.CanActivate(Ctx(bot)).CanActivate).IsTrue();
+        var initial = module.CanActivate(Ctx(bot));
+        await Assert.That(initial.CanActivate).IsTrue().Because($"why={initial.WhyNot}");
         await HoldFor(170);
 
         // Moving restarts the watch: the bot was doing something for the quest.
@@ -250,6 +253,124 @@ public class QuestBootstrapRetainTests
         var next = module.CanActivate(Ctx(bot));
         await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsNotEqualTo(q)
             .Because($"allowed={next.CanActivate} activity={next.ActivityName} why={next.WhyNot}");
+    }
+
+    [Test]
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task UnappliedAdvance_ReservesOnlyAnElectedQuestWake(bool questActivity)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("unapplied-wake-owner");
+        Place(actor, session);
+        const uint q = 93_191;
+        GameplayActorTestRig.SeedItemTemplate(93_195);
+        // Supplied negative delivery fixture: one ordinary supply item, three
+        // required. The native advance declines while valid delivery stays held.
+        SeedGatherShape(q, 93_192, 93_193, 93_194, 93_195, 93_199, 93_200);
+        Accept(actor, q, 93_194, "unapplied-owner-accept");
+        var runtime = new BotBehaviorRuntime();
+        var owned = runtime.Tick(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { ChosenQuestId = q, CycleId = "unapplied-owner" },
+            questActivity ? QuestBootstrapActivityModule.ActivityName : null);
+        await Assert.That(runtime.CurrentActorRequest!.Action).IsEqualTo(ActorActionType.AdvanceQuest);
+        await Assert.That(runtime.CurrentActorRequest.Result).IsEqualTo(false);
+        await Assert.That(runtime.Status).IsEqualTo(BotBehaviorStatus.Blocked);
+        await Assert.That(runtime.CurrentPhase).IsEqualTo("ran-without-progress");
+        await Assert.That(runtime.LastProgressAt).IsNull();
+        await Assert.That(owned).IsEqualTo(questActivity);
+    }
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task UnappliedAdvance_PatrolCannotResetExistingIdleRecovery_AndNextOfferCanWin(bool idleRoamingEnabled)
+    {
+        var (executor, actor, session, bot, module, arbiter, clock, outcomes) = NoOpComposition(idleRoamingEnabled);
+        for (var seconds = 0; seconds < 180; seconds += 5)
+        {
+            _ = arbiter.Arbitrate(bot, 12f);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(93_191u);
+            var nextWake = await executor.StepAsync(bot, CancellationToken.None);
+            await Assert.That(nextWake).IsEqualTo((TimeSpan?)executor.IdleWakeInterval);
+            await Assert.That(executor.GetBotState(bot.CharacterId)!.QuestDecideDetail).StartsWith("not applied AdvanceQuest");
+            await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.Move && r.MoveOwner == "ROAM"))
+                .IsFalse().Because("the elected quest wake must not restart unrelated patrol movement");
+            await Assert.That(executor.TryGetQuestRuntime(bot.CharacterId, out var runtime)).IsTrue();
+            await Assert.That(runtime!.LastProgressAt).IsNull();
+            clock.Advance(TimeSpan.FromSeconds(5));
+        }
+        // The same production three-minute bound; no shortened fixture timer.
+        _ = arbiter.Arbitrate(bot, 12f);
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(0u);
+        await Assert.That(actor.Character.Quests.ActiveQuests.ContainsKey(93_191u)).IsTrue();
+        await Assert.That(outcomes.Any(o => o.Action == ActorActionType.AdvanceQuest)).IsFalse()
+            .Because("synchronous quest advances never occupied the route's PendingLeg return path");
+
+        // Supplied new NPC opportunity, through normal discovery and selection.
+        GameplayActorTestRig.SeedQuestOffer(93_196, 93_197, 93_198, level: 1);
+        var id = session.SpawnNpc(93_198);
+        var npc = session.World.GetNpc(id)!;
+        npc.Hp = 100;
+        GameplayActorTestRig.SetNpcPosition(session, id, SeedPos + new Vector3(2, 0, 0));
+        actor.Character.Region.AddObject(npc);
+        npc.Region = actor.Character.Region;
+        _ = arbiter.Arbitrate(bot, 12f);
+        await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(93_196u);
+        await executor.StepAsync(bot, CancellationToken.None);
+        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AcceptQuest && r.TargetId == 93_196u
+            && r.Result == ActorLifecycleState.Completed))
+            .IsTrue();
+        await Assert.That((actor.Character.Quests.ActiveQuests.ContainsKey(93_196u)
+            || actor.Character.Quests.HasQuestCompleted(93_196u))).IsTrue()
+            .Because("the native quest must be accepted or already completed, not merely attempted");
+    }
+
+    [Test]
+    public async Task UnappliedAdvance_RealItemCreditRestartsIdleWatch()
+    {
+        var (executor, actor, session, bot, module, arbiter, clock, _) = NoOpComposition();
+        async Task Wake()
+        {
+            _ = arbiter.Arbitrate(bot, 12f);
+            await Assert.That(module.GetChosenQuest(bot.CharacterId)).IsEqualTo(93_191u);
+            await executor.StepAsync(bot, CancellationToken.None);
+            clock.Advance(TimeSpan.FromSeconds(5));
+        }
+        for (var i = 0; i < 34; i++) await Wake();
+        GameplayActorTestRig.StockItem(session, 93_195, 1);
+        await Assert.That(actor.Character.Quests.ActiveQuests[93_191].Objectives[0]).IsEqualTo(2);
+        for (var i = 0; i < 35; i++) await Wake();
+        // Native objective credit resets the existing watch even when a later
+        // advance itself still declines; it does not invent quest completion.
+        await Assert.That(actor.Character.Quests.HasQuestCompleted(93_191)).IsFalse();
+    }
+
+    private static (BotRoamStepExecutor Executor, GameplayActor Actor, HeadlessSession Session,
+        PlayerBotRuntime Bot, QuestBootstrapActivityModule Module, BotGoalArbiter Arbiter,
+        FakeTimeProvider Clock, List<BotLegOutcome> Outcomes) NoOpComposition(bool idleRoamingEnabled = true)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("unapplied-idle-composition");
+        Place(actor, session);
+        GameplayActorTestRig.SeedItemTemplate(93_195);
+        SeedGatherShape(93_191, 93_192, 93_193, 93_194, 93_195, 93_199, 93_200);
+        Accept(actor, 93_191, 93_194, "unapplied-composition-accept");
+        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var module = new QuestBootstrapActivityModule(new QuestBootstrapModuleOptions { Enabled = true }, time: clock);
+        var arbiter = new BotGoalArbiter([module]);
+        var bot = new PlayerBotRuntime(actor.Character, "unapplied-composition");
+        var outcomes = new List<BotLegOutcome>();
+        var executor = new BotRoamStepExecutor
+        {
+            ActorFactory = _ => actor, TimeProvider = clock, EnableIdleWake = idleRoamingEnabled,
+            ActiveActivityProvider = arbiter.GetActiveActivity,
+            QuestChosenProvider = module.GetChosenQuest,
+            QuestTerminalSink = module.NotifyQuestTerminal,
+            QuestGiveUpSink = module.NotifyQuestGiveUp,
+            LegOutcomeSink = outcome => { outcomes.Add(outcome); arbiter.ReportLegOutcome(outcome); },
+        };
+        executor.SetRoamRoute(actor.Character,
+            new BotPath([SeedPos + new Vector3(50, 0, 0), SeedPos + new Vector3(0, 50, 0)], BotPath.LoopMode.Loop));
+        return (executor, actor, session, bot, module, arbiter, clock, outcomes);
     }
 
     [Test]

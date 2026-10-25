@@ -13,6 +13,7 @@ using AAEmu.Game.Models.Game.Quests.Director;
 using AAEmu.Game.Models.Game.Quests.Static;
 using AAEmu.Game.Models.Game.Quests.Templates;
 using AAEmu.Game.Utils;
+using AAEmu.Game.Models;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -97,7 +98,13 @@ public static class BotOpportunityListing
     public sealed record ActiveQuestWork(
         uint QuestId,
         string Leg,
-        string Reason);
+        string Reason)
+    {
+        // Local opportunity only: the quest remains accepted and other places
+        // may still have prey. This does not forbid attacking a foreign tag.
+        public bool PreySourceContended { get; init; }
+        public bool UsefulSourcePerceived { get; init; }
+    }
 
     /// <summary>One accepted quest that cannot proceed, with the explicit blocker.</summary>
     public sealed record BlockedQuestWork(
@@ -172,7 +179,7 @@ public static class BotOpportunityListing
                 return byDist != 0 ? byDist : a.TargetObjId.CompareTo(b.TargetObjId);
             });
             BotStepProfile.Mark("listing-recovery");
-            CollectActiveWork(character, hunts, out var active, out var blocked);
+            CollectActiveWork(character, out var active, out var blocked);
             BotStepProfile.Mark("listing-active-work");
             return new OpportunityListing(coverageValid, coverageReason, eligible, hunts, recovery, questOffersUnknown, active, blocked);
         }
@@ -345,7 +352,7 @@ public static class BotOpportunityListing
     /// Absence from offers/prey is never itself a blocker. Read-only: no quest,
     /// movement, combat, loot, item, or vitals mutation.
     /// </summary>
-    private static void CollectActiveWork(Character character, IReadOnlyList<ViableHunt> hunts, out IReadOnlyList<ActiveQuestWork> active, out IReadOnlyList<BlockedQuestWork> blocked)
+    private static void CollectActiveWork(Character character, out IReadOnlyList<ActiveQuestWork> active, out IReadOnlyList<BlockedQuestWork> blocked)
     {
         var live = new List<ActiveQuestWork>();
         var stuck = new List<BlockedQuestWork>();
@@ -412,11 +419,16 @@ public static class BotOpportunityListing
                 {
                     foreach (var act in group.Remaining)
                     {
-                        var verdict = AssessObjective(character, template, act, hunts);
+                        var verdict = AssessObjective(character, template, act);
                         if (verdict.Blocker != null)
                             blockers.Add(new BlockedQuestWork(questId, verdict.Blocker));
                         else
-                            work ??= new ActiveQuestWork(questId, verdict.Leg!, verdict.Reason!);
+                        {
+                            var candidate = new ActiveQuestWork(questId, verdict.Leg!, verdict.Reason!)
+                            { PreySourceContended = verdict.PreySourceContended, UsefulSourcePerceived = verdict.UsefulSourcePerceived };
+                            if (work == null || WorkPriority(candidate) < WorkPriority(work))
+                                work = candidate;
+                        }
                     }
                 }
                 alternatives.Add((work, blockers));
@@ -425,7 +437,8 @@ public static class BotOpportunityListing
             {
                 // A blocked unused alternative does not block a usable one.
                 // Missing-world work stays work; it is NEVER advance credit.
-                var usable = alternatives.FirstOrDefault(a => a.Work != null && a.Blockers.Count == 0);
+                var usable = alternatives.Where(a => a.Work != null && a.Blockers.Count == 0)
+                    .OrderBy(a => WorkPriority(a.Work!)).FirstOrDefault();
                 if (usable.Work != null)
                     live.Add(usable.Work);
                 else
@@ -434,7 +447,8 @@ public static class BotOpportunityListing
             else
             {
                 stuck.AddRange(alternatives.SelectMany(a => a.Blockers));
-                var work = alternatives.Select(a => a.Work).FirstOrDefault(w => w != null);
+                var work = alternatives.Select(a => a.Work).Where(w => w != null)
+                    .OrderBy(w => WorkPriority(w!)).FirstOrDefault();
                 if (work != null)
                     live.Add(work);
             }
@@ -450,9 +464,12 @@ public static class BotOpportunityListing
     /// surfaces EVERY stuck objective as a BlockedWork row — a resolvable first
     /// objective never hides a genuinely missing later target/source.
     /// </summary>
-    private sealed record ObjectiveVerdict(string? Leg, string? Reason, string? Blocker)
+    internal sealed record ObjectiveVerdict(string? Leg, string? Reason, string? Blocker)
     {
-        public static ObjectiveVerdict Work(string leg, string reason) => new(leg, reason, null);
+        public bool PreySourceContended { get; init; }
+        public bool UsefulSourcePerceived { get; init; }
+        public static ObjectiveVerdict Work(string leg, string reason, bool useful = false)
+            => new(leg, reason, null) { UsefulSourcePerceived = useful };
         public static ObjectiveVerdict Stuck(string blocker) => new(null, null, blocker);
     }
 
@@ -466,7 +483,7 @@ public static class BotOpportunityListing
     /// use-item without the item, sourceless interact, prey-less hunts and
     /// unserved act shapes are the genuinely stuck cases with named blockers.
     /// </summary>
-    private static ObjectiveVerdict AssessObjective(Character character, QuestTemplate template, QuestActTemplate act, IReadOnlyList<ViableHunt> hunts)
+    internal static ObjectiveVerdict AssessObjective(Character character, IQuestTemplate template, QuestActTemplate act)
     {
         var questId = template.Id;
         switch (act)
@@ -476,7 +493,7 @@ public static class BotOpportunityListing
                 if (talk.NpcId == 0)
                     return ObjectiveVerdict.Stuck($"quest-talk-no-target-act-{act.ActId}");
                 return CensusHasNpcTarget(character, talk.NpcId, 0)
-                    ? ObjectiveVerdict.Work("talk", $"talk-objective-pending-npc-{talk.NpcId}-group-0-target-perceived")
+                    ? ObjectiveVerdict.Work("talk", $"talk-objective-pending-npc-{talk.NpcId}-group-0-target-perceived", useful: true)
                     : ObjectiveVerdict.Work("talk", $"talk-objective-pending-npc-{talk.NpcId}-group-0-no-perceived-target");
             }
             case QuestActObjTalkNpcGroup groupTalk:
@@ -484,7 +501,7 @@ public static class BotOpportunityListing
                 if (groupTalk.NpcGroupId == 0)
                     return ObjectiveVerdict.Stuck($"quest-talk-no-target-act-{act.ActId}");
                 return CensusHasNpcTarget(character, 0, groupTalk.NpcGroupId)
-                    ? ObjectiveVerdict.Work("talk", $"talk-objective-pending-npc-0-group-{groupTalk.NpcGroupId}-target-perceived")
+                    ? ObjectiveVerdict.Work("talk", $"talk-objective-pending-npc-0-group-{groupTalk.NpcGroupId}-target-perceived", useful: true)
                     : ObjectiveVerdict.Work("talk", $"talk-objective-pending-npc-0-group-{groupTalk.NpcGroupId}-no-perceived-target");
             }
             case QuestActObjItemUse useItem:
@@ -492,7 +509,7 @@ public static class BotOpportunityListing
                 if (useItem.ItemId == 0)
                     return ObjectiveVerdict.Stuck($"quest-use-item-no-item-act-{act.ActId}");
                 return HasObjectiveItem(character, useItem.ItemId)
-                    ? ObjectiveVerdict.Work("use-item", $"use-item-objective-pending-item-{useItem.ItemId}")
+                    ? ObjectiveVerdict.Work("use-item", $"use-item-objective-pending-item-{useItem.ItemId}", useful: true)
                     : ObjectiveVerdict.Stuck($"quest-use-item-missing-item-{useItem.ItemId}");
             }
             case QuestActObjInteraction interaction:
@@ -500,7 +517,7 @@ public static class BotOpportunityListing
                 if (interaction.DoodadId == 0)
                     return ObjectiveVerdict.Stuck($"quest-interact-no-source-act-{act.ActId}");
                 return CensusHasDoodad(character, [interaction.DoodadId])
-                    ? ObjectiveVerdict.Work("gather", $"interact-objective-pending-doodad-{interaction.DoodadId}-source-perceived")
+                    ? ObjectiveVerdict.Work("gather", $"interact-objective-pending-doodad-{interaction.DoodadId}-source-perceived", useful: true)
                     : ObjectiveVerdict.Work("gather", $"interact-objective-pending-doodad-{interaction.DoodadId}-no-perceived-source");
             }
             case QuestActObjItemGather gather:
@@ -512,17 +529,49 @@ public static class BotOpportunityListing
                 // the legitimate supply receipt — the deliver monitor leg owns it.
                 var supply = FindSupplyItem(template, gather.ItemId);
                 if (supply != null)
-                    return ObjectiveVerdict.Work("delivery", $"delivery-objective-pending-item-{gather.ItemId}-supply-{supply.ItemId}");
+                    return ObjectiveVerdict.Work("delivery", $"delivery-objective-pending-item-{gather.ItemId}-supply-{supply.ItemId}",
+                        useful: HasObjectiveItem(character, gather.ItemId));
                 var row = QuestFixtureRow.FromQuestData(questId, gather);
                 var hasNpcSources = row.GatherNpcSources.Count != 0;
                 var doodadTemplates = row.GatherDoodadTemplates;
+                var livingPrey = false;
+                var usefulPrey = false;
+                var possibleLoot = false;
+                var foreignCorpseBlocksSpawn = false;
+                if (hasNpcSources)
+                {
+                    foreach (var npc in WorldManager.GetAround<Npc>(character, QuestObjectiveTargetSelector.LivingPreyScanRadiusM))
+                    {
+                        if (QuestObjectiveTargetSelector.IsSuitableGatherPrey(character, npc, row)
+                            && !QuestBehavior.HasExhaustedPursuit(character, npc.ObjId, questId))
+                        {
+                            livingPrey = true;
+                            usefulPrey |= !QuestObjectiveTargetSelector.HasCompetingClaim(character, npc);
+                        }
+                        else if (npc.Hp <= 0 && QuestObjectiveTargetSelector.IsQuestNpcSource(row, npc.TemplateId)
+                            && npc.LootingContainer is { } container)
+                        {
+                            var permission = container.GetNpcLootPermission(character);
+                            // Unknown permission is not proof that useful loot is
+                            // absent. Leave the normal loot owner to resolve it.
+                            possibleLoot |= container.ItemEntryCount > 0 && permission != false;
+                            // This is positive native state, not an inference from
+                            // missing prey: this corpse is unavailable to us and
+                            // its spawn definition cannot currently replace it.
+                            foreignCorpseBlocksSpawn |= permission == false
+                                && npc.Spawner?.IsSearchBlocked(npc.TemplateId) == true;
+                        }
+                    }
+                }
                 var perceived = CensusHasDoodad(character, doodadTemplates)
-                    || (hasNpcSources && WorldManager.GetAround<Npc>(character, QuestObjectiveTargetSelector.LivingPreyScanRadiusM)
-                        .Any(n => QuestObjectiveTargetSelector.IsSuitableGatherPrey(character, n, row)
-                            && !QuestBehavior.HasExhaustedPursuit(character, n.ObjId, questId)))
-                    || hunts.Any(h => h.QuestId == questId);
+                    || usefulPrey || possibleLoot;
                 if (perceived)
-                    return ObjectiveVerdict.Work("gather", $"gather-objective-pending-item-{gather.ItemId}-source-perceived");
+                    return ObjectiveVerdict.Work("gather", $"gather-objective-pending-item-{gather.ItemId}-source-perceived", useful: true);
+                if ((livingPrey || foreignCorpseBlocksSpawn) && doodadTemplates.Count == 0)
+                    return ObjectiveVerdict.Work("wait", foreignCorpseBlocksSpawn && !livingPrey
+                        ? $"gather-objective-pending-item-{gather.ItemId}-foreign-corpse-source-blocked"
+                        : $"gather-objective-pending-item-{gather.ItemId}-nearby-prey-claimed")
+                        with { PreySourceContended = true };
                 return HasObjectiveItem(character, gather.ItemId)
                     ? ObjectiveVerdict.Work("gather", $"gather-objective-pending-item-{gather.ItemId}-no-perceived-source")
                     : ObjectiveVerdict.Work("wait", $"gather-objective-waiting-loot-item-{gather.ItemId}-no-perceived-source");
@@ -531,12 +580,10 @@ public static class BotOpportunityListing
             {
                 if (hunt.NpcId == 0)
                     return ObjectiveVerdict.Stuck($"quest-hunt-no-prey-act-{act.ActId}");
-                // Usable-now is the engine-gated viable-hunt verdict from this
-                // same listing (hostile/attack/visible all passed); a merely
-                // perceived-but-gated-out prey names that instead. Neither gates
-                // the row: no nearby prey is never abandonment.
-                if (hunts.Any(h => h.QuestId == questId && h.TargetTemplateId == hunt.NpcId))
-                    return ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-{hunt.NpcId}-group-0-prey-perceived");
+                var observed = AssessHuntSource(character, QuestFixtureRow.FromQuestData(questId, hunt),
+                    $"hunt-objective-pending-prey-{hunt.NpcId}-group-0");
+                if (observed != null)
+                    return observed;
                 if (QuestBehavior.HasKnownHuntSearch(character, QuestFixtureRow.FromQuestData(questId, hunt)))
                     return ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-{hunt.NpcId}-group-0-search-location-known");
                 return CensusHasNpcTarget(character, hunt.NpcId, 0)
@@ -547,8 +594,10 @@ public static class BotOpportunityListing
             {
                 if (groupHunt.QuestMonsterGroupId == 0)
                     return ObjectiveVerdict.Stuck($"quest-hunt-no-prey-act-{act.ActId}");
-                if (hunts.Any(h => h.QuestId == questId && IsGroupMember(groupHunt.QuestMonsterGroupId, h.TargetTemplateId)))
-                    return ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-0-group-{groupHunt.QuestMonsterGroupId}-prey-perceived");
+                var observed = AssessHuntSource(character, QuestFixtureRow.FromQuestData(questId, groupHunt),
+                    $"hunt-objective-pending-prey-0-group-{groupHunt.QuestMonsterGroupId}");
+                if (observed != null)
+                    return observed;
                 if (QuestBehavior.HasKnownHuntSearch(character, QuestFixtureRow.FromQuestData(questId, groupHunt)))
                     return ObjectiveVerdict.Work("hunt", $"hunt-objective-pending-prey-0-group-{groupHunt.QuestMonsterGroupId}-search-location-known");
                 return CensusHasNpcTarget(character, 0, groupHunt.QuestMonsterGroupId)
@@ -559,6 +608,31 @@ public static class BotOpportunityListing
                 return ObjectiveVerdict.Stuck($"quest-objective-unserved-act-{act.GetType().Name}");
         }
     }
+    // Positive useful work wins, then a positive local contention fact. An
+    // unknown source cannot mask contention or become proof of exhaustion.
+    private static int WorkPriority(ActiveQuestWork work)
+        => work.UsefulSourcePerceived ? 0 : work.PreySourceContended ? 1 : 2;
+
+    private static ObjectiveVerdict? AssessHuntSource(Character character, QuestFixtureRow row, string reason)
+    {
+        var observedPrey = false;
+        var sharedCredit = AppConfiguration.Instance.World?.TagShareEnabled != false;
+        var matches = QuestObjectiveTargetSelector.QuestNpcSourceMatcher(row);
+        foreach (var npc in WorldManager.GetAround<Npc>(character, QuestObjectiveTargetSelector.LivingPreyScanRadiusM))
+        {
+            if (!matches(npc.TemplateId)
+                || !QuestObjectiveTargetSelector.IsSuitableLivingPrey(character, npc, npc.TemplateId)
+                || QuestBehavior.HasExhaustedPursuit(character, npc.ObjId, row.QuestId))
+                continue;
+            observedPrey = true;
+            if (sharedCredit || !QuestObjectiveTargetSelector.HasCompetingClaim(character, npc))
+                return ObjectiveVerdict.Work("hunt", $"{reason}-prey-perceived", useful: true);
+        }
+        return observedPrey
+            ? ObjectiveVerdict.Work("wait", $"{reason}-nearby-prey-claimed") with { PreySourceContended = true }
+            : null;
+    }
+
     /// <summary>
     /// The engine's own quest-monster-group membership test (the same test the
     /// talk-group and express-fire acts gate on). Fail-closed: an unreadable
@@ -639,7 +713,7 @@ public static class BotOpportunityListing
     /// supplied-gather shape's own source fact). Null when the quest grants no
     /// such supply — the gather is then an ordinary loot gather, never delivery.
     /// </summary>
-    private static QuestActSupplyItem? FindSupplyItem(QuestTemplate template, uint itemId)
+    private static QuestActSupplyItem? FindSupplyItem(IQuestTemplate template, uint itemId)
     {
         try
         {

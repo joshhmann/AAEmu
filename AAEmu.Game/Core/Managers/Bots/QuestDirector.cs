@@ -290,19 +290,22 @@ public static class QuestDirector
                 continue;
             }
             var candidates = groups.Where(g => g.Active && !g.Credited)
-                .Select(g => g.Remaining.Select(act => Plan(questId, QuestFixtureRow.FromQuestData(questId, act))).ToList())
+                .Select(g => g.Remaining.Select(act => (
+                    Plan: Plan(questId, QuestFixtureRow.FromQuestData(questId, act)),
+                    Useful: BotOpportunityListing.AssessObjective(character!, quest.Template, act).UsefulSourcePerceived)).ToList())
                 .ToList();
             // One completeable component is enough for Selective, but every
             // remaining action inside that component still has to be served.
             if (quest.Template?.Selective == true)
             {
-                var supported = candidates.FirstOrDefault(component => component.All(p => !p.HasFailed && p.Unserved.Length == 0));
+                var supported = candidates.Where(component => component.All(p => !p.Plan.HasFailed && p.Plan.Unserved.Length == 0))
+                    .OrderByDescending(component => component.Any(p => p.Useful)).FirstOrDefault();
                 if (supported != null)
                     candidates = [supported];
             }
             // Keep one bounded execution plan, as before. Once it receives
             // credit, the next wake selects the next unfinished objective.
-            var remainingPlans = candidates.SelectMany(component => component).ToList();
+            var remainingPlans = candidates.SelectMany(component => component).OrderByDescending(p => p.Useful).Select(p => p.Plan).ToList();
             plans.Add(remainingPlans.Count > 0 ? remainingPlans[0] : Plan(questId, QuestFixtureRow.FromQuestData(questId)));
         }
         return plans;

@@ -417,6 +417,33 @@ public class NpcSpawner : Spawner<Npc>
         return true;
     }
 
+    /// <summary>
+    /// Positive evidence that this definition is not a useful search destination:
+    /// its members are corpses, or native selection currently excludes it.
+    /// A living requested member remains useful even if definition selection has
+    /// changed. Unknown/unconfigured membership stays inspectable. This does not
+    /// execute spawn decisions or change schedule flags.
+    /// </summary>
+    internal bool IsSearchBlocked(uint npcTemplateId)
+    {
+        if (SpawnedNpcs.TryGetValue(SpawnerId, out var npcs) && npcs != null)
+        {
+            // Membership edits lock this list. Do not take the global spawn lock:
+            // it also covers expensive spawning at unrelated world locations.
+            lock (npcs)
+            {
+                if (npcs.Any(npc => !npc.IsDead && npc.TemplateId == npcTemplateId))
+                    return false;
+                if (IsCorpse(npcs))
+                    return true;
+            }
+        }
+        // AddNpcSpawner registers every definition at each authored position.
+        // Reuse native selection so an inactive sibling cannot answer for a
+        // corpse-blocked active definition at the exact same coordinates.
+        return Template != null && NpcSpawnerIds is { Count: > 0 } && !IsOptimalSpawner();
+    }
+
     private bool HasCorpse()
     {
         if (SpawnedNpcs.TryGetValue(SpawnerId, out var npcs))

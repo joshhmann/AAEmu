@@ -91,7 +91,8 @@ public class ChallengeV1ScenarioTests
             Activate251(actor.Character);
             var npc = session.World.GetNpc(npcObjId)!;
             actor.Character.CurrentTarget = npc;
-            actor.Character.IsAutoAttack = true;
+            await Assert.That(actor.AutoAttack(npcObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+            await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
             QuestBehavior.ClearCombatStallMemory();
             CombatBrainEngagement.ClearAll();
 
@@ -102,7 +103,6 @@ public class ChallengeV1ScenarioTests
                 runs.Add(QuestDecisionScenario.Run(actor, (_, _) => [],
                     new QuestDecisionScenario.QuestOptions { CycleId = $"ch1-long-{wake}" }));
                 npc.Hp = 100;
-                actor.Character.IsAutoAttack = true;
             }
 
             await Assert.That(runs[8].SelectedAction == ActorActionType.Move).IsFalse();
@@ -143,7 +143,9 @@ public class ChallengeV1ScenarioTests
         var dObjId = SpawnExtraPrey(session, new Vector3(19, 7, 0));
         var targets = new[] { aObjId, bObjId, cObjId, dObjId };
         var visited = new HashSet<uint>();
-        actor.Character.IsAutoAttack = true;
+        // Supply an executable native attack, not just the enabled flag.
+        await Assert.That(actor.AutoAttack(aObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         ActorRequest? recovery = null;
         uint intendedTarget = 0;
         for (var wake = 1; wake <= QuestBehavior.CombatStallWakes && recovery == null; wake++)
@@ -180,7 +182,8 @@ public class ChallengeV1ScenarioTests
         var npcObjId = SpawnPrey(session, actor, new Vector3(6, 1, 0), new Vector3(25, 1, 0));
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(npcObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         for (var wake = 1; wake <= 3; wake++)
         {
             Activate251(actor.Character);
@@ -228,7 +231,8 @@ public class ChallengeV1ScenarioTests
         var foreignNpcId = SpawnPrey(foreignSession, foreignActor, new Vector3(6, 1, 0), new Vector3(25, 1, 0));
         var foreignNpc = foreignSession.World.GetNpc(foreignNpcId)!;
         foreignActor.Character.CurrentTarget = foreignNpc;
-        foreignActor.Character.IsAutoAttack = true;
+        await Assert.That(foreignActor.AutoAttack(foreignNpcId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(foreignActor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         for (var wake = 1; wake < QuestBehavior.CombatStallWakes; wake++)
         {
             Activate251(foreignActor.Character);
@@ -478,6 +482,7 @@ public class ChallengeV1ScenarioTests
     private static void SeedCombatSurface()
     {
         GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicMeleeAutoAttackSkillId);
+        GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicRangedAutoAttackSkillId);
         SeedQuest251GatherAct();
         SeedBoarLootLink();
     }

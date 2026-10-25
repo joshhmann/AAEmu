@@ -435,6 +435,75 @@ public class QuestHuntObjectiveBehaviorTests
     }
 
     [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task CorpseBlockedHunt_TravelsToAnotherSourceOrWaitsWithoutRearming(bool allBlocked)
+    {
+        GameplayActorTestRig.Seed();
+        using var definitions = new NpcSpawnerSearchTestRig();
+        QuestBehavior.ClearGiveUpMemory();
+        QuestLegActor.ClearAll();
+        TravelIntentStore.ClearAll();
+        var (actor, session) = GameplayActorTestRig.CreateActor("corpse-source-travel");
+        actor.Character.Level = 20;
+        actor.Character.Hp = actor.Character.MaxHp;
+        actor.Character.Mp = actor.Character.MaxMp;
+        var origin = new Vector3(32, 32, 0);
+        GameplayActorTestRig.SetPosition(actor, origin);
+        var region = session.World.GetRegionByPos(origin)!;
+        region.AddObject(actor.Character);
+        actor.Character.Region = region;
+        // Accepted quest and authored sources are setup; no kill, loot or credit is supplied.
+        var quest = new Quest(QuestManager.Instance.GetTemplate(266), actor.Character)
+            { Step = QuestComponentKind.Progress, Status = QuestStatus.Progress };
+        actor.Character.Quests.ActiveQuests[266] = quest;
+        var act = quest.Template.GetComponents(QuestComponentKind.Progress)
+            .SelectMany(c => c.ActTemplates).Single(a => a.ActId == 26549);
+        var fixture = QuestFixtureRow.FromQuestData(266, act);
+        session.World.SpawnManager = new SpawnManager(session.World);
+        var far = origin + new Vector3(250, 0, 0);
+        foreach (var (pos, blocked) in new[] { (origin, true), (far, allBlocked) })
+        {
+            var variants = definitions.Add(session.World, pos);
+            var active = variants.Single(s => s.SpawnerId == 3348);
+            if (blocked)
+                active.SpawnedNpcs[active.SpawnerId] = [new Npc { TemplateId = 3451, Hp = 0 }];
+        }
+        var clock = new FakeTimeProvider(DateTimeOffset.UtcNow);
+        var executor = new BotRoamStepExecutor {
+            ActorFactory = _ => actor, TimeProvider = clock,
+            ActiveActivityProvider = _ => "quest.progress", QuestChosenProvider = _ => 266,
+            ActiveCadence = TimeSpan.FromMilliseconds(100),
+            EnableWildlifeHunt = false, EnableWildlifeButcher = false,
+            GroundHeightProvider = (_, _) => 0f, NearbyDoodadProvider = (_, _) => []
+        };
+        var bot = new PlayerBotRuntime(actor.Character, "corpse-source-travel");
+        executor.GetOrCreateActor(actor.Character);
+        QuestLegActor.SetResolver(executor.TryGetActor);
+        try
+        {
+            for (var wake = 0; wake < 4; wake++)
+            {
+                clock.Advance(TimeSpan.FromSeconds(1));
+                await executor.StepAsync(bot, CancellationToken.None);
+            }
+            await Assert.That(QuestBehavior.HasKnownHuntSearch(actor.Character, fixture)).IsTrue();
+            await Assert.That(executor.GetBotState(bot.CharacterId)!.QuestTravelTarget)
+                .IsEqualTo(allBlocked ? (Vector3?)null : far);
+            if (allBlocked)
+                await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move)).IsEqualTo(0);
+            await Assert.That(actor.Character.Quests.ActiveQuests[266]).IsSameReferenceAs(quest);
+            await Assert.That(act.GetObjective(quest)).IsEqualTo(0);
+        }
+        finally
+        {
+            actor.PreemptCurrent("corpse source test cleanup");
+            QuestLegActor.ClearAll(); QuestLegActor.SetResolver(null);
+            QuestBehavior.ClearGiveUpMemory(); TravelIntentStore.ClearAll();
+        }
+    }
+
+    [Test]
     public async Task CanonicalKnownHuntSource_ReferenceControlsAndEarnedReadmission()
     {
         GameplayActorTestRig.Seed();

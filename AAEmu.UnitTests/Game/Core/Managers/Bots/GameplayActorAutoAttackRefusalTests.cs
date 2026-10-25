@@ -4,6 +4,15 @@ using AAEmu.Game.Core.Managers.Bots;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Bots;
+using AAEmu.Game.Models.Game.Skills;
+using AAEmu.Game.Models.Tasks.Skills;
+using AAEmu.Game.Core.Managers;
+using AAEmu.Game.GameData;
+using AAEmu.Game.Models.Game.Skills.Effects;
+using AAEmu.Game.Models.Game.Skills.Effects.Enums;
+using AAEmu.Game.Models.Game.Units;
+using AAEmu.Game.Models.Game.Units.Static;
+using System.Reflection;
 
 namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 
@@ -79,6 +88,148 @@ public class GameplayActorAutoAttackRefusalTests
 
     // ------------------------------------------------------------ fixture
 
+    [Test]
+    public async Task NativeRequirementRefusal_CanLaterDealDamageWithoutRevivingTheCancelledSkill()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("autoattack-requirement-clears");
+        var target = SpawnTarget(actor, session, Here + new Vector3(2, 0, 0));
+        var template = SkillManager.Instance.GetSkillTemplate(2);
+        var previousEffects = template.Effects;
+        var index = (Dictionary<string, List<UnitReqs>>)typeof(UnitRequirementsGameData)
+            .GetField("<_unitReqsByOwnerType>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(UnitRequirementsGameData.Instance)!;
+        var previousRequirements = index.GetValueOrDefault("Skill");
+        try
+        {
+            // Supplied development fixture: one native level requirement and
+            // a synchronous fixed-damage effect, not canonical skill2 data.
+            var requiredLevel = (uint)actor.Character.Level + 1;
+            index["Skill"] = (previousRequirements ?? []).Where(r => r.OwnerId != 2).Append(new UnitReqs
+            {
+                Id = 0x7f001, OwnerType = "Skill", OwnerId = 2,
+                KindType = UnitReqsKindType.Level, Value1 = requiredLevel,
+            }).ToList();
+            template.Effects = [FixedDamage()];
+            var refused = actor.AutoAttack(target);
+            var task = actor.Character.AutoAttackTask!;
+            var skill = task.Skill;
+            await Assert.That(refused.Result).IsNotEqualTo(SkillResult.Success);
+            await Assert.That(skill.Cancelled).IsTrue();
+            await Assert.That(session.World.GetNpc(target)!.Hp).IsEqualTo(100);
+            task.Execute();
+            await Assert.That(((UseAutoAttackSkillTask)task).LastTick.State).IsEqualTo("refused");
+            await Assert.That(((UseAutoAttackSkillTask)task).LastTick.Result).IsEqualTo((SkillResult)refused.Result!);
+
+            actor.Character.Level = (byte)requiredLevel;
+            actor.Character.GlobalCooldown = DateTime.MinValue;
+            task.Execute();
+
+            // Reject the tempting but incorrect theory that this flag alone
+            // blocks damage: native effects can run while it remains set.
+            await Assert.That(ReferenceEquals(skill, task.Skill)).IsTrue();
+            await Assert.That(skill.Cancelled).IsTrue();
+            await Assert.That(session.World.GetNpc(target)!.Hp).IsLessThan(100);
+        }
+        finally
+        {
+            template.Effects = previousEffects;
+            if (previousRequirements == null) index.Remove("Skill");
+            else index["Skill"] = previousRequirements;
+            actor.StopAutoAttack();
+        }
+    }
+
+    [Test]
+    public async Task NativeLoop_GlobalCooldownAndRangePausesAreObservedWithoutRestart()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("autoattack-paused-native");
+        var target = SpawnTarget(actor, session, Here + new Vector3(2, 0, 0));
+        _ = actor.AutoAttack(target);
+        var task = (UseAutoAttackSkillTask)actor.Character.AutoAttackTask!;
+        actor.Character.GlobalCooldown = DateTime.UtcNow.AddSeconds(30);
+        task.Execute();
+        await Assert.That(task.LastTick.State).IsEqualTo("global-cooldown");
+        await Assert.That(task.LastTick.Result).IsNull();
+        actor.Character.GlobalCooldown = DateTime.MinValue;
+        GameplayActorTestRig.SetNpcPosition(session, target, Here + new Vector3(100, 0, 0));
+        task.Execute();
+        await Assert.That(task.LastTick.State).IsEqualTo("out-of-range");
+        await Assert.That(task.LastTick.Result).IsNull();
+        await Assert.That(ReferenceEquals(task, actor.Character.AutoAttackTask)).IsTrue();
+        actor.StopAutoAttack();
+    }
+
+    [Test]
+    public async Task CancelledNativeTask_IsReplacedInsteadOfReportedAlreadyActive()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("autoattack-cancelled-task");
+        var target = SpawnTarget(actor, session, Here + new Vector3(2, 0, 0));
+        _ = actor.AutoAttack(target);
+        var previous = actor.Character.AutoAttackTask!;
+        previous.Cancel(); // Ordinary native cancellation leaves the character reference until its callback runs.
+        await Assert.That(previous.Cancelled).IsTrue();
+
+        var request = actor.AutoAttack(target);
+
+        await Assert.That(ReferenceEquals(previous, actor.Character.AutoAttackTask)).IsFalse();
+        await Assert.That(actor.Character.AutoAttackTask!.Cancelled).IsFalse();
+        await Assert.That(request.Detail).DoesNotContain("already active");
+        actor.StopAutoAttack();
+    }
+
+    [Test]
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task ObsoleteNativeCallback_DoesNotStrikeOrClearReplacementAttack(bool cancelled)
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("autoattack-obsolete-callback");
+        var target = SpawnTarget(actor, session, Here + new Vector3(2, 0, 0));
+        _ = actor.AutoAttack(target);
+        var previous = actor.Character.AutoAttackTask!;
+        if (cancelled)
+            previous.Cancel();
+        // Supplied race state: the old worker was queued before cancellation,
+        // and a new native task now owns the character's attack.
+        var replacement = new UseAutoAttackSkillTask(new Skill(previous.Skill.Template), actor.Character);
+        actor.Character.AutoAttackTask = replacement;
+        actor.Character.IsAutoAttack = true;
+
+        var template = previous.Skill.Template;
+        var effects = template.Effects;
+        try
+        {
+            template.Effects = [FixedDamage()];
+            actor.Character.GlobalCooldown = DateTime.MinValue;
+            previous.Execute();
+            await Assert.That(session.World.GetNpc(target)!.Hp).IsEqualTo(100);
+            await Assert.That(ReferenceEquals(replacement, actor.Character.AutoAttackTask)).IsTrue();
+            await Assert.That(actor.Character.IsAutoAttack).IsTrue();
+            await Assert.That(((UseAutoAttackSkillTask)previous).LastTick.State).IsEqualTo("superseded");
+        }
+        finally
+        {
+            template.Effects = effects;
+            actor.StopAutoAttack();
+        }
+    }
+
+    [Test]
+    public async Task HealthyNativeTask_IsPreservedWhenTargetChanges()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("autoattack-healthy-retarget");
+        var first = SpawnTarget(actor, session, Here + new Vector3(2, 0, 0));
+        var second = SpawnTarget(actor, session, Here + new Vector3(3, 0, 0));
+        _ = actor.AutoAttack(first);
+        var task = actor.Character.AutoAttackTask!;
+
+        _ = actor.AutoAttack(second);
+
+        await Assert.That(ReferenceEquals(task, actor.Character.AutoAttackTask)).IsTrue();
+        task.Execute(); // The native loop follows CurrentTarget, not its last Skill.InitialTarget.
+        await Assert.That(task.Skill.InitialTarget!.ObjId).IsEqualTo(second);
+        actor.StopAutoAttack();
+    }
+
     private static uint SpawnTarget(GameplayActor actor, HeadlessSession session, Vector3 npcPos)
     {
         GameplayActorTestRig.SetPosition(actor, Here);
@@ -98,4 +249,16 @@ public class GameplayActorAutoAttackRefusalTests
         npc.Region = region;
         return npcObjId;
     }
+
+    private static SkillEffect FixedDamage() => new()
+    {
+        EffectId = 0x7f002,
+        Template = new DamageEffect
+        {
+            Id = 0x7f002, DamageType = DamageType.Siege, UseFixedDamage = true,
+            FixedMin = 10, FixedMax = 10, Multiplier = 1,
+        },
+        Chance = 100, Friendly = true, NonFriendly = true, Front = true, Back = true,
+        EndLevel = byte.MaxValue, AlwaysHit = true, ApplicationMethod = SkillEffectApplicationMethod.Target,
+    };
 }

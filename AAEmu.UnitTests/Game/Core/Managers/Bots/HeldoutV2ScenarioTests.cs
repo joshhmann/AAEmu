@@ -71,7 +71,8 @@ public class HeldoutV2ScenarioTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
@@ -82,7 +83,7 @@ public class HeldoutV2ScenarioTests
             last = QuestDecisionScenario.Run(actor, (_, _) => [],
                 new QuestDecisionScenario.QuestOptions { CycleId = $"hv2-single-{wake}" });
             npc.Hp = 100;
-            actor.Character.IsAutoAttack = true;
+
         }
 
         await Assert.That(last!.SelectedAction).IsEqualTo(ActorActionType.Move);
@@ -110,7 +111,8 @@ public class HeldoutV2ScenarioTests
         var first = session.World.GetNpc(firstObjId)!;
         var second = session.World.GetNpc(secondObjId)!;
         actor.Character.CurrentTarget = first;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
@@ -121,7 +123,7 @@ public class HeldoutV2ScenarioTests
                 new QuestDecisionScenario.QuestOptions { CycleId = $"hv2-split-a-{wake}" });
             first.Hp = 100;
             second.Hp = 100;
-            actor.Character.IsAutoAttack = true;
+
         }
 
         Activate251(actor.Character);
@@ -130,14 +132,14 @@ public class HeldoutV2ScenarioTests
             new QuestDecisionScenario.QuestOptions { CycleId = "hv2-split-b-1" });
         first.Hp = 100;
         second.Hp = 100;
-        actor.Character.IsAutoAttack = true;
+
 
         Activate251(actor.Character);
         _ = QuestDecisionScenario.Run(actor, (_, _) => [],
             new QuestDecisionScenario.QuestOptions { CycleId = "hv2-split-b-2" });
         first.Hp = 100;
         second.Hp = 100;
-        actor.Character.IsAutoAttack = true;
+
 
         // 9th consecutive hold-wake actor-wide: still holds, never trips.
         Activate251(actor.Character);
@@ -148,7 +150,7 @@ public class HeldoutV2ScenarioTests
             .Contains(":dispatch=held:reason=inside-combat-band");
         first.Hp = 100;
         second.Hp = 100;
-        actor.Character.IsAutoAttack = true;
+
 
         // The 10th consecutive hold-wake actor-wide: the backstop trips the
         // pursuit Move close-in (verdict + dispatch, not counter internals).
@@ -178,7 +180,8 @@ public class HeldoutV2ScenarioTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
@@ -188,7 +191,7 @@ public class HeldoutV2ScenarioTests
             _ = QuestDecisionScenario.Run(actor, (_, _) => [],
                 new QuestDecisionScenario.QuestOptions { CycleId = $"hv2-foreign-{wake}" });
             npc.Hp = 100;
-            actor.Character.IsAutoAttack = true;
+
         }
 
         // Bystander damage: a foreign tagger plus a visible HP drop on the trip wake.
@@ -222,7 +225,8 @@ public class HeldoutV2ScenarioTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
@@ -232,7 +236,7 @@ public class HeldoutV2ScenarioTests
             _ = QuestDecisionScenario.Run(actor, (_, _) => [],
                 new QuestDecisionScenario.QuestOptions { CycleId = $"hv2-self-{wake}" });
             npc.Hp = 100;
-            actor.Character.IsAutoAttack = true;
+
         }
 
         // The actor's own damage landed: self tag plus a visible HP drop.
@@ -267,7 +271,8 @@ public class HeldoutV2ScenarioTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         // Flat from wake 1: pin BEFORE the loop so no wake ever observes a
         // drop (a 100→70 edge on wake 2 would read as progress and restart).
         npc.Hp = 70;
@@ -282,7 +287,7 @@ public class HeldoutV2ScenarioTests
                 new QuestDecisionScenario.QuestOptions { CycleId = $"hv2-regen-{wake}" });
             // Regen cancels DPS exactly: flat at 70, never falling, never a kill.
             npc.Hp = 70;
-            actor.Character.IsAutoAttack = true;
+
         }
 
         await Assert.That(last!.SelectedAction).IsEqualTo(ActorActionType.Move);
@@ -362,6 +367,7 @@ public class HeldoutV2ScenarioTests
     private static void SeedCombatSurface()
     {
         GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicMeleeAutoAttackSkillId);
+        GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicRangedAutoAttackSkillId);
         SeedQuest251GatherAct();
         SeedBoarLootLink();
     }

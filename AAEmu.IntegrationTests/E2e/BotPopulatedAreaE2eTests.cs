@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
 using Xunit;
+using AAEmu.Game.Core.Managers.Bots;
 
 using static AAEmu.IntegrationTests.E2e.BotStartupArmingE2eTests;
 
@@ -18,7 +19,7 @@ namespace AAEmu.IntegrationTests.E2e;
 /// starter area. It asks whether the single-bot loop survives company:
 ///
 ///   - every bot makes its own progress (saved XP and completed quests grow);
-///   - no bot is parked (its live position never stays put for the stall window);
+///   - no bot stays still without observed gameplay gains for the stall window;
 ///   - a REAL restart re-enrols the same characters, and every one of them
 ///     makes new saved progress afterwards (the loop resumes from saved state);
 ///   - and what it cost: tick timings from the server's own metrics lines,
@@ -36,8 +37,15 @@ public class BotPopulatedAreaE2eTests
 {
     private const string Token = "e2e-population-token";
 
-    private static int BotCount => int.TryParse(Environment.GetEnvironmentVariable("E2E_POP_BOTS"), out var n)
-        ? Math.Clamp(n, 2, 10) : 6;
+    internal static int ParseBotCount(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return 6;
+        if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var count)
+            || count is < 2 or > 50)
+            throw new ArgumentOutOfRangeException(nameof(value), "E2E_POP_BOTS must be an integer from 2 to 50.");
+        return count;
+    }
 
     private static double PlaySeconds => double.TryParse(Environment.GetEnvironmentVariable("E2E_POP_PLAY_SECONDS"),
         NumberStyles.Float, CultureInfo.InvariantCulture, out var s) ? Math.Max(360, s) : 900;
@@ -45,7 +53,7 @@ public class BotPopulatedAreaE2eTests
     /// <summary>One autosave interval (World.json AutoSaveInterval 5 min) plus margin.</summary>
     private const double AfterRestartSeconds = 390;
 
-    /// <summary>A bot whose live position does not change for this long is parked.</summary>
+    /// <summary>Maximum time standing still without observed gameplay gains.</summary>
     private const double StallSeconds = 300;
 
     private static string GameLog => Path.Combine(E2eStack.E2eRoot, "logs", "game.log");
@@ -54,24 +62,103 @@ public class BotPopulatedAreaE2eTests
 
     private static string ReportPath => Path.Combine(E2eStack.E2eRoot, "logs", "bot-populated-area-report.json");
 
-    private static string[] ManagedAccounts => Enumerable.Range(1, BotCount)
-        .Select(i => $"bot_managed_startup_{i:D3}").ToArray();
-
     private sealed record Saved(uint Id, string Name, int Level, long Experience, int CompletedQuests, long ObjectiveProgress);
 
-    private sealed class Watch
+    internal sealed class Watch
     {
         public required string Name { get; init; }
-        public (float X, float Y, float Z) LastPosition { get; set; }
-        public DateTime LastMovedUtc { get; set; }
-        public double LongestStillSeconds { get; set; }
+        public required DateTime StartedUtc { get; init; }
+        public DateTime? LastObservedUtc { get; private set; }
+        public int Observations { get; private set; }
+        public int TimedOutObservations { get; set; }
+        public int FailedObservations { get; set; }
+        public double LongestObservationGapSeconds { get; private set; }
+        public (float X, float Y, float Z) LastPosition { get; private set; }
+        public DateTime LastMovedUtc { get; private set; }
+        public double LongestStillSeconds { get; private set; }
         public Dictionary<string, int> Activities { get; } = [];
+        public DateTime LastUsefulWorkUtc { get; private set; }
+        public double LongestWithoutUsefulWorkSeconds { get; private set; }
+        private BotQuestLoopObservation.Snapshot? _previousProgress;
+        public sealed record Sample(DateTime ReceivedUtc, float X, float Y, float Z,
+            BotQuestLoopObservation.Snapshot? GameplayProgress, bool ObservedGain);
+        public List<Sample> Samples { get; } = [];
+
+        private static bool Gained(BotQuestLoopObservation.Snapshot before, BotQuestLoopObservation.Snapshot after)
+        {
+            if (after.CharacterId != before.CharacterId || after.ObservedAtUtc <= before.ObservedAtUtc)
+                return false;
+            if (after.Level > before.Level || after.Experience > before.Experience
+                || after.CompletedCount > before.CompletedCount)
+                return true;
+            foreach (var quest in after.ActiveQuests)
+            {
+                var prior = before.ActiveQuests.FirstOrDefault(q => q.QuestId == quest.QuestId);
+                if (prior == null)
+                    continue; // Accepting a quest is not earned objective progress.
+                for (var i = 0; i < Math.Min(prior.Objectives.Length, quest.Objectives.Length); i++)
+                    if (quest.Objectives[i] > prior.Objectives[i])
+                        return true;
+            }
+            return after.ObjectiveItemCounts != null && before.ObjectiveItemCounts != null
+                && after.ObjectiveItemCounts.Any(item => before.ObjectiveItemCounts.TryGetValue(item.Key, out var old)
+                    && item.Value > old);
+        }
+
+        public void Observe((float X, float Y, float Z) position, string activity, DateTime now, BotQuestLoopObservation.Snapshot? progress = null)
+        {
+            if (!float.IsFinite(position.X) || !float.IsFinite(position.Y) || !float.IsFinite(position.Z))
+                throw new FormatException("Bot position must have finite coordinates.");
+            LongestObservationGapSeconds = Math.Max(LongestObservationGapSeconds,
+                (now - (LastObservedUtc ?? StartedUtc)).TotalSeconds);
+            var moved = Observations == 0 || Dist(position, LastPosition) > 0.5f;
+            var gained = progress != null && _previousProgress != null && Gained(_previousProgress, progress);
+            if (Observations > 0)
+                LongestWithoutUsefulWorkSeconds = Math.Max(LongestWithoutUsefulWorkSeconds,
+                    (now - LastUsefulWorkUtc).TotalSeconds);
+            if (moved || gained)
+                LastUsefulWorkUtc = now;
+            // Missing or stale native facts cannot create progress or replace the last good baseline.
+            if (progress != null && (_previousProgress == null || progress.ObservedAtUtc > _previousProgress.ObservedAtUtc))
+                _previousProgress = progress;
+            Samples.Add(new Sample(now, position.X, position.Y, position.Z, progress, gained));
+            if (moved)
+            {
+                LastPosition = position;
+                LastMovedUtc = now;
+            }
+            LongestStillSeconds = Math.Max(LongestStillSeconds, (now - LastMovedUtc).TotalSeconds);
+            LastObservedUtc = now;
+            Observations++;
+            Activities[activity] = Activities.GetValueOrDefault(activity) + 1;
+        }
+
+        public double ObservationGapSeconds(DateTime now) => Math.Max(LongestObservationGapSeconds,
+            (now - (LastObservedUtc ?? StartedUtc)).TotalSeconds);
+
+        public void FinishObservation(DateTime now)
+        {
+            LongestObservationGapSeconds = ObservationGapSeconds(now);
+            if (Observations > 0)
+                LongestWithoutUsefulWorkSeconds = Math.Max(LongestWithoutUsefulWorkSeconds,
+                    (now - LastUsefulWorkUtc).TotalSeconds);
+        }
+
+        public bool HasContinuedWorkEvidence(DateTime now) => Observations >= 2
+            && ObservationGapSeconds(now) < StallSeconds
+            && Math.Max(LongestWithoutUsefulWorkSeconds, (now - LastUsefulWorkUtc).TotalSeconds) < StallSeconds;
     }
 
     [Fact]
     [Trait("Category", "e2e")]
     public async Task PopulatedArea_BotsArmedAtBoot_EachProgressesCoexists_AndResumesAfterRestart()
     {
+        // Refuse unsupported populations before changing flags or starting servers.
+        var botCount = ParseBotCount(Environment.GetEnvironmentVariable("E2E_POP_BOTS"));
+        var managedAccounts = Enumerable.Range(1, botCount)
+            .Select(i => $"bot_managed_startup_{i:D3}").ToArray();
+        var playSeconds = PlaySeconds;
+        var samplingSeconds = new List<double>();
         var wall = Stopwatch.StartNew();
         var legs = new List<(string Leg, bool Passed, string Detail)>();
         var evidence = new StringBuilder();
@@ -88,8 +175,8 @@ public class BotPopulatedAreaE2eTests
         object? cost = null;
 
         Environment.SetEnvironmentVariable("AAEMU_STARTUP_ARMING", "1");
-        Environment.SetEnvironmentVariable("AAEMU_STARTUP_BOT_COUNT", BotCount.ToString(CultureInfo.InvariantCulture));
-        Environment.SetEnvironmentVariable("AAEMU_PRESENCE_MAX_BOTS", BotCount.ToString(CultureInfo.InvariantCulture));
+        Environment.SetEnvironmentVariable("AAEMU_STARTUP_BOT_COUNT", botCount.ToString(CultureInfo.InvariantCulture));
+        Environment.SetEnvironmentVariable("AAEMU_PRESENCE_MAX_BOTS", botCount.ToString(CultureInfo.InvariantCulture));
         Environment.SetEnvironmentVariable("AAEMU_QUEST_BOOTSTRAP_ENABLED", "1");
         Environment.SetEnvironmentVariable("AAEMU_PRESENCE_IDLE_WAKE", "1");
         Environment.SetEnvironmentVariable("AAEMU_BOT_CTRL", "1");
@@ -97,8 +184,8 @@ public class BotPopulatedAreaE2eTests
         try
         {
             E2eStack.RequireFlags("AAEMU_STARTUP_ARMING", "AAEMU_STARTUP_BOT_COUNT", "AAEMU_QUEST_BOOTSTRAP_ENABLED");
-            evidence.AppendLine($"Revision: {E2eStack.SourceRevision} · E2E_ROOT {E2eStack.E2eRoot} · bots {BotCount} · "
-                + $"play {PlaySeconds:0}s · startup roster: level-5 Nuian male at the template spawn (switch defaults)");
+            evidence.AppendLine($"Revision: {E2eStack.SourceRevision} · E2E_ROOT {E2eStack.E2eRoot} · bots {botCount} · "
+                + $"play {playSeconds:0}s · startup roster: level-5 Nuian male at the template spawn (switch defaults)");
             evidence.AppendLine();
 
             E2eStack.EnsureUp();
@@ -108,32 +195,36 @@ public class BotPopulatedAreaE2eTests
             // ------------------------------------------------------ armed, N real
             var enrolLine = await WaitForLogLineAsync(GameLog, "Startup arming: ", TimeSpan.FromSeconds(300));
             Assert.NotNull(enrolLine);
-            Assert.Contains($"enrolled {BotCount} bot(s)", enrolLine);
-            bots = await WaitForActiveBotsAsync(authed, BotCount, TimeSpan.FromSeconds(120));
-            Assert.Equal(BotCount, bots.Count);
+            Assert.Contains($"enrolled {botCount} bot(s)", enrolLine);
+            bots = await WaitForActiveBotsAsync(authed, botCount, TimeSpan.FromSeconds(120));
+            Assert.Equal(botCount, bots.Count);
             start = ReadSaved(bots);
-            Assert.Equal(BotCount, start.Count);
+            Assert.Equal(botCount, start.Count);
             Leg("armed", true, $"`{enrolLine.Trim()}`; active: {string.Join(", ", bots.Select(b => $"{b.Name}(id {b.Id})"))}");
 
             // ---------------------------------------------------------- play
-            foreach (var (name, _, _) in bots)
-                watches[name] = new Watch { Name = name, LastMovedUtc = DateTime.UtcNow };
             var playStart = DateTime.UtcNow;
-            while ((DateTime.UtcNow - playStart).TotalSeconds < PlaySeconds)
+            foreach (var (name, _, _) in bots)
+                watches[name] = new Watch { Name = name, StartedUtc = playStart };
+            while ((DateTime.UtcNow - playStart).TotalSeconds < playSeconds)
             {
-                await SampleAsync(authed, watches);
+                samplingSeconds.Add(await SampleAsync(authed, watches));
                 await Task.Delay(TimeSpan.FromSeconds(15));
             }
-            await SampleAsync(authed, watches);
+            samplingSeconds.Add(await SampleAsync(authed, watches));
             played = ReadSaved(bots);
 
             var progressed = bots.Where(b => played[b.Id].Experience > start[b.Id].Experience
                 && played[b.Id].CompletedQuests > start[b.Id].CompletedQuests).ToList();
-            var parked = watches.Values.Where(w => w.LongestStillSeconds >= StallSeconds).ToList();
-            Leg("each-progresses", progressed.Count == BotCount,
+            var observationEnd = DateTime.UtcNow;
+            foreach (var watch in watches.Values)
+                watch.FinishObservation(observationEnd);
+            var unprovedWork = watches.Values.Where(w => !w.HasContinuedWorkEvidence(observationEnd)).ToList();
+            Leg("each-progresses", progressed.Count == botCount,
                 string.Join(" | ", bots.Select(b => Progress(b.Name, start[b.Id], played[b.Id]))));
-            Leg("none-parked", parked.Count == 0,
-                string.Join(" | ", watches.Values.Select(w => $"{w.Name}: longest still {w.LongestStillSeconds:0}s, "
+            Leg("none-parked", unprovedWork.Count == 0,
+                string.Join(" | ", watches.Values.Select(w => $"{w.Name}: longest still {w.LongestStillSeconds:0}s, longest without movement or native gain {w.LongestWithoutUsefulWorkSeconds:0}s, observations {w.Observations}, "
+                    + $"failed {w.FailedObservations}, longest observation gap {w.ObservationGapSeconds(observationEnd):0.0}s, "
                     + string.Join(",", w.Activities.OrderByDescending(a => a.Value).Take(4).Select(a => $"{a.Key}×{a.Value}")))));
 
             var log = await ReadSharedAsync(GameLog);
@@ -145,7 +236,7 @@ public class BotPopulatedAreaE2eTests
             Assert.True(killed > 0, "RestartGameServer killed no live game process");
             var reEnrol = await WaitForLogLineAsync(RestartLog, "Startup arming: ", TimeSpan.FromSeconds(300));
             Assert.NotNull(reEnrol);
-            var reBots = await WaitForActiveBotsAsync(authed, BotCount, TimeSpan.FromSeconds(120));
+            var reBots = await WaitForActiveBotsAsync(authed, botCount, TimeSpan.FromSeconds(120));
             var sameRoster = reBots.OrderBy(b => b.Id).Select(b => (b.Id, b.Name))
                 .SequenceEqual(bots.OrderBy(b => b.Id).Select(b => (b.Id, b.Name)));
             Leg("restart-same-roster", sameRoster,
@@ -159,7 +250,7 @@ public class BotPopulatedAreaE2eTests
             var resumedBots = bots.Where(b => resumed[b.Id].Experience > afterRestartBase[b.Id].Experience
                 || resumed[b.Id].CompletedQuests > afterRestartBase[b.Id].CompletedQuests
                 || resumed[b.Id].ObjectiveProgress > afterRestartBase[b.Id].ObjectiveProgress).ToList();
-            Leg("resumes-after-restart", resumedBots.Count == BotCount,
+            Leg("resumes-after-restart", resumedBots.Count == botCount,
                 string.Join(" | ", bots.Select(b => Progress(b.Name, afterRestartBase[b.Id], resumed[b.Id]))));
 
             var stop = await PostJsonAsync(authed, "/api/bots/host/stop", "{\"reason\":\"population-lane-stop\"}");
@@ -177,13 +268,13 @@ public class BotPopulatedAreaE2eTests
         finally
         {
             await WriteReportAsync(passed, legs, evidence.ToString(), wall.Elapsed.TotalSeconds,
-                bots, start, played, resumed, watches, cost);
+                bots, start, played, resumed, watches, cost, botCount, playSeconds, samplingSeconds);
             foreach (var key in new[] { "AAEMU_STARTUP_ARMING", "AAEMU_STARTUP_BOT_COUNT", "AAEMU_PRESENCE_MAX_BOTS",
                          "AAEMU_QUEST_BOOTSTRAP_ENABLED", "AAEMU_PRESENCE_IDLE_WAKE", "AAEMU_BOT_CTRL", "AAEMU_BOT_CTRL_TOKEN" })
                 Environment.SetEnvironmentVariable(key, null);
             try
             {
-                E2eStack.CleanupBotRows(ManagedAccounts);
+                E2eStack.CleanupBotRows(managedAccounts);
             }
             catch
             {
@@ -196,30 +287,32 @@ public class BotPopulatedAreaE2eTests
         => $"{name}: level {from.Level}→{to.Level}, xp {from.Experience}→{to.Experience}, "
             + $"completed quests {from.CompletedQuests}→{to.CompletedQuests}, objective counters {from.ObjectiveProgress}→{to.ObjectiveProgress}";
 
-    private static async Task SampleAsync(HttpClient client, Dictionary<string, Watch> watches)
+    internal static async Task<double> SampleAsync(HttpClient client, Dictionary<string, Watch> watches)
     {
-        var now = DateTime.UtcNow;
-        foreach (var watch in watches.Values)
-        {
-            JsonElement brain;
-            try
+        var elapsed = Stopwatch.StartNew();
+        // Bound observer load and time: one failed HTTP request cannot delay
+        // every later bot by the shared client's full 60-second timeout.
+        await Parallel.ForEachAsync(watches.Values, new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            async (watch, _) =>
             {
-                brain = await GetBrainAsync(client, watch.Name);
-            }
-            catch
-            {
-                continue;
-            }
-            var position = ReadPosition(brain);
-            var activity = Str(brain, "Activity") ?? "(none)";
-            watch.Activities[activity] = watch.Activities.GetValueOrDefault(activity) + 1;
-            if (Dist(position, watch.LastPosition) > 0.5f)
-            {
-                watch.LastPosition = position;
-                watch.LastMovedUtc = now;
-            }
-            watch.LongestStillSeconds = Math.Max(watch.LongestStillSeconds, (now - watch.LastMovedUtc).TotalSeconds);
-        }
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                try
+                {
+                    var brain = await GetBrainAsync(client, watch.Name, timeout.Token);
+                    BotQuestLoopObservation.Snapshot? progress = null;
+                    if (brain.TryGetProperty("GameplayProgress", out var facts) && facts.ValueKind != JsonValueKind.Null)
+                        progress = facts.Deserialize<BotQuestLoopObservation.Snapshot>();
+                    watch.Observe(ReadPosition(brain), Str(brain, "Activity") ?? "(none)", DateTime.UtcNow, progress);
+                }
+                catch (Exception ex) when (ex is HttpRequestException or OperationCanceledException
+                    or JsonException or KeyNotFoundException or InvalidOperationException or FormatException)
+                {
+                    watch.FailedObservations++;
+                    if (ex is OperationCanceledException)
+                        watch.TimedOutObservations++;
+                }
+            });
+        return elapsed.Elapsed.TotalSeconds;
     }
 
     /// <summary>Saved level, XP and completed-quest count (set bits in the completed blocks) per bot.</summary>
@@ -320,7 +413,7 @@ public class BotPopulatedAreaE2eTests
     private static async Task WriteReportAsync(bool passed, List<(string Leg, bool Passed, string Detail)> legs,
         string evidence, double wallSeconds, List<(string Name, uint Id, string State)> bots,
         Dictionary<uint, Saved> start, Dictionary<uint, Saved> played, Dictionary<uint, Saved> resumed,
-        Dictionary<string, Watch> watches, object? cost)
+        Dictionary<string, Watch> watches, object? cost, int botCount, double playSeconds, List<double> samplingSeconds)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(ReportPath)!);
         var report = new JsonObject
@@ -329,9 +422,18 @@ public class BotPopulatedAreaE2eTests
             ["passed"] = passed,
             ["wallSeconds"] = wallSeconds,
             ["revision"] = E2eStack.SourceRevision,
-            ["botCount"] = BotCount,
-            ["playSeconds"] = PlaySeconds,
-            ["roster"] = "startup arming defaults: level-5 Nuian male, shared template spawn; nothing seeded",
+            ["botCount"] = botCount,
+            ["playSeconds"] = playSeconds,
+            ["sampling"] = JsonSerializer.SerializeToNode(new
+            {
+                batches = samplingSeconds.Count,
+                totalSeconds = samplingSeconds.Sum(),
+                maxBatchSeconds = samplingSeconds.Count == 0 ? 0 : samplingSeconds.Max(),
+                maxConcurrentRequests = 4,
+                requestTimeoutSeconds = 5,
+            }),
+            ["roster"] = "startup arming defaults: level-5 Nuian male, shared template spawn and normal startup supplies; no assigned quests or targets",
+            ["stationaryWorkMeasure"] = "300 seconds without movement or native XP/level/completed-quest/objective/relevant-item gain; raw stationary duration retained separately; timestamped facts are sampled, not atomic",
             ["legs"] = new JsonArray(legs.Select(l => (JsonNode)new JsonObject
             {
                 ["leg"] = l.Leg, ["passed"] = l.Passed, ["detail"] = l.Detail,
@@ -342,7 +444,14 @@ public class BotPopulatedAreaE2eTests
                 ["start"] = JsonSerializer.SerializeToNode(start.GetValueOrDefault(b.Id)),
                 ["afterPlay"] = JsonSerializer.SerializeToNode(played.GetValueOrDefault(b.Id)),
                 ["afterRestart"] = JsonSerializer.SerializeToNode(resumed.GetValueOrDefault(b.Id)),
+                ["longestWithoutUsefulWorkSeconds"] = watches.TryGetValue(b.Name, out var useful) ? useful.LongestWithoutUsefulWorkSeconds : null,
+                ["samples"] = watches.TryGetValue(b.Name, out var sampled) ? JsonSerializer.SerializeToNode(sampled.Samples) : null,
                 ["longestStillSeconds"] = watches.TryGetValue(b.Name, out var w) ? w.LongestStillSeconds : null,
+                ["observations"] = watches.TryGetValue(b.Name, out var observed) ? observed.Observations : 0,
+                ["failedObservations"] = watches.TryGetValue(b.Name, out var failed) ? failed.FailedObservations : 0,
+                ["timedOutObservations"] = watches.TryGetValue(b.Name, out var timedOut) ? timedOut.TimedOutObservations : 0,
+                ["longestObservationGapSeconds"] = watches.TryGetValue(b.Name, out var gap)
+                    ? gap.LongestObservationGapSeconds : null,
                 ["activities"] = watches.TryGetValue(b.Name, out var w2) ? JsonSerializer.SerializeToNode(w2.Activities) : null,
             }).ToArray()),
             ["cost"] = cost == null ? null : JsonSerializer.SerializeToNode(cost),

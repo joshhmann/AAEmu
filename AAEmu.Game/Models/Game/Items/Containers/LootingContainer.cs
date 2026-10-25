@@ -71,6 +71,10 @@ public class LootingContainer(IBaseUnit owner)
     /// </summary>
     public Dictionary<ushort, LootingContainerItemEntry> Items { get; } = [];
     private object ItemsLock { get; } = new();
+    internal int ItemEntryCount
+    {
+        get { lock (ItemsLock) return Items.Count; }
+    }
     private bool AlreadyGenerated { get; set; }
     private HashSet<Character> EligiblePlayers { get; } = [];
     private HashSet<Character> OpenedBy { get; } = [];

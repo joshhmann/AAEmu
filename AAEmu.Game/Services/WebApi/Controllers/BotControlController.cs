@@ -359,7 +359,10 @@ internal class BotControlController : BaseController
                 // decision this decorator saw — outcome, elected activity, the
                 // arbiter's own refusal reason and the counts — on the same
                 // surface that already carries the assignment read-back.
-                decision: decorator?.GetLastDecision(runtime.CharacterId)));
+                decision: decorator?.GetLastDecision(runtime.CharacterId)) with
+            {
+                GameplayProgress = BotQuestLoopObservation.Capture(acting, state?.QuestLegActive ?? false),
+            });
         }
         catch (Exception ex)
         {

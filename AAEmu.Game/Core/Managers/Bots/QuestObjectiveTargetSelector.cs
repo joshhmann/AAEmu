@@ -1,5 +1,6 @@
 using AAEmu.Game.Core.Managers;
 using AAEmu.Game.GameData;
+using AAEmu.Game.Models;
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.NPChar;
 using AAEmu.Game.Models.Game.Quests.Acts;
@@ -24,10 +25,11 @@ namespace AAEmu.Game.Core.Managers.Bots;
 /// combat-legality (engine rules, queried live) share nothing but the objId and
 /// are projected separately. Legality reuses
 /// <see cref="CombatDecisionTree.IsHostileTarget"/> — never a copy.
-/// Ordering is nearest-first flat with an ObjId tiebreak (G3 doctrine:
-/// deterministic before any cut), raised ONE tier: a candidate no sibling has
-/// already committed to outranks a nearer one a sibling is already on, so a
-/// converged group spreads across the census instead of piling onto one boar.
+/// Ordering is nearest-first flat with an ObjId tiebreak, preferring prey no
+/// sibling has committed to. Item-gather work also prefers prey without a
+/// competing native claim, even over an already selected foreign-tagged NPC.
+/// Hunts use that preference when the server requires tag/team kill credit;
+/// shared-hunt credit retains its existing commitment and contention ordering.
 /// The rule is a pure read of live world state — it stores no claim, mints no
 /// id, and cannot go stale; with no contention it reduces to the flat ordering
 /// exactly.
@@ -294,7 +296,17 @@ public static class QuestObjectiveTargetSelector
         // wins, exactly like the all-contested tier-2 rule. Fail-closed the
         // other way too — HP damage resets the watchdog inside its counter,
         // so a target being killed is never demoted.
-        const byte staleTier = 3;
+        // An item needs native loot eligibility. Hunts also need tag/team
+        // credit when contributor sharing is disabled in the native server.
+        // Unknown configuration preserves existing hunt ordering. Sibling
+        // intent only predicts competition. Failed
+        // approaches remain below both, so an unreachable unclaimed NPC
+        // cannot displace a usable contested fallback.
+        var requiresNativeClaim = fixture.HuntActId == 0
+            || AppConfiguration.Instance.World?.TagShareEnabled == false;
+        const byte foreignClaimPenalty = 3;
+        const byte staleTier = 6;
+        const byte exhaustedTier = 7;
         foreach (var objId in observation == null ? [] : PreyCandidates(observation))
         {
             rawCount++;
@@ -352,7 +364,7 @@ public static class QuestObjectiveTargetSelector
                 });
             // Nearest-first flat with an ObjId tiebreak (G3 doctrine:
             // deterministic before any cut), raised to tiers:
-            //   0  the actor's OWN committed prey — never diverted;
+            //   0  the actor's OWN committed prey;
             //   1  prey no sibling is committed to;
             //   2  prey a sibling is already on or another player has tagged.
             // A converged group therefore spreads across the census instead of
@@ -360,6 +372,8 @@ public static class QuestObjectiveTargetSelector
             // contested to avoid — still takes the nearest legal prey exactly
             // as before. Within a tier the order is the old flat one.
             //
+            // When this objective needs native claim rights, foreign claims
+            // rank below all healthy preferences, including sibling intent.
             // Relevance still gates: a legal non-fixture-template NPC is never
             // the objective target. Deconfliction is a TIE-BREAK among relevant
             // legal prey, never a filter — when every candidate is contested the
@@ -376,11 +390,13 @@ public static class QuestObjectiveTargetSelector
                     ? (byte)(QuestBehavior.IsLeashStaleTarget(character?.ObjId ?? 0, objId) ? staleTier : 0)
                     : (byte)(QuestBehavior.IsLeashStaleTarget(character?.ObjId ?? 0, objId) ? staleTier
                         : contested.Contains(objId) || competingClaim ? 2 : 1);
+                if (requiresNativeClaim && competingClaim && tier < staleTier)
+                    tier += foreignClaimPenalty;
                 // An exhausted owned approach cannot keep a useful alternative
                 // behind an otherwise valid commitment. Keep the sole fallback:
                 // its named terminal lets the existing owner retire finitely.
                 if (QuestBehavior.HasExhaustedPursuit(character!, objId, fixture.QuestId))
-                    tier = 4;
+                    tier = exhaustedTier;
                 if (tier < bestTier
                     || (tier == bestTier && (distance < bestDistance
                         || (distance == bestDistance && objId < bestObjId))))
@@ -412,7 +428,7 @@ public static class QuestObjectiveTargetSelector
 
     // A living tag is competition evidence, not a new attack or loot rule.
     // Read ordinary team membership; managed accounts alone do not form a party.
-    private static bool HasCompetingClaim(Character character, Npc npc)
+    internal static bool HasCompetingClaim(Character character, Npc npc)
     {
         if (ReferenceEquals(npc.CurrentAggroTarget, character))
             return false; // Defending against this NPC remains useful.

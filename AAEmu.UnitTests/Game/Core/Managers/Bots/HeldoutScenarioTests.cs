@@ -68,7 +68,8 @@ public class HeldoutScenarioTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
@@ -78,7 +79,7 @@ public class HeldoutScenarioTests
             last = QuestDecisionScenario.Run(actor, (_, _) => [],
                 new QuestDecisionScenario.QuestOptions { CycleId = $"ho-single-{wake}" });
             npc.Hp = 100;
-            actor.Character.IsAutoAttack = true;
+
         }
 
         await Assert.That(last!.SelectedAction).IsEqualTo(ActorActionType.Move);
@@ -106,7 +107,8 @@ public class HeldoutScenarioTests
         var first = session.World.GetNpc(firstObjId)!;
         var second = session.World.GetNpc(secondObjId)!;
         actor.Character.CurrentTarget = first;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
@@ -117,7 +119,7 @@ public class HeldoutScenarioTests
                 new QuestDecisionScenario.QuestOptions { CycleId = $"ho-split-a-{wake}" });
             first.Hp = 100;
             second.Hp = 100;
-            actor.Character.IsAutoAttack = true;
+
         }
 
         // Re-stage the quest (the A-loop's Advance wakes completed it) and switch
@@ -160,7 +162,8 @@ public class HeldoutScenarioTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
@@ -169,7 +172,7 @@ public class HeldoutScenarioTests
             _ = QuestDecisionScenario.Run(actor, (_, _) => [],
                 new QuestDecisionScenario.QuestOptions { CycleId = $"ho-foreign-{wake}" });
             npc.Hp = 100;
-            actor.Character.IsAutoAttack = true;
+
         }
 
         // Bystander damage: a foreign tagger plus a visible HP drop on the trip wake.
@@ -202,7 +205,8 @@ public class HeldoutScenarioTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
@@ -211,7 +215,7 @@ public class HeldoutScenarioTests
             _ = QuestDecisionScenario.Run(actor, (_, _) => [],
                 new QuestDecisionScenario.QuestOptions { CycleId = $"ho-self-{wake}" });
             npc.Hp = 100;
-            actor.Character.IsAutoAttack = true;
+
         }
 
         // The actor's own damage landed: self tag plus a visible HP drop.
@@ -244,7 +248,8 @@ public class HeldoutScenarioTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        await Assert.That(actor.AutoAttack(actor.Character.CurrentTarget.ObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
         ActorRequest? recovery = null;
@@ -261,7 +266,7 @@ public class HeldoutScenarioTests
                 recovery = request;
             // Regen outpaces DPS: bot deals ~2/wake, mob heals 5/wake.
             npc.Hp = Math.Min(npc.MaxHp, npc.Hp - 2 + 5);
-            actor.Character.IsAutoAttack = true;
+
         }
 
         await Assert.That(npc.Hp > 0).IsTrue();
@@ -347,6 +352,7 @@ public class HeldoutScenarioTests
     private static void SeedCombatSurface()
     {
         GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicMeleeAutoAttackSkillId);
+        GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicRangedAutoAttackSkillId);
         SeedQuest251GatherAct();
         SeedBoarLootLink();
     }

@@ -21,6 +21,24 @@ namespace AAEmu.UnitTests.Game.Core.Managers.Bots;
 [NotInParallel]
 public class BotPresenceManifestTests
 {
+    private object? _previousMetadataStore;
+
+    [Before(Test)]
+    public void IsolateMetadata()
+    {
+        // These fixtures reuse character IDs. One test's recorded patrol home
+        // must not turn another test's fresh character into a returning bot.
+        var field = typeof(Singleton<PlayerBotMetadataStore>).GetField("s_instance",
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+        _previousMetadataStore = field.GetValue(null);
+        field.SetValue(null, new PlayerBotMetadataStore());
+    }
+
+    [After(Test)]
+    public void RestoreMetadata()
+        => typeof(Singleton<PlayerBotMetadataStore>).GetField("s_instance",
+            BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, _previousMetadataStore);
+
     // ---------------------------------------------------------------- loader
 
     [Test]

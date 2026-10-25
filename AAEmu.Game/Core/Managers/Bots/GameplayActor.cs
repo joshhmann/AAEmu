@@ -33,6 +33,7 @@ using AAEmu.Game.Models.Game.Skills.Effects;
 using AAEmu.Game.Models.Game.Skills.Static;
 using AAEmu.Game.Models.Game.Units;
 using AAEmu.Game.Models.Game.Units.Movements;
+using AAEmu.Game.Models.Tasks.Skills;
 using AAEmu.Game.Models.Game.World.Interactions;
 using AAEmu.Game.Models.StaticValues;
 using AAEmu.Game.Utils;
@@ -874,8 +875,11 @@ public class GameplayActor : IGameplayActor
             Character, Character.GetDistanceTo(target, true));
 
         // If already auto-attacking with the exact same skill on this target, complete immediately
-        if (Character.IsAutoAttack && Character.AutoAttackTask?.Skill?.Template?.Id == autoAttackSkillId)
+        if (Character.IsAutoAttack && Character.AutoAttackTask is { Cancelled: false } running
+            && running.Skill?.Template?.Id == autoAttackSkillId)
         {
+            if (running is UseAutoAttackSkillTask nativeLoop)
+                nativeLoop.ObserveTicks = true;
             request.Start($"auto-attack already active ({autoAttackSkillId}) on {target.ObjId}");
             return Complete(request, $"auto-attack already active ({autoAttackSkillId}) on {target.ObjId}");
         }
@@ -926,6 +930,8 @@ public class GameplayActor : IGameplayActor
         // Start continuous auto-attack loop on the character via TaskManager
         Character.IsAutoAttack = true;
         Character.StartAutoSkill(skill);
+        if (Character.AutoAttackTask is UseAutoAttackSkillTask startedLoop)
+            startedLoop.ObserveTicks = true;
 
         // The engine's verdict is part of the record: `skill.Use` returns the
         // SkillResult, and a REFUSED cast (TooFarRange / CooldownTime / …)
@@ -4850,28 +4856,40 @@ public class GameplayActor : IGameplayActor
     {
         if (_pendingItemUse is not { } pending || !ReferenceEquals(pending.Request, request))
             return false;
-        var state = pending.Skill.ExecutionState;
-        if (state == SkillExecutionState.Pending)
+        // Native effects hold this lock while they commit on their worker.
+        // A status poll must not hold the game tick waiting for that work;
+        // keep the request Running and observe its real result next tick.
+        if (!Monitor.TryEnter(pending.Skill.ExecutionLock))
             return false;
+        try
+        {
+            var state = pending.Skill.ExecutionState;
+            if (state == SkillExecutionState.Pending)
+                return false;
 
-        _pendingItemUse = null;
-        if (state == SkillExecutionState.Completed)
-        {
-            _ledger.RecordEffect(ActorIdempotency.EffectKey("itemuse", request.TargetId, pending.ItemId.ToString()), request.TraceId);
-            Complete(request, SkillResult.Success, $"item {request.TargetId} used (skill {pending.Skill.Id}, ordinary effects completed)");
-        }
-        else
-        {
-            CancelOwnedItemSkill(pending.Skill);
-            if (state == SkillExecutionState.Refused)
-                Reject(request, ActorFailureReason.RejectedAction, $"item {request.TargetId} native cast refused its source item");
-            else if (state == SkillExecutionState.TimedOut)
-                Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action), "item skill native callback exceeded action budget"));
+            _pendingItemUse = null;
+            if (state == SkillExecutionState.Completed)
+            {
+                _ledger.RecordEffect(ActorIdempotency.EffectKey("itemuse", request.TargetId, pending.ItemId.ToString()), request.TraceId);
+                Complete(request, SkillResult.Success, $"item {request.TargetId} used (skill {pending.Skill.Id}, ordinary effects completed)");
+            }
             else
-                Interrupt(request, interruptedDetail ?? $"item {request.TargetId} native skill " +
-                    (state == SkillExecutionState.Failed ? "failed" : "interrupted"));
+            {
+                CancelOwnedItemSkill(pending.Skill);
+                if (state == SkillExecutionState.Refused)
+                    Reject(request, ActorFailureReason.RejectedAction, $"item {request.TargetId} native cast refused its source item");
+                else if (state == SkillExecutionState.TimedOut)
+                    Finish(request, request.Expire(ActorTimeoutPolicy.ReasonFor(request.Action), "item skill native callback exceeded action budget"));
+                else
+                    Interrupt(request, interruptedDetail ?? $"item {request.TargetId} native skill " +
+                        (state == SkillExecutionState.Failed ? "failed" : "interrupted"));
+            }
+            return true;
         }
-        return true;
+        finally
+        {
+            Monitor.Exit(pending.Skill.ExecutionLock);
+        }
     }
 
     private void CancelOwnedItemSkill(Skill skill)

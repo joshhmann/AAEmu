@@ -191,7 +191,10 @@ public static class BotBrainProjection
         // never-cleared CurrentActivity.
         string? WorkOrigin,
         // Bounded recent audit history (execution order, oldest first).
-        IReadOnlyList<BotBrainHistoryRow> History);
+        IReadOnlyList<BotBrainHistoryRow> History)
+    {
+        public BotQuestLoopObservation.Snapshot? GameplayProgress { get; init; }
+    }
 
     /// <summary>
     /// Projects one bot's inspector snapshot. All inputs are reads of

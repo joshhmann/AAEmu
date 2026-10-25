@@ -433,7 +433,9 @@ public sealed class BotPresenceCoordinator
                 var explicitHome = entry.Home ?? config.HomePosition;
                 var metadata = PlayerBotMetadataStore.Instance.GetForRead(character.Id);
                 var home = ResolveHome(explicitHome, metadata, character.Transform.Local.Position);
-                if (explicitHome != default || metadata.HasHome)
+                // A persisted patrol home does not authorize a teleport from
+                // the ordinary character position restored by provisioning.
+                if (explicitHome != default)
                     character.Transform.Local.SetPosition(home.X, home.Y, home.Z);
 
                 if (!_manager.Spawn(character, "presence-demo"))
@@ -533,20 +535,19 @@ public sealed class BotPresenceCoordinator
 
                 var character = session.Character;
                 // B4 home resolution (playerbot_metadata store): an explicit
-                // env override wins; else the bot's PERSISTED home (restart:
-                // re-embody at the recorded patrol home); else the resolver
-                // default (template spawn in production). Fire-and-forget —
+                // env override wins; else the bot's PERSISTED patrol home;
+                // else the resolver default (template spawn in production).
+                // Home anchors the patrol, not the saved character position.
+                // Fire-and-forget —
                 // the store never throws (no DB → empty metadata → default).
                 var metadata = PlayerBotMetadataStore.Instance.GetForRead(character.Id);
                 var home = ResolveHome(config.HomePosition, metadata, defaultHome);
                 // Patrol-home relocation (t_118484a7 scope-add): when a home
-                // override is configured (or a home was restored from the
-                // store), embody the bot AT that position (not the template
-                // spawn) so a logging-in human at that spot sees the bots
-                // instantly. The adapter's AddVisibleObject placement then
-                // registers the bot in the home's region graph. No-op when
-                // neither is set (template spawn — the default demo layout).
-                if (config.HomePosition != default || metadata.HasHome)
+                // override is configured, place the bot there as requested.
+                // A stored patrol home alone must not replace the ordinary
+                // Character.Load position on restart and make the bot walk
+                // back to its quest from the starter area.
+                if (config.HomePosition != default)
                     character.Transform.Local.SetPosition(home.X, home.Y, home.Z);
 
                 if (!_manager.Spawn(character, "presence-demo"))
@@ -679,7 +680,8 @@ public sealed class BotPresenceCoordinator
         var character = runtime.Character;
         var metadata = PlayerBotMetadataStore.Instance.GetForRead(character.Id);
         var home = ResolveHome(config.HomePosition, metadata, defaultHome);
-        if (config.HomePosition != default || metadata.HasHome)
+        // Re-enrollment preserves current location unless explicitly relocated.
+        if (config.HomePosition != default)
             character.Transform.Local.SetPosition(home.X, home.Y, home.Z);
 
         var previousState = runtime.State;

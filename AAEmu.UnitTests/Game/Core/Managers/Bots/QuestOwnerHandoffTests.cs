@@ -1372,8 +1372,7 @@ public class QuestOwnerHandoffTests
             var pairType = pair.GetType();
             var key = (uint)pairType.GetProperty("Key")!.GetValue(pair)!;
             var deferredQuest = pairType.GetProperty("Value")!.GetValue(pair)!;
-            var outcome = deferredQuest.GetType().GetProperty("Outcome")!.GetValue(deferredQuest)!;
-            result[key] = (string)outcome.GetType().GetProperty("Reason")!.GetValue(outcome)!;
+            result[key] = (string)deferredQuest.GetType().GetProperty("Reason")!.GetValue(deferredQuest)!;
         }
 
         return result;

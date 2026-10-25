@@ -161,13 +161,35 @@ public class QuestObjectiveCombatTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        _ = actor.AutoAttack(npcObjId);
+        var issued = actor.AuditTrace.Count(r => r.Action == ActorActionType.AutoAttack);
 
         var result = QuestDecisionScenario.Run(actor, (_, _) => [],
             new QuestDecisionScenario.QuestOptions { CycleId = "g6-live-1" });
 
         await Assert.That(result.SelectedAction == ActorActionType.AutoAttack).IsFalse();
-        await Assert.That(actor.AuditTrace.Any(r => r.Action == ActorActionType.AutoAttack)).IsFalse();
+        await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.AutoAttack)).IsEqualTo(issued);
+        actor.StopAutoAttack();
+    }
+
+    [Test]
+    public async Task AutoAttackFlagWithoutTask_RecoversThroughOrdinaryAttack()
+    {
+        var (actor, session) = GameplayActorTestRig.CreateActor("g6-missing-native-loop");
+        var target = SpawnBoar(session, actor, Vector3.Zero, new Vector3(2, 0, 0));
+        Activate251(actor.Character);
+        actor.Character.CurrentTarget = session.World.GetNpc(target);
+        actor.Character.IsAutoAttack = true;
+        actor.Character.AutoAttackTask = null;
+        _ = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g6-missing-loop-stop" });
+
+        var result = QuestDecisionScenario.Run(actor, (_, _) => [],
+            new QuestDecisionScenario.QuestOptions { CycleId = "g6-missing-loop-attack" });
+
+        await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.AutoAttack);
+        await Assert.That(actor.Character.AutoAttackTask).IsNotNull();
+        actor.StopAutoAttack();
     }
     /// <summary>
     /// NO-PROGRESS STALL TRIP (kill22 char 2): a ranged actor holding inside its own
@@ -186,7 +208,9 @@ public class QuestObjectiveCombatTests
         Activate251(actor.Character);
         var npc = session.World.GetNpc(npcObjId)!;
         actor.Character.CurrentTarget = npc;
-        actor.Character.IsAutoAttack = true;
+        GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicRangedAutoAttackSkillId);
+        await Assert.That(actor.AutoAttack(npcObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         QuestBehavior.ClearCombatStallMemory();
         CombatBrainEngagement.ClearAll();
 
@@ -307,6 +331,9 @@ public class QuestObjectiveCombatTests
         QuestDecisionScenario.QuestRunResult? last = null;
         var first = session.World.GetNpc(firstObjId)!;
         var second = session.World.GetNpc(secondObjId)!;
+        GameplayActorTestRig.SeedSkillTemplate(CombatDecisionTree.BasicRangedAutoAttackSkillId);
+        await Assert.That(actor.AutoAttack(firstObjId).State).IsEqualTo(ActorLifecycleState.Completed);
+        await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
         for (var wake = 1; wake <= QuestBehavior.CombatStallWakes; wake++)
         {
             // Alternate every wake; HP pinned on both, flag stays live.
@@ -1375,17 +1402,153 @@ public class QuestObjectiveCombatTests
                     || r.Action == ActorActionType.Cast)).IsFalse();
             });
 
+    [Test]
+    [Arguments(2f, 20)]
+    [Arguments(14f, 20)]
+    [Arguments(21f, 20)]
+    [Arguments(2f, 15)]
+    [Arguments(14f, 15)]
+    [Arguments(21f, 15)]
+    public async Task ArcherFallbackBow_UsesNativeReachForSpacing(float distance, int bowRange)
+        => await WithMeleeBowControl("archer-fallback-reach", new Vector3(distance, 0, 0), bowRange,
+            async (actor, session, id) =>
+            {
+                // Supplied native equipment and target; no learned attack is
+                // available. This checks the real adapter, not pure inputs.
+                actor.Character.Skills.Skills.Clear();
+                var prepared = CombatBrainPlanner.Prepare(actor, null, id, allowSkillCasts: true, DateTime.UtcNow);
+                var decision = CombatBrainPlanner.Decide(prepared);
+                await Assert.That(prepared.Inputs.SelectedSkillId).IsEqualTo(0u);
+                await Assert.That(decision.BandMaxM).IsEqualTo((float)bowRange);
+                if (distance > bowRange)
+                    await Assert.That(decision.Arm).IsEqualTo(CombatArm.CloseRange);
+                else if (distance >= 12f)
+                    await Assert.That(decision.Verb).IsEqualTo(CombatVerb.AutoAttack);
+                else
+                {
+                    await Assert.That(decision.Arm).IsEqualTo(CombatArm.BackOff);
+                    var landingDistance = Vector3.Distance(decision.Destination!.Value,
+                        session.World.GetNpc(id)!.Transform.World.Position);
+                    var admitted = QuestBehavior.CombatAdmissionRadiusM(actor.Character, landingDistance, id);
+                    await Assert.That(landingDistance).IsLessThanOrEqualTo(admitted);
+                    await Assert.That(landingDistance).IsLessThanOrEqualTo((float)bowRange);
+                    // Supplied landing in this local rig, then the ordinary
+                    // native attack must accept the pose chosen by the brain.
+                    GameplayActorTestRig.SetPosition(actor, decision.Destination.Value);
+                    var attack = actor.AutoAttack(id);
+                    await Assert.That(attack.Result).IsEqualTo(SkillResult.Success);
+                }
+            }, AbilityType.Wild);
+
     private static Dictionary<uint, AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate> CombatControlSkillTemplates()
         => (Dictionary<uint, AAEmu.Game.Models.Game.Skills.Templates.SkillTemplate>)typeof(SkillManager)
             .GetField("_skills", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(SkillManager.Instance)!;
 
     // Same native actor/equipment/basic4 setup as the two existing14m positives.
     // bowRange=-1 deliberately omits the bow; zero tests readable but unusable range.
+    [Test]
+    [Arguments("absent")]
+    [Arguments("missing-task")]
+    [Arguments("cancelled")]
+    public async Task ArcherInRange_NoExecutableAttack_IsNotForcedToContactByOldStall(string state)
+        => await WithMeleeBowControl("archer-start-before-stall", new Vector3(18.7f, 0, 0), 20,
+            async (actor, session, id) =>
+            {
+                actor.Character.Skills.Skills.Clear();
+                var npc = session.World.GetNpc(id)!;
+                if (state == "cancelled")
+                {
+                    await Assert.That(actor.AutoAttack(id).State).IsEqualTo(ActorLifecycleState.Completed);
+                    actor.Character.AutoAttackTask!.Cancel();
+                    await Assert.That(actor.Character.AutoAttackTask.Cancelled).IsTrue();
+                }
+                else if (state == "missing-task")
+                    actor.Character.IsAutoAttack = true; // Supplied stale native flag, not an executing attack.
+
+                // Retained no-damage history is the supplied live-failure precondition.
+                // It must not prevent a native attack from starting at valid bow range.
+                QuestBehavior.ClearLeashStaleMemory();
+                for (var i = 0; i < QuestBehavior.CombatStallWakes; i++)
+                    QuestBehavior.CountLeashStaleWake(actor.ActorId, id, npc.Hp,
+                        $"separate-leash-{i}", out _);
+                await Assert.That(QuestBehavior.IsLeashStaleTarget(actor.ActorId, id)).IsTrue();
+                for (var i = 0; i < QuestBehavior.CombatStallWakes + 2; i++)
+                    QuestBehavior.CountCombatStallWake(actor.ActorId, id, npc.Hp,
+                        $"before-attack-{i}", out _, selfAttributed: false);
+                var moveCount = actor.AuditTrace.Count(r => r.Action == ActorActionType.Move);
+                var result = QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = $"start-before-stall-{state}" });
+                await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.AutoAttack);
+                await Assert.That(result.Request!.State).IsEqualTo(ActorLifecycleState.Completed);
+                await Assert.That(result.Request.Detail).Contains("auto-attack started (4)");
+                await Assert.That(actor.Character.AutoAttackTask is { Cancelled: false }).IsTrue();
+                await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.Move)).IsEqualTo(moveCount);
+                await Assert.That(QuestBehavior.IsLeashStaleTarget(actor.ActorId, id)).IsTrue()
+                    .Because("attack startup does not erase separate failed-approach/leash evidence");
+                QuestBehavior.ClearLeashStaleMemory();
+            }, ability: AbilityType.Wild);
+
+    [Test]
+    [Arguments(false)]
+    [Arguments(true)]
+    public async Task MeleeBow_PreviousRunningAttackFailure_KeepsContactRecoveryWhenLoopStops(bool cancelled)
+        => await WithMeleeBowControl("melee-bow-stopped-failure", new Vector3(18.7f, 0, 0), 20,
+            async (actor, session, id) =>
+            {
+                await Assert.That(actor.AutoAttack(id).State).IsEqualTo(ActorLifecycleState.Completed);
+                var npc = session.World.GetNpc(id)!;
+                for (var i = 0; i < QuestBehavior.CombatStallWakes; i++)
+                    QuestBehavior.CountCombatStallWake(actor.ActorId, id, npc.Hp,
+                        $"running-bow-failure-{i}", out _, selfAttributed: false);
+                if (cancelled)
+                    actor.Character.AutoAttackTask!.Cancel();
+                else
+                    actor.StopAutoAttack();
+                // Melee falls back to contact after an observed failed bow
+                // attempt. It has no archer BackOff arm to pull it out again.
+                var before = actor.AuditTrace.Count(r => r.Action == ActorActionType.AutoAttack);
+                var result = QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = "melee-stopped-bow-failure" });
+                await Assert.That(result.SelectedAction).IsEqualTo(ActorActionType.Move);
+                await Assert.That(actor.AuditTrace.Count(r => r.Action == ActorActionType.AutoAttack)).IsEqualTo(before);
+            });
+
+    [Test]
+    public async Task ArcherRetreat_ThenInRange_StartsAttackBeforeOldStallCanPullItBack()
+        => await WithMeleeBowControl("archer-retreat-attack", new Vector3(2.5f, 0, 0), 20,
+            async (actor, session, id) =>
+            {
+                actor.Character.Skills.Skills.Clear();
+                var npc = session.World.GetNpc(id)!;
+                for (var i = 0; i < QuestBehavior.CombatStallWakes + 2; i++)
+                    QuestBehavior.CountCombatStallWake(actor.ActorId, id, npc.Hp,
+                        $"before-retreat-{i}", out _, selfAttributed: false);
+                ActorRequest? retreat = null;
+                for (var wake = 0; wake < 4 && retreat == null; wake++)
+                {
+                    var result = QuestDecisionScenario.Run(actor, (_, _) => [],
+                        new QuestDecisionScenario.QuestOptions { CycleId = $"retreat-before-attack-{wake}" });
+                    if (result.Request is { Action: ActorActionType.Move, MoveOwner: "COMBAT_KITE_MOVE" } move)
+                        retreat = move;
+                }
+                await Assert.That(retreat).IsNotNull();
+                for (var tick = 0; tick < 300 && !retreat!.IsTerminal; tick++)
+                    actor.Tick(TimeSpan.FromMilliseconds(100));
+                await Assert.That(retreat!.State).IsEqualTo(ActorLifecycleState.Completed);
+                var distance = actor.Character.GetDistanceTo(npc, true);
+                await Assert.That(distance).IsGreaterThanOrEqualTo(12f);
+                await Assert.That(distance).IsLessThanOrEqualTo(20f);
+                var settled = QuestDecisionScenario.Run(actor, (_, _) => [],
+                    new QuestDecisionScenario.QuestOptions { CycleId = "after-native-retreat" });
+                await Assert.That(settled.SelectedAction).IsEqualTo(ActorActionType.AutoAttack);
+                await Assert.That(settled.Request!.Detail).Contains("auto-attack started (4)");
+            }, ability: AbilityType.Wild);
+
     private static async Task WithMeleeBowControl(string name, Vector3 targetPosition, int bowRange,
-        Func<GameplayActor, HeadlessSession, uint, Task> check)
+        Func<GameplayActor, HeadlessSession, uint, Task> check, AbilityType ability = AbilityType.Fight)
     {
         var (actor, session) = GameplayActorTestRig.CreateActor(name);
-        actor.Character.Ability1 = AbilityType.Fight;
+        actor.Character.Ability1 = ability;
         actor.Character.Hp = actor.Character.MaxHp;
         actor.Character.Mp = actor.Character.MaxMp;
         QuestBehavior.ClearCombatStallMemory();
@@ -1421,7 +1584,7 @@ public class QuestObjectiveCombatTests
             Activate251(actor.Character);
             actor.Character.CurrentTarget = session.World.GetNpc(id);
             await check(actor, session, id);
-            await Assert.That(actor.Character.Ability1).IsEqualTo(AbilityType.Fight);
+            await Assert.That(actor.Character.Ability1).IsEqualTo(ability);
             await Assert.That(actor.Character.Quests.HasQuestCompleted(Quest251)).IsFalse();
         }
         finally

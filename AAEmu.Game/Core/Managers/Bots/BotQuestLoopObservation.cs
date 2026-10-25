@@ -1,6 +1,7 @@
 using AAEmu.Game.Models.Game.Char;
 using AAEmu.Game.Models.Game.Quests;
 using AAEmu.Game.Models.Game.Quests.Static;
+using AAEmu.Game.Models.Game.Quests.Acts;
 
 namespace AAEmu.Game.Core.Managers.Bots;
 
@@ -34,6 +35,11 @@ public static class BotQuestLoopObservation
     /// <summary>One projected per-wake quest-loop snapshot.</summary>
     public sealed record Snapshot
     {
+        // Timestamped sampled facts, not an atomic gameplay transaction.
+        public DateTimeOffset ObservedAtUtc { get; init; }
+        public int Experience { get; init; }
+        // Native GetItemsCount scope: equipment, bag and warehouse. Null means unavailable.
+        public IReadOnlyDictionary<uint, int>? ObjectiveItemCounts { get; init; }
         public required uint CharacterId { get; init; }
         public required string CharacterName { get; init; }
         public required byte Level { get; init; }
@@ -65,7 +71,9 @@ public static class BotQuestLoopObservation
     {
         ArgumentNullException.ThrowIfNull(character);
 
+        var observedAt = DateTimeOffset.UtcNow;
         var quests = character.Quests;
+        var itemIds = new HashSet<uint>();
         var active = new List<QuestRow>();
         if (quests != null)
         {
@@ -78,8 +86,20 @@ public static class BotQuestLoopObservation
                     QuestId = questId,
                     Status = quest!.Status.ToString(),
                     Step = quest.Step.ToString(),
-                    Objectives = quest.Objectives ?? [],
+                    Objectives = [.. quest.Objectives ?? []],
                 });
+                if (quest.QuestSteps.TryGetValue(QuestComponentKind.Progress, out var progress))
+                    foreach (var act in progress.Components.Values.SelectMany(c => c.Acts))
+                    {
+                        var itemId = act.Template switch
+                        {
+                            QuestActObjItemGather gather => gather.ItemId,
+                            QuestActObjItemUse use => use.ItemId,
+                            _ => 0u,
+                        };
+                        if (itemId != 0)
+                            itemIds.Add(itemId);
+                    }
             }
         }
 
@@ -91,6 +111,10 @@ public static class BotQuestLoopObservation
         var position = character.Transform.World.Position;
         return new Snapshot
         {
+            ObservedAtUtc = observedAt,
+            Experience = character.Experience,
+            ObjectiveItemCounts = character.Inventory == null ? null
+                : itemIds.Order().ToDictionary(id => id, id => character.Inventory.GetItemsCount(id)),
             CharacterId = character.Id,
             CharacterName = character.Name ?? "",
             Level = character.Level,

@@ -2999,6 +2999,23 @@ public enum NeedsFarmLoopPhase
         if (JevShadow.Enabled)
             JevShadow.ReleaseWakeIfUnemitted(actor.ActorId);
 
+        // Stored patrol intent is not runnable work while the quest owns a
+        // no-change turn. Use the existing wait interval, not that old route's
+        // fast movement cadence. The quest remains owned even if generic idle
+        // roaming is disabled; no new timer or progress credit is introduced.
+        if (!live && state.QuestLegActive
+            && _questRuntimes.TryGetValue(bot.CharacterId, out var waitingQuest)
+            && waitingQuest.Status == BotBehaviorStatus.Blocked
+            && waitingQuest.CurrentPhase == "ran-without-progress")
+            return Task.FromResult<TimeSpan?>(IdleWakeInterval);
+
+        // A retired chase needs a prompt combat/target recheck even when no
+        // route or actor action remains to keep the scheduler awake.
+        if (!live && state.QuestLegActive
+            && _questRuntimes.TryGetValue(bot.CharacterId, out var retiredPursuit)
+            && retiredPursuit.CurrentPhase == "pursuit-recheck")
+            return Task.FromResult<TimeSpan?>(ActiveCadence);
+
         var effectiveCadence = state.CadenceOverride ?? ActiveCadence;
 
         // Dormant with the idle-wake gate on: report the bounded idle interval
@@ -3396,7 +3413,9 @@ public enum NeedsFarmLoopPhase
         state.QuestDecideDetail = result == null
             ? $"holding {actor.ActiveRequest?.Action} ({TruncateDecide(actor.ActiveRequest?.Detail)})"
             : result.WorkSelected
-                ? $"landed {result.SelectedAction} ({TruncateDecide(result.Request?.Detail)})"
+                ? result.Request is { State: ActorLifecycleState.Completed, Result: false }
+                    ? $"not applied {result.SelectedAction} ({TruncateDecide(result.Request.Detail)})"
+                    : $"landed {result.SelectedAction} ({TruncateDecide(result.Request?.Detail)})"
                 : $"{result.FailStage}: {TruncateDecide(result.FailReason)}";
         // Jev shadow (Stage 1, default OFF): frozen shadow-log row for the
         // offline critic, emitted at this ALREADY-LOGGED point from the
@@ -3429,6 +3448,16 @@ public enum NeedsFarmLoopPhase
         // (runtime LastResult is null there) — a hold must never arm fallback
         // against our own leg, and only a Blocked (no-legal-work) wake arms it.
         var holdingRunning = result == null;
+        if (landed && runtime.CurrentPhase == "ran-without-progress")
+        {
+            // An unapplied advance must not start unrelated patrol. It can
+            // still need ordinary quest travel, including a newly observed
+            // objective source. Keep that existing route path runnable.
+            ArmQuestTravel(bot, concreteActor, state, wakeOptions, questActivity);
+            if (state.PendingMoveOwner == QuestTravelMoveOwner
+                && state.Path is { IsFinished: false })
+                return false;
+        }
         if (landed)
         {
             // G5: a dispatched pursuit leg preempts (and thereby orphans) any

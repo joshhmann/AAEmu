@@ -1065,9 +1065,7 @@ public static class E2eStack
                                    "WHERE TABLE_SCHEMA = 'aaemu_game' AND TABLE_NAME = 'playerbot_metadata'";
         if (Convert.ToInt64(cmdMetaCheck.ExecuteScalar()) > 0)
         {
-            using var cmdMeta = conn.CreateCommand();
-            cmdMeta.CommandText = "DELETE FROM playerbot_metadata WHERE character_id IN (SELECT id FROM characters WHERE name LIKE 'Citizen%')";
-            try { cmdMeta.ExecuteNonQuery(); } catch { /* FK-tolerant */ }
+            try { DeleteBotMetadata(conn, accountNames); } catch { /* FK-tolerant */ }
         }
 
         // One bound parameter per account name. A single joined "'a','b'"
@@ -1092,6 +1090,17 @@ public static class E2eStack
         using var cmd4 = conn2.CreateCommand();
         cmd4.CommandText = $"DELETE FROM users WHERE username IN ({BindInList(cmd4, accountNames)})";
         cmd4.ExecuteNonQuery();
+    }
+
+    internal static void DeleteBotMetadata(MySqlConnection conn, IReadOnlyList<string> accountNames)
+    {
+        if (accountNames.Count == 0)
+            return;
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "DELETE FROM playerbot_metadata WHERE character_id IN "
+            + "(SELECT id FROM characters WHERE account_id IN "
+            + $"(SELECT id FROM aaemu_login.users WHERE username IN ({BindInList(cmd, accountNames)})))";
+        cmd.ExecuteNonQuery();
     }
 
     /// <summary>Binds one parameter per value and returns the placeholder
